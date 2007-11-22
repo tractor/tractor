@@ -1,9 +1,11 @@
-chooseReferenceT2ImageForSession <- function (session, ask = FALSE)
+runEddyCorrectWithSession <- function (session, ask = FALSE)
 {
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
     
     targetDir <- session$getPreBedpostDirectory()
+    if (!file.exists(file.path(targetDir,"bvals")) || !file.exists(file.path(targetDir,"bvecs")))
+        output(OL$Error, "The specified session does not contain \"bvals\" and \"bvecs\" files")
     bvals <- as.vector(read.table(file.path(targetDir, "bvals")))
     zeroes <- which(bvals == 0)
     

@@ -50,7 +50,7 @@ isAffineTransform3D <- function (object)
 
 checkFlirtCacheForTransform <- function (sourceFile, destFile)
 {
-    cacheIndexFile <- paste(tempdir(), "flirt-cache", "index.txt", sep="/")
+    cacheIndexFile <- file.path(tempdir(), "flirt-cache", "index.txt")
     if (!file.exists(cacheIndexFile))
         return (invisible(NULL))
     
@@ -73,7 +73,7 @@ updateFlirtCacheWithTransform <- function (transform, sourceFile, destFile)
     if (!is.null(checkFlirtCacheForTransform(sourceFile, destFile)))
         return (FALSE)
         
-    cacheDir <- paste(tempdir(), "flirt-cache", sep="/")
+    cacheDir <- file.path(tempdir(), "flirt-cache")
     cacheIndexFile <- file.path(cacheDir, "index.txt")
     transformFile <- paste(tempfile("transform-",cacheDir), "Rdata", sep=".")
     

@@ -94,7 +94,7 @@ createFilesForSession <- function (session)
     if (file.exists(workingDir))
     {
         ans <- output(OL$Question, "Internal directory ", workingDir, " exists. This operation will DESTROY it. Continue? [yn]")
-        if (ans != "y" && ans != "Y")
+        if (tolower(ans) != "y")
             return (invisible(NULL))
         else
             unlink(workingDir, recursive=TRUE)
@@ -257,7 +257,7 @@ flipGradientVectorsForSession <- function (session, axes)
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
     
-    fileName <- paste(session$getPreBedpostDirectory(), "bvecs", sep="/")
+    fileName <- file.path(session$getPreBedpostDirectory(), "bvecs")
     bvecs <- as.matrix(read.table(fileName))
     bvecs[axes,] <- (-bvecs[axes,])
     write.table(bvecs, fileName, row.names=FALSE, col.names=FALSE)
