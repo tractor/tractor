@@ -1,0 +1,139 @@
+#! /bin/sh
+
+status=1
+temp_file="/tmp/tractor$$"
+trap 'rm -f $temp_file; exit $status' 0 1 2 15
+
+config_file="/dev/null"
+output_level='OL$Warning'
+use_log=0
+quiet=0
+verbose_level=0
+working_dir="."
+
+usage()
+{
+    echo "tractor v1.0.0, by Jon Clayden <jon.clayden@gmail.com>"
+    echo "Run a TractoR experiment script in R and report the results"
+    echo
+    echo "Usage: tractor -h"
+    echo "       tractor [-ldq] [-v level] [-w working_dir] [-c config_file] ..."
+    echo "                                              script [arg1 [arg2 ...]]"
+    echo
+    echo "  -h          Display this usage information and exit"
+    echo "  -l          Direct output to a log file rather than stdout"
+    echo "  -d          Produce debugging output; equivalent to '-v 3'"
+    echo "  -q          Run in quiet mode; the tractor script will not produce any"
+    echo "              output of its own"
+    echo "  -v [1-3]    Produce verbose output: the level determines the amount of"
+    echo "              extra information reported, from 1 (least) to 3 (most)"
+    echo "  -w dir      Specify the working directory for the experiment, which"
+    echo "              will be created if necessary (default .)"
+    echo "  -c file     Specify a configuration file in YAML format"
+    echo
+    echo "The script, a text file containing R code, need not be specified with the"
+    echo "'.R' extension. The program searches in the current working directory for"
+    echo "the specified script first, followed by any directory specified using the"
+    echo "'-w' option, then ~/.tractor and finally /etc/tractor. Any script not in"
+    echo "one of these locations must be specified using its full path."
+    echo
+}
+
+set -- `getopt "hldqv:w:c:" "$@"` || {
+    usage 1>&2
+    exit 1
+}
+
+while [ $# -gt 0 ]
+    do
+    case "$1" in
+        -l) use_log=1 ;;
+        -d) verbose_level=3 ;;
+        -q) quiet=1 ;;
+        -v) shift; verbose_level=$1 ;;
+        -w) shift; working_dir=`echo $1 | sed 's/\/$//'` ;;
+        -c) shift; config_file="$1" ;;
+        --) shift; break ;;
+    esac
+    shift
+done
+
+if [ $# -eq 0 ]
+    then
+    usage 1>&2
+    exit 1
+fi
+
+file_found=0
+script_file="`echo $1 | sed 's/\.R$//'`.R"
+shift
+args="$@"
+
+if [ -f $script_file ]
+    then
+    file_found=1
+elif [ -f "$working_dir/$script_file" ]
+    then
+    script_file="$working_dir/$script_file"
+    file_found=1
+elif [ -f ~/.tractor/"$script_file" ]
+    then
+    script_file="~/.tractor/$script_file"
+    file_found=1
+elif [ -f "/etc/tractor/$script_file" ]
+    then
+    script_file="/etc/tractor/$script_file"
+    file_found=1
+fi
+
+if [ $file_found -ne 1 ]
+    then
+    echo "Script file not found" 2>&1
+    exit 1
+fi
+
+if [ ! -e $working_dir ]
+    then
+    mkdir -p $working_dir
+fi
+
+if [ $verbose_level -eq 1 ]
+    then
+    output_level='OL$Info'
+elif [ $verbose_level -eq 2 ]
+    then
+    output_level='OL$Verbose'
+elif [ $verbose_level -eq 3 ]
+    then
+    output_level='OL$Debug'
+fi
+
+if [ $quiet -eq 0 ]
+    then
+    echo "Starting TractoR environment..."
+fi
+
+r_code="source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); assign('Arguments', unlist(strsplit('$args','\\\\s+',perl=TRUE)), .GlobalEnv); createWorkspaceFromYamlFile('$config_file'); runExperiment()"
+
+if [ $use_log -eq 0 ]
+    then
+    echo $r_code | R --slave 2>&1 | tee $temp_file
+    else
+    echo $r_code | R --slave 2>&1 | tee $temp_file >"$working_dir/tractor.log"
+fi
+
+warnings=`grep -c WARNING $temp_file`
+errors=`grep -c Error $temp_file`
+
+if [ $quiet -eq 0 ]
+    then
+    echo "Experiment completed with $warnings warning(s) and $errors error(s)"
+fi
+
+if [ $warnings -eq 0 -a $errors -eq 0 ]
+    then
+    status=0
+elif [ $errors -eq 0 ]
+    then
+    status=2
+fi

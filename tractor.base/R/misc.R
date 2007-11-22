@@ -1,0 +1,172 @@
+setOutputLevel <- function (level)
+{
+    if (level %in% OL$Debug:OL$Error)
+        options(outputLevel=level)
+}
+
+output <- function (level, ..., default = NULL)
+{
+    if (is.null(getOption("outputLevel")))
+    {
+        cat("INFO: Output level is not set; defaulting to \"Info\"\n")
+        options(outputLevel=OL$Info)
+    }
+    
+    outputLevel <- getOption("outputLevel")
+    prefixStrings <- c("DEBUG: ", "VERBOSE: ", "INFO: ", "WARNING: ")
+
+    leadingSpace <- implode(rep("* ", length(sys.calls())-1))
+    if ((level < OL$Question) && (outputLevel <= level))
+        cat(paste(leadingSpace, prefixStrings[level], ..., "\n", sep=""))
+    
+    else if (level == OL$Question)
+    {
+        if (outputLevel == OL$Error)
+            return (default)
+        else
+        {
+            cat(paste(leadingSpace, "QUESTION: ", ..., "\n", sep=""))
+            ans <- scan(what=character(0), nlines=1, quiet=TRUE)
+            return (ans)
+        }
+    }
+    else if (level == OL$Error)
+    {
+        if (outputLevel == OL$Debug)
+        {
+            cat("ERROR - stack trace follows\n")
+            calls <- sys.calls()
+            for (i in 1:length(calls))
+            {
+                cat(rep("* ", i), sep="")
+                print(calls[[i]])
+            }
+        }
+        stop(..., call.=FALSE)
+    }
+}
+
+"%~%" <- function (X, Y)
+{
+    if (!is.character(X) || !is.character(Y) || length(Y) != 1)
+        output(OL$Error, "Parameters for matching on a regular expression are not valid")
+    
+    matchLocs <- regexpr(Y, X, perl=TRUE)
+    return (!(matchLocs == -1))
+}
+
+implode <- function (strings, sep = "")
+{
+    strings <- as.character(strings)
+    
+    if (length(strings) == 1)
+        return (strings[1])
+    else if (length(strings) > 1)
+    {
+        result <- strings[1]
+        for (i in 2:length(strings))
+            result <- paste(result, strings[i], sep=sep)    
+        return (result)
+    }
+}
+
+expandFileName <- function (fileName)
+{
+    fileName <- path.expand(fileName)
+    if (length(grep("^/", fileName)) == 0)
+        fileName <- file.path(getwd(), fileName)
+    
+    # Remove all instances of '/.' (which are redundant), recursively collapse
+    # instances of '/..', and remove trailing slashes
+    fileName <- gsub("/\\.(?!\\.)", "", fileName, perl=TRUE)
+    while (length(grep('..', fileName, fixed=TRUE) > 0))
+        fileName <- sub("/[^/.]+/\\.\\.(?!\\.)", "", fileName, perl=TRUE)
+    fileName <- gsub("/*$", "", fileName, perl=TRUE)
+    
+    return(fileName)
+}
+
+ensureFileSuffix <- function (fileName, suffix, strip = NULL)
+{
+    if (is.null(strip))
+    {
+        if (is.null(suffix))
+            strip <- "\\w+"
+        else
+            strip <- suffix
+    }
+    else
+        strip <- c(strip, suffix)
+    
+    stripPattern <- paste("\\.(", implode(strip,sep="|"), ")$", sep="")
+    fileStem <- sub(stripPattern, "", fileName, ignore.case=TRUE, perl=TRUE)
+    
+    if (is.null(suffix))
+        return (fileStem)
+    else
+    {
+        fileName <- paste(fileStem, suffix, sep=".")
+        return (fileName)
+    }
+}
+
+locateExecutable <- function (fileName, errorIfMissing = TRUE)
+{
+    pathDirs <- unlist(strsplit(Sys.getenv("PATH"), .Platform$path.sep, fixed=TRUE))
+    possibleLocations <- file.path(pathDirs, fileName)
+    filesExist <- file.exists(possibleLocations)
+    
+    if (sum(filesExist) == 0)
+    {
+        if (errorIfMissing)
+            output(OL$Error, "Required executable \"", fileName, "\" is not available on the system path")
+        else
+            return (NULL)
+    }
+    else
+    {
+        realLocations <- possibleLocations[filesExist]
+        return (realLocations[1])
+    }
+}
+
+execute <- function (executable, paramString = NULL, errorOnFail = TRUE, background = FALSE, ...)
+{
+    execLoc <- locateExecutable(executable, errorOnFail)
+    if (!is.null(execLoc))
+    {
+        backgroundString <- ifelse(background, "&", "")
+        execString <- paste(execLoc, paramString, backgroundString, sep=" ")
+        output(OL$Debug, execString)
+        system(execString, ...)
+    }
+}
+
+promote <- function (x, byrow = FALSE)
+{
+    if (is.matrix(x))
+        return (x)
+    else if (is.vector(x))
+    {
+        m <- as.matrix(x)
+        if (byrow)
+            m <- t(m)
+        return (m)
+    }
+    else
+        return (NA)
+}
+
+commands <- function (match = "[a-z]")
+{
+    pattern <- paste("^", match, sep="")
+    return (grep(pattern, ls(.GlobalEnv), perl=TRUE, value=TRUE))
+}
+
+equivalent <- function (x, y, signMatters = TRUE, ...)
+{
+    if (signMatters)
+        return (isTRUE(all.equal(x, y, ...)))
+    else
+        return (isTRUE(all.equal(abs(x), abs(y), ...)))
+}

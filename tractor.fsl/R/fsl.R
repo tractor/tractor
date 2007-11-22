@@ -1,0 +1,100 @@
+chooseReferenceT2ImageForSession <- function (session, ask = FALSE)
+{
+    if (!isMriSession(session))
+        output(OL$Error, "Specified session is not an MriSession object")
+    
+    targetDir <- session$getPreBedpostDirectory()
+    bvals <- as.vector(read.table(file.path(targetDir, "bvals")))
+    zeroes <- which(bvals == 0)
+    
+    if (length(zeroes) == 1)
+    {
+        choice <- zeroes
+        output(OL$Info, "Volume ", choice, " is the only T2 weighted volume in the data set")
+    }
+    else if (!ask)
+    {
+        choice <- zeroes[1]
+        output(OL$Info, "Using volume ", choice, " as the reference volume")
+    }
+    else
+    {
+        choice <- -1
+        while (!(choice %in% zeroes))
+            choice <- as.numeric(output(OL$Question, "Volumes ", implode(zeroes,sep="/"), " are T2 weighted; use which one as the reference?"))
+    }
+    
+    output(OL$Info, "Running eddy_correct to remove eddy current induced artefacts...")
+    paramString <- paste(file.path(targetDir,"basic"), file.path(targetDir,"data"), choice-1, sep=" ")
+    execute("eddy_correct", paramString, errorOnFail=TRUE)
+    
+    data <- newMriImageFromFile(file.path(targetDir, "data"))
+    refVolume <- newMriImageByExtraction(data, 4, choice)
+    writeMriImageToFile(refVolume, file.path(targetDir,"nodif"))
+}
+
+runDtifitWithSession <- function (session)
+{
+    if (!isMriSession(session))
+        output(OL$Error, "Specified session is not an MriSession object")
+    
+    targetDir <- session$getPreBedpostDirectory()
+    
+    output(OL$Info, "Running dtifit to do tensor fitting...")
+    paramString <- paste("-k", file.path(targetDir,"data"), "-m", file.path(targetDir,"nodif_brain_mask"), "-r", file.path(targetDir,"bvecs"), "-b", file.path(targetDir,"bvals"), "-o", file.path(targetDir,"dti"), sep=" ")
+    execute("dtifit", paramString, errorOnFail=TRUE)
+}
+
+runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradient = 0)
+{
+    if (!isMriSession(session))
+        output(OL$Error, "Specified session is not an MriSession object")
+    
+    targetDir <- session$getPreBedpostDirectory()
+    
+    output(OL$Info, "Running FSL's brain extraction tool...")
+    paramString <- paste(file.path(targetDir,"nodif"), file.path(targetDir,"nodif_brain"), "-m -v -f", intensityThreshold, "-g", verticalGradient, sep=" ")
+    execute("bet", paramString, errorOnFail=TRUE)
+    
+    paramString <- paste(file.path(targetDir,"nodif"), file.path(targetDir,"nodif_brain_mask"), sep=" ")
+    execute("fslview", paramString, errorOnFail=TRUE, background=TRUE)
+}
+
+runBedpostWithSession <- function (session, how = c("auto","screen","bg","fg"), ask = TRUE)
+{
+    if (!isMriSession(session))
+        output(OL$Error, "Specified session is not an MriSession object")
+    
+    how <- match.arg(how)
+    
+    if (!ask)
+        ans <- "y"
+    else
+    {
+        execute("bedpost_datacheck", session$getPreBedpostDirectory(), errorOnFail=TRUE)
+        ans <- output(OL$Question, "Okay to start bedpost [yn]?")
+    }
+    
+    if (tolower(ans) == "y")
+    {
+        screenAvailable <- !is.null(locateExecutable("screen", errorIfMissing=FALSE))
+        if (how == "screen" || (how == "auto" && screenAvailable))
+        {
+            output(OL$Info, "Starting bedpost in a \"screen\" session")
+            locateExecutable("bedpost", errorIfMissing=TRUE)
+            paramString <- paste("-d -m bedpost", session$getPreBedpostDirectory(), sep=" ")
+            execute("screen", paramString, errorOnFail=TRUE)
+        }
+        else if (how %in% c("auto","bg"))
+        {
+            output(OL$Info, "Starting bedpost as a background process")
+            paramString <- paste(session$getPreBedpostDirectory(), "&", sep=" ")
+            execute("bedpost", paramString, errorOnFail=TRUE)
+        }
+        else
+        {
+            output(OL$Info, "Starting bedpost as a normal foreground process")
+            execute("bedpost", session$getPreBedpostDirectory(), errorOnFail=TRUE)
+        }
+    }
+}
