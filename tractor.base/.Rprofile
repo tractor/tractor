@@ -13,6 +13,5 @@ source("R/vector.R")
 source("R/viz.R")
 source("R/yaml.R")
 source("R/zzz.R")
-source("dev/nifti.R")
 
 .First.lib(NULL, NULL)
