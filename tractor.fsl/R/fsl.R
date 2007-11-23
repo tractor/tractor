@@ -62,7 +62,7 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     execute("fslview", paramString, errorOnFail=TRUE, background=TRUE)
 }
 
-runBedpostWithSession <- function (session, how = c("auto","screen","bg","fg"), ask = TRUE)
+runBedpostWithSession <- function (session, nFibres = 2, how = c("auto","screen","bg","fg"), ask = TRUE)
 {
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
@@ -73,8 +73,8 @@ runBedpostWithSession <- function (session, how = c("auto","screen","bg","fg"), 
         ans <- "y"
     else
     {
-        execute("bedpost_datacheck", session$getPreBedpostDirectory(), errorOnFail=TRUE)
-        ans <- output(OL$Question, "Okay to start bedpost [yn]?")
+        execute("bedpostx_datacheck", session$getPreBedpostDirectory(), errorOnFail=TRUE)
+        ans <- output(OL$Question, "Okay to start bedpostx [yn]?")
     }
     
     if (tolower(ans) == "y")
@@ -82,21 +82,22 @@ runBedpostWithSession <- function (session, how = c("auto","screen","bg","fg"), 
         screenAvailable <- !is.null(locateExecutable("screen", errorIfMissing=FALSE))
         if (how == "screen" || (how == "auto" && screenAvailable))
         {
-            output(OL$Info, "Starting bedpost in a \"screen\" session")
-            locateExecutable("bedpost", errorIfMissing=TRUE)
-            paramString <- paste("-d -m bedpost", session$getPreBedpostDirectory(), sep=" ")
+            output(OL$Info, "Starting bedpostx in a \"screen\" session")
+            locateExecutable("bedpostx", errorIfMissing=TRUE)
+            paramString <- paste("-d -m bedpostx -n", nFibres, session$getPreBedpostDirectory(), sep=" ")
             execute("screen", paramString, errorOnFail=TRUE)
         }
         else if (how %in% c("auto","bg"))
         {
-            output(OL$Info, "Starting bedpost as a background process")
-            paramString <- paste(session$getPreBedpostDirectory(), "&", sep=" ")
-            execute("bedpost", paramString, errorOnFail=TRUE)
+            output(OL$Info, "Starting bedpostx as a background process")
+            paramString <- paste("-n", nFibres, session$getPreBedpostDirectory(), "&", sep=" ")
+            execute("bedpostx", paramString, errorOnFail=TRUE)
         }
         else
         {
-            output(OL$Info, "Starting bedpost as a normal foreground process")
-            execute("bedpost", session$getPreBedpostDirectory(), errorOnFail=TRUE)
+            output(OL$Info, "Starting bedpostx as a normal foreground process")
+            paramString <- paste("-n", nFibres, session$getPreBedpostDirectory(), sep=" ")
+            execute("bedpostx", paramString, errorOnFail=TRUE)
         }
     }
 }
