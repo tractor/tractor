@@ -83,20 +83,20 @@ runBedpostWithSession <- function (session, nFibres = 2, how = c("auto","screen"
         if (how == "screen" || (how == "auto" && screenAvailable))
         {
             output(OL$Info, "Starting bedpostx in a \"screen\" session")
-            locateExecutable("bedpostx", errorIfMissing=TRUE)
-            paramString <- paste("-d -m bedpostx -n", nFibres, session$getPreBedpostDirectory(), sep=" ")
+            bedpostLoc <- locateExecutable("bedpostx", errorIfMissing=TRUE)
+            paramString <- paste("-d -m", bedpostLoc, session$getPreBedpostDirectory(), "-n", nFibres, sep=" ")
             execute("screen", paramString, errorOnFail=TRUE)
         }
         else if (how %in% c("auto","bg"))
         {
             output(OL$Info, "Starting bedpostx as a background process")
-            paramString <- paste("-n", nFibres, session$getPreBedpostDirectory(), "&", sep=" ")
+            paramString <- paste(session$getPreBedpostDirectory(), "-n", nFibres, "&", sep=" ")
             execute("bedpostx", paramString, errorOnFail=TRUE)
         }
         else
         {
             output(OL$Info, "Starting bedpostx as a normal foreground process")
-            paramString <- paste("-n", nFibres, session$getPreBedpostDirectory(), sep=" ")
+            paramString <- paste(session$getPreBedpostDirectory(), "-n", nFibres, sep=" ")
             execute("bedpostx", paramString, errorOnFail=TRUE)
         }
     }
