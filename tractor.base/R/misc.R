@@ -1,18 +1,18 @@
 setOutputLevel <- function (level)
 {
     if (level %in% OL$Debug:OL$Error)
-        options(outputLevel=level)
+        options(tractorOutputLevel=level)
 }
 
 output <- function (level, ..., default = NULL)
 {
-    if (is.null(getOption("outputLevel")))
+    if (is.null(getOption("tractorOutputLevel")))
     {
         cat("INFO: Output level is not set; defaulting to \"Info\"\n")
-        options(outputLevel=OL$Info)
+        options(tractorOutputLevel=OL$Info)
     }
     
-    outputLevel <- getOption("outputLevel")
+    outputLevel <- getOption("tractorOutputLevel")
     prefixStrings <- c("DEBUG: ", "VERBOSE: ", "INFO: ", "WARNING: ")
 
     leadingSpace <- implode(rep("* ", length(sys.calls())-1))
