@@ -265,19 +265,3 @@ calculatePosteriorsFromLikelihoods <- function (matchedLogLikelihoods, nonmatche
     posteriors <- list(tractPosteriors=tractPosteriors, nullPosterior=nullPosterior, logEvidence=log(evidence)+maxTractPosterior)
     return (posteriors)
 }
-
-calculatePosteriorsFromLikelihoods2 <- function (matchedLogLikelihoods, nonmatchedLogLikelihoods, tractPriors)
-{
-    matchedPosteriors <- matchedLogLikelihoods + log(tractPriors)
-    unmatchedPosteriors <- nonmatchedLogLikelihoods + log(1-tractPriors)
-    maxMatchedPosterior <- max(matchedPosteriors, na.rm=TRUE)
-    matchedPosteriors <- exp(matchedPosteriors - maxMatchedPosterior)
-    unmatchedPosteriors <- exp(unmatchedPosteriors - maxMatchedPosterior)
-    
-    evidences <- matchedPosteriors + unmatchedPosteriors
-    tractPosteriors <- matchedPosteriors / evidences
-    logFullEvidence <- sum(log(evidences) + maxMatchedPosterior, na.rm=TRUE)
-    
-    posteriors <- list(tractPosteriors=tractPosteriors, nullPosterior=0, logEvidence=logFullEvidence)
-    return (posteriors)
-}

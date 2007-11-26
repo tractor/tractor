@@ -218,8 +218,6 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
     invisible (tract)
 }
 
-# Takes a StreamlineTract and creates a new one compliant with the specified
-# metadata object (moving seed etc. as appropriate)
 newStreamlineTractWithMetadata <- function (tract, metadata)
 {
     if (!isStreamlineTract(tract))

@@ -389,7 +389,7 @@ calculateUninformativeLogLikelihoodsForDataTable <- function (data, uninformativ
     if (!isUninformativeTractModel(uninformativeModel))
         output(OL$Error, "The specified model is not an UninformativeTractModel object")
     
-    # The evaluateMultinomialDistribution is not vectorised at present
+    # The evaluateMultinomialDistribution function is not vectorised at present
     lls <- numeric(nrow(data))
     for (i in 1:nrow(data))
         lls[i] <- evaluateMultinomialDistribution(data$leftLength[i], uninformativeModel$getLeftLengthDistribution(), log=TRUE) + evaluateMultinomialDistribution(data$rightLength[i], uninformativeModel$getRightLengthDistribution(), log=TRUE)
