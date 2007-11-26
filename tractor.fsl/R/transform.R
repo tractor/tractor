@@ -42,13 +42,19 @@ transformWithScaling <- function (x, ...)
 
 transformRVoxelToFslVoxel <- function (x)
 {
-    len <- length(x)
+    if (is.matrix(x))
+        len <- ncol(x)
+    else if (is.vector(x))
+        len <- length(x)
     return (transformWithTranslation(x, rep(-1,len)))
 }
 
 transformFslVoxelToRVoxel <- function (x)
 {
-    len <- length(x)
+    if (is.matrix(x))
+        len <- ncol(x)
+    else if (is.vector(x))
+        len <- length(x)
     return (transformWithTranslation(x, rep(1,len)))
 }
 
