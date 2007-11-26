@@ -157,12 +157,6 @@ promote <- function (x, byrow = FALSE)
         return (NA)
 }
 
-commands <- function (match = "[a-z]")
-{
-    pattern <- paste("^", match, sep="")
-    return (grep(pattern, ls(.GlobalEnv), perl=TRUE, value=TRUE))
-}
-
 equivalent <- function (x, y, signMatters = TRUE, ...)
 {
     if (signMatters)
