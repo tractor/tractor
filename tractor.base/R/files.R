@@ -23,7 +23,7 @@ getParametersForFileType <- function (fileType = NA, format = NA, singleFile = N
     return (parameters)
 }
 
-identifyImageFileNames <- function (fileName, fileType = NULL)
+identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = TRUE)
 {
     suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)
     fileName <- expandFileName(fileName)
@@ -33,7 +33,12 @@ identifyImageFileNames <- function (fileName, fileType = NULL)
     imagesExist <- intersect(unique(.FileTypes$imageSuffixes), suffixes[exist])
     
     if (length(headersExist) != 1 || length(imagesExist) != 1)
-        output(OL$Error, "File does not exist or multiple compatible files exist")
+    {
+        if (errorIfMissing)
+            output(OL$Error, "File does not exist or multiple compatible files exist")
+        else
+            return (NULL)
+    }
     
     typeIndices <- which(.FileTypes$headerSuffixes == headersExist &
                          .FileTypes$imageSuffixes == imagesExist)
@@ -52,6 +57,14 @@ identifyImageFileNames <- function (fileName, fileType = NULL)
     
     fileNames <- list(fileStem=fileStem, headerFile=headerFile, imageFile=imageFile, format=format)
     return (fileNames)
+}
+
+removeImageFilesWithName <- function (fileName)
+{
+    fileName <- expandFileName(fileName)
+    suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)    
+    files <- ensureFileSuffix(fileName, suffixes)
+    unlink(files)
 }
 
 newMriImageMetadataFromFile <- function (fileName, fileType = NULL)
