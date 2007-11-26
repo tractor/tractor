@@ -113,7 +113,7 @@ if [ $quiet -eq 0 ]
     echo "Starting TractoR environment..."
 fi
 
-r_code="source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); assign('Arguments', unlist(strsplit('$args','\\\\s+',perl=TRUE)), .GlobalEnv); createWorkspaceFromYamlFile('$config_file'); runExperiment()"
+r_code="source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); assign('Arguments', unlist(strsplit('$args','\\\\\\\\s+',perl=TRUE)), .GlobalEnv); createWorkspaceFromYamlFile('$config_file'); runExperiment()"
 
 if [ $use_log -eq 0 ]
     then
