@@ -1,0 +1,44 @@
+runNeighbourhoodTractography <- function (session, seed, refTract, avfThreshold = 0.2, searchWidth = 7)
+{
+    if (!isFieldTract(refTract))
+        output(Error, "Reference tract must be specified as a FieldTract object")
+    if (!is.numeric(seed) || !is.vector(seed) || (length(seed) != 3))
+        output(Error, "Central seed point must be specified as a numeric vector of length 3")
+    
+    output(Info, "Creating reduced reference tract")
+    reducedRefTract <- createReducedTractInfo(refTract)
+    output(Info, "Reference tract contains ", reducedRefTract$nVoxels, " nonzero voxels; length is ", reducedRefTract$length)
+    
+    searchNeighbourhood <- createNeighbourhoodInfo(searchWidth, centre=seed)
+    candidateSeeds <- t(searchNeighbourhood$vectors)
+    
+    nSeeds <- searchWidth ^ 3
+    middle <- (nSeeds %/% 2) + 1
+    similarities <- rep(NA, searchWidth^3)
+    
+    output(Info, "Starting neighbourhood tractography with AVF threshold of ", avfThreshold, " and search width of ", searchWidth)
+    
+    avfImage <- session$getImageByType("avf")
+    avfs <- avfImage[candidateSeeds]
+    validSeeds <- c(middle, which(avfs >= avfThreshold))
+    validSeeds <- validSeeds[!duplicated(validSeeds)]
+    
+    output(Info, "Rejecting ", nSeeds-length(validSeeds), " seed points as below the AVF threshold")
+    
+    runProbtrackWithSession(session, candidateSeeds[validSeeds,], requireFile=TRUE)
+    for (d in validSeeds)
+    {
+        candidateTract <- newFieldTractFromProbtrack(session, candidateSeeds[d,], expectExists=TRUE, threshold=0.01)
+        similarities[d] <- calculateSimilarity(reducedRefTract, candidateTract)
+    }
+    
+    naiveSimilarity <- similarities[middle]
+    bestLoc <- which.max(similarities)
+    bestSimilarity <- similarities[bestLoc]
+    bestSeed <- candidateSeeds[bestLoc,]
+    
+    output(Info, "Naive similarity is ", round(naiveSimilarity,3), " at location ", implode(seed,","))
+    output(Info, "Best similarity is ", round(bestSimilarity,3), " at location ", implode(bestSeed,","))
+    
+    return (list(naiveSimilarity=naiveSimilarity, naiveSeed=seed, bestSimilarity=bestSimilarity, bestSeed=bestSeed))
+}
