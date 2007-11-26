@@ -1,14 +1,14 @@
 .StreamlineTractMetadata <- function (.isOriginAtSeed, .coordUnit, .imageMetadata)
 {
     if (!(.coordUnit %in% c("vox","mm")))
-        output(Error, "Coordinate unit must be 'vox' (for voxels) or 'mm' (for millimetres)")
+        output(OL$Error, "Coordinate unit must be 'vox' (for voxels) or 'mm' (for millimetres)")
     
     self <- list(
         getCoordinateUnit = function () { return (.coordUnit) },
         
         getImageMetadata = function () { return (.imageMetadata) },
         
-        getSpatialRange = function () { output(Error, "Method 'getSpatialRange' undefined") },
+        getSpatialRange = function () { output(OL$Error, "Method 'getSpatialRange' undefined") },
         
         isOriginAtSeed = function () { return (.isOriginAtSeed) }
     )
@@ -21,9 +21,9 @@
 .StreamlineTract <- function (.line, .seedIndex, .originalSeedPoint, .metadata)
 {
     if (!is.matrix(.line) || (dim(.line)[2] != 3))
-        output(Error, "Streamline must be specified as a matrix with 3 columns")
+        output(OL$Error, "Streamline must be specified as a matrix with 3 columns")
     if (!isStreamlineTractMetadata(.metadata))
-        output(Error, "Specified metadata is not valid")
+        output(OL$Error, "Specified metadata is not valid")
     
     .pointSpacings <- apply(diff(.line), 1, vectorLength)
     
@@ -59,9 +59,9 @@
 .StreamlineSetTract <- function (.seedPoint, .leftLengths, .rightLengths, .leftPoints, .rightPoints, .metadata)
 {
     if (!is.numeric(.seedPoint) || (length(.seedPoint) != 3))
-        output(Error, "Seed point should be specified as a 3-vector")
+        output(OL$Error, "Seed point should be specified as a 3-vector")
     if (!isStreamlineTractMetadata(.metadata))
-        output(Error, "Specified metadata is not valid")
+        output(OL$Error, "Specified metadata is not valid")
     
     self <- list(
         getLeftLengths = function () { return (.leftLengths) },
@@ -119,14 +119,14 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
     {
         fileSizes <- particleFileSizesForResult(probtrackResult)
         maxPathLength <- round(max(fileSizes) / 20)
-        output(Info, "Setting maximum path length to ", maxPathLength)
+        output(OL$Info, "Setting maximum path length to ", maxPathLength)
     }
     
     # In order to estimate appropriate parameters for the calculations and
     # plots below, we initially read in a subsample of the streamlines
     subSize <- nSamples / 20
     subData <- array(NA, dim=c(maxPathLength,3,subSize))
-    output(Info, "Reading subsample of ", subSize, " streamlines")
+    output(OL$Info, "Reading subsample of ", subSize, " streamlines")
     
     for (i in 1:subSize)
     {
@@ -135,20 +135,20 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
         
         if (len > maxPathLength)
         {
-            output(Warning, "Path length for streamline ", i, " is too long (", len, "); truncating")
+            output(OL$Warning, "Path length for streamline ", i, " is too long (", len, "); truncating")
             len <- maxPathLength
         }
         
         subData[1:len,,i] <- sampleData[1:len,]
     }
-    output(Info, "Done; analyzing subsample")
+    output(OL$Info, "Done; analyzing subsample")
     
     # Whichever dimension changes most in the first step from the seed point
     # in the subsample will be used to split "left" from "right"
     firstSteps <- subData[2,,] - subData[1,,]
     meanFirstStep <- apply(abs(firstSteps), 1, mean)
     testAxis <- which.max(meanFirstStep)
-    output(Info, "Using ", axisNames[testAxis], " axis for left/right splitting")
+    output(OL$Info, "Using ", axisNames[testAxis], " axis for left/right splitting")
     
     # Remove the subsample to save memory
     rm(subData)
@@ -157,7 +157,7 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
     rightLengths <- numeric(0)
     leftData <- array(NA, dim=c(maxPathLength,3,nSamples))
     rightData <- array(NA, dim=c(maxPathLength,3,nSamples))
-    output(Info, "Reading data from ", nSamples, " streamlines...")
+    output(OL$Info, "Reading data from ", nSamples, " streamlines...")
     
     # Read all the data in, separating out "left" and "right" streamline parts
     for (i in 1:nSamples)
@@ -168,7 +168,7 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
         # If any streamline is too long, we have to truncate it
         if (len > maxPathLength)
         {
-            output(Warning, "Path length for streamline ", i, " (", len, ") is too long; truncating")
+            output(OL$Warning, "Path length for streamline ", i, " (", len, ") is too long; truncating")
             len <- maxPathLength
         }
         
@@ -186,10 +186,10 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
         }
         
         if (length(startRows) != 2)
-            output(Error, "Seed point appears ", length(startRows), " times (expecting 2) in streamline ", i)
+            output(OL$Error, "Seed point appears ", length(startRows), " times (expecting 2) in streamline ", i)
         restartRow <- startRows[2]
         if (restartRow > len)
-            output(Error, "Left and right line components do not appear within the specified maximum path length")
+            output(OL$Error, "Left and right line components do not appear within the specified maximum path length")
         
         # This left/right distinction is a little flakey...
         if (sampleData[2,testAxis] < sampleData[1,testAxis])
@@ -208,7 +208,7 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
         }
         
         if (i %% subSize == 0)
-            output(Verbose, "Done ", i)
+            output(OL$Verbose, "Done ", i)
     }
     
     t2Metadata <- newMriImageMetadataFromAnalyze(session$getImageFileNameByType("t2"))
@@ -223,11 +223,11 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
 newStreamlineTractWithMetadata <- function (tract, metadata)
 {
     if (!isStreamlineTract(tract))
-        output(Error, "The specified tract is not a valid StreamlineTract object")
+        output(OL$Error, "The specified tract is not a valid StreamlineTract object")
     if (!isStreamlineTractMetadata(metadata))
-        output(Error, "The specified metadata object is not valid")
+        output(OL$Error, "The specified metadata object is not valid")
     if (!equivalent(tract$getVoxelDimensions(), metadata$getVoxelDimensions(), signMatters=FALSE))
-        output(Error, "Can't change voxel dimensions at the moment")
+        output(OL$Error, "Can't change voxel dimensions at the moment")
     
     line <- tract$getLine()
     seed <- tract$getOriginalSeedPoint()
@@ -258,7 +258,7 @@ newStreamlineTractWithMetadata <- function (tract, metadata)
 newStreamlineTractFromSet <- function (tract, method = "median", lengthQuantile = 0.9, originAtSeed = NULL)
 {
     if (!isStreamlineSetTract(tract))
-        output(Error, "The specified tract is not a valid StreamlineSetTract object")
+        output(OL$Error, "The specified tract is not a valid StreamlineSetTract object")
     if (is.null(originAtSeed))
         originAtSeed <- tract$isOriginAtSeed()
     
@@ -288,7 +288,7 @@ newStreamlineTractFromSet <- function (tract, method = "median", lengthQuantile 
 newStreamlineTractByTransformation <- function (tract, transform)
 {
     if (!isStreamlineTract(tract))
-        output(Error, "The specified tract is not a valid StreamlineTract object")
+        output(OL$Error, "The specified tract is not a valid StreamlineTract object")
     
     oldSeed <- tract$getOriginalSeedPoint()
     oldLine <- tract$getLine()
@@ -310,7 +310,7 @@ newStreamlineTractByTransformation <- function (tract, transform)
 newStreamlineTractWithSpacingThreshold <- function (tract, maxSeparation)
 {
     if (!isStreamlineTract(tract))
-        output(Error, "The specified tract is not a valid StreamlineTract object")
+        output(OL$Error, "The specified tract is not a valid StreamlineTract object")
     
     line <- tract$getLine()
     spacings <- tract$getPointSpacings()
@@ -329,7 +329,7 @@ newStreamlineTractWithSpacingThreshold <- function (tract, maxSeparation)
     rightStop <- ifelse(length(rightWide) > 0, min(rightWide), nPoints)
     
     if (!identical(c(leftStop,rightStop), c(1,nPoints)))
-        output(Info, "Truncating median line to avoid large space between points")
+        output(OL$Info, "Truncating median line to avoid large space between points")
     
     tract <- .StreamlineTract(line[leftStop:rightStop,], (seedPoint-leftStop+1), tract$getOriginalSeedPoint(), tract$getMetadata())
     invisible (tract)
@@ -368,7 +368,7 @@ getAxesForStreamlinePlot <- function (x, unit = NULL, axes = NULL, drawAxes = FA
     if (is.null(unit))
         unit <- x$getCoordinateUnit()
     
-    output(Info, "Calculating plot range")
+    output(OL$Info, "Calculating plot range")
     range <- x$getSpatialRange()
     rescaledMaxes <- rescalePoints(range$maxes, unit, x$getMetadata(), x$getSeedPoint())
     rescaledMins <- rescalePoints(range$mins, unit, x$getMetadata(), x$getSeedPoint())
@@ -382,7 +382,7 @@ getAxesForStreamlinePlot <- function (x, unit = NULL, axes = NULL, drawAxes = FA
     }
     
     if (length(axes) != 2)
-        output(Error, "Exactly two axes must be specified")
+        output(OL$Error, "Exactly two axes must be specified")
     
     axisNames <- c("left-right", "anterior-posterior", "inferior-superior")
     xlim <- c(range$mins[axes[1]], range$maxes[axes[1]])
@@ -403,7 +403,7 @@ plot.tract.streamline <- function (x, y = NULL, unit = NULL, axes = NULL, add = 
     if (add)
     {
         if (is.null(axes))
-            output(Error, "Axes must be specified if adding to an existing plot")
+            output(OL$Error, "Axes must be specified if adding to an existing plot")
     }
     else    
         axes <- getAxesForStreamlinePlot(x, unit, axes, drawAxes=TRUE)
@@ -420,12 +420,12 @@ plot.tract.streamline.set <- function (x, y = NULL, unit = NULL, axes = NULL, ad
     if (add)
     {
         if (is.null(axes))
-            output(Error, "Axes must be specified if adding to an existing plot")
+            output(OL$Error, "Axes must be specified if adding to an existing plot")
     }
     else
         axes <- getAxesForStreamlinePlot(x, unit, axes, drawAxes=TRUE)
     
-    output(Info, "Plotting streamlines")
+    output(OL$Info, "Plotting streamlines")
     leftPoints <- x$getLeftPoints()
     rightPoints <- x$getRightPoints()
     

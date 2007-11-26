@@ -6,7 +6,7 @@
     
     # This is a uniform B-spline, so knots should be equally spaced
     if (!equivalent(.knotSpacings, rep(.knotSpacings[1],length(.knotSpacings))))
-        output(Error, "Knots are not equally spaced")
+        output(OL$Error, "Knots are not equally spaced")
     
     self <- list(
         getControlPoints = function ()
@@ -60,7 +60,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         knots <- seedLoc + (-nKnots:nKnots * gap)
         knots <- knots[which(knots>1 & knots<lineLength)]
         if (length(knots) != nKnots)
-            output(Error, "Didn't get the expected number of knots")
+            output(OL$Error, "Didn't get the expected number of knots")
 
         line <- streamlineTract$getLine()
         data <- data.frame(t=pointLocs, x=line[,1], y=line[,2], z=line[,3])
@@ -81,7 +81,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
     
     if (is.null(knotSpacing))
     {
-        output(Info, "Fitting B-spline model for accuracy")
+        output(OL$Info, "Fitting B-spline model for accuracy")
         for (nKnots in 1:100)
         {
             knotSpacing <- streamlineTract$getLineLength() / nKnots
@@ -94,18 +94,18 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
             if (meanError <= maxResidError)
             {
                 knotSpacing <- diff(attr(bSpline$basis, "knots"))[1]
-                output(Info, "Spline with ", nKnots, " knots has mean residual error of ", signif(meanError,3))
-                output(Info, "Knot spacing is ", signif(knotSpacing,3))
+                output(OL$Info, "Spline with ", nKnots, " knots has mean residual error of ", signif(meanError,3))
+                output(OL$Info, "Knot spacing is ", signif(knotSpacing,3))
                 break
             }
         }
         
         if (is.null(knotSpacing))
-            output(Error, "Cannot fit a model with 100 or less knots and residual error below ", maxResidError)
+            output(OL$Error, "Cannot fit a model with 100 or less knots and residual error below ", maxResidError)
     }
     else
     {
-        output(Info, "Fitting B-spline model with fixed knot spacing of ", signif(knotSpacing,3))
+        output(OL$Info, "Fitting B-spline model with fixed knot spacing of ", signif(knotSpacing,3))
         streamlineTract <- newStreamlineTractWithSpacingThreshold(streamlineTract, knotSpacing)
         nKnots <- floor(streamlineTract$getLineLength() / knotSpacing)
         bSpline <- fitBSplineModels(streamlineTract, nKnots)
@@ -118,7 +118,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
 calculateSplineStepVectors <- function (tract, pointType = c("control","knot"))
 {
     if (!isBSplineTract(tract))
-        output(Error, "The specified tract is not a valid BSplineTract object")
+        output(OL$Error, "The specified tract is not a valid BSplineTract object")
     
     pointType <- match.arg(pointType)
     

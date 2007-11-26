@@ -1,9 +1,9 @@
 .FieldTract <- function (.image, .seed)
 {
     if (!isMriImage(.image))
-        output(Error, "Specified image is not an MriImage object")
+        output(OL$Error, "Specified image is not an MriImage object")
     if (!is.vector(.seed) || !is.numeric(.seed))
-        output(Error, "Seed point must be specified as a numeric vector")
+        output(OL$Error, "Seed point must be specified as a numeric vector")
     
     self <- list(
         getImage = function () { return (.image) },

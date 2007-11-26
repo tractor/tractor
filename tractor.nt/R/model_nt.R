@@ -13,9 +13,9 @@ isTractOptionList <- function (object)
 splineTractWithOptions <- function (options, session, seed, refSession = NULL)
 {
     if (!isTractOptionList(options))
-        output(Error, "Tract representation options must be specified as a TractOptionList")
+        output(OL$Error, "Tract representation options must be specified as a TractOptionList")
     if (options$registerToReference && is.null(refSession))
-        output(Error, "The reference session must be specified if options$registerToReference is TRUE")
+        output(OL$Error, "The reference session must be specified if options$registerToReference is TRUE")
     
     streamSet <- newStreamlineSetTractFromProbtrack(session, seed, maxPathLength=options$maxPathLength)
     streamline <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
@@ -42,7 +42,7 @@ referenceSplineTractWithOptions <- function (options, refSession, refSeed)
 buildMaxLikelihoodMatchingModel <- function (refSession, refSeed, otherSessions, otherSeeds, options, lengthCutoff = 50)
 {
     if (length(otherSessions) != nrow(otherSeeds))
-        output(Error, "Dimensions of matching session list and seed matrix do not match")
+        output(OL$Error, "Dimensions of matching session list and seed matrix do not match")
     
     reference <- referenceSplineTractWithOptions(options, refSession, refSeed)
     
@@ -119,11 +119,11 @@ calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession,
     for (i in 1:nSessions)
     {
         seed <- testSeed + stepVectors[,i]
-        output(Info, "Current seed point is ", implode(seed,sep=","), " (", i, "/", nSessions, ")")
+        output(OL$Info, "Current seed point is ", implode(seed,sep=","), " (", i, "/", nSessions, ")")
         
         if (!is.na(avf$getDataAtPoint(seed)) && (avf$getDataAtPoint(seed) < avfThreshold) && (i != middle))
         {
-            output(Info, "Skipping seed point because AVF < ", avfThreshold)
+            output(OL$Info, "Skipping seed point because AVF < ", avfThreshold)
             splines <- c(splines, list(NA))
         }
         else
@@ -139,16 +139,16 @@ calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession,
 calculatePosteriorsForSplines <- function (splines, matchingModel, nonmatchingModel, nullPrior = NULL)
 {
     if (!is.list(splines))
-        output(Error, "Tracts must be specified as a list of BSplineTract objects")
+        output(OL$Error, "Tracts must be specified as a list of BSplineTract objects")
     
     validSessions <- which(!is.na(splines))
     nValidSessions <- length(validSessions)
-    output(Info, "Using ", nValidSessions, " of ", length(splines), " possible seed points")
+    output(OL$Info, "Using ", nValidSessions, " of ", length(splines), " possible seed points")
     
     if (is.null(nullPrior))
         nullPrior <- 1/(nValidSessions+1)
     tractPriors <- rep((1-nullPrior)/nValidSessions, nValidSessions)
-    output(Info, "Null match probability is ", round(nullPrior,5), "; other prior values are ", round(tractPriors[1],5))
+    output(OL$Info, "Null match probability is ", round(nullPrior,5), "; other prior values are ", round(tractPriors[1],5))
     
     matchedLogLikelihoods <- rep(NA, nValidSessions)
     nonmatchedLogLikelihoods <- rep(NA, nValidSessions)
@@ -175,9 +175,9 @@ calculatePosteriorsForSplines <- function (splines, matchingModel, nonmatchingMo
 runMatchingEMForDataTable <- function (data, refSpline, options, lengthCutoff = NULL, lambda = NULL, nullPrior = NULL)
 {
     if (!isBSplineTract(refSpline))
-        output(Error, "Reference tract must be specified as a BSplineTract object")
+        output(OL$Error, "Reference tract must be specified as a BSplineTract object")
     if (is.null(data$subject))
-        output(Error, "The 'subject' field must be present in the data table")
+        output(OL$Error, "The 'subject' field must be present in the data table")
     
     subjects <- factor(data$subject)
     nSubjects <- nlevels(subjects)
@@ -189,11 +189,11 @@ runMatchingEMForDataTable <- function (data, refSpline, options, lengthCutoff = 
         nullPriors <- 1/(nValidSplines+1)
     else
         nullPriors <- rep(nullPrior, nSubjects)
-    output(Verbose, "Null priors are ", implode(round(nullPriors,5),sep=", "))
+    output(OL$Verbose, "Null priors are ", implode(round(nullPriors,5),sep=", "))
     
     if (is.null(lengthCutoff))
         lengthCutoff <- max(data$leftLength, data$rightLength, na.rm=TRUE)
-    output(Verbose, "Length cutoff is ", lengthCutoff)
+    output(OL$Verbose, "Length cutoff is ", lengthCutoff)
     
     tractPriors <- list()
     for (s in levels(subjects))
@@ -205,7 +205,7 @@ runMatchingEMForDataTable <- function (data, refSpline, options, lengthCutoff = 
     
     previousLogEvidence <- -Inf
     previousAlphas <- NULL
-    output(Info, "Starting EM algorithm")
+    output(OL$Info, "Starting EM algorithm")
     
     repeat
     {
@@ -216,13 +216,13 @@ runMatchingEMForDataTable <- function (data, refSpline, options, lengthCutoff = 
         uninformativeLogLikelihoods <- calculateUninformativeLogLikelihoodsForDataTable(data, uninformativeModel)
         
         nMatchedBetter <- sum(matchedLogLikelihoods>uninformativeLogLikelihoods, na.rm=TRUE)
-        output(Verbose, nMatchedBetter, " tracts are explained better by the matching model")
+        output(OL$Verbose, nMatchedBetter, " tracts are explained better by the matching model")
         
         alphas <- matchingModel$getAlphas()
         if (!is.null(previousAlphas))
         {
             meanDifference <- mean(abs(alphas - previousAlphas))
-            output(Verbose, "Mean difference in alpha parameters is ", meanDifference)
+            output(OL$Verbose, "Mean difference in alpha parameters is ", meanDifference)
             if (meanDifference < 0.1)
                 break
         }
@@ -237,7 +237,7 @@ runMatchingEMForDataTable <- function (data, refSpline, options, lengthCutoff = 
             logEvidence <- logEvidence + posteriors$logEvidence
         }
         
-        output(Verbose, "Log-evidence is ", logEvidence)        
+        output(OL$Verbose, "Log-evidence is ", logEvidence)        
         if (abs(logEvidence-previousLogEvidence) < 0.1)
             break
         previousLogEvidence <- logEvidence

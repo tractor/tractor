@@ -17,9 +17,9 @@
         
         summarise = function ()
         {
-            output(Info, "Ref tract lengths : ", self$getRefLeftLength(), " (left), ", self$getRefRightLength(), " (right)")
-            output(Info, "Length cutoff     : ", self$getMaximumLength())
-            output(Info, "Point type        : ", self$getPointType())
+            output(OL$Info, "Ref tract lengths : ", self$getRefLeftLength(), " (left), ", self$getRefRightLength(), " (right)")
+            output(OL$Info, "Length cutoff     : ", self$getMaximumLength())
+            output(OL$Info, "Point type        : ", self$getPointType())
         },
 
         summarize = function () { self$summarise() }
@@ -42,9 +42,9 @@
         
         summarise = function ()
         {
-            output(Info, "Alpha      : ", round(self$getCosineDistribution()$betaFit$alpha, 2))
-            output(Info, "Epsilon    : ", signif(self$getCosineDistribution()$epsilon, 2))
-            output(Info, "Point type : ", self$getPointType())
+            output(OL$Info, "Alpha      : ", round(self$getCosineDistribution()$betaFit$alpha, 2))
+            output(OL$Info, "Epsilon    : ", signif(self$getCosineDistribution()$epsilon, 2))
+            output(OL$Info, "Point type : ", self$getPointType())
         },
         
         summarize = function () { self$summarise() }
@@ -57,7 +57,7 @@
 .MatchingTractModel <- function (.cosineDistributions, .lengthDistributions, .refSpline, .pointType)
 {
     if (!isBSplineTract(.refSpline))
-        output(Error, "The specified reference tract is not a BSplineTract object")
+        output(OL$Error, "The specified reference tract is not a BSplineTract object")
     
     ssv <- characteriseSplineStepVectors(.refSpline, pointType=.pointType)
     .refLengths <- list(left=ssv$leftLength, right=ssv$rightLength)
@@ -96,10 +96,10 @@
         
         summarise = function ()
         {
-            output(Info, "Alphas            : ", implode(round(self$getAlphas(),2), sep=", "))
-            output(Info, "Ref tract lengths : ", self$getRefLeftLength(), " (left), ", self$getRefRightLength(), " (right)")
-            output(Info, "Length cutoff     : ", self$getMaximumLength())
-            output(Info, "Point type        : ", self$getPointType())
+            output(OL$Info, "Alphas            : ", implode(round(self$getAlphas(),2), sep=", "))
+            output(OL$Info, "Ref tract lengths : ", self$getRefLeftLength(), " (left), ", self$getRefRightLength(), " (right)")
+            output(OL$Info, "Length cutoff     : ", self$getMaximumLength())
+            output(OL$Info, "Point type        : ", self$getPointType())
         },
         
         summarize = function () { self$summarise() }
@@ -135,9 +135,9 @@ calculateRescaledCosinesFromAngles <- function (angles, naRemove = TRUE)
 createDataTableForSplines <- function (splines, refSpline, pointType, subjectId = NULL)
 {
     if (!is.list(splines))
-        output(Error, "Spline tracts must be specified as a list of BSplineTract objects")
+        output(OL$Error, "Spline tracts must be specified as a list of BSplineTract objects")
     if (!isBSplineTract(refSpline))
-        output(Error, "The specified reference tract is not a BSplineTract object")
+        output(OL$Error, "The specified reference tract is not a BSplineTract object")
     
     nSplines <- length(splines)
     rssv <- characteriseSplineStepVectors(refSpline, pointType=pointType)
@@ -175,7 +175,7 @@ newUninformativeTractModelFromDataTable <- function (data, maxLength, weights = 
     if (!is.null(weights))
     {
         if (length(weights) != nrow(data))
-            output(Error, "The weight vector must have the same length as the spline data table")
+            output(OL$Error, "The weight vector must have the same length as the spline data table")
         
         weights[is.na(data$leftLength)] <- NA       
     }
@@ -197,7 +197,7 @@ newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength, lamb
     if (is.null(weights))
         weights <- rep(1,nrow(data))
     else if (length(weights) != nrow(data))
-        output(Error, "The weight vector must have the same length as the spline data table")
+        output(OL$Error, "The weight vector must have the same length as the spline data table")
     weights[is.na(data$leftLength)] <- NA
     
     leftLengthDistribution <- fitMultinomialDistribution(data$leftLength, const=1, values=0:maxLength, weights=weights)
@@ -227,11 +227,11 @@ newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength, lamb
 newUninformativeTractModelFromSplines <- function (refSpline, nonmatchingSplines, maxLength, pointType, weights = NULL)
 {
     if (!isBSplineTract(refSpline))
-        output(Error, "The specified reference tract is not a BSplineTract object")
+        output(OL$Error, "The specified reference tract is not a BSplineTract object")
     if (!is.list(nonmatchingSplines) || !isBSplineTract(nonmatchingSplines[[1]]))
-        output(Error, "The nonmatching tracts must be specified as a list of BSplineTract objects")
+        output(OL$Error, "The nonmatching tracts must be specified as a list of BSplineTract objects")
     if (!is.null(weights) && (length(weights) != length(nonmatchingSplines)))
-        output(Error, "The weight vector must have the same length as the list of nonmatching splines")
+        output(OL$Error, "The weight vector must have the same length as the list of nonmatching splines")
 
     leftLengths <- numeric(0)
     rightLengths <- numeric(0)
@@ -259,7 +259,7 @@ newUninformativeTractModelFromSplines <- function (refSpline, nonmatchingSplines
 newNonmatchingTractModelFromSplines <- function (nonmatchingSplines, maxLength, pointType)
 {
     if (!is.list(nonmatchingSplines) || !isBSplineTract(nonmatchingSplines[[1]]))
-        output(Error, "The nonmatching tracts must be specified as a list of BSplineTract objects")
+        output(OL$Error, "The nonmatching tracts must be specified as a list of BSplineTract objects")
     
     angles <- numeric(0)
     leftLengths <- numeric(0)
@@ -289,14 +289,14 @@ newNonmatchingTractModelFromSplines <- function (nonmatchingSplines, maxLength, 
 newMatchingTractModelFromSplines <- function (refSpline, matchingSplines, maxLength, pointType, weights = NULL)
 {
     if (!isBSplineTract(refSpline))
-        output(Error, "The specified reference tract is not a BSplineTract object")
+        output(OL$Error, "The specified reference tract is not a BSplineTract object")
     if (!is.list(matchingSplines) || !isBSplineTract(matchingSplines[[1]]))
-        output(Error, "The matching tracts must be specified as a list of BSplineTract objects")
+        output(OL$Error, "The matching tracts must be specified as a list of BSplineTract objects")
     
     if (is.null(weights))
         weights <- rep(1, length(matchingSplines))
     else if (length(weights) != length(matchingSplines))
-        output(Error, "The weight vector must have the same length as the list of matching splines")
+        output(OL$Error, "The weight vector must have the same length as the list of matching splines")
     
     angles <- numeric(0)
     positions <- numeric(0)
@@ -355,7 +355,7 @@ fitCosineDistribution <- function (cosines, epsilon = 1e-5)
         betaFit$alpha <- sum(-betaWeights) / sum(betaWeights * log(cosines))
         epsilon <- sum(unifWeights) / sum(betaWeights + unifWeights)
         
-        output(Debug, "Alpha = ", betaFit$alpha, "; epsilon = ", epsilon)
+        output(OL$Debug, "Alpha = ", betaFit$alpha, "; epsilon = ", epsilon)
         
         if (epsilon == 0)
             break
@@ -387,7 +387,7 @@ evaluateCosineDistribution <- function (x, params, log = FALSE)
 calculateUninformativeLogLikelihoodsForDataTable <- function (data, uninformativeModel)
 {
     if (!isUninformativeTractModel(uninformativeModel))
-        output(Error, "The specified model is not an UninformativeTractModel object")
+        output(OL$Error, "The specified model is not an UninformativeTractModel object")
     
     # The evaluateMultinomialDistribution is not vectorised at present
     lls <- numeric(nrow(data))
@@ -404,7 +404,7 @@ calculateUninformativeLogLikelihoodsForDataTable <- function (data, uninformativ
 calculateMatchedLogLikelihoodsForDataTable <- function (data, matchingModel)
 {
     if (!isMatchingTractModel(matchingModel))
-        output(Error, "The specified model is not a MatchingTractModel object")
+        output(OL$Error, "The specified model is not a MatchingTractModel object")
     
     lls <- numeric(nrow(data))
     for (i in 1:nrow(data))
@@ -427,7 +427,7 @@ calculateMatchedLogLikelihoodsForDataTable <- function (data, matchingModel)
 calculateUninformativeLogLikelihoodForSpline <- function (spline, uninformativeModel)
 {
     if (!isUninformativeTractModel(uninformativeModel))
-        output(Error, "The specified model is not an UninformativeTractModel object")
+        output(OL$Error, "The specified model is not an UninformativeTractModel object")
     
     ssv <- characteriseSplineStepVectors(spline, pointType=uninformativeModel$getPointType())
     shorterLeftLength <- min(ssv$leftLength, uninformativeModel$getRefLeftLength())
@@ -442,7 +442,7 @@ calculateUninformativeLogLikelihoodForSpline <- function (spline, uninformativeM
 calculateNonmatchedLogLikelihoodForSpline <- function (spline, nonmatchingModel)
 {
     if (!isNonmatchingTractModel(nonmatchingModel))
-        output(Error, "The specified model is not a NonmatchingTractModel object")
+        output(OL$Error, "The specified model is not a NonmatchingTractModel object")
     
     ssv <- characteriseSplineStepVectors(spline, pointType=nonmatchingModel$getPointType())
     
@@ -458,7 +458,7 @@ calculateNonmatchedLogLikelihoodForSpline <- function (spline, nonmatchingModel)
 calculateMatchedLogLikelihoodForSpline <- function (spline, matchingModel)
 {
     if (!isMatchingTractModel(matchingModel))
-        output(Error, "The specified model is not a MatchingTractModel object")
+        output(OL$Error, "The specified model is not a MatchingTractModel object")
     
     ssv <- characteriseSplineStepVectors(spline, pointType=matchingModel$getPointType())
     bsa <- calculateBetweenSplineAngles(matchingModel$getRefSpline(), spline, pointType=matchingModel$getPointType())

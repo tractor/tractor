@@ -1,11 +1,11 @@
 findVoxelValues <- function (tract, centre, unvisited, searchNeighbourhood)
 {
     if (!isNeighbourhoodInfo(searchNeighbourhood))
-        output(Error, "Specified search neighbourhood is not a NeighbourhoodInfo object")
+        output(OL$Error, "Specified search neighbourhood is not a NeighbourhoodInfo object")
     
     dims <- tract$getDimensions()
     if (!identical(dim(unvisited), dims))
-        output(Error, "The unvisited array must have the same dimensions as the tract data")
+        output(OL$Error, "The unvisited array must have the same dimensions as the tract data")
     
     indices <- searchNeighbourhood$vectors + centre
     indices <- replace(indices, which(indices < 1 | indices > dims), NA)
@@ -31,16 +31,16 @@ calculateMatchingScore <- function (refTract, candTract, trueLengths = FALSE, bi
             # when 'previous' is NA), since in that case all voxels will be
             # visited eventually anyway
             if (length(maxLocs) > 1)
-                output(Warning, "Maximal voxel value is not unique")
+                output(OL$Warning, "Maximal voxel value is not unique")
         }
         
         return (maxLocs[1])
     }
     
     if (!isFieldTract(refTract) || !isFieldTract(candTract))
-        output(Error, "Reference and candidate tracts must be specified as FieldTract objects")
+        output(OL$Error, "Reference and candidate tracts must be specified as FieldTract objects")
     if (!equivalent(refTract$getVoxelDimensions(), candTract$getVoxelDimensions(), signMatters=FALSE, tolerance=1e-3))
-        output(Error, "Reference and candidate tracts must have the same voxel dimensions")
+        output(OL$Error, "Reference and candidate tracts must have the same voxel dimensions")
     
     refDims <- refTract$getDimensions()
     candDims <- candTract$getDimensions()
@@ -151,9 +151,9 @@ calculateSimilarity <- function (reference, candidate)
     if (!is.finite(lengthSimilarity))
         lengthSimilarity <- 0
     if ((shapeSimilarity > 1) || (lengthSimilarity > 1))
-        output(Warning, "Score component greater than one (", max(shapeSimilarity,lengthSimilarity), ")")
+        output(OL$Warning, "Score component greater than one (", max(shapeSimilarity,lengthSimilarity), ")")
     if ((shapeSimilarity < 0) || (lengthSimilarity < 0))
-        output(Warning, "Score component less than zero (", min(shapeSimilarity,lengthSimilarity), ")")
+        output(OL$Warning, "Score component less than zero (", min(shapeSimilarity,lengthSimilarity), ")")
     
     similarity <- sqrt(shapeSimilarity * lengthSimilarity)
     return (similarity)
