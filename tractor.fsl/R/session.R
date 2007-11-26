@@ -12,7 +12,7 @@
         getImageByType = function (type, fibrePopulation = 1)
         {
             fileName <- self$getImageFileNameByType(type, fibrePopulation)
-            if (type %in% c("fa","md") && is.null(identifyImageFileNames(fileName,errorIfMissing=FALSE)))
+            if (type %in% c("fa","md") && !imageFileExists(fileName))
                 runDtifitWithSession(self)
             return (newMriImageFromFile(fileName))
         },
@@ -68,11 +68,7 @@
         
         getWorkingDirectory = function () { return (file.path(.directory, "combined")) },
         
-        isPreprocessed = function ()
-        {
-            avfFile <- identifyImageFileNames(self$getImageFileNameByType("avf"), errorIfMissing=FALSE)
-            return (!is.null(avfFile))
-        },
+        isPreprocessed = function () { return (imageFileExists(self$getImageFileNameByType("avf"))) },
         
         nFibres = function ()
         {
@@ -83,7 +79,7 @@
             # used (but I think Behrens advises against that anyway)
             for (i in 1:4)
             {
-                if (is.null(identifyImageFileNames(self$getImageFileNameByType("avf",fibrePopulation=i), errorIfMissing=FALSE)))
+                if (!imageFileExists(self$getImageFileNameByType("avf",fibrePopulation=i)))
                     break
             }
             return (i-1)

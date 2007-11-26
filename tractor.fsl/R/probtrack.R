@@ -50,7 +50,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     {
         outputFile <- paste(outputStem, implode(seed,sep="_"), sep="_")
         
-        if (!requireParticlesDir && !force && !is.null(identifyImageFileNames(outputFile, errorIfMissing=FALSE)))
+        if (!requireParticlesDir && !force && imageFileExists(outputFile))
             output(OL$Verbose, "Output for this seed point already exists")
         else
         {

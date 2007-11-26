@@ -59,6 +59,11 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     return (fileNames)
 }
 
+imageFileExists <- function (fileName, fileType = NULL)
+{
+    return (!is.null(identifyImageFileNames(fileName, fileType, errorIfMissing=FALSE)))
+}
+
 removeImageFilesWithName <- function (fileName)
 {
     fileName <- expandFileName(fileName)
