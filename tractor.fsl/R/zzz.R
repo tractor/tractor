@@ -10,8 +10,7 @@
         candidatePaths <- c(file.path(fslHome,"data","standard","tissuepriors"), file.path(fslHome,"etc","standard"))
         for (path in candidatePaths)
         {
-            standardBrainFiles <- suppressWarnings(list.files(path, "^avg152T1_brain\\."))
-            if (length(standardBrainFiles) > 0)
+            if (imageFileExists(file.path(path, "avg152T1_brain")))
             {
                 assign(".StandardBrainPath", path, pos=pos)
                 break
