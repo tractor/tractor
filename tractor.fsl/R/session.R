@@ -7,28 +7,28 @@
     self <- list(
         getBaseDirectory = function () { return (.directory) },
         
-        getBedpostDirectory = function () { return (file.path(.directory, "combined", "fdt.bedpost")) },
+        getBedpostDirectory = function () { return (file.path(.directory, "combined", "fdt.bedpostX")) },
         
-        getImageByType = function (type)
+        getImageByType = function (type, fibrePopulation = 1)
         {
-            fileName <- self$getImageFileNameByType(type)
-            if (type %in% c("fa","md") && !file.exists(paste(fileName,"img",sep=".")))
+            fileName <- self$getImageFileNameByType(type, fibrePopulation)
+            if (type %in% c("fa","md") && is.null(identifyImageFileNames(fileName,errorIfMissing=FALSE)))
                 runDtifitWithSession(self)
             return (newMriImageFromFile(fileName))
         },
         
-        getImageFileNameByType = function (type)
+        getImageFileNameByType = function (type, fibrePopulation = 1)
         {
             if (type == "avf")
-                return (file.path(self$getBedpostDirectory(), "mean_fsamples"))
+                return (file.path(self$getBedpostDirectory(), paste("mean_f",fibrePopulation,"samples",sep="")))
             else if (type == "t2")
                 return (file.path(self$getBedpostDirectory(), "nodif_brain"))
             else if (type == "mask")
                 return (file.path(self$getBedpostDirectory(), "nodif_brain_mask"))
             else if (type == "theta")
-                return (file.path(self$getBedpostDirectory(), "merged_thsamples"))
+                return (file.path(self$getBedpostDirectory(), paste("merged_th",fibrePopulation,"samples",sep="")))
             else if (type == "phi")
-                return (file.path(self$getBedpostDirectory(), "merged_phsamples"))
+                return (file.path(self$getBedpostDirectory(), paste("merged_ph",fibrePopulation,"samples",sep="")))
             else if (type == "fa")
                 return (file.path(self$getPreBedpostDirectory(), "dti_FA"))
             else if (type == "md")
@@ -68,7 +68,26 @@
         
         getWorkingDirectory = function () { return (file.path(.directory, "combined")) },
         
-        isPreprocessed = function () { return (file.exists(file.path(.directory, "combined", "fdt.bedpost", "mean_fsamples.img"))) }
+        isPreprocessed = function ()
+        {
+            avfFile <- identifyImageFileNames(self$getImageFileNameByType("avf"), errorIfMissing=FALSE)
+            return (!is.null(avfFile))
+        },
+        
+        nFibres = function ()
+        {
+            if (!self$isPreprocessed())
+                return (NA)
+            
+            # This will give the wrong answer if more than 3 populations were
+            # used (but I think Behrens advises against that anyway)
+            for (i in 1:4)
+            {
+                if (is.null(identifyImageFileNames(self$getImageFileNameByType("avf",fibrePopulation=i), errorIfMissing=FALSE)))
+                    break
+            }
+            return (i-1)
+        }
     )
     
     class(self) <- c("session.mri", "list.object", "list")

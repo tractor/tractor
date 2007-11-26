@@ -36,7 +36,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     probtrackDir <- session$getProbtrackDirectory()
     
     previousWorkingDir <- getwd()
-    workingDir <- file.path(tempdir(), "probtrack")
+    workingDir <- file.path(tempdir(), "probtrackx")
     if (!file.exists(workingDir))
         dir.create(workingDir)
     setwd(workingDir)
@@ -48,9 +48,9 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     
     if (mode == "simple")
     {
-        outputFile <- paste(outputStem, implode(seed,sep="_"), sep="")
+        outputFile <- paste(outputStem, implode(seed,sep="_"), sep="_")
         
-        if (!requireParticlesDir && !force && file.exists(ensureFileSuffix(outputFile,"img")))
+        if (!requireParticlesDir && !force && !is.null(identifyImageFileNames(outputFile, errorIfMissing=FALSE)))
             output(OL$Verbose, "Output for this seed point already exists")
         else
         {
@@ -73,8 +73,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
             else if (is.matrix(seed))
                 write.table(seed, seedFile, row.names=FALSE, col.names=FALSE)
 
-            paramString <- paste("--mode=simple -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", outputStem, ifelse(verbose, " -V 2", ""), " >/dev/null 2>&1", sep="")
-            execute("probtrack", paramString, errorOnFail=TRUE)
+            paramString <- paste("--opd --dir=", outputStem, " --mode=simple -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", outputStem, ifelse(verbose, " -V 2", ""), " >/dev/null 2>&1", sep="")
+            execute("probtrackx", paramString, errorOnFail=TRUE)
         
             unlink(seedFile)
         }
@@ -87,7 +87,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         if (requireFile)
             result <- c(result, list(fileName=outputFile))
         else
-            unlink(ensureFileSuffix(outputFile, c("hdr","img")))
+            removeImageFilesWithName(outputFile)
     }
     else if (mode == "seedmask")
     {
@@ -102,13 +102,13 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         outputFile <- file.path(outputDir, basename(outputStem))
         
         paramString <- paste("--mode=seedmask -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), " --dir=", outputDir, " 2>&1", sep="")
-        execute("probtrack", paramString, errorOnFail=TRUE)
+        execute("probtrackx", paramString, errorOnFail=TRUE)
         
         result <- list(session=session, seed=as.vector(seedCentre), nSamples=nSamples*seedCount)
         if (requireImage)
             result <- c(result, list(image=newMriImageFromFile(outputFile)))
         
-        unlink(ensureFileSuffix(seedFile, c("hdr","img")))
+        removeImageFilesWithName(seedFile)
         unlink(outputDir, recursive=TRUE)
     }
     else if (mode == "waypoints")
@@ -129,7 +129,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         writeLines(waypointFiles, waypointListFile)
         
         paramString <- paste("--mode=waypoints -x ", seedFile, " --mask2=", waypointListFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), " --dir=", outputDir, " 2>&1", sep="")
-        execute("probtrack", paramString, errorOnFail=TRUE)
+        execute("probtrackx", paramString, errorOnFail=TRUE)
         
         nRetainedSamples <- as.numeric(readLines(file.path(outputDir, "waytotal")))
         result <- list(session=session, seed=as.vector(seedCentre), nSamples=nRetainedSamples)
@@ -137,8 +137,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
             result <- c(result, list(image=newMriImageFromFile(outputFile)))
         
         for (i in seq_along(waypointMasks))
-            unlink(ensureFileSuffix(waypointFiles[i], c("hdr","img")))
-        unlink(ensureFileSuffix(seedFile, c("hdr","img")))
+            removeImageFilesWithName(waypointFiles[i])
+        removeImageFilesWithName(seedFile)
         unlink(outputDir, recursive=TRUE)
     }
 
