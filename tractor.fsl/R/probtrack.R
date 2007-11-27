@@ -73,8 +73,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
             else if (is.matrix(seed))
                 write.table(seed, seedFile, row.names=FALSE, col.names=FALSE)
 
-            paramString <- paste("--opd --dir=", outputStem, " --mode=simple -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", outputStem, ifelse(verbose, " -V 2", ""), " >/dev/null 2>&1", sep="")
-            execute("probtrackx", paramString, errorOnFail=TRUE)
+            paramString <- paste("--opd --dir=", outputStem, " --mode=simple -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", outputStem, ifelse(verbose, " -V 2", ""), sep="")
+            execute("probtrackx", paramString, errorOnFail=TRUE, silent=TRUE)
         
             unlink(seedFile)
         }

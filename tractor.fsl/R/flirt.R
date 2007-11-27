@@ -218,7 +218,7 @@ transformWorldPointsWithAffine <- function (transform, x, y = NULL, z = NULL)
     return (transformPointsWithAffine(transform, x, y, z, useVoxels=FALSE))
 }
 
-transformStandardSpaceSeeds <- function (session, seeds, unit = c("vox","mm"))
+transformStandardSpaceSeeds <- function (session, seeds, unit = c("vox","mm"), round = TRUE)
 {
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
@@ -251,5 +251,6 @@ transformStandardSpaceSeeds <- function (session, seeds, unit = c("vox","mm"))
         coords <- transformVoxelPointsWithAffine(inverseXfm, coords)
     }
     
+    coords <- ifelse(round, round(coords), coords)
     return (coords)
 }

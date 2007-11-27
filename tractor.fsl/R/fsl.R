@@ -59,7 +59,7 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     execute("bet", paramString, errorOnFail=TRUE)
     
     paramString <- paste(file.path(targetDir,"nodif"), file.path(targetDir,"nodif_brain_mask"), sep=" ")
-    execute("fslview", paramString, errorOnFail=TRUE, background=TRUE)
+    execute("fslview", paramString, errorOnFail=TRUE, wait=FALSE)
 }
 
 runBedpostWithSession <- function (session, nFibres = 2, how = c("auto","screen","bg","fg"), ask = TRUE)
@@ -90,8 +90,8 @@ runBedpostWithSession <- function (session, nFibres = 2, how = c("auto","screen"
         else if (how %in% c("auto","bg"))
         {
             output(OL$Info, "Starting bedpostx as a background process")
-            paramString <- paste(session$getPreBedpostDirectory(), "-n", nFibres, "&", sep=" ")
-            execute("bedpostx", paramString, errorOnFail=TRUE)
+            paramString <- paste(session$getPreBedpostDirectory(), "-n", nFibres, sep=" ")
+            execute("bedpostx", paramString, errorOnFail=TRUE, wait=FALSE)
         }
         else
         {
