@@ -39,24 +39,6 @@ referenceSplineTractWithOptions <- function (options, refSession, refSeed)
     invisible (list(spline=refSpline, options=options))
 }
 
-buildMaxLikelihoodMatchingModel <- function (refSession, refSeed, otherSessions, otherSeeds, options, lengthCutoff = 50)
-{
-    if (length(otherSessions) != nrow(otherSeeds))
-        output(OL$Error, "Dimensions of matching session list and seed matrix do not match")
-    
-    reference <- referenceSplineTractWithOptions(options, refSession, refSeed)
-    
-    otherSplines <- list()
-    for (i in seq_along(otherSessions))
-    {
-        spline <- splineTractWithOptions(reference$options, otherSessions[[i]], otherSeeds[i,], refSession)
-        otherSplines <- c(otherSplines, list(spline))
-    }
-    
-    matchingModel <- newMatchingTractModelFromSplines(reference$spline, otherSplines, lengthCutoff, reference$options$pointType)
-    invisible (list(model=matchingModel, splines=otherSplines, options=reference$options))
-}
-
 buildMaxLikelihoodUninformativeModel <- function (refSession, options, matchingModel, nTracts = 10, avfThreshold = 0.2, lengthCutoff = 50)
 {
     maskImage <- refSession$getImageByType("mask")
@@ -82,29 +64,22 @@ buildMaxLikelihoodUninformativeModel <- function (refSession, options, matchingM
     invisible (list(model=uninformativeModel))
 }
 
-buildMaxLikelihoodNonmatchingModel <- function (refSession, options, matchingModel, nTracts = 10, avfThreshold = 0.2, lengthCutoff = 50)
+buildMaxLikelihoodMatchingModel <- function (refSession, refSeed, otherSessions, otherSeeds, options, lengthCutoff = 50)
 {
-    maskImage <- refSession$getImageByType("mask")
-    avfImage <- refSession$getImageByType("avf")
-    dims <- avfImage$getDimensions()
+    if (length(otherSessions) != nrow(otherSeeds))
+        output(OL$Error, "Dimensions of matching session list and seed matrix do not match")
     
-    splines <- list()
-    for (i in seq_len(nTracts))
+    reference <- referenceSplineTractWithOptions(options, refSession, refSeed)
+    
+    otherSplines <- list()
+    for (i in seq_along(otherSessions))
     {
-        repeat
-        {
-            proposedSeed <- round(runif(3) * dims)
-            if (identical(maskImage$getDataAtPoint(proposedSeed),as.integer(1)) && (avfImage$getDataAtPoint(proposedSeed) >= avfThreshold))
-                break
-        }
-        
-        options$registerToReference <- FALSE
-        spline <- splineTractWithOptions(options, refSession, proposedSeed)
-        splines <- c(splines, list(spline))
+        spline <- splineTractWithOptions(reference$options, otherSessions[[i]], otherSeeds[i,], refSession)
+        otherSplines <- c(otherSplines, list(spline))
     }
     
-    nonmatchingModel <- newNonmatchingTractModelFromSplines(splines, lengthCutoff, options$pointType)
-    invisible (list(model=nonmatchingModel, splines=splines))
+    matchingModel <- newMatchingTractModelFromSplines(reference$spline, otherSplines, lengthCutoff, reference$options$pointType)
+    invisible (list(model=matchingModel, splines=otherSplines, options=reference$options))
 }
 
 calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession, options, searchWidth = 7, avfThreshold = 0.2)
@@ -172,7 +147,7 @@ calculatePosteriorsForSplines <- function (splines, matchingModel, nonmatchingMo
     invisible (results)
 }
 
-calculatePosteriorsFromLikelihoods <- function (matchedLogLikelihoods, nonmatchedLogLikelihoods, tractPriors, nullPrior)
+calculatePosteriorsFromLogLikelihoods <- function (matchedLogLikelihoods, nonmatchedLogLikelihoods, tractPriors, nullPrior = 0)
 {
     nTracts <- length(tractPriors)
     
