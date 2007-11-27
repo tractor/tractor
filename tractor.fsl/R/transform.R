@@ -2,22 +2,19 @@ applyTransformation <- function (x, m)
 {
     if (is.null(x))
         return (m)
-    else
+    else if (is.matrix(x))
     {
-        if (is.matrix(x))
-        {
-            x <- cbind(x,1)
-            len <- ncol(x)
-            result <- m %*% t(x)
-            return (t(result[1:(len-1),]))
-        }
-        else if (is.vector(x))
-        {
-            x <- c(x,1)
-            len <- length(x)
-            result <- m %*% x
-            return (drop(result[1:(len-1),]))
-        }
+        x <- cbind(x,1)
+        len <- ncol(x)
+        result <- m %*% t(x)
+        return (t(result[1:(len-1),]))
+    }
+    else if (is.vector(x))
+    {
+        x <- c(x,1)
+        len <- length(x)
+        result <- m %*% x
+        return (drop(result[1:(len-1),]))
     }
 }
 
@@ -42,7 +39,9 @@ transformWithScaling <- function (x, ...)
 
 transformRVoxelToFslVoxel <- function (x)
 {
-    if (is.matrix(x))
+    if (is.null(x))
+        len <- 3
+    else if (is.matrix(x))
         len <- ncol(x)
     else if (is.vector(x))
         len <- length(x)
@@ -51,7 +50,9 @@ transformRVoxelToFslVoxel <- function (x)
 
 transformFslVoxelToRVoxel <- function (x)
 {
-    if (is.matrix(x))
+    if (is.null(x))
+        len <- 3
+    else if (is.matrix(x))
         len <- ncol(x)
     else if (is.vector(x))
         len <- length(x)
