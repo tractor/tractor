@@ -251,6 +251,6 @@ transformStandardSpaceSeeds <- function (session, seeds, unit = c("vox","mm"), r
         coords <- transformVoxelPointsWithAffine(inverseXfm, coords)
     }
     
-    coords <- ifelse(round, round(coords), coords)
+    coords <- (if (round) round(coords) else coords)
     return (coords)
 }
