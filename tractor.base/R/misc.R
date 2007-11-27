@@ -130,13 +130,14 @@ locateExecutable <- function (fileName, errorIfMissing = TRUE)
     }
 }
 
-execute <- function (executable, paramString = NULL, errorOnFail = TRUE, background = FALSE, ...)
+execute <- function (executable, paramString = NULL, errorOnFail = TRUE, silent = FALSE, ...)
 {
     execLoc <- locateExecutable(executable, errorOnFail)
     if (!is.null(execLoc))
     {
-        backgroundString <- ifelse(background, "&", "")
-        execString <- paste(execLoc, paramString, backgroundString, sep=" ")
+        execString <- paste(execLoc, paramString, sep=" ")
+        if (silent && getOption("tractorOutputLevel") > OL$Debug)
+            execString <- paste(execString, ">/dev/null 2>&1", sep=" ")
         output(OL$Debug, execString)
         system(execString, ...)
     }
