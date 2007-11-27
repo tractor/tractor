@@ -211,7 +211,7 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
             output(OL$Verbose, "Done ", i)
     }
     
-    t2Metadata <- newMriImageMetadataFromAnalyze(session$getImageFileNameByType("t2"))
+    t2Metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("t2"))
     metadata <- .StreamlineTractMetadata(FALSE, "vox", t2Metadata)
     
     tract <- .StreamlineSetTract(seed, leftLengths, rightLengths, leftData, rightData, metadata)
