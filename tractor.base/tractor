@@ -113,7 +113,7 @@ if [ $quiet -eq 0 ]
     echo "Starting TractoR environment..."
 fi
 
-r_code="source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); assign('Arguments', unlist(strsplit('$args','\\\\\\\\s+',perl=TRUE)), .GlobalEnv); createWorkspaceFromYamlFile('$config_file'); runExperiment()"
+r_code="source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- runExperiment(); writeReportToYaml(results)"
 
 if [ $use_log -eq 0 ]
     then
@@ -127,6 +127,11 @@ errors=`grep -c Error $temp_file`
 
 if [ $quiet -eq 0 ]
     then
+	if [ -f "$working_dir/tractor_report.yaml" ]
+		then
+		cat "$working_dir/tractor_report.yaml"
+		echo
+	fi
     echo "Experiment completed with $warnings warning(s) and $errors error(s)"
 fi
 

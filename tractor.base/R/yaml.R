@@ -1,4 +1,4 @@
-createWorkspaceFromYamlFile <- function (fileName, environment = .GlobalEnv)
+createWorkspaceFromYamlFile <- function (fileName = NULL, text = NULL, environment = .GlobalEnv)
 {
     .asAppropriateType <- function (x)
     {
@@ -15,10 +15,23 @@ createWorkspaceFromYamlFile <- function (fileName, environment = .GlobalEnv)
             return (as.numeric(x))
     }
     
-    if (!file.exists(fileName))
+    if (!is.null(fileName) && !file.exists(fileName))
         output(OL$Error, "Configuration file ", fileName, " does not exist")
     
-    lines <- readLines(fileName, warn=FALSE)
+    if (!is.null(fileName))
+    {
+        lines <- readLines(fileName, warn=FALSE)
+        usingFile <- TRUE
+    }
+    else if (!is.null(text))
+    {
+        lines <- unlist(strsplit(text, '\\s+', perl=TRUE))
+        usingFile <- FALSE
+    }
+    else
+        output(OL$Error, "File name or YAML text must be specified")
+    
+    arguments <- character(0)
     repeat
     {
         if (length(lines) == 0)
@@ -39,7 +52,11 @@ createWorkspaceFromYamlFile <- function (fileName, environment = .GlobalEnv)
         
         if (key == textValue)
         {
-            output(OL$Warning, "A line in the configuration file ", fileName, " has no key")
+            if (usingFile)
+                output(OL$Warning, "A line in the configuration file ", fileName, " has no key")
+            else
+                arguments <- c(arguments, textValue)
+            
             lines <- lines[-1]
             next
         }
@@ -92,4 +109,27 @@ createWorkspaceFromYamlFile <- function (fileName, environment = .GlobalEnv)
         
         assign(key, value, pos=environment)
     }
+    
+    if (length(arguments) > 0)
+        assign("Arguments", arguments, pos=environment)
+}
+
+writeReportToYaml <- function (results, fileName = "tractor_report.yaml")
+{
+    if (!is.list(results))
+        return (invisible(NULL))
+    
+    lines <- character(0)
+    for (i in seq_along(results))
+    {
+        label <- sub("^([a-z])", "\\U\\1", names(results)[i], perl=TRUE)
+        if (length(results[[i]]) > 1)
+            value <- paste("[", implode(results[[i]],", "), "]")
+        else
+            value <- results[[i]]
+        line <- paste(label, value, sep=": ")
+        lines <- c(lines, line)
+    }
+    
+    writeLines(lines, fileName)
 }
