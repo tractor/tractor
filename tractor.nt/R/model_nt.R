@@ -39,31 +39,6 @@ referenceSplineTractWithOptions <- function (options, refSession, refSeed)
     invisible (list(spline=refSpline, options=options))
 }
 
-buildMaxLikelihoodUninformativeModel <- function (refSession, options, matchingModel, nTracts = 10, avfThreshold = 0.2, lengthCutoff = 50)
-{
-    maskImage <- refSession$getImageByType("mask")
-    avfImage <- refSession$getImageByType("avf")
-    dims <- avfImage$getDimensions()
-    
-    splines <- list()
-    for (i in seq_len(nTracts))
-    {
-        repeat
-        {
-            proposedSeed <- round(runif(3) * dims)
-            if (identical(maskImage$getDataAtPoint(proposedSeed),as.integer(1)) && (avfImage$getDataAtPoint(proposedSeed) >= avfThreshold))
-                break
-        }
-    
-        options$registerToReference <- FALSE
-        spline <- splineTractWithOptions(options, refSession, proposedSeed)
-        splines <- c(splines, list(spline))
-    }
-    
-    uninformativeModel <- newUninformativeTractModelFromSplines(matchingModel$getRefSpline(), splines, lengthCutoff, options$pointType)
-    invisible (list(model=uninformativeModel))
-}
-
 buildMaxLikelihoodMatchingModel <- function (refSession, refSeed, otherSessions, otherSeeds, options, lengthCutoff = 50)
 {
     if (length(otherSessions) != nrow(otherSeeds))

@@ -145,7 +145,7 @@ createDataTableForSplines <- function (splines, refSpline, pointType, subjectId 
     invisible (data)
 }
 
-newUninformativeTractModelFromDataTable <- function (data, maxLength, weights = NULL)
+newUninformativeTractModelFromDataTable <- function (data, maxLength = NULL, weights = NULL)
 {
     if (!is.null(weights))
     {
@@ -154,6 +154,9 @@ newUninformativeTractModelFromDataTable <- function (data, maxLength, weights = 
         
         weights[is.na(data$leftLength)] <- NA       
     }
+    
+    if (is.null(maxLength))
+        maxLength <- max(data$leftLength, data$rightLength, na.rm=TRUE)
     
     leftLengthDistribution <- fitMultinomialDistribution(data$leftLength, const=1, values=0:maxLength, weights=weights)
     rightLengthDistribution <- fitMultinomialDistribution(data$rightLength, const=1, values=0:maxLength, weights=weights)
@@ -167,13 +170,16 @@ newUninformativeTractModelFromDataTable <- function (data, maxLength, weights = 
     invisible (model)
 }
 
-newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength, lambda = NULL, weights = NULL)
+newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NULL, lambda = NULL, weights = NULL)
 {
     if (is.null(weights))
         weights <- rep(1,nrow(data))
     else if (length(weights) != nrow(data))
         output(OL$Error, "The weight vector must have the same length as the spline data table")
     weights[is.na(data$leftLength)] <- NA
+    
+    if (is.null(maxLength))
+        maxLength <- max(data$leftLength, data$rightLength, na.rm=TRUE)
     
     leftLengthDistribution <- fitMultinomialDistribution(data$leftLength, const=1, values=0:maxLength, weights=weights)
     rightLengthDistribution <- fitMultinomialDistribution(data$rightLength, const=1, values=0:maxLength, weights=weights)
