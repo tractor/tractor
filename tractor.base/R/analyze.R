@@ -72,10 +72,22 @@ writeMriImageToAnalyze <- function (image, fileNames, gzipped = FALSE, datatype 
             output(OL$Error, "The data type is not stored with the image; it must be specified")
     }
     
+    # Try to match the datatype exactly; failing that, and if the data will
+    # fit, invert isSigned and try again; if that fails too, we have to give up
     datatypeMatches <- (.Analyze$typesR == datatype$type) & (.Analyze$sizes == datatype$size) & (.Analyze$isSigned == datatype$isSigned)
-    if (length(which(datatypeMatches == TRUE)) != 1)
+    if (sum(datatypeMatches) != 1)
+    {
+        signedMax <- 2^(datatype$size*8-1) - 1
+        flipOkay <- (!datatype$isSigned && max(image) <= signedMax) || (datatype$isSigned && min(image) >= 0)
+        if (flipOkay)
+        {
+            output(OL$Info, "Trying to change datatype to comply with Analyze standard")
+            datatypeMatches <- (.Analyze$typesR == datatype$type) & (.Analyze$sizes == datatype$size) & (.Analyze$isSigned == !datatype$isSigned)
+        }
+    }
+    if (sum(datatypeMatches) != 1)
         output(OL$Error, "No supported Analyze datatype is appropriate for this file")
-    typeIndex <- which(datatypeMatches == TRUE)
+    typeIndex <- which(datatypeMatches)
     
     data <- image$getData()
     if (.Analyze$typesR[typeIndex] == "integer")
