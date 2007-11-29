@@ -145,7 +145,7 @@ Summary.image.mri <- function (..., na.rm = FALSE)
     return (result)
 }
 
-newMriImageMetadataFromTemplate <- function (metadata, imageDims = NA, voxelDims = NA, voxelUnit = NA, source = NA, datatype = NA, origin = NA, endian = NA)
+newMriImageMetadataFromTemplate <- function (metadata, imageDims = NA, voxelDims = NA, voxelUnit = NA, source = "internal", datatype = NA, origin = NA, endian = NA)
 {
     if (!isMriImageMetadata(metadata))
         output(OL$Error, "The specified metadata template is not valid")
@@ -205,7 +205,7 @@ newMriImageWithSimpleFunction <- function (image, fun, ..., newDataType = NULL)
     fun <- match.fun(fun)
     newData <- fun(image$getData(), ...)
     newDataType <- (if (is.null(newDataType)) image$getDataType() else newDataType)
-    metadata <- newMriImageMetadataFromTemplate(image$getMetadata(), source="internal", datatype=newDataType)
+    metadata <- newMriImageMetadataFromTemplate(image$getMetadata(), datatype=newDataType)
     
     image <- .MriImage(newData, metadata)
     invisible (image)
@@ -219,7 +219,7 @@ newMriImageWithBinaryFunction <- function (image1, image2, fun, ..., newDataType
     fun <- match.fun(fun)
     newData <- fun(image1$getData(), image2$getData(), ...)
     newDataType <- (if (is.null(newDataType)) image1$getDataType() else newDataType)
-    metadata <- newMriImageMetadataFromTemplate(image1$getMetadata(), source="internal", datatype=newDataType)
+    metadata <- newMriImageMetadataFromTemplate(image1$getMetadata(), datatype=newDataType)
     
     image <- .MriImage(newData, metadata)
     invisible (image)
@@ -265,7 +265,7 @@ newMriImageByMasking <- function (image, mask)
         output(OL$Error, "Mask must be specified as an array of logical values")
     
     newData <- image$getData() * mask
-    metadata <- newMriImageMetadataFromTemplate(image$getMetadata(), source="internal")
+    metadata <- newMriImageMetadataFromTemplate(image$getMetadata())
     
     image <- .MriImage(newData, metadata)
     invisible (image)

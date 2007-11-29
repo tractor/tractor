@@ -200,9 +200,9 @@ createFilesForSession <- function (session)
         }
     }
 
-    imageMetadata <- .MriImageMetadata(imageDims, voxelDims, "mm", "internal", images[[1]]$getDataTypeCode(), rep(0,length(imageDims)), images[[1]]$getEndianness())
+    imageMetadata <- newMriImageMetadataFromTemplate(images[[1]]$getMetadata(), imageDims=imageDims, voxelDims=voxelDims, origin=rep(0,length(imageDims)))
     rm(images)
-    image <- .MriImage(data, imageMetadata)
+    image <- newMriImageWithData(data, imageMetadata)
     
     dir.create(workingDir)
     targetDir <- session$getPreBedpostDirectory()
