@@ -1,4 +1,4 @@
-createWorkspaceFromYamlFile <- function (fileName = NULL, text = NULL, environment = .GlobalEnv)
+createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment = .GlobalEnv)
 {
     .asAppropriateType <- function (x)
     {
