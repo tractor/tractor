@@ -4,5 +4,5 @@ runExperiment <- function ()
 {
     requireArguments(1)
     setOutputLevel(OL$Info)
-    newMriImageFromFile(Arguments[1])$summarise()
+    newMriImageMetadataFromFile(Arguments[1])$summarise()
 }
