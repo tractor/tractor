@@ -73,7 +73,10 @@ createNiftiMetadata <- function (fileNames)
     {
         output(OL$Debug, "Both qform and sform are zero - setting zero origin")
         origin <- rep(0,5)
-        rotationMatrix <- diag(3)
+        output(OL$Warning, "Nifti qform and sform codes are both zero in file ", fileNames$headerFile, " - orientation can only be guessed")
+        # This guess is the same as the one that FSL uses - assume the file
+        # uses the Analyze orientation convention
+        rotationMatrix <- diag(c(-1,1,1))
     }
     else if (qformCode > 0)
     {
