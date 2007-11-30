@@ -165,3 +165,29 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
     else
         return (isTRUE(all.equal(abs(x), abs(y), ...)))
 }
+
+getWithDefault <- function (name, defaultValue = NULL, mode = NULL, errorIfInvalid = FALSE)
+{
+    if (!exists(name))
+    {
+        if (errorIfInvalid)
+            output(OL$Error, "The configuration variable \"", name, "\" must be specified")
+        else
+            return (defaultValue)
+    }
+    else if (is.null(mode))
+        return (get(name))
+    else
+    {
+        value <- get(paste("as", mode, sep="."))(get(name))
+        if (is.na(value))
+        {
+            if (errorIfInvalid)
+                output(OL$Error, "The configuration variable \"", name, "\" does not have a suitable value")
+            else
+                return (defaultValue)
+        }
+        else
+            return (value)
+    }
+}
