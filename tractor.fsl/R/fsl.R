@@ -41,6 +41,8 @@ runDtifitWithSession <- function (session)
         output(OL$Error, "Specified session is not an MriSession object")
     
     targetDir <- session$getPreBedpostDirectory()
+    if (!file.exists(file.path(targetDir,"bvals")) || !file.exists(file.path(targetDir,"bvecs")) || !imageFileExists(file.path(targetDir,"data")) || !imageFileExists(file.path(targetDir,"nodif_brain_mask")))
+        output(OL$Error, "Some required files are missing - run eddy_correct and bet first")
     
     output(OL$Info, "Running dtifit to do tensor fitting...")
     paramString <- paste("-k", file.path(targetDir,"data"), "-m", file.path(targetDir,"nodif_brain_mask"), "-r", file.path(targetDir,"bvecs"), "-b", file.path(targetDir,"bvals"), "-o", file.path(targetDir,"dti"), sep=" ")
@@ -53,6 +55,8 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
         output(OL$Error, "Specified session is not an MriSession object")
     
     targetDir <- session$getPreBedpostDirectory()
+    if (!imageFileExists(file.path(targetDir,"nodif")))
+        output(OL$Error, "A \"nodif\" image file has not yet been corrected - run eddy_correct first")
     
     output(OL$Info, "Running FSL's brain extraction tool...")
     paramString <- paste(file.path(targetDir,"nodif"), file.path(targetDir,"nodif_brain"), "-m -v -f", intensityThreshold, "-g", verticalGradient, sep=" ")
