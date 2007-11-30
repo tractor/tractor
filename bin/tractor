@@ -121,8 +121,8 @@ if [ $quiet -eq 0 ]
     then
 	if [ -f "$working_dir/tractor_report.yaml" ]
 		then
-		cat "$working_dir/tractor_report.yaml"
 		echo
+		cat "$working_dir/tractor_report.yaml"
 	fi
     echo "Experiment completed with $warnings warning(s) and $errors error(s)"
 fi
