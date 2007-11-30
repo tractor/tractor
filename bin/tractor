@@ -58,11 +58,10 @@ while [ $# -gt 0 ]
     shift
 done
 
-if [ $# -eq 0 ]
-    then
+[ $# -eq 0 ] && {
     usage 1>&2
     exit 1
-fi
+}
 
 file_found=0
 script_file="`echo $1 | sed 's/\.R$//'`.R"
@@ -86,16 +85,12 @@ elif [ -f "/etc/tractor/$script_file" ]
     file_found=1
 fi
 
-if [ $file_found -ne 1 ]
-    then
-    echo "Script file not found" 2>&1
+[ $file_found -ne 1 ] && {
+    echo "Script file not found" 1>&2
     exit 1
-fi
+}
 
-if [ ! -e $working_dir ]
-    then
-    mkdir -p $working_dir
-fi
+[ ! -e $working_dir ] && mkdir -p $working_dir
 
 if [ $verbose_level -eq 1 ]
     then
@@ -108,10 +103,7 @@ elif [ $verbose_level -eq 3 ]
     output_level='OL$Debug'
 fi
 
-if [ $quiet -eq 0 ]
-    then
-    echo "Starting TractoR environment..."
-fi
+[ $quiet -eq 0 ] && echo "Starting TractoR environment..."
 
 r_code="source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- runExperiment(); writeReportToYaml(results)"
 
