@@ -36,9 +36,9 @@ runExperiment <- function ()
                 while (tolower(runBetAgain) == "y")
                 {
                     output(OL$Info, "Previous intensity threshold was ", betIntensityThreshold, "; smaller values give larger brain outlines")
-                    betIntensityThreshold <- output(OL$Question, "Intensity threshold? [0 to 1]")
+                    betIntensityThreshold <- as.numeric(output(OL$Question, "Intensity threshold? [0 to 1]"))
                     output(OL$Info, "Previous vertical gradient was ", betVerticalGradient, "; positive values shift the outline downwards")
-                    betVerticalGradient <- output(OL$Question, "Vertical gradient? [-1 to 1]")
+                    betVerticalGradient <- as.numeric(output(OL$Question, "Vertical gradient? [-1 to 1]"))
                     try(runBetWithSession(session, betIntensityThreshold, betVerticalGradient, show=TRUE))
                     runBetAgain <- output(OL$Question, "Run brain extraction tool again? [yn]")
                 }
