@@ -15,7 +15,8 @@ output <- function (level, ..., default = NULL)
     outputLevel <- getOption("tractorOutputLevel")
     prefixStrings <- c("DEBUG: ", "VERBOSE: ", "INFO: ", "WARNING: ")
 
-    leadingSpace <- implode(rep("* ", length(sys.calls())-1))
+    nStars <- length(sys.calls()) - length(grep("trycatch", sys.calls(), ignore.case=TRUE)) - 1
+    leadingSpace <- implode(rep("* ", nStars))
     if ((level < OL$Question) && (outputLevel <= level))
         cat(paste(leadingSpace, prefixStrings[level], ..., "\n", sep=""))
     

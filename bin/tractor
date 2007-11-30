@@ -103,26 +103,31 @@ elif [ $verbose_level -eq 3 ]
     output_level='OL$Debug'
 fi
 
+[ -f "$working_dir/.Rprofile" ] && mv "$working_dir/.Rprofile" "$working_dir/.Rprofile.bak"
+
 [ $quiet -eq 0 ] && echo "Starting TractoR environment..."
 
-r_code="source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- runExperiment(); writeReportToYaml(results)"
+echo "source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- runExperiment(); writeReportToYaml(results); q()" >"$working_dir/.Rprofile"
 
 if [ $use_log -eq 0 ]
     then
-    echo $r_code | R --slave 2>&1 | tee $temp_file
+    R --slave --no-restore 2>&1 | tee $temp_file
     else
-    echo $r_code | R --slave 2>&1 | tee $temp_file >"$working_dir/tractor.log"
+    R --slave --no-restore 2>&1 | tee $temp_file >"$working_dir/tractor.log"
 fi
 
-warnings=`grep -c WARNING $temp_file`
-errors=`grep -c Error $temp_file`
+rm "$working_dir/.Rprofile"
+
+[ -f "$working_dir/.Rprofile.bak" ] && mv "$working_dir/.Rprofile.bak" "$working_dir/.Rprofile"
+
+warnings=`grep -c ^WARNING $temp_file`
+errors=`grep -c ^Error $temp_file`
 
 if [ $quiet -eq 0 ]
     then
 	if [ -f "$working_dir/tractor_report.yaml" ]
 		then
-		echo
-		cat "$working_dir/tractor_report.yaml"
+		cat "$working_dir/tractor_report.yaml" | sed 's/^/- /'
 	fi
     echo "Experiment completed with $warnings warning(s) and $errors error(s)"
 fi

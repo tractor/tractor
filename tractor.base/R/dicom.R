@@ -150,7 +150,7 @@ maskPixels <- function (pixels, metadata)
     
     newPixels <- packBits(as.raw(mask) & intToBits(pixels), "integer")
     if (!equivalent(pixels, newPixels))
-        output(OL$Debug, "Masking has altered the pixel values")
+        output(OL$Warning, "Masking has altered the pixel values")
     
     return (newPixels)
 }
