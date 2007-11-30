@@ -168,6 +168,9 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
 
 getWithDefault <- function (name, defaultValue = NULL, mode = NULL, errorIfInvalid = FALSE)
 {
+    if (is.null(mode) && !is.null(defaultValue))
+        mode <- mode(defaultValue)
+    
     if (!exists(name))
     {
         if (errorIfInvalid)
@@ -175,7 +178,7 @@ getWithDefault <- function (name, defaultValue = NULL, mode = NULL, errorIfInval
         else
             return (defaultValue)
     }
-    else if (is.null(mode))
+    else if (is.null(mode) || mode == "NULL")
         return (get(name))
     else
     {
