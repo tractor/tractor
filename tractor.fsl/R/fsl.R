@@ -49,7 +49,7 @@ runDtifitWithSession <- function (session)
     execute("dtifit", paramString, errorOnFail=TRUE)
 }
 
-runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradient = 0)
+runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradient = 0, show = FALSE)
 {
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
@@ -62,8 +62,11 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     paramString <- paste(file.path(targetDir,"nodif"), file.path(targetDir,"nodif_brain"), "-m -v -f", intensityThreshold, "-g", verticalGradient, sep=" ")
     execute("bet", paramString, errorOnFail=TRUE)
     
-    paramString <- paste(file.path(targetDir,"nodif"), file.path(targetDir,"nodif_brain_mask"), sep=" ")
-    execute("fslview", paramString, errorOnFail=TRUE, wait=FALSE)
+    if (show)
+    {
+        paramString <- paste(file.path(targetDir,"nodif"), file.path(targetDir,"nodif_brain_mask"), sep=" ")
+        execute("fslview", paramString, errorOnFail=TRUE, wait=FALSE)
+    }
 }
 
 runBedpostWithSession <- function (session, nFibres = 2, how = c("auto","screen","bg","fg"), ask = TRUE)
@@ -72,6 +75,10 @@ runBedpostWithSession <- function (session, nFibres = 2, how = c("auto","screen"
         output(OL$Error, "Specified session is not an MriSession object")
     
     how <- match.arg(how)
+    
+    targetDir <- session$getPreBedpostDirectory()
+    if (!file.exists(file.path(targetDir,"bvals")) || !file.exists(file.path(targetDir,"bvecs")) || !imageFileExists(file.path(targetDir,"data")) || !imageFileExists(file.path(targetDir,"nodif_brain_mask")))
+        output(OL$Error, "Some required files are missing - run eddy_correct and bet first")
     
     if (!ask)
         ans <- "y"

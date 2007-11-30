@@ -166,14 +166,14 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
         return (isTRUE(all.equal(abs(x), abs(y), ...)))
 }
 
-getWithDefault <- function (name, defaultValue = NULL, mode = NULL, errorIfInvalid = FALSE)
+getWithDefault <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE)
 {
     if (is.null(mode) && !is.null(defaultValue))
         mode <- mode(defaultValue)
     
     if (!exists(name))
     {
-        if (errorIfInvalid)
+        if (errorIfMissing)
             output(OL$Error, "The configuration variable \"", name, "\" must be specified")
         else
             return (defaultValue)
@@ -195,15 +195,29 @@ getWithDefault <- function (name, defaultValue = NULL, mode = NULL, errorIfInval
     }
 }
 
-requireArguments <- function (minLength = 1, errorIfNot = TRUE)
+nArguments <- function ()
 {
-    if (!exists("Arguments") || length(Arguments) < minLength)
+    if (!exists("Arguments"))
+        return (0)
+    else
+        return (length(get("Arguments")))
+}
+
+requireArguments <- function (minLength = 1, errorIfMissing = TRUE)
+{
+    if (nArguments() < minLength)
     {
-        if (errorIfNot)
+        if (errorIfMissing)
             output(OL$Error, "At least ", minLength, " argument(s) must be specified")
         else
             invisible (FALSE)
     }
     else
         invisible (TRUE)
+}
+
+producesError <- function (expr, silent = TRUE)
+{
+    returnValue <- try(expr, silent)
+    return (class(returnValue) == "try-error")
 }
