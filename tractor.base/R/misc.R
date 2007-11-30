@@ -191,3 +191,16 @@ getWithDefault <- function (name, defaultValue = NULL, mode = NULL, errorIfInval
             return (value)
     }
 }
+
+requireArguments <- function (minLength = 1, errorIfNot = TRUE)
+{
+    if (!exists("Arguments") || length(Arguments) < minLength)
+    {
+        if (errorIfNot)
+            output(OL$Error, "At least ", minLength, " argument(s) must be specified")
+        else
+            invisible (FALSE)
+    }
+    else
+        invisible (TRUE)
+}
