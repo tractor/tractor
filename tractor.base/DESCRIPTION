@@ -4,7 +4,7 @@ Date: 2007-11-12
 Title: Basic functions for the TractoR (tractography with R) bundle
 Author: Jon Clayden <jon.clayden@gmail.com>
 Maintainer: Jon Clayden <jon.clayden@gmail.com>
-Depends: R (>= 2.5.0)
+Depends: R (>= 2.5.0), utils
 Description: The tractor.base package consists of functions for working with magnetic resonance images. It can read and write image files stored in Analyze, NIfTI and DICOM formats (DICOM support is read only); generate images for use as regions of interest; and visualise images. The package also includes supporting infrastructure for the TractoR bundle, including the "tractor" shell script for running experiments.
 License: GPL-2
 URL: http://code.google.com/p/tractor/
