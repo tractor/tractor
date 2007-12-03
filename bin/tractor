@@ -1,12 +1,15 @@
 #! /bin/sh
 
 status=1
+keep_report=0
 temp_file="/tmp/tractor$$"
-trap 'rm -f $temp_file; exit $status' 0 1 2 15
+report_file="/tmp/tractor$$_report"
+trap 'rm -f $temp_file; [ $keep_report -eq 0 ] && rm -f $report_file; exit $status' 0 1 2 15
 
 config_file="/dev/null"
 output_level='OL$Warning'
 use_log=0
+rprofile_backed_up=0
 quiet=0
 verbose_level=0
 working_dir="."
@@ -17,7 +20,7 @@ usage()
     echo "Run a TractoR experiment script in R and report the results"
     echo
     echo "Usage: tractor -h"
-    echo "       tractor [-ldq] [-v level] [-w working_dir] [-c config_file] ..."
+    echo "       tractor [-ldqr] [-v level] [-w working_dir] [-c config_file] ..."
     echo "                                              script [arg1 [arg2 ...]]"
     echo
     echo "  -h          Display this usage information and exit"
@@ -25,6 +28,8 @@ usage()
     echo "  -d          Produce debugging output; equivalent to '-v 3'"
     echo "  -q          Run in quiet mode; the tractor script will not produce any"
     echo "              output of its own"
+	echo "  -r			Produce a report file in the working directory (if anything"
+	echo "				is reported by the experiment script)"
     echo "  -v [1-3]    Produce verbose output: the level determines the amount of"
     echo "              extra information reported, from 1 (least) to 3 (most)"
     echo "  -w dir      Specify the working directory for the experiment, which"
@@ -39,7 +44,7 @@ usage()
     echo
 }
 
-set -- `getopt "hldqv:w:c:" "$@"` || {
+set -- `getopt "hldqrv:w:c:" "$@"` || {
     usage 1>&2
     exit 1
 }
@@ -50,6 +55,7 @@ while [ $# -gt 0 ]
         -l) use_log=1 ;;
         -d) verbose_level=3 ;;
         -q) quiet=1 ;;
+		-r) keep_report=1 ;;
         -v) shift; verbose_level=$1 ;;
         -w) shift; working_dir=`echo $1 | sed 's/\/$//'` ;;
         -c) shift; config_file="$1" ;;
@@ -62,6 +68,8 @@ done
     usage 1>&2
     exit 1
 }
+
+[ $keep_report -eq 1 ] && report_file="$working_dir/tractor_report.yaml"
 
 file_found=0
 script_file="`echo $1 | sed 's/\.R$//'`.R"
@@ -103,11 +111,14 @@ elif [ $verbose_level -eq 3 ]
     output_level='OL$Debug'
 fi
 
-[ -f "$working_dir/.Rprofile" ] && mv "$working_dir/.Rprofile" "$working_dir/.Rprofile.bak"
+[ -f .Rprofile ] && {
+	mv .Rprofile .Rprofile.bak
+	rprofile_backed_up=1
+}
 
 [ $quiet -eq 0 ] && echo "Starting TractoR environment..."
 
-echo "source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- runExperiment(); writeReportToYaml(results); q()" >"$working_dir/.Rprofile"
+echo "source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()" >.Rprofile
 
 if [ $use_log -eq 0 ]
     then
@@ -116,18 +127,17 @@ if [ $use_log -eq 0 ]
     R --slave --no-restore 2>&1 | tee $temp_file >"$working_dir/tractor.log"
 fi
 
-rm "$working_dir/.Rprofile"
-
-[ -f "$working_dir/.Rprofile.bak" ] && mv "$working_dir/.Rprofile.bak" "$working_dir/.Rprofile"
+rm .Rprofile
+[ $rprofile_backed_up -eq 1 ] && mv .Rprofile.bak .Rprofile
 
 warnings=`grep -c ^WARNING $temp_file`
 errors=`grep -c ^Error $temp_file`
 
 if [ $quiet -eq 0 ]
     then
-	if [ -f "$working_dir/tractor_report.yaml" ]
+	if [ -f "$report_file" ]
 		then
-		cat "$working_dir/tractor_report.yaml" | sed 's/^/- /'
+		cat "$report_file" | sed 's/^/- /'
 	fi
     echo "Experiment completed with $warnings warning(s) and $errors error(s)"
 fi
