@@ -76,7 +76,10 @@ runExperiment <- function ()
     result <- runProbtrackWithSession(session, seed, mode="simple", requireImage=createImages, nSamples=nSamples, force=force)
     
     if (createImages)
+    {
+        output(OL$Info, "Creating tract images")
         writePngsForResult(result, prefix=tractName, threshold=vizThreshold, showSeed=showSeed)
+    }
     
     invisible (NULL)
 }

@@ -4,8 +4,6 @@ superimposePng <- function (lowerFile, upperFile, newFile, maskFile = NULL)
     upperFile <- ensureFileSuffix(upperFile, "png")
     newFile <- ensureFileSuffix(newFile, "png")
 
-    output(OL$Info, "Creating composite image")
-    
     paramString <- paste(upperFile, lowerFile, sep=" ")
     if (is.character(maskFile))
     {
