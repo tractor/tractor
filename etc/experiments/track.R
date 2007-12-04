@@ -54,8 +54,17 @@ runExperiment <- function ()
         {
             neighbourhood <- createNeighbourhoodInfo(centre=currentSeed, width=3)
             nextLoc <- which.max(thresholdImage[t(neighbourhood$vectors)])
-            currentSeed <- neighbourhood$vectors[,nextLoc]
-            currentValue <- thresholdImage$getDataAtPoint(currentSeed)
+            
+            if (equivalent(neighbourhood$vectors[,nextLoc], currentSeed))
+            {
+                output(OL$Warning, "Dead end reached")
+                break
+            }
+            else
+            {
+                currentSeed <- neighbourhood$vectors[,nextLoc]
+                currentValue <- thresholdImage$getDataAtPoint(currentSeed)
+            }
             
             output(OL$Verbose, "Ascending to voxel ", implode(currentSeed,","), " with ", toupper(thresholdType), " value ", currentValue)
         }
