@@ -59,6 +59,7 @@ runExperiment <- function ()
                         eddyCorrectCompleted=imageFileExists(file.path(targetDir, "nodif")),
                         betCompleted=imageFileExists(session$getImageFileNameByType("mask")),
                         dtifitCompleted=imageFileExists(session$getImageFileNameByType("fa")),
-                        allPreprocessingCompleted=session$isPreprocessed())
+                        allPreprocessingCompleted=session$isPreprocessed(),
+                        numberOfFibres=session$nFibres())
     invisible (returnValue)
 }
