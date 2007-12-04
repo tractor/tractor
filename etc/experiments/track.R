@@ -21,7 +21,7 @@ runExperiment <- function ()
     isStandardSeed <- getWithDefault("SeedInMNISpace", FALSE)
     
     useGradientAscent <- getWithDefault("UseGradientAscent", FALSE)
-    thresholdType <- getWithDefault("GradientDescentThresholdType", "fa")
+    thresholdType <- getWithDefault("GradientAscentThresholdType", "fa")
     thresholdLevel <- getWithDefault("GradientAscentThresholdLevel", 0.2)
     
     nSamples <- getWithDefault("NumberOfSamples", 5000)
