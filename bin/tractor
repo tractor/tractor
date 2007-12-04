@@ -118,7 +118,7 @@ fi
 
 [ $quiet -eq 0 ] && echo "Starting TractoR environment..."
 
-echo "source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()" >.Rprofile
+echo "library('utils'); library('graphics'); library('grDevices'); library('stats'); source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()" >.Rprofile
 
 if [ $use_log -eq 0 ]
     then
