@@ -130,7 +130,7 @@ fi
 rm .Rprofile
 [ $rprofile_backed_up -eq 1 ] && mv .Rprofile.bak .Rprofile
 
-warnings=`grep -c ^WARNING $temp_file`
+warnings=`grep -c WARNING $temp_file`
 errors=`grep -c ^Error $temp_file`
 
 if [ $quiet -eq 0 ]
