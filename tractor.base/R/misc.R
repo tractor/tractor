@@ -204,17 +204,10 @@ nArguments <- function ()
         return (length(get("Arguments")))
 }
 
-requireArguments <- function (minLength = 1, errorIfMissing = TRUE)
+requireArguments <- function (minLength = 1)
 {
     if (nArguments() < minLength)
-    {
-        if (errorIfMissing)
-            output(OL$Error, "At least ", minLength, " argument(s) must be specified")
-        else
-            invisible (FALSE)
-    }
-    else
-        invisible (TRUE)
+        output(OL$Error, "At least ", minLength, " argument(s) must be specified")
 }
 
 producesError <- function (expr, silent = TRUE)
