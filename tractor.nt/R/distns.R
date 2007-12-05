@@ -31,6 +31,8 @@ fitBetaDistribution <- function (data, alpha = NULL, beta = 1, weights = NULL)
 
 evaluateBetaDistribution <- function (x, params, log = FALSE)
 {
+    if (!("distribution.beta" %in% class(params)))
+        output(OL$Error, "The specified object does not describe a beta distribution")
     return (dbeta(x, params$alpha, params$beta, ncp=0, log=log))
 }
 
@@ -67,6 +69,8 @@ fitGaussianDistribution <- function (data, mu = NULL, sigma = NULL)
 
 evaluateGaussianDistribution <- function (x, params, log = FALSE)
 {
+    if (!("distribution.gaussian" %in% class(params)))
+        output(OL$Error, "The specified object does not describe a Gaussian distribution")
     return (dnorm(x, mean=params$mu, sd=params$sigma, log=log))
 }
 
@@ -109,6 +113,9 @@ fitMultinomialDistribution <- function (data, const = 0, values = NULL, weights 
 
 evaluateMultinomialDistribution <- function (x, params, log = FALSE)
 {
+    if (!("distribution.multinomial" %in% class(params)))
+        output(OL$Error, "The specified object does not describe a multinomial distribution")
+    
     if (is.na(x))
         return (NA)
     if (!is.numeric(x))
