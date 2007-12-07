@@ -1,7 +1,9 @@
-setOutputLevel <- function (level)
+setOutputLevel <- function (level, usePrefix = NA)
 {
     if (level %in% OL$Debug:OL$Error)
         options(tractorOutputLevel=level)
+    if (usePrefix %in% c(TRUE,FALSE))
+        options(tractorUseOutputPrefix=usePrefix)
 }
 
 output <- function (level, ..., default = NULL)
@@ -12,13 +14,17 @@ output <- function (level, ..., default = NULL)
         options(tractorOutputLevel=OL$Info)
     }
     
+    usePrefix <- getOption("tractorUseOutputPrefix")
+    if (is.null(usePrefix))
+        usePrefix <- TRUE
+    
     outputLevel <- getOption("tractorOutputLevel")
     prefixStrings <- c("DEBUG: ", "VERBOSE: ", "INFO: ", "WARNING: ")
 
     nStars <- length(sys.calls()) - length(grep("trycatch", sys.calls(), ignore.case=TRUE)) - 1
-    leadingSpace <- implode(rep("* ", nStars))
+    leadingSpace <- ifelse(usePrefix, implode(rep("* ", nStars)), "")
     if ((level < OL$Question) && (outputLevel <= level))
-        cat(paste(leadingSpace, prefixStrings[level], ..., "\n", sep=""))
+        cat(paste(leadingSpace, ifelse(usePrefix,prefixStrings[level],""), ..., "\n", sep=""))
     
     else if (level == OL$Question)
     {
@@ -26,7 +32,7 @@ output <- function (level, ..., default = NULL)
             return (default)
         else
         {
-            cat(paste(leadingSpace, "QUESTION: ", ..., "\n", sep=""))
+            cat(paste(leadingSpace, ifelse(usePrefix,"QUESTION: ",""), ..., "\n", sep=""))
             ans <- scan(what=character(0), nlines=1, quiet=TRUE)
             return (ans)
         }
