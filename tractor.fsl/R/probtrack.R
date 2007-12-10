@@ -98,10 +98,10 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         seedCount <- sum(seedMask$getData() > 0)
         seedCentre <- round(apply(which(seedMask$getData() > 0, arr.ind=TRUE), 2, median))
         
-        outputDir <- file.path(tempdir(), "seedmask")
-        outputFile <- file.path(outputDir, basename(outputStem))
+        outputDir <- file.path(workingDir, "seedmask")
+        outputFile <- file.path(outputDir, "fdt_paths")
         
-        paramString <- paste("--mode=seedmask -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), " --dir=", outputDir, " 2>&1", sep="")
+        paramString <- paste("--opd --mode=seedmask -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), " --dir=", outputDir, " 2>&1", sep="")
         execute("probtrackx", paramString, errorOnFail=TRUE)
         
         result <- list(session=session, seed=as.vector(seedCentre), nSamples=nSamples*seedCount)
@@ -119,8 +119,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         writeMriImageToFile(seedMask, seedFile)
         seedCentre <- round(apply(which(seedMask$getData() > 0, arr.ind=TRUE), 2, median))
         
-        outputDir <- file.path(tempdir(), "waypoints")
-        outputFile <- file.path(outputDir, basename(outputStem))
+        outputDir <- file.path(workingDir, "waypoints")
+        outputFile <- file.path(outputDir, "fdt_paths")
         
         waypointFiles <- tempfile(rep("waypoint",length(waypointMasks)))
         for (i in seq_along(waypointMasks))
@@ -128,7 +128,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         waypointListFile <- tempfile()
         writeLines(waypointFiles, waypointListFile)
         
-        paramString <- paste("--mode=waypoints -x ", seedFile, " --mask2=", waypointListFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), " --dir=", outputDir, " 2>&1", sep="")
+        paramString <- paste("--opd --mode=waypoints -x ", seedFile, " --mask2=", waypointListFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), " --dir=", outputDir, " 2>&1", sep="")
         execute("probtrackx", paramString, errorOnFail=TRUE)
         
         nRetainedSamples <- as.numeric(readLines(file.path(outputDir, "waytotal")))
@@ -139,7 +139,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         for (i in seq_along(waypointMasks))
             removeImageFilesWithName(waypointFiles[i])
         removeImageFilesWithName(seedFile)
-        unlink(outputDir, recursive=TRUE)
+        #unlink(outputDir, recursive=TRUE)
     }
 
     setwd(previousWorkingDir)
