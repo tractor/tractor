@@ -168,7 +168,7 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     if (!isMriImage(image))
         output(OL$Error, "The specified image is not an MriImage object")
     
-    description <- "Created by the TractoR NIfTI writer v1.0.0"
+    description <- "TractoR NIfTI writer v1.0.0"
     fileFun <- (if (gzipped) gzfile else file)
     
     if (is.null(datatype))
@@ -191,7 +191,7 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     
     ndims <- image$getDimensionality()
     fullDims <- c(ndims, image$getDimensions(), rep(1,7-ndims))
-    fullVoxelDims <- c(-1, image$getVoxelDimensions(), rep(0,7-ndims))
+    fullVoxelDims <- c(-1, abs(image$getVoxelDimensions()), rep(0,7-ndims))
     
     # The 8 below is for seconds; we default to 10 (mm/sec)
     unitName <- image$getVoxelUnit()
@@ -201,11 +201,12 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     else
         unitCode <- unitCode + 8
     
-    origin <- (image$getOrigin() - 1) * image$getVoxelDimensions()
+    origin <- (image$getOrigin() - 1) * abs(image$getVoxelDimensions())
     if (length(origin) > 3)
         origin <- origin[1:3]
     else if (length(origin) < 3)
         origin <- c(origin, rep(0,3-length(origin)))
+    origin <- ifelse(origin < 0, rep(0,3), origin)
     origin[2:3] <- -origin[2:3]
     sformRows <- c(-fullVoxelDims[2], 0, 0, origin[1],
                     0, fullVoxelDims[3], 0, origin[2],

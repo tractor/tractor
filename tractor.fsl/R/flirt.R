@@ -39,7 +39,7 @@
         getTransformType = function () { return (.type) }
     )
     
-    class(self) <- c("transform.affine.3d", "list")
+    class(self) <- c("transform.affine.3d", "list.object", "list")
     invisible (self)
 }
 
