@@ -105,6 +105,7 @@ createNiftiMetadata <- function (fileNames)
         unit <- NULL
     
     dimsToKeep <- which(dims > 1)
+    voxelDims[2:4] <- voxelDims[2:4] * sign(diag(rotationMatrix))
     imageMetadata <- .MriImageMetadata(dims[dimsToKeep], voxelDims[dimsToKeep+1], unit, fileNames$fileStem, datatype, origin[dimsToKeep], endian)
     
     storageMetadata <- list(dataOffset=dataOffset,
