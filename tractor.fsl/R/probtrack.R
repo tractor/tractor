@@ -139,7 +139,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         for (i in seq_along(waypointMasks))
             removeImageFilesWithName(waypointFiles[i])
         removeImageFilesWithName(seedFile)
-        #unlink(outputDir, recursive=TRUE)
+        unlink(outputDir, recursive=TRUE)
     }
 
     setwd(previousWorkingDir)
