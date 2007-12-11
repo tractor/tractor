@@ -2,6 +2,8 @@
 {
     if (!(.coordUnit %in% c("vox","mm")))
         output(OL$Error, "Coordinate unit must be 'vox' (for voxels) or 'mm' (for millimetres)")
+    if (!isMriImageMetadata(.imageMetadata))
+        output(OL$Error, "Specified image metadata is not an MriImageMetadata object")
     
     self <- list(
         getCoordinateUnit = function () { return (.coordUnit) },
@@ -106,6 +108,12 @@ isStreamlineTract <- function (object)
 isStreamlineSetTract <- function (object)
 {
     return ("tract.streamline.set" %in% class(object))
+}
+
+newStreamlineTractMetadataFromImageMetadata <- function (imageMetadata, originAtSeed, coordUnit)
+{
+    tractMetadata <- .StreamlineTractMetadata(originAtSeed, coordUnit, imageMetadata)
+    invisible (tractMetadata)
 }
 
 newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, nSamples = 5000, maxPathLength = NULL)
@@ -251,6 +259,12 @@ newStreamlineTractWithMetadata <- function (tract, metadata)
     
     newTract <- .StreamlineTract(line, tract$getSeedIndex(), seed, metadata)
     invisible (newTract)
+}
+
+newStreamlineTractFromLine <- function (line, seedIndex, originalSeedPoint, metadata)
+{
+    streamline <- .StreamlineTract(line, seedIndex, originalSeedPoint, metadata)
+    invisible (streamline)
 }
 
 newStreamlineTractFromSet <- function (tract, method = "median", lengthQuantile = 0.9, originAtSeed = NULL)

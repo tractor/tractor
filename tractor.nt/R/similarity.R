@@ -15,7 +15,7 @@ findVoxelValues <- function (tract, centre, unvisited, searchNeighbourhood)
     return (voxelValues)
 }
 
-calculateMatchingScore <- function (refTract, candTract, trueLengths = FALSE, biasReferenceSteps = FALSE, maxReps = NA)
+calculateMatchingScore <- function (refTract, candTract, trueLengths = FALSE, biasReferenceSteps = FALSE, maxReps = NA, requireRoute = FALSE)
 {
     chooseVector <- function (voxelValues, searchNeighbourhood, previous = NA)
     {
@@ -56,6 +56,7 @@ calculateMatchingScore <- function (refTract, candTract, trueLengths = FALSE, bi
     reps <- 0
     
     refFirstLoc <- NA
+    route <- matrix(0, nrow=1, ncol=3)
     
     repeat
     {
@@ -70,6 +71,7 @@ calculateMatchingScore <- function (refTract, candTract, trueLengths = FALSE, bi
         
         repeat
         {
+            route <- rbind(route, candPointer, deparse.level=0)
             refUnvisited[matrix(refPointer,nrow=1)] <- FALSE
             candUnvisited[matrix(candPointer,nrow=1)] <- FALSE
             
@@ -117,7 +119,11 @@ calculateMatchingScore <- function (refTract, candTract, trueLengths = FALSE, bi
             reps <- reps + 1
     }
     
-    return (list(score=score, length=length, refMask=(!refUnvisited), reps=reps))
+    returnValue <- list(score=score, length=length, refMask=(!refUnvisited), reps=reps)
+    if (requireRoute)
+        returnValue <- c(returnValue, list(route=route[-1,]))
+    
+    return (returnValue)
 }
 
 createReducedTractInfo <- function (tract, biasSteps = FALSE, maxReps = NA)
