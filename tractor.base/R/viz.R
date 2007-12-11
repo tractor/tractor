@@ -31,7 +31,7 @@ maximumIntensityProjection <- function (image, axis)
     invisible(result)
 }
 
-createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL)
+createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell")
 {
     if (!isMriImage(image))
         output(OL$Error, "The specified image is not an MriImage object")
@@ -55,10 +55,16 @@ createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("inter
     if (device == "internal")
         displayGraphic(slice, colourScale, add=add)
     else if (device == "png")
-        writePng(slice, colourScale, file)
+    {
+        tempFile <- tempfile()
+        pngDims <- round(abs(dims[!axisRelevance] * image$getVoxelDimensions()[!axisRelevance] * zoomFactor))
+        writePng(slice, colourScale, tempFile)
+        interpolatePng(tempFile, file, pngDims, filter=filter)
+        unlink(ensureFileSuffix(tempFile, "png"))
+    }
 }
 
-createProjectionGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL)
+createProjectionGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell")
 {
     if (!isMriImage(image))
         output(OL$Error, "The specified image is not an MriImage object")
@@ -69,5 +75,12 @@ createProjectionGraphic <- function (image, axis, device = c("internal","png"), 
     if (device == "internal")
         displayGraphic(projection, colourScale, add=add)
     else if (device == "png")
-        writePng(projection, colourScale, file)
+    {
+        imageAxes <- !(1:3 %in% axis)
+        tempFile <- tempfile()
+        pngDims <- round(abs(image$getDimensions()[imageAxes] * image$getVoxelDimensions()[imageAxes] * zoomFactor))
+        writePng(projection, colourScale, tempFile)
+        interpolatePng(tempFile, file, pngDims, filter=filter)
+        unlink(ensureFileSuffix(tempFile, "png"))
+    }
 }

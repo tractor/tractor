@@ -17,7 +17,8 @@ runExperiment <- function ()
     if (!exists("seed") || length(seed) != 3)
         output(OL$Error, "Seed point must be given as a single vector in 3D space")
     
-    seedType <- match.arg(getWithDefault("SeedType", mode="character", errorIfMissing=TRUE), c("fsl","r","mm"))
+    seedType <- getWithDefault("SeedType", NULL, mode="character", errorIfMissing=TRUE)
+    seedType <- match.arg(seedType, c("fsl","r","mm"))
     isStandardSeed <- getWithDefault("SeedInMNISpace", FALSE)
     
     useGradientAscent <- getWithDefault("UseGradientAscent", FALSE)
