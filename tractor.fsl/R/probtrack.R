@@ -101,8 +101,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         outputDir <- file.path(workingDir, "seedmask")
         outputFile <- file.path(outputDir, "fdt_paths")
         
-        paramString <- paste("--opd --mode=seedmask -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), " --dir=", outputDir, " 2>&1", sep="")
-        execute("probtrackx", paramString, errorOnFail=TRUE)
+        paramString <- paste("--opd --mode=seedmask -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), " --dir=", outputDir, sep="")
+        execute("probtrackx", paramString, errorOnFail=TRUE, silent=TRUE)
         
         result <- list(session=session, seed=as.vector(seedCentre), nSamples=nSamples*seedCount)
         if (requireImage)
@@ -128,8 +128,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         waypointListFile <- tempfile()
         writeLines(waypointFiles, waypointListFile)
         
-        paramString <- paste("--opd --mode=waypoints -x ", seedFile, " --mask2=", waypointListFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), " --dir=", outputDir, " 2>&1", sep="")
-        execute("probtrackx", paramString, errorOnFail=TRUE)
+        paramString <- paste("--opd --mode=waypoints -x ", seedFile, " --mask2=", waypointListFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), " --dir=", outputDir, sep="")
+        execute("probtrackx", paramString, errorOnFail=TRUE, silent=TRUE)
         
         nRetainedSamples <- as.numeric(readLines(file.path(outputDir, "waytotal")))
         result <- list(session=session, seed=as.vector(seedCentre), nSamples=nRetainedSamples)
