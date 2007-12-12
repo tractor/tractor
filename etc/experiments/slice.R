@@ -1,4 +1,4 @@
-require(tractor.fsl)
+suppressPackageStartupMessages(require(tractor.fsl))
 
 runExperiment <- function ()
 {
