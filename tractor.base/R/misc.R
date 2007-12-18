@@ -210,14 +210,18 @@ nArguments <- function ()
         return (length(get("Arguments")))
 }
 
-requireArguments <- function (minLength = 1)
+requireArguments <- function (...)
 {
-    if (nArguments() < minLength)
-        output(OL$Error, "At least ", minLength, " argument(s) must be specified")
+    args <- c(...)
+    
+    if (is.numeric(args) && nArguments() < args)
+        output(OL$Error, "At least ", args, " argument(s) must be specified")
+    else if (is.character(args) && nArguments() < length(args))
+        output(OL$Error, "At least ", length(args), " argument(s) must be specified: ", implode(args,", "))
 }
 
 producesError <- function (expr, silent = TRUE)
 {
     returnValue <- try(expr, silent)
-    return (class(returnValue) == "try-error")
+    return ("try-error" %in% class(returnValue))
 }
