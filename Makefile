@@ -1,6 +1,5 @@
 INSTALL=/usr/bin/install
 R=/usr/bin/R
-TRUE=/usr/bin/true
 
 all:
 	@echo 'Nothing to compile - run "make install" to install packages'
@@ -19,7 +18,7 @@ install: install-base install-fsl install-nt
 install-extras:
 	@ mkdir -p ~/.tractor
 	@ $(INSTALL) -Cv -m 0644 etc/experiments/*.R ~/.tractor
-	@ [ -d ~/bin2 ] && $(INSTALL) -Cv bin/tractor ~/bin || $(TRUE)
+	@ [ ! -d ~/bin ] || $(INSTALL) -Cv bin/tractor ~/bin
 
 extras: install-extras
 
