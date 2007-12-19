@@ -254,7 +254,7 @@ transformStandardSpaceImage <- function (session, image)
     imageFiles <- tempfile(rep("image",2))
     writeMriImageToFile(image, imageFiles[1])
     
-    paramString <- paste("-in", imageFiles[1], "-ref", file.path(.StandardBrainPath,"avg152T1_brain"), "-applyxfm -init", xfmFile, "-out", imageFiles[2], sep=" ")
+    paramString <- paste("-in", imageFiles[1], "-ref", session$getImageFileNameByType("t2"), "-applyxfm -init", xfmFile, "-out", imageFiles[2], sep=" ")
     execute("flirt", paramString, silent=TRUE, errorOnFail=TRUE)
     
     finalImage <- newMriImageFromFile(imageFiles[2])
