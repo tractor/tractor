@@ -17,8 +17,8 @@ runExperiment <- function ()
     if (!exists("seed") || length(seed) != 3)
         output(OL$Error, "Seed point must be given as a single vector in 3D space")
     
-    seedType <- getWithDefault("SeedType", NULL, mode="character", errorIfMissing=TRUE)
-    seedType <- match.arg(seedType, c("fsl","r","mm"))
+    pointType <- getWithDefault("PointType", NULL, mode="character", errorIfMissing=TRUE)
+    pointType <- match.arg(tolower(pointType), c("fsl","r","mm"))
     isStandardSeed <- getWithDefault("SeedInMNISpace", FALSE)
     
     useGradientAscent <- getWithDefault("UseGradientAscent", FALSE)
@@ -33,11 +33,12 @@ runExperiment <- function ()
     vizThreshold <- getWithDefault("VisualisationThreshold", 0.01)
     showSeed <- getWithDefault("ShowSeedPoint", TRUE)
     
-    if (seedType == "fsl")
+    if (pointType == "fsl")
         seed <- transformFslVoxelToRVoxel(seed)
+    
     if (isStandardSeed)
-        seed <- transformStandardSpaceSeeds(session, seed, unit=ifelse(seedType=="mm","mm","vox"))
-    else if (seedType == "mm")
+        seed <- transformStandardSpaceSeeds(session, seed, unit=ifelse(pointType=="mm","mm","vox"))
+    else if (pointType == "mm")
     {
         metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("t2"))
         seed <- transformWorldToRVoxel(seed, metadata, useOrigin=TRUE)
@@ -79,6 +80,7 @@ runExperiment <- function ()
     if (createImages)
     {
         output(OL$Info, "Creating tract images")
+        writeMriImageToFile(result$image, tractName)
         writePngsForResult(result, prefix=tractName, threshold=vizThreshold, showSeed=showSeed)
     }
     

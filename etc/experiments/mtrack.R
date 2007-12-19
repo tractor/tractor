@@ -2,7 +2,7 @@ suppressPackageStartupMessages(require(tractor.fsl))
 
 runExperiment <- function ()
 {
-    requireArguments(1)
+    requireArguments("session directory")
     session <- newSessionFromDirectory(Arguments[1])
     
     nSamples <- getWithDefault("NumberOfSamples", 5000)
@@ -34,12 +34,13 @@ runExperiment <- function ()
             waypointMasks <- c(waypointMasks, list(waypointMask))
         }
         
-        result <- runProbtrackWithSession(session, mode="waypoints", seedMask=seedMask, waypointMasks=waypointMasks, requireImage=createImages, nSamples=nSamples)
+        result <- runProbtrackWithSession(session, mode="seedmask", seedMask=seedMask, waypointMasks=waypointMasks, requireImage=createImages, nSamples=nSamples)
     }
     
     if (createImages)
     {
         output(OL$Info, "Creating tract images")
+        writeMriImageToFile(result$image, tractName)
         writePngsForResult(result, prefix=tractName, threshold=vizThreshold, showSeed=showSeed)
     }
     
