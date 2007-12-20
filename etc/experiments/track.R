@@ -5,17 +5,10 @@ runExperiment <- function ()
     requireArguments(2)
     
     session <- newSessionFromDirectory(Arguments[1])
-    if (is.character(Arguments[2]))
-    {
-        seed <- as.numeric(unlist(strsplit(Arguments[2], ",")))
-        if (length(seed) == 1 && is.na(seed))
-            output(OL$Error, "Seed point must be comma or space separated")
-    }
-    else if (is.numeric(Arguments[2]))
-        seed <- Arguments[-1]
     
+    seed <- as.numeric(unlist(strsplit(Arguments[-1], ",")))
     if (!exists("seed") || length(seed) != 3)
-        output(OL$Error, "Seed point must be given as a single vector in 3D space")
+        output(OL$Error, "Seed point must be given as a single vector in 3D space, comma or space separated")
     
     pointType <- getWithDefault("PointType", NULL, mode="character", errorIfMissing=TRUE)
     pointType <- match.arg(tolower(pointType), c("fsl","r","mm"))

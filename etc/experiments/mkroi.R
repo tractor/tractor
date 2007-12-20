@@ -5,17 +5,10 @@ runExperiment <- function ()
     requireArguments("session directory", "centre point")
     
     session <- newSessionFromDirectory(Arguments[1])
-    if (is.character(Arguments[2]))
-    {
-        centre <- as.numeric(unlist(strsplit(Arguments[2], ",")))
-        if (length(centre) == 1 && is.na(centre))
-            output(OL$Error, "Centre point must be comma or space separated")
-    }
-    else if (is.numeric(Arguments[2]))
-        centre <- Arguments[-1]
     
+    centre <- as.numeric(unlist(strsplit(Arguments[-1], ",")))
     if (!exists("centre") || length(centre) != 3)
-        output(OL$Error, "Centre point must be given as a single vector in 3D space")
+        output(OL$Error, "Centre point must be given as a single vector in 3D space, comma or space separated")
     
     pointType <- getWithDefault("PointType", NULL, mode="character", errorIfMissing=TRUE)
     pointType <- match.arg(tolower(pointType), c("fsl","r","mm"))
