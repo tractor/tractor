@@ -173,7 +173,7 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
         return (isTRUE(all.equal(abs(x), abs(y), ...)))
 }
 
-getWithDefault <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE)
+getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE)
 {
     if (is.null(mode) && !is.null(defaultValue))
         mode <- mode(defaultValue)
