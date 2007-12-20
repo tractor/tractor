@@ -2,7 +2,7 @@ suppressPackageStartupMessages(require(tractor.fsl))
 
 runExperiment <- function ()
 {
-    requireArguments(2)
+    requireArguments("session directory", "seed point")
     
     session <- newSessionFromDirectory(Arguments[1])
     

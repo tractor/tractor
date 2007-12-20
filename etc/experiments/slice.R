@@ -2,7 +2,7 @@ suppressPackageStartupMessages(require(tractor.fsl))
 
 runExperiment <- function ()
 {
-    requireArguments(1)
+    requireArguments("image file")
     image <- newMriImageFromFile(Arguments[1])
     
     if (nArguments() > 1)
