@@ -1,4 +1,4 @@
-runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode = c("simple","seedmask","waypoints"), seedMask = NULL, waypointMasks = NULL, requireFile = !force, requireParticlesDir = FALSE, requireImage = FALSE, nSamples = 5000, verbose = FALSE, force = FALSE, expectExists = FALSE)
+runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode = c("simple","seedmask"), seedMask = NULL, waypointMasks = NULL, requireFile = !force, requireParticlesDir = FALSE, requireImage = FALSE, nSamples = 5000, verbose = FALSE, force = FALSE, expectExists = FALSE)
 {
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
@@ -7,10 +7,10 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     
     mode <- match.arg(mode)
     
-    if (mode %in% c("seedmask","waypoints") && !isMriImage(seedMask))
+    if (mode == "seedmask" && !isMriImage(seedMask))
         output(OL$Error, "Seed point mask must be specified in this mode")
-    if (mode == "waypoints" && !is.list(waypointMasks) && !isMriImage(waypointMasks[[1]]))
-        output(OL$Error, "Waypoint masks must be specified in this mode")
+    if (!is.null(waypointMasks) && (!is.list(waypointMasks) || !isMriImage(waypointMasks[[1]])))
+        output(OL$Error, "Waypoint masks must be specified as a list of MriImage objects")
     
     if (mode == "simple")
     {
@@ -91,44 +91,28 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     }
     else if (mode == "seedmask")
     {
-        output(OL$Info, "Performing seed mask tractography with ", nSamples, " samples per seed...")
+        output(OL$Info, "Performing seed mask tractography with ", nSamples, " samples per seed")
         
         seedFile <- tempfile()
         writeMriImageToFile(seedMask, seedFile)
-        seedCount <- sum(seedMask$getData() > 0)
         seedCentre <- round(apply(which(seedMask$getData() > 0, arr.ind=TRUE), 2, median))
         
         outputDir <- file.path(workingDir, "seedmask")
         outputFile <- file.path(outputDir, "fdt_paths")
         
-        paramString <- paste("--opd --mode=seedmask -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), " --dir=", outputDir, sep="")
-        execute("probtrackx", paramString, errorOnFail=TRUE, silent=TRUE)
+        if (is.null(waypointMasks))
+            waypointString <- NULL
+        else
+        {
+            waypointFiles <- tempfile(rep("waypoint",length(waypointMasks)))
+            for (i in seq_along(waypointMasks))
+                writeMriImageToFile(waypointMasks[[i]], waypointFiles[i])
+            waypointListFile <- tempfile()
+            writeLines(waypointFiles, waypointListFile)
+            waypointString <- paste(" --waypoints=", waypointListFile, sep="")
+        }
         
-        result <- list(session=session, seed=as.vector(seedCentre), nSamples=nSamples*seedCount)
-        if (requireImage)
-            result <- c(result, list(image=newMriImageFromFile(outputFile)))
-        
-        removeImageFilesWithName(seedFile)
-        unlink(outputDir, recursive=TRUE)
-    }
-    else if (mode == "waypoints")
-    {
-        output(OL$Info, "Performing tractography with waypoints using ", nSamples, " samples per seed...")
-        
-        seedFile <- tempfile()
-        writeMriImageToFile(seedMask, seedFile)
-        seedCentre <- round(apply(which(seedMask$getData() > 0, arr.ind=TRUE), 2, median))
-        
-        outputDir <- file.path(workingDir, "waypoints")
-        outputFile <- file.path(outputDir, "fdt_paths")
-        
-        waypointFiles <- tempfile(rep("waypoint",length(waypointMasks)))
-        for (i in seq_along(waypointMasks))
-            writeMriImageToFile(waypointMasks[[i]], waypointFiles[i])
-        waypointListFile <- tempfile()
-        writeLines(waypointFiles, waypointListFile)
-        
-        paramString <- paste("--opd --mode=waypoints -x ", seedFile, " --mask2=", waypointListFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), " --dir=", outputDir, sep="")
+        paramString <- paste("--opd --mode=seedmask -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " --dir=", outputDir, waypointString, sep="")
         execute("probtrackx", paramString, errorOnFail=TRUE, silent=TRUE)
         
         nRetainedSamples <- as.numeric(readLines(file.path(outputDir, "waytotal")))
