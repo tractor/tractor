@@ -8,9 +8,15 @@
     
     tempAnalyze <- list(
         typeCodes=c(2,          4,          8,          16,         64),
-        typesR=c(   "integer",  "integer",  "integer",  "double",   "double"),
+        typesR=c(  "integer",  "integer",  "integer",  "double",   "double"),
         sizes=c(    1,          2,          4,          4,          8),
         isSigned=c( FALSE,      TRUE,       TRUE,       TRUE,       TRUE))
+    
+    tempCamino <- list(
+        typeNames=c("byte",     "char",     "short",    "int",      "long",     "float",    "double"),
+        typesR=c(   "integer",  "integer",  "integer",  "integer",  "integer",  "double",   "double"),
+        sizes=c(     1,          1,          2,          4,          8,          4,          8),
+        isSigned=c(  TRUE,       FALSE,      TRUE,       TRUE,       TRUE,       TRUE,       TRUE))
     
     tempDicom <- list(
         nonCharTypes=list(codes=c("OF", "FL", "FD", "SL", "SS", "UL", "US", "AT"),
