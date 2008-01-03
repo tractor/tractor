@@ -14,14 +14,16 @@ splineTractWithOptions <- function (options, session, seed, refSession = NULL)
 {
     if (!isTractOptionList(options))
         output(OL$Error, "Tract representation options must be specified as a TractOptionList")
-    if (options$registerToReference && is.null(refSession))
-        output(OL$Error, "The reference session must be specified if options$registerToReference is TRUE")
     
     streamSet <- newStreamlineSetTractFromProbtrack(session, seed, maxPathLength=options$maxPathLength)
     streamline <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
     if (options$registerToReference)
     {
-        transform <- newAffineTransform3DFromFlirt(session$getImageFileNameByType("t2"), refSession$getImageFileNameByType("t2"))
+        if (is.null(refSession))
+            transform <- newAffineTransform3DByInversion(getMniTransformForSession(session))
+        else
+            transform <- newAffineTransform3DFromFlirt(session$getImageFileNameByType("t2"), refSession$getImageFileNameByType("t2"))
+        
         streamline <- newStreamlineTractByTransformation(streamline, transform)
     }
     spline <- newBSplineTractFromStreamline(streamline, knotSpacing=options$knotSpacing)
