@@ -218,8 +218,32 @@ transformWorldPointsWithAffine <- function (transform, x, y = NULL, z = NULL)
     return (transformPointsWithAffine(transform, x, y, z, useVoxels=FALSE))
 }
 
+getNativeSpacePointForSession <- function (session, point, pointType, isStandard, round = TRUE)
+{
+    pointType <- match.arg(tolower(pointType), c("fsl","r","mm"))
+    
+    if (pointType == "fsl")
+        point <- transformFslVoxelToRVoxel(point)
+    
+    if (isStandard)
+        point <- transformStandardSpacePoints(session, point, unit=ifelse(pointType=="mm","mm","vox"))
+    else if (pointType == "mm")
+    {
+        metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("t2"))
+        point <- transformWorldToRVoxel(point, metadata, useOrigin=TRUE)
+    }
+    
+    point <- (if (round) round(point) else point)
+    return (point)
+}
+
 getMniTransformForSession <- function (session)
 {
+    if (!isMriSession(session))
+        output(OL$Error, "Specified session is not an MriSession object")
+    if (is.null(.StandardBrainPath))
+        output(OL$Error, "No standard brain volumes were found in the FSL tree")
+    
     xfmFile <- session$getObjectFileName("xfmMniToT2")
     if (file.exists(xfmFile))
         inverseXfm <- get(load(xfmFile))
@@ -241,8 +265,6 @@ getMniTransformForSession <- function (session)
 
 transformStandardSpaceImage <- function (session, image)
 {
-    if (!isMriSession(session))
-        output(OL$Error, "Specified session is not an MriSession object")
     if (!isMriImage(image))
         output(OL$Error, "Specified image is not an MriImage object")
     
@@ -265,22 +287,17 @@ transformStandardSpaceImage <- function (session, image)
     invisible (finalImage)
 }
 
-transformStandardSpaceSeeds <- function (session, seeds, unit = c("vox","mm"), round = TRUE)
+transformStandardSpacePoints <- function (session, points, unit = c("vox","mm"), round = TRUE)
 {
-    if (!isMriSession(session))
-        output(OL$Error, "Specified session is not an MriSession object")
-    if (is.null(.StandardBrainPath))
-        output(OL$Error, "No standard brain volumes were found in the FSL tree")
-    
     xfm <- getMniTransformForSession(session)
     output(OL$Info, "Transforming points from standard space")
     
     unit <- match.arg(unit)
     if (unit == "vox")
-        coords <- transformVoxelPointsWithAffine(xfm, seeds)
+        coords <- transformVoxelPointsWithAffine(xfm, points)
     else
     {
-        coords <- transformWorldToRVoxel(seeds, xfm$getSourceMetadata(), useOrigin=TRUE)
+        coords <- transformWorldToRVoxel(points, xfm$getSourceMetadata(), useOrigin=TRUE)
         coords <- transformVoxelPointsWithAffine(xfm, coords)
     }
     
