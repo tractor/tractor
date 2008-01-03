@@ -2,9 +2,10 @@
 
 status=1
 keep_report=0
-temp_file="/tmp/tractor$$"
+log_file="/tmp/tractor$$_log"
+expect_file="/tmp/tractor$$_expect"
 report_file="/tmp/tractor$$_report"
-trap 'rm -f $temp_file; [ $keep_report -eq 0 ] && rm -f $report_file; exit $status' 0 1 2 15
+trap 'rm -f $log_file $expect_file; [ $keep_report -eq 0 ] && rm -f $report_file; exit $status' 0 1 2 15
 
 config_file="/dev/null"
 output_level='OL$Warning'
@@ -14,6 +15,9 @@ rprofile_backed_up=0
 quiet=0
 verbose_level=0
 working_dir="."
+
+type expect >/dev/null 2>&1
+expect_available=$?
 
 usage()
 {
@@ -121,27 +125,49 @@ elif [ $verbose_level -eq 3 ]
     output_level='OL$Debug'
 fi
 
-[ -f .Rprofile ] && {
-	mv .Rprofile .Rprofile.bak
-	rprofile_backed_up=1
+[ $expect_available -ne 0 -a -f .Rprofile ] && {
+    echo "Ignoring current .Rprofile file"
+    mv .Rprofile .Rprofile.bak
+    rprofile_backed_up=1
 }
 
 [ $quiet -eq 0 ] && echo "Starting TractoR environment..."
 
-echo "library('utils'); library('graphics'); library('grDevices'); library('stats'); source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()" >.Rprofile
-
-if [ $use_log -eq 0 ]
+if [ $expect_available -eq 0 ]
     then
-    R --slave --no-restore 2>&1 | tee $temp_file
+    output_level=`echo $output_level | sed 's/\\$/\\\\\\$/'`
+    cat >"$expect_file" <<EOF
+log_user 0
+spawn R --quiet --no-save --no-restore
+set timeout 2
+send "source('$script_file')\n"
+send "setOutputLevel($output_level)\n"
+send "setwd('$working_dir')\n"
+send "createWorkspaceFromYaml('$config_file')\n"
+send "createWorkspaceFromYaml(text='$args')\n"
+send "results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()\n"
+expect -re ">.+\r\n"
+interact {
+   -o
+   "1:"            { send_user "?>" }
+   -re ">.+\r\n"   {}
+}
+EOF
+    expect -f $expect_file | tee $log_file
     else
-    R --slave --no-restore 2>&1 | tee $temp_file >"$working_dir/tractor.log"
+    echo "library('utils'); library('graphics'); library('grDevices'); library('stats'); source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()" >.Rprofile
+    R --slave --no-restore 2>&1 | tee $log_file
 fi
 
-rm .Rprofile
-[ $rprofile_backed_up -eq 1 ] && mv .Rprofile.bak .Rprofile
+[ $use_log -eq 1 ] && cp $log_file "$working_dir/tractor.log"
 
-warnings=`grep -c WARNING $temp_file`
-errors=`grep -c Error $temp_file`
+[ $expect_available -ne 0 ] && {
+    rm -f .Rprofile
+    [ $rprofile_backed_up -eq 1 ] && mv .Rprofile.bak .Rprofile
+}
+
+warnings=`grep -c WARNING $log_file`
+errors=`grep -c Error $log_file`
 
 if [ $quiet -eq 0 ]
     then
