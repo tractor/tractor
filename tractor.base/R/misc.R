@@ -22,7 +22,7 @@ output <- function (level, ..., default = NULL)
     prefixStrings <- c("DEBUG: ", "VERBOSE: ", "INFO: ", "WARNING: ")
 
     nStars <- length(sys.calls()) - length(grep("trycatch", sys.calls(), ignore.case=TRUE)) - 1
-    leadingSpace <- ifelse(usePrefix, implode(rep("* ", nStars)), "")
+    leadingSpace <- ifelse(usePrefix && (nStars > 0), implode(rep("* ", nStars)), "")
     if ((level < OL$Question) && (outputLevel <= level))
         cat(paste(leadingSpace, ifelse(usePrefix,prefixStrings[level],""), ..., "\n", sep=""))
     
@@ -32,8 +32,7 @@ output <- function (level, ..., default = NULL)
             return (default)
         else
         {
-            cat(paste(leadingSpace, ifelse(usePrefix,"QUESTION: ",""), ..., "\n", sep=""))
-            ans <- scan(what=character(0), nlines=1, quiet=TRUE)
+            ans <- readline(paste(leadingSpace, ifelse(usePrefix,"QUESTION: ",""), ..., " ", sep=""))
             return (ans)
         }
     }
