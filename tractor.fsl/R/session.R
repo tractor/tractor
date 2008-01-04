@@ -253,8 +253,8 @@ readDiffusionParametersFromMetadata <- function (metadata)
     }
     else if (identical(vendor, "SIEMENS"))
     {
-        bval <- metadata$getTagValue(0x0019, 0x000c)
-        bvec <- metadata$getTagValue(0x0019, 0x000e)
+        bval <- metadata$getTagValue(0x0019, 0x100c)
+        bvec <- metadata$getTagValue(0x0019, 0x100e)
         
         if (is.na(bval) || is.na(bvec))
             return (list(bval=NA, bvec=rep(NA,3), defType="none"))
