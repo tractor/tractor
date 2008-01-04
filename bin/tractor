@@ -151,9 +151,9 @@ send "createWorkspaceFromYaml(text='$args')\n"
 send "results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()\n"
 expect -re ">.+\r\n"
 interact {
-   -o
-   "1:"            { send_user "?>" }
-   -re ">.+\r\n"   {}
+  -o
+  -re " >.+\r\n"  { send_user "\$interact_out(0,string)" }
+  -re ">.+\r\n"   {}
 }
 EOF
     expect -f $expect_file | tee $log_file
