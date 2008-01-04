@@ -118,13 +118,25 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
     voxdims <- dicom$getTagValue(0x0028, 0x0030)
     endian <- dicom$getEndianness()
     
+    slices <- dicom$getTagValue(0x0019, 0x100a)
+    nDims <- ifelse(is.na(slices), 2, 3)
+    if (is.na(slices))
+        slices <- NULL
+    else
+    {
+        acquisitionMatrix <- dicom$getTagValue(0x0018, 0x1310)
+        rows <- max(acquisitionMatrix[1], acquisitionMatrix[3])
+        columns <- max(acquisitionMatrix[2], acquisitionMatrix[4])
+        voxdims <- c(voxdims, dicom$getTagValue(0x0018, 0x0050))
+    }
+    
     bitsAllocated <- dicom$getTagValue(0x0028, 0x0100)
     if ((bitsAllocated %% 8) != 0)
         output(OL$Error, "Number of bits allocated per pixel doesn't correspond to an integral number of bytes")
     isSigned <- isTRUE(dicom$getTagValue(0x0028, 0x0103) == 1)
     datatype <- list(type="integer", size=bitsAllocated/8, isSigned=isSigned)
     
-    metadata <- .MriImageMetadata(c(columns,rows), voxdims, "mm", dicom$getSource(), datatype, rep(0,2), endian) 
+    metadata <- .MriImageMetadata(c(columns,rows,slices), voxdims, "mm", dicom$getSource(), datatype, rep(1,nDims), endian) 
     invisible (metadata)
 }
 
@@ -165,15 +177,37 @@ newMriImageFromDicomMetadata <- function (metadata)
     datatype <- imageMetadata$getDataType()
     nPixels <- fileMetadata$getDataLength() / datatype$size
     dims <- imageMetadata$getDimensions()
+    nDims <- imageMetadata$getDimensionality()
     endian <- fileMetadata$getEndianness()
     
     connection <- file(fileMetadata$getSource(), "rb")
     seek(connection, where=fileMetadata$getDataOffset())
     pixels <- readBin(connection, "integer", n=nPixels, size=datatype$size, signed=datatype$isSigned, endian=endian)
     pixels <- maskPixels(pixels, fileMetadata)
-    data <- array(pixels, dim=dims)
-    data <- data[,(dims[2]:1)]
     close(connection)
+    
+    if (nDims == 2)
+    {
+        data <- array(pixels, dim=dims)
+        data <- data[,(dims[2]:1)]
+    }
+    else if (nDims == 3)
+    {
+        # Handle Siemens mosaic images, which encapsulate a whole 3D image in
+        # a single-frame DICOM file
+        mosaicDims <- c(fileMetadata$getTagValue(0x0028, 0x0010), fileMetadata$getTagValue(0x0028, 0x0011))
+        mosaicGrid <- mosaicDims / dims[1:2]
+        mosaicCellDims <- mosaicDims / mosaicGrid
+        gridColumns <- rep(1:mosaicGrid[2], times=mosaicDims[2], each=mosaicCellDims[1])
+        gridRows <- rep(1:mosaicGrid[1], each=mosaicCellDims[2]*mosaicDims[1])
+        
+        data <- array(NA, dim=dims)
+        sliceList <- tapply(pixels, list(gridColumns,gridRows), "[")
+        for (i in seq_len(dims[3]))
+            data[,,i] <- sliceList[[i]]
+        
+        data <- data[,(dims[2]:1),]
+    }
     
     image <- .MriImage(drop(data), imageMetadata)
     invisible (image)
