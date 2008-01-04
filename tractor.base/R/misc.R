@@ -190,7 +190,7 @@ getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FA
     else
     {
         value <- get(paste("as", mode, sep="."))(get(name))
-        if (is.na(value))
+        if (isTRUE(is.na(value)))
         {
             if (errorIfInvalid)
                 output(OL$Error, "The configuration variable \"", name, "\" does not have a suitable value")
