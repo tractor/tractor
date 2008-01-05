@@ -162,15 +162,27 @@ createFilesForSession <- function (session)
     uniqueAcquisitions <- sort(unique(acquisitionNumbers))
     uniqueImages <- sort(unique(imageNumbers))
     uniqueSlices <- sort(unique(sliceLocations))
-    nSlices <- length(uniqueSlices)
-    nVolumes <- nDicomFiles / nSlices
-    if (floor(nVolumes) != nVolumes)
-        output(OL$Error, "Number of files (", nDicomFiles, ") is not a multiple of the number of slices detected (", nSlices, ")")
-    else
-        output(OL$Info, "Data set contains ", nVolumes, " volumes; ", nSlices, " slices per volume")
     
-    imageDims <- c(images[[1]]$getDimensions(), nSlices, nVolumes)
-    voxelDims <- c(images[[1]]$getVoxelDimensions(), zVoxDim, 1)
+    if (images[[1]]$getDimensionality() == 3)
+    {
+        volumePerDicomFile <- TRUE
+        nSlices <- images[[1]]$getDimensions()[3]
+        nVolumes <- nDicomFiles
+        imageDims <- c(images[[1]]$getDimensions(), nVolumes)
+        voxelDims <- c(images[[1]]$getVoxelDimensions(), 1)
+    }
+    else
+    {
+        volumePerDicomFile <- FALSE
+        nSlices <- length(uniqueSlices)
+        nVolumes <- nDicomFiles / nSlices
+        if (floor(nVolumes) != nVolumes)
+            output(OL$Error, "Number of files (", nDicomFiles, ") is not a multiple of the number of slices detected (", nSlices, ")")
+        imageDims <- c(images[[1]]$getDimensions(), nSlices, nVolumes)
+        voxelDims <- c(images[[1]]$getVoxelDimensions(), zVoxDim, 1)
+    }
+    
+    output(OL$Info, "Data set contains ", nVolumes, " volumes; ", nSlices, " slices per volume")
     data <- array(NA, dim=imageDims)
 
     volumeBValues <- rep(NA, nVolumes)
@@ -184,23 +196,32 @@ createFilesForSession <- function (session)
         {
             for (i in uniqueImages)
             {
-                slice <- (index %% nSlices) + 1
-                volume <- (index %/% nSlices) + 1
                 sliceLoc <- which(seriesNumbers==s & acquisitionNumbers==a & imageNumbers==i)
+                
+                if (volumePerDicomFile)
+                {
+                    volume <- index + 1
+                    data[,,,volume] <- images[[sliceLoc]]$getData()
+                }
+                else
+                {
+                    slice <- (index %% nSlices) + 1
+                    volume <- (index %/% nSlices) + 1
+                    data[,,slice,volume] <- images[[sliceLoc]]$getData()
+                }
                 
                 if (is.na(volumeBValues[volume]))
                 {
                     volumeBValues[volume] <- bValues[sliceLoc]
                     volumeBVectors[,volume] <- bVectors[,sliceLoc]
                 }
-                data[,,slice,volume] <- images[[sliceLoc]]$getData()
                 
                 index <- index + 1
             }
         }
     }
 
-    imageMetadata <- newMriImageMetadataFromTemplate(images[[1]]$getMetadata(), imageDims=imageDims, voxelDims=voxelDims, origin=rep(0,length(imageDims)))
+    imageMetadata <- newMriImageMetadataFromTemplate(images[[1]]$getMetadata(), imageDims=imageDims, voxelDims=voxelDims, origin=rep(1,length(imageDims)))
     rm(images)
     image <- newMriImageWithData(data, imageMetadata)
     
