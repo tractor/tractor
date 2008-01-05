@@ -197,6 +197,8 @@ createFilesForSession <- function (session)
             for (i in uniqueImages)
             {
                 sliceLoc <- which(seriesNumbers==s & acquisitionNumbers==a & imageNumbers==i)
+                if (length(sliceLoc) == 0)
+                    next
                 
                 if (volumePerDicomFile)
                 {
