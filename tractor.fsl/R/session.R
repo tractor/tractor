@@ -265,7 +265,7 @@ readDiffusionParametersFromMetadata <- function (metadata)
                   metadata$getTagValue(0x0019, 0x10bc),
                   metadata$getTagValue(0x0019, 0x10bd))
         
-        if (is.na(bval) || is.na(bvec))
+        if (is.na(bval))
             return (list(bval=NA, bvec=rep(NA,3), defType="none"))
         else if (bval == 0 || identical(bvec, rep(0,3)))
             return (list(bval=0, bvec=rep(0,3), defType="GE"))
@@ -277,7 +277,7 @@ readDiffusionParametersFromMetadata <- function (metadata)
         bval <- metadata$getTagValue(0x0019, 0x100c)
         bvec <- metadata$getTagValue(0x0019, 0x100e)
         
-        if (is.na(bval) || is.na(bvec))
+        if (is.na(bval))
             return (list(bval=NA, bvec=rep(NA,3), defType="none"))
         else if (bval == 0 || identical(bvec, rep(0,3)))
             return (list(bval=0, bvec=rep(0,3), defType="Siemens"))
