@@ -61,7 +61,7 @@ output <- function (level, ..., default = NULL)
     return (!(matchLocs == -1))
 }
 
-implode <- function (strings, sep = "")
+implode <- function (strings, sep = "", finalSep = NULL)
 {
     strings <- as.character(strings)
     
@@ -71,7 +71,12 @@ implode <- function (strings, sep = "")
     {
         result <- strings[1]
         for (i in 2:length(strings))
-            result <- paste(result, strings[i], sep=sep)    
+        {
+            if (i == length(strings) && !is.null(finalSep))
+                result <- paste(result, strings[i], sep=finalSep)
+            else
+                result <- paste(result, strings[i], sep=sep)
+        }
         return (result)
     }
 }

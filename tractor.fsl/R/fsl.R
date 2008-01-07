@@ -23,7 +23,7 @@ runEddyCorrectWithSession <- function (session, ask = FALSE)
     {
         choice <- -1
         while (!(choice %in% zeroes))
-            choice <- as.numeric(output(OL$Question, "Volumes ", implode(zeroes,sep="/"), " are T2 weighted; use which one as the reference?"))
+            choice <- as.numeric(output(OL$Question, "Volumes ", implode(zeroes,sep=", ",finalSep=" and "), " are T2 weighted; use which one as the reference?"))
     }
     
     output(OL$Info, "Running eddy_correct to remove eddy current induced artefacts...")

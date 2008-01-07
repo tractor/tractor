@@ -13,6 +13,7 @@ runExperiment <- function ()
     fromScratch <- getWithDefault("FromScratch", FALSE)
     betIntensityThreshold <- getWithDefault("BetIntensityThreshold", 0.5)
     betVerticalGradient <- getWithDefault("BetVerticalGradient", 0)
+    flipAxes <- getWithDefault("FlipGradientAxes", NULL, "integer")
     nFibres <- getWithDefault("NumberOfFibres", 2, errorIfInvalid=TRUE)
     howRunBedpost <- getWithDefault("HowRunBedpost", "auto")
     
@@ -47,10 +48,23 @@ runExperiment <- function ()
     
         if (interactive && !imageFileExists(session$getImageFileNameByType("fa")))
         {
-            ans <- output(OL$Question, "Run dtifit for diffusion tensor metrics? [yn]")
-            if (tolower(ans) == "y")
+            runDtifitAgain <- output(OL$Question, "Run dtifit for diffusion tensor metrics? [yn]")
+            while (tolower(runDtifitAgain) == "y")
+            {
+                if (is.null(flipAxes))
+                {
+                    ans <- output(OL$Question, "Flip diffusion gradient vectors along which axes? [123; Enter for none]")
+                    flipAxes <- suppressWarnings(as.numeric(unlist(strsplit(ans,""))))
+                }
+                if (length(flipAxes[!is.na(flipAxes)]) > 0)
+                    flipGradientVectorsForSession(session, flipAxes)
                 try(runDtifitWithSession(session))
+                runDtifitAgain <- output(OL$Question, "Run dtifit again? [yn]")
+                flipAxes <- NULL
+            }
         }
+        else if (!is.null(flipAxes))
+            flipGradientVectorsForSession(session, flipAxes)
         
         try(runBedpostWithSession(session, nFibres, how=howRunBedpost, ask=interactive))
     }
