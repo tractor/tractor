@@ -1,13 +1,21 @@
 .MriSession <- function (.directory)
 {
     .directory <- expandFileName(.directory)
+    .usesOldBedpost <- FALSE
     if (!file.exists(.directory))
         output(OL$Error, "Session directory does not exist")
     
     self <- list(
         getBaseDirectory = function () { return (.directory) },
         
-        getBedpostDirectory = function () { return (file.path(.directory, "combined", "fdt.bedpostX")) },
+        getBedpostDirectory = function ()
+        {
+            bedpostDir <- file.path(.directory, "combined", "fdt.bedpost")
+            bedpostxDir <- file.path(.directory, "combined", "fdt.bedpostX")
+            if (file.exists(bedpostDir) && !file.exists(bedpostxDir))
+                .usesOldBedpost <<- TRUE
+            return (ifelse(.usesOldBedpost, bedpostDir, bedpostxDir))
+        },
         
         getImageByType = function (type, fibrePopulation = 1)
         {
@@ -19,20 +27,27 @@
         
         getImageFileNameByType = function (type, fibrePopulation = 1)
         {
-            if (type == "avf")
-                return (file.path(self$getBedpostDirectory(), paste("mean_f",fibrePopulation,"samples",sep="")))
-            else if (type == "t2")
-                return (file.path(self$getPreBedpostDirectory(), "nodif_brain"))
+            # The getBedpostDirectory() call must be here because its
+            # side-effect (setting .usesOldBedpost) is important
+            preBedpostDir <- self$getPreBedpostDirectory()
+            bedpostDir <- self$getBedpostDirectory()
+            if (.usesOldBedpost)
+                fibrePopulation <- NULL
+            
+            if (type == "t2")
+                return (file.path(preBedpostDir, "nodif_brain"))
             else if (type == "mask")
-                return (file.path(self$getPreBedpostDirectory(), "nodif_brain_mask"))
+                return (file.path(preBedpostDir, "nodif_brain_mask"))
+            else if (type == "avf")
+                return (file.path(bedpostDir, paste("mean_f",fibrePopulation,"samples",sep="")))
             else if (type == "theta")
-                return (file.path(self$getBedpostDirectory(), paste("merged_th",fibrePopulation,"samples",sep="")))
+                return (file.path(bedpostDir, paste("merged_th",fibrePopulation,"samples",sep="")))
             else if (type == "phi")
-                return (file.path(self$getBedpostDirectory(), paste("merged_ph",fibrePopulation,"samples",sep="")))
+                return (file.path(bedpostDir, paste("merged_ph",fibrePopulation,"samples",sep="")))
             else if (type == "fa")
-                return (file.path(self$getPreBedpostDirectory(), "dti_FA"))
+                return (file.path(preBedpostDir, "dti_FA"))
             else if (type == "md")
-                return (file.path(self$getPreBedpostDirectory(), "dti_MD"))
+                return (file.path(preBedpostDir, "dti_MD"))
             else
                 output(OL$Error, "Unknown file type (", type, ") specified")
         },
@@ -74,6 +89,8 @@
         {
             if (!self$isPreprocessed())
                 return (NA)
+            if (.usesOldBedpost)
+                return (1)
             
             # This will give the wrong answer if more than 3 populations were
             # used (but I think Behrens advises against that anyway)
@@ -83,6 +100,12 @@
                     break
             }
             return (i-1)
+        },
+        
+        usesOldBedpost = function ()
+        {
+            self$getBedpostDirectory()
+            return (.usesOldBedpost)
         }
     )
     

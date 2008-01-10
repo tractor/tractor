@@ -3,7 +3,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
     if (!session$isPreprocessed())
-        output(OL$Error, "The specified session has not yet been preprocessed with BEDPOST")
+        output(OL$Error, "The specified session has not yet been fully preprocessed")
     
     mode <- match.arg(mode)
     

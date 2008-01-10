@@ -75,5 +75,8 @@ runExperiment <- function ()
                         dtifitCompleted=imageFileExists(session$getImageFileNameByType("fa")),
                         allPreprocessingCompleted=session$isPreprocessed(),
                         numberOfFibres=session$nFibres())
+    if (session$usesOldBedpost())
+        returnValue <- c(returnValue, list(usesOldBedpost=TRUE))
+    
     invisible (returnValue)
 }
