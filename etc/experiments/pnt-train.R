@@ -36,7 +36,8 @@ runExperiment <- function ()
     }
     
     data <- createDataTableForSplines(trainingSplines, spline, "knot")    
+    write.table(data, file=paste(modelName,"_data.txt",sep=""))
     model <- newMatchingTractModelFromDataTable(data, spline, maxLength=maxKnotCount)
-    save(model, file=modelName)
+    save(model, file=paste(modelName,"Rdata",sep="."))
     model$summarise()
 }

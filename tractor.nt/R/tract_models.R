@@ -178,15 +178,15 @@ newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NUL
         output(OL$Error, "The weight vector must have the same length as the spline data table")
     weights[is.na(data$leftLength)] <- NA
     
+    refLeftLength <- length(grep("^leftSimCosine", colnames(data)))
+    refRightLength <- length(grep("^rightSimCosine", colnames(data)))
+    
     if (is.null(maxLength))
-        maxLength <- max(data$leftLength, data$rightLength, na.rm=TRUE)
+        maxLength <- max(data$leftLength, data$rightLength, refLeftLength, refRightLength, na.rm=TRUE)
     
     leftLengthDistribution <- fitMultinomialDistribution(data$leftLength, const=1, values=0:maxLength, weights=weights)
     rightLengthDistribution <- fitMultinomialDistribution(data$rightLength, const=1, values=0:maxLength, weights=weights)
     lengthDistributions <- list(left=leftLengthDistribution, right=rightLengthDistribution)
-    
-    refLeftLength <- length(grep("^leftSimCosine", colnames(data)))
-    refRightLength <- length(grep("^rightSimCosine", colnames(data)))
     
     cosineDistributions <- list()
     for (i in 1:max(refLeftLength,refRightLength))
