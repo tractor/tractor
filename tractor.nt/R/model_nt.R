@@ -124,6 +124,81 @@ calculatePosteriorsForSplines <- function (splines, matchingModel, nonmatchingMo
     invisible (results)
 }
 
+runMatchingEMForDataTable <- function (data, refSpline, options, lengthCutoff = NULL, lambda = NULL, nullPrior = NULL)
+{
+    if (!isBSplineTract(refSpline))
+        output(OL$Error, "Reference tract must be specified as a BSplineTract object")
+    if (is.null(data$subject))
+        output(OL$Error, "The 'subject' field must be present in the data table")
+    
+    subjects <- factor(data$subject)
+    nSubjects <- nlevels(subjects)
+    nSplines <- tapply(data$subject, subjects, length)
+    validSplines <- tapply(!is.na(data$leftLength), subjects, "[")
+    nValidSplines <- tapply(!is.na(data$leftLength), subjects, sum)
+    
+    if (is.null(nullPrior))
+        nullPriors <- 1/(nValidSplines+1)
+    else
+        nullPriors <- rep(nullPrior, nSubjects)
+    output(OL$Verbose, "Null priors are ", implode(round(nullPriors,5),sep=", "))
+    
+    if (is.null(lengthCutoff))
+        lengthCutoff <- max(data$leftLength, data$rightLength, na.rm=TRUE)
+    output(OL$Verbose, "Length cutoff is ", lengthCutoff)
+    
+    tractPriors <- list()
+    for (s in levels(subjects))
+    {
+        priors <- rep(NA, nSplines[[s]])
+        priors[validSplines[[s]]] <- (1-nullPriors[[s]])/nValidSplines[[s]]
+        tractPriors[[s]] <- priors
+    }
+    
+    previousLogEvidence <- -Inf
+    previousAlphas <- NULL
+    output(OL$Info, "Starting EM algorithm")
+    
+    repeat
+    {
+        matchingModel <- newMatchingTractModelFromDataTable(data, refSpline, lengthCutoff, lambda=lambda, weights=unlist(tractPriors))
+        uninformativeModel <- newUninformativeTractModelFromDataTable(data, lengthCutoff, weights=(1-unlist(tractPriors)))
+        
+        matchedLogLikelihoods <- calculateMatchedLogLikelihoodsForDataTable(data, matchingModel)
+        uninformativeLogLikelihoods <- calculateUninformativeLogLikelihoodsForDataTable(data, uninformativeModel)
+        
+        nMatchedBetter <- sum(matchedLogLikelihoods>uninformativeLogLikelihoods, na.rm=TRUE)
+        output(OL$Verbose, nMatchedBetter, " tracts are explained better by the matching model")
+        
+        alphas <- matchingModel$getAlphas()
+        if (!is.null(previousAlphas))
+        {
+            meanDifference <- mean(abs(alphas - previousAlphas))
+            output(OL$Verbose, "Mean difference in alpha parameters is ", meanDifference)
+            if (meanDifference < 0.1)
+                break
+        }
+        previousAlphas <- alphas
+        
+        logEvidence <- 0
+        for (s in levels(subjects))
+        {
+            posteriors <- calculatePosteriorsFromLikelihoods(matchedLogLikelihoods[subjects==s], uninformativeLogLikelihoods[subjects==s], tractPriors[[s]], nullPriors[[s]])
+            tractPriors[[s]] <- posteriors$tractPosteriors
+            nullPriors[[s]] <- posteriors$nullPosterior
+            logEvidence <- logEvidence + posteriors$logEvidence
+        }
+        
+        output(OL$Verbose, "Log-evidence is ", logEvidence)        
+        if (abs(logEvidence-previousLogEvidence) < 0.1)
+            break
+        previousLogEvidence <- logEvidence
+    }
+    
+    results <- list(tp=tractPriors, np=nullPriors, mm=matchingModel, um=uninformativeModel)
+    invisible (results)
+}
+
 calculatePosteriorsFromLogLikelihoods <- function (matchedLogLikelihoods, nonmatchedLogLikelihoods, tractPriors, nullPrior = 0)
 {
     nTracts <- length(tractPriors)
