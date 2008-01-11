@@ -11,21 +11,13 @@ runExperiment <- function ()
         output(OL$Error, "Centre point must be given as a single vector in 3D space, comma or space separated")
     
     pointType <- getWithDefault("PointType", NULL, mode="character", errorIfMissing=TRUE)
-    pointType <- match.arg(tolower(pointType), c("fsl","r","mm"))
     isStandardPoint <- getWithDefault("CentreInMNISpace", FALSE)
     
     width <- getWithDefault("Width", 7)
     roiName <- getWithDefault("ROIName", "roi")
     
     t2Image <- session$getImageByType("t2")
-    
-    if (pointType == "fsl")
-        centre <- transformFslVoxelToRVoxel(centre)
-    
-    if (isStandardPoint)
-        centre <- transformStandardSpaceSeeds(session, centre, unit=ifelse(pointType=="mm","mm","vox"))
-    else if (pointType == "mm")
-        centre <- transformWorldToRVoxel(centre, t2Image$getMetadata(), useOrigin=TRUE)
+    centre <- getNativeSpacePointForSession(session, centre, pointType, isStandardPoint)
     
     roiImage <- newMriImageAsShapeOverlay("block", t2Image, centre=round(centre), width=width)
     writeMriImageToFile(roiImage, roiName)

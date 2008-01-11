@@ -11,7 +11,6 @@ runExperiment <- function ()
         output(OL$Error, "Seed point must be given as a single vector in 3D space, comma or space separated")
     
     pointType <- getWithDefault("PointType", NULL, mode="character", errorIfMissing=TRUE)
-    pointType <- match.arg(tolower(pointType), c("fsl","r","mm"))
     isStandardSeed <- getWithDefault("SeedInMNISpace", FALSE)
     
     useGradientAscent <- getWithDefault("UseGradientAscent", FALSE)
@@ -26,18 +25,7 @@ runExperiment <- function ()
     vizThreshold <- getWithDefault("VisualisationThreshold", 0.01)
     showSeed <- getWithDefault("ShowSeedPoint", TRUE)
     
-    if (pointType == "fsl")
-        seed <- transformFslVoxelToRVoxel(seed)
-    
-    if (isStandardSeed)
-        seed <- transformStandardSpaceSeeds(session, seed, unit=ifelse(pointType=="mm","mm","vox"))
-    else if (pointType == "mm")
-    {
-        metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("t2"))
-        seed <- transformWorldToRVoxel(seed, metadata, useOrigin=TRUE)
-    }
-    
-    seed <- round(seed)
+    seed <- getNativeSpacePointForSession(session, seed, pointType, isStandardSeed)
     
     if (useGradientAscent)
     {
