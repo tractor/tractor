@@ -84,3 +84,74 @@ createProjectionGraphic <- function (image, axis, device = c("internal","png"), 
         unlink(ensureFileSuffix(tempFile, "png"))
     }
 }
+
+createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sliceLoc = NULL, device = c("internal","png"), alphaImages = NULL, prefix = "image", zoomFactor = 1, filter = "Mitchell")
+{
+    if (!is.list(images) || !is.list(colourScales))
+        output(OL$Error, "Images and colour scales must be given as lists")
+    if (!is.null(alphaImages) && !is.list(alphaImages))
+        output(OL$Error, "Alpha images must be specified in a list")
+    if (!is.numeric(axes) || any(axes < 1 | axes > 3))
+        output(OL$Error, "Projection axes must be specified as a combination of 1 (x), 2 (y) or 3 (z)")
+    
+    modes <- match.arg(modes, c("slice","projection"), several.ok=TRUE)
+    if (any(modes == "slice") && is.null(sliceLoc))
+        output(OL$Error, "Slice location must be specified")
+    
+    device <- match.arg(device)
+    
+    nImages <- length(images)
+    if (!all(c(length(modes),length(colourScales)) == nImages))
+        output(OL$Error, "Lengths of 'images', 'modes' and 'colourScales' do not all match")
+    if (!is.null(alphaImages) && length(alphaImages) != nImages)
+        output(OL$Error, "Lengths of 'images' and 'alphaImages' do not match")
+    
+    if (device == "png")
+    {
+        projectionNames <- c("sagittal", "coronal", "axial")
+        imageFiles <- tempfile(rep(prefix, 2*nImages))
+        combinedFiles <- tempfile(rep(prefix, 2))
+        
+        for (axis in axes)
+        {
+            if (!is.null(sliceLoc))
+            {
+                currentSliceLoc <- sliceLoc
+                currentSliceLoc[setdiff(1:3,axis)] <- NA
+            }
+            currentFile <- paste(prefix, projectionNames[axis], sep="_")
+            
+            for (i in seq_along(images))
+            {
+                if (modes[i] == "slice")
+                {
+                    createSliceGraphic(images[[i]], currentSliceLoc[1], currentSliceLoc[2], currentSliceLoc[3], device="png", colourScale=colourScales[[i]], file=imageFiles[2*i-1], zoomFactor=zoomFactor, filter=filter)
+                    if (!is.null(alphaImages[[i]]))
+                        createSliceGraphic(alphaImages[[i]], currentSliceLoc[1], currentSliceLoc[2], currentSliceLoc[3], device="png", colourScale=1, file=imageFiles[2*i], zoomFactor=zoomFactor, filter=filter)
+                }
+                else
+                {
+                    createProjectionGraphic(images[[i]], axis, device="png", colourScale=colourScales[[i]], file=imageFiles[2*i-1], zoomFactor=zoomFactor, filter=filter)
+                    if (!is.null(alphaImages[[i]]))
+                        createProjectionGraphic(alphaImages[[i]], axis, device="png", colourScale=1, file=imageFiles[2*i], zoomFactor=zoomFactor, filter=filter)
+                }
+                
+                if (i == 1)
+                    file.copy(ensureFileSuffix(imageFiles[1],"png"), ensureFileSuffix(combinedFiles[1],"png"), overwrite=TRUE)
+                else
+                {
+                    file.copy(ensureFileSuffix(combinedFiles[1],"png"), ensureFileSuffix(combinedFiles[2],"png"), overwrite=TRUE)
+                    if (is.null(alphaImages[[i]]))
+                        superimposePng(combinedFiles[2], imageFiles[2*i-1], combinedFiles[1])
+                    else
+                        superimposePng(combinedFiles[2], imageFiles[2*i-1], combinedFiles[1], imageFiles[2*i])
+                }
+            }
+            
+            file.copy(ensureFileSuffix(combinedFiles[1],"png"), ensureFileSuffix(currentFile,"png"), overwrite=TRUE)
+            
+            unlink(imageFiles)
+            unlink(combinedFiles)
+        }
+    }
+}
