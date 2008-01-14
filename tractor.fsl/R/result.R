@@ -25,7 +25,7 @@ writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zo
         output(OL$Error, "Projection axes must be specified as a combination of 1 (x), 2 (y) or 3 (z)")
     
     projectionNames <- c("sagittal", "coronal", "axial")
-    tmpFiles <- tempfile(rep(prefix, 6))
+    tmpFiles <- tempfile(rep(prefix, 3))
     
     if (!isMriImage(baseImage))
         baseImage <- probtrackResult$session$getImageByType(baseImage)
@@ -50,29 +50,22 @@ writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zo
         currentDims <- pngDims[setdiff(1:3,axis)]
         currentFile <- paste(prefix, projectionNames[axis], sep="_")
         
-        createSliceGraphic(baseImage, seed[1], seed[2], seed[3], device="png", file=tmpFiles[1])
-        createProjectionGraphic(finalImage, axis, device="png", colourScale=colourScale, file=tmpFiles[2])
-        createProjectionGraphic(logFinalImage, axis, device="png", colourScale=1, file=tmpFiles[3])
-        
-        interpolatePng(tmpFiles[1], tmpFiles[4], currentDims, "Sinc")
-        interpolatePng(tmpFiles[2], tmpFiles[5], currentDims, "Sinc")
-        interpolatePng(tmpFiles[3], tmpFiles[6], currentDims, "Sinc")
+        createSliceGraphic(baseImage, seed[1], seed[2], seed[3], device="png", file=tmpFiles[1], filter="Sinc")
+        createProjectionGraphic(finalImage, axis, device="png", colourScale=colourScale, file=tmpFiles[2], filter="Sinc")
+        createProjectionGraphic(logFinalImage, axis, device="png", colourScale=1, file=tmpFiles[3], filter="Sinc")
         
         if (showSeed)
         {
-            moreTmpFiles <- tempfile(rep(prefix, 5))
-            createProjectionGraphic(seedImage, axis, device="png", colourScale="green", file=moreTmpFiles[1])
-            createProjectionGraphic(seedImage, axis, device="png", colourScale=1, file=moreTmpFiles[2])
+            moreTmpFiles <- tempfile(rep(prefix, 3))
+            createProjectionGraphic(seedImage, axis, device="png", colourScale="green", file=moreTmpFiles[1], filter="Sinc")
+            createProjectionGraphic(seedImage, axis, device="png", colourScale=1, file=moreTmpFiles[2], filter="Sinc")
             
-            interpolatePng(moreTmpFiles[1], moreTmpFiles[3], currentDims, "Sinc")
-            interpolatePng(moreTmpFiles[2], moreTmpFiles[4], currentDims, "Sinc")
-            
-            superimposePng(tmpFiles[4], tmpFiles[5], moreTmpFiles[5], tmpFiles[6])
-            superimposePng(moreTmpFiles[5], moreTmpFiles[3], currentFile, moreTmpFiles[4])
+            superimposePng(tmpFiles[1], tmpFiles[2], moreTmpFiles[3], tmpFiles[3])
+            superimposePng(moreTmpFiles[3], moreTmpFiles[1], currentFile, moreTmpFiles[2])
             unlink(moreTmpFiles)
         }
         else
-            superimposePng(tmpFiles[4], tmpFiles[5], currentFile, tmpFiles[6])
+            superimposePng(tmpFiles[1], tmpFiles[2], currentFile, tmpFiles[3])
 
         unlink(tmpFiles)
     }
