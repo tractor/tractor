@@ -124,7 +124,7 @@ calculatePosteriorsForSplines <- function (splines, matchingModel, nonmatchingMo
     invisible (results)
 }
 
-runMatchingEMForDataTable <- function (data, refSpline, options, lengthCutoff = NULL, lambda = NULL, nullPrior = NULL)
+runMatchingEMForDataTable <- function (data, refSpline, lengthCutoff = NULL, lambda = NULL, nullPrior = NULL)
 {
     if (!isBSplineTract(refSpline))
         output(OL$Error, "Reference tract must be specified as a BSplineTract object")
