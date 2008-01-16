@@ -19,17 +19,17 @@ runExperiment <- function ()
     
     if (session$isPreprocessed())
         output(OL$Info, "This session directory is already preprocessed")
-    else
+    else try(
     {
         if (fromScratch || !file.exists(session$getWorkingDirectory()))
-            try(createFilesForSession(session))
+            createFilesForSession(session)
     
         if (!imageFileExists(file.path(targetDir, "nodif")))
-            try(runEddyCorrectWithSession(session, ask=interactive))
+            runEddyCorrectWithSession(session, ask=interactive)
     
         if (!imageFileExists(session$getImageFileNameByType("mask")))
         {
-            try(runBetWithSession(session, betIntensityThreshold, betVerticalGradient, show=interactive))
+            runBetWithSession(session, betIntensityThreshold, betVerticalGradient, show=interactive)
         
             if (interactive)
             {
@@ -40,7 +40,7 @@ runExperiment <- function ()
                     betIntensityThreshold <- as.numeric(output(OL$Question, "Intensity threshold? [0 to 1]"))
                     output(OL$Info, "Previous vertical gradient was ", betVerticalGradient, "; positive values shift the outline downwards")
                     betVerticalGradient <- as.numeric(output(OL$Question, "Vertical gradient? [-1 to 1]"))
-                    try(runBetWithSession(session, betIntensityThreshold, betVerticalGradient, show=TRUE))
+                    runBetWithSession(session, betIntensityThreshold, betVerticalGradient, show=TRUE)
                     runBetAgain <- output(OL$Question, "Run brain extraction tool again? [yn]")
                 }
             }
@@ -58,7 +58,7 @@ runExperiment <- function ()
                 }
                 if (length(flipAxes[!is.na(flipAxes)]) > 0)
                     flipGradientVectorsForSession(session, flipAxes)
-                try(runDtifitWithSession(session))
+                runDtifitWithSession(session)
                 runDtifitAgain <- output(OL$Question, "Run dtifit again? [yn]")
                 flipAxes <- NULL
             }
@@ -66,8 +66,8 @@ runExperiment <- function ()
         else if (!is.null(flipAxes))
             flipGradientVectorsForSession(session, flipAxes)
         
-        try(runBedpostWithSession(session, nFibres, how=howRunBedpost, ask=interactive))
-    }
+        runBedpostWithSession(session, nFibres, how=howRunBedpost, ask=interactive)
+    } )
     
     returnValue <- list(workingDirectoryExists=file.exists(session$getWorkingDirectory()),
                         eddyCorrectCompleted=imageFileExists(file.path(targetDir, "nodif")),
