@@ -181,6 +181,9 @@ createFilesForSession <- function (session)
     }
 
     nDicomFiles <- count
+    if (nDicomFiles == 0)
+        output(OL$Error, "No readable DICOM files were found")
+    
     uniqueSeries <- sort(unique(seriesNumbers))
     uniqueAcquisitions <- sort(unique(acquisitionNumbers))
     uniqueImages <- sort(unique(imageNumbers))
