@@ -7,9 +7,13 @@ runEddyCorrectWithSession <- function (session, ask = FALSE)
     if (!file.exists(file.path(targetDir,"bvals")) || !file.exists(file.path(targetDir,"bvecs")))
         output(OL$Error, "The specified session does not contain \"bvals\" and \"bvecs\" files")
     bvals <- as.vector(read.table(file.path(targetDir, "bvals")))
-    zeroes <- which(bvals == 0)
+    if (min(bvals) != 0)
+        output(OL$Info, "Minimal b-value in this data set is ", min(bvals), " rather than 0")
     
-    if (length(zeroes) == 1)
+    zeroes <- which(bvals == min(bvals))
+    if (length(zeroes) == 0)
+        output(OL$Error, "No b-values are specified for this data set")
+    else if (length(zeroes) == 1)
     {
         choice <- zeroes
         output(OL$Info, "Volume ", choice, " is the only T2 weighted volume in the data set")
