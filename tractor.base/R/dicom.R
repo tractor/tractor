@@ -113,20 +113,32 @@ newMriImageMetadataFromDicom <- function (fileName)
 
 newMriImageMetadataFromDicomMetadata <- function (dicom)
 {
-    rows <- dicom$getTagValue(0x0028, 0x0010)
-    columns <- dicom$getTagValue(0x0028, 0x0011)
+    acquisitionMatrix <- dicom$getTagValue(0x0018, 0x1310)
+    rows <- max(acquisitionMatrix[1], acquisitionMatrix[3])
+    columns <- max(acquisitionMatrix[2], acquisitionMatrix[4])
+    dataRows <- dicom$getTagValue(0x0028, 0x0010)
+    dataColumns <- dicom$getTagValue(0x0028, 0x0011)
     voxdims <- dicom$getTagValue(0x0028, 0x0030)
     endian <- dicom$getEndianness()
     
     slices <- dicom$getTagValue(0x0019, 0x100a)
-    nDims <- ifelse(is.na(slices), 2, 3)
     if (is.na(slices))
-        slices <- NULL
+    {
+        if (rows == dataRows && columns == dataColumns)
+            slices <- NULL
+        else
+        {
+            slices <- (dataRows/rows) * (dataColumns/columns)
+            if (slices != floor(slices))
+                output(OL$Error, "Image dimensions are not a multiple of the acquisition matrix size")
+        }
+    }
+    
+    if (is.null(slices))
+        nDims <- 2
     else
     {
-        acquisitionMatrix <- dicom$getTagValue(0x0018, 0x1310)
-        rows <- max(acquisitionMatrix[1], acquisitionMatrix[3])
-        columns <- max(acquisitionMatrix[2], acquisitionMatrix[4])
+        nDims <- 3
         voxdims <- c(voxdims, dicom$getTagValue(0x0018, 0x0050))
     }
     
@@ -278,6 +290,11 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
             currentGroup <- readBin(connection, "integer", n=1, size=2, signed=FALSE, endian=endian)
             if (length(currentGroup) == 0)
                 break
+            else if (currentGroup == 0x0800)
+            {
+                currentGroup <- 0x0008
+                endian <- setdiff(c("big","little"), endian)
+            }
             currentElement <- readBin(connection, "integer", n=1, size=2, signed=FALSE, endian=endian)
             
             if (explicitTypes)
@@ -340,8 +357,13 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
         
         close(connection)
 
-        tags <- data.frame(groups, elements, types, values)
-        invisible (.DicomMetadata(fileName, tags, tagOffset, dataOffset, dataLength, explicitTypes, endian))
+        if (is.null(dataOffset))
+            invisible (NULL)
+        else
+        {
+            tags <- data.frame(groups, elements, types, values)
+            invisible (.DicomMetadata(fileName, tags, tagOffset, dataOffset, dataLength, explicitTypes, endian))
+        }
     }
     else
     {
