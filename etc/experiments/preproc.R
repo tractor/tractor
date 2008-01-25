@@ -17,7 +17,7 @@ runExperiment <- function ()
     nFibres <- getWithDefault("NumberOfFibres", 2, errorIfInvalid=TRUE)
     howRunBedpost <- getWithDefault("HowRunBedpost", "auto")
     
-    if (session$isPreprocessed())
+    if (!fromScratch && session$isPreprocessed() && session$nFibres() == nFibres)
         output(OL$Info, "This session directory is already preprocessed")
     else try(
     {
