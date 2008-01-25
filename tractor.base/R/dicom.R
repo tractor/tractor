@@ -121,6 +121,11 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
     voxdims <- dicom$getTagValue(0x0028, 0x0030)
     endian <- dicom$getEndianness()
     
+    if (is.na(rows))
+        rows <- dataRows
+    if (is.na(columns))
+        columns <- dataColumns
+    
     slices <- dicom$getTagValue(0x0019, 0x100a)
     if (is.na(slices))
     {
