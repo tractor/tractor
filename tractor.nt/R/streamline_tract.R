@@ -343,8 +343,8 @@ newStreamlineTractWithSpacingThreshold <- function (tract, maxSeparation)
     if (!identical(c(leftStop,rightStop), c(1,nPoints)))
         output(OL$Info, "Truncating streamline to avoid large space between points")
     
-    tract <- .StreamlineTract(line[leftStop:rightStop,], (seedPoint-leftStop+1), tract$getOriginalSeedPoint(), tract$getMetadata())
-    invisible (tract)
+    newTract <- .StreamlineTract(line[leftStop:rightStop,], (seedPoint-leftStop+1), tract$getOriginalSeedPoint(), tract$getMetadata())
+    invisible (newTract)
 }
 
 newStreamlineTractWithCurvatureThreshold <- function (tract, maxAngle, isRadians = FALSE)
@@ -369,8 +369,28 @@ newStreamlineTractWithCurvatureThreshold <- function (tract, maxAngle, isRadians
     if (!identical(c(leftStop,rightStop), c(1,nPoints)))
         output(OL$Info, "Truncating streamline to avoid sharp curvature")
     
-    tract <- .StreamlineTract(line[leftStop:rightStop,], (seedPoint-leftStop+1), tract$getOriginalSeedPoint(), tract$getMetadata())
-    invisible (tract)
+    newTract <- .StreamlineTract(line[leftStop:rightStop,], (seedPoint-leftStop+1), tract$getOriginalSeedPoint(), tract$getMetadata())
+    invisible (newTract)
+}
+
+newStreamlineTractByTrimming <- function (tract, trimLeft, trimRight)
+{
+    if (!isStreamlineTract(tract))
+        output(OL$Error, "The specified tract is not a valid StreamlineTract object")
+    if (tract$getCoordinateUnit() != "mm")
+        output(OL$Error, "This function requires a tract which uses a world coordinate system")
+    
+    line <- tract$getLine()
+    spacings <- tract$getPointSpacings()
+    
+    leftSum <- cumsum(spacings)
+    rightSum <- cumsum(rev(spacings))
+    
+    leftStop <- ifelse(max(leftSum) > trimLeft, min(which(leftSum > trimLeft)), 1)
+    rightStop <- tract$nPoints() - ifelse(max(rightSum) > trimRight, min(which(rightSum > trimRight))-1, 0)
+    
+    newTract <- .StreamlineTract(line[leftStop:rightStop,], (tract$getSeedIndex()-leftStop+1), tract$getOriginalSeedPoint(), tract$getMetadata())
+    invisible (newTract)
 }
 
 rescalePoints <- function (points, newUnit, metadata, seed)
