@@ -16,7 +16,6 @@
             controlPoints[,1] <- .splineModels[[1]]$coefficients[indices] + .splineModels[[1]]$coefficients[1]
             controlPoints[,2] <- .splineModels[[2]]$coefficients[indices] + .splineModels[[2]]$coefficients[1]
             controlPoints[,3] <- .splineModels[[3]]$coefficients[indices] + .splineModels[[3]]$coefficients[1]
-            
             return (controlPoints)
         },
         
@@ -25,6 +24,14 @@
         getKnotPositions = function () { return (attr(.splineBasis, "knots")) },
         
         getKnotSpacing = function () { return (.knotSpacings[1]) },
+        
+        getLineAtPoints = function (tValues)
+        {
+            locsX <- as.vector(predict(.splineModels[[1]], data.frame(t=tValues)))
+            locsY <- as.vector(predict(.splineModels[[2]], data.frame(t=tValues)))
+            locsZ <- as.vector(predict(.splineModels[[3]], data.frame(t=tValues)))
+            return (matrix(c(locsX, locsY, locsZ), ncol=3))
+        },
         
         getSeedControlPoint = function () { return (.seedKnot+1) },
         
