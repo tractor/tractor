@@ -341,7 +341,33 @@ newStreamlineTractWithSpacingThreshold <- function (tract, maxSeparation)
     rightStop <- ifelse(length(rightWide) > 0, min(rightWide), nPoints)
     
     if (!identical(c(leftStop,rightStop), c(1,nPoints)))
-        output(OL$Info, "Truncating median line to avoid large space between points")
+        output(OL$Info, "Truncating streamline to avoid large space between points")
+    
+    tract <- .StreamlineTract(line[leftStop:rightStop,], (seedPoint-leftStop+1), tract$getOriginalSeedPoint(), tract$getMetadata())
+    invisible (tract)
+}
+
+newStreamlineTractWithCurvatureThreshold <- function (tract, maxAngle, isRadians = FALSE)
+{
+    if (!isStreamlineTract(tract))
+        output(OL$Error, "The specified tract is not a valid StreamlineTract object")
+    
+    if (!isRadians)
+        maxAngle <- maxAngle / 180 * pi
+    
+    line <- tract$getLine()
+    seedPoint <- tract$getSeedIndex()
+    nPoints <- tract$nPoints()
+    steps <- characteriseStepVectors(line, seedPoint)
+    
+    leftSharp <- which(steps$leftAngles > maxAngle)
+    rightSharp <- which(steps$rightAngles > maxAngle)
+    
+    leftStop <- ifelse(length(leftSharp) > 0, max(leftSharp), 1)
+    rightStop <- ifelse(length(rightSharp) > 0, min(rightSharp)-1, nPoints)
+    
+    if (!identical(c(leftStop,rightStop), c(1,nPoints)))
+        output(OL$Info, "Truncating streamline to avoid sharp curvature")
     
     tract <- .StreamlineTract(line[leftStop:rightStop,], (seedPoint-leftStop+1), tract$getOriginalSeedPoint(), tract$getMetadata())
     invisible (tract)
