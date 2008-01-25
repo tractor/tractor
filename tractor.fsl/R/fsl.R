@@ -94,6 +94,8 @@ runBedpostWithSession <- function (session, nFibres = 2, how = c("auto","screen"
     
     if (tolower(ans) == "y")
     {
+        unlink(session$getBedpostDirectory(), recursive=TRUE)
+        
         screenAvailable <- !is.null(locateExecutable("screen", errorIfMissing=FALSE))
         if (how == "screen" || (how == "auto" && screenAvailable))
         {
