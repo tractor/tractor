@@ -235,7 +235,7 @@ calculateMatchedLogLikelihoodsForDataTable <- function (data, matchingModel)
     {
         # Implicitly use a uniform distribution (i.e. fixed log likelihood
         # contribution of 0) if the model is not trained at this point
-        if (!is.na(matchingModel$getCosineDistribution(j)))
+        if (is.list(matchingModel$getCosineDistribution(j)))
         {
             contribs <- evaluateBetaDistribution(data[[paste("leftSimCosine",j,sep="")]], matchingModel$getCosineDistribution(j), log=TRUE)
             lls <- lls + replace(contribs, is.na(contribs), 0)
@@ -243,7 +243,7 @@ calculateMatchedLogLikelihoodsForDataTable <- function (data, matchingModel)
     }
     for (j in 2:matchingModel$getRefRightLength())
     {
-        if (!is.na(matchingModel$getCosineDistribution(j)))
+        if (is.list(matchingModel$getCosineDistribution(j)))
         {
             contribs <- evaluateBetaDistribution(data[[paste("rightSimCosine",j,sep="")]], matchingModel$getCosineDistribution(j), log=TRUE)
             lls <- lls + replace(contribs, is.na(contribs), 0)
