@@ -183,7 +183,7 @@ runMatchingEMForDataTable <- function (data, refSpline, lengthCutoff = NULL, lam
         logEvidence <- 0
         for (s in levels(subjects))
         {
-            posteriors <- calculatePosteriorsFromLikelihoods(matchedLogLikelihoods[subjects==s], uninformativeLogLikelihoods[subjects==s], tractPriors[[s]], nullPriors[[s]])
+            posteriors <- calculatePosteriorsFromLogLikelihoods(matchedLogLikelihoods[subjects==s], uninformativeLogLikelihoods[subjects==s], tractPriors[[s]], nullPriors[[s]])
             tractPriors[[s]] <- posteriors$tractPosteriors
             nullPriors[[s]] <- posteriors$nullPosterior
             logEvidence <- logEvidence + posteriors$logEvidence
