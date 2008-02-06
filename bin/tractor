@@ -142,8 +142,18 @@ if [ $expect_available -eq 0 ]
     cat >"$expect_file" <<EOF
 log_user 0
 spawn R --quiet --no-save --no-restore
-set timeout 2
-send "source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()\n"
+set timeout 3
+send "source('$script_file')\n"
+expect -re ">.+\r\n"
+send "setOutputLevel($output_level)\n"
+expect -re ">.+\r\n"
+send "setwd('$working_dir')\n"
+expect -re ">.+\r\n"
+send "createWorkspaceFromYaml('$config_file')\n"
+expect -re ">.+\r\n"
+send "createWorkspaceFromYaml(text='$args')\n"
+expect -re ">.+\r\n"
+send "results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()\n"
 expect -re ">.+\r\n"
 interact {
   -o
