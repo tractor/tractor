@@ -10,10 +10,13 @@ install-base:
 install-fsl:
 	$(R) CMD INSTALL tractor.fsl
 
+install-camino:
+	$(R) CMD INSTALL tractor.camino
+
 install-nt:
 	$(R) CMD INSTALL tractor.nt
 
-install: install-base install-fsl install-nt
+install: install-base install-fsl install-camino install-nt
 
 install-extras:
 	@ mkdir -p ~/.tractor
