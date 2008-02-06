@@ -10,7 +10,7 @@ newMriImageFromCamino <- function (fileName, metadata)
         caminoDims <- dims
     nVoxels <- prod(dims)
     
-    suffix <- sub(".+\\.([BL][a-z]+)$", "\1", fileName, perl=TRUE)
+    suffix <- sub(".+\\.([BL][a-z]+)$", "\\1", fileName, perl=TRUE)
     endian <- ifelse(substr(suffix,1,1)=="B", "big", "little")
     typeIndex <- which(.Camino$typeNames == substr(suffix,2,nchar(suffix)))
     if (length(typeIndex) != 1)
@@ -64,10 +64,7 @@ writeMriImageToCamino <- function (image, fileName, gzipped = FALSE, datatype = 
     typeIndex <- which(datatypeMatches)
     
     data <- image$getData()
-    if (.Camino$typesR[typeIndex] == "integer")
-        data <- as.integer(data)
-    else
-        data <- as.double(data)
+    storage.mode(data) <- .Camino$typesR[typeIndex]
     
     # Camino uses voxel-ordered data files
     if (image$getDimensionality() == 4)
@@ -78,6 +75,6 @@ writeMriImageToCamino <- function (image, fileName, gzipped = FALSE, datatype = 
     
     # Image data
     connection <- fileFun(fileName, "w+b")
-    writeBin(data, connection, size=.Camino$sizes[typeIndex], endian="big")
+    writeBin(as.vector(data), connection, size=.Camino$sizes[typeIndex], endian="big")
     close(connection)
 }
