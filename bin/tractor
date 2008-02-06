@@ -143,17 +143,11 @@ if [ $expect_available -eq 0 ]
 log_user 0
 spawn R --quiet --no-save --no-restore
 set timeout 2
-send "source('$script_file')\n"
-send "setOutputLevel($output_level)\n"
-send "setwd('$working_dir')\n"
-send "createWorkspaceFromYaml('$config_file')\n"
-send "createWorkspaceFromYaml(text='$args')\n"
-send "results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()\n"
+send "source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()\n"
 expect -re ">.+\r\n"
 interact {
   -o
-  -re " >.+\r\n"  { send_user "\$interact_out(0,string)" }
-  -re ">.+\r\n"   {}
+  -re "\n>.+\r\n"   { send_user "\n" }
 }
 EOF
     expect -f $expect_file | tee $log_file
