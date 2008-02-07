@@ -6,7 +6,7 @@ runEddyCorrectWithSession <- function (session, ask = FALSE)
     targetDir <- session$getPreBedpostDirectory()
     if (!file.exists(file.path(targetDir,"bvals")) || !file.exists(file.path(targetDir,"bvecs")))
         output(OL$Error, "The specified session does not contain \"bvals\" and \"bvecs\" files")
-    bvals <- as.vector(read.table(file.path(targetDir, "bvals")))
+    bvals <- unlist(read.table(file.path(targetDir, "bvals")))
     if (min(bvals) != 0)
         output(OL$Info, "Minimal b-value in this data set is ", min(bvals), " rather than 0")
     
