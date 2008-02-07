@@ -5,5 +5,6 @@ runExperiment <- function ()
 {
     requireArguments("source file")
     image <- newMriImageFromFile(Arguments[1])
-    writeMriImageToCamino(image, image$getSource())
+    fileName <- writeMriImageToCamino(image, image$getSource())
+    return (list(fileName=fileName))
 }

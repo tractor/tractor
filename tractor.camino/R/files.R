@@ -77,4 +77,6 @@ writeMriImageToCamino <- function (image, fileName, gzipped = FALSE, datatype = 
     connection <- fileFun(fileName, "w+b")
     writeBin(as.vector(data), connection, size=.Camino$sizes[typeIndex], endian="big")
     close(connection)
+    
+    invisible (fileName)
 }

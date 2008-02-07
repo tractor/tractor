@@ -130,4 +130,6 @@ writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, format =
         writeMriImageToAnalyze(image, fileNames, gzipped=params$gzipped, datatype=datatype)
     else if (params$format == "Nifti")
         writeMriImageToNifti(image, fileNames, gzipped=params$gzipped, datatype=datatype)
+    
+    invisible (fileNames)
 }
