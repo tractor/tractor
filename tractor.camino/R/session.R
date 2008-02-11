@@ -40,7 +40,8 @@ createCaminoFilesForSession <- function (session, diffusionTime = NULL)
     for (i in volumeOrder)
     {
         modQ <- sqrt(bvals[i] * 1e6 / diffusionTime)
-        scheme <- c(scheme, bvecs[,i]*modQ)
+        bvecLength <- vectorLength(bvecs[,i])
+        scheme <- c(scheme, bvecs[,i] / ifelse(bvecLength==0,1,bvecLength) * modQ)
     }
     scheme <- round(scheme, 3)
     write.table(as.matrix(scheme), file.path(caminoDir,"sequence.scheme"), row.names=FALSE, col.names=FALSE)
