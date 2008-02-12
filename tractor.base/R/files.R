@@ -98,6 +98,9 @@ newMriImageFromFile <- function (fileName, fileType = NULL)
 
 writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, format = NA, singleFile = NA, gzipped = NA, datatype = NULL, overwrite = TRUE)
 {
+    if (!isMriImage(image))
+        output(OL$Error, "The specified image is not an MriImage object")
+    
     if (!is.null(fileName))
         fileName <- expandFileName(fileName)
     else if (image$isInternal())
