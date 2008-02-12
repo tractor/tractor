@@ -34,7 +34,7 @@ writePng <- function (data, colourScale = 1, fileName = NULL)
         
     dims <- dim(data)
     if (length(dims) != 2)
-        stop("Can only write 2D array data to a PNG file")
+        output(OL$Error, "Can only write 2D array data to a PNG file")
     
     fileName <- ensureFileSuffix(fileName, "png")
     scale <- getColourScale(colourScale)
