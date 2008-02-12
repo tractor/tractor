@@ -4,7 +4,7 @@ suppressPackageStartupMessages(require(tractor.nt))
 runExperiment <- function ()
 {
     refTractFile <- getWithDefault("ReferenceTractFile", NULL, "character", errorIfMissing=TRUE)
-    dataFile <- getWithDefault("DatasetFile", NULL, "character", errorIfMissing=TRUE)
+    dataFile <- getWithDefault("TrainingDatasetFile", NULL, "character", errorIfMissing=TRUE)
     maxKnotCount <- getWithDefault("MaximumKnotCount", NULL, "integer")
     modelName <- getWithDefault("ModelName", "model")
     
