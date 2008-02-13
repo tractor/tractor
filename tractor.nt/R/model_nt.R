@@ -41,24 +41,6 @@ referenceSplineTractWithOptions <- function (options, refSession, refSeed)
     invisible (list(spline=refSpline, options=options))
 }
 
-buildMaxLikelihoodMatchingModel <- function (refSession, refSeed, otherSessions, otherSeeds, options, lengthCutoff = 50)
-{
-    if (length(otherSessions) != nrow(otherSeeds))
-        output(OL$Error, "Dimensions of matching session list and seed matrix do not match")
-    
-    reference <- referenceSplineTractWithOptions(options, refSession, refSeed)
-    
-    otherSplines <- list()
-    for (i in seq_along(otherSessions))
-    {
-        spline <- splineTractWithOptions(reference$options, otherSessions[[i]], otherSeeds[i,], refSession)
-        otherSplines <- c(otherSplines, list(spline))
-    }
-    
-    matchingModel <- newMatchingTractModelFromSplines(reference$spline, otherSplines, lengthCutoff, reference$options$pointType)
-    invisible (list(model=matchingModel, splines=otherSplines, options=reference$options))
-}
-
 calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession, options, searchWidth = 7, avfThreshold = 0.2)
 {
     avf <- testSession$getImageByType("avf")
@@ -88,39 +70,31 @@ calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession,
     invisible (splines)
 }
 
-calculatePosteriorsForSplines <- function (splines, matchingModel, nonmatchingModel, nullPrior = NULL)
+calculatePosteriorsForDataTable <- function (data, matchingModel)
 {
-    if (!is.list(splines))
-        output(OL$Error, "Tracts must be specified as a list of BSplineTract objects")
+    if (is.null(data$subject))
+        data <- cbind(data, data.frame(subject=rep(1,nrow(data))))
     
-    validSessions <- which(!is.na(splines))
-    nValidSessions <- length(validSessions)
-    output(OL$Info, "Using ", nValidSessions, " of ", length(splines), " possible seed points")
+    subjects <- factor(data$subject)
+    nSubjects <- nlevels(subjects)
+    nSplines <- tapply(data$subject, subjects, length)
+    validSplines <- tapply(!is.na(data$leftLength), subjects, "[")
+    nValidSplines <- tapply(!is.na(data$leftLength), subjects, sum)
     
-    if (is.null(nullPrior))
-        nullPrior <- 1/(nValidSessions+1)
-    tractPriors <- rep((1-nullPrior)/nValidSessions, nValidSessions)
-    output(OL$Info, "Null match probability is ", round(nullPrior,5), "; other prior values are ", round(tractPriors[1],5))
+    matchedLogLikelihoods <- calculateMatchedLogLikelihoodsForDataTable(data, matchingModel)
     
-    matchedLogLikelihoods <- rep(NA, nValidSessions)
-    nonmatchedLogLikelihoods <- rep(NA, nValidSessions)
-    for (i in validSessions)
+    tractPosteriors <- nullPosteriors <- list()
+    for (s in levels(subjects))
     {
-        j <- which(validSessions == i)
-        matchedLogLikelihoods[j] <- calculateMatchedLogLikelihoodForSpline(splines[[i]], matchingModel)
-        nonmatchedLogLikelihoods[j] <- calculateNonmatchedLogLikelihoodForSpline(splines[[i]], nonmatchingModel)
+        priors <- rep(NA, nSplines[[s]])
+        priors[validSplines[[s]]] <- 1 / nValidSplines[[s]]
+        
+        posteriors <- calculatePosteriorsFromLogLikelihoods(matchedLogLikelihoods[subjects==s], rep(1,nValidSplines[[s]]), priors)
+        tractPosteriors[[s]] <- posteriors$tractPosteriors
+        nullPosteriors[[s]] <- posteriors$nullPosterior
     }
     
-    oneModelPosteriors <- calculatePosteriorsFromLikelihoods(matchedLogLikelihoods, rep(1,nValidSessions), tractPriors, 0)
-    twoModelPosteriors <- calculatePosteriorsFromLikelihoods(matchedLogLikelihoods, nonmatchedLogLikelihoods, tractPriors, nullPrior)
-    
-    results <- list(tp1=oneModelPosteriors$tractPosteriors,
-                    np1=oneModelPosteriors$nullPosterior,
-                    tp2=twoModelPosteriors$tractPosteriors,
-                    np2=twoModelPosteriors$nullPosterior,
-                    mll=matchedLogLikelihoods,
-                    nll=nonmatchedLogLikelihoods,
-                    validSessions=validSessions)    
+    results <- list(tp=tractPosteriors, np=nullPosteriors, mm=matchingModel)
     invisible (results)
 }
 
