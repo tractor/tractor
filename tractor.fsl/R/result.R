@@ -89,7 +89,7 @@ createWeightingAndMetricImagesForResult <- function (probtrackResult, threshold 
     if (!is.null(threshold))
         threshold <- round(threshold * probtrackResult$nSamples)
     
-    images <- createWeightingAndMetricImages(probtrackResult$session, tractImage, ..., threshold=threshold)
+    images <- createWeightingAndMetricImages(tractImage, probtrackResult$session, ..., threshold=threshold)
     invisible (images)
 }
 
