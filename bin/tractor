@@ -186,10 +186,7 @@ if [ $quiet -eq 0 ]
     echo "Experiment completed with $warnings warning(s) and $errors error(s)"
 fi
 
-if [ $warnings -eq 0 -a $errors -eq 0 ]
+if [ $errors -eq 0 ]
     then
     status=0
-elif [ $errors -eq 0 ]
-    then
-    status=2
 fi
