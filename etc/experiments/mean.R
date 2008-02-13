@@ -15,7 +15,7 @@ runExperiment <- function ()
     threshold <- getWithDefault("WeightThreshold", 0.01)
     thresholdMode <- getWithDefault("ThresholdRelativeTo", "nothing")
     
-    thresholdMode <- match.arg(thresholdMode, c("nothing","maximum","minimum"))
+    thresholdMode <- match.arg(tolower(thresholdMode), c("nothing","maximum","minimum"))
     if (thresholdMode == "maximum")
         threshold <- threshold * max(image, na.rm=TRUE)
     else if (thresholdMode == "minimum")
