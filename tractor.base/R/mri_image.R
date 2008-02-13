@@ -1,7 +1,10 @@
 .MriImageMetadata <- function (.imagedims, .voxdims, .voxunit, .source, .datatype, .origin, .endian)
 {
     if (!is.list(.datatype) || length(unlist(.datatype[c("type","size","isSigned")])) != 3)
+    {
+        output(OL$Warning, "Specified image data type is not valid - ignoring it")
         .datatype <- NULL
+    }
     
     self <- list(
         dump = function ()
@@ -49,8 +52,13 @@
         
         summarise = function ()
         {
-            datatypeString <- ifelse(.datatype$isSigned, "signed", "unsigned")
-            datatypeString <- paste(datatypeString, " ", .datatype$type, ", ", .datatype$size*8, " bits/voxel", sep="")
+            if (is.null(.datatype))
+                datatypeString <- "undefined"
+            else
+            {
+                datatypeString <- ifelse(.datatype$isSigned, "signed", "unsigned")
+                datatypeString <- paste(datatypeString, " ", .datatype$type, ", ", .datatype$size*8, " bits/voxel", sep="")
+            }
             
             output(OL$Info, "Image source     : ", .source)
             output(OL$Info, "Image dimensions : ", implode(.imagedims, sep=" x "), " voxels")

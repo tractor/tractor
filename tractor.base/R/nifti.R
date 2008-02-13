@@ -1,3 +1,13 @@
+getDataTypeByNiftiCode <- function (code)
+{
+    typeIndex <- which(.Nifti$datatypes$codes == code)
+    if (length(typeIndex) != 1)
+        output(OL$Error, "Specified NIfTI data type code is not valid")
+    datatype <- list(type=.Nifti$datatypes$rTypes[typeIndex], size=.Nifti$datatypes$sizes[typeIndex], isSigned=.Nifti$datatypes$isSigned[typeIndex])
+    
+    return (datatype)
+}
+
 hasNiftiMagicString <- function (fileName)
 {
     connection <- gzfile(fileName, "rb")
@@ -96,7 +106,7 @@ createNiftiMetadata <- function (fileNames)
     typeIndex <- which(.Nifti$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
         output(OL$Error, "Data type of file ", fileNames$imageFile, " (", typeCode, ") is not supported")
-    datatype <- list(type=.Nifti$datatypes$rTypes[typeIndex], size=.Nifti$datatypes$sizes[typeIndex], isSigned=.Nifti$datatypes$isSigned[typeIndex])
+    datatype <- getDataTypeByNiftiCode(typeCode)
     
     # We're only interested in the bottom 3 bits (the spatial unit)
     unitCode <- packBits(c(intToBits(unitCode)[1:3], intToBits(0L)[4:32]), "integer")

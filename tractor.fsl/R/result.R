@@ -28,9 +28,9 @@ writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zo
     images <- createWeightingAndMetricImagesForResult(probtrackResult, ...)
     finalImage <- newMriImageWithBinaryFunction(images$metric, images$weight, "*")
     if (is.null(images$threshold))
-        logFinalImage <- newMriImageWithSimpleFunction(finalImage, function (x) { ifelse(x == 0, 0, log(x)) }, newDataType=16)
+        logFinalImage <- newMriImageWithSimpleFunction(finalImage, function (x) { ifelse(x == 0, 0, log(x)) }, newDataType=getDataTypeByNiftiCode(16))
     else
-        logFinalImage <- newMriImageWithSimpleFunction(finalImage, function (x) { ifelse(x == 0, 0, log(x/images$threshold)) }, newDataType=16)
+        logFinalImage <- newMriImageWithSimpleFunction(finalImage, function (x) { ifelse(x == 0, 0, log(x/images$threshold)) }, newDataType=getDataTypeByNiftiCode(16))
     
     if (!showSeed)
         createCombinedGraphics(list(baseImage,finalImage), c("s","p"), list(1,colourScale), axes=axes, sliceLoc=probtrackResult$seed, device="png", alphaImages=list(NULL,logFinalImage), prefix=prefix, zoomFactor=zoomFactor, filter="Sinc")
@@ -41,7 +41,43 @@ writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zo
     }
 }
 
-createWeightingAndMetricImagesForResult <- function (probtrackResult, type = c("prob","avf","fa","md"), mode = c("weighted","log","binary"), threshold = NULL)
+createWeightingAndMetricImages <- function (image, session = NULL, type = c("weight","avf","fa","md"), mode = c("weighted","log","binary"), threshold = NULL)
+{
+    type <- match.arg(type)
+    
+    if (type == "weight")
+    {
+        metricImage <- image
+        mode <- "binary"
+    }
+    else if (is.null(session))
+        output(OL$Error, "A session must be specified for metric ", toupper(type))
+    else
+    {
+        metricImage <- session$getImageByType(type)
+        mode <- match.arg(mode)
+    }
+
+    if (mode == "weighted")
+    {
+        threshold <- NULL
+        weightImage <- image
+    }
+    else if (mode == "log")
+    {
+        threshold <- NULL
+        weightImage <- newMriImageWithSimpleFunction(image, function (x) { ifelse(x == 0, 0, log(x)) }, newDataType=getDataTypeByNiftiCode(16))
+    }
+    else if (mode == "binary")
+    {
+        threshold <- ifelse(is.null(threshold), 1, threshold)
+        weightImage <- newMriImageWithSimpleFunction(image, function (x) { ifelse(x > threshold, 1, 0) }, newDataType=getDataTypeByNiftiCode(2))
+    }
+
+    invisible (list(metric=metricImage, weight=weightImage, threshold=threshold))
+}
+
+createWeightingAndMetricImagesForResult <- function (probtrackResult, threshold = NULL, ...)
 {
     if (!is.null(probtrackResult$image))
         tractImage <- probtrackResult$image
@@ -50,36 +86,11 @@ createWeightingAndMetricImagesForResult <- function (probtrackResult, type = c("
     else
         output(OL$Error, "Cannot use a result containing no tract image or file name")
     
-    type <- match.arg(type)
+    if (!is.null(threshold))
+        threshold <- round(threshold * probtrackResult$nSamples)
     
-    if (type == "prob")
-    {
-        metricImage <- tractImage
-        mode <- "binary"
-    }
-    else
-    {
-        metricImage <- probtrackResult$session$getImageByType(type)
-        mode <- match.arg(mode)
-    }
-
-    if (mode == "weighted")
-    {
-        threshold <- NULL
-        weightImage <- tractImage
-    }
-    else if (mode == "log")
-    {
-        threshold <- NULL
-        weightImage <- newMriImageWithSimpleFunction(tractImage, function (x) { ifelse(x == 0, 0, log(x)) }, newDataType=16)
-    }
-    else if (mode == "binary")
-    {
-        threshold <- ifelse(is.null(threshold), 1, round(threshold * probtrackResult$nSamples))
-        weightImage <- newMriImageWithSimpleFunction(tractImage, function (x) { ifelse(x > threshold, 1, 0) }, newDataType=2)
-    }
-
-    invisible (list(metric=metricImage, weight=weightImage, threshold=threshold))
+    images <- createWeightingAndMetricImages(probtrackResult$session, tractImage, ..., threshold=threshold)
+    invisible (images)
 }
 
 calculateMetricForResult <- function (probtrackResult, ...)
