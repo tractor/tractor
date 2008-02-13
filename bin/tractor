@@ -108,9 +108,10 @@ fi
 }
 
 [ $show_options -eq 1 ] && {
-    echo "Options for script $script_file (* required)"
+    echo "OPTIONS for script $script_file (* required)"
     grep 'getWithDefault' $script_file | grep 'errorIfMissing=TRUE' | awk -F ' *"?(\\(|\\)|,) *"?' '{ print " * "$2": "$3 }'
     grep 'getWithDefault' $script_file | grep -v 'errorIfMissing=TRUE' | awk -F ' *"?(\\(|\\)|,) *"?' '{ print "   "$2": "$3 }'
+    grep '#@args' $script_file | sed 's/#@args /ARGUMENTS: /'
     grep '#@desc' $script_file | sed 's/#@desc //'
     exit 0
 }
