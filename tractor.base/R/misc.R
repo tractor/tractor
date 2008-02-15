@@ -20,8 +20,12 @@ output <- function (level, ..., default = NULL)
     
     outputLevel <- getOption("tractorOutputLevel")
     prefixStrings <- c("DEBUG: ", "VERBOSE: ", "INFO: ", "WARNING: ")
+    
+    callStrings <- as.character(sys.calls())
+    tryRelated <- grep("^(do)?try", callStrings, ignore.case=TRUE, perl=TRUE)
+    callStrings <- callStrings[setdiff(seq_along(callStrings), tryRelated)]
 
-    nStars <- length(sys.calls()) - length(grep("trycatch", sys.calls(), ignore.case=TRUE)) - 1
+    nStars <- length(callStrings) - 1
     leadingSpace <- ifelse(usePrefix && (nStars > 0), implode(rep("* ", nStars)), "")
     if ((level < OL$Question) && (outputLevel <= level))
         cat(paste(leadingSpace, ifelse(usePrefix,prefixStrings[level],""), ..., "\n", sep=""))
@@ -41,12 +45,8 @@ output <- function (level, ..., default = NULL)
         if (outputLevel == OL$Debug)
         {
             cat("ERROR - stack trace follows\n")
-            calls <- sys.calls()
-            for (i in 1:length(calls))
-            {
-                cat(rep("* ", i), sep="")
-                print(calls[[i]])
-            }
+            for (i in 1:length(callStrings))
+                cat(rep("* ", i), callStrings[i], "\n", sep="")
         }
         stop(..., call.=FALSE)
     }
