@@ -1,6 +1,7 @@
 #! /bin/sh
 
 status=1
+command="$0 $*"
 keep_report=0
 log_file="/tmp/tractor$$_log"
 expect_file="/tmp/tractor$$_expect"
@@ -167,7 +168,9 @@ EOF
     R --slave --no-restore 2>&1 | tee $log_file
 fi
 
-[ $use_log -eq 1 ] && cp $log_file "$working_dir/tractor.log"
+echo "$command" >> "$working_dir/tractor_history.log"
+
+[ $use_log -eq 1 ] && cp $log_file "$working_dir/tractor_output.log"
 
 [ $expect_available -ne 0 ] && {
     rm -f .Rprofile
