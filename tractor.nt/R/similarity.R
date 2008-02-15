@@ -34,7 +34,10 @@ calculateMatchingScore <- function (refTract, candTract, trueLengths = FALSE, bi
                 output(OL$Warning, "Maximal voxel value is not unique")
         }
         
-        return (maxLocs[1])
+        if (length(maxLocs) > 1)
+            return (sample(maxLocs, 1))
+        else
+            return (maxLocs)
     }
     
     if (!isFieldTract(refTract) || !isFieldTract(candTract))
@@ -76,9 +79,6 @@ calculateMatchingScore <- function (refTract, candTract, trueLengths = FALSE, bi
             candUnvisited[matrix(candPointer,nrow=1)] <- FALSE
             
             refVoxelValues <- findVoxelValues(refTract, refPointer, refUnvisited, searchNeighbourhood)
-            if (max(refVoxelValues,na.rm=TRUE) <= 0)
-                break
-            
             if (biasReferenceSteps)
             {
                 if (!is.na(refMaxLoc))
@@ -86,6 +86,9 @@ calculateMatchingScore <- function (refTract, candTract, trueLengths = FALSE, bi
                 else if (!is.na(refFirstLoc) && (reps == 1))
                     refVoxelValues <- refVoxelValues * -sign(searchNeighbourhood$innerProducts[refFirstLoc,])
             }
+            if (max(refVoxelValues,na.rm=TRUE) <= 0)
+                break
+            
             refMaxLoc <- chooseVector(refVoxelValues, searchNeighbourhood, refPreviousLoc)
             
             if (is.na(refFirstLoc))
