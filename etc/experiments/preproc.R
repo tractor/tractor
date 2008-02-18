@@ -7,7 +7,7 @@
 #@desc will be run using a 2 fibre model at each voxel by default - this is changed
 #@desc with the NumberOfFibres option.
 
-require(tractor.fsl)
+suppressPackageStartupMessages(require(tractor.fsl))
 
 runExperiment <- function ()
 {
