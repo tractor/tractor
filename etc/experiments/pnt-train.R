@@ -4,7 +4,7 @@ suppressPackageStartupMessages(require(tractor.nt))
 runExperiment <- function ()
 {
     tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
-    datasetName <- getWithDefault("TrainingDatasetName", NULL, "character", errorIfMissing=TRUE)
+    datasetName <- getWithDefault("DatasetName", NULL, "character", errorIfMissing=TRUE)
     maxKnotCount <- getWithDefault("MaximumKnotCount", NULL, "integer")
     
     refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
