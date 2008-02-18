@@ -165,7 +165,10 @@ EOF
     R --slave --no-restore 2>&1 | tee $log_file
 fi
 
-echo "$command" >> "$working_dir/tractor_history.log"
+warnings=`grep -c WARNING $log_file`
+errors=`grep -c Error $log_file`
+
+echo "$command [${warnings}W/${errors}E]" >> "$working_dir/tractor_history.log"
 
 [ $use_log -eq 1 ] && cp $log_file "$working_dir/tractor_output.log"
 
@@ -173,9 +176,6 @@ echo "$command" >> "$working_dir/tractor_history.log"
     rm -f .Rprofile
     [ $rprofile_backed_up -eq 1 ] && mv .Rprofile.bak .Rprofile
 }
-
-warnings=`grep -c WARNING $log_file`
-errors=`grep -c Error $log_file`
 
 if [ $quiet -eq 0 ]
     then
