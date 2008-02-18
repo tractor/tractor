@@ -82,7 +82,10 @@ calculateMatchingScore <- function (refTract, candTract, trueLengths = FALSE, bi
             if (biasReferenceSteps)
             {
                 if (!is.na(refMaxLoc))
-                    refVoxelValues <- refVoxelValues * sign(searchNeighbourhood$innerProducts[refMaxLoc,])
+                {
+                    ip <- searchNeighbourhood$innerProducts[refMaxLoc,]
+                    refVoxelValues <- refVoxelValues * sqrt(ifelse(ip <= 0, 0, ip))
+                }
                 else if (!is.na(refFirstLoc) && (reps == 1))
                     refVoxelValues <- refVoxelValues * -sign(searchNeighbourhood$innerProducts[refFirstLoc,])
             }
