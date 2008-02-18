@@ -1,3 +1,12 @@
+#@args [session directory]
+#@desc Runs the standard FSL-FDT preprocessing pipeline on the specified session
+#@desc directory (or "." if none is specified). If the pipeline was previously partly
+#@desc completed, the script will resume it where appropriate. (Starting from the
+#@desc beginning can be forced by specifying FromScratch:true.) The script asks the
+#@desc user about each stage unless Interactive:false is given. Note that BEDPOSTX
+#@desc will be run using a 2 fibre model at each voxel by default - this is changed
+#@desc with the NumberOfFibres option.
+
 require(tractor.fsl)
 
 runExperiment <- function ()

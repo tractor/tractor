@@ -1,3 +1,5 @@
+#@args session directory, seed point
+
 suppressPackageStartupMessages(require(tractor.fsl))
 suppressPackageStartupMessages(require(tractor.nt))
 

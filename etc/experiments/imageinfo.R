@@ -1,3 +1,5 @@
+#@args image file
+
 library(tractor.base)
 
 runExperiment <- function ()

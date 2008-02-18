@@ -1,3 +1,5 @@
+#@args image file, data value(s) to extract
+
 suppressPackageStartupMessages(require(tractor.fsl))
 
 runExperiment <- function ()

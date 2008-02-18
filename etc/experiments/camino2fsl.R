@@ -1,3 +1,5 @@
+#@args source file, reference image
+
 suppressPackageStartupMessages(require(tractor.fsl))
 suppressPackageStartupMessages(require(tractor.camino))
 

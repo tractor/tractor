@@ -1,3 +1,5 @@
+#@args session directory, centre point
+
 suppressPackageStartupMessages(require(tractor.fsl))
 
 runExperiment <- function ()

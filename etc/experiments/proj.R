@@ -1,3 +1,5 @@
+#@args image file, projection axis, [output file name]
+
 suppressPackageStartupMessages(require(tractor.fsl))
 
 runExperiment <- function ()
