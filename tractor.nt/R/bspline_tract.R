@@ -61,8 +61,6 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         pointLocs <- c(1, pointLocs+1)
         seedLoc <- pointLocs[streamlineTract$getSeedIndex()]
 
-        # This formulation for the knot spacing seems to work, but I can't
-        # quite understand why... :)
         gap <- (lineLength-1) / nKnots
         knots <- seedLoc + (-nKnots:nKnots * gap)
         knots <- knots[which(knots>1 & knots<lineLength)]
@@ -98,7 +96,9 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
                                         summary(bSpline$models[[2]])$sigma,
                                         summary(bSpline$models[[3]])$sigma)
             meanError <- mean(residualStandardErrors)
-            if (meanError <= maxResidError)
+            if (is.nan(meanError))
+                output(OL$Error, "Knot spacing now too narrow - no fit possible for residual error threshold of ", signif(maxResidError,3))
+            else if (meanError <= maxResidError)
             {
                 knotSpacing <- diff(attr(bSpline$basis, "knots"))[1]
                 output(OL$Info, "Spline with ", nKnots, " knots has mean residual error of ", signif(meanError,3))
