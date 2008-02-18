@@ -1,3 +1,5 @@
+#@args session directory, seed point
+
 suppressPackageStartupMessages(require(tractor.fsl))
 suppressPackageStartupMessages(require(tractor.nt))
 
@@ -12,7 +14,7 @@ runExperiment <- function ()
     
     pointType <- getWithDefault("PointType", NULL, mode="character", errorIfMissing=TRUE)
     isStandardSeed <- getWithDefault("SeedInMNISpace", FALSE)
-    tractName <- getWithDefault("TractName", "ref")
+    tractName <- getWithDefault("TractName", "tract")
     
     lengthQuantile <- getWithDefault("LengthQuantile", 0.99)
     registerToReference <- getWithDefault("RegisterCandidatesToReference", TRUE)
@@ -22,11 +24,10 @@ runExperiment <- function ()
     options <- createTractOptionList("knot", lengthQuantile, registerToReference, NULL, NULL)
     returnValue <- referenceSplineTractWithOptions(options, session, seed)
     
-    xfm <- newAffineTransform3DByInversion(getMniTransformForSession(session))
-    standardSeed <- round(transformVoxelPointsWithAffine(xfm,seed), 2)
+    reference <- newReferenceTractWithTract(returnValue$spline, nativeSeed=seed, session=session, options=returnValue$options)
     
-    returnValue <- c(returnValue, list(refSession=session, seed=standardSeed))
-    with(returnValue, save(seed, spline, options, refSession, file=paste(tractName,"Rdata",sep=".")))
+    fileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
+    save(reference, file=fileName)
     
-    return (returnValue$options)
+    invisible (returnValue$options)
 }

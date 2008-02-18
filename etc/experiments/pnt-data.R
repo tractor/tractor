@@ -3,7 +3,7 @@ suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()
 {
-    refTractFile <- getWithDefault("ReferenceTractFile", NULL, "character", errorIfMissing=TRUE)
+    tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
     sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
     seedList <- getWithDefault("SeedPointList", NULL, "integer")
     pointType <- getWithDefault("PointType", NULL, mode="character")
@@ -11,10 +11,12 @@ runExperiment <- function ()
     avfThreshold <- getWithDefault("AnisotropyThreshold", 0.2)
     datasetName <- getWithDefault("DatasetName", "data")
     
-    if (!all(c("seed","spline","options") %in% load(refTractFile)))
+    refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
+    load(refFileName)
+    if (!exists("reference") || !isReferenceTract(reference))
         output(OL$Error, "The file specified does not seem to contain reference tract information")
-    if (!exists("refSession"))
-        refSession <- NULL
+    if (!isBSplineTract(reference))
+        output(OL$Error, "The specified reference tract is not in the correct form")
     
     if (is.null(seedList))
         pointType <- "r"
@@ -38,13 +40,13 @@ runExperiment <- function ()
         if (exists("seedMatrix"))
             currentSeed <- seedMatrix[i,]
         else
-            currentSeed <- getNativeSpacePointForSession(currentSession, seed, pointType="r", isStandard=TRUE)
+            currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType="r", isStandard=TRUE)
         
         if (pointType == "mm")
             currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("t2")), useOrigin=TRUE)
         
-        splines <- calculateSplinesForNeighbourhood(currentSession, currentSeed, refSession, options, searchWidth, avfThreshold)
-        data <- createDataTableForSplines(splines, spline, "knot", subjectId=i)
+        splines <- calculateSplinesForNeighbourhood(currentSession, currentSeed, reference$getSourceSession(), reference$getTractOptions(), searchWidth, avfThreshold)
+        data <- createDataTableForSplines(splines, reference$getTract(), "knot", subjectId=i)
         
         if (is.null(allData))
             allData <- data

@@ -3,8 +3,8 @@ suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()
 {
-    refTractFile <- getWithDefault("ReferenceTractFile", NULL, "character", errorIfMissing=TRUE)
-    resultsFile <- getWithDefault("ResultsFile", NULL, "character", errorIfMissing=TRUE)
+    tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
+    resultsName <- getWithDefault("ResultsName", NULL, "character", errorIfMissing=TRUE)
     sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
     
     maxSeeds <- getWithDefault("MaximumSeedPoints", 1, "integer")
@@ -12,19 +12,22 @@ runExperiment <- function ()
     
     createVolumes <- getWithDefault("CreateVolumes", TRUE)
     createImages <- getWithDefault("CreateImages", FALSE)
-    tractName <- getWithDefault("TractName", "tract")
     vizThreshold <- getWithDefault("VisualisationThreshold", 0.01)
     showSeed <- getWithDefault("ShowSeedPoint", TRUE)
     
-    if (!all(c("seed","spline","options") %in% load(refTractFile)))
+    refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
+    load(refFileName)
+    if (!exists("reference") || !isReferenceTract(reference))
         output(OL$Error, "The file specified does not seem to contain reference tract information")
+    if (!isBSplineTract(reference))
+        output(OL$Error, "The specified reference tract is not in the correct form")
     
     if (!createVolumes && !createImages)
         output(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
     nSessions <- length(sessionList)
     
-    load(resultsFile)
+    load(ensureFileSuffix(resultsName,"Rdata"))
     if (length(tp) != nSessions)
         output(OL$Error, "Length of the session list specified does not match the results file")
     nPoints <- length(tp[[1]])
@@ -38,7 +41,7 @@ runExperiment <- function ()
         output(OL$Info, "Generating tract for session ", i)
         
         currentSession <- newSessionFromDirectory(sessionList[i])
-        currentSeed <- getNativeSpacePointForSession(currentSession, seed, pointType="r", isStandard=TRUE)
+        currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType="r", isStandard=TRUE)
         currentPosteriors <- tp[[i]]
         
         ranks <- rank(currentPosteriors, na.last="keep")
