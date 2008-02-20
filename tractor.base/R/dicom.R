@@ -135,7 +135,12 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
         {
             slices <- (dataRows/rows) * (dataColumns/columns)
             if (slices != floor(slices))
-                output(OL$Error, "Image dimensions are not a multiple of the acquisition matrix size")
+            {
+                output(OL$Warning, "Image dimensions are not a multiple of the acquisition matrix size")
+                slices <- NULL
+                rows <- dataRows
+                columns <- dataColumns
+            }
         }
     }
     
