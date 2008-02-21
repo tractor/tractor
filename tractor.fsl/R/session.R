@@ -5,13 +5,17 @@
     if (!file.exists(.directory))
         output(OL$Error, "Session directory does not exist")
     
+    .workingDirectory <- file.path(.directory, "tractor")
+    if (!file.exists(.workingDirectory) && file.exists(file.path(.directory,"combined")))
+        file.rename(file.path(.directory,"combined"), .workingDirectory)
+    
     self <- list(
         getBaseDirectory = function () { return (.directory) },
         
         getBedpostDirectory = function ()
         {
-            bedpostDir <- file.path(.directory, "combined", "fdt.bedpost")
-            bedpostxDir <- file.path(.directory, "combined", "fdt.bedpostX")
+            bedpostDir <- file.path(.workingDirectory, "fdt.bedpost")
+            bedpostxDir <- file.path(.workingDirectory, "fdt.bedpostX")
             if (file.exists(bedpostDir) && !file.exists(bedpostxDir))
                 .usesOldBedpost <<- TRUE
             return (ifelse(.usesOldBedpost, bedpostDir, bedpostxDir))
@@ -54,7 +58,7 @@
         
         getObjectDirectory = function ()
         {
-            objectDir <- file.path(.directory, "combined", "objects")
+            objectDir <- file.path(.workingDirectory, "objects")
             if (!file.exists(objectDir))
                 dir.create(objectDir)
             return (objectDir)
@@ -67,7 +71,7 @@
         
         getPreBedpostDirectory = function ()
         {
-            preBedpostDir <- file.path(.directory, "combined", "fdt")
+            preBedpostDir <- file.path(.workingDirectory, "fdt")
             if (!file.exists(preBedpostDir))
                 dir.create(preBedpostDir)
             return (preBedpostDir)
@@ -75,13 +79,13 @@
         
         getProbtrackDirectory = function ()
         {
-            probtrackDir <- file.path(.directory, "combined", "fdt.track")
+            probtrackDir <- file.path(.workingDirectory, "fdt.track")
             if (!file.exists(probtrackDir))
                 dir.create(probtrackDir)
             return (probtrackDir)
         },
         
-        getWorkingDirectory = function () { return (file.path(.directory, "combined")) },
+        getWorkingDirectory = function () { return (.workingDirectory) },
         
         isPreprocessed = function () { return (imageFileExists(self$getImageFileNameByType("avf"))) },
         
