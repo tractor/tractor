@@ -1,4 +1,4 @@
-displayProbtrackResult <- function (probtrackResult, axes = 1:3, colourScale = 2, baseImage = "avf", ...)
+displayProbtrackResult <- function (probtrackResult, axes = 1:3, colourScale = 2, baseImage = "fa", ...)
 {
     if (!is.numeric(axes) || any(axes < 1 | axes > 3))
         output(OL$Error, "Projection axes must be specified as a combination of 1 (x), 2 (y) or 3 (z)")
@@ -19,7 +19,7 @@ displayProbtrackResult <- function (probtrackResult, axes = 1:3, colourScale = 2
     }
 }
 
-writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zoomFactor = 1, prefix = "tract", baseImage = "avf", showSeed = FALSE, ...)
+writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zoomFactor = 1, prefix = "tract", baseImage = "fa", showSeed = FALSE, ...)
 {
     if (!isMriImage(baseImage))
         baseImage <- probtrackResult$session$getImageByType(baseImage)

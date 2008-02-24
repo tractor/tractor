@@ -41,9 +41,9 @@ referenceSplineTractWithOptions <- function (options, refSession, refSeed)
     invisible (list(spline=refSpline, options=options))
 }
 
-calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession, options, searchWidth = 7, avfThreshold = 0.2)
+calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession, options, searchWidth = 7, faThreshold = 0.2)
 {
-    avf <- testSession$getImageByType("avf")
+    fa <- testSession$getImageByType("fa")
     
     nSessions <- searchWidth ^ 3
     stepVectors <- buildStepVectors(searchWidth)
@@ -55,9 +55,9 @@ calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession,
         seed <- testSeed + stepVectors[,i]
         output(OL$Info, "Current seed point is ", implode(seed,sep=","), " (", i, "/", nSessions, ")")
         
-        if (!is.na(avf$getDataAtPoint(seed)) && (avf$getDataAtPoint(seed) < avfThreshold) && (i != middle))
+        if (!is.na(fa$getDataAtPoint(seed)) && (fa$getDataAtPoint(seed) < faThreshold) && (i != middle))
         {
-            output(OL$Info, "Skipping seed point because AVF < ", avfThreshold)
+            output(OL$Info, "Skipping seed point because FA < ", faThreshold)
             splines <- c(splines, list(NA))
         }
         else

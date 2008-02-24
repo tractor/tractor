@@ -8,7 +8,7 @@ runExperiment <- function ()
     seedList <- getWithDefault("SeedPointList", NULL, "integer")
     pointType <- getWithDefault("PointType", NULL, mode="character")
     searchWidth <- getWithDefault("SearchWidth", 1)
-    avfThreshold <- getWithDefault("AnisotropyThreshold", 0.2)
+    faThreshold <- getWithDefault("AnisotropyThreshold", 0.2)
     resultsName <- getWithDefault("ResultsName", "results")
     
     refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
@@ -45,7 +45,7 @@ runExperiment <- function ()
         if (pointType == "mm")
             currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("t2")), useOrigin=TRUE)
         
-        result <- runNeighbourhoodTractography(currentSession, currentSeed, reference$getTract(), avfThreshold, searchWidth)
+        result <- runNeighbourhoodTractography(currentSession, currentSeed, reference$getTract(), faThreshold, searchWidth)
         results <- c(results, list(result))
     }
     

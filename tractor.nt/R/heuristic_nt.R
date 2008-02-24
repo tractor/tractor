@@ -1,4 +1,4 @@
-runNeighbourhoodTractography <- function (session, seed, refTract, avfThreshold = 0.2, searchWidth = 7)
+runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold = 0.2, searchWidth = 7)
 {
     if (!isFieldTract(refTract))
         output(OL$Error, "Reference tract must be specified as a FieldTract object")
@@ -16,14 +16,14 @@ runNeighbourhoodTractography <- function (session, seed, refTract, avfThreshold 
     middle <- (nSeeds %/% 2) + 1
     similarities <- rep(NA, searchWidth^3)
     
-    output(OL$Info, "Starting neighbourhood tractography with AVF threshold of ", avfThreshold, " and search width of ", searchWidth)
+    output(OL$Info, "Starting neighbourhood tractography with FA threshold of ", faThreshold, " and search width of ", searchWidth)
     
-    avfImage <- session$getImageByType("avf")
-    avfs <- avfImage[candidateSeeds]
-    validSeeds <- c(middle, which(avfs >= avfThreshold))
+    faImage <- session$getImageByType("fa")
+    fas <- faImage[candidateSeeds]
+    validSeeds <- c(middle, which(fas >= faThreshold))
     validSeeds <- validSeeds[!duplicated(validSeeds)]
     
-    output(OL$Info, "Rejecting ", nSeeds-length(validSeeds), " seed points as below the AVF threshold")
+    output(OL$Info, "Rejecting ", nSeeds-length(validSeeds), " seed points as below the FA threshold")
     
     runProbtrackWithSession(session, candidateSeeds[validSeeds,], requireFile=TRUE)
     for (d in validSeeds)
