@@ -55,7 +55,7 @@ usage()
 
 set -- `getopt "hldoqrv:w:c:" "$@"` || {
     usage 1>&2
-    exit 1
+    exit
 }
 
 while [ $# -gt 0 ]
@@ -76,7 +76,7 @@ done
 
 [ $# -eq 0 ] && {
     usage 1>&2
-    exit 1
+    exit
 }
 
 [ $keep_report -eq 1 ] && report_file="$working_dir/tractor_report.yaml"
@@ -105,7 +105,7 @@ fi
 
 [ $file_found -ne 1 ] && {
     echo "Script file not found" 1>&2
-    exit 1
+    exit
 }
 
 [ $show_options -eq 1 ] && {
@@ -114,7 +114,8 @@ fi
     grep 'getWithDefault' $script_file | grep -v 'errorIfMissing=TRUE' | awk -F ' *"?(\\(|\\)|,) *"?' '{ print "   "$2": "$3 }'
     grep '#@args' $script_file | sed 's/#@args /ARGUMENTS: /'
     grep '#@desc' $script_file | sed 's/#@desc //'
-    exit 0
+    status=0
+    exit
 }
 
 [ ! -e $working_dir ] && mkdir -p $working_dir
