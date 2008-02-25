@@ -132,7 +132,12 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
         if (rows == dataRows && columns == dataColumns)
             slices <- NULL
         else if (rows == dataColumns && columns == dataRows)
-            output(OL$Error, "Data matrix is transposed relative to acquisition matrix - this is currently unsupported")
+        {
+            output(OL$Warning, "Data matrix is transposed relative to acquisition matrix")
+            rows <- dataRows
+            columns <- dataColumns
+            slices <- NULL
+        }
         else
         {
             slices <- (dataRows/rows) * (dataColumns/columns)
@@ -196,6 +201,8 @@ newMriImageFromDicomMetadata <- function (metadata)
     fileMetadata <- metadata
     if (fileMetadata$getTagValue(0x0008, 0x0060) != "MR")
         output(OL$Error, "DICOM file does not contain MR image data")
+    if (!equivalent(fileMetadata$getTagValue(0x0020,0x0037), c(1,0,0,0,1,0)))
+        output(OL$Warning, "DICOM file does not use LPS orientation slices - results may be unreliable")
     imageMetadata <- newMriImageMetadataFromDicomMetadata(fileMetadata)
     
     datatype <- imageMetadata$getDataType()
