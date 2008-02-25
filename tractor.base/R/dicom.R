@@ -131,6 +131,8 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
     {
         if (rows == dataRows && columns == dataColumns)
             slices <- NULL
+        else if (rows == dataColumns && columns == dataRows)
+            output(OL$Error, "Data matrix is transposed relative to acquisition matrix - this is currently unsupported")
         else
         {
             slices <- (dataRows/rows) * (dataColumns/columns)
