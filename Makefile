@@ -1,6 +1,6 @@
 INSTALL=/usr/bin/install
 R=/usr/bin/R
-BIN_PREFIX=/usr/local
+PREFIX=/usr/local
 
 all:
 	@echo 'Nothing to compile - run "make install" to install packages'
@@ -22,8 +22,10 @@ install: install-base install-fsl install-camino install-nt
 install-extras:
 	@mkdir -p ~/.tractor
 	@$(INSTALL) -Cv -m 0644 etc/experiments/*.R ~/.tractor
-	@[ -d $(BIN_PREFIX)/bin ] || mkdir -p $(BIN_PREFIX)/bin
-	@$(INSTALL) -Cv bin/tractor $(BIN_PREFIX)/bin
+	
+	@mkdir -p $(PREFIX)/bin $(PREFIX)/share/man/man1
+	@$(INSTALL) -Cv bin/tractor $(PREFIX)/bin
+	@$(INSTALL) -Cv -m 0644 man/man1/tractor.1 $(PREFIX)/share/man/man1
 
 extras: install-extras
 
