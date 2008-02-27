@@ -22,7 +22,7 @@ expect_available=$?
 
 usage()
 {
-    echo "tractor v1.0.0, by Jon Clayden <jon.clayden@gmail.com>"
+    echo "tractor v1.0.0, by Jon Clayden <jon.clayden+tractor@gmail.com>"
     echo "Run a TractoR experiment script in R and report the results"
     echo
     echo "Usage: tractor -h"
@@ -61,6 +61,7 @@ set -- `getopt "hldoqrv:w:c:" "$@"` || {
 while [ $# -gt 0 ]
     do
     case "$1" in
+        -h) usage; status=0; exit ;;
         -l) use_log=1 ;;
         -d) verbose_level=3 ;;
         -o) show_options=1 ;;
