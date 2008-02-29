@@ -264,12 +264,12 @@ createFilesForSession <- function (session)
     rm(image)
     
     if (length(which(is.na(bValues))) != 0)
-        output(OL$Info, "Diffusion b-values could not be found in the DICOM files; you need to create a bvals file manually")
+        output(OL$Warning, "Diffusion b-values could not be found in the DICOM files; you need to create a bvals file manually")
     else
         write.table(matrix(volumeBValues,nrow=1), file.path(targetDir,"bvals"), row.names=FALSE, col.names=FALSE)
     
     if (length(which(is.na(bVectors))) != 0)
-        output(OL$Info, "Diffusion gradient vectors could not be found in the DICOM files; you need to create a bvecs file manually")
+        output(OL$Warning, "Diffusion gradient vectors could not be found in the DICOM files; you need to create a bvecs file manually")
     else
         write.table(volumeBVectors, file.path(targetDir,"bvecs"), row.names=FALSE, col.names=FALSE)
 }

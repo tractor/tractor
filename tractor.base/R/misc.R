@@ -29,7 +29,6 @@ output <- function (level, ..., default = NULL)
     leadingSpace <- ifelse(usePrefix && (nStars > 0), implode(rep("* ", nStars)), "")
     if ((level < OL$Question) && (outputLevel <= level))
         cat(paste(leadingSpace, ifelse(usePrefix,prefixStrings[level],""), ..., "\n", sep=""))
-    
     else if (level == OL$Question)
     {
         if (outputLevel == OL$Error)

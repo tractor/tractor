@@ -25,9 +25,17 @@ runEddyCorrectWithSession <- function (session, ask = FALSE)
     }
     else
     {
+        output(OL$Info, "Volumes ", implode(zeroes,sep=", ",finalSep=" and "), " are T2 weighted")
         choice <- -1
+        
         while (!(choice %in% zeroes))
-            choice <- as.numeric(output(OL$Question, "Volumes ", implode(zeroes,sep=", ",finalSep=" and "), " are T2 weighted; use which one as the reference?"))
+        {
+            choice <- output(OL$Question, "Use which one as the reference [s to show in fslview]?")
+            if (tolower(choice) == "s")
+                execute("fslview", file.path(targetDir,"basic"), errorOnFail=TRUE, wait=FALSE)
+            else
+                choice <- as.numeric(choice)
+        }
     }
     
     output(OL$Info, "Running eddy_correct to remove eddy current induced artefacts...")
