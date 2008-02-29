@@ -26,6 +26,9 @@ runExperiment <- function ()
     nFibres <- getWithDefault("NumberOfFibres", 2, errorIfInvalid=TRUE)
     howRunBedpost <- getWithDefault("HowRunBedpost", "auto")
     
+    if (interactive && getOption("tractorOutputLevel") > OL$Info)
+        setOutputLevel(OL$Info)
+    
     if (!fromScratch && session$isPreprocessed() && session$nFibres() == nFibres)
         output(OL$Info, "This session directory is already preprocessed")
     else try(
