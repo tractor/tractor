@@ -19,7 +19,8 @@ runExperiment <- function ()
     targetDir <- session$getPreBedpostDirectory()
 
     interactive <- getWithDefault("Interactive", TRUE)
-    fromScratch <- getWithDefault("FromScratch", FALSE)
+    stages <- getWithDefault("RunStages", "12345")
+    skipCompleted <- getWithDefault("SkipCompletedStages", TRUE)
     betIntensityThreshold <- getWithDefault("BetIntensityThreshold", 0.5)
     betVerticalGradient <- getWithDefault("BetVerticalGradient", 0)
     flipAxes <- getWithDefault("FlipGradientAxes", NULL, "integer")
@@ -29,17 +30,21 @@ runExperiment <- function ()
     if (interactive && getOption("tractorOutputLevel") > OL$Info)
         setOutputLevel(OL$Info)
     
-    if (!fromScratch && session$isPreprocessed() && session$nFibres() == nFibres)
+    runStages <- 1:5 %in% suppressWarnings(as.numeric(unlist(strsplit(stages, ""))))
+    if (all(!runStages))
+        output(OL$Info, "Nothing to do")
+    
+    if (skipCompleted && session$isPreprocessed() && session$nFibres() == nFibres)
         output(OL$Info, "This session directory is already preprocessed")
     else try(
     {
-        if (fromScratch || !file.exists(session$getWorkingDirectory()))
+        if (runStages[1] && (!skipCompleted || !file.exists(session$getWorkingDirectory())))
             createFilesForSession(session)
     
-        if (!imageFileExists(file.path(targetDir, "nodif")))
+        if (runStages[2] && (!skipCompleted || !imageFileExists(file.path(targetDir,"nodif"))))
             runEddyCorrectWithSession(session, ask=interactive)
     
-        if (!imageFileExists(session$getImageFileNameByType("mask")))
+        if (runStages[3] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("mask"))))
         {
             runBetWithSession(session, betIntensityThreshold, betVerticalGradient, show=interactive)
         
@@ -58,7 +63,7 @@ runExperiment <- function ()
             }
         }
     
-        if (interactive && !imageFileExists(session$getImageFileNameByType("fa")))
+        if (runStages[4] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("fa"))))
         {
             runDtifitAgain <- output(OL$Question, "Run dtifit for diffusion tensor metrics? [yn]")
             while (tolower(runDtifitAgain) == "y")
@@ -78,7 +83,8 @@ runExperiment <- function ()
         else if (!is.null(flipAxes))
             flipGradientVectorsForSession(session, flipAxes)
         
-        runBedpostWithSession(session, nFibres, how=howRunBedpost, ask=interactive)
+        if (runStages[5])
+            runBedpostWithSession(session, nFibres, how=howRunBedpost, ask=interactive)
     } )
     
     returnValue <- list(workingDirectoryExists=file.exists(session$getWorkingDirectory()),
