@@ -1,4 +1,8 @@
 #@args session directory, seed point
+#@desc Create a reference tract for use with heuristic neighbourhood tractography.
+#@desc This is a matter of simply running the ProbTrack tractography algorithm with
+#@desc an appropriate session and seed point, and the options are therefore closely
+#@desc related to those of the "track" experiment.
 
 suppressPackageStartupMessages(require(tractor.fsl))
 suppressPackageStartupMessages(require(tractor.nt))

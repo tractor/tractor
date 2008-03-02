@@ -1,3 +1,8 @@
+#@desc Visualise the results of heuristic neighbourhood tractography, creating image
+#@desc volumes and/or projection images of the "best" matching candidate tracts.
+#@desc The TractName, ResultsName and SessionList options must match those passed to
+#@desc the "hnt-eval" experiment.
+
 suppressPackageStartupMessages(require(tractor.fsl))
 suppressPackageStartupMessages(require(tractor.nt))
 

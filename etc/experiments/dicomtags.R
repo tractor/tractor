@@ -1,4 +1,7 @@
 #@args file name
+#@desc Produce a full list of all the DICOM tags contained in the specified file.
+#@desc Descriptions of the tag, rather than its DICOM group and element numbers, will
+#@desc be given unless Descriptions:false is specified.
 
 library(tractor.base)
 

@@ -1,4 +1,8 @@
 #@args image file, data value(s) to extract
+#@desc Create a volume which is the same as the input volume, except that all voxels
+#@desc whose value is not in the list of data values to extract have their values set
+#@desc to zero. Projection images can optionally be created with CreateImages:true.
+#@desc The base name of the output files is specified with the RegionName option.
 
 suppressPackageStartupMessages(require(tractor.fsl))
 

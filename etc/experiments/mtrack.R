@@ -1,4 +1,8 @@
 #@args session directory
+#@desc Run tractography using one or more masks. Every nonzero voxel in the specified
+#@desc SeedMaskFile will be used as a seed point for NumberOfSamples streamlines, and
+#@desc the results combined. If any WaypointMaskFiles are specified, streamlines which
+#@desc do not pass through ALL of the masks given will be ignored.
 
 suppressPackageStartupMessages(require(tractor.fsl))
 
