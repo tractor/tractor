@@ -11,6 +11,7 @@ trap 'rm -f $log_file $expect_file; [ $keep_report -eq 0 ] && rm -f $report_file
 config_file="/dev/null"
 output_level='OL$Warning'
 use_log=0
+write_history=1
 show_options=0
 rprofile_backed_up=0
 quiet=0
@@ -27,7 +28,7 @@ usage()
     echo
     echo "Usage: tractor -h"
     echo "       tractor -o [-w working_dir] script"
-    echo "       tractor [-ldqr] [-v level] [-w working_dir] [-c config_file] ..."
+    echo "       tractor [-ldzqr] [-v level] [-w working_dir] [-c config_file] ..."
     echo "                                              script [arg1 [arg2 ...]]"
     echo
     echo "  -h          Display this usage information and exit"
@@ -35,6 +36,7 @@ usage()
     echo "              options that it supports, along with their default values"
     echo "  -l          Direct output to a log file as well as stdout"
     echo "  -d          Produce debugging output; equivalent to '-v 3'"
+    echo "  -z          Do not write the command line used into a history log file"
     echo "  -q          Run in quiet mode; the tractor script will not produce any"
     echo "              output of its own"
     echo "  -r          Produce a report file in the working directory (if anything"
@@ -53,7 +55,7 @@ usage()
     echo
 }
 
-set -- `getopt "hldoqrv:w:c:" "$@"` || {
+set -- `getopt "hldozqrv:w:c:" "$@"` || {
     usage 1>&2
     exit
 }
@@ -65,6 +67,7 @@ while [ $# -gt 0 ]
         -l) use_log=1 ;;
         -d) verbose_level=3 ;;
         -o) show_options=1 ;;
+        -z) write_history=0 ;;
         -q) quiet=1 ;;
 		-r) keep_report=1 ;;
         -v) shift; verbose_level=$1 ;;
@@ -170,7 +173,7 @@ fi
 warnings=`grep -c WARNING $log_file`
 errors=`grep -c Error $log_file`
 
-echo "$command [${warnings}W/${errors}E]" >> "$working_dir/tractor_history.log"
+[ $write_history -eq 1 ] && echo "$command [${warnings}W/${errors}E]" >> "$working_dir/tractor_history.log"
 
 [ $use_log -eq 1 ] && cp $log_file "$working_dir/tractor_output.log"
 

@@ -4,16 +4,18 @@
 tractor \- Command line interface for the TractoR MRI analysis project
 
 .SH SYNOPSIS
-.B tractor \fR[\fB\-ldqr\fR] [\fB\-v \fIlevel\fR] [\fB\-w \fIworking_dir\fR] [\fB\-c \fIconfig_file\fR] \fIscript \fR[\fIarguments\fR]\fB
+.B tractor \fR[\fB\-ldzqr\fR] [\fB\-v \fIlevel\fR] [\fB\-w \fIworking_dir\fR] [\fB\-c \fIconfig_file\fR] \fIscript \fR[\fIarguments\fR]\fB
 .br
 .B tractor \-o \fR[\fB\-w \fIworking_dir\fR]\fB \fIscript\fB
 .br
 .B tractor \-h
 
 .SH DESCRIPTION
-The \fBtractor\fR program provides a simple shell interface to the packages making up the core of the TractoR project, via a set of experiment \fIscripts\fR which encapsulate common tasks. It thereby obviates the need to interact directly with the R language for which the core packages are written. A \fIscript\fR may take a number of \fIarguments\fR and/or configuration parameters, which can be specified on the command line or in a separate file (see "Script Configuration and Arguments" below). In the second synopsis form, using the '-o' flag, the program will list the options appropriate to the specified experiment. The final form summarises the flags available to the \fBtractor\fR program itself.
+The \fBtractor\fR program provides a simple shell interface to the packages making up the core of the TractoR project, via a set of experiment \fIscripts\fR which encapsulate common tasks. It thereby obviates the need to interact directly with the R language for which the core packages are written. A \fIscript\fR may take a number of \fIarguments\fR and/or configuration parameters, which can be specified on the command line or in a separate file (see "Script Configuration and Arguments" below). In the second synopsis form, using the '\-o' flag, the program will list the options appropriate to the specified experiment. The final form summarises the flags available to the \fBtractor\fR program itself.
 .PP
-The \fIscript\fR, a text file containing R code, need not be specified with the '\.R' extension. The program searches in the current working directory for the named \fIscript\fR first, followed by any directory specified using the '-w' flag, then ~/\.tractor and finally /etc/tractor. Any \fIscript\fR not in one of these locations must be specified using its full path.
+The \fIscript\fR, a text file containing R code, need not be specified with the '\.R' extension. The program searches in the current working directory for the named \fIscript\fR first, followed by any directory specified using the '\-w' flag, then ~/\.tractor and finally /etc/tractor. Any \fIscript\fR not in one of these locations must be specified using its full path.
+.PP
+By default, a log file containing a history of all TractoR experiments run is created or updated in the working directory. This can be useful to keep track of what has been done, but it can be disabled using the '\-z' flag to reduce clutter if desired.
 
 .SH OPTIONS
 .TP
@@ -28,6 +30,9 @@ Direct output to a log file as well as \fBstdout\fR.
 .TP
 .B \-d
 Produce debugging output; equivalent to '\-v 3'.
+.TP
+.B \-z
+Do not write the command line used into a history log file.
 .TP
 .B \-q
 Run in quiet mode. The tractor program will not produce any output of its own.
