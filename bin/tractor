@@ -33,7 +33,7 @@ usage()
     echo "  -h          Display this usage information and exit"
     echo "  -o          Do not run the script, but instead produce a list of the"
     echo "              options that it supports, along with their default values"
-    echo "  -l          Direct output to a log file rather than stdout"
+    echo "  -l          Direct output to a log file as well as stdout"
     echo "  -d          Produce debugging output; equivalent to '-v 3'"
     echo "  -q          Run in quiet mode; the tractor script will not produce any"
     echo "              output of its own"
