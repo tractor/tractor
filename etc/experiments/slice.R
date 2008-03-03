@@ -24,6 +24,7 @@ runExperiment <- function ()
     nas <- is.na(point)
     point[nas] <- 1
     
+    pointType <- match.arg(tolower(pointType), c("fsl","r","mm"))
     if (pointType == "fsl")
         point <- transformFslVoxelToRVoxel(point)
     else if (pointType == "mm")
