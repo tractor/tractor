@@ -1,3 +1,9 @@
+#@args session directory
+#@desc Run tractography using a mask, as with the "mtrack" experiment, except that
+#@desc each nonzero voxel in the mask will generate a SEPARATE output volume (with
+#@desc CreateVolumes:true) and/or projection image (CreateImages:true). This
+#@desc experiment can therefore generate a very large number of files.
+
 suppressPackageStartupMessages(require(tractor.fsl))
 
 runExperiment <- function ()

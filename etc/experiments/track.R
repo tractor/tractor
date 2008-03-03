@@ -1,4 +1,12 @@
 #@args session directory, seed point
+#@desc Run single seed point tractography using the specified session and seed. The
+#@desc seed point may be specified in standard or native diffusion space and using
+#@desc FSL (voxel coordinates, beginning at zero), R (voxel coordinates, beginning at
+#@desc one) or mm (world coordinates) conventions. The PointType and SeedInMNISpace
+#@desc options need to be set to reflect these choices. Standard space seed points
+#@desc are transferred to native space using the FLIRT registration algorithm. The
+#@desc tract produced by FSL ProbTrack may be visualised in projection by giving
+#@desc CreateImages:true.
 
 suppressPackageStartupMessages(require(tractor.fsl))
 

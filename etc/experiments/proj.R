@@ -1,4 +1,7 @@
 #@args image file, projection axis, [output file name]
+#@desc Create a 2D maximum intensity projection of the specified Analyze/NIfTI volume
+#@desc along the x, y or z axis. The output file name is by default the same as the
+#@desc input file name, but with a "png" extension.
 
 suppressPackageStartupMessages(require(tractor.fsl))
 
@@ -17,6 +20,7 @@ runExperiment <- function ()
         outputFile <- Arguments[3]
     else
         outputFile <- image$getSource()
-    
-    createProjectionGraphic(image, axis, device="png", file=outputFile)
+
+    projectionNames <- c("sagittal", "coronal", "axial")    
+    createProjectionGraphic(image, axis, device="png", file=paste(outputFile,projectionNames[axis],sep="_"))
 }

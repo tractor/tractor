@@ -1,3 +1,7 @@
+#@desc Evaluate a data set against a model (which must already exist) and calculate
+#@desc matching probabilities. The TractName and DatasetName should match those used
+#@desc for "pnt-data". The output file name is controlled by the ResultsName option.
+
 suppressPackageStartupMessages(require(tractor.fsl))
 suppressPackageStartupMessages(require(tractor.nt))
 

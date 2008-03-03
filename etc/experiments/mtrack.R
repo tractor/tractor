@@ -12,16 +12,15 @@ runExperiment <- function ()
     session <- newSessionFromDirectory(Arguments[1])
     
     nSamples <- getWithDefault("NumberOfSamples", 5000)
-    
-    createImages <- getWithDefault("CreateImages", FALSE)
-    tractName <- getWithDefault("TractName", "tract")
-    vizThreshold <- getWithDefault("VisualisationThreshold", 0.01)
-    showSeed <- getWithDefault("ShowSeedPoint", TRUE)
-    
     seedMaskFile <- getWithDefault("SeedMaskFile", NULL, "character", errorIfInvalid=TRUE, errorIfMissing=TRUE)
     seedMaskInStandardSpace <- getWithDefault("SeedMaskInStandardSpace", FALSE)
     waypointMaskFiles <- getWithDefault("WaypointMaskFiles", NULL, "character", errorIfInvalid=TRUE)
     waypointMasksInStandardSpace <- getWithDefault("WaypointMasksInStandardSpace", FALSE)
+        
+    createImages <- getWithDefault("CreateImages", FALSE)
+    tractName <- getWithDefault("TractName", "tract")
+    vizThreshold <- getWithDefault("VisualisationThreshold", 0.01)
+    showSeed <- getWithDefault("ShowSeedPoint", TRUE)
     
     seedMask <- newMriImageFromFile(seedMaskFile)
     if (seedMaskInStandardSpace)

@@ -1,3 +1,12 @@
+#@desc Create B-spline tract representations and calculate characteristics of interest
+#@desc for a set of seed points in one or more brain volumes. This is a prerequisite
+#@desc for training or using a tract matching model. For training, a specific list of
+#@desc seed points will likely be required, in which case PointType should also be
+#@desc set. For using a model, the SeedPointList need not be given, in which case a
+#@desc region of width SearchWidth voxels around the reference tract seed point will
+#@desc be used, subject to the specified AnisotropyThreshold. The TractName specified
+#@desc must match that given to the "pnt-ref" experiment.
+
 suppressPackageStartupMessages(require(tractor.fsl))
 suppressPackageStartupMessages(require(tractor.nt))
 

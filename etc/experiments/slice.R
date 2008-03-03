@@ -1,4 +1,7 @@
 #@args image file, [output file name]
+#@desc Create a 2D slice image from the specified Analyze/NIfTI volume. Exactly one
+#@desc of the X, Y and Z options must be specified, giving the location on the
+#@desc appropriate axis where the slice should be taken.
 
 suppressPackageStartupMessages(require(tractor.fsl))
 
@@ -12,9 +15,21 @@ runExperiment <- function ()
     else
         outputFile <- image$getSource()
     
+    pointType <- getWithDefault("PointType", NULL, "character", errorIfMissing=TRUE)
     x <- getWithDefault("X", NA, "numeric", errorIfInvalid=TRUE)
     y <- getWithDefault("Y", NA, "numeric", errorIfInvalid=TRUE)
     z <- getWithDefault("Z", NA, "numeric", errorIfInvalid=TRUE)
     
-    createSliceGraphic(image, x, y, z, device="png", file=outputFile)
+    point <- round(c(x,y,z))
+    nas <- is.na(point)
+    point[nas] <- 1
+    
+    if (pointType == "fsl")
+        point <- transformFslVoxelToRVoxel(point)
+    else if (pointType == "mm")
+        point <- transformWorldToRVoxel(point, image$getMetadata(), useOrigin=TRUE)
+    
+    point[nas] <- NA
+    
+    createSliceGraphic(image, point[1], point[2], point[3], device="png", file=outputFile)
 }

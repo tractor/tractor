@@ -1,4 +1,8 @@
 #@args session directory, seed point
+#@desc Create a reference tract for probabilistic neighbourhood tractography. This
+#@desc requires a session and seed point. Users should not change the LengthQuantile
+#@desc and RegisterCandidatesToReference options from their defaults unless they know
+#@desc what they are doing.
 
 suppressPackageStartupMessages(require(tractor.fsl))
 suppressPackageStartupMessages(require(tractor.nt))
