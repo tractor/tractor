@@ -89,11 +89,6 @@ isUninformativeTractModel <- function (object)
     return ("model.tract.uninformative" %in% class(object))
 }
 
-isNonmatchingTractModel <- function (object)
-{
-    return ("model.tract.nonmatching" %in% class(object))
-}
-
 isMatchingTractModel <- function (object)
 {
     return ("model.tract.matching" %in% class(object))
