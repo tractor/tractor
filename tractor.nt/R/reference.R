@@ -14,7 +14,24 @@
         
         getTract = function () { return (.tract) },
         
-        inStandardSpace = function () { return (is.null(.session)) }
+        inStandardSpace = function () { return (is.null(.session)) },
+        
+        summarise = function ()
+        {
+            output(OL$Info, "Tract class        : ", class(.tract)[1])
+            output(OL$Info, "In standard space  : ", self$inStandardSpace())
+            output(OL$Info, "Standard space seed: ", implode(round(.standardSeed,2), ","))
+            if (!is.null(.session))
+                output(OL$Info, "Source session     : ", .session$getBaseDirectory())
+            if (isTractOptionList(.options))
+            {
+                output(OL$Info, "Point type         : ", .options$pointType)
+                output(OL$Info, "Length quantile    : ", .options$lengthQuantile)
+                output(OL$Info, "Knot spacing       : ", round(.options$knotSpacing,2))
+                if (!is.null(.options$maxPathLength))
+                    output(OL$Info, "Maximum knot count : ", .options$maxPathLength)
+            }
+        }
     )
     
     class(self) <- c("metatract.reference", "list.object", "list")
