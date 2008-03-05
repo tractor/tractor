@@ -1,5 +1,5 @@
 INSTALL=/usr/bin/install
-R=/usr/bin/R
+R=/usr/local/bin/R
 PREFIX=/usr/local
 
 all:
