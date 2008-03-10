@@ -23,7 +23,7 @@ expect_available=$?
 
 usage()
 {
-    echo "tractor v1.0.0, by Jon Clayden <jon.clayden+tractor@gmail.com>"
+    echo "tractor v1.0.1, by Jon Clayden <jon.clayden+tractor@gmail.com>"
     echo "Run a TractoR experiment script in R and report the results"
     echo
     echo "Usage: tractor -h"
@@ -79,7 +79,7 @@ while [ $# -gt 0 ]
 done
 
 [ $# -eq 0 ] && {
-    usage 1>&2
+    echo "Error: No script name given; type tractor -h for help" 1>&2
     exit
 }
 
@@ -108,7 +108,7 @@ elif [ -f "/etc/tractor/$script_file" ]
 fi
 
 [ $file_found -ne 1 ] && {
-    echo "Script file not found" 1>&2
+    echo "Error: Script file not found" 1>&2
     exit
 }
 
