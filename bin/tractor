@@ -2,15 +2,15 @@
 
 status=1
 command="$0 $*"
+keep_log=0
 keep_report=0
 log_file="/tmp/tractor$$_log"
 expect_file="/tmp/tractor$$_expect"
 report_file="/tmp/tractor$$_report"
-trap 'rm -f $log_file $expect_file; [ $keep_report -eq 0 ] && rm -f $report_file; exit $status' 0 1 2 15
+trap 'rm -f $expect_file; [ $keep_report -eq 0 ] && rm -f $report_file; [ $keep_log -eq 0 ] && rm -f $log_file; exit $status' 0 1 2 15
 
 config_file="/dev/null"
 output_level='OL$Warning'
-use_log=0
 write_history=1
 show_options=0
 rprofile_backed_up=0
@@ -64,7 +64,7 @@ while [ $# -gt 0 ]
     do
     case "$1" in
         -h) usage; status=0; exit ;;
-        -l) use_log=1 ;;
+        -l) keep_log=1 ;;
         -d) verbose_level=3 ;;
         -o) show_options=1 ;;
         -z) write_history=0 ;;
@@ -82,6 +82,8 @@ done
     echo "Error: No script name given; type tractor -h for help" 1>&2
     exit
 }
+
+[ $keep_log -eq 1 ] && log_file="$working_dir/tractor_output.log"
 
 [ $keep_report -eq 1 ] && report_file="$working_dir/tractor_report.yaml"
 
@@ -174,8 +176,6 @@ warnings=`grep -c WARNING $log_file`
 errors=`grep -c Error $log_file`
 
 [ $write_history -eq 1 ] && echo "$command [${warnings}W/${errors}E]" >> "$working_dir/tractor_history.log"
-
-[ $use_log -eq 1 ] && cp $log_file "$working_dir/tractor_output.log"
 
 [ $expect_available -ne 0 ] && {
     rm -f .Rprofile
