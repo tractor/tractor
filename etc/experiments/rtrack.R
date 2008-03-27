@@ -34,7 +34,7 @@ runExperiment <- function ()
             validSeeds <- 1:nrow(seeds)
         else
         {
-            thresholdImage <- session$getImageByType(thresholdType)
+            thresholdImage <- session$getImageByType(tolower(thresholdType))
             validSeeds <- which(thresholdImage[seeds] >= thresholdLevel)
             output(OL$Info, "Rejecting ", nrow(seeds)-length(validSeeds), " seed points as below threshold")
         }
