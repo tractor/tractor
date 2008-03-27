@@ -23,7 +23,7 @@ expect_available=$?
 
 usage()
 {
-    echo "tractor v1.0.1, by Jon Clayden <jon.clayden+tractor@gmail.com>"
+    echo "tractor v1.1.0, by Jon Clayden <jon.clayden+tractor@gmail.com>"
     echo "Run a TractoR experiment script in R and report the results"
     echo
     echo "Usage: tractor -h"
@@ -72,7 +72,7 @@ while [ $# -gt 0 ]
 		-r) keep_report=1 ;;
         -v) shift; verbose_level=$1 ;;
         -w) shift; working_dir=`echo $1 | sed 's/\/$//'` ;;
-        -c) shift; config_file="$1" ;;
+        -c) shift; config_file="$config_file:$1" ;;
         --) shift; break ;;
     esac
     shift
@@ -156,11 +156,11 @@ send "source('$script_file')\n"
 expect -re ">.+\r\n"
 send "setOutputLevel($output_level)\n"
 expect -re ">.+\r\n"
-send "setwd('$working_dir')\n"
-expect -re ">.+\r\n"
 send "createWorkspaceFromYaml('$config_file')\n"
 expect -re ">.+\r\n"
 send "createWorkspaceFromYaml(text='$args')\n"
+expect -re ">.+\r\n"
+send "setwd('$working_dir')\n"
 expect -re ">.+\r\n"
 send "results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()\n"
 expect -re ">.+\r\n"
@@ -168,14 +168,14 @@ interact
 EOF
     expect -f $expect_file | tee $log_file
     else
-    echo "library('utils'); library('graphics'); library('grDevices'); library('stats'); source('$script_file'); setOutputLevel($output_level); setwd('$working_dir'); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()" >.Rprofile
+    echo "library('utils'); library('graphics'); library('grDevices'); library('stats'); source('$script_file'); setOutputLevel($output_level); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); setwd('$working_dir'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()" >.Rprofile
     R --slave --no-restore 2>&1 | tee $log_file
 fi
 
 warnings=`grep -c WARNING $log_file`
 errors=`grep -c Error $log_file`
 
-[ $write_history -eq 1 ] && echo "$command [${warnings}W/${errors}E]" >> "$working_dir/tractor_history.log"
+[ $write_history -eq 1 ] && echo "[`date`] $command [${warnings}W/${errors}E]" >> "$working_dir/tractor_history.log"
 
 [ $expect_available -ne 0 ] && {
     rm -f .Rprofile

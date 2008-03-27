@@ -15,6 +15,22 @@ createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment =
             return (as.numeric(x))
     }
     
+    if (!is.null(fileName))
+    {
+        fileNames <- unlist(strsplit(fileName, ":", fixed=TRUE))
+        if (length(fileNames) > 1)
+        {
+            emptyLocs <- grep("^\\s*$", fileNames, perl=TRUE)
+            if (length(emptyLocs) > 0)
+                fileNames <- fileNames[-emptyLocs]
+            
+            for (file in fileNames)
+                createWorkspaceFromYaml(file, environment=environment)
+            
+            return (invisible(NULL))
+        }
+    }
+    
     if (!is.null(fileName) && !file.exists(fileName))
         output(OL$Error, "Configuration file ", fileName, " does not exist")
     
