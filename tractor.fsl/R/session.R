@@ -122,6 +122,12 @@ isMriSession <- function (object)
     return ("session.mri" %in% class(object))
 }
 
+deserialiseMriSession <- function (file = NULL, object = NULL)
+{
+    session <- deserialiseListObject(file, object, .MriSession)
+    invisible (session)
+}
+
 newSessionFromDirectory <- function (directory, createFiles = FALSE)
 {
     session <- .MriSession(directory)

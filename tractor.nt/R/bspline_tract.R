@@ -51,6 +51,12 @@ isBSplineTract <- function (object)
     return ("tract.bspline" %in% class(object))
 }
 
+deserialiseBSplineTract <- function (file = NULL, object = NULL)
+{
+    tract <- deserialiseListObject(file, object, .BSplineTract)
+    invisible (tract)
+}
+
 newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, maxResidError = 0.1)
 {
     fitBSplineModels <- function (streamlineTract, nKnots)

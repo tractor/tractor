@@ -118,6 +118,26 @@ isMriImage <- function (object)
     return ("image.mri" %in% class(object))
 }
 
+deserialiseMriImageMetadata <- function (file = NULL, object = NULL)
+{
+    metadata <- deserialiseListObject(file, object, .MriImageMetadata)
+    invisible (metadata)
+}
+
+deserialiseMriImage <- function (file = NULL, object = NULL)
+{
+    if (is.null(object))
+        object <- deserialiseListObject(file, raw=TRUE)
+    
+    if (isDeserialisable(object$metadata, "metadata.image.mri"))
+        object$metadata <- deserialiseMriImageMetadata(object=object$metadata)
+    else
+        output(OL$Error, "Deserialised object contains no valid metadata")
+    
+    image <- deserialiseListObject(NULL, object, .MriImage)
+    invisible (image)
+}
+
 "[.image.mri" <- function (x, ...)
 {
     return (x$getData()[...])

@@ -44,6 +44,25 @@ isReferenceTract <- function (object)
     return ("metatract.reference" %in% class(object))
 }
 
+deserialiseReferenceTract <- function (file = NULL, object = NULL)
+{
+    if (is.null(object))
+        object <- deserialiseListObject(file, raw=TRUE)
+    
+    if (isDeserialisable(object$tract, "tract.bspline"))
+        object$tract <- deserialiseBSplineTract(object=object$tract)
+    else if (isDeserialisable(object$tract, "tract.field"))
+        object$tract <- deserialiseFieldTract(object=object$tract)
+    else
+        output(OL$Error, "Deserialised object contains no valid tract")
+    
+    if (isDeserialisable(object$session, "session.mri"))
+        object$session <- deserialiseMriSession(object=object$session)
+    
+    reference <- deserialiseListObject(NULL, object, .ReferenceTract)
+    invisible (reference)
+}
+
 newReferenceTractWithTract <- function (tract, standardSeed = NULL, nativeSeed = NULL, session = NULL, options = NULL)
 {
     if (is.null(session) && is.null(standardSeed))

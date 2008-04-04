@@ -21,6 +21,20 @@ isFieldTract <- function (object)
     return ("tract.field" %in% class(object))
 }
 
+deserialiseFieldTract <- function (file = NULL, object = NULL)
+{
+    if (is.null(object))
+        object <- deserialiseListObject(file, raw=TRUE)
+    
+    if (isDeserialisable(object$image, "image.mri"))
+        object$image <- deserialiseMriImage(object=object$image)
+    else
+        output(OL$Error, "Deserialised object contains no valid image")
+    
+    tract <- deserialiseListObject(NULL, object, .FieldTract)
+    invisible (tract)
+}
+
 newFieldTractFromProbtrack <- function (..., threshold=NA)
 {
     probtrackResult <- runProbtrackWithSession(..., requireImage=TRUE)
