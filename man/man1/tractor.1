@@ -50,7 +50,7 @@ Specify the working directory for the experiment, which will be created if neces
 Specify a configuration file in YAML format.
 
 .SH SCRIPT CONFIGURATION AND ARGUMENTS
-Most experiment scripts offer a number of options that describe what processing is to be done, and to which data it is to be applied. These options may be specified in a configuration file (using the '\-c' flag), using a small subset of the YAML markup language. Parameter names and values are separated by a colon (and optional space); and lists of values are given inside square brackets, comma-separated:
+Most experiment scripts offer a number of options that describe what processing is to be done, and to which data it is to be applied. These options may be specified in a configuration file (with the '\-c' flag), using a small subset of the YAML markup language. Parameter names and values are separated by a colon (and optional space); and lists of values are given inside square brackets, comma-separated:
 .TP
 .PP
 Param1: 17
@@ -61,7 +61,9 @@ Param3: [ /data/subject1,
 .br
           /data/subject2 ]
 .PP
-Note that all parameter names begin with an upper case letter, and lists of values may span more than one line. Configuration parameters may also be specified on the command line, after the script name, although in that case there must be NO SPACE between the colon and the value. Moreover, lists of values cannot be specified in this way.
+Note that all parameter names begin with an upper case letter, and lists of values may span more than one line. Multiple configuration files may be specified on the command line (using several '\-c' flags), in which case they are read in the order given, with any duplicate parameters in later files overriding the values set in earlier ones.
+.PP
+Configuration parameters may also be specified directly on the command line, after the script name, although in that case there must be NO SPACE between the colon and the value. Lists of values cannot be specified in this way.
 .PP
 Some scripts additionally take command line arguments, which are specified after the script name, and are distinguished from named parameters by being unlabelled.
 
