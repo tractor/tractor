@@ -7,17 +7,6 @@
     }
     
     self <- list(
-        dump = function ()
-        {
-            return (list(imagedims=.imagedims,
-                         voxdims=.voxdims,
-                         voxunit=.voxunit,
-                         source=.source,
-                         datatype=.datatype,
-                         origin=.origin,
-                         endian=.endian))
-        },
-        
         getDataType = function () { return (.datatype) },
         
         getDimensionality = function () { return (length(.voxdims)) },
@@ -178,7 +167,7 @@ newMriImageMetadataFromTemplate <- function (metadata, imageDims = NA, voxelDims
     if (!isMriImageMetadata(metadata))
         output(OL$Error, "The specified metadata template is not valid")
     
-    template <- metadata$dump()
+    template <- serialiseListObject(metadata)
     params <- list(imagedims=imageDims,
                    voxdims=voxelDims,
                    voxunit=voxelUnit,
@@ -278,7 +267,7 @@ newMriImageByExtraction <- function (image, dim, loc)
     newData <- extractDataFromMriImage(image, dim, loc)
     
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
-    metadata <- image$getMetadata()$dump()
+    metadata <- serialiseListObject(image$getMetadata())
     newMetadata <- .MriImageMetadata(metadata$imagedims[dimsToKeep], metadata$voxdims[dimsToKeep], metadata$voxunit, "internal", metadata$datatype, metadata$origin[dimsToKeep], metadata$endian)
         
     image <- .MriImage(newData, newMetadata)
