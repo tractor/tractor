@@ -48,6 +48,25 @@ isAffineTransform3D <- function (object)
     return ("transform.affine.3d" %in% class(object))
 }
 
+deserialiseAffineTransform3D <- function (file = NULL, object = NULL)
+{
+    if (is.null(object))
+        object <- deserialiseListObject(file, raw=TRUE)
+    
+    if (isDeserialisable(object$sourceMetadata, "metadata.image.mri"))
+        object$sourceMetadata <- deserialiseMriImageMetadata(object=object$sourceMetadata)
+    else
+        output(OL$Error, "Deserialised object contains no valid source metadata")
+
+    if (isDeserialisable(object$destMetadata, "metadata.image.mri"))
+        object$destMetadata <- deserialiseMriImageMetadata(object=object$destMetadata)
+    else
+        output(OL$Error, "Deserialised object contains no valid target metadata")
+    
+    transform <- deserialiseListObject(NULL, object, .AffineTransform3D)
+    invisible (transform)
+}
+
 checkFlirtCacheForTransform <- function (sourceFile, destFile)
 {
     cacheIndexFile <- file.path(tempdir(), "flirt-cache", "index.txt")

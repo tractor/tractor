@@ -1,4 +1,4 @@
-.ReferenceTract <- function (.tract, .standardSeed, .session = NULL, .options = NULL)
+.ReferenceTract <- function (.tract, .standardSeed, .session, .options)
 {
     if (length(grep("tract", class(.tract))) == 0)
         output(OL$Error, "The specified tract object is not valid")

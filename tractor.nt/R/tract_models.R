@@ -94,6 +94,12 @@ isMatchingTractModel <- function (object)
     return ("model.tract.matching" %in% class(object))
 }
 
+deserialiseMatchingTractModel <- function (file = NULL, object = NULL)
+{
+    model <- deserialiseListObject(file, object, .MatchingTractModel)
+    invisible (model)
+}
+
 calculateRescaledCosinesFromAngles <- function (angles, naRemove = TRUE)
 {
     if (naRemove)
