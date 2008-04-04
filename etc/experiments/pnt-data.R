@@ -18,6 +18,7 @@ runExperiment <- function ()
     pointType <- getWithDefault("PointType", NULL, mode="character")
     searchWidth <- getWithDefault("SearchWidth", 1)
     faThreshold <- getWithDefault("AnisotropyThreshold", 0.2)
+    nSamples <- getWithDefault("NumberOfSamples", 5000)
     datasetName <- getWithDefault("DatasetName", "data")
     
     refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
@@ -54,7 +55,7 @@ runExperiment <- function ()
         if (pointType == "mm")
             currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("t2")), useOrigin=TRUE)
         
-        splines <- calculateSplinesForNeighbourhood(currentSession, currentSeed, reference$getSourceSession(), reference$getTractOptions(), searchWidth, faThreshold)
+        splines <- calculateSplinesForNeighbourhood(currentSession, currentSeed, reference$getSourceSession(), reference$getTractOptions(), searchWidth, faThreshold, nSamples)
         data <- createDataTableForSplines(splines, reference$getTract(), "knot", subjectId=i)
         
         if (is.null(allData))

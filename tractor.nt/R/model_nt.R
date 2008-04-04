@@ -10,12 +10,12 @@ isTractOptionList <- function (object)
     return ("options.tract" %in% class(object))
 }
 
-splineTractWithOptions <- function (options, session, seed, refSession = NULL)
+splineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000)
 {
     if (!isTractOptionList(options))
         output(OL$Error, "Tract representation options must be specified as a TractOptionList")
     
-    streamSet <- newStreamlineSetTractFromProbtrack(session, seed, maxPathLength=options$maxPathLength)
+    streamSet <- newStreamlineSetTractFromProbtrack(session, seed, nSamples=nSamples, maxPathLength=options$maxPathLength)
     streamline <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
     if (options$registerToReference)
     {
@@ -41,7 +41,7 @@ referenceSplineTractWithOptions <- function (options, refSession, refSeed)
     invisible (list(spline=refSpline, options=options))
 }
 
-calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession, options, searchWidth = 7, faThreshold = 0.2)
+calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession, options, searchWidth = 7, faThreshold = 0.2, nSamples = 5000)
 {
     fa <- testSession$getImageByType("fa")
     
@@ -62,7 +62,7 @@ calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession,
         }
         else
         {
-            spline <- splineTractWithOptions(options, testSession, seed, refSession)
+            spline <- splineTractWithOptions(options, testSession, seed, refSession, nSamples)
             splines <- c(splines, list(spline))
         }
     }
