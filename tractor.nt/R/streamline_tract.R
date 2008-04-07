@@ -263,6 +263,19 @@ newStreamlineTractWithMetadata <- function (tract, metadata)
 
 newStreamlineTractFromLine <- function (line, seedIndex, originalSeedPoint, metadata)
 {
+    axisNames <- c("left-right", "anterior-posterior", "inferior-superior")
+    firstStep <- line[seedIndex+1,] - line[seedIndex,]
+    testAxis <- which.max(abs(firstStep))
+    output(OL$Info, "Using ", axisNames[testAxis], " axis for left/right splitting")
+    
+    if (firstStep[testAxis] < 0)
+    {
+        output(OL$Info, "Inverting the order of points in the streamline")
+        len <- nrow(line)
+        line <- line[len:1,]
+        seedIndex <- len - seedIndex + 1
+    }
+    
     streamline <- .StreamlineTract(line, seedIndex, originalSeedPoint, metadata)
     invisible (streamline)
 }
