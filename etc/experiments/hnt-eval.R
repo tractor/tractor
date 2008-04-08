@@ -20,9 +20,7 @@ runExperiment <- function ()
     resultsName <- getWithDefault("ResultsName", "results")
     
     refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
-    load(refFileName)
-    if (!exists("reference") || !isReferenceTract(reference))
-        output(OL$Error, "The file specified does not seem to contain reference tract information")
+    reference <- deserialiseReferenceTract(refFileName)
     if (!isFieldTract(reference))
         output(OL$Error, "The specified reference tract is not in the correct form")
     

@@ -12,9 +12,7 @@ runExperiment <- function ()
     resultsName <- getWithDefault("ResultsName", "results")
     
     modelFileName <- ensureFileSuffix(paste(tractName,"model",sep="_"), "Rdata")
-    load(modelFileName)
-    if (!exists("model") || !isMatchingTractModel(model))
-        output(OL$Error, "The file specified does not seem to contain a valid model")
+    model <- deserialiseMatchingTractModel(modelFileName)
     
     data <- read.table(ensureFileSuffix(datasetName,"txt"))
     

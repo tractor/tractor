@@ -26,5 +26,5 @@ runExperiment <- function ()
     reference <- newReferenceTractWithTract(tract, session=session, nativeSeed=seed)
     
     fileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
-    save(reference, file=fileName)
+    serialiseListObject(reference, file=fileName)
 }

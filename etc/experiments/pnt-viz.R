@@ -25,9 +25,7 @@ runExperiment <- function ()
     showSeed <- getWithDefault("ShowSeedPoint", TRUE)
     
     refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
-    load(refFileName)
-    if (!exists("reference") || !isReferenceTract(reference))
-        output(OL$Error, "The file specified does not seem to contain reference tract information")
+    reference <- deserialiseReferenceTract(refFileName)
     if (!isBSplineTract(reference))
         output(OL$Error, "The specified reference tract is not in the correct form")
     
