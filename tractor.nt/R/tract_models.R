@@ -96,7 +96,15 @@ isMatchingTractModel <- function (object)
 
 deserialiseMatchingTractModel <- function (file = NULL, object = NULL)
 {
-    model <- deserialiseListObject(file, object, .MatchingTractModel)
+    if (is.null(object))
+        object <- deserialiseListObject(file, raw=TRUE)
+    
+    if (isDeserialisable(object$refSpline, "tract.bspline"))
+        object$refSpline <- deserialiseBSplineTract(object=object$refSpline)
+    else
+        output(OL$Error, "Deserialised object contains no valid reference spline")
+    
+    model <- deserialiseListObject(NULL, object, .MatchingTractModel)
     invisible (model)
 }
 
