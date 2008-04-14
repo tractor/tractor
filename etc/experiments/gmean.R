@@ -1,6 +1,7 @@
+#@args volume prefix
 #@desc Calculate the mean or weighted mean value of a metric within the nonzero region
 #@desc of a group of brain volumes (usually tractography output) whose file names are
-#@desc assumed to have the form of the specified VolumePrefix followed by a number
+#@desc assumed to have the form of the specified volume prefix followed by a number
 #@desc corresponding to the location in the SessionList. The metric can be FA, MD or
 #@desc AVF, and the specified image can be used as a binary mask (the default) or as
 #@desc a set of weights (with AveragingMode:weighted). In the latter case any weight
@@ -10,8 +11,10 @@ suppressPackageStartupMessages(require(tractor.fsl))
 
 runExperiment <- function ()
 {
+    requireArguments("volume prefix")
+    fileStem <- Arguments[1]
+    
     sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
-    fileStem <- getWithDefault("VolumePrefix", NULL, "character", errorIfMissing=TRUE)
     metricName <- getWithDefault("Metric", NULL, "character")
     mode <- getWithDefault("AveragingMode", "binary")
     baseThreshold <- getWithDefault("WeightThreshold", 0.01)
