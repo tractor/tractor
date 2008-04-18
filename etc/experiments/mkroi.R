@@ -27,4 +27,6 @@ runExperiment <- function ()
     
     roiImage <- newMriImageAsShapeOverlay("block", t2Image, centre=round(centre), width=width)
     writeMriImageToFile(roiImage, roiName)
+    
+    invisible (NULL)
 }
