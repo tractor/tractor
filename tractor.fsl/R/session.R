@@ -128,15 +128,15 @@ deserialiseMriSession <- function (file = NULL, object = NULL)
     invisible (session)
 }
 
-newSessionFromDirectory <- function (directory, createFiles = FALSE)
+newSessionFromDirectory <- function (directory, createFiles = FALSE, dicomDir = NULL)
 {
     session <- .MriSession(directory)
     if (createFiles)
-        createFilesForSession(session)
+        createFilesForSession(session, dicomDir)
     invisible (session)
 }
 
-createFilesForSession <- function (session)
+createFilesForSession <- function (session, dicomDir = NULL)
 {
     workingDir <- session$getWorkingDirectory()
     if (file.exists(workingDir))
@@ -148,7 +148,14 @@ createFilesForSession <- function (session)
             unlink(workingDir, recursive=TRUE)
     }
     
-    files <- expandFileName(list.files(session$getBaseDirectory(), full.names=TRUE, recursive=TRUE))
+    if (is.null(dicomDir))
+        dicomDir <- session$getBaseDirectory()
+    else
+        dicomDir <- file.path(session$getBaseDirectory(), dicomDir)
+    dicomDir <- gsub("//+", "/", dicomDir, perl=TRUE)
+    
+    output(OL$Info, "Looking for DICOM files in directory ", dicomDir)
+    files <- expandFileName(list.files(dicomDir, full.names=TRUE, recursive=TRUE))
     files <- files[!file.info(files)$isdir]
     nFiles <- length(files)
     

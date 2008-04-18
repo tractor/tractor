@@ -26,6 +26,7 @@ runExperiment <- function ()
     interactive <- getWithDefault("Interactive", TRUE)
     stages <- getWithDefault("RunStages", "12345")
     skipCompleted <- getWithDefault("SkipCompletedStages", TRUE)
+    dicomDir <- getWithDefault("DicomDirectory", NULL, "character")
     betIntensityThreshold <- getWithDefault("BetIntensityThreshold", 0.5)
     betVerticalGradient <- getWithDefault("BetVerticalGradient", 0)
     flipAxes <- getWithDefault("FlipGradientAxes", NULL, "integer")
@@ -44,26 +45,31 @@ runExperiment <- function ()
     else try(
     {
         if (runStages[1] && (!skipCompleted || !file.exists(session$getWorkingDirectory())))
-            createFilesForSession(session)
+            createFilesForSession(session, dicomDir)
     
         if (runStages[2] && (!skipCompleted || !imageFileExists(file.path(targetDir,"nodif"))))
             runEddyCorrectWithSession(session, ask=interactive)
     
         if (runStages[3] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("mask"))))
         {
-            runBetWithSession(session, betIntensityThreshold, betVerticalGradient, show=interactive)
+            runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
         
             if (interactive)
             {
-                runBetAgain <- output(OL$Question, "Run brain extraction tool again? [yn]")
-                while (tolower(runBetAgain) == "y")
+                runBetAgain <- output(OL$Question, "Run brain extraction tool again? [yn; s to show the mask in fslview]")
+                while (tolower(runBetAgain) %in% c("y","s"))
                 {
-                    output(OL$Info, "Previous intensity threshold was ", betIntensityThreshold, "; smaller values give larger brain outlines")
-                    betIntensityThreshold <- as.numeric(output(OL$Question, "Intensity threshold? [0 to 1]"))
-                    output(OL$Info, "Previous vertical gradient was ", betVerticalGradient, "; positive values shift the outline downwards")
-                    betVerticalGradient <- as.numeric(output(OL$Question, "Vertical gradient? [-1 to 1]"))
-                    runBetWithSession(session, betIntensityThreshold, betVerticalGradient, show=TRUE)
-                    runBetAgain <- output(OL$Question, "Run brain extraction tool again? [yn]")
+                    if (tolower(runBetAgain) == "s")
+                        runBetWithSession(session, showOnly=TRUE)
+                    else
+                    {
+                        output(OL$Info, "Previous intensity threshold was ", betIntensityThreshold, "; smaller values give larger brain outlines")
+                        betIntensityThreshold <- as.numeric(output(OL$Question, "Intensity threshold? [0 to 1]"))
+                        output(OL$Info, "Previous vertical gradient was ", betVerticalGradient, "; positive values shift the outline downwards")
+                        betVerticalGradient <- as.numeric(output(OL$Question, "Vertical gradient? [-1 to 1]"))
+                        runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
+                    }
+                    runBetAgain <- output(OL$Question, "Run brain extraction tool again? [yn; s to show the mask in fslview]")
                 }
             }
         }

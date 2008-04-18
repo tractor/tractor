@@ -61,7 +61,7 @@ runDtifitWithSession <- function (session)
     execute("dtifit", paramString, errorOnFail=TRUE)
 }
 
-runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradient = 0, show = FALSE)
+runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradient = 0, showOnly = FALSE)
 {
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
@@ -70,14 +70,16 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     if (!imageFileExists(file.path(targetDir,"nodif")))
         output(OL$Error, "A \"nodif\" image file has not yet been corrected - run eddy_correct first")
     
-    output(OL$Info, "Running FSL's brain extraction tool...")
-    paramString <- paste(file.path(targetDir,"nodif"), file.path(targetDir,"nodif_brain"), "-m -v -f", intensityThreshold, "-g", verticalGradient, sep=" ")
-    execute("bet", paramString, errorOnFail=TRUE)
-    
-    if (show)
+    if (showOnly)
     {
         paramString <- paste(file.path(targetDir,"nodif"), file.path(targetDir,"nodif_brain_mask"), sep=" ")
         execute("fslview", paramString, errorOnFail=TRUE, wait=FALSE)
+    }
+    else
+    {
+        output(OL$Info, "Running FSL's brain extraction tool...")
+        paramString <- paste(file.path(targetDir,"nodif"), file.path(targetDir,"nodif_brain"), "-m -v -f", intensityThreshold, "-g", verticalGradient, sep=" ")
+        execute("bet", paramString, errorOnFail=TRUE)
     }
 }
 
