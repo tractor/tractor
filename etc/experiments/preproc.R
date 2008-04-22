@@ -29,12 +29,18 @@ runExperiment <- function ()
     dicomDir <- getWithDefault("DicomDirectory", NULL, "character")
     betIntensityThreshold <- getWithDefault("BetIntensityThreshold", 0.5)
     betVerticalGradient <- getWithDefault("BetVerticalGradient", 0)
-    flipAxes <- getWithDefault("FlipGradientAxes", NULL, "integer")
+    flipAxes <- getWithDefault("FlipGradientAxes", NULL, "character")
     nFibres <- getWithDefault("NumberOfFibres", 2, errorIfInvalid=TRUE)
     howRunBedpost <- getWithDefault("HowRunBedpost", "auto")
     
     if (interactive && getOption("tractorOutputLevel") > OL$Info)
         setOutputLevel(OL$Info)
+    
+    if (!is.null(flipAxes))
+    {
+        flipAxes <- suppressWarnings(as.numeric(unlist(strsplit(flipAxes, ""))))
+        flipAxes <- flipAxes[!is.na(flipAxes)]
+    }
     
     runStages <- 1:5 %in% suppressWarnings(as.numeric(unlist(strsplit(stages, ""))))
     if (all(!runStages))
@@ -91,7 +97,7 @@ runExperiment <- function ()
                 flipAxes <- NULL
             }
         }
-        else if (!is.null(flipAxes))
+        else if (!is.null(flipAxes) && length(flipAxes) > 0)
             flipGradientVectorsForSession(session, flipAxes)
         
         if (runStages[5])
