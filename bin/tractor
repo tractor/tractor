@@ -21,6 +21,8 @@ working_dir="."
 type expect >/dev/null 2>&1
 expect_available=$?
 
+[ -f "$HOME/.tractor/config" ] && source "$HOME/.tractor/config"
+
 usage()
 {
     echo "tractor (v1.1.0)"
@@ -41,8 +43,9 @@ usage()
     echo "              output of its own"
     echo "  -r          Produce a report file in the working directory (if anything"
     echo "              is reported by the experiment script)"
-    echo "  -v [1-3]    Produce verbose output: the level determines the amount of"
-    echo "              extra information reported, from 1 (least) to 3 (most)"
+    echo "  -v {0-3}    Produce verbose output: the level determines the amount of"
+    echo "              extra information reported, from 0 (least, the default) to"
+    echo "              3 (most)"
     echo "  -w dir      Specify the working directory for the experiment, which"
     echo "              will be created if necessary (default .)"
     echo "  -c file     Specify a configuration file in YAML format"
