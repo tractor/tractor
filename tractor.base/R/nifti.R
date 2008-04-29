@@ -15,7 +15,7 @@ hasNiftiMagicString <- function (fileName)
     magicString <- rawToChar(readBin(connection, "raw", n=4))
     close(connection)
     
-    return (magicString %in% c("ni1\0","n+1\0"))
+    return (magicString == "ni1\0" || magicString == "n+1\0")
 }
 
 createNiftiMetadata <- function (fileNames)
@@ -73,7 +73,7 @@ createNiftiMetadata <- function (fileNames)
 
     close(connection)
     
-    if (!(magicString %in% c("ni1\0","n+1\0")))
+    if (!(magicString == "ni1\0" || magicString == "n+1\0"))
         output(OL$Error, "The file ", fileNames$headerFile, " is not a valid NIfTI file")
     
     ndims <- dims[1]
