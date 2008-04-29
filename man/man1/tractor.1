@@ -49,6 +49,37 @@ Specify the working directory for the experiment, which will be created if neces
 .B \-c \fIconfig_file\fB
 Specify a configuration file in YAML format.
 
+.SH SETTING DEFAULT OPTIONS
+Since version 1.1.0 of the \fBtractor\fR program, it has been possible to set up user-specific defaults for each of the options that the program supports. To do this, a user can create a file at ~/\.tractor/config which sets any or all of the following variables, using \fBbash\fR(1) syntax. Note that 'off' and 'on' are represented by the numbers 0 and 1, respectively.
+.TP
+.PP
+\fBName\fR             \fBEquivalent flag\fR       \fBDefault value\fR
+.br
+show_options     -o                    0
+.br
+keep_log         -l                    0
+.br
+write_history    -z (switches to 0)    1
+.br
+quiet            -q                    0
+.br
+keep_report      -r                    0
+.br
+verbose_level    -v                    0
+.br
+working_dir      -w                    '.'
+.br
+config_file      -c                    '/dev/null' (i\.e\. none)
+.PP
+Thus, if you do not want a history file to ever be created, and you want moderately verbose output by default, your config file would contain
+.TP
+.PP
+write_history=0
+.br
+verbose_level=1
+.PP
+Note that the names of any default configuration files (described below) given to the 'config_file' named option in this way should be separated by colons.
+
 .SH SCRIPT CONFIGURATION AND ARGUMENTS
 Most experiment scripts offer a number of options that describe what processing is to be done, and to which data it is to be applied. These options may be specified in a configuration file (with the '\-c' flag), using a small subset of the YAML markup language. Parameter names and values are separated by a colon (and optional space); and lists of values are given inside square brackets, comma-separated:
 .TP
