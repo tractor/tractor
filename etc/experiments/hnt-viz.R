@@ -22,8 +22,8 @@ runExperiment <- function ()
     
     nSessions <- length(sessionList)
     
-    load(ensureFileSuffix(resultsName,"Rdata"))
-    if (length(results) != nSessions)
+    results <- deserialiseHeuristicNTResults(file=ensureFileSuffix(resultsName,"Rdata"))
+    if (results$nSessions() != nSessions)
         output(OL$Error, "Length of the session list specified does not match the results file")
 
     for (i in 1:nSessions)
@@ -31,7 +31,7 @@ runExperiment <- function ()
         output(OL$Info, "Generating tract for session ", i)
         
         currentSession <- newSessionFromDirectory(sessionList[i])
-        currentSeed <- results[[i]]$bestSeed
+        currentSeed <- results$getResult(i)$bestSeed
         
         ptResult <- runProbtrackWithSession(currentSession, currentSeed, mode="simple", requireImage=TRUE)
         

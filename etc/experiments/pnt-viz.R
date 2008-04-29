@@ -34,10 +34,10 @@ runExperiment <- function ()
     
     nSessions <- length(sessionList)
     
-    load(ensureFileSuffix(resultsName,"Rdata"))
-    if (length(tp) != nSessions)
+    results <- deserialiseProbabilisticNTResults(file=ensureFileSuffix(resultsName,"Rdata"))
+    if (results$nSessions() != nSessions)
         output(OL$Error, "Length of the session list specified does not match the results file")
-    nPoints <- length(tp[[1]])
+    nPoints <- results$nPoints()
 
     searchWidth <- round(nPoints^(1/3))
     if (searchWidth^3 != nPoints)
@@ -49,7 +49,7 @@ runExperiment <- function ()
         
         currentSession <- newSessionFromDirectory(sessionList[i])
         currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType="r", isStandard=TRUE)
-        currentPosteriors <- tp[[i]]
+        currentPosteriors <- results$getTractPosteriors(i)
         
         ranks <- rank(currentPosteriors, na.last="keep")
         maxRank <- max(ranks, na.rm=TRUE)

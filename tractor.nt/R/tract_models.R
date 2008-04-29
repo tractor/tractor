@@ -94,6 +94,12 @@ isMatchingTractModel <- function (object)
     return ("model.tract.matching" %in% class(object))
 }
 
+deserialiseUninformativeTractModel <- function (file = NULL, object = NULL)
+{
+    model <- deserialiseListObject(file, object, .UninformativeTractModel)
+    invisible (model)
+}
+
 deserialiseMatchingTractModel <- function (file = NULL, object = NULL)
 {
     if (is.null(object))

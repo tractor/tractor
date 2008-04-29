@@ -55,5 +55,6 @@ runExperiment <- function ()
         results <- c(results, list(result))
     }
     
-    save(results, file=ensureFileSuffix(resultsName,"Rdata"))
+    resultsObject <- newHeuristicNTResultsFromList(results)
+    serialiseListObject(resultsObject, file=ensureFileSuffix(resultsName,"Rdata"))
 }
