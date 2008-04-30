@@ -73,7 +73,7 @@
         {
             preBedpostDir <- file.path(.workingDirectory, "fdt")
             if (!file.exists(preBedpostDir))
-                dir.create(preBedpostDir)
+                dir.create(preBedpostDir, showWarnings=FALSE)
             return (preBedpostDir)
         },
         
