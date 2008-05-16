@@ -231,6 +231,8 @@ createFilesForSession <- function (session, dicomDir = NULL)
     volumeBValues <- rep(NA, nVolumes)
     volumeBVectors <- matrix(NA, nrow=3, ncol=nVolumes)
 
+    firstLocs <- numeric(0)
+    
     # This is meant to be zero (so that the modulo arithmetic works)
     index <- 0
     for (s in uniqueSeries)
@@ -239,31 +241,40 @@ createFilesForSession <- function (session, dicomDir = NULL)
         {
             for (i in uniqueImages)
             {
-                sliceLoc <- which(seriesNumbers==s & acquisitionNumbers==a & imageNumbers==i)
-                if (length(sliceLoc) == 0)
+                slicePos <- which(seriesNumbers==s & acquisitionNumbers==a & imageNumbers==i)
+                if (length(slicePos) == 0)
                     next
                 
                 if (volumePerDicomFile)
                 {
                     volume <- index + 1
-                    data[,,,volume] <- images[[sliceLoc]]$getData()
+                    data[,,,volume] <- images[[slicePos]]$getData()
                 }
                 else
                 {
+                    if (length(firstLocs) < 2)
+                        firstLocs <- c(firstLocs, sliceLocations[slicePos])
+                    
                     slice <- (index %% nSlices) + 1
                     volume <- (index %/% nSlices) + 1
-                    data[,,slice,volume] <- images[[sliceLoc]]$getData()
+                    data[,,slice,volume] <- images[[slicePos]]$getData()
                 }
                 
                 if (is.na(volumeBValues[volume]))
                 {
-                    volumeBValues[volume] <- bValues[sliceLoc]
-                    volumeBVectors[,volume] <- bVectors[,sliceLoc]
+                    volumeBValues[volume] <- bValues[slicePos]
+                    volumeBVectors[,volume] <- bVectors[,slicePos]
                 }
                 
                 index <- index + 1
             }
         }
+    }
+    
+    if (!volumePerDicomFile && nSlices>1 && length(firstLocs)==2 && diff(firstLocs)<0)
+    {
+        output(OL$Warning, "Slice location decreases between consecutive images - inverting z order")
+        data <- data[,,nSlices:1,]
     }
 
     imageMetadata <- newMriImageMetadataFromTemplate(images[[1]]$getMetadata(), imageDims=imageDims, voxelDims=voxelDims, origin=rep(1,length(imageDims)))
