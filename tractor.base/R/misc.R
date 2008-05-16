@@ -168,6 +168,28 @@ promote <- function (x, byrow = FALSE)
         return (NA)
 }
 
+restrict <- function (x, fun = NULL, ..., invert = FALSE, na.rm=TRUE)
+{
+    if (!is.vector(x))
+        output(OL$Error, "The \"restrict\" function only works for vectors")
+    if (is.null(fun))
+        matches <- rep(TRUE, length(x))
+    else
+    {
+        fun <- match.fun(fun)
+        matches <- fun(x, ...)
+        if (!is.logical(matches))
+            output(OL$Error, "The result of applying the specified function to the vector is not of logical type")
+    }
+    
+    if (invert)
+        matches <- !matches
+    if (na.rm)
+        matches <- matches & !is.na(x)
+    
+    return (x[matches])
+}
+
 equivalent <- function (x, y, signMatters = TRUE, ...)
 {
     if (signMatters)
