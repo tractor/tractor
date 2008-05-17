@@ -32,6 +32,8 @@ runExperiment <- function ()
     if (!createVolumes && !createImages)
         output(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
+    options(bitmapType="Xlib")
+    
     nSessions <- length(sessionList)
     
     results <- deserialiseProbabilisticNTResults(file=ensureFileSuffix(resultsName,"Rdata"))
