@@ -282,15 +282,19 @@ getMniTransformForSession <- function (session)
     invisible (inverseXfm)
 }
 
-transformStandardSpaceImage <- function (session, image)
+transformStandardSpaceImage <- function (session, image, toStandard = FALSE)
 {
     if (!isMriImage(image))
         output(OL$Error, "Specified image is not an MriImage object")
     
-    xfm <- getMniTransformForSession(session)
+    if (toStandard)
+        xfm <- newAffineTransform3DByInversion(getMniTransformForSession(session))
+    else
+        xfm <- getMniTransformForSession(session)
+    
     xfmFile <- ensureFileSuffix(tempfile(), "mat")
     write.table(xfm$getMatrix(), xfmFile, row.names=FALSE, col.names=FALSE)
-    output(OL$Info, "Transforming image from standard space")
+    output(OL$Info, "Transforming image ", ifelse(toStandard,"to","from"), " standard space")
     
     imageFiles <- tempfile(rep("image",2))
     writeMriImageToFile(image, imageFiles[1])
@@ -306,10 +310,13 @@ transformStandardSpaceImage <- function (session, image)
     invisible (finalImage)
 }
 
-transformStandardSpacePoints <- function (session, points, unit = c("vox","mm"), round = TRUE)
+transformStandardSpacePoints <- function (session, points, unit = c("vox","mm"), round = TRUE, toStandard = FALSE)
 {
-    xfm <- getMniTransformForSession(session)
-    output(OL$Info, "Transforming points from standard space")
+    if (toStandard)
+        xfm <- newAffineTransform3DByInversion(getMniTransformForSession(session))
+    else
+        xfm <- getMniTransformForSession(session)
+    output(OL$Info, "Transforming points ", ifelse(toStandard,"to","from"), " standard space")
     
     unit <- match.arg(unit)
     if (unit == "vox")
