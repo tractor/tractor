@@ -288,9 +288,15 @@ transformStandardSpaceImage <- function (session, image, toStandard = FALSE)
         output(OL$Error, "Specified image is not an MriImage object")
     
     if (toStandard)
+    {
         xfm <- newAffineTransform3DByInversion(getMniTransformForSession(session))
+        dest <- file.path(.StandardBrainPath, "avg152T1_brain")
+    }
     else
+    {
         xfm <- getMniTransformForSession(session)
+        dest <- session$getImageFileNameByType("t2")
+    }
     
     xfmFile <- ensureFileSuffix(tempfile(), "mat")
     write.table(xfm$getMatrix(), xfmFile, row.names=FALSE, col.names=FALSE)
@@ -299,7 +305,7 @@ transformStandardSpaceImage <- function (session, image, toStandard = FALSE)
     imageFiles <- tempfile(rep("image",2))
     writeMriImageToFile(image, imageFiles[1])
     
-    paramString <- paste("-in", imageFiles[1], "-ref", session$getImageFileNameByType("t2"), "-applyxfm -init", xfmFile, "-out", imageFiles[2], sep=" ")
+    paramString <- paste("-in", imageFiles[1], "-ref", dest, "-applyxfm -init", xfmFile, "-out", imageFiles[2], sep=" ")
     execute("flirt", paramString, silent=TRUE, errorOnFail=TRUE)
     
     finalImage <- newMriImageFromFile(imageFiles[2])
