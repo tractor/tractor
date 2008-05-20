@@ -136,12 +136,16 @@ newSessionFromDirectory <- function (directory, createFiles = FALSE, dicomDir = 
     invisible (session)
 }
 
-createFilesForSession <- function (session, dicomDir = NULL)
+createFilesForSession <- function (session, dicomDir = NULL, overwriteQuietly = FALSE)
 {
     workingDir <- session$getWorkingDirectory()
     if (file.exists(workingDir))
     {
-        ans <- output(OL$Question, "Internal directory ", workingDir, " exists. This operation will DESTROY it. Continue? [yn]")
+        if (overwriteQuietly)
+            ans <- "y"
+        else
+            ans <- output(OL$Question, "Internal directory ", workingDir, " exists. This operation will DESTROY it. Continue? [yn]")
+        
         if (tolower(ans) != "y")
             return (invisible(NULL))
         else

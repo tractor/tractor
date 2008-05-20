@@ -51,7 +51,7 @@ runExperiment <- function ()
     else try(
     {
         if (runStages[1] && (!skipCompleted || !file.exists(session$getWorkingDirectory())))
-            createFilesForSession(session, dicomDir)
+            createFilesForSession(session, dicomDir, overwriteQuietly=(!interactive))
     
         if (runStages[2] && (!skipCompleted || !imageFileExists(file.path(targetDir,"nodif"))))
             runEddyCorrectWithSession(session, ask=interactive)
