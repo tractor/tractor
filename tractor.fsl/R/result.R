@@ -13,7 +13,6 @@ displayProbtrackResult <- function (probtrackResult, axes = 1:3, colourScale = 2
         seed <- probtrackResult$seed
         seed[setdiff(1:3,axis)] <- NA
         
-        get(getOption("device"))()
         createSliceGraphic(baseImage, seed[1], seed[2], seed[3], device="internal")
         createProjectionGraphic(finalImage, axis, device="internal", colourScale=colourScale, add=TRUE)
     }
