@@ -132,7 +132,7 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
     
     # In order to estimate appropriate parameters for the calculations and
     # plots below, we initially read in a subsample of the streamlines
-    subSize <- nSamples / 20
+    subSize <- ifelse(nSamples < 40, nSamples, ceiling(nSamples / 20))
     subData <- array(NA, dim=c(maxPathLength,3,subSize))
     output(OL$Info, "Reading subsample of ", subSize, " streamlines")
     
