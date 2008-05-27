@@ -82,19 +82,28 @@ runExperiment <- function ()
     
         if (runStages[4] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("fa"))))
         {
-            runDtifitAgain <- output(OL$Question, "Run dtifit for diffusion tensor metrics? [yn]")
-            while (tolower(runDtifitAgain) == "y")
+            if (interactive)
             {
-                if (is.null(flipAxes))
+                runDtifitAgain <- output(OL$Question, "Run dtifit for diffusion tensor metrics? [yn]")
+                while (tolower(runDtifitAgain) == "y")
                 {
-                    ans <- output(OL$Question, "Flip diffusion gradient vectors along which axes? [123; Enter for none]")
-                    flipAxes <- suppressWarnings(as.numeric(unlist(strsplit(ans,""))))
+                    if (is.null(flipAxes))
+                    {
+                        ans <- output(OL$Question, "Flip diffusion gradient vectors along which axes? [123; Enter for none]")
+                        flipAxes <- suppressWarnings(as.numeric(unlist(strsplit(ans,""))))
+                    }
+                    if (length(flipAxes[!is.na(flipAxes)]) > 0)
+                        flipGradientVectorsForSession(session, flipAxes)
+                    runDtifitWithSession(session)
+                    runDtifitAgain <- output(OL$Question, "Run dtifit again? [yn]")
+                    flipAxes <- NULL
                 }
-                if (length(flipAxes[!is.na(flipAxes)]) > 0)
+            }
+            else
+            {
+                if (!is.null(flipAxes) && length(flipAxes[!is.na(flipAxes)]) > 0)
                     flipGradientVectorsForSession(session, flipAxes)
                 runDtifitWithSession(session)
-                runDtifitAgain <- output(OL$Question, "Run dtifit again? [yn]")
-                flipAxes <- NULL
             }
         }
         else if (!is.null(flipAxes) && length(flipAxes) > 0)
