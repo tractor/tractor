@@ -280,34 +280,49 @@ newStreamlineTractFromLine <- function (line, seedIndex, originalSeedPoint, meta
     invisible (streamline)
 }
 
-newStreamlineTractFromSet <- function (tract, method = "median", lengthQuantile = 0.9, originAtSeed = NULL)
+newStreamlineTractFromSet <- function (tract, method = c("median","single"), originAtSeed = NULL, lengthQuantile = NULL, index = NULL)
 {
     if (!isStreamlineSetTract(tract))
         output(OL$Error, "The specified tract is not a valid StreamlineSetTract object")
     if (is.null(originAtSeed))
         originAtSeed <- tract$isOriginAtSeed()
     
-    # The only supported method at the moment
+    method <- match.arg(method)
+    
     if (method == "median")
     {
+        if (is.null(lengthQuantile))
+            output(OL$Error, "Length quantile must be specified for the \"median\" method")
+        
         leftLength <- quantile(tract$getLeftLengths(), probs=lengthQuantile, names=FALSE)
         rightLength <- quantile(tract$getRightLengths(), probs=lengthQuantile, names=FALSE)
     
         leftLine <- apply(tract$getLeftPoints()[1:leftLength,,], 1:2, median, na.rm=TRUE)
         rightLine <- apply(tract$getRightPoints()[1:rightLength,,], 1:2, median, na.rm=TRUE)
-    
-        # Reverse the order of points in the first line part and append it to the
-        # second line part, to create the complete median line
-        # The first instance of the seed point is removed to avoid duplication
-        fullLine <- rbind(leftLine[leftLength:2,], rightLine)
-        
-        newTract <- .StreamlineTract(fullLine, leftLength, tract$getSeedPoint(), tract$getMetadata())
-        finalMetadata <- .StreamlineTractMetadata(originAtSeed, "mm", tract$getImageMetadata())
-        newTract <- newStreamlineTractWithMetadata(newTract, finalMetadata)
-        
-        rm(tract)
-        invisible (newTract)
     }
+    else if (method == "single")
+    {
+        if (is.null(index))
+            output(OL$Error, "Index must be specified for the \"single\" method")
+        
+        leftLength <- tract$getLeftLengths()[index]
+        rightLength <- tract$getRightLengths()[index]
+        
+        leftLine <- tract$getLeftPoints()[1:leftLength,,index]
+        rightLine <- tract$getRightPoints()[1:rightLength,,index]
+    }
+    
+    # Reverse the order of points in the first line part and append it to the
+    # second line part, to create the complete median line
+    # The first instance of the seed point is removed to avoid duplication
+    fullLine <- rbind(leftLine[leftLength:2,], rightLine)
+    
+    newTract <- .StreamlineTract(fullLine, leftLength, tract$getSeedPoint(), tract$getMetadata())
+    finalMetadata <- .StreamlineTractMetadata(originAtSeed, "mm", tract$getImageMetadata())
+    newTract <- newStreamlineTractWithMetadata(newTract, finalMetadata)
+    
+    rm(tract)
+    invisible (newTract)
 }
 
 newStreamlineTractByTransformation <- function (tract, transform)
@@ -463,7 +478,7 @@ getAxesForStreamlinePlot <- function (x, unit = NULL, axes = NULL, drawAxes = FA
     {
         xlab <- paste(axisNames[axes[1]], " (", unit, ")", sep="")
         ylab <- paste(axisNames[axes[2]], " (", unit, ")", sep="")
-        plot(NA, xlim=xlim, ylim=ylim, xlab=xlab, ylab=ylab)
+        plot(NA, xlim=xlim, ylim=ylim, xlab=xlab, ylab=ylab, asp=1)
     }
     
     return(axes)
