@@ -61,6 +61,12 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
 {
     fitBSplineModels <- function (streamlineTract, nKnots)
     {
+        if (nKnots == 0)
+        {
+            output(OL$Info, "Streamline is too short to fit a B-spline")
+            return (NULL)
+        }
+        
         # All of the following numbers are parametric, in mm along the line
         lineLength <- streamlineTract$getLineLength()
         pointLocs <- cumsum(streamlineTract$getPointSpacings())
@@ -124,8 +130,13 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         bSpline <- fitBSplineModels(streamlineTract, nKnots)
     }
     
-    bSplineTract <- .BSplineTract(bSpline$basis, bSpline$models, bSpline$knotLocs, bSpline$seedKnot)
-    invisible (bSplineTract)
+    if (is.null(bSpline))
+        invisible (NULL)
+    else
+    {
+        bSplineTract <- .BSplineTract(bSpline$basis, bSpline$models, bSpline$knotLocs, bSpline$seedKnot)
+        invisible (bSplineTract)
+    }
 }
 
 getPointsForTract <- function (tract, pointType = c("control", "knot"))
