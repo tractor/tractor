@@ -77,7 +77,16 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         knots <- seedLoc + (-nKnots:nKnots * gap)
         knots <- knots[which(knots>1 & knots<lineLength)]
         if (length(knots) != nKnots)
-            output(OL$Error, "Didn't get the expected number of knots")
+        {
+            output(OL$Warning, "Didn't get the expected number of knots")
+            return (NULL)
+        }
+        seedKnot <- which(knots==seedLoc)
+        if (length(seedKnot) != 1)
+        {
+            output(OL$Warning, "Seed knot is outside the line")
+            return (NULL)
+        }
 
         line <- streamlineTract$getLine()
         data <- data.frame(t=pointLocs, x=line[,1], y=line[,2], z=line[,3])
@@ -93,7 +102,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         knotLocsZ <- as.vector(predict(modelZ, data.frame(t=knots)))
         knotLocs <- matrix(c(knotLocsX, knotLocsY, knotLocsZ), ncol=3)
 
-        return (list(basis=basis, models=models, knotLocs=knotLocs, seedKnot=which(knots==seedLoc)))
+        return (list(basis=basis, models=models, knotLocs=knotLocs, seedKnot=seedKnot))
     }
     
     if (is.null(knotSpacing))
