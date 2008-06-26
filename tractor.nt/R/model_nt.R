@@ -63,10 +63,7 @@ calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession,
         else
         {
             spline <- splineTractWithOptions(options, testSession, seed, refSession, nSamples)
-            if (is.null(spline))
-                splines <- c(splines, list(NA))
-            else
-                splines <- c(splines, list(spline))
+            splines <- c(splines, list(spline))
         }
     }
     

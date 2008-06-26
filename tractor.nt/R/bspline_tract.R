@@ -140,7 +140,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
     }
     
     if (is.null(bSpline))
-        invisible (NULL)
+        invisible (NA)
     else
     {
         bSplineTract <- .BSplineTract(bSpline$basis, bSpline$models, bSpline$knotLocs, bSpline$seedKnot)
