@@ -72,7 +72,5 @@ runExperiment <- function ()
     }
     
     write.table(allData, file=ensureFileSuffix(datasetName,"txt"))
-    
-    for (i in seq_along(sessionList))
-        unlink(ensureFileSuffix(paste(datasetName,"_session",i,sep=""), "txt"))
+    unlink(ensureFileSuffix(paste(datasetName,"_session",seq_along(sessionList),sep=""), "txt"))
 }
