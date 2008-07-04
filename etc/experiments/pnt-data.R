@@ -20,6 +20,7 @@ runExperiment <- function ()
     faThreshold <- getWithDefault("AnisotropyThreshold", 0.2)
     nSamples <- getWithDefault("NumberOfSamples", 5000)
     datasetName <- getWithDefault("DatasetName", "data")
+    resume <- getWithDefault("Resume", FALSE)
     
     refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
     reference <- deserialiseReferenceTract(refFileName)
@@ -43,18 +44,26 @@ runExperiment <- function ()
     allData <- NULL
     for (i in seq_along(sessionList))
     {
-        currentSession <- newSessionFromDirectory(sessionList[i])
+        sessionDatasetName <- ensureFileSuffix(paste(datasetName,"_session",i,sep=""), "txt")
         
-        if (exists("seedMatrix"))
-            currentSeed <- seedMatrix[i,]
+        if (resume && file.exists(sessionDatasetName))
+            data <- read.table(sessionDatasetName)
         else
-            currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType="r", isStandard=TRUE)
+        {
+            currentSession <- newSessionFromDirectory(sessionList[i])
         
-        if (pointType == "mm")
-            currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("t2")), useOrigin=TRUE)
+            if (exists("seedMatrix"))
+                currentSeed <- seedMatrix[i,]
+            else
+                currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType="r", isStandard=TRUE)
         
-        splines <- calculateSplinesForNeighbourhood(currentSession, currentSeed, reference$getSourceSession(), reference$getTractOptions(), searchWidth, faThreshold, nSamples)
-        data <- createDataTableForSplines(splines, reference$getTract(), "knot", subjectId=i)
+            if (pointType == "mm")
+                currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("t2")), useOrigin=TRUE)
+        
+            splines <- calculateSplinesForNeighbourhood(currentSession, currentSeed, reference$getSourceSession(), reference$getTractOptions(), searchWidth, faThreshold, nSamples)
+            data <- createDataTableForSplines(splines, reference$getTract(), "knot", subjectId=i)
+            write.table(data, file=sessionDatasetName)
+        }
         
         if (is.null(allData))
             allData <- data
@@ -63,4 +72,7 @@ runExperiment <- function ()
     }
     
     write.table(allData, file=ensureFileSuffix(datasetName,"txt"))
+    
+    for (i in seq_along(sessionList))
+        unlink(ensureFileSuffix(paste(datasetName,"_session",i,sep=""), "txt"))
 }
