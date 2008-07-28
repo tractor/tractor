@@ -25,13 +25,13 @@ expect_available=$?
 
 usage()
 {
-    echo "tractor (v1.1.0)"
+    echo "tractor (v1.2.0)"
     echo "Run a TractoR experiment script in R and report the results"
     echo
-    echo "Usage: tractor -h"
-    echo "       tractor -o [-w working_dir] script"
-    echo "       tractor [-ldzqr] [-v level] [-w working_dir] [-c config_file] ..."
+    echo "Usage: tractor [-ldzqr] [-v level] [-w working_dir] [-c config_file] ..."
     echo "                                              script [arg1 [arg2 ...]]"
+    echo "       tractor -o [-w working_dir] script"
+    echo "       tractor -h"
     echo
     echo "  -h          Display this usage information and exit"
     echo "  -o          Do not run the script, but instead produce a list of the"
@@ -53,8 +53,9 @@ usage()
     echo "The script, a text file containing R code, need not be specified with the"
     echo "'.R' extension. The program searches in the current working directory for"
     echo "the specified script first, followed by any directory specified using the"
-    echo "'-w' option, then ~/.tractor and finally /etc/tractor. Any script not in"
-    echo "one of these locations must be specified using its full path."
+    echo "'-w' option, then ~/.tractor, then /etc/tractor, and finally the etc/exp-"
+    echo "eriments directory under \$TRACTOR_HOME. Additional paths can be specified"
+    echo "using the \$TRACTOR_PATH environment variable. (The man page has details.)"
     echo
 }
 
@@ -110,6 +111,19 @@ elif [ -f "/etc/tractor/$script_file" ]
     then
     script_file="/etc/tractor/$script_file"
     file_found=1
+fi
+
+if [ $file_found -ne 1 ]
+    then
+    for d in `echo "$TRACTOR_PATH:${TRACTOR_HOME}${TRACTOR_HOME+/etc/experiments}" | sed 's/:/ /g'`
+        do
+        if [ -f "$d/$script_file" ]
+            then
+            script_file="$d/$script_file"
+            file_found=1
+            break
+        fi
+    done
 fi
 
 [ $file_found -ne 1 ] && {
