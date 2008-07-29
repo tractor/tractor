@@ -315,7 +315,10 @@ newStreamlineTractFromSet <- function (tract, method = c("median","single"), ori
     # Reverse the order of points in the first line part and append it to the
     # second line part, to create the complete median line
     # The first instance of the seed point is removed to avoid duplication
-    fullLine <- rbind(leftLine[leftLength:2,], rightLine)
+    if (leftLength < 2)
+        fullLine <- rightLine
+    else
+        fullLine <- rbind(leftLine[leftLength:2,], rightLine)
     
     newTract <- .StreamlineTract(fullLine, leftLength, tract$getSeedPoint(), tract$getMetadata())
     finalMetadata <- .StreamlineTractMetadata(originAtSeed, "mm", tract$getImageMetadata())

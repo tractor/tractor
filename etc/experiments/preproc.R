@@ -50,7 +50,7 @@ runExperiment <- function ()
         output(OL$Info, "This session directory is already preprocessed")
     else try(
     {
-        if (runStages[1] && (!skipCompleted || !file.exists(session$getWorkingDirectory())))
+        if (runStages[1] && (!skipCompleted || !imageFileExists(file.path(targetDir,"basic"))))
             createFilesForSession(session, dicomDir, overwriteQuietly=(!interactive))
     
         if (runStages[2] && (!skipCompleted || !imageFileExists(file.path(targetDir,"nodif"))))

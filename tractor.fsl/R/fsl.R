@@ -4,6 +4,8 @@ runEddyCorrectWithSession <- function (session, ask = FALSE)
         output(OL$Error, "Specified session is not an MriSession object")
     
     targetDir <- session$getPreBedpostDirectory()
+    if (!imageFileExists(file.path(targetDir,"basic")))
+        output(OL$Error, "The specified session does not contain a \"basic\" 4D image")
     if (!file.exists(file.path(targetDir,"bvals")) || !file.exists(file.path(targetDir,"bvecs")))
         output(OL$Error, "The specified session does not contain \"bvals\" and \"bvecs\" files")
     bvals <- unlist(read.table(file.path(targetDir, "bvals")))
