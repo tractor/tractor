@@ -14,6 +14,7 @@ runExperiment <- function ()
 {
     tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
     sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
+    seedPoint <- getWithDefault("SeedPoint", NULL, "character")
     seedList <- getWithDefault("SeedPointList", NULL, "integer")
     pointType <- getWithDefault("PointType", NULL, mode="character")
     searchWidth <- getWithDefault("SearchWidth", 1)
@@ -27,15 +28,25 @@ runExperiment <- function ()
     if (!isBSplineTract(reference))
         output(OL$Error, "The specified reference tract is not in the correct form")
     
-    if (is.null(seedList))
+    if (!is.null(seedPoint) && !is.null(seedList))
+        output(OL$Error, "Only one of \"SeedPoint\" and \"SeedPointList\" should be given")
+    
+    if (is.null(seedPoint) && is.null(seedList))
         pointType <- "r"
     else
     {
         if (is.null(pointType))
-            output(OL$Error, "Point type must be specified with the seed list")
+            output(OL$Error, "Point type must be specified with the seed point(s)")
         
         pointType <- match.arg(tolower(pointType), c("fsl","r","mm"))
-        seedMatrix <- matrix(seedList, ncol=3, byrow=TRUE)
+        
+        if (!is.null(seedList))
+            seedMatrix <- matrix(seedList, ncol=3, byrow=TRUE)
+        else
+        {
+            seedPoint <- as.numeric(unlist(strsplit(seedPoint, ",")))
+            seedMatrix <- promote(seedPoint, byrow=TRUE)
+        }
         
         if (pointType == "fsl")
             seedMatrix <- transformFslVoxelToRVoxel(seedMatrix)
