@@ -88,9 +88,9 @@ expandFileName <- function (fileName)
     
     # Remove all instances of '/.' (which are redundant), recursively collapse
     # instances of '/..', and remove trailing slashes
-    fileName <- gsub("/\\.(?!\\.)", "", fileName, perl=TRUE)
-    while (length(grep('..', fileName, fixed=TRUE) > 0))
-        fileName <- sub("/[^/]*[^./][^/]*/\\.\\.(?!\\.)", "", fileName, perl=TRUE)
+    fileName <- gsub("/\\.(?=/)", "", fileName, perl=TRUE)
+    while (length(grep('/../', fileName, fixed=TRUE) > 0))
+        fileName <- sub("/[^/]*[^./][^/]*/\\.\\.(?=/)", "", fileName, perl=TRUE)
     fileName <- gsub("/*$", "", fileName, perl=TRUE)
     
     return(fileName)
