@@ -3,6 +3,8 @@
 #@desc series number (as given in DICOM tag 0020,0011). The original files will not be
 #@desc deleted or otherwise moved unless DeleteOriginals:true is given.
 
+library(tractor.base)
+
 runExperiment <- function ()
 {
     if (nArguments() == 0)
