@@ -21,7 +21,7 @@
     if (!exists(".StandardBrainPath"))
         assign(".StandardBrainPath", NULL, pos=pos)
     
-    fslFileType <- Sys.getenv("FSLOUTPUTTYPE")
-    if (fslFileType %in% .FileTypes$typeNames)
+    fslFileType <- toupper(Sys.getenv("FSLOUTPUTTYPE"))
+    if (is.null(getOption("tractorFileType")) && isTRUE(fslFileType %in% .FileTypes$typeNames))
         options(tractorFileType=as.vector(fslFileType))
 }

@@ -1,6 +1,6 @@
 Package: tractor.fsl
-Version: 1.0.2
-Date: 2008-08-11
+Version: 1.0.3
+Date: 2008-08-18
 Title: Functions for interacting between TractoR and FSL
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
