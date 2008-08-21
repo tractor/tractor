@@ -185,13 +185,13 @@ results <- try(runExperiment())
 writeReportToYaml(results,fileName='$report_file')
 q(runLast=FALSE)
 EOF
-    R CMD BATCH --slave --no-restore $expect_file $log_file
+    R CMD BATCH --slave --vanilla $expect_file $log_file
 elif [ $expect_available -eq 0 ]
     then
     output_level=`echo $output_level | sed 's/\\$/\\\\\\$/'`
     cat >"$expect_file" <<EOF
 log_user 0
-spawn R --quiet --no-save --no-restore
+spawn R --quiet --vanilla
 set timeout 3
 send "source('$script_file')\n"
 expect -re ">.+\r\n"
@@ -210,7 +210,7 @@ EOF
     expect -f $expect_file | tee $log_file
     else
     echo "library('utils'); library('graphics'); library('grDevices'); library('stats'); source('$script_file'); setOutputLevel($output_level); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); setwd('$working_dir'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()" >.Rprofile
-    R --slave --no-restore 2>&1 | tee $log_file
+    R --slave --no-save --no-restore --no-site-file --no-environ 2>&1 | tee $log_file
 fi
 
 warnings=`grep -c WARNING $log_file`
