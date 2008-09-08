@@ -92,12 +92,14 @@ done
     exit
 }
 
-[ $keep_log -eq 1 ] && log_file="$working_dir/tractor_output.log"
+script_name=`echo $1 | sed 's/\.R$//'`
+
+[ $keep_log -eq 1 ] && log_file="$working_dir/tractor_${script_name}.log"
 
 [ $keep_report -eq 1 ] && report_file="$working_dir/tractor_report.yaml"
 
 file_found=0
-script_file="`echo $1 | sed 's/\.R$//'`.R"
+script_file="${script_name}.R"
 shift
 args="$@"
 
@@ -227,14 +229,8 @@ errors=`grep -c Error $log_file`
 
 if [ $quiet -eq 0 ]
     then
-	if [ -f "$report_file" ]
-		then
-		cat "$report_file" | sed 's/^/- /'
-	fi
+	[ -f "$report_file" ] && cat "$report_file" | sed 's/^/- /'
     echo "Experiment completed with $warnings warning(s) and $errors error(s)"
 fi
 
-if [ $errors -eq 0 ]
-    then
-    status=0
-fi
+[ $errors -eq 0 ] && status=0
