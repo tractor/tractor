@@ -198,6 +198,12 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
         return (isTRUE(all.equal(abs(x), abs(y), ...)))
 }
 
+isValidAs <- function (value, mode)
+{
+    coercedValue <- suppressWarnings(as(value, mode))
+    return (!is.na(coercedValue))
+}
+
 getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE)
 {
     if (is.null(mode) && !is.null(defaultValue))
@@ -214,16 +220,19 @@ getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FA
         return (get(name))
     else
     {
-        value <- get(paste("as", mode, sep="."))(get(name))
-        if (isTRUE(is.na(value)))
+        value <- get(name)
+        if (!isValidAs(value, mode))
         {
             if (errorIfInvalid)
                 output(OL$Error, "The configuration variable \"", name, "\" does not have a suitable value")
             else
+            {
+                output(OL$Warning, "The configuration variable \"", name, "\" does not have a suitable value - ignoring")
                 return (defaultValue)
+            }
         }
         else
-            return (value)
+            return (as(value, mode))
     }
 }
 

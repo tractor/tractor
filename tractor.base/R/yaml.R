@@ -4,7 +4,7 @@ createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment =
     {
         if (x %~% "^\\s*$")
             return (NULL)
-        else if (is.na(suppressWarnings(as.numeric(x))))
+        else if (!isValidAs(x, "numeric"))
         {
             text <- as.character(x)
             text <- sub("^\\s*\"?", "", text, perl=TRUE)
