@@ -51,7 +51,10 @@ runExperiment <- function ()
     else try(
     {
         if (runStages[1] && (!skipCompleted || !imageFileExists(file.path(targetDir,"basic"))))
+        {
             createFilesForSession(session, dicomDir, overwriteQuietly=(!interactive))
+            reportFlags()
+        }
     
         if (runStages[2] && (!skipCompleted || !imageFileExists(file.path(targetDir,"nodif"))))
             runEddyCorrectWithSession(session, ask=interactive)
@@ -84,7 +87,7 @@ runExperiment <- function ()
         {
             if (interactive)
             {
-                runDtifitAgain <- output(OL$Question, "Run dtifit for diffusion tensor metrics? [yn]")
+                runDtifitAgain <- "y"
                 while (tolower(runDtifitAgain) == "y")
                 {
                     if (is.null(flipAxes))

@@ -202,7 +202,7 @@ newMriImageFromDicomMetadata <- function (metadata)
     if (fileMetadata$getTagValue(0x0008, 0x0060) != "MR")
         output(OL$Error, "DICOM file does not contain MR image data")
     if (!equivalent(fileMetadata$getTagValue(0x0020,0x0037), c(1,0,0,0,1,0)))
-        output(OL$Warning, "DICOM file does not use LPS orientation slices - results may be unreliable")
+        flag(OL$Warning, "DICOM file does not use LPS orientation slices - results may be unreliable")
     imageMetadata <- newMriImageMetadataFromDicomMetadata(fileMetadata)
     
     datatype <- imageMetadata$getDataType()
