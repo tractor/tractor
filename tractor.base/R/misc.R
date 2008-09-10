@@ -51,6 +51,32 @@ output <- function (level, ..., default = NULL)
     }
 }
 
+flag <- function (level, ...)
+{
+    currentFlag <- list(list(level=level, message=paste(...,sep="")))
+    
+    if (exists(".TractorFlags"))
+        .TractorFlags <<- c(.TractorFlags, currentFlag)
+    else
+        .TractorFlags <<- currentFlag
+}
+
+reportFlags <- function ()
+{
+    if (exists(".TractorFlags") && length(".TractorFlags") > 0)
+    {
+        levels <- unlist(lapply(.TractorFlags, "[[", "level"))
+        messages <- unlist(lapply(.TractorFlags, "[[", "message"))
+        
+        for (message in unique(messages))
+        {
+            locs <- which(messages == message)
+            level <- max(levels[locs])
+            output(level, paste(message," [",length(locs)," occurrences]",sep=""))
+        }
+    }
+}
+
 "%~%" <- function (X, Y)
 {
     if (!is.character(X) || !is.character(Y) || length(Y) != 1)
@@ -201,7 +227,7 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
 isValidAs <- function (value, mode)
 {
     coercedValue <- suppressWarnings(as(value, mode))
-    return (!is.na(coercedValue))
+    return (!any(is.na(coercedValue)))
 }
 
 getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE)
