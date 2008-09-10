@@ -20,7 +20,13 @@
     self <- list(
         getMatchingModel = function () { return (.matchingModel) },
         
-        getNullPosterior = function () { return (.nullPosterior) },
+        getNullPosterior = function (pos = NULL)
+        {
+            if (is.null(pos))
+                return (.nullPosterior)
+            else
+                return (.nullPosterior[[pos]])
+        },
         
         getTractPosteriors = function (pos = NULL)
         {
@@ -85,13 +91,13 @@ newHeuristicNTResultsFromList <- function (results)
     invisible (object)
 }
 
-newProbabilisticNTResultsFromPosteriors <- function (tractPosteriors, nullPosterior, matchingModel, uninformativeModel = NULL)
+newProbabilisticNTResultsFromPosteriors <- function (tractPosteriors, nullPosteriors, matchingModel, uninformativeModel = NULL)
 {
-    if (!is.list(tractPosteriors) || !is.numeric(nullPosterior) || !isMatchingTractModel(matchingModel))
+    if (!is.list(tractPosteriors) || !is.list(nullPosteriors) || !isMatchingTractModel(matchingModel))
         output(OL$Error, "Some of the probabilistic NT results information provided is invalid")
     if (!is.null(uninformativeModel) && !isUninformativeTractModel(uninformativeModel))
         output(OL$Error, "The specified uninformative model is not an UninformativeTractModel object")
     
-    results <- .ProbabilisticNTResults(tractPosteriors, nullPosterior, matchingModel, uninformativeModel)
+    results <- .ProbabilisticNTResults(tractPosteriors, nullPosteriors, matchingModel, uninformativeModel)
     invisible (results)
 }

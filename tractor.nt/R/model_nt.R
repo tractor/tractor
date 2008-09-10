@@ -117,6 +117,8 @@ runMatchingEMForDataTable <- function (data, refSpline, lengthCutoff = NULL, lam
         nullPriors <- rep(nullPrior, nSubjects)
     output(OL$Verbose, "Null priors are ", implode(round(nullPriors,5),sep=", "))
     
+    nullPriors <- as.list(nullPriors)
+    
     if (is.null(lengthCutoff))
         lengthCutoff <- max(data$leftLength, data$rightLength, na.rm=TRUE)
     output(OL$Verbose, "Length cutoff is ", lengthCutoff)
