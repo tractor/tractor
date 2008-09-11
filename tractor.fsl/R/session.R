@@ -280,8 +280,12 @@ createFilesForSession <- function (session, dicomDir = NULL, overwriteQuietly = 
         output(OL$Warning, "Slice location decreases between consecutive images - inverting z order")
         data <- data[,,nSlices:1,]
     }
+    
+    # Origin is at 1 for spatial dimensions (first 3), and 0 for temporal ones
+    origin <- rep(1,length(imageDims))
+    origin[setdiff(seq_along(origin),1:3)] <- 0
 
-    imageMetadata <- newMriImageMetadataFromTemplate(images[[1]]$getMetadata(), imageDims=imageDims, voxelDims=voxelDims, origin=rep(1,length(imageDims)))
+    imageMetadata <- newMriImageMetadataFromTemplate(images[[1]]$getMetadata(), imageDims=imageDims, voxelDims=voxelDims, origin=origin)
     rm(images)
     image <- newMriImageWithData(data, imageMetadata)
     
