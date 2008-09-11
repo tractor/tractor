@@ -133,7 +133,7 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
             slices <- NULL
         else if (rows == dataColumns && columns == dataRows)
         {
-            output(OL$Warning, "Data matrix is transposed relative to acquisition matrix")
+            flag(OL$Warning, "Data matrix is transposed relative to acquisition matrix")
             rows <- dataRows
             columns <- dataColumns
             slices <- NULL
@@ -143,7 +143,7 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
             slices <- (dataRows/rows) * (dataColumns/columns)
             if (slices != floor(slices))
             {
-                output(OL$Warning, "Image dimensions are not a multiple of the acquisition matrix size")
+                flag(OL$Warning, "Image dimensions are not a multiple of the acquisition matrix size")
                 slices <- NULL
                 rows <- dataRows
                 columns <- dataColumns
@@ -191,7 +191,7 @@ maskPixels <- function (pixels, metadata)
     
     newPixels <- packBits(as.raw(mask) & intToBits(pixels), "integer")
     if (!equivalent(pixels, newPixels))
-        output(OL$Warning, "Masking has altered the pixel values")
+        flag(OL$Warning, "Masking has altered the pixel values")
     
     return (newPixels)
 }
