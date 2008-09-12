@@ -1,5 +1,5 @@
 INSTALL=/usr/bin/install
-R=/usr/local/bin/R
+R=R
 PREFIX=/usr/local
 RLIBRARY=$(HOME)/Rlibrary
 
