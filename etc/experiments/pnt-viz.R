@@ -38,7 +38,10 @@ runExperiment <- function ()
     
     results <- deserialiseProbabilisticNTResults(file=ensureFileSuffix(resultsName,"Rdata"))
     if (results$nSessions() != nSessions)
-        output(OL$Error, "Length of the session list specified does not match the results file")
+    {
+        nSessions <- min(nSessions, results$nSessions())
+        output(OL$Warning, "Length of the session list does not match the results file - using ", nSessions, " sessions only")
+    }
     nPoints <- results$nPoints()
 
     searchWidth <- round(nPoints^(1/3))
