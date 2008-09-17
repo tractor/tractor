@@ -58,7 +58,10 @@ runExperiment <- function ()
         sessionDatasetName <- ensureFileSuffix(paste(datasetName,"_session",i,sep=""), "txt")
         
         if (resume && file.exists(sessionDatasetName))
+        {
             data <- read.table(sessionDatasetName)
+            data$subject <- i
+        }
         else
         {
             currentSession <- newSessionFromDirectory(sessionList[i])
