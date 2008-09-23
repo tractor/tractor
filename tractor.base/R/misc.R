@@ -77,6 +77,8 @@ reportFlags <- function ()
             output(level, paste(message," [",length(locs)," occurrences]",sep=""))
         }
     }
+    
+    .TractorFlags <<- NULL
 }
 
 "%~%" <- function (X, Y)
