@@ -4,9 +4,10 @@ status=1
 command="$0 $*"
 keep_log=0
 keep_report=0
-log_file="/tmp/tractor$$_log"
-expect_file="/tmp/tractor$$_expect"
-report_file="/tmp/tractor$$_report"
+tmpdir=${TMPDIR:-/tmp}
+log_file="$tmpdir/tractor$$_log"
+expect_file="$tmpdir/tractor$$_expect"
+report_file="$tmpdir/tractor$$_report"
 trap 'rm -f $expect_file; [ $keep_report -eq 0 ] && rm -f $report_file; [ $keep_log -eq 0 ] && rm -f $log_file; exit $status' 0 1 2 15
 
 config_file="/dev/null"
