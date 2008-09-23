@@ -14,12 +14,14 @@ output <- function (level, ..., default = NULL)
         options(tractorOutputLevel=OL$Info)
     }
     
+    outputLevel <- getOption("tractorOutputLevel")
+    if ((level < OL$Question) && (outputLevel > level))
+        return (invisible(NULL))
+    
+    prefixStrings <- c("DEBUG: ", "VERBOSE: ", "INFO: ", "WARNING: ")
     usePrefix <- getOption("tractorUseOutputPrefix")
     if (is.null(usePrefix))
         usePrefix <- TRUE
-    
-    outputLevel <- getOption("tractorOutputLevel")
-    prefixStrings <- c("DEBUG: ", "VERBOSE: ", "INFO: ", "WARNING: ")
     
     callStrings <- as.character(sys.calls())
     tryRelated <- grep("^(do)?try", callStrings, ignore.case=TRUE, perl=TRUE)
