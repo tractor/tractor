@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 status=1
 command="$0 $*"
