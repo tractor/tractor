@@ -186,10 +186,21 @@ calculatePosteriorsFromLogLikelihoods <- function (matchedLogLikelihoods, nonmat
     tractPosteriors <- exp(tractPosteriors - maxTractPosterior)
     nullPosterior <- log(nullPrior) + sum(nonmatchedLogLikelihoods, na.rm=TRUE)
     nullPosterior <- exp(nullPosterior - maxTractPosterior)
-    evidence <- nullPosterior + sum(tractPosteriors, na.rm=TRUE)
-    tractPosteriors <- tractPosteriors / evidence
-    nullPosterior <- nullPosterior / evidence
     
-    posteriors <- list(tractPosteriors=tractPosteriors, nullPosterior=nullPosterior, logEvidence=log(evidence)+maxTractPosterior)
+    if (nullPosterior == Inf)
+    {
+        # Bail out an overflow
+        logEvidence <- log(nullPrior) + sum(nonmatchedLogLikelihoods, na.rm=TRUE)
+        tractPosteriors[!is.na(tractPosteriors)] <- 0
+        posteriors <- list(tractPosteriors=tractPosteriors, nullPosterior=1, logEvidence=logEvidence)
+    }
+    else
+    {
+        evidence <- nullPosterior + sum(tractPosteriors, na.rm=TRUE)
+        tractPosteriors <- tractPosteriors / evidence
+        nullPosterior <- nullPosterior / evidence
+        posteriors <- list(tractPosteriors=tractPosteriors, nullPosterior=nullPosterior, logEvidence=log(evidence)+maxTractPosterior)
+    }
+    
     return (posteriors)
 }
