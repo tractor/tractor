@@ -26,8 +26,15 @@ runExperiment <- function ()
     {
         output(OL$Info, "Current session is ", sessionList[i])
         
+        fileName <- paste(fileStem, i, sep="")
+        if (!imageFileExists(fileName))
+        {
+            cat("NA\n")
+            next
+        }
+        
         session <- newSessionFromDirectory(sessionList[i])
-        image <- newMriImageFromFile(paste(fileStem,i,sep=""))
+        image <- newMriImageFromFile(fileName)
         
         if (thresholdMode == "maximum")
             threshold <- baseThreshold * max(image, na.rm=TRUE)
