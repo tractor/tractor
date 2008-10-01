@@ -157,6 +157,7 @@ fi
 
 [ ! -e $working_dir ] && mkdir -p $working_dir
 
+export verbose_level
 if [ $verbose_level -eq 1 ]
     then
     output_level='OL$Info'
