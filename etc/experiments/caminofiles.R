@@ -7,6 +7,7 @@
 #@desc so preprocessing with the "preproc" script must be completed before running
 #@desc this one. The script will prompt for the diffusion time (in seconds) of the
 #@desc data set if it is not specified using the DiffusionTime option.
+#@interactive TRUE
 
 suppressPackageStartupMessages(require(tractor.fsl))
 suppressPackageStartupMessages(require(tractor.camino))

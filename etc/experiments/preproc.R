@@ -11,6 +11,7 @@
 #@desc unless Interactive:false is given. Note that BEDPOSTX will be run using a 2
 #@desc fibre model at each voxel by default - this is changed with the NumberOfFibres
 #@desc option.
+#@interactive TRUE
 
 suppressPackageStartupMessages(require(tractor.fsl))
 
