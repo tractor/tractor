@@ -104,25 +104,20 @@ script_file="${script_name}.R"
 shift
 args="$@"
 
-if [ -f $script_file ]
-    then
+if [ -f $script_file ]; then
     file_found=1
-elif [ -f "$working_dir/$script_file" ]
-    then
+elif [ -f "$working_dir/$script_file" ]; then
     script_file="$working_dir/$script_file"
     file_found=1
-elif [ -f "$HOME/.tractor/$script_file" ]
-    then
+elif [ -f "$HOME/.tractor/$script_file" ]; then
     script_file="$HOME/.tractor/$script_file"
     file_found=1
-elif [ -f "/etc/tractor/$script_file" ]
-    then
+elif [ -f "/etc/tractor/$script_file" ]; then
     script_file="/etc/tractor/$script_file"
     file_found=1
 fi
 
-if [ $file_found -ne 1 ]
-    then
+if [ $file_found -ne 1 ]; then
     for d in `echo "$TRACTOR_PATH:${TRACTOR_HOME}${TRACTOR_HOME+/etc/experiments}" | sed 's/:/ /g'`
         do
         if [ -f "$d/$script_file" ]
@@ -142,10 +137,9 @@ fi
 [ $show_options -eq 1 ] && {
     echo "OPTIONS for script $script_file (* required)"
     n_options=`grep -c getWithDefault $script_file`
-    if [ $n_options -eq 0 ]
-        then
+    if [ $n_options -eq 0 ]; then
         echo "   None"
-        else
+    else
         grep 'getWithDefault' $script_file | grep 'errorIfMissing=TRUE' | awk -F ' *"?(\\(|\\)|,) *"?' '{ print " * "$2": "$3 }'
         grep 'getWithDefault' $script_file | grep -v 'errorIfMissing=TRUE' | awk -F ' *"?(\\(|\\)|,) *"?' '{ print "   "$2": "$3 }'
     fi
@@ -155,17 +149,16 @@ fi
     exit
 }
 
+interactive=`grep -ci '#@interactive TRUE' $script_file`
+
 [ ! -e $working_dir ] && mkdir -p $working_dir
 
 export verbose_level
-if [ $verbose_level -eq 1 ]
-    then
+if [ $verbose_level -eq 1 ]; then
     output_level='OL$Info'
-elif [ $verbose_level -eq 2 ]
-    then
+elif [ $verbose_level -eq 2 ]; then
     output_level='OL$Verbose'
-elif [ $verbose_level -eq 3 ]
-    then
+elif [ $verbose_level -eq 3 ]; then
     output_level='OL$Debug'
 fi
 
@@ -177,8 +170,7 @@ fi
 
 [ $quiet -eq 0 ] && echo "Starting TractoR environment..."
 
-if [ $batch_mode -eq 1 ]
-    then
+if [ $batch_mode -eq 1 ]; then
     cat >"$expect_file" <<EOF
 source('$script_file')
 setOutputLevel($output_level)
@@ -190,8 +182,9 @@ writeReportToYaml(results,fileName='$report_file')
 q(runLast=FALSE)
 EOF
     R CMD BATCH --slave --vanilla $expect_file $log_file
-elif [ $expect_available -eq 0 ]
-    then
+elif [ $interactive -eq 0 ]; then
+    echo "source('$script_file'); setOutputLevel($output_level); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); setwd('$working_dir'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file')" | R --slave --vanilla 2>&1 | tee $log_file
+elif [ $expect_available -eq 0 ]; then
     output_level=`echo $output_level | sed 's/\\$/\\\\\\$/'`
     cat >"$expect_file" <<EOF
 log_user 0
@@ -212,7 +205,7 @@ expect -re ">.+\r\n"
 interact
 EOF
     expect -f $expect_file | tee $log_file
-    else
+else
     echo "library('utils'); library('graphics'); library('grDevices'); library('stats'); source('$script_file'); setOutputLevel($output_level); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); setwd('$working_dir'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()" >.Rprofile
     R --slave --no-save --no-restore --no-site-file --no-environ 2>&1 | tee $log_file
 fi
@@ -229,8 +222,7 @@ errors=`grep -c Error $log_file`
     [ $rprofile_backed_up -eq 1 ] && mv .Rprofile.bak .Rprofile
 }
 
-if [ $quiet -eq 0 ]
-    then
+if [ $quiet -eq 0 ]; then
 	[ -f "$report_file" ] && cat "$report_file" | sed 's/^/- /'
     echo "Experiment completed with $warnings warning(s) and $errors error(s)"
 fi
