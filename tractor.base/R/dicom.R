@@ -196,7 +196,7 @@ maskPixels <- function (pixels, metadata)
     return (newPixels)
 }
 
-newMriImageFromDicomMetadata <- function (metadata)
+newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE)
 {
     fileMetadata <- metadata
     if (fileMetadata$getTagValue(0x0008, 0x0060) != "MR")
@@ -220,7 +220,8 @@ newMriImageFromDicomMetadata <- function (metadata)
     if (nDims == 2)
     {
         data <- array(pixels, dim=dims)
-        data <- data[,(dims[2]:1)]
+        if (flipY)
+            data <- data[,(dims[2]:1)]
     }
     else if (nDims == 3)
     {
@@ -237,7 +238,8 @@ newMriImageFromDicomMetadata <- function (metadata)
         for (i in seq_len(dims[3]))
             data[,,i] <- sliceList[[i]]
         
-        data <- data[,(dims[2]:1),]
+        if (flipY)
+            data <- data[,(dims[2]:1),]
     }
     
     image <- .MriImage(drop(data), imageMetadata)
