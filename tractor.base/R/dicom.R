@@ -267,6 +267,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
     dataOffset <- NULL
     
     data("dictionary", envir=environment(NULL))
+    typeCol <- which(colnames(dictionary) == "type")
     connection <- file(fileName, "rb")
     
     if (checkFormat)
@@ -331,12 +332,10 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
             }
             else
             {
-                dictionaryRow <- subset(dictionary, (group==currentGroup & element==currentElement))
                 lengthSize <- 4
-                if (nrow(dictionaryRow) == 0)
+                type <- as.vector(dictionary[dictionary$group==currentGroup & dictionary$element==currentElement, typeCol])
+                if (length(type) == 0)
                     type <- "UN"
-                else
-                    type <- as.vector(dictionaryRow$type)
             }
             
             length <- readBin(connection, "integer", n=1, size=lengthSize, signed=FALSE, endian=endian)
