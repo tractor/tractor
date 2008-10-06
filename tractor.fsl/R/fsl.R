@@ -34,7 +34,14 @@ runEddyCorrectWithSession <- function (session, ask = FALSE)
         {
             choice <- output(OL$Question, "Use which one as the reference [s to show in fslview]?")
             if (tolower(choice) == "s")
-                execute("fslview", file.path(targetDir,"basic"), errorOnFail=TRUE, wait=FALSE)
+            {
+                # fslview is fussy about data types, so write the image into
+                # Analyze format to avoid a crash
+                image <- newMriImageFromFile(file.path(targetDir, "basic"))
+                imageLoc <- tempfile()
+                writeMriImageToFile(image, imageLoc, fileType="ANALYZE_GZ")
+                execute("fslview", imageLoc, errorOnFail=TRUE, wait=FALSE)
+            }
             else
                 choice <- as.numeric(choice)
         }
