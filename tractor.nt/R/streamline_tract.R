@@ -116,11 +116,11 @@ newStreamlineTractMetadataFromImageMetadata <- function (imageMetadata, originAt
     invisible (tractMetadata)
 }
 
-newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, nSamples = 5000, maxPathLength = NULL)
+newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, nSamples = 5000, maxPathLength = NULL, rightwardsVector = NULL)
 {
     probtrackResult <- runProbtrackWithSession(session, x, y, z, requireParticlesDir=TRUE, nSamples=nSamples, verbose=TRUE, force=TRUE)
     
-    seed <- resolveVector(len=3, x, y, z)
+    seed <- probtrackResult$seed
     axisNames <- c("left-right", "anterior-posterior", "inferior-superior")
     
     if (is.null(maxPathLength))
@@ -130,36 +130,42 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
         output(OL$Info, "Setting maximum path length to ", maxPathLength)
     }
     
-    # In order to estimate appropriate parameters for the calculations and
-    # plots below, we initially read in a subsample of the streamlines
-    subSize <- ifelse(nSamples < 40, nSamples, ceiling(nSamples / 20))
-    subData <- array(NA, dim=c(maxPathLength,3,subSize))
-    output(OL$Info, "Reading subsample of ", subSize, " streamlines")
-    
-    for (i in 1:subSize)
+    if (!is.null(rightwardsVector) && (!is.numeric(rightwardsVector) || length(rightwardsVector) != 3))
     {
-        sampleData <- retrieveProbtrackStreamline(probtrackResult, i)
-        len <- length(sampleData[,1])
-        
-        if (len > maxPathLength)
-        {
-            output(OL$Warning, "Path length for streamline ", i, " is too long (", len, "); truncating")
-            len <- maxPathLength
-        }
-        
-        subData[1:len,,i] <- sampleData[1:len,]
+        flag(OL$Warning, "Rightwards vector specified is not a numeric 3-vector - ignoring it")
+        rightwardsVector <- NULL
     }
-    output(OL$Info, "Done; analyzing subsample")
     
-    # Whichever dimension changes most in the first step from the seed point
-    # in the subsample will be used to split "left" from "right"
-    firstSteps <- subData[2,,] - subData[1,,]
-    meanFirstStep <- apply(abs(firstSteps), 1, mean)
-    testAxis <- which.max(meanFirstStep)
-    output(OL$Info, "Using ", axisNames[testAxis], " axis for left/right splitting")
+    if (is.null(rightwardsVector))
+    {
+        subSize <- ifelse(nSamples < 40, nSamples, ceiling(nSamples / 20))
+        subData <- array(NA, dim=c(maxPathLength,3,subSize))
+        output(OL$Info, "Reading subset of ", subSize, " streamlines")
+
+        for (i in 1:subSize)
+        {
+            sampleData <- retrieveProbtrackStreamline(probtrackResult, i)
+            len <- length(sampleData[,1])
+
+            if (len > maxPathLength)
+            {
+                output(OL$Warning, "Path length for streamline ", i, " is too long (", len, "); truncating")
+                len <- maxPathLength
+            }
+
+            subData[1:len,,i] <- sampleData[1:len,]
+        }
+        output(OL$Info, "Done; analyzing subsample")
+
+        # The estimated rightwards direction is the mean first step
+        firstSteps <- subData[2,,] - subData[1,,]
+        rightwardsVector <- apply(abs(firstSteps), 1, mean)
+        
+        # Remove the subsample to save memory
+        rm(subData)
+    }
     
-    # Remove the subsample to save memory
-    rm(subData)
+    output(OL$Info, "Rightwards vector is (", implode(rightwardsVector,","), ")")
     
     leftLengths <- numeric(0)
     rightLengths <- numeric(0)
@@ -199,8 +205,11 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
         if (restartRow > len)
             output(OL$Error, "Left and right line components do not appear within the specified maximum path length")
         
-        # This left/right distinction is a little flakey...
-        if (sampleData[2,testAxis] < sampleData[1,testAxis])
+        rightSideInnerProduct <- (sampleData[2,]-sampleData[1,]) %*% rightwardsVector
+        if (rightSideInnerProduct == 0)
+            flag(OL$Warning, "Tract is orthogonal to the left-right separation plane")
+        
+        if (rightSideInnerProduct <= 0)
         {
             leftLengths <- c(leftLengths, (restartRow-1))
             rightLengths <- c(rightLengths, (len-restartRow+1))

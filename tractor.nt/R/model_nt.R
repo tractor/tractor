@@ -10,12 +10,12 @@ isTractOptionList <- function (object)
     return ("options.tract" %in% class(object))
 }
 
-splineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000)
+splineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)
 {
     if (!isTractOptionList(options))
         output(OL$Error, "Tract representation options must be specified as a TractOptionList")
     
-    streamSet <- newStreamlineSetTractFromProbtrack(session, seed, nSamples=nSamples, maxPathLength=options$maxPathLength)
+    streamSet <- newStreamlineSetTractFromProbtrack(session, seed, nSamples=nSamples, maxPathLength=options$maxPathLength, rightwardsVector=rightwardsVector)
     streamline <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
     if (options$registerToReference)
     {
@@ -41,19 +41,30 @@ referenceSplineTractWithOptions <- function (options, refSession, refSeed)
     invisible (list(spline=refSpline, options=options))
 }
 
-calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession, options, searchWidth = 7, faThreshold = 0.2, nSamples = 5000)
+calculateSplinesForNeighbourhood <- function (testSession, testSeed, reference, searchWidth = 7, faThreshold = 0.2, nSamples = 5000)
 {
+    if (!isReferenceTract(reference) || !isBSplineTract(reference))
+        output(OL$Error, "The specified reference tract is not valid")
+    
+    referenceSteps <- calculateSplineStepVectors(reference$getTract(), reference$getTractOptions()$pointType)
+    if (nrow(referenceSteps$right) >= 2)
+        rightwardsVector <- referenceSteps$right[2,]
+    else if (nrow(referenceSteps$left) >= 2)
+        rightwardsVector <- (-referenceSteps$left[2,])
+    else
+        output(OL$Error, "The specified reference tract has no length on either side")
+    
     fa <- testSession$getImageByType("fa")
     
-    nSessions <- searchWidth ^ 3
+    nSeeds <- searchWidth ^ 3
     stepVectors <- buildStepVectors(searchWidth)
-    middle <- (nSessions %/% 2) + 1
+    middle <- (nSeeds %/% 2) + 1
     
     splines <- list()
-    for (i in 1:nSessions)
+    for (i in 1:nSeeds)
     {
         seed <- testSeed + stepVectors[,i]
-        output(OL$Info, "Current seed point is ", implode(seed,sep=","), " (", i, "/", nSessions, ")")
+        output(OL$Info, "Current seed point is ", implode(seed,sep=","), " (", i, "/", nSeeds, ")")
         
         if (!is.na(fa$getDataAtPoint(seed)) && (fa$getDataAtPoint(seed) < faThreshold) && (i != middle))
         {
@@ -62,7 +73,7 @@ calculateSplinesForNeighbourhood <- function (testSession, testSeed, refSession,
         }
         else
         {
-            spline <- splineTractWithOptions(options, testSession, seed, refSession, nSamples)
+            spline <- splineTractWithOptions(reference$getTractOptions(), testSession, seed, reference$getSourceSession(), nSamples, rightwardsVector)
             splines <- c(splines, list(spline))
         }
     }
