@@ -53,7 +53,7 @@ runExperiment <- function ()
         output(OL$Info, "Generating tract for session ", i)
         
         currentSession <- newSessionFromDirectory(sessionList[i])
-        currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType="r", isStandard=TRUE)
+        currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
         currentPosteriors <- results$getTractPosteriors(i)
         
         ranks <- rank(currentPosteriors, na.last="keep")

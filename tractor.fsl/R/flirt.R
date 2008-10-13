@@ -239,7 +239,8 @@ transformWorldPointsWithAffine <- function (transform, x, y = NULL, z = NULL)
 
 getNativeSpacePointForSession <- function (session, point, pointType, isStandard, round = TRUE)
 {
-    pointType <- match.arg(tolower(pointType), c("fsl","r","mm"))
+    # NB: point types "r" and "vox" are equivalent
+    pointType <- match.arg(tolower(pointType), c("fsl","r","vox","mm"))
     
     if (pointType == "fsl")
         point <- transformFslVoxelToRVoxel(point)
