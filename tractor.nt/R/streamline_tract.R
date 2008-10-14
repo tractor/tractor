@@ -136,9 +136,10 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
         rightwardsVector <- NULL
     }
     
+    subSize <- ifelse(nSamples < 40, nSamples, ceiling(nSamples / 20))
+    
     if (is.null(rightwardsVector))
     {
-        subSize <- ifelse(nSamples < 40, nSamples, ceiling(nSamples / 20))
         subData <- array(NA, dim=c(maxPathLength,3,subSize))
         output(OL$Info, "Reading subset of ", subSize, " streamlines")
 
@@ -165,7 +166,7 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
         rm(subData)
     }
     
-    output(OL$Info, "Rightwards vector is (", implode(rightwardsVector,","), ")")
+    output(OL$Info, "Rightwards vector is (", implode(round(rightwardsVector,2),","), ")")
     
     leftLengths <- numeric(0)
     rightLengths <- numeric(0)
