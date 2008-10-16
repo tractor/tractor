@@ -74,7 +74,10 @@ reportFlags <- function ()
         {
             locs <- which(messages == message)
             level <- max(levels[locs])
-            output(level, paste(message," [",length(locs)," occurrences]",sep=""))
+            if (length(locs) == 1)
+                output(level, message)
+            else
+                output(level, paste("[x",length(locs),"] ",message,sep=""))
         }
     }
     

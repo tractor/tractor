@@ -178,12 +178,13 @@ createWorkspaceFromYaml('$config_file')
 createWorkspaceFromYaml(text='$args')
 setwd('$working_dir')
 results <- try(runExperiment())
+reportFlags()
 writeReportToYaml(results,fileName='$report_file')
 q(runLast=FALSE)
 EOF
     R CMD BATCH --slave --vanilla $expect_file $log_file
 elif [ $interactive -eq 0 ]; then
-    echo "source('$script_file'); setOutputLevel($output_level); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); setwd('$working_dir'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file')" | R --slave --vanilla 2>&1 | tee $log_file
+    echo "source('$script_file'); setOutputLevel($output_level); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); setwd('$working_dir'); results <- try(runExperiment()); reportFlags(); writeReportToYaml(results,fileName='$report_file')" | R --slave --vanilla 2>&1 | tee $log_file
 elif [ $expect_available -eq 0 ]; then
     output_level=`echo $output_level | sed 's/\\$/\\\\\\$/'`
     cat >"$expect_file" <<EOF
@@ -200,13 +201,13 @@ send "createWorkspaceFromYaml(text='$args')\n"
 expect -re ">.+\r\n"
 send "setwd('$working_dir')\n"
 expect -re ">.+\r\n"
-send "results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()\n"
+send "results <- try(runExperiment()); reportFlags(); writeReportToYaml(results,fileName='$report_file'); q()\n"
 expect -re ">.+\r\n"
 interact
 EOF
     expect -f $expect_file | tee $log_file
 else
-    echo "library('utils'); library('graphics'); library('grDevices'); library('stats'); source('$script_file'); setOutputLevel($output_level); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); setwd('$working_dir'); results <- try(runExperiment()); writeReportToYaml(results,fileName='$report_file'); q()" >.Rprofile
+    echo "library('utils'); library('graphics'); library('grDevices'); library('stats'); source('$script_file'); setOutputLevel($output_level); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); setwd('$working_dir'); results <- try(runExperiment()); reportFlags(); writeReportToYaml(results,fileName='$report_file'); q()" >.Rprofile
     R --slave --no-save --no-restore --no-site-file --no-environ 2>&1 | tee $log_file
 fi
 
