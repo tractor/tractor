@@ -67,14 +67,14 @@ deserialiseReferenceTract <- function (file = NULL, object = NULL)
     invisible (reference)
 }
 
-newReferenceTractWithTract <- function (tract, standardSeed = NULL, nativeSeed = NULL, session = NULL, options = NULL, finalSeedUnit = c("vox","mm"))
+newReferenceTractWithTract <- function (tract, standardSeed = NULL, nativeSeed = NULL, session = NULL, options = NULL, seedUnit = c("vox","mm"))
 {
     if (is.null(session) && is.null(standardSeed))
         output(OL$Error, "A standard space seed point must be given if the reference tract is not associated with a session")
     if (!isFieldTract(tract) && !isBSplineTract(tract))
         output(OL$Error, "Only field tracts and B-spline tracts can currently be used as references")
     
-    finalSeedUnit <- match.arg(finalSeedUnit)
+    seedUnit <- match.arg(seedUnit)
     
     if (is.null(standardSeed))
     {
@@ -84,15 +84,13 @@ newReferenceTractWithTract <- function (tract, standardSeed = NULL, nativeSeed =
             output(OL$Error, "The native space point associated with the tract must be specified")
         
         xfm <- newAffineTransform3DByInversion(getMniTransformForSession(session))
-        standardSeed <- transformVoxelPointsWithAffine(xfm, nativeSeed)
+        
+        if (seedUnit == "mm")
+            standardSeed <- transformWorldPointsWithAffine(xfm, nativeSeed)
+        else
+            standardSeed <- transformVoxelPointsWithAffine(xfm, nativeSeed)
     }
     
-    if (finalSeedUnit == "mm")
-    {
-        standardSpaceMetadata <- newMriImageMetadataFromFile(getFileNameForStandardImage("brain"))
-        standardSeed <- transformRVoxelToWorld(standardSeed, standardSpaceMetadata, useOrigin=TRUE)
-    }
-    
-    reference <- .ReferenceTract(tract, standardSeed, finalSeedUnit, session, options)
+    reference <- .ReferenceTract(tract, standardSeed, seedUnit, session, options)
     invisible (reference)
 }
