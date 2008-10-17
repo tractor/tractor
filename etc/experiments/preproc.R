@@ -31,7 +31,7 @@ runExperiment <- function ()
     betIntensityThreshold <- getWithDefault("BetIntensityThreshold", 0.5)
     betVerticalGradient <- getWithDefault("BetVerticalGradient", 0)
     flipAxes <- getWithDefault("FlipGradientAxes", NULL, "character")
-    nFibres <- getWithDefault("NumberOfFibres", 2, errorIfInvalid=TRUE)
+    nFibres <- getWithDefault("NumberOfFibres", NULL, "integer")
     howRunBedpost <- getWithDefault("HowRunBedpost", "auto")
     
     if (interactive && getOption("tractorOutputLevel") > OL$Info)
@@ -47,7 +47,7 @@ runExperiment <- function ()
     if (all(!runStages))
         output(OL$Info, "Nothing to do")
     
-    if (skipCompleted && session$isPreprocessed() && session$nFibres() == nFibres)
+    if (skipCompleted && session$isPreprocessed() && (is.null(nFibres) || session$nFibres() == nFibres))
         output(OL$Info, "This session directory is already preprocessed")
     else try(
     {
@@ -114,7 +114,11 @@ runExperiment <- function ()
             flipGradientVectorsForSession(session, flipAxes)
         
         if (runStages[5])
+        {
+            if (is.null(nFibres))
+                nFibres <- 2
             runBedpostWithSession(session, nFibres, how=howRunBedpost, ask=interactive)
+        }
     } )
     
     returnValue <- list(workingDirectoryExists=file.exists(session$getWorkingDirectory()),
