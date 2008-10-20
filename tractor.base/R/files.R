@@ -35,7 +35,7 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     if (length(headersExist) != 1 || length(imagesExist) != 1)
     {
         if (errorIfMissing)
-            output(OL$Error, "File does not exist or multiple compatible files exist")
+            output(OL$Error, "File does not exist or multiple compatible files exist: ", fileName)
         else
             return (NULL)
     }
