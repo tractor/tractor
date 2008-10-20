@@ -89,17 +89,23 @@ runExperiment <- function ()
             if (interactive)
             {
                 runDtifitAgain <- "y"
-                while (tolower(runDtifitAgain) == "y")
+                while (tolower(runDtifitAgain) %in% c("y","s"))
                 {
-                    if (is.null(flipAxes))
+                    if (tolower(runDtifitAgain) == "s")
+                        runDtifitWithSession(session, showOnly=TRUE)
+                    else
                     {
-                        ans <- output(OL$Question, "Flip diffusion gradient vectors along which axes? [123; Enter for none]")
-                        flipAxes <- suppressWarnings(as.numeric(unlist(strsplit(ans,""))))
+                        if (is.null(flipAxes))
+                        {
+                            ans <- output(OL$Question, "Flip diffusion gradient vectors along which axes? [123; Enter for none]")
+                            flipAxes <- suppressWarnings(as.numeric(unlist(strsplit(ans,""))))
+                        }
+                        if (length(flipAxes[!is.na(flipAxes)]) > 0)
+                            flipGradientVectorsForSession(session, flipAxes)
+                        runDtifitWithSession(session)
                     }
-                    if (length(flipAxes[!is.na(flipAxes)]) > 0)
-                        flipGradientVectorsForSession(session, flipAxes)
-                    runDtifitWithSession(session)
-                    runDtifitAgain <- output(OL$Question, "Run dtifit again? [yn]")
+                    
+                    runDtifitAgain <- output(OL$Question, "Run dtifit again? [yn; s to show principal directions in fslview]")
                     flipAxes <- NULL
                 }
             }

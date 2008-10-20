@@ -56,7 +56,7 @@ runEddyCorrectWithSession <- function (session, ask = FALSE)
     writeMriImageToFile(refVolume, file.path(targetDir,"nodif"))
 }
 
-runDtifitWithSession <- function (session)
+runDtifitWithSession <- function (session, showOnly = FALSE)
 {
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
@@ -65,9 +65,22 @@ runDtifitWithSession <- function (session)
     if (!file.exists(file.path(targetDir,"bvals")) || !file.exists(file.path(targetDir,"bvecs")) || !imageFileExists(file.path(targetDir,"data")) || !imageFileExists(file.path(targetDir,"nodif_brain_mask")))
         output(OL$Error, "Some required files are missing - run eddy_correct and bet first")
     
-    output(OL$Info, "Running dtifit to do tensor fitting...")
-    paramString <- paste("-k", file.path(targetDir,"data"), "-m", file.path(targetDir,"nodif_brain_mask"), "-r", file.path(targetDir,"bvecs"), "-b", file.path(targetDir,"bvals"), "-o", file.path(targetDir,"dti"), sep=" ")
-    execute("dtifit", paramString, errorOnFail=TRUE)
+    if (showOnly)
+    {
+        if (!imageFileExists(file.path(targetDir, "dti_FA")))
+            output(OL$Warning, "Cannot display tensor directions because dtifit has not yet been run")
+        else
+        {
+            paramString <- paste(file.path(targetDir,"dti_FA"), file.path(targetDir,"dti_V1"), sep=" ")
+            execute("fslview", paramString, errorOnFail=TRUE, wait=FALSE)
+        }
+    }
+    else
+    {
+        output(OL$Info, "Running dtifit to do tensor fitting...")
+        paramString <- paste("-k", file.path(targetDir,"data"), "-m", file.path(targetDir,"nodif_brain_mask"), "-r", file.path(targetDir,"bvecs"), "-b", file.path(targetDir,"bvals"), "-o", file.path(targetDir,"dti"), sep=" ")
+        execute("dtifit", paramString, errorOnFail=TRUE)
+    }
 }
 
 runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradient = 0, showOnly = FALSE)
