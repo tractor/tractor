@@ -12,10 +12,11 @@ hasNiftiMagicString <- function (fileName)
 {
     connection <- gzfile(fileName, "rb")
     seek(connection, where=344)
-    magicString <- rawToChar(readBin(connection, "raw", n=4))
+    magicString <- readBin(connection, "raw", n=4)
     close(connection)
     
-    return (magicString == "ni1\0" || magicString == "n+1\0")
+    # NB: "\0" is not allowed as of R 2.8.0
+    return (identical(magicString, c(charToRaw("ni1"),as.raw(0))) || identical(magicString, c(charToRaw("n+1"),as.raw(0))))
 }
 
 createNiftiMetadata <- function (fileNames)
@@ -69,11 +70,11 @@ createNiftiMetadata <- function (fileNames)
     quaternionParams <- readBin(connection, "double", n=6, size=4, endian=endian)
     affine <- matrix(readBin(connection, "double", n=12, size=4, endian=endian), nrow=3, byrow=TRUE)
     seek(connection, where=344)
-    magicString <- rawToChar(readBin(connection, "raw", n=4))
+    magicString <- readBin(connection, "raw", n=4)
 
     close(connection)
     
-    if (!(magicString == "ni1\0" || magicString == "n+1\0"))
+    if (!identical(magicString, c(charToRaw("ni1"),as.raw(0))) && !identical(magicString, c(charToRaw("n+1"),as.raw(0))))
         output(OL$Error, "The file ", fileNames$headerFile, " is not a valid NIfTI file")
     
     ndims <- dims[1]

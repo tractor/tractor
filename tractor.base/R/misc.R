@@ -186,6 +186,11 @@ execute <- function (executable, paramString = NULL, errorOnFail = TRUE, silent 
     }
 }
 
+rawToCharQuiet <- function (...)
+{
+   suppressWarnings(rawToChar(...))
+}
+
 promote <- function (x, byrow = FALSE)
 {
     if (is.matrix(x))
