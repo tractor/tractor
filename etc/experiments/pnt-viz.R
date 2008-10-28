@@ -48,6 +48,9 @@ runExperiment <- function ()
     if (searchWidth^3 != nPoints)
         output(OL$Error, "Results file does not describe a cubic search space")
     
+    if (vizThreshold == 0)
+        vizThreshold <- NULL
+    
     for (i in 1:nSessions)
     {
         output(OL$Info, "Generating tract for session ", i)
