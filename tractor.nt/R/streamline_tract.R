@@ -499,13 +499,10 @@ getAxesForStreamlinePlot <- function (x, unit = NULL, axes = NULL, drawAxes = FA
 
 plot.tract.streamline <- function (x, y = NULL, unit = NULL, axes = NULL, add = FALSE, ...)
 {
-    if (add)
-    {
-        if (is.null(axes))
-            output(OL$Error, "Axes must be specified if adding to an existing plot")
-    }
-    else    
+    if (!add)
         axes <- getAxesForStreamlinePlot(x, unit, axes, drawAxes=TRUE)
+    else if (is.null(axes))
+        output(OL$Error, "Axes must be specified if adding to an existing plot")
     
     line <- x$getLine()
     rescaledLine <- rescalePoints(line, unit, x$getMetadata(), x$getSeedPoint())
@@ -516,13 +513,10 @@ plot.tract.streamline <- function (x, y = NULL, unit = NULL, axes = NULL, add = 
 
 plot.tract.streamline.set <- function (x, y = NULL, unit = NULL, axes = NULL, add = FALSE, ...)
 {
-    if (add)
-    {
-        if (is.null(axes))
-            output(OL$Error, "Axes must be specified if adding to an existing plot")
-    }
-    else
+    if (!add)
         axes <- getAxesForStreamlinePlot(x, unit, axes, drawAxes=TRUE)
+    else if (is.null(axes))
+        output(OL$Error, "Axes must be specified if adding to an existing plot")
     
     output(OL$Info, "Plotting streamlines")
     leftPoints <- x$getLeftPoints()
