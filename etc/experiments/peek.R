@@ -30,6 +30,8 @@ runExperiment <- function ()
         object <- deserialiseProbabilisticNTResults(NULL, object)
     else if (isDeserialisable(object, "model.tract.matching"))
         object <- deserialiseMatchingTractModel(NULL, object)
+    else
+        output(OL$Error, "Unknown class - cannot deserialise")
     
     if (!is.null(object$summarise))
     {
