@@ -154,7 +154,7 @@ createFilesForSession <- function (session, dicomDir = NULL, overwriteQuietly = 
     
     if (is.null(dicomDir))
         dicomDir <- session$getBaseDirectory()
-    else
+    else if (!(dicomDir %~% "^/"))
         dicomDir <- file.path(session$getBaseDirectory(), dicomDir)
     dicomDir <- gsub("//+", "/", dicomDir, perl=TRUE)
     
