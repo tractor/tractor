@@ -1,18 +1,16 @@
 createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment = .GlobalEnv)
 {
-    .asAppropriateType <- function (x)
+    trimWhitespaceAndQuotes <- function (x)
     {
         if (x %~% "^\\s*$")
             return (NULL)
-        else if (!isValidAs(x, "numeric"))
+        else
         {
             text <- as.character(x)
             text <- sub("^\\s*\"?", "", text, perl=TRUE)
             text <- sub("\"?\\s*$", "", text, perl=TRUE)
             return (text)
         }
-        else
-            return (as.numeric(x))
     }
     
     if (!is.null(fileName))
@@ -109,17 +107,17 @@ createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment =
                     
                     endPiece <- endQuotePieces[1] + i - 1
                     compositePiece <- paste(pieces[i:endPiece], collapse=",")
-                    value <- c(value, .asAppropriateType(compositePiece))
+                    value <- c(value, trimWhitespaceAndQuotes(compositePiece))
                 }
                 else
-                    value <- c(value, .asAppropriateType(pieces[i]))
+                    value <- c(value, trimWhitespaceAndQuotes(pieces[i]))
             }
             
             lines <- lines[-(1:endLine)]
         }
         else
         {
-            value <- .asAppropriateType(textValue)
+            value <- trimWhitespaceAndQuotes(textValue)
             lines <- lines[-1]
         }
         
