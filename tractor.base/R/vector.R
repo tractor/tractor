@@ -14,6 +14,9 @@ vectorLength <- function (vector)
 
 cross <- function (a, b)
 {
+    if (length(a) != 3 || length(b) != 3)
+        output(OL$Error, "Cross product is currently only defined for 3-vectors")
+    
     # Ref: http://mathworld.wolfram.com/CrossProduct.html
     return (c(a[2]*b[3]-a[3]*b[2], a[3]*b[1]-a[1]*b[3], a[1]*b[2]-a[2]*b[1]))
 }

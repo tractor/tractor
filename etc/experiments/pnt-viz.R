@@ -75,6 +75,11 @@ runExperiment <- function ()
         currentPosteriors[setdiff(1:nPoints,indices)] <- NA
         
         ptResult <- runProbtrackForNeighbourhood(currentSession, currentSeed, width=searchWidth, weights=currentPosteriors, weightThreshold=minPosterior, requireImage=TRUE)
+        if (is.null(ptResult))
+        {
+            output(OL$Warning, "No seed points above threshold for session number ", i)
+            next
+        }
         
         currentTractName <- paste(tractName, "_session", i, sep="")
         if (createVolumes)
