@@ -185,7 +185,7 @@ newUninformativeTractModelFromDataTable <- function (data, maxLength = NULL, wei
     invisible (model)
 }
 
-newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NULL, lambda = NULL, weights = NULL)
+newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NULL, lambda = NULL, alphaOffset = 0, weights = NULL)
 {
     if (is.null(weights))
         weights <- rep(1,nrow(data))
@@ -213,7 +213,7 @@ newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NUL
         if (is.null(cosines) || sum(!is.na(cosines)) == 0)
             cosineDistributions <- c(cosineDistributions, NA)
         else
-            cosineDistributions <- c(cosineDistributions, list(fitRegularisedBetaDistribution(cosines, lambda=lambda, weights=cosineWeights)))
+            cosineDistributions <- c(cosineDistributions, list(fitRegularisedBetaDistribution(cosines, lambda=lambda, alphaOffset=alphaOffset, weights=cosineWeights)))
     }
     
     model <- .MatchingTractModel(cosineDistributions, lengthDistributions, refSpline, as.character(data$pointType[1]))

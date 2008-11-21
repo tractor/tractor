@@ -36,7 +36,7 @@ evaluateBetaDistribution <- function (x, params, log = FALSE)
     return (dbeta(x, params$alpha, params$beta, ncp=0, log=log))
 }
 
-fitRegularisedBetaDistribution <- function (data, alpha = NULL, beta = 1, lambda = 1, weights = NULL)
+fitRegularisedBetaDistribution <- function (data, alpha = NULL, beta = 1, lambda = 1, alphaOffset = 0, weights = NULL)
 {
     if (is.null(weights))
         weightSum <- length(data)
@@ -45,7 +45,7 @@ fitRegularisedBetaDistribution <- function (data, alpha = NULL, beta = 1, lambda
     
     result <- fitBetaDistribution(data, alpha, beta, weights)
     if (!is.null(lambda) && is.null(alpha) && (beta == 1))
-        result$alpha <- (result$alpha*weightSum) / (result$alpha*lambda + weightSum)
+        result$alpha <- (result$alpha*weightSum) / (result$alpha*lambda + weightSum) + alphaOffset
     
     return (result)
 }
