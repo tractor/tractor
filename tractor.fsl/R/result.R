@@ -86,7 +86,7 @@ createWeightingAndMetricImagesForResult <- function (probtrackResult, threshold 
         output(OL$Error, "Cannot use a result containing no tract image or file name")
     
     if (!is.null(threshold))
-        threshold <- round(threshold * probtrackResult$nSamples)
+        threshold <- threshold * probtrackResult$nSamples
     
     images <- createWeightingAndMetricImages(tractImage, probtrackResult$session, ..., threshold=threshold)
     invisible (images)
