@@ -83,7 +83,7 @@ checkFlirtCacheForTransform <- function (sourceFile, destFile)
     
     output(OL$Info, "FLIRT cache hit - reusing transform")
     transformFile <- as.vector(cacheEntry$file)
-    transform <- get(load(transformFile))
+    transform <- deserialiseAffineTransform3D(transformFile)
     invisible(transform)
 }
 
@@ -101,7 +101,7 @@ updateFlirtCacheWithTransform <- function (transform, sourceFile, destFile)
     if (!file.exists(cacheIndexFile))
         file.create(cacheIndexFile)
     
-    save(transform, file=transformFile)
+    serialiseListObject(transform, file=transformFile)
     cacheEntry <- data.frame(source=sourceFile, dest=destFile, file=transformFile)
     write.table(cacheEntry, cacheIndexFile, append=TRUE, row.names=FALSE, col.names=FALSE)
 
@@ -262,9 +262,9 @@ getMniTransformForSession <- function (session)
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
     
-    xfmFile <- session$getObjectFileName("xfmMniToT2")
-    if (file.exists(xfmFile))
-        inverseXfm <- get(load(xfmFile))
+    xfmFileName <- session$getObjectFileName("transformFromMni")
+    if (file.exists(xfmFileName))
+        inverseXfm <- deserialiseAffineTransform3D(xfmFileName)
     else
     {
         whiteMatterImage <- getStandardImage("white")
@@ -275,7 +275,7 @@ getMniTransformForSession <- function (session)
         dest <- getFileNameForStandardImage("brain")
         xfm <- newAffineTransform3DFromFlirt(source, dest, refweight=refWeightImage)
         inverseXfm <- newAffineTransform3DByInversion(xfm)
-        save(inverseXfm, file=xfmFile)
+        serialiseListObject(inverseXfm, file=xfmFileName)
     }
     
     invisible (inverseXfm)
