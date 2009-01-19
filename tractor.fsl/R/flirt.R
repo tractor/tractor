@@ -261,20 +261,18 @@ getMniTransformForSession <- function (session)
 {
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
-    if (is.null(.StandardBrainPath))
-        output(OL$Error, "No standard brain volumes were found in the FSL tree")
     
     xfmFile <- session$getObjectFileName("xfmMniToT2")
     if (file.exists(xfmFile))
         inverseXfm <- get(load(xfmFile))
     else
     {
-        whiteMatterImage <- newMriImageFromFile(file.path(.StandardBrainPath, "avg152T1_white"))
+        whiteMatterImage <- getStandardImage("white")
         rescaleFunction <- function(x) { return ((x / 10) + 1) }
         refWeightImage <- newMriImageWithSimpleFunction(whiteMatterImage, rescaleFunction)
 
         source <- session$getImageFileNameByType("t2")
-        dest <- file.path(.StandardBrainPath, "avg152T1_brain")
+        dest <- getFileNameForStandardImage("brain")
         xfm <- newAffineTransform3DFromFlirt(source, dest, refweight=refWeightImage)
         inverseXfm <- newAffineTransform3DByInversion(xfm)
         save(inverseXfm, file=xfmFile)
@@ -291,7 +289,7 @@ transformStandardSpaceImage <- function (session, image, toStandard = FALSE)
     if (toStandard)
     {
         xfm <- newAffineTransform3DByInversion(getMniTransformForSession(session))
-        dest <- file.path(.StandardBrainPath, "avg152T1_brain")
+        dest <- getFileNameForStandardImage("brain")
     }
     else
     {

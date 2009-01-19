@@ -30,11 +30,17 @@ runExperiment <- function ()
     
     if (createImages)
     {
-        if (!overlayOnBrain || is.null(.StandardBrainPath))
+        if (overlayOnBrain && is.null(getFileNameForStandardImage("brain",errorIfMissing=FALSE)))
+        {
+            output(OL$Warning, "Cannot find standard brain volumes - no overlay possible")
+            overlayOnBrain <- FALSE
+        }
+        
+        if (!overlayOnBrain)
             createCombinedGraphics(list(newImage), "p", regionColour, device="png", prefix=regionName)
         else
         {
-            brainImage <- newMriImageFromFile(file.path(.StandardBrainPath,"avg152T1_brain"))
+            brainImage <- getStandardImage("brain")
             if (!equivalent(newImage$getFieldOfView(), brainImage$getFieldOfView()))
                 output(OL$Error, "The specified image is not in standard space")
             

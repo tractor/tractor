@@ -1,7 +1,12 @@
-getFileNameForStandardImage <- function (name = c("brain","white","grey","gray"))
+getFileNameForStandardImage <- function (name = c("brain","white","grey","gray"), errorIfMissing = TRUE)
 {
     if (is.null(.StandardBrainPath))
-        output(OL$Error, "Cannot find standard brain volumes")
+    {
+        if (errorIfMissing)
+            output(OL$Error, "Cannot find standard brain volumes")
+        else
+            return (NULL)
+    }
     
     name <- match.arg(name)
     fileName <- switch(name, brain="avg152T1_brain",
@@ -12,7 +17,7 @@ getFileNameForStandardImage <- function (name = c("brain","white","grey","gray")
     return (file.path(.StandardBrainPath, fileName))
 }
 
-getStandardImage <- function (name)
+getStandardImage <- function (name, errorIfMissing = TRUE)
 {
     invisible (newMriImageFromFile(getFileNameForStandardImage(name)))
 }
