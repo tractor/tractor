@@ -51,7 +51,7 @@
             
             output(OL$Info, "Image source     : ", .source)
             output(OL$Info, "Image dimensions : ", implode(.imagedims, sep=" x "), " voxels")
-            output(OL$Info, "Coordinate origin: (", implode(.origin, sep=","), ")")
+            output(OL$Info, "Coordinate origin: (", implode(round(.origin,2), sep=","), ")")
             output(OL$Info, "Voxel dimensions : ", implode(round(abs(.voxdims),5), sep=" x "), " ", .voxunit)
             output(OL$Info, "Data type        : ", datatypeString)
             output(OL$Info, "Endianness       : ", self$getEndianness())
