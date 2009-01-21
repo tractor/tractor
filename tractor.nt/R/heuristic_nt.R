@@ -5,10 +5,6 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     if (!is.numeric(seed) || !is.vector(seed) || (length(seed) != 3))
         output(OL$Error, "Central seed point must be specified as a numeric vector of length 3")
     
-    output(OL$Info, "Creating reduced reference tract")
-    reducedRefTract <- createReducedTractInfo(refTract)
-    output(OL$Info, "Reference tract contains ", reducedRefTract$nVoxels, " nonzero voxels; length is ", reducedRefTract$length)
-    
     searchNeighbourhood <- createNeighbourhoodInfo(searchWidth, centre=seed)
     candidateSeeds <- t(searchNeighbourhood$vectors)
     
@@ -22,8 +18,19 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     fas <- faImage[candidateSeeds]
     validSeeds <- c(middle, which(fas >= faThreshold))
     validSeeds <- validSeeds[!duplicated(validSeeds)]
+    output(OL$Info, "Rejecting ", nSeeds-length(validSeeds), " candidate seed points below the FA threshold")
     
-    output(OL$Info, "Rejecting ", nSeeds-length(validSeeds), " seed points as below the FA threshold")
+    if (!equivalent(refTract$getVoxelDimensions(), faImage$getVoxelDimensions(), signMatters=FALSE, tolerance=1e-3))
+    {
+        output(OL$Info, "Resampling reference tract to the resolution of the session's native space")
+        newRefImage <- resampleImageToDimensions(refTract$getImage(), faImage$getVoxelDimensions())
+        newRefSeed <- round(transformWorldToRVoxel(transformRVoxelToWorld(refTract$getSeedPoint(), refTract$getImage()$getMetadata()), newRefImage$getMetadata()))
+        refTract <- newFieldTractFromMriImage(newRefImage, newRefSeed)
+    }
+    
+    output(OL$Info, "Creating reduced reference tract")
+    reducedRefTract <- createReducedTractInfo(refTract)
+    output(OL$Info, "Reference tract contains ", reducedRefTract$nVoxels, " nonzero voxels; length is ", reducedRefTract$length)
     
     runProbtrackWithSession(session, candidateSeeds[validSeeds,], requireFile=TRUE)
     for (d in validSeeds)
