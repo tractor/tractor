@@ -212,13 +212,13 @@ resampleImageToDimensions <- function (image, voxelDims = NULL, imageDims = NULL
     writeMriImageToFile(image, tempFiles[1])
     write.table(diag(4), tempFiles[2], row.names=FALSE, col.names=FALSE)
     
-    metadata <- newMriImageMetadataFromTemplate(image$getMetadata(), imageDims=imageDims, voxelDims=voxelDims, datatype=getDataTypeByNiftiCode(2), origin=ifelse(is.null(origin),NA,origin))
+    metadata <- newMriImageMetadataFromTemplate(image$getMetadata(), imageDims=abs(imageDims), voxelDims=abs(voxelDims), datatype=getDataTypeByNiftiCode(2), origin=ifelse(is.null(origin),NA,origin))
     if (is.null(origin))
     {
         origin <- transformWorldToRVoxel(transformRVoxelToWorld(image$getOrigin(), image$getMetadata()), metadata)
         metadata <- newMriImageMetadataFromTemplate(metadata, origin=origin)
     }
-    targetImage <- newMriImageWithData(array(0,dim=imageDims), metadata)
+    targetImage <- newMriImageWithData(array(0,dim=abs(imageDims)), metadata)
     writeMriImageToFile(targetImage, tempFiles[3])
     
     paramString <- paste("-in", tempFiles[1], "-applyxfm -init", tempFiles[2], "-ref", tempFiles[3], "-out", tempFiles[4], "-paddingsize 0.0 -interp trilinear 2>&1", sep=" ")
