@@ -252,6 +252,52 @@ newMriImageFromDicom <- function (fileName)
     invisible (newMriImageFromDicomMetadata(fileMetadata))
 }
 
+readDiffusionParametersFromMetadata <- function (metadata)
+{
+    if (!isDicomMetadata(metadata))
+        output(OL$Error, "The specified metadata is not a valid DicomMetadata object")
+    
+    bval <- metadata$getTagValue(0x0018, 0x9087)
+    bvec <- metadata$getTagValue(0x0018, 0x9089)
+    if (!is.na(bval))
+    {
+        if (bval == 0)
+            return (list(bval=0, bvec=rep(0,3), defType="standard"))
+        else if (!is.na(bvec))
+            return (list(bval=bval, bvec=bvec, defType="standard"))
+    }
+    
+    vendor <- metadata$getTagValue(0x0008, 0x0070)
+    if (identical(vendor, "GE MEDICAL SYSTEMS"))
+    {
+        bval <- metadata$getTagValue(0x0043, 0x1039)[1]
+        bvec <- c(metadata$getTagValue(0x0019, 0x10bb),
+                  metadata$getTagValue(0x0019, 0x10bc),
+                  metadata$getTagValue(0x0019, 0x10bd))
+        
+        if (is.na(bval))
+            return (list(bval=NA, bvec=rep(NA,3), defType="none"))
+        else if (bval == 0 || identical(bvec, rep(0,3)))
+            return (list(bval=0, bvec=rep(0,3), defType="GE"))
+        else
+            return (list(bval=bval, bvec=bvec, defType="GE"))
+    }
+    else if (identical(vendor, "SIEMENS"))
+    {
+        bval <- metadata$getTagValue(0x0019, 0x100c)
+        bvec <- metadata$getTagValue(0x0019, 0x100e)
+        
+        if (is.na(bval))
+            return (list(bval=NA, bvec=rep(NA,3), defType="none"))
+        else if (bval == 0 || identical(bvec, rep(0,3)))
+            return (list(bval=0, bvec=rep(0,3), defType="Siemens"))
+        else
+            return (list(bval=bval, bvec=bvec, defType="Siemens"))
+    }
+    else
+        return (list(bval=NA, bvec=rep(NA,3), defType="none"))
+}
+
 newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE)
 {
     if (!file.exists(dicomDir) || !file.info(dicomDir)$isdir)
