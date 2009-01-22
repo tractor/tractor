@@ -158,152 +158,22 @@ createFilesForSession <- function (session, dicomDir = NULL, overwriteQuietly = 
         dicomDir <- file.path(session$getBaseDirectory(), dicomDir)
     dicomDir <- gsub("//+", "/", dicomDir, perl=TRUE)
     
-    output(OL$Info, "Looking for DICOM files in directory ", dicomDir)
-    files <- expandFileName(list.files(dicomDir, full.names=TRUE, recursive=TRUE))
-    files <- files[!file.info(files)$isdir]
-    nFiles <- length(files)
-    
-    output(OL$Info, "Reading image information from ", nFiles, " files")
-    seriesNumbers <- numeric(0)
-    acquisitionNumbers <- numeric(0)
-    imageNumbers <- numeric(0)
-    sliceLocations <- numeric(0)
-    bValues <- numeric(0)
-    bVectors <- matrix(NA, nrow=3, ncol=0)
-    images <- list()
-    zVoxDim <- NULL
-    count <- 0
-    for (file in files)
-    {
-        metadata <- newDicomMetadataFromFile(file)
-        if (is.null(metadata))
-        {
-            output(OL$Info, "Skipping ", file)
-            next
-        }
-        else if (is.null(zVoxDim))
-            zVoxDim <- metadata$getTagValue(0x0018,0x0050)
-        
-        seriesNumbers <- c(seriesNumbers, metadata$getTagValue(0x0020,0x0011))
-        acquisitionNumbers <- c(acquisitionNumbers, metadata$getTagValue(0x0020,0x0012))
-        imageNumbers <- c(imageNumbers, metadata$getTagValue(0x0020,0x0013))
-        sliceLocations <- c(sliceLocations, metadata$getTagValue(0x0020,0x1041))
-        images <- c(images, list(newMriImageFromDicomMetadata(metadata)))
-        
-        diffusion <- readDiffusionParametersFromMetadata(metadata)
-        if (count == 0 && diffusion$defType != "none")
-            output(OL$Info, "Attempting to read diffusion parameters using ", diffusion$defType, " DICOM convention")
-        bValues <- c(bValues, diffusion$bval)
-        bVectors <- cbind(bVectors, diffusion$bvec)
-
-        count <- count + 1
-        if (count %% 100 == 0)
-            output(OL$Verbose, "Done ", count)
-    }
-
-    nDicomFiles <- count
-    if (nDicomFiles == 0)
-        output(OL$Error, "No readable DICOM files were found")
-    
-    uniqueSeries <- sort(unique(seriesNumbers))
-    uniqueAcquisitions <- sort(unique(acquisitionNumbers))
-    uniqueImages <- sort(unique(imageNumbers))
-    uniqueSlices <- sort(unique(sliceLocations))
-    
-    if (images[[1]]$getDimensionality() == 3)
-    {
-        volumePerDicomFile <- TRUE
-        nSlices <- images[[1]]$getDimensions()[3]
-        nVolumes <- nDicomFiles
-        imageDims <- c(images[[1]]$getDimensions(), nVolumes)
-        voxelDims <- c(images[[1]]$getVoxelDimensions(), 1)
-    }
-    else
-    {
-        volumePerDicomFile <- FALSE
-        nSlices <- length(uniqueSlices)
-        nVolumes <- nDicomFiles / nSlices
-        if (floor(nVolumes) != nVolumes)
-            output(OL$Error, "Number of files (", nDicomFiles, ") is not a multiple of the number of slices detected (", nSlices, ")")
-        imageDims <- c(images[[1]]$getDimensions(), nSlices, nVolumes)
-        voxelDims <- c(images[[1]]$getVoxelDimensions(), zVoxDim, 1)
-    }
-    
-    output(OL$Info, "Data set contains ", nVolumes, " volumes; ", nSlices, " slices per volume")
-    data <- array(NA, dim=imageDims)
-
-    volumeBValues <- rep(NA, nVolumes)
-    volumeBVectors <- matrix(NA, nrow=3, ncol=nVolumes)
-
-    firstLocs <- numeric(0)
-    
-    # This is meant to be zero (so that the modulo arithmetic works)
-    index <- 0
-    for (s in uniqueSeries)
-    {
-        for (a in uniqueAcquisitions)
-        {
-            for (i in uniqueImages)
-            {
-                slicePos <- which(seriesNumbers==s & acquisitionNumbers==a & imageNumbers==i)
-                if (length(slicePos) == 0)
-                    next
-                
-                if (volumePerDicomFile)
-                {
-                    volume <- index + 1
-                    data[,,,volume] <- images[[slicePos]]$getData()
-                }
-                else
-                {
-                    if (length(firstLocs) < 2)
-                        firstLocs <- c(firstLocs, sliceLocations[slicePos])
-                    
-                    slice <- (index %% nSlices) + 1
-                    volume <- (index %/% nSlices) + 1
-                    data[,,slice,volume] <- images[[slicePos]]$getData()
-                }
-                
-                if (is.na(volumeBValues[volume]))
-                {
-                    volumeBValues[volume] <- bValues[slicePos]
-                    volumeBVectors[,volume] <- bVectors[,slicePos]
-                }
-                
-                index <- index + 1
-            }
-        }
-    }
-    
-    if (!volumePerDicomFile && nSlices>1 && length(firstLocs)==2 && diff(firstLocs)<0)
-    {
-        output(OL$Warning, "Slice location decreases between consecutive images - inverting z order")
-        data <- data[,,nSlices:1,]
-    }
-    
-    # Origin is at 1 for spatial dimensions (first 3), and 0 for temporal ones
-    origin <- rep(1,length(imageDims))
-    origin[setdiff(seq_along(origin),1:3)] <- 0
-
-    imageMetadata <- newMriImageMetadataFromTemplate(images[[1]]$getMetadata(), imageDims=imageDims, voxelDims=voxelDims, origin=origin)
-    rm(images)
-    image <- newMriImageWithData(data, imageMetadata)
+    info <- newMriImageFromDicomDirectory(dicomDir, readDiffusionParams=TRUE)
     
     dir.create(workingDir)
     targetDir <- session$getPreBedpostDirectory()
-    writeMriImageToFile(image, file.path(targetDir,"basic"))
-    image$summarise()
-    rm(image)
-    
-    if (length(which(is.na(bValues))) != 0)
+    writeMriImageToFile(info$image, file.path(targetDir,"basic"))
+    info$image$summarise()
+
+    if (any(is.na(info$bValues)))
         output(OL$Warning, "Diffusion b-values could not be found in the DICOM files; you need to create a bvals file manually")
     else
-        write.table(matrix(volumeBValues,nrow=1), file.path(targetDir,"bvals"), row.names=FALSE, col.names=FALSE)
-    
-    if (length(which(is.na(bVectors))) != 0)
+        write.table(matrix(info$bValues,nrow=1), file.path(targetDir,"bvals"), row.names=FALSE, col.names=FALSE)
+
+    if (any(is.na(info$bVectors)))
         output(OL$Warning, "Diffusion gradient vectors could not be found in the DICOM files; you need to create a bvecs file manually")
     else
-        write.table(volumeBVectors, file.path(targetDir,"bvecs"), row.names=FALSE, col.names=FALSE)
+        write.table(info$bVectors, file.path(targetDir,"bvecs"), row.names=FALSE, col.names=FALSE)
 }
 
 readDiffusionParametersFromMetadata <- function (metadata)
