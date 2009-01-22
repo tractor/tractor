@@ -13,7 +13,7 @@ runExperiment <- function ()
     tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
     datasetName <- getWithDefault("DatasetName", NULL, "character", errorIfMissing=TRUE)
     maxKnotCount <- getWithDefault("MaximumKnotCount", NULL, "integer")
-    alphaPriorMean <- getWithDefault("AlphaPriorMean", NULL)
+    alphaPriorMean <- getWithDefault("AlphaPriorMean", NULL, "numeric")
     nullPrior <- getWithDefault("NullPrior", NULL, "numeric")
     resultsName <- getWithDefault("ResultsName", "results")
     
