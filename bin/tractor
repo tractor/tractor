@@ -216,6 +216,8 @@ errors=`grep -c Error $log_file`
 
 [ $batch_mode -eq 1 ] && cat $log_file
 
+[ -f "$working_dir/tractor_history.log" ] && mv "$working_dir/tractor_history.log" "$working_dir/tractor-history.log"
+
 [ $write_history -eq 1 ] && echo "[`date`] $command [${warnings}W/${errors}E]" >> "$working_dir/tractor-history.log"
 
 [ $expect_available -ne 0 ] && {
