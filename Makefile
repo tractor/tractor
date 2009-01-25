@@ -17,6 +17,9 @@ install-camino:
 install-nt:
 	$(R) CMD INSTALL tractor.nt
 
+install-session:
+	$(R) CMD INSTALL tractor.session
+
 install: install-base install-fsl install-camino install-nt
 
 install-extras:
