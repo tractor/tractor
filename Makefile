@@ -9,18 +9,21 @@ install-base:
 	$(R) CMD INSTALL tractor.base
 
 install-fsl:
-	$(R) CMD INSTALL tractor.fsl
+	@echo 'The fsl package is deprecated - run "make install-session" instead'
 
 install-camino:
-	$(R) CMD INSTALL tractor.camino
-
-install-nt:
-	$(R) CMD INSTALL tractor.nt
+	@echo 'The camino package is deprecated - run "make install-session" instead'
 
 install-session:
 	$(R) CMD INSTALL tractor.session
 
-install: install-base install-fsl install-camino install-nt
+install-nt:
+	$(R) CMD INSTALL tractor.nt
+
+install: install-base install-session install-nt
+
+uninstall:
+	$(R) CMD REMOVE tractor.nt tractor.session tractor.base
 
 install-extras:
 	@read -p "The install-extras target is deprecated - are you sure? [yn] " ans && [ $$ans = "y" ]
