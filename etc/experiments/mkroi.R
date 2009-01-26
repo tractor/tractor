@@ -4,7 +4,7 @@
 #@desc addition to the ROI centre point so that the script can identify the correct
 #@desc diffusion space to use. The output file name is set with the ROIName option.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {

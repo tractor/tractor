@@ -4,7 +4,7 @@
 #@desc and RegisterCandidatesToReference options from their defaults unless they know
 #@desc what they are doing.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()

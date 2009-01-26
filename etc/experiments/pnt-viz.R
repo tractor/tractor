@@ -7,7 +7,7 @@
 #@desc for example, then up to 5 seeds will contribute, if that many have matching
 #@desc posterior probabilities of at least 0.01.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()

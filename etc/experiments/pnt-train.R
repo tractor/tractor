@@ -4,7 +4,7 @@
 #@desc model can describe. By default this will be set to the largest length in the
 #@desc training data set, but in some cases a larger value may need to be given.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()

@@ -4,7 +4,7 @@
 #@desc the results combined. If any WaypointMaskFiles are specified, streamlines which
 #@desc do not pass through ALL of the masks given will be ignored.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {

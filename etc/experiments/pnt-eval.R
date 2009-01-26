@@ -2,7 +2,7 @@
 #@desc matching probabilities. The TractName and DatasetName should match those used
 #@desc for "pnt-data". The output file name is controlled by the ResultsName option.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()

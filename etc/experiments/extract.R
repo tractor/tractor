@@ -4,7 +4,7 @@
 #@desc to zero. Projection images can optionally be created with CreateImages:true.
 #@desc The base name of the output files is specified with the RegionName option.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {

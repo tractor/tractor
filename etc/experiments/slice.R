@@ -3,7 +3,7 @@
 #@desc of the X, Y and Z options must be specified, giving the location on the
 #@desc appropriate axis where the slice should be taken.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {

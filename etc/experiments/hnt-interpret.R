@@ -4,7 +4,7 @@
 #@desc for the value of the similarity score at that point. In either case, one value
 #@desc is given per session.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()

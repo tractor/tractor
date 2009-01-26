@@ -13,7 +13,7 @@
 #@desc option.
 #@interactive TRUE
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {

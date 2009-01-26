@@ -6,7 +6,7 @@
 #@desc used to establish neighbourhood centre points. Any candidate seed point with
 #@desc anisotropy lower than AnisotropyThreshold will be ignored.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()

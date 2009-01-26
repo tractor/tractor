@@ -7,7 +7,7 @@
 #@desc a set of weights (with AveragingMode:weighted). In the latter case any weight
 #@desc threshold given is ignored.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {

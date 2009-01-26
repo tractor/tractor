@@ -4,8 +4,7 @@
 #@desc the class of the stored object will be displayed, along with a summary of the
 #@desc properties of the object if available.
 
-suppressPackageStartupMessages(require(tractor.camino))
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()

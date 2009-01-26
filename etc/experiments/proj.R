@@ -3,7 +3,7 @@
 #@desc along the x, y or z axis. The output file name is by default the same as the
 #@desc input file name, but with a "png" extension.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {

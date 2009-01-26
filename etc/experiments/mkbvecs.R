@@ -6,7 +6,7 @@
 #@desc normalised or unnormalised, and with or without zeroes for b=0 measurements.
 #@desc The small b-value is assumed to be zero if it is not explicitly specified.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {

@@ -1,8 +1,7 @@
 #@args source file
 #@desc Convert an Analyze or NIfTI image file to a data stream for use with Camino.
 
-suppressPackageStartupMessages(require(tractor.fsl))
-suppressPackageStartupMessages(require(tractor.camino))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {

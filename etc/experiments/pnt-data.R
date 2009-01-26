@@ -7,7 +7,7 @@
 #@desc be used, subject to the specified AnisotropyThreshold. The TractName specified
 #@desc must match that given to the "pnt-ref" experiment.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()

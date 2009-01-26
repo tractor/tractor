@@ -5,7 +5,7 @@
 #@desc or "null-posterior", for the posterior probability of no match. In each case one
 #@desc value is given per session.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()

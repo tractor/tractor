@@ -5,7 +5,7 @@
 #@desc NULL indicates no prior. For small datasets in particular, 1 is usually a good
 #@desc setting. For larger datasets the effect of this parameter will be small.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()

@@ -9,8 +9,7 @@
 #@desc data set if it is not specified using the DiffusionTime option.
 #@interactive TRUE
 
-suppressPackageStartupMessages(require(tractor.fsl))
-suppressPackageStartupMessages(require(tractor.camino))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {

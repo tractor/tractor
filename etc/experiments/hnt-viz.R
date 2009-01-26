@@ -3,7 +3,7 @@
 #@desc The TractName, ResultsName and SessionList options must match those passed to
 #@desc the "hnt-eval" experiment.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()

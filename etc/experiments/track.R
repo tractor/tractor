@@ -8,7 +8,7 @@
 #@desc tract produced by FSL ProbTrack may be visualised in projection by giving
 #@desc CreateImages:true.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {

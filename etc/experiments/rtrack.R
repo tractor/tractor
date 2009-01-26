@@ -4,7 +4,7 @@
 #@desc CreateVolumes:true) and/or projection image (CreateImages:true). This
 #@desc experiment can therefore generate a very large number of files.
 
-suppressPackageStartupMessages(require(tractor.fsl))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {

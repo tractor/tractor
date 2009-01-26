@@ -4,8 +4,7 @@
 #@desc format) must be specified, from which voxel and image dimensions will be
 #@desc extracted.
 
-suppressPackageStartupMessages(require(tractor.fsl))
-suppressPackageStartupMessages(require(tractor.camino))
+suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {
