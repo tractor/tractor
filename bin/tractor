@@ -58,9 +58,9 @@ usage()
     echo "The script, a text file containing R code, need not be specified with the"
     echo "'.R' extension. The program searches in the current working directory for"
     echo "the specified script first, followed by any directory specified using the"
-    echo "'-w' option, then ~/.tractor, then /etc/tractor, and finally the etc/exp-"
-    echo "eriments directory under \$TRACTOR_HOME. Additional paths can be specified"
-    echo "using the \$TRACTOR_PATH environment variable. (The man page has details.)"
+    echo "'-w' option, then ~/.tractor, and finally the share/experiments directory"
+    echo "under \$TRACTOR_HOME. The \$TRACTOR_PATH environment variable can be used"
+    echo "to specify additional paths; the man page has details."
     echo
 }
 
@@ -113,6 +113,7 @@ elif [ -f "$HOME/.tractor/$script_file" ]; then
     script_file="$HOME/.tractor/$script_file"
     file_found=1
 elif [ -f "/etc/tractor/$script_file" ]; then
+    echo "NB: Support for scripts in /etc/tractor may be removed in future" 1>&2
     script_file="/etc/tractor/$script_file"
     file_found=1
 fi
