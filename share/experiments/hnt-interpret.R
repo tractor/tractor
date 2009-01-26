@@ -16,14 +16,11 @@ runExperiment <- function ()
     mode <- getWithDefault("Mode", NULL, "character", errorIfMissing=TRUE)
     mode <- match.arg(tolower(mode), c("location","similarity"))
     
-    refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
-    reference <- deserialiseReferenceTract(refFileName)
-    if (!isFieldTract(reference))
-        output(OL$Error, "The specified reference tract is not in the correct form")
+    reference <- getNTResource("reference", "hnt", list(tractName=tractName))
     
     nSessions <- length(sessionList)
     
-    results <- deserialiseHeuristicNTResults(file=ensureFileSuffix(resultsName,"Rdata"))
+    results <- getNTResource("results", "hnt", list(resultsName=resultsName))
     if (results$nSessions() != nSessions)
         output(OL$Error, "Length of the session list specified does not match the results file")
 

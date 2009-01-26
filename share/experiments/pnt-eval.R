@@ -18,5 +18,5 @@ runExperiment <- function ()
     
     results <- calculatePosteriorsForDataTable(data, model)
     resultsObject <- newProbabilisticNTResultsFromPosteriors(results$tp, results$np, results$mm, NULL)
-    serialiseListObject(resultsObject, file=ensureFileSuffix(resultsName,"Rdata"))
+    writeNTResource(resultsObject, "results", "pnt", list(resultsName=resultsName))
 }

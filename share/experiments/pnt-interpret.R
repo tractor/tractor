@@ -21,17 +21,12 @@ runExperiment <- function ()
     mode <- getWithDefault("Mode", NULL, "character", errorIfMissing=TRUE)
     mode <- match.arg(tolower(mode), c("location","posterior","ratio","null-posterior"))
     
-    refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
-    reference <- deserialiseReferenceTract(refFileName)
-    if (!isBSplineTract(reference))
-        output(OL$Error, "The specified reference tract is not in the correct form")
-    
-    modelFileName <- ensureFileSuffix(paste(tractName,"model",sep="_"), "Rdata")
-    model <- deserialiseMatchingTractModel(modelFileName)
+    reference <- getNTResource("reference", "pnt", list(tractName=tractName))
+    model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName))
     
     nSessions <- length(sessionList)
     
-    results <- deserialiseProbabilisticNTResults(file=ensureFileSuffix(resultsName,"Rdata"))
+    results <- getNTResource("results", "pnt", list(resultsName=resultsName))
     if (results$nSessions() != nSessions)
         output(OL$Error, "Length of the session list specified does not match the results file")
     nPoints <- results$nPoints()

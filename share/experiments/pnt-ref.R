@@ -29,9 +29,7 @@ runExperiment <- function ()
     returnValue <- referenceSplineTractWithOptions(options, session, seed)
     
     reference <- newReferenceTractWithTract(returnValue$spline, nativeSeed=seed, session=session, options=returnValue$options)
-    
-    fileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
-    serialiseListObject(reference, file=fileName)
+    writeNTResource(reference, "reference", "pnt", list(tractName=tractName))
     
     invisible (returnValue$options)
 }

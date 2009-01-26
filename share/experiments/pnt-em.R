@@ -17,10 +17,7 @@ runExperiment <- function ()
     nullPrior <- getWithDefault("NullPrior", NULL, "numeric")
     resultsName <- getWithDefault("ResultsName", "results")
     
-    refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
-    reference <- deserialiseReferenceTract(refFileName)
-    if (!isBSplineTract(reference))
-        output(OL$Error, "The specified reference tract is not in the correct form")
+    reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     
     # This is certainly the most sensible choice, so for now we hard-code it
     alphaOffset <- 1
@@ -33,11 +30,10 @@ runExperiment <- function ()
         results <- runMatchingEMForDataTable(data, reference$getTract(), lengthCutoff=maxKnotCount, lambda=1/alphaPriorMean, alphaOffset=alphaOffset, nullPrior=nullPrior)
     
     resultsObject <- newProbabilisticNTResultsFromPosteriors(results$tp, results$np, results$mm, results$um)
-    serialiseListObject(resultsObject, file=ensureFileSuffix(resultsName,"Rdata"))
+    writeNTResource(resultsObject, "results", "pnt", list(resultsName=resultsName))
     
     model <- results$mm
-    modelFileName <- ensureFileSuffix(paste(tractName,"model",sep="_"), "Rdata")
-    serialiseListObject(model, file=ensureFileSuffix(modelFileName,"Rdata"))
+    writeNTResource(model, "model", "pnt", list(tractName=tractName,datasetName=datasetName))
 
     model$summarise()
     

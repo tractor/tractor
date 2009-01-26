@@ -24,10 +24,7 @@ runExperiment <- function ()
     vizThreshold <- getWithDefault("VisualisationThreshold", 0.01)
     showSeed <- getWithDefault("ShowSeedPoint", TRUE)
     
-    refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
-    reference <- deserialiseReferenceTract(refFileName)
-    if (!isBSplineTract(reference))
-        output(OL$Error, "The specified reference tract is not in the correct form")
+    reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     
     if (!createVolumes && !createImages)
         output(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
@@ -36,7 +33,7 @@ runExperiment <- function ()
     
     nSessions <- length(sessionList)
     
-    results <- deserialiseProbabilisticNTResults(file=ensureFileSuffix(resultsName,"Rdata"))
+    results <- getNTResource("results", "pnt", list(resultsName=resultsName))
     if (results$nSessions() != nSessions)
     {
         nSessions <- min(nSessions, results$nSessions())

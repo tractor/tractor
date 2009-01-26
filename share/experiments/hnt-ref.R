@@ -25,6 +25,5 @@ runExperiment <- function ()
     tract <- newFieldTractFromProbtrack(session, seed, nSamples=nSamples, threshold=0.01)
     reference <- newReferenceTractWithTract(tract, session=session, nativeSeed=seed)
     
-    fileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
-    serialiseListObject(reference, file=fileName)
+    writeNTResource(reference, "reference", "hnt", list(tractName=tractName))
 }

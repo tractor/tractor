@@ -1,4 +1,4 @@
-getFileNameForNTResource <- function (type, mode, options, expectExists = FALSE)
+getFileNameForNTResource <- function (type, mode, options = NULL, expectExists = FALSE)
 {
     validTypes <- list(hnt=c("reference","results"), pnt=c("reference","model","results"))
     
@@ -52,7 +52,7 @@ getFileNameForNTResource <- function (type, mode, options, expectExists = FALSE)
     }
 }
 
-getNTResource <- function (type, mode, options)
+getNTResource <- function (type, mode, options = NULL)
 {
     fileName <- getFileNameForNTResource(type, mode, options, expectExists=TRUE)
     
@@ -78,4 +78,10 @@ getNTResource <- function (type, mode, options)
         model <- deserialiseMatchingTractModel(fileName)
         return (invisible(model))
     }
+}
+
+writeNTResource <- function (object, type, mode, options = NULL)
+{
+    fileName <- getFileNameForNTResource(type, mode, options)
+    serialiseListObject(object, file=fileName)
 }

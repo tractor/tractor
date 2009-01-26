@@ -23,10 +23,7 @@ runExperiment <- function ()
     datasetName <- getWithDefault("DatasetName", "data")
     resume <- getWithDefault("Resume", FALSE)
     
-    refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
-    reference <- deserialiseReferenceTract(refFileName)
-    if (!isBSplineTract(reference))
-        output(OL$Error, "The specified reference tract is not in the correct form")
+    reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     
     if (!is.null(seedPoint) && !is.null(seedList))
         output(OL$Error, "Only one of \"SeedPoint\" and \"SeedPointList\" should be given")

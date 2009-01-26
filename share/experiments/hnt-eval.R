@@ -19,10 +19,7 @@ runExperiment <- function ()
     faThreshold <- getWithDefault("AnisotropyThreshold", 0.2)
     resultsName <- getWithDefault("ResultsName", "results")
     
-    refFileName <- ensureFileSuffix(paste(tractName,"ref",sep="_"), "Rdata")
-    reference <- deserialiseReferenceTract(refFileName)
-    if (!isFieldTract(reference))
-        output(OL$Error, "The specified reference tract is not in the correct form")
+    reference <- getNTResource("reference", "hnt", list(tractName=tractName))
     
     if (is.null(seedList))
         pointType <- "r"
@@ -56,5 +53,5 @@ runExperiment <- function ()
     }
     
     resultsObject <- newHeuristicNTResultsFromList(results)
-    serialiseListObject(resultsObject, file=ensureFileSuffix(resultsName,"Rdata"))
+    writeNTResource(resultsObject, "results", "hnt", list(resultsName=resultsName))
 }

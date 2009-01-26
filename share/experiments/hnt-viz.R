@@ -22,7 +22,7 @@ runExperiment <- function ()
     
     nSessions <- length(sessionList)
     
-    results <- deserialiseHeuristicNTResults(file=ensureFileSuffix(resultsName,"Rdata"))
+    results <- getNTResource("results", "hnt", list(resultsName=resultsName))
     if (results$nSessions() != nSessions)
         output(OL$Error, "Length of the session list specified does not match the results file")
 
