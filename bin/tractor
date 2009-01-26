@@ -118,7 +118,7 @@ elif [ -f "/etc/tractor/$script_file" ]; then
 fi
 
 if [ $file_found -ne 1 ]; then
-    for d in `echo "$TRACTOR_PATH:${TRACTOR_HOME}${TRACTOR_HOME+/etc/experiments}" | sed 's/:/ /g'`
+    for d in `echo "$TRACTOR_PATH:${TRACTOR_HOME}${TRACTOR_HOME+/share/experiments}" | sed 's/:/ /g'`
         do
         if [ -f "$d/$script_file" ]
             then

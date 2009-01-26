@@ -32,7 +32,7 @@ install-extras:
 	@read -p "The install-extras target is deprecated - are you sure? [yn] " ans && [ $$ans = "y" ]
 	
 	@mkdir -p ~/.tractor
-	@$(INSTALL) -Cv -m 0644 etc/experiments/*.R ~/.tractor
+	@$(INSTALL) -Cv -m 0644 share/experiments/*.R ~/.tractor
 	
 	@mkdir -p $(PREFIX)/bin $(PREFIX)/share/man/man1
 	@$(INSTALL) -Cv bin/tractor $(PREFIX)/bin
