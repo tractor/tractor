@@ -25,6 +25,9 @@ install: install-base install-session install-nt
 uninstall:
 	$(R) CMD REMOVE tractor.nt tractor.session tractor.base
 
+uninstall-deprecated:
+	$(R) CMD REMOVE tractor.camino tractor.fsl
+
 install-extras:
 	@read -p "The install-extras target is deprecated - are you sure? [yn] " ans && [ $$ans = "y" ]
 	
