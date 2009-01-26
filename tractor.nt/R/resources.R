@@ -1,14 +1,9 @@
 getFileNameForNTResource <- function (type, mode, options, expectExists = FALSE)
 {
-    type <- tolower(type)
-    mode <- tolower(mode)
-    
-    if (!(mode %in% c("hnt","pnt")))
-        output(OL$Error, "Mode must be \"hnt\" or \"pnt\"")
-    
     validTypes <- list(hnt=c("reference","results"), pnt=c("reference","model","results"))
-    if (!(type %in% validTypes[[mode]]))
-        output(OL$Error, "The specified resource type (\"", type, "\") is not valid in this mode")
+    
+    mode <- match.arg(tolower(mode), c("hnt","pnt"))
+    type <- match.arg(tolower(type), validTypes[[mode]])
     
     tractorHome <- Sys.getenv("TRACTOR_HOME")
     if (tractorHome == "" || !file.exists(tractorHome))
@@ -59,10 +54,10 @@ getFileNameForNTResource <- function (type, mode, options, expectExists = FALSE)
 
 getNTResource <- function (type, mode, options)
 {
+    fileName <- getFileNameForNTResource(type, mode, options, expectExists=TRUE)
+    
     type <- tolower(type)
     mode <- tolower(mode)
-    
-    fileName <- getFileNameForNTResource(type, mode, options, expectExists=TRUE)
     
     if (type == "reference")
     {
