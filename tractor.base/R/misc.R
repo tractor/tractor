@@ -278,6 +278,17 @@ isValidAs <- function (value, mode)
     return (!any(is.na(coercedValue)))
 }
 
+splitAndConvertString <- function (string, split = "", mode = "character", errorIfInvalid = FALSE, ...)
+{
+    values <- unlist(strsplit(string, split, ...))
+    values <- suppressWarnings(as(values, mode))
+    
+    if (errorIfInvalid && any(is.na(values)))
+        output(OL$Error, "Specified list, \"", implode(string,sep=" "), "\", is not valid here")
+    else
+        return (values)
+}
+
 getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE)
 {
     if (is.null(mode) && !is.null(defaultValue))
