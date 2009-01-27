@@ -41,7 +41,7 @@ runExperiment <- function ()
             seedMatrix <- matrix(seedList, ncol=3, byrow=TRUE)
         else
         {
-            seedPoint <- as.numeric(unlist(strsplit(seedPoint, ",")))
+            seedPoint <- splitAndConvertString(seedPoint, ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
             seedMatrix <- promote(seedPoint, byrow=TRUE)
         }
         

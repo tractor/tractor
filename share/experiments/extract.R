@@ -10,7 +10,7 @@ runExperiment <- function ()
 {
     requireArguments("image file", "data value(s) to extract")
     image <- newMriImageFromFile(Arguments[1])
-    values <- as.numeric(unlist(strsplit(Arguments[-1], ",")))
+    values <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
     
     createImages <- getWithDefault("CreateImages", FALSE)
     overlayOnBrain <- getWithDefault("OverlayOnBrain", FALSE)

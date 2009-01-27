@@ -39,11 +39,11 @@ runExperiment <- function ()
     
     if (!is.null(flipAxes))
     {
-        flipAxes <- suppressWarnings(as.numeric(unlist(strsplit(flipAxes, ""))))
+        flipAxes <- splitAndConvertString(flipAxes, "", "integer", fixed=TRUE, errorIfInvalid=TRUE)
         flipAxes <- flipAxes[!is.na(flipAxes)]
     }
     
-    runStages <- 1:5 %in% suppressWarnings(as.numeric(unlist(strsplit(stages, ""))))
+    runStages <- 1:5 %in% splitAndConvertString(stages, "", "integer", fixed=TRUE, errorIfInvalid=TRUE)
     if (all(!runStages))
         output(OL$Info, "Nothing to do")
     
@@ -98,7 +98,7 @@ runExperiment <- function ()
                         if (is.null(flipAxes))
                         {
                             ans <- output(OL$Question, "Flip diffusion gradient vectors along which axes? [123; Enter for none]")
-                            flipAxes <- suppressWarnings(as.numeric(unlist(strsplit(ans,""))))
+                            flipAxes <- splitAndConvertString(ans, "", "integer", fixed=TRUE)
                         }
                         if (length(flipAxes[!is.na(flipAxes)]) > 0)
                             flipGradientVectorsForSession(session, flipAxes)

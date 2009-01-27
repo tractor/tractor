@@ -16,7 +16,7 @@ runExperiment <- function ()
     
     session <- newSessionFromDirectory(Arguments[1])
     
-    seed <- as.numeric(unlist(strsplit(Arguments[-1], ",")))
+    seed <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
     if (!exists("seed") || length(seed) != 3)
         output(OL$Error, "Seed point must be given as a single vector in 3D space, comma or space separated")
     
