@@ -78,13 +78,13 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         knots <- knots[which(knots>1 & knots<lineLength)]
         if (length(knots) != nKnots)
         {
-            output(OL$Warning, "Didn't get the expected number of knots")
+            flag(OL$Warning, "Didn't get the expected number of knots")
             return (NULL)
         }
         seedKnot <- which(knots==seedLoc)
         if (length(seedKnot) != 1)
         {
-            output(OL$Warning, "Seed knot is outside the line")
+            flag(OL$Warning, "Seed knot is outside the line")
             return (NULL)
         }
 

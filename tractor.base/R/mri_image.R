@@ -2,7 +2,7 @@
 {
     if (!is.list(.datatype) || length(unlist(.datatype[c("type","size","isSigned")])) != 3)
     {
-        output(OL$Warning, "Specified image data type is not valid - ignoring it")
+        flag(OL$Warning, "Specified image data type is not valid - ignoring it")
         .datatype <- NULL
     }
     
@@ -206,7 +206,7 @@ newMriImageFromTemplate <- function (image, ...)
     else
     {
         if (prod(oldMetadata$getDimensions()) != prod(newMetadata$getDimensions()))
-            output(OL$Warning, "The requested image dimensions will not result in a perfect reshaping")
+            flag(OL$Warning, "The requested image dimensions will not result in a perfect reshaping")
         newData <- array(as.vector(image$getData()), dim=newMetadata$getDimensions())
         newImage <- .MriImage(newData, newMetadata)
     }

@@ -359,7 +359,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     firstSliceDirection <- which(abs(sliceOrientation[1:3]) == 1) * sum(sliceOrientation[1:3])
     secondSliceDirection <- which(abs(sliceOrientation[4:6]) == 1) * sum(sliceOrientation[4:6])
     if (length(firstSliceDirection) != 1 || length(secondSliceDirection) != 1)
-        output(OL$Error, "Slices orientation information is missing or slices are oblique")
+        output(OL$Error, "Slice orientation information is missing or slices are oblique")
     sliceDirections <- abs(c(firstSliceDirection, secondSliceDirection))
     throughSliceDirection <- setdiff(1:3, abs(c(firstSliceDirection,secondSliceDirection)))
     output(OL$Info, "Slice select direction is ", LETTERS[24:26][throughSliceDirection])
@@ -474,7 +474,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
 
     if (!volumePerDicomFile && nSlices>1 && length(firstLocs)==2 && diff(firstLocs)<0)
     {
-        output(OL$Warning, "Slice location decreases between consecutive images - inverting slice order")
+        flag(OL$Warning, "Slice location decreases between consecutive images - inverting slice order")
         indices <- alist(x=, y=, z=, t=)
         indices[[throughSliceDirection]] <- nSlices:1
         data <- do.call("[", c(list(data),indices,list(drop=FALSE)))

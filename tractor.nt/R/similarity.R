@@ -31,7 +31,7 @@ calculateMatchingScore <- function (refTract, candTract, trueLengths = FALSE, bi
             # when 'previous' is NA), since in that case all voxels will be
             # visited eventually anyway
             if (length(maxLocs) > 1)
-                output(OL$Warning, "Maximal voxel value is not unique")
+                flag(OL$Warning, "Maximal voxel value is not unique")
         }
         
         if (length(maxLocs) > 1)

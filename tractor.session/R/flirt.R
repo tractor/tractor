@@ -250,7 +250,7 @@ transformPointsWithAffine <- function (transform, x, y = NULL, z = NULL, useVoxe
     {
         if (dims[1] == 3)
         {
-            output(OL$Warning, "Matrix does not have 3 columns; transposing it")
+            flag(OL$Warning, "Matrix does not have 3 columns; transposing it")
             m <- t(m)
             dims <- dim(m)
         }
