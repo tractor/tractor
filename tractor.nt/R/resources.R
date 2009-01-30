@@ -69,7 +69,7 @@ getNTResource <- function (type, mode, options = NULL)
     }
     else if (type == "results")
     {
-        deserialiseFunction <- ifelse(mode=="hnt", deserialiseHeuristicNTResults, deserialiseProbabilisticNTResults)
+        deserialiseFunction <- match.fun(ifelse(mode=="hnt", "deserialiseHeuristicNTResults", "deserialiseProbabilisticNTResults"))
         results <- deserialiseFunction(fileName)
         return (invisible(results))
     }
