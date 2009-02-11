@@ -173,47 +173,33 @@ fi
 
 if [ $batch_mode -eq 1 ]; then
     cat >"$expect_file" <<EOF
-source('$script_file')
-setOutputLevel($output_level)
-createWorkspaceFromYaml('$config_file')
-createWorkspaceFromYaml(text='$args')
-setwd('$working_dir')
-results <- try(runExperiment())
-reportFlags()
-writeReportToYaml(results,fileName='$report_file')
+library(tractor.base)
+bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args')
 q(runLast=FALSE)
 EOF
     R CMD BATCH --slave --vanilla $expect_file $log_file
 elif [ $interactive -eq 0 ]; then
-    echo "source('$script_file'); setOutputLevel($output_level); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); setwd('$working_dir'); results <- try(runExperiment()); reportFlags(); writeReportToYaml(results,fileName='$report_file')" | R --slave --vanilla 2>&1 | tee $log_file
+    echo "library(tractor.base); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args')" | R --slave --vanilla 2>&1 | tee $log_file
 elif [ $expect_available -eq 0 ]; then
     output_level=`echo $output_level | sed 's/\\$/\\\\\\$/'`
     cat >"$expect_file" <<EOF
 log_user 0
 spawn R --quiet --vanilla
 set timeout 3
-send "source('$script_file')\n"
+send "library(tractor.base)\n"
 expect -re ">.+\r\n"
-send "setOutputLevel($output_level)\n"
-expect -re ">.+\r\n"
-send "createWorkspaceFromYaml('$config_file')\n"
-expect -re ">.+\r\n"
-send "createWorkspaceFromYaml(text='$args')\n"
-expect -re ">.+\r\n"
-send "setwd('$working_dir')\n"
-expect -re ">.+\r\n"
-send "results <- try(runExperiment()); reportFlags(); writeReportToYaml(results,fileName='$report_file'); q()\n"
+send "bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args'); q()\n"
 expect -re ">.+\r\n"
 interact
 EOF
     expect -f $expect_file | tee $log_file
 else
-    echo "library('utils'); library('graphics'); library('grDevices'); library('stats'); source('$script_file'); setOutputLevel($output_level); createWorkspaceFromYaml('$config_file'); createWorkspaceFromYaml(text='$args'); setwd('$working_dir'); results <- try(runExperiment()); reportFlags(); writeReportToYaml(results,fileName='$report_file'); q()" >.Rprofile
+    echo "library(tractor.base); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args'); q()" >.Rprofile
     R --slave --no-save --no-restore --no-site-file --no-environ 2>&1 | tee $log_file
 fi
 
 warnings=`grep -c WARNING $log_file`
-errors=`grep -c Error $log_file`
+errors=`grep -c ERROR $log_file`
 
 [ $batch_mode -eq 1 ] && cat $log_file
 

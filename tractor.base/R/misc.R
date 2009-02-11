@@ -6,7 +6,7 @@ setOutputLevel <- function (level, usePrefix = NA)
         options(tractorUseOutputPrefix=usePrefix)
 }
 
-output <- function (level, ..., default = NULL)
+output <- function (level, ..., default = NULL, showDepth = TRUE, toReport = FALSE)
 {
     if (is.null(getOption("tractorOutputLevel")))
     {
@@ -24,10 +24,12 @@ output <- function (level, ..., default = NULL)
         usePrefix <- TRUE
     
     callStrings <- as.character(sys.calls())
-    tryRelated <- grep("^(do)?try", callStrings, ignore.case=TRUE, perl=TRUE)
-    callStrings <- callStrings[setdiff(seq_along(callStrings), tryRelated)]
+    runExperimentCallLoc <- which(callStrings %~% "^runExperiment")
+    if (length(runExperimentCallLoc) == 1)
+        callStrings <- callStrings[-seq_len(runExperimentCallLoc-1)]
+    callStrings <- callStrings[setdiff(seq_along(callStrings), which(callStrings %~% "Error"))]
 
-    nStars <- length(callStrings) - 1
+    nStars <- ifelse(showDepth, length(callStrings), 0)
     leadingSpace <- ifelse(usePrefix && (nStars > 0), implode(rep("* ", nStars)), "")
     if ((level < OL$Question) && (outputLevel <= level))
         cat(paste(leadingSpace, ifelse(usePrefix,prefixStrings[level],""), ..., "\n", sep=""))
@@ -43,11 +45,15 @@ output <- function (level, ..., default = NULL)
     }
     else if (level == OL$Error)
     {
+        if (toReport && isTRUE(getOption("tractorOutputErrors")))
+            cat(paste(leadingSpace, "ERROR: ", ..., "\n", sep=""))
+        
         if (outputLevel == OL$Debug)
         {
-            cat("ERROR - stack trace follows\n")
+            cat("--- Begin stack trace ---\n")
             for (i in 1:length(callStrings))
                 cat(rep("* ", i), callStrings[i], "\n", sep="")
+            cat("---  End stack trace  ---\n")
         }
         stop(..., call.=FALSE)
     }
@@ -75,9 +81,9 @@ reportFlags <- function ()
             locs <- which(messages == message)
             level <- max(levels[locs])
             if (length(locs) == 1)
-                output(level, message)
+                output(level, message, showDepth=FALSE)
             else
-                output(level, paste("[x",length(locs),"] ",message,sep=""))
+                output(level, paste("[x",length(locs),"] ",message,sep=""), showDepth=FALSE)
         }
     }
     
