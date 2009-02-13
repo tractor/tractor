@@ -11,7 +11,7 @@ tractor \- Command line interface for the TractoR MRI analysis project
 .B tractor \-h
 
 .SH DESCRIPTION
-The \fBtractor\fR program provides a simple shell interface to the packages making up the core of the TractoR project, via a set of experiment \fIscripts\fR which encapsulate common tasks. It thereby obviates the need to interact directly with the R language for which the core packages are written. A \fIscript\fR may take a number of \fIarguments\fR and/or configuration parameters, which can be specified on the command line or in a separate file (see "Script Configuration and Arguments" below). In the second synopsis form, using the '\-o' flag, the program will list the options appropriate to the specified experiment. The final form summarises the flags available to the \fBtractor\fR program itself.
+The \fBtractor\fR program provides a simple shell interface to the packages making up the core of the TractoR project, via a set of experiment \fIscripts\fR which encapsulate common tasks. A \fIscript\fR may take a number of \fIarguments\fR and/or configuration parameters, which can be specified on the command line or in a separate file (see "Script Configuration and Arguments" below). In the second synopsis form, using the '\-o' flag, the program will give a description of the specified experiment, along with a list of the options relevant to it. The final form summarises the flags available to the \fBtractor\fR program itself.
 .PP
 The \fIscript\fR, a text file containing R code, need not be specified with the '\.R' extension. The program searches in the current working directory for the named \fIscript\fR first, followed by any directory specified using the '\-w' flag, then ~/\.tractor, and finally \fB$TRACTOR_HOME\fR/share/experiments. Additional search paths can be specified using the \fBTRACTOR_PATH\fR variable (see "Environment Variables" below). Any \fIscript\fR not in one of these locations must be specified using its full path.
 .PP
@@ -23,10 +23,10 @@ By default, a log file containing a history of all TractoR experiments run is cr
 Display usage information and quit.
 .TP
 .B \-o
-Do not run the \fIscript\fR, but instead produce a list of the options that it supports, along with their default values.
+Do not run the \fIscript\fR, but instead produce a list of the options that it supports, along with their default values. Also provides a short description of the purpose of the \fIscript\fR.
 .TP
 .B \-l
-Direct output to a log file as well as \fBstdout\fR.
+Direct output to a log file as well as \fBstdout\fR(4).
 .TP
 .B \-d
 Produce debugging output; equivalent to '\-v 3'.
