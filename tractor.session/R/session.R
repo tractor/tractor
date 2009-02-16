@@ -76,7 +76,7 @@
         
         getObjectFileName = function (object)
         {
-            return (paste(self$getObjectDirectory(), "/", object, ".Rdata", sep=""))
+            return (file.path(self$getObjectDirectory(), ensureFileSuffix(object,"Rdata")))
         },
         
         getPreBedpostDirectory = function ()
