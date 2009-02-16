@@ -32,8 +32,10 @@
         getImageByType = function (type, fibrePopulation = 1)
         {
             fileName <- self$getImageFileNameByType(type, fibrePopulation)
-            if (type %in% c("fa","md") && !imageFileExists(fileName))
+            if (tolower(type) %in% c("fa","md") && !imageFileExists(fileName))
                 runDtifitWithSession(self)
+            if (tolower(type) == "lrad" && !imageFileExists(fileName))
+                createRadialDiffusivityMapForSession(self)
             return (newMriImageFromFile(fileName))
         },
         
@@ -46,22 +48,20 @@
             if (.usesOldBedpost)
                 fibrePopulation <- NULL
             
-            if (type == "t2")
-                return (file.path(preBedpostDir, "nodif_brain"))
-            else if (type == "mask")
-                return (file.path(preBedpostDir, "nodif_brain_mask"))
-            else if (type == "avf")
-                return (file.path(bedpostDir, paste("mean_f",fibrePopulation,"samples",sep="")))
-            else if (type == "theta")
-                return (file.path(bedpostDir, paste("merged_th",fibrePopulation,"samples",sep="")))
-            else if (type == "phi")
-                return (file.path(bedpostDir, paste("merged_ph",fibrePopulation,"samples",sep="")))
-            else if (type == "fa")
-                return (file.path(preBedpostDir, "dti_FA"))
-            else if (type == "md")
-                return (file.path(preBedpostDir, "dti_MD"))
-            else
-                output(OL$Error, "Unknown file type (", type, ") specified")
+            path <- switch (tolower(type),
+                            t2=file.path(preBedpostDir, "nodif_brain"),
+                            mask=file.path(preBedpostDir, "nodif_brain_mask"),
+                            avf=file.path(bedpostDir, paste("mean_f",fibrePopulation,"samples",sep="")),
+                            theta=file.path(bedpostDir, paste("merged_th",fibrePopulation,"samples",sep="")),
+                            phi=file.path(bedpostDir, paste("merged_ph",fibrePopulation,"samples",sep="")),
+                            fa=file.path(preBedpostDir, "dti_FA"),
+                            md=file.path(preBedpostDir, "dti_MD"),
+                            lax=file.path(preBedpostDir, "dti_L1"),
+                            lrad=file.path(preBedpostDir, "dti_Lrad"),
+                            NULL)
+            
+            if (is.null(path))
+                output(OL$Error, "Unknown file type (\"", type, "\") specified")
         },
         
         getObjectDirectory = function ()
@@ -242,4 +242,18 @@ createCaminoFilesForSession <- function (session, diffusionTime = NULL)
     writeMriImageToCamino(maskImage, file.path(caminoDir,"mask"))
     
     invisible (NULL)
+}
+
+createRadialDiffusivityMapForSession <- function (session)
+{
+    if (!isMriSession(session))
+        output(OL$Error, "The specified session is not an MriSession object")
+    
+    preBedpostDir <- session$getPreBedpostDirectory()
+    
+    secondEigenvalue <- newMriImageFromFile(file.path(preBedpostDir, "dti_L2"))
+    thirdEigenvalue <- newMriImageFromFile(file.path(preBedpostDir, "dti_L3"))
+    radialDiffusivity <- newMriImageWithBinaryFunction(secondEigenvalue, thirdEigenvalue, function(x,y) (x+y)/2)
+    
+    writeMriImageToFile(radialDiffusivity, session$getImageFileNameByType("lrad"))
 }

@@ -40,7 +40,7 @@ writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zo
     }
 }
 
-createWeightingAndMetricImages <- function (image, session = NULL, type = c("weight","avf","fa","md"), mode = c("weighted","log","binary"), threshold = NULL)
+createWeightingAndMetricImages <- function (image, session = NULL, type = c("weight","avf","fa","md","lax","lrad"), mode = c("weighted","log","binary"), threshold = NULL)
 {
     type <- match.arg(type)
     
