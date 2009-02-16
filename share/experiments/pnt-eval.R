@@ -11,8 +11,7 @@ runExperiment <- function ()
     datasetName <- getWithDefault("DatasetName", NULL, "character", errorIfMissing=TRUE)
     resultsName <- getWithDefault("ResultsName", "results")
     
-    modelFileName <- ensureFileSuffix(paste(tractName,"model",sep="_"), "Rdata")
-    model <- deserialiseMatchingTractModel(modelFileName)
+    model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName))
     
     data <- read.table(ensureFileSuffix(datasetName,"txt"))
     
