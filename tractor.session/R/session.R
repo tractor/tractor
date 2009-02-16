@@ -62,6 +62,8 @@
             
             if (is.null(path))
                 output(OL$Error, "Unknown file type (\"", type, "\") specified")
+            
+            return (path)
         },
         
         getObjectDirectory = function ()
