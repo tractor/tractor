@@ -201,15 +201,6 @@ createCaminoFilesForSession <- function (session, diffusionTime = NULL)
         output(OL$Error, "The specified session is not an MriSession object")
     
     caminoDir <- session$getCaminoDirectory()
-    if (file.exists(caminoDir))
-    {
-        ans <- output(OL$Question, "Internal directory ", caminoDir, " exists. This operation will DESTROY it. Continue? [yn]")
-        if (tolower(ans) != "y")
-            return (invisible(NULL))
-        else
-            unlink(caminoDir, recursive=TRUE)
-    }
-    
     sourceDir <- session$getPreBedpostDirectory()
     if (!file.exists(file.path(sourceDir,"bvals")) || !file.exists(file.path(sourceDir,"bvecs")) || !imageFileExists(file.path(sourceDir,"data")) || !imageFileExists(file.path(sourceDir,"nodif_brain_mask")))
         output(OL$Error, "Some required files are missing - the session must be processed for FSL first")
