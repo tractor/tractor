@@ -9,9 +9,10 @@ runExperiment <- function ()
 {
     requireArguments("file name")
     descriptions <- getWithDefault("Descriptions", TRUE)
-    metadata <- newDicomMetadataFromFile(Arguments[1])
+    fileName <- implode(Arguments, sep=" ")
+    metadata <- newDicomMetadataFromFile(fileName)
     if (is.null(metadata))
-        output(OL$Error, "File ", Arguments[1], " appears not to be a DICOM file or is unreadable")
+        output(OL$Error, "File ", fileName, " appears not to be a DICOM file or is unreadable")
     else
         print(metadata, descriptions=descriptions)
 }
