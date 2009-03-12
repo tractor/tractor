@@ -4,6 +4,7 @@
 #@desc appropriate, using the specified output name.
 
 library(tractor.base)
+library(tractor.session)
 
 runExperiment <- function ()
 {
