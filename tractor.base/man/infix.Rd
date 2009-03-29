@@ -2,7 +2,7 @@
 \alias{\%~\%}
 \title{Test a character vector for a match against a regular expression}
 \description{
-  Test if a character
+  Test if a the elements of a character vector match a Perl regular expression.
 }
 \usage{
 X \%~\% Y
