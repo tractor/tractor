@@ -12,7 +12,7 @@ print.list.object(x, ...)
 }
 \arguments{
   \item{object}{Any object.}
-  \item{x, child, parent}{Objects of class \code{list.object}.}
+  \item{x}{Objects of class \code{list.object}.}
 }
 \details{
   The list.object class is the basis for various other classes in the TractoR packages. The class itself inherits from \code{link{list}}. The \code{isListObject} function can be used to test whether a given object is a list object or not. \code{print.list.object} calls the \code{summarise} function within the list object if one is defined; otherwise it prints the result of calling \code{summary(object)}, which will give a list of functions in the object.
