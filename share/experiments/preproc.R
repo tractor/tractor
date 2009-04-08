@@ -127,14 +127,5 @@ runExperiment <- function ()
         }
     } )
     
-    returnValue <- list(workingDirectoryExists=file.exists(session$getWorkingDirectory()),
-                        eddyCorrectCompleted=imageFileExists(file.path(targetDir, "nodif")),
-                        betCompleted=imageFileExists(session$getImageFileNameByType("mask")),
-                        dtifitCompleted=imageFileExists(session$getImageFileNameByType("fa")),
-                        allPreprocessingCompleted=session$isPreprocessed(),
-                        numberOfFibres=session$nFibres())
-    if (session$usesOldBedpost())
-        returnValue <- c(returnValue, list(usesOldBedpost=TRUE))
-    
-    invisible (returnValue)
+    invisible (NULL)
 }
