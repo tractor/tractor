@@ -44,6 +44,7 @@
     assign(".Nifti", tempNifti, pos=pos)
     assign(".FileTypes", tempFileTypes, pos=pos)
     assign("OL", tempOL, pos=pos)
+    assign(".TractorFlags", NULL, pos=pos)
     
     fileType <- toupper(Sys.getenv("TRACTOR_FILETYPE"))
     if (is.null(getOption("tractorFileType")) && isTRUE(fileType %in% .FileTypes$typeNames))

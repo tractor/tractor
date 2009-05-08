@@ -63,15 +63,15 @@ flag <- function (level, ...)
 {
     currentFlag <- list(list(level=level, message=paste(...,sep="")))
     
-    if (exists(".TractorFlags"))
-        .TractorFlags <<- c(.TractorFlags, currentFlag)
-    else
+    if (is.null(.TractorFlags))
         .TractorFlags <<- currentFlag
+    else
+        .TractorFlags <<- c(.TractorFlags, currentFlag)
 }
 
 reportFlags <- function ()
 {
-    if (exists(".TractorFlags") && length(".TractorFlags") > 0)
+    if (!is.null(.TractorFlags))
     {
         levels <- unlist(lapply(.TractorFlags, "[[", "level"))
         messages <- unlist(lapply(.TractorFlags, "[[", "message"))

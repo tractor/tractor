@@ -6,8 +6,8 @@
   Extract or replace subsets of the data in an MriImage object.
 }
 \usage{
-x[...]
-x[...] <- value
+\S3method{[}{image.mri}(x, ...)
+\S3method{[}{image.mri}(x, ...) <- value
 }
 \arguments{
   \item{x}{An object inheriting from class \code{image.mri}.}

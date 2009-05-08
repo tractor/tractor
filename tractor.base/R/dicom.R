@@ -54,7 +54,7 @@ isDicomMetadata <- function (object)
     return ("metadata.dicom" %in% class(object))
 }
 
-print.metadata.dicom <- function (x, descriptions = FALSE)
+print.metadata.dicom <- function (x, descriptions = FALSE, ...)
 {
     tags <- x$getAvailableTags()
     if (descriptions && !exists("dictionary"))

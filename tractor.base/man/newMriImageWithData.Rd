@@ -7,6 +7,7 @@
 \alias{newMriImageFromTemplate}
 \alias{newMriImageWithBinaryFunction}
 \alias{newMriImageWithSimpleFunction}
+\alias{generateImageDataForShape}
 
 \title{Functions for creating MriImage objects from data}
 \description{
@@ -39,6 +40,7 @@ newMriImageWithBinaryFunction(image1, image2, fun, ..., newDataType = NULL)
   \item{background}{The voxel value outside the shape.}
   \item{centre, width}{The centre and width of the shape.}
   \item{newDataType}{The data type of the new image. If \code{NULL}, then the data type is the same as the source image.}
+  \item{fun}{A function object, taking one or two numeric array parameters, as appropriate.}
   \item{\dots}{For \code{newMriImageFromTemplate}, further parameters to \code{\link{newMriImageMetadataFromTemplate}}. For \code{newMriImageAsShapeOverlay}, further parameters to \code{generateImageDataForShape}. And for \code{newMriImageWithSimpleFunction} and \code{newMriImageWithBinaryFunction}, further parameters to \code{fun}.}
 }
 \details{

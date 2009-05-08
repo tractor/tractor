@@ -10,7 +10,6 @@
 \alias{execute}
 \alias{expandFileName}
 \alias{extractDataFromMriImage}
-\alias{generateImageDataForShape}
 \alias{getColourScale}
 \alias{getDescriptionForDicomTag}
 \alias{getParametersForFileType}
