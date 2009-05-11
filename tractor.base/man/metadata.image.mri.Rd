@@ -1,9 +1,16 @@
 \name{MriImageMetadata}
 \alias{MriImageMetadata}
 \alias{metadata.image.mri}
+\alias{isMriImageMetadata}
 \title{Class representing metadata associated with an MRI image}
 \description{
   This class represents MRI image metadata. An object of this class contains various information about an image, such as its image and voxel dimensions, coordinate origin and storage data type. An object of type \code{\link{MriImage}} can be treated as a metadata object, since the latter is always embedded in it.
+}
+\usage{
+isMriImageMetadata(object)
+}
+\arguments{
+  \item{object}{Any object.}
 }
 \value{
   A list object (see \code{\link{list.object}}) with class \code{c("metadata.image.mri", "list.object", "list")} and the following function elements.
@@ -20,6 +27,7 @@
   \item{setEndianness(newEndian)}{Set the storage endianness of the image.}
   \item{setSource(newSource)}{Set the source of the image.}
   \item{summarise()}{Prints a summary of the metadata at output level \code{OL$Info} (see \code{\link{output}}).}
+  \code{isMriImageMetadata} returns TRUE if \code{object} is an MriImageMetadata object.
 }
 \author{Jon Clayden}
 \seealso{\code{\link{list.object}}, which this class extends. \code{\link{newMriImageMetadataFromTemplate}} for creating metadata objects.}
