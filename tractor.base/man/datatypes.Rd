@@ -1,4 +1,4 @@
-\name{getDataTypeByNiftiCode}
+\name{data types}
 \alias{getDataTypeByNiftiCode}
 \title{MriImage data types}
 \description{

@@ -1,4 +1,4 @@
-\name{createCombinedGraphics}
+\name{visualisation}
 \alias{createCombinedGraphics}
 \alias{createProjectionGraphic}
 \alias{createSliceGraphic}
