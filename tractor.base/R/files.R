@@ -32,10 +32,17 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     headersExist <- intersect(unique(.FileTypes$headerSuffixes), suffixes[exist])
     imagesExist <- intersect(unique(.FileTypes$imageSuffixes), suffixes[exist])
     
-    if (length(headersExist) != 1 || length(imagesExist) != 1)
+    if (length(headersExist) < 1 || length(imagesExist) < 1)
     {
         if (errorIfMissing)
-            output(OL$Error, "File does not exist or multiple compatible files exist: ", fileName)
+            output(OL$Error, "Complete image file does not exist: ", fileName)
+        else
+            return (NULL)
+    }
+    if (length(headersExist) > 1 || length(imagesExist) > 1)
+    {
+        if (errorIfMissing)
+            output(OL$Error, "Multiple compatible image files exist: ", fileName)
         else
             return (NULL)
     }
@@ -96,7 +103,7 @@ newMriImageFromFile <- function (fileName, fileType = NULL)
     invisible (image)
 }
 
-writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, format = NA, singleFile = NA, gzipped = NA, datatype = NULL, overwrite = TRUE)
+writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
 {
     if (!isMriImage(image))
         output(OL$Error, "The specified image is not an MriImage object")
@@ -111,8 +118,6 @@ writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, format =
     params <- getParametersForFileType(fileType, errorIfInvalid=FALSE)
     if (is.null(params))
         params <- getParametersForFileType(getOption("tractorFileType"), errorIfInvalid=FALSE)
-    if (is.null(params))
-        params <- getParametersForFileType(NA, format, singleFile, gzipped, errorIfInvalid=TRUE)
     
     suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)
     
