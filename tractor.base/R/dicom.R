@@ -359,7 +359,17 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     firstSliceDirection <- which(abs(sliceOrientation[1:3]) == 1) * sum(sliceOrientation[1:3])
     secondSliceDirection <- which(abs(sliceOrientation[4:6]) == 1) * sum(sliceOrientation[4:6])
     if (length(firstSliceDirection) != 1 || length(secondSliceDirection) != 1)
-        output(OL$Error, "Slice orientation information is missing or slices are oblique")
+    {
+        roundedSliceOrientation <- round(sliceOrientation)
+        firstSliceDirection <- which(abs(roundedSliceOrientation[1:3]) == 1) * sum(roundedSliceOrientation[1:3])
+        secondSliceDirection <- which(abs(roundedSliceOrientation[4:6]) == 1) * sum(roundedSliceOrientation[4:6])
+        
+        if (length(firstSliceDirection) == 1 || length(secondSliceDirection) == 1)
+            output(OL$Warning, "Slices appear to be oblique: mean offset is ", signif(mean(abs(sliceOrientation-roundedSliceOrientation)),3))
+        else
+            output(OL$Error, "Slice orientation information is missing or complex")
+    }
+    
     sliceDirections <- abs(c(firstSliceDirection, secondSliceDirection))
     throughSliceDirection <- setdiff(1:3, abs(c(firstSliceDirection,secondSliceDirection)))
     output(OL$Info, "Slice select direction is ", LETTERS[24:26][throughSliceDirection])
