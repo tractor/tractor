@@ -20,14 +20,6 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     validSeeds <- validSeeds[!duplicated(validSeeds)]
     output(OL$Info, "Rejecting ", nSeeds-length(validSeeds), " candidate seed points below the FA threshold")
     
-    if (!equivalent(refTract$getVoxelDimensions(), faImage$getVoxelDimensions(), signMatters=FALSE, tolerance=1e-3))
-    {
-        output(OL$Info, "Resampling reference tract to the resolution of the session's native space")
-        newRefImage <- resampleImageToDimensions(refTract$getImage(), faImage$getVoxelDimensions())
-        newRefSeed <- round(transformWorldToRVoxel(transformRVoxelToWorld(refTract$getSeedPoint(), refTract$getImage()$getMetadata()), newRefImage$getMetadata()))
-        refTract <- newFieldTractFromMriImage(newRefImage, newRefSeed)
-    }
-    
     output(OL$Info, "Creating reduced reference tract")
     reducedRefTract <- createReducedTractInfo(refTract)
     output(OL$Info, "Reference tract contains ", reducedRefTract$nVoxels, " nonzero voxels; length is ", reducedRefTract$length)
@@ -36,6 +28,14 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     for (d in validSeeds)
     {
         candidateTract <- newFieldTractFromProbtrack(session, candidateSeeds[d,], expectExists=TRUE, threshold=0.01)
+        if (!equivalent(refTract$getVoxelDimensions(), candidateTract$getVoxelDimensions(), signMatters=FALSE, tolerance=1e-3))
+        {
+            output(OL$Verbose, "Resampling candidate tract to the resolution of the reference tract's space")
+            newCandImage <- resampleImageToDimensions(candidateTract$getImage(), refTract$getVoxelDimensions())
+            newCandSeed <- round(transformWorldToRVoxel(transformRVoxelToWorld(candidateTract$getSeedPoint(), candidateTract$getImage()$getMetadata()), newCandImage$getMetadata()))
+            candidateTract <- newFieldTractFromMriImage(newCandImage, newCandSeed)
+        }
+        
         similarities[d] <- calculateSimilarity(reducedRefTract, candidateTract)
     }
     
