@@ -109,7 +109,7 @@ calculatePosteriorsForDataTable <- function (data, matchingModel)
     invisible (results)
 }
 
-runMatchingEMForDataTable <- function (data, refSpline, lengthCutoff = NULL, lambda = NULL, alphaOffset = 0, nullPrior = NULL)
+runMatchingEMForDataTable <- function (data, refSpline, lengthCutoff = NULL, lambda = NULL, alphaOffset = 0, nullPrior = NULL, asymmetricModel = FALSE)
 {
     if (!isBSplineTract(refSpline))
         output(OL$Error, "Reference tract must be specified as a BSplineTract object")
@@ -148,7 +148,7 @@ runMatchingEMForDataTable <- function (data, refSpline, lengthCutoff = NULL, lam
     
     repeat
     {
-        matchingModel <- newMatchingTractModelFromDataTable(data, refSpline, lengthCutoff, lambda=lambda, alphaOffset=alphaOffset, weights=unlist(tractPriors))
+        matchingModel <- newMatchingTractModelFromDataTable(data, refSpline, lengthCutoff, lambda=lambda, alphaOffset=alphaOffset, weights=unlist(tractPriors), asymmetric=asymmetricModel)
         uninformativeModel <- newUninformativeTractModelFromDataTable(data, lengthCutoff, weights=(1-unlist(tractPriors)))
         
         matchedLogLikelihoods <- calculateMatchedLogLikelihoodsForDataTable(data, matchingModel)

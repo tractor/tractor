@@ -33,35 +33,41 @@
 {
     if (!isBSplineTract(.refSpline))
         output(OL$Error, "The specified reference tract is not a BSplineTract object")
+    if (!is.list(.cosineDistributions) || !all(c("left","right") %in% names(.cosineDistributions)))
+        output(OL$Error, "Cosine distributions for left and right sides of the tract are not both present")
     
     ssv <- characteriseSplineStepVectors(.refSpline, pointType=.pointType)
     .refLengths <- list(left=ssv$leftLength, right=ssv$rightLength)
     rm(ssv)
     
     self <- list(
-        getAlphas = function ()
+        getAlphas = function (side = c("left","right"))
         {
+            side <- match.arg(side)
             alphas <- numeric(0)
-            for (i in 1:length(.cosineDistributions))
-                alphas <- c(alphas, as.list(.cosineDistributions[[i]])$alpha)
+            for (i in 1:length(.cosineDistributions[[side]]))
+                alphas <- c(alphas, as.list(.cosineDistributions[[side]][[i]])$alpha)
             return (alphas)
         },
         
-        getCosineDistribution = function (pos)
+        getCosineDistribution = function (pos, side = c("left","right"))
         {
-            if ((pos < 1) || (pos > length(.cosineDistributions)))
+            side <- match.arg(side)
+            if ((pos < 1) || (pos > length(.cosineDistributions[[side]])))
                 return (NA)
             else
-                return (.cosineDistributions[[pos]])
+                return (.cosineDistributions[[side]][[pos]])
         },
         
         getMaximumLength = function () { return (max(.lengthDistributions$left$values)) },
         
         getPointType = function () { return (.pointType) },
         
-        getLeftLengthDistribution = function () { return (.lengthDistributions$left) },
-        
-        getRightLengthDistribution = function () { return (.lengthDistributions$right) },
+        getLengthDistribution = function (side = c("left","right"))
+        {
+            side <- match.arg(side)
+            return (.lengthDistributions[[side]])
+        },
         
         getRefLeftLength = function () { return (.refLengths$left) },
         
@@ -69,9 +75,18 @@
         
         getRefSpline = function () { return (.refSpline) },
         
+        isAsymmetric = function () { return (!identical(.cosineDistributions$left, .cosineDistributions$right)) },
+        
         summarise = function ()
         {
-            output(OL$Info, "Alphas            : ", implode(round(self$getAlphas(),2), sep=", "))
+            output(OL$Info, "Asymmetric model  : ", self$isAsymmetric())
+            if (self$isAsymmetric())
+            {
+                output(OL$Info, "Alphas (left)     : ", implode(round(self$getAlphas("left"),2), sep=", "))
+                output(OL$Info, "Alphas (right)    : ", implode(round(self$getAlphas("right"),2), sep=", "))
+            }
+            else
+                output(OL$Info, "Alphas            : ", implode(round(self$getAlphas(),2), sep=", "))
             output(OL$Info, "Ref tract lengths : ", self$getRefLeftLength(), " (left), ", self$getRefRightLength(), " (right)")
             output(OL$Info, "Length cutoff     : ", self$getMaximumLength())
             output(OL$Info, "Point type        : ", self$getPointType())
@@ -109,6 +124,9 @@ deserialiseMatchingTractModel <- function (file = NULL, object = NULL)
         object$refSpline <- deserialiseBSplineTract(object=object$refSpline)
     else
         output(OL$Error, "Deserialised object contains no valid reference spline")
+    
+    if (is.null(object$cosineDistributions$left))
+        object$cosineDistributions <- list(left=object$cosineDistributions, right=object$cosineDistributions)
     
     model <- deserialiseListObject(NULL, object, .MatchingTractModel)
     invisible (model)
@@ -185,7 +203,7 @@ newUninformativeTractModelFromDataTable <- function (data, maxLength = NULL, wei
     invisible (model)
 }
 
-newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NULL, lambda = NULL, alphaOffset = 0, weights = NULL)
+newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NULL, lambda = NULL, alphaOffset = 0, weights = NULL, asymmetric = FALSE)
 {
     if (is.null(weights))
         weights <- rep(1,nrow(data))
@@ -203,17 +221,23 @@ newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NUL
     rightLengthDistribution <- fitMultinomialDistribution(data$rightLength, const=1, values=0:maxLength, weights=weights)
     lengthDistributions <- list(left=leftLengthDistribution, right=rightLengthDistribution)
     
-    cosineDistributions <- list()
-    for (i in 1:max(refLeftLength,refRightLength))
+    cosineDistributions <- list(left=list(), right=list())
+    for (side in c("left","right"))
     {
-        cosines <- c(data[[paste("leftSimCosine",i,sep="")]], data[[paste("rightSimCosine",i,sep="")]])
-        cosineWeights <- rep(weights, length(cosines)/length(weights))
-        cosineWeights[is.na(cosines)] <- NA
-        
-        if (is.null(cosines) || sum(!is.na(cosines)) == 0)
-            cosineDistributions <- c(cosineDistributions, NA)
-        else
-            cosineDistributions <- c(cosineDistributions, list(fitRegularisedBetaDistribution(cosines, lambda=lambda, alphaOffset=alphaOffset, weights=cosineWeights)))
+        for (i in 1:ifelse(side=="left",refLeftLength,refRightLength))
+        {
+            if (asymmetric)
+                cosines <- data[[paste(side,"SimCosine",i,sep="")]]
+            else
+                cosines <- c(data[[paste("leftSimCosine",i,sep="")]], data[[paste("rightSimCosine",i,sep="")]])
+            cosineWeights <- rep(weights, length(cosines)/length(weights))
+            cosineWeights[is.na(cosines)] <- NA
+
+            if (is.null(cosines) || sum(!is.na(cosines)) == 0)
+                cosineDistributions[[side]] <- c(cosineDistributions[[side]], NA)
+            else
+                cosineDistributions[[side]] <- c(cosineDistributions[[side]], list(fitRegularisedBetaDistribution(cosines, lambda=lambda, alphaOffset=alphaOffset, weights=cosineWeights)))
+        }
     }
     
     model <- .MatchingTractModel(cosineDistributions, lengthDistributions, refSpline, as.character(data$pointType[1]))
@@ -244,7 +268,7 @@ calculateMatchedLogLikelihoodsForDataTable <- function (data, matchingModel)
     
     lls <- numeric(nrow(data))
     for (i in 1:nrow(data))
-        lls[i] <- evaluateMultinomialDistribution(data$leftLength[i], matchingModel$getLeftLengthDistribution(), log=TRUE) + evaluateMultinomialDistribution(data$rightLength[i], matchingModel$getRightLengthDistribution(), log=TRUE)
+        lls[i] <- evaluateMultinomialDistribution(data$leftLength[i], matchingModel$getLengthDistribution("left"), log=TRUE) + evaluateMultinomialDistribution(data$rightLength[i], matchingModel$getLengthDistribution("right"), log=TRUE)
     
     for (j in 2:matchingModel$getRefLeftLength())
     {
@@ -252,7 +276,7 @@ calculateMatchedLogLikelihoodsForDataTable <- function (data, matchingModel)
         # contribution of 0) if the model is not trained at this point
         if (is.list(matchingModel$getCosineDistribution(j)))
         {
-            contribs <- evaluateBetaDistribution(data[[paste("leftSimCosine",j,sep="")]], matchingModel$getCosineDistribution(j), log=TRUE)
+            contribs <- evaluateBetaDistribution(data[[paste("leftSimCosine",j,sep="")]], matchingModel$getCosineDistribution(j,"left"), log=TRUE)
             lls <- lls + replace(contribs, is.na(contribs), 0)
         }
     }
@@ -260,7 +284,7 @@ calculateMatchedLogLikelihoodsForDataTable <- function (data, matchingModel)
     {
         if (is.list(matchingModel$getCosineDistribution(j)))
         {
-            contribs <- evaluateBetaDistribution(data[[paste("rightSimCosine",j,sep="")]], matchingModel$getCosineDistribution(j), log=TRUE)
+            contribs <- evaluateBetaDistribution(data[[paste("rightSimCosine",j,sep="")]], matchingModel$getCosineDistribution(j,"right"), log=TRUE)
             lls <- lls + replace(contribs, is.na(contribs), 0)
         }
     }
