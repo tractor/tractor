@@ -18,6 +18,8 @@ output <- function (level, ..., default = NULL, showDepth = TRUE, toReport = FAL
     if ((level < OL$Question) && (outputLevel > level))
         return (invisible(NULL))
     
+    reportFlags()
+    
     prefixStrings <- c("DEBUG: ", "VERBOSE: ", "INFO: ", "WARNING: ")
     usePrefix <- getOption("tractorUseOutputPrefix")
     if (is.null(usePrefix))
@@ -76,6 +78,9 @@ reportFlags <- function ()
         levels <- unlist(lapply(.TractorFlags, "[[", "level"))
         messages <- unlist(lapply(.TractorFlags, "[[", "message"))
         
+        # This is before the call to output() to avoid infinite recursion
+        .TractorFlags <<- NULL
+        
         for (message in unique(messages))
         {
             locs <- which(messages == message)
@@ -86,8 +91,6 @@ reportFlags <- function ()
                 output(level, paste("[x",length(locs),"] ",message,sep=""), showDepth=FALSE)
         }
     }
-    
-    .TractorFlags <<- NULL
 }
 
 "%~%" <- function (X, Y)
