@@ -13,6 +13,7 @@ runExperiment <- function ()
     tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
     datasetName <- getWithDefault("DatasetName", NULL, "character", errorIfMissing=TRUE)
     maxKnotCount <- getWithDefault("MaximumKnotCount", NULL, "integer")
+    asymmetricModel <- getWithDefault("AsymmetricModel", FALSE)
     alphaPriorMean <- getWithDefault("AlphaPriorMean", NULL, "numeric")
     nullPrior <- getWithDefault("NullPrior", NULL, "numeric")
     resultsName <- getWithDefault("ResultsName", "results")
@@ -25,9 +26,9 @@ runExperiment <- function ()
     data <- read.table(ensureFileSuffix(datasetName,"txt"))
     
     if (is.null(alphaPriorMean))
-        results <- runMatchingEMForDataTable(data, reference$getTract(), lengthCutoff=maxKnotCount, alphaOffset=alphaOffset, nullPrior=nullPrior)
+        results <- runMatchingEMForDataTable(data, reference$getTract(), lengthCutoff=maxKnotCount, alphaOffset=alphaOffset, nullPrior=nullPrior, asymmetricModel=asymmetricModel)
     else
-        results <- runMatchingEMForDataTable(data, reference$getTract(), lengthCutoff=maxKnotCount, lambda=1/alphaPriorMean, alphaOffset=alphaOffset, nullPrior=nullPrior)
+        results <- runMatchingEMForDataTable(data, reference$getTract(), lengthCutoff=maxKnotCount, lambda=1/alphaPriorMean, alphaOffset=alphaOffset, nullPrior=nullPrior, asymmetricModel=asymmetricModel)
     
     resultsObject <- newProbabilisticNTResultsFromPosteriors(results$tp, results$np, results$mm, results$um)
     writeNTResource(resultsObject, "results", "pnt", list(resultsName=resultsName))
@@ -37,6 +38,7 @@ runExperiment <- function ()
 
     model$summarise()
     
+    # This test is redundant with alphaOffset=1, but it's left in for now
     alphas <- model$getAlphas()
     subUnityCount <- sum(alphas < 1, na.rm=TRUE)
     if (subUnityCount >= (length(alphas)/2))

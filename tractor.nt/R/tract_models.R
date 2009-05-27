@@ -75,7 +75,11 @@
         
         getRefSpline = function () { return (.refSpline) },
         
-        isAsymmetric = function () { return (!identical(.cosineDistributions$left, .cosineDistributions$right)) },
+        isAsymmetric = function ()
+        {
+            minLength <- min(length(.cosineDistributions$left), length(.cosineDistributions$right))
+            return (!equivalent(.cosineDistributions$left[1:minLength], .cosineDistributions$right[1:minLength]))
+        },
         
         summarise = function ()
         {
@@ -86,7 +90,10 @@
                 output(OL$Info, "Alphas (right)    : ", implode(round(self$getAlphas("right"),2), sep=", "))
             }
             else
-                output(OL$Info, "Alphas            : ", implode(round(self$getAlphas(),2), sep=", "))
+            {
+                longerSide <- ifelse(length(.cosineDistributions$left) > length(.cosineDistributions$right), "left", "right")
+                output(OL$Info, "Alphas            : ", implode(round(self$getAlphas(longerSide),2), sep=", "))
+            }
             output(OL$Info, "Ref tract lengths : ", self$getRefLeftLength(), " (left), ", self$getRefRightLength(), " (right)")
             output(OL$Info, "Length cutoff     : ", self$getMaximumLength())
             output(OL$Info, "Point type        : ", self$getPointType())
