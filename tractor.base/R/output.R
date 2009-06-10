@@ -29,7 +29,7 @@ output <- function (level, ..., default = NULL, showDepth = TRUE, toReport = FAL
     runExperimentCallLoc <- which(callStrings %~% "^runExperiment")
     if (length(runExperimentCallLoc) == 1)
         callStrings <- callStrings[-seq_len(runExperimentCallLoc-1)]
-    callStrings <- callStrings[setdiff(seq_along(callStrings), which(callStrings %~% "Error"))]
+    callStrings <- callStrings[setdiff(seq_along(callStrings), which(callStrings %~% "([tT]ryCatch|Error)"))]
 
     nStars <- ifelse(showDepth, length(callStrings), 0)
     leadingSpace <- ifelse(usePrefix && (nStars > 0), implode(rep("* ", nStars)), "")
