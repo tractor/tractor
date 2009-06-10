@@ -197,7 +197,7 @@ flipGradientVectorsForSession <- function (session, axes)
     write.table(bvecs, fileName, row.names=FALSE, col.names=FALSE)
 }
 
-createCaminoFilesForSession <- function (session, diffusionTime = NULL)
+createCaminoFilesForSession <- function (session)
 {
     if (!isMriSession(session))
         output(OL$Error, "The specified session is not an MriSession object")
@@ -222,33 +222,16 @@ createCaminoFilesForSession <- function (session, diffusionTime = NULL)
     bvals <- unlist(read.table(file.path(sourceDir, "bvals")))
     bvecs <- as.matrix(read.table(file.path(sourceDir, "bvecs")))
     
-    if (min(bvals) != 0)
-        output(OL$Info, "Minimal b-value in this data set is ", min(bvals), " rather than 0")
-    
-    zeroes <- which(bvals == min(bvals))
-    if (length(zeroes) == 0)
-        output(OL$Error, "No b-values are specified for this data set")
-    nonzeroes <- setdiff(seq_along(bvals), zeroes)
-    volumeOrder <- c(zeroes, nonzeroes)
-    
-    if (is.null(diffusionTime))
-        diffusionTime <- as.numeric(output(OL$Question, "What is the diffusion time for this data set in seconds?"))
-
-    scheme <- c(diffusionTime, length(bvals))
-    for (i in volumeOrder)
-    {
-        modQ <- sqrt(bvals[i] * 1e6 / diffusionTime)
-        bvecLength <- vectorLength(bvecs[,i])
-        scheme <- c(scheme, bvecs[,i] / ifelse(bvecLength==0,1,bvecLength) * modQ)
-    }
-    scheme <- round(scheme, 3)
-    write.table(as.matrix(scheme), file.path(caminoDir,"sequence.scheme"), row.names=FALSE, col.names=FALSE)
+    bvecLengths <- apply(bvecs, 2, vectorLength)
+    bvecMatrix <- t(bvecs) / ifelse(bvecLengths==0, 1, bvecLengths)
+    bvecMatrix <- cbind(bvecMatrix, bvals)
+    lines <- apply(format(bvecMatrix), 1, implode, sep=" ")
+    lines <- c("VERSION: 2", lines)
+    writeLines(lines, file.path(caminoDir,"sequence.scheme"))
     
     output(OL$Info, "Copying data and mask images")
     dataImage <- newMriImageFromFile(file.path(sourceDir,"data"))
-    data <- dataImage[,,,volumeOrder]
-    newDataImage <- newMriImageWithData(data, dataImage$getMetadata())
-    writeMriImageToCamino(newDataImage, file.path(caminoDir,"data"))
+    writeMriImageToCamino(dataImage, file.path(caminoDir,"data"))
     maskImage <- newMriImageFromFile(file.path(sourceDir,"nodif_brain_mask"))
     writeMriImageToCamino(maskImage, file.path(caminoDir,"mask"))
     

@@ -13,12 +13,6 @@ suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {
-    if (nArguments() == 0)
-        session <- newSessionFromDirectory(".")
-    else
-        session <- newSessionFromDirectory(Arguments[1])
-    
-    diffusionTime <- getWithDefault("DiffusionTime", NULL, "numeric")
-    
-    createCaminoFilesForSession(session, diffusionTime)
+    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
+    createCaminoFilesForSession(session)
 }
