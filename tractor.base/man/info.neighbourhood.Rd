@@ -22,7 +22,7 @@ isNeighbourhoodInfo(object)
   \item{width}{Copied from the \code{width} argument.}
   \item{dim}{Copied from the \code{dim} argument.}
   \item{centre}{Copied from the \code{centre} argument.}
-  \item{vectors}{\code{dim} x \code{width}^\code{dim} matrix whose columns give the locations of each point in the neighbourhood.}
+  \item{vectors}{\code{dim} x \code{width^dim} matrix whose columns give the locations of each point in the neighbourhood.}
   \item{innerProducts}{A square, symmetric matrix of inner products between every location in the neighbourhood and every other.}
   
   \code{isNeighbourhoodInfo} returns TRUE if \code{object} is a NeighbourhoodInfo object, and FALSE otherwise.
