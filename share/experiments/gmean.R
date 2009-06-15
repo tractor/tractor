@@ -2,10 +2,10 @@
 #@desc Calculate the mean or weighted mean value of a metric within the nonzero region
 #@desc of a group of brain volumes (usually tractography output) whose file names are
 #@desc assumed to have the form of the specified volume prefix followed by a number
-#@desc corresponding to the location in the SessionList. The metric can be FA, MD or
-#@desc AVF, and the specified image can be used as a binary mask (the default) or as
-#@desc a set of weights (with AveragingMode:weighted). In the latter case any weight
-#@desc threshold given is ignored.
+#@desc corresponding to the location in the SessionList. The metric can be FA, MD, Lax,
+#@desc Lrad or AVF, and the specified image can be used as a binary mask (the default)
+#@desc or as a set of weights (with AveragingMode:weighted). In the latter case any
+#@desc weight threshold given is ignored.
 
 suppressPackageStartupMessages(require(tractor.session))
 
