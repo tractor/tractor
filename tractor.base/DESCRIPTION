@@ -1,6 +1,6 @@
 Package: tractor.base
-Version: 1.0.5
-Date: 2009-05-13
+Version: 1.1.0
+Date: 2009-06-15
 Title: Basic functions for the TractoR (tractography with R) bundle
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
