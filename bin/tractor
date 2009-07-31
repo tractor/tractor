@@ -131,21 +131,13 @@ if [ $file_found -ne 1 ]; then
 fi
 
 [ $file_found -ne 1 ] && {
-    echo "Error: Script file not found" 1>&2
+    echo "Error: Script file \"${script_file}\" not found" 1>&2
     exit
 }
 
 [ $show_options -eq 1 ] && {
-    echo "OPTIONS for script $script_file (* required)"
-    n_options=`grep -c getWithDefault $script_file`
-    if [ $n_options -eq 0 ]; then
-        echo "   None"
-    else
-        grep 'getWithDefault' $script_file | grep 'errorIfMissing=TRUE' | awk -F ' *"?(\\(|\\)|,) *"?' '{ print " * "$2": "$3 }'
-        grep 'getWithDefault' $script_file | grep -v 'errorIfMissing=TRUE' | awk -F ' *"?(\\(|\\)|,) *"?' '{ print "   "$2": "$3 }'
-    fi
-    grep '#@args' $script_file | sed 's/#@args /ARGUMENTS: /'
-    grep '#@desc' $script_file | sed 's/#@desc //'
+    binpath=`dirname $0`
+    echo "library(tractor.base); describeExperiment('$script_file')" | R --slave --vanilla 2>&1 | ${binpath}/rfmt ${COLUMNS:-80}
     status=0
     exit
 }
