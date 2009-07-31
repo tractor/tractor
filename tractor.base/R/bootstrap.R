@@ -33,3 +33,40 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
     reportFlags()
     writeReportToYaml(results,fileName=reportFile)
 }
+
+describeExperiment <- function (scriptFile)
+{
+    scriptFile <- expandFileName(scriptFile)
+    inputLines <- readLines(scriptFile)
+    outputLines <- paste("OPTIONS for script", scriptFile, "(* required)", sep=" ")
+    
+    getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE)
+    {
+        leadString <- ifelse(errorIfMissing, " * ", "   ")
+        defaultValueString <- ifelse(is.null(defaultValue), "NULL", as.character(defaultValue))
+        outputLines <<- c(outputLines, paste(leadString, name, ": ", defaultValueString, sep=""))
+    }
+    
+    relevantInputLines <- grep("getWithDefault", inputLines, value=TRUE, fixed=TRUE)
+    for (currentLine in relevantInputLines)
+        eval(parse(text=currentLine))
+    
+    if (length(outputLines) == 1)
+        outputLines <- c(outputLines, "   None")
+    
+    relevantInputLines <- grep("#@args", inputLines, value=TRUE, fixed=TRUE)
+    if (length(relevantInputLines) != 0)
+    {
+        argsString <- implode(sub("^\\s*\\#\\@args\\s*", "", relevantInputLines, perl=TRUE), ", ")
+        outputLines <- c(outputLines, paste("ARGUMENTS:", argsString, sep=" "))
+    }
+    
+    relevantInputLines <- grep("#@desc", inputLines, value=TRUE, fixed=TRUE)
+    if (length(relevantInputLines) != 0)
+    {
+        descriptionString <- implode(sub("^\\s*\\#\\@desc\\s*", "", relevantInputLines, perl=TRUE), " ")
+        outputLines <- c(outputLines, descriptionString)
+    }
+    
+    cat(implode(c(outputLines,""), "\n"))
+}
