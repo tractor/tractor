@@ -40,10 +40,15 @@ describeExperiment <- function (scriptFile)
     inputLines <- readLines(scriptFile)
     outputLines <- paste("OPTIONS for script", scriptFile, "(* required)", sep=" ")
     
-    getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE)
+    getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL)
     {
         leadString <- ifelse(errorIfMissing, " * ", "   ")
         defaultValueString <- ifelse(is.null(defaultValue), "NULL", as.character(defaultValue))
+        if (!is.null(validValues))
+        {
+            otherValues <- (if (is.null(defaultValue)) validValues else validValues[-match(defaultValue,validValues)])
+            defaultValueString <- paste(defaultValueString, " [", implode(otherValues,","), "]", sep="")
+        }
         outputLines <<- c(outputLines, paste(leadString, name, ": ", defaultValueString, sep=""))
     }
     
