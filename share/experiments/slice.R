@@ -15,7 +15,7 @@ runExperiment <- function ()
     else
         outputFile <- image$getSource()
     
-    pointType <- getWithDefault("PointType", NULL, "character", errorIfMissing=TRUE)
+    pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
     x <- getWithDefault("X", NA, "numeric", errorIfInvalid=TRUE)
     y <- getWithDefault("Y", NA, "numeric", errorIfInvalid=TRUE)
     z <- getWithDefault("Z", NA, "numeric", errorIfInvalid=TRUE)
@@ -24,7 +24,6 @@ runExperiment <- function ()
     nas <- is.na(point)
     point[nas] <- 1
     
-    pointType <- match.arg(tolower(pointType), c("fsl","r","mm"))
     if (pointType == "fsl")
         point <- transformFslVoxelToRVoxel(point)
     else if (pointType == "mm")

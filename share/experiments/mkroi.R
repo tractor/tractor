@@ -16,7 +16,7 @@ runExperiment <- function ()
     if (!exists("centre") || length(centre) != 3)
         output(OL$Error, "Centre point must be given as a single vector in 3D space, comma or space separated")
     
-    pointType <- getWithDefault("PointType", NULL, mode="character", errorIfMissing=TRUE)
+    pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
     isStandardPoint <- getWithDefault("CentreInMNISpace", FALSE)
     
     width <- getWithDefault("Width", 7)

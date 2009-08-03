@@ -18,8 +18,7 @@ runExperiment <- function ()
     originalMaxSeeds <- getWithDefault("MaximumSeedPoints", 1, "integer")
     minPosterior <- getWithDefault("MinimumPosterior", 0, "numeric")
     
-    mode <- getWithDefault("Mode", NULL, "character", errorIfMissing=TRUE)
-    mode <- match.arg(tolower(mode), c("location","posterior","ratio","null-posterior"))
+    mode <- getWithDefault("Mode", NULL, "character", errorIfMissing=TRUE, c("location","posterior","ratio","null-posterior"), errorIfInvalid=TRUE)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName))

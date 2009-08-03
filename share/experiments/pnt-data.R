@@ -16,7 +16,7 @@ runExperiment <- function ()
     sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
     seedPoint <- getWithDefault("SeedPoint", NULL, "character")
     seedList <- getWithDefault("SeedPointList", NULL, "integer")
-    pointType <- getWithDefault("PointType", NULL, mode="character")
+    pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
     searchWidth <- getWithDefault("SearchWidth", 1)
     faThreshold <- getWithDefault("AnisotropyThreshold", 0.2)
     nSamples <- getWithDefault("NumberOfSamples", 5000)
@@ -34,8 +34,6 @@ runExperiment <- function ()
     {
         if (is.null(pointType))
             output(OL$Error, "Point type must be specified with the seed point(s)")
-        
-        pointType <- match.arg(tolower(pointType), c("fsl","r","mm"))
         
         if (!is.null(seedList))
             seedMatrix <- matrix(seedList, ncol=3, byrow=TRUE)

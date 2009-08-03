@@ -15,12 +15,10 @@ runExperiment <- function ()
     fileStem <- Arguments[1]
     
     sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
-    metricName <- getWithDefault("Metric", NULL, "character")
-    mode <- getWithDefault("AveragingMode", "binary")
+    metricName <- getWithDefault("Metric", NULL, "character", validValues=c("weight","AVF","FA","MD","Lax","Lrad"))
+    mode <- getWithDefault("AveragingMode", "binary", validValues=c("binary","weighted"))
     baseThreshold <- getWithDefault("WeightThreshold", 0.01)
-    thresholdMode <- getWithDefault("ThresholdRelativeTo", "nothing")
-    
-    thresholdMode <- match.arg(tolower(thresholdMode), c("nothing","maximum","minimum"))
+    thresholdMode <- getWithDefault("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
     
     for (i in seq_along(sessionList))
     {

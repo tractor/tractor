@@ -16,7 +16,7 @@ runExperiment <- function ()
     if (!exists("seed") || length(seed) != 3)
         output(OL$Error, "Seed point must be given as a single vector in 3D space, comma or space separated")
     
-    pointType <- getWithDefault("PointType", NULL, mode="character", errorIfMissing=TRUE)
+    pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
     isStandardSeed <- getWithDefault("SeedInMNISpace", FALSE)
     nSamples <- getWithDefault("NumberOfSamples", 5000)
     tractName <- getWithDefault("TractName", "tract")

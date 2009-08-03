@@ -17,12 +17,11 @@ runExperiment <- function ()
     else
         session <- NULL
     
-    metric <- getWithDefault("Metric", NULL, "character")
-    mode <- getWithDefault("AveragingMode", "binary")
+    metric <- getWithDefault("Metric", NULL, "character", validValues=c("weight","AVF","FA","MD","Lax","Lrad"))
+    mode <- getWithDefault("AveragingMode", "binary", validValues=c("binary","weighted"))
     threshold <- getWithDefault("WeightThreshold", 0.01)
-    thresholdMode <- getWithDefault("ThresholdRelativeTo", "nothing")
+    thresholdMode <- getWithDefault("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
     
-    thresholdMode <- match.arg(tolower(thresholdMode), c("nothing","maximum","minimum"))
     if (thresholdMode == "maximum")
         threshold <- threshold * max(image, na.rm=TRUE)
     else if (thresholdMode == "minimum")

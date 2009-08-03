@@ -12,9 +12,7 @@ runExperiment <- function ()
     tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
     resultsName <- getWithDefault("ResultsName", NULL, "character", errorIfMissing=TRUE)
     sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
-    
-    mode <- getWithDefault("Mode", NULL, "character", errorIfMissing=TRUE)
-    mode <- match.arg(tolower(mode), c("location","similarity"))
+    mode <- getWithDefault("Mode", NULL, "character", errorIfMissing=TRUE, validValues=c("location","similarity"), errorIfInvalid=TRUE)
     
     reference <- getNTResource("reference", "hnt", list(tractName=tractName))
     
