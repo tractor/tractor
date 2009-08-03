@@ -203,8 +203,37 @@ splitAndConvertString <- function (string, split = "", mode = "character", error
         return (values)
 }
 
-getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE)
+getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL)
 {
+    reportInvalid <- function ()
+    {
+        level <- ifelse(errorIfInvalid, OL$Error, OL$Warning)
+        message <- paste("The configuration variable \"", name, "\" does not have a suitable value", ifelse(errorIfInvalid,""," - using default"), sep="")
+        output(level, message)
+    }
+    
+    matchAgainstValidValues <- function (currentValue)
+    {
+        if (is.null(validValues))
+            return (currentValue)
+        else if (!is.null(mode) && mode == "character")
+        {
+            currentValue <- tolower(currentValue)
+            currentValidValues <- tolower(validValues)
+        }
+        else
+            currentValidValues <- validValues
+        
+        loc <- match(currentValue, currentValidValues, nomatch=0)
+        if (loc != 0)
+            return (validValues[loc])
+        else
+        {
+            reportInvalid()
+            return (defaultValue)
+        }
+    }
+    
     if (is.null(mode) && !is.null(defaultValue))
         mode <- mode(defaultValue)
     
@@ -215,23 +244,21 @@ getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FA
         else
             return (defaultValue)
     }
-    else if (is.null(mode) || mode == "NULL")
-        return (get(name))
     else
     {
         value <- get(name)
-        if (!isValidAs(value, mode))
+        if (is.null(mode) || mode == "NULL")
+            return (matchAgainstValidValues(value))
+        else if (!isValidAs(value, mode))
         {
-            if (errorIfInvalid)
-                output(OL$Error, "The configuration variable \"", name, "\" does not have a suitable value")
-            else
-            {
-                output(OL$Warning, "The configuration variable \"", name, "\" does not have a suitable value - ignoring")
-                return (defaultValue)
-            }
+            reportInvalid()
+            return (defaultValue)
         }
         else
-            return (as(value, mode))
+        {
+            value <- as(value, mode)
+            return (matchAgainstValidValues(value))
+        }
     }
 }
 
