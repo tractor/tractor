@@ -208,7 +208,7 @@ getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FA
     reportInvalid <- function ()
     {
         level <- ifelse(errorIfInvalid, OL$Error, OL$Warning)
-        message <- paste("The configuration variable \"", name, "\" does not have a suitable value", ifelse(errorIfInvalid,""," - using default"), sep="")
+        message <- paste("The configuration variable \"", name, "\" does not have a suitable and unambiguous value", ifelse(errorIfInvalid,""," - using default"), sep="")
         output(level, message)
     }
     
@@ -216,15 +216,11 @@ getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FA
     {
         if (is.null(validValues))
             return (currentValue)
-        else if (!is.null(mode) && mode == "character")
-        {
-            currentValue <- tolower(currentValue)
-            currentValidValues <- tolower(validValues)
-        }
+        else if (isTRUE(mode == "character"))
+            loc <- pmatch(tolower(currentValue), tolower(validValues), nomatch=0)
         else
-            currentValidValues <- validValues
+            loc <- match(currentValue, validValues, nomatch=0)
         
-        loc <- match(currentValue, currentValidValues, nomatch=0)
         if (loc != 0)
             return (validValues[loc])
         else
