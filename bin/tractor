@@ -135,12 +135,18 @@ fi
     exit
 }
 
-[ $show_options -eq 1 ] && {
+if [ $show_options -eq 1 ]; then
+    [ -z $COLUMNS ] && {
+        type tput >/dev/null 2>&1
+        tput_available=$?
+        [ $tput_available -eq 0 ] && COLUMNS=`tput cols`
+    }
+    
     binpath=`dirname $0`
     echo "library(tractor.base); describeExperiment('$script_file')" | R --slave --vanilla 2>&1 | ${binpath}/rfmt ${COLUMNS:-80}
     status=0
     exit
-}
+fi
 
 interactive=`grep -ci '#@interactive TRUE' $script_file`
 
