@@ -511,24 +511,6 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
 
 newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
 {
-    readBinWithPos <- function (x, what, n = 1, size = NA, ...)
-    {
-        # Requires variable "pos" from parent environment
-        if (what == "raw")
-        {
-            totalSize <- n
-            data <- x[(1:totalSize) + pos]
-        }
-        else
-        {
-            totalSize <- n * size
-            data <- readBin(x[(1:totalSize) + pos], what, n, size, ...)
-        }
-        
-        pos <<- pos + totalSize
-        return (data)
-    }
-    
     fileName <- expandFileName(fileName)
     
     if (!file.exists(fileName))
@@ -543,27 +525,22 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
     
     data("dictionary", envir=environment(NULL))
     typeCol <- which(colnames(dictionary) == "type")
-    
-    fileSize <- file.info(fileName)$size 
-    connection <- file(fileName, "rb") 
-    bytes <- readBin(connection, "raw", n=fileSize) 
-    pos <- 0 
-    close(connection)
+    connection <- file(fileName, "rb")
     
     if (checkFormat)
     {
-        pos <- 128
-        str <- rawToCharQuiet(readBinWithPos(bytes, "raw", n=4))
+        seek(connection, where=128)
+        str <- rawToCharQuiet(readBin(connection, "raw", n=4))
         if (str == "DICM")
         {
             isDicomFile <- TRUE
             tagOffset <- 132
         }
         else
-            pos <- 0
+            seek(connection, where=0)
     }
     
-    group <- readBinWithPos(bytes, "integer", n=1, size=2, signed=FALSE)
+    group <- readBin(connection, "integer", n=1, size=2, signed=FALSE)
     if (group == 0x0008)
         isDicomFile <- TRUE
     else if (group == 0x0800)
@@ -572,8 +549,8 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
     if (group > 0x00ff)
         endian <- setdiff(c("big","little"), .Platform$endian)
     
-    pos <- pos + 2
-    type <- rawToCharQuiet(readBinWithPos(bytes, "raw", n=2))
+    seek(connection, where=2, origin="current")
+    type <- rawToCharQuiet(readBin(connection, "raw", n=2))
     if (type == "UL")
         explicitTypes <- TRUE
     else
@@ -586,13 +563,10 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
         types <- character(0)
         values <- character(0)
         
-        pos <- tagOffset
+        seek(connection, where=tagOffset)
         repeat
         {
-            if (pos == fileSize)
-                break
-            
-            currentGroup <- readBinWithPos(bytes, "integer", n=1, size=2, signed=FALSE, endian=endian)
+            currentGroup <- readBin(connection, "integer", n=1, size=2, signed=FALSE, endian=endian)
             if (length(currentGroup) == 0)
                 break
             else if (currentGroup == 0x0800)
@@ -600,14 +574,14 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
                 currentGroup <- 0x0008
                 endian <- setdiff(c("big","little"), endian)
             }
-            currentElement <- readBinWithPos(bytes, "integer", n=1, size=2, signed=FALSE, endian=endian)
+            currentElement <- readBin(connection, "integer", n=1, size=2, signed=FALSE, endian=endian)
             
             if (explicitTypes)
             {
-                type <- rawToCharQuiet(readBinWithPos(bytes, "raw", n=2))
+                type <- rawToCharQuiet(readBin(connection, "raw", n=2))
                 if (type %in% .Dicom$longTypes)
                 {
-                    pos <- pos + 2
+                    seek(connection, where=2, origin="current")
                     lengthSize <- 4
                 }
                 else
@@ -621,16 +595,16 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
                     type <- "UN"
             }
             
-            length <- readBinWithPos(bytes, "integer", n=1, size=lengthSize, signed=FALSE, endian=endian)
+            length <- readBin(connection, "integer", n=1, size=lengthSize, signed=FALSE, endian=endian)
             
             if (type %in% c("OX","OW","OB","UN"))
             {
                 if ((currentGroup == 0x7fe0) && (currentElement == 0x0010))
                 {
-                    dataOffset <- pos
+                    dataOffset <- seek(connection, where=NA)
                     dataLength <- length
                 }
-                pos <- pos + length
+                seek(connection, where=length, origin="current")
                 next
             }
             
@@ -645,9 +619,9 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
                 nValues <- length/size
                 
                 if (.Dicom$nonCharTypes$rTypes[loc] == "integer")
-                    value <- readBinWithPos(bytes, "integer", n=nValues, size=size, signed=.Dicom$nonCharTypes$isSigned[loc], endian=endian)
+                    value <- readBin(connection, "integer", n=nValues, size=size, signed=.Dicom$nonCharTypes$isSigned[loc], endian=endian)
                 else
-                    value <- readBinWithPos(bytes, "double", n=nValues, size=size, endian=endian)
+                    value <- readBin(connection, "double", n=nValues, size=size, endian=endian)
                     
                 if (nValues > 1)
                     values <- c(values, implode(value,sep="\\"))
@@ -655,10 +629,10 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
                     values <- c(values, as.character(value))
             }
             else
-                values <- c(values, rawToCharQuiet(readBinWithPos(bytes, "raw", n=length)))
+                values <- c(values, rawToCharQuiet(readBin(connection, "raw", n=length)))
         }
         
-        # close(connection)
+        close(connection)
 
         if (is.null(dataOffset))
             invisible (NULL)
@@ -670,7 +644,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
     }
     else
     {
-        # close(connection)
+        close(connection)
         invisible (NULL)
     }
 }
