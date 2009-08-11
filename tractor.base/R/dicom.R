@@ -307,6 +307,8 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     files <- expandFileName(list.files(dicomDir, full.names=TRUE, recursive=TRUE))
     files <- files[!file.info(files)$isdir]
     nFiles <- length(files)
+    
+    data("dictionary", envir=environment(NULL))
 
     output(OL$Info, "Reading image information from ", nFiles, " files")
     seriesNumbers <- numeric(0)
@@ -320,7 +322,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     count <- 0
     for (file in files)
     {
-        metadata <- newDicomMetadataFromFile(file)
+        metadata <- newDicomMetadataFromFile(file, dictionary=dictionary)
         if (is.null(metadata))
         {
             output(OL$Info, "Skipping ", file)
@@ -509,8 +511,15 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     invisible (returnValue)
 }
 
-newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
+newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary = NULL)
 {
+    # Redefining readBin() to avoid argument checking overheads
+    readBin <- function (con, what, n = 1L, size = NA_integer_, signed = TRUE, endian = .Platform$endian) 
+    {
+        swap <- endian != .Platform$endian
+        .Internal(readBin(con, what, n, size, signed, swap))
+    }
+    
     fileName <- expandFileName(fileName)
     
     if (!file.exists(fileName))
@@ -523,7 +532,9 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
     tagOffset <- 0
     dataOffset <- NULL
     
-    data("dictionary", envir=environment(NULL))
+    if (is.null(dictionary))
+        data("dictionary", envir=environment(NULL))
+    dictionary$type <- as.vector(dictionary$type)
     typeCol <- which(colnames(dictionary) == "type")
     connection <- file(fileName, "rb")
     
@@ -579,7 +590,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
             if (explicitTypes)
             {
                 type <- rawToCharQuiet(readBin(connection, "raw", n=2))
-                if (type %in% .Dicom$longTypes)
+                if (any(.Dicom$longTypes == type))
                 {
                     seek(connection, where=2, origin="current")
                     lengthSize <- 4
@@ -590,14 +601,14 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
             else
             {
                 lengthSize <- 4
-                type <- as.vector(dictionary[dictionary$group==currentGroup & dictionary$element==currentElement, typeCol])
+                type <- dictionary$type[dictionary$group==currentGroup & dictionary$element==currentElement]
                 if (length(type) == 0)
                     type <- "UN"
             }
             
             length <- readBin(connection, "integer", n=1, size=lengthSize, signed=FALSE, endian=endian)
             
-            if (type %in% c("OX","OW","OB","UN"))
+            if (any(c("OX","OW","OB","UN") == type))
             {
                 if ((currentGroup == 0x7fe0) && (currentElement == 0x0010))
                 {
@@ -612,7 +623,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
             elements <- c(elements, currentElement)
             types <- c(types, type)
             
-            if (type %in% .Dicom$nonCharTypes$codes)
+            if (any(.Dicom$nonCharTypes$codes == type))
             {
                 loc <- which(.Dicom$nonCharTypes$codes == type)
                 size <- .Dicom$nonCharTypes$sizes[loc]
@@ -638,7 +649,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE)
             invisible (NULL)
         else
         {
-            tags <- data.frame(groups, elements, types, values)
+            tags <- data.frame(groups=groups, elements=elements, types=types, values=values, stringsAsFactors=FALSE)
             invisible (.DicomMetadata(fileName, tags, tagOffset, dataOffset, dataLength, explicitTypes, endian))
         }
     }
