@@ -1,13 +1,11 @@
-#@args session directory
-#@desc Print the status of a session directory with regard to preprocessing for FSL
-#@desc and Camino. Preprocessing stages relate to those used by the "preproc" script.
+#@args [session directory]
+#@desc Print the status of a session directory (default ".") with regard to preprocessing for FSL and Camino. Preprocessing stages relate to those used by the "preproc" script.
 
 library(tractor.session)
 
 runExperiment <- function ()
 {
-    requireArguments("session directory")
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
     
     if (getOption("tractorOutputLevel") > OL$Info)
         setOutputLevel(OL$Info)
