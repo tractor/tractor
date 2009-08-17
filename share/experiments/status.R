@@ -22,5 +22,5 @@ runExperiment <- function ()
     output(OL$Info, "Preprocessing stages complete: ", implode(which(stagesComplete), ","))
     output(OL$Info, "Multifibre preprocessing:      ", !session$usesOldBedpost())
     output(OL$Info, "Number of fibres per voxel:    ", session$nFibres())
-    output(OL$Info, "Camino files created:          ", file.exists(file.path(session$getCaminoDirectory(), "sequence.scheme")))
+    output(OL$Info, "Camino files created:          ", file.exists(file.path(session$getCaminoDirectory(createIfMissing=FALSE), "sequence.scheme")))
 }
