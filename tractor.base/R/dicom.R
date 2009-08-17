@@ -513,13 +513,6 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
 
 newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary = NULL)
 {
-    # Redefining readBin() to avoid argument checking overheads
-    readBin <- function (con, what, n = 1L, size = NA_integer_, signed = TRUE, endian = .Platform$endian) 
-    {
-        swap <- endian != .Platform$endian
-        .Internal(readBin(con, what, n, size, signed, swap))
-    }
-    
     fileName <- expandFileName(fileName)
     
     if (!file.exists(fileName))
