@@ -9,13 +9,14 @@
   This class represents DICOM metadata, which typically contains detailed information about the scan parameters and subject. Only DICOM files from magnetic resonance scanners are supported.
 }
 \usage{
-newDicomMetadataFromFile(fileName, checkFormat = TRUE)
+newDicomMetadataFromFile(fileName, checkFormat = TRUE, dictionary = NULL)
 isDicomMetadata(object)
 \S3method{print}{metadata.dicom}(x, descriptions = FALSE, ...)
 }
 \arguments{
   \item{fileName}{The name of a DICOM file.}
   \item{checkFormat}{If TRUE, the function will check for the magic string "DICM" at byte offset 128. This string should be present, but in reality not all files contain it.}
+  \item{dictionary}{A tag dictionary to use when reading the file. If NULL then the built-in dictionary will be loaded and used.}
   \item{object}{Any object.}
   \item{x}{Object of class \code{metadata.dicom}.}
   \item{descriptions}{Logical value: should tag descriptions be given? Numeric tag numbers are printed if this is FALSE (the default).}

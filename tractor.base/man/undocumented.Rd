@@ -5,6 +5,7 @@
 \alias{createNiftiMetadata}
 \alias{createWorkspaceFromYaml}
 \alias{cross}
+\alias{describeExperiment}
 \alias{deserialiseListObject}
 \alias{displayGraphic}
 \alias{ensureFileSuffix}
