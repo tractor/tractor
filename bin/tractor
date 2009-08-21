@@ -27,7 +27,7 @@ expect_available=$?
 
 usage()
 {
-    echo "tractor (v1.3.0)"
+    echo "tractor (program v1.4.0)"
     echo "Run a TractoR experiment script in R and report the results"
     echo
     echo "Usage: tractor [-ldzqbr] [-v level] [-w working_dir] [-c config_file] ..."
@@ -61,6 +61,9 @@ usage()
     echo "'-w' option, then ~/.tractor, and finally the share/experiments directory"
     echo "under \$TRACTOR_HOME. The \$TRACTOR_PATH environment variable can be used"
     echo "to specify additional paths; the man page has details."
+    echo
+    echo "To find out what scripts are available, type \"tractor list\". To find out"
+    echo "what a given script does, type \"tractor -o (script name)\"."
     echo
 }
 
