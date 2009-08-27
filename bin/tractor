@@ -23,15 +23,13 @@ working_dir="."
 type expect >/dev/null 2>&1
 expect_available=$?
 
-[ -f "$HOME/.tractor/config" ] && source "$HOME/.tractor/config"
-
 usage()
 {
     echo "tractor (program v1.4.0)"
     echo "Run a TractoR experiment script in R and report the results"
     echo
-    echo "Usage: tractor [-ldzqbr] [-v level] [-w working_dir] [-c config_file] ..."
-    echo "                                              script [arg1 [arg2 ...]]"
+    echo "Usage: tractor [-ldzqbri] [-v level] [-w working_dir] ..."
+    echo "                              [-c config_file] script [arg1 [arg2 ...]]"
     echo "       tractor -o [-w working_dir] script"
     echo "       tractor -h"
     echo
@@ -48,6 +46,7 @@ usage()
     echo "              be useful when running multiple experiments in parallel"
     echo "  -r          Produce a report file in the working directory (if anything"
     echo "              is reported by the experiment script)"
+    echo "  -i          Ignore any personal config file at ~/.tractor/config"
     echo "  -v {0-3}    Produce verbose output: the level determines the amount of"
     echo "              extra information reported, from 0 (least, the default) to"
     echo "              3 (most)"
@@ -67,10 +66,13 @@ usage()
     echo
 }
 
-set -- `getopt "hldozqbrv:w:c:" "$@"` || {
+set -- `getopt "hldozqbriv:w:c:" "$@"` || {
     usage 1>&2
     exit
 }
+
+supress_config=`echo "$@" | grep -c '\-i' -`
+[ $supress_config -eq 0 -a -f "$HOME/.tractor/config" ] && source "$HOME/.tractor/config"
 
 while [ $# -gt 0 ]
     do

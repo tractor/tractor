@@ -4,7 +4,7 @@
 tractor \- Command line interface for the TractoR MRI analysis project
 
 .SH SYNOPSIS
-.B tractor \fR[\fB\-ldzqbr\fR] [\fB\-v \fIlevel\fR] [\fB\-w \fIworking_dir\fR] [\fB\-c \fIconfig_file\fR] \fIscript \fR[\fIarguments\fR]\fB
+.B tractor \fR[\fB\-ldzqbri\fR] [\fB\-v \fIlevel\fR] [\fB\-w \fIworking_dir\fR] [\fB\-c \fIconfig_file\fR] \fIscript \fR[\fIarguments\fR]\fB
 .br
 .B tractor \-o \fR[\fB\-w \fIworking_dir\fR]\fB \fIscript\fB
 .br
@@ -43,6 +43,9 @@ Run R in batch mode, which is entirely noninteractive, and will produce no outpu
 .B \-r
 Produce a report file in the working directory (if anything is reported by the experiment \fIscript\fR).
 .TP
+.B \-i
+Ignore any personal config file at ~/\.tractor/config.
+.TP
 .B \-v \fIlevel\fB
 Produce verbose output: the \fIlevel\fR determines the amount of extra information reported, from 0 (least, the default) to 3 (most).
 .TP
@@ -53,7 +56,7 @@ Specify the working directory for the experiment, which will be created if neces
 Specify a configuration file in YAML format.
 
 .SH SETTING DEFAULT OPTIONS
-Since version 1.1.0 of the \fBtractor\fR program, it has been possible to set up user-specific defaults for each of the options that the program supports. To do this, a user can create a file at ~/\.tractor/config which sets any or all of the following variables, using \fBbash\fR(1) syntax. Note that 'off' and 'on' are represented by the numbers 0 and 1, respectively.
+Since version 1.1.0 of the \fBtractor\fR program, it has been possible to set up user-specific defaults for each of the options that the program supports. To do this, a user can create a file at ~/\.tractor/config which sets any or all of the following variables, using \fBbash\fR(1) syntax. (This file is ignored if \fBtractor\fR is run with the '\-i' flag.) Note that 'off' and 'on' are represented by the numbers 0 and 1, respectively.
 .TP
 .PP
 \fBName\fR             \fBEquivalent flag\fR       \fBDefault value\fR
