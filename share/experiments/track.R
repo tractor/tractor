@@ -30,10 +30,14 @@ runExperiment <- function ()
     nSamples <- getWithDefault("NumberOfSamples", 5000)
     force <- getWithDefault("Force", FALSE)
     
+    createVolumes <- getWithDefault("CreateVolumes", TRUE)
     createImages <- getWithDefault("CreateImages", FALSE)
     tractName <- getWithDefault("TractName", "tract")
     vizThreshold <- getWithDefault("VisualisationThreshold", 0.01)
     showSeed <- getWithDefault("ShowSeedPoint", TRUE)
+    
+    if (!createVolumes && !createImages)
+        output(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
     seed <- getNativeSpacePointForSession(session, seed, pointType, isStandardSeed)
     
@@ -66,14 +70,13 @@ runExperiment <- function ()
     }
     
     output(OL$Info, "Using seed point ", implode(seed,","), " for tractography")
-    result <- runProbtrackWithSession(session, seed, mode="simple", requireImage=createImages, nSamples=nSamples, force=force)
-    
-    if (createImages)
-    {
-        output(OL$Info, "Creating tract images")
+    result <- runProbtrackWithSession(session, seed, mode="simple", requireImage=TRUE, nSamples=nSamples, force=force)
+        
+    output(OL$Info, "Creating tract images")
+    if (createVolumes)
         writeMriImageToFile(result$image, tractName)
+    if (createImages)
         writePngsForResult(result, prefix=tractName, threshold=vizThreshold, showSeed=showSeed)
-    }
     
     invisible (NULL)
 }
