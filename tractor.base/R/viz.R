@@ -31,7 +31,7 @@ maximumIntensityProjection <- function (image, axis)
     invisible(result)
 }
 
-createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell")
+createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
 {
     if (!isMriImage(image))
         output(OL$Error, "The specified image is not an MriImage object")
@@ -53,18 +53,18 @@ createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("inter
     slice <- extractDataFromMriImage(image, which(axisRelevance), planeLoc)
     
     if (device == "internal")
-        displayGraphic(slice, colourScale, add=add)
+        displayGraphic(slice, colourScale, add=add, windowLimits=windowLimits)
     else if (device == "png")
     {
         tempFile <- tempfile()
         pngDims <- round(abs(dims[!axisRelevance] * image$getVoxelDimensions()[!axisRelevance] * zoomFactor))
-        writePng(slice, colourScale, tempFile)
+        writePng(slice, colourScale, tempFile, windowLimits=windowLimits)
         interpolatePng(tempFile, file, pngDims, filter=filter)
         unlink(ensureFileSuffix(tempFile, "png"))
     }
 }
 
-createProjectionGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell")
+createProjectionGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
 {
     if (!isMriImage(image))
         output(OL$Error, "The specified image is not an MriImage object")
@@ -73,24 +73,26 @@ createProjectionGraphic <- function (image, axis, device = c("internal","png"), 
     projection <- maximumIntensityProjection(image, axis)
     
     if (device == "internal")
-        displayGraphic(projection, colourScale, add=add)
+        displayGraphic(projection, colourScale, add=add, windowLimits=windowLimits)
     else if (device == "png")
     {
         imageAxes <- !(1:3 %in% axis)
         tempFile <- tempfile()
         pngDims <- round(abs(image$getDimensions()[imageAxes] * image$getVoxelDimensions()[imageAxes] * zoomFactor))
-        writePng(projection, colourScale, tempFile)
+        writePng(projection, colourScale, tempFile, windowLimits=windowLimits)
         interpolatePng(tempFile, file, pngDims, filter=filter)
         unlink(ensureFileSuffix(tempFile, "png"))
     }
 }
 
-createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sliceLoc = NULL, device = c("internal","png"), alphaImages = NULL, prefix = "image", zoomFactor = 1, filter = "Mitchell")
+createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sliceLoc = NULL, device = c("internal","png"), alphaImages = NULL, prefix = "image", zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
 {
     if (!is.list(images) || !is.list(colourScales))
         output(OL$Error, "Images and colour scales must be given as lists")
     if (!is.null(alphaImages) && !is.list(alphaImages))
         output(OL$Error, "Alpha images must be specified in a list")
+    if (!is.null(windowLimits) && !is.list(windowLimits))
+        output(OL$Error, "Window limits must be specified in a list")
     if (!is.numeric(axes) || any(axes < 1 | axes > 3))
         output(OL$Error, "Projection axes must be specified as a combination of 1 (x), 2 (y) or 3 (z)")
     
@@ -105,6 +107,8 @@ createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sli
         output(OL$Error, "Lengths of 'images', 'modes' and 'colourScales' do not all match")
     if (!is.null(alphaImages) && length(alphaImages) != nImages)
         output(OL$Error, "Lengths of 'images' and 'alphaImages' do not match")
+    if (!is.null(windowLimits) && length(windowLimits) != nImages)
+        output(OL$Error, "Lengths of 'images' and 'windowLimits' do not match")
     
     if (device == "png")
     {
@@ -125,13 +129,13 @@ createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sli
             {
                 if (modes[i] == "slice")
                 {
-                    createSliceGraphic(images[[i]], currentSliceLoc[1], currentSliceLoc[2], currentSliceLoc[3], device="png", colourScale=colourScales[[i]], file=imageFiles[2*i-1], zoomFactor=zoomFactor, filter=filter)
+                    createSliceGraphic(images[[i]], currentSliceLoc[1], currentSliceLoc[2], currentSliceLoc[3], device="png", colourScale=colourScales[[i]], file=imageFiles[2*i-1], zoomFactor=zoomFactor, filter=filter, windowLimits=windowLimits[[i]])
                     if (!is.null(alphaImages[[i]]))
                         createSliceGraphic(alphaImages[[i]], currentSliceLoc[1], currentSliceLoc[2], currentSliceLoc[3], device="png", colourScale=1, file=imageFiles[2*i], zoomFactor=zoomFactor, filter=filter)
                 }
                 else
                 {
-                    createProjectionGraphic(images[[i]], axis, device="png", colourScale=colourScales[[i]], file=imageFiles[2*i-1], zoomFactor=zoomFactor, filter=filter)
+                    createProjectionGraphic(images[[i]], axis, device="png", colourScale=colourScales[[i]], file=imageFiles[2*i-1], zoomFactor=zoomFactor, filter=filter, windowLimits=windowLimits[[i]])
                     if (!is.null(alphaImages[[i]]))
                         createProjectionGraphic(alphaImages[[i]], axis, device="png", colourScale=1, file=imageFiles[2*i], zoomFactor=zoomFactor, filter=filter)
                 }
@@ -154,4 +158,6 @@ createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sli
             unlink(combinedFiles)
         }
     }
+    else
+        output(OL$Warning, "The 'createCombinedGraphics' function only supports the \"png\" device for now")
 }

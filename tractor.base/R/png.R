@@ -25,7 +25,7 @@ interpolatePng <- function (oldFile, newFile, newDims, filter = "Mitchell")
     execute("convert", paramString, errorOnFail=TRUE)
 }
 
-writePng <- function (data, colourScale = 1, fileName = NULL)
+writePng <- function (data, colourScale = 1, fileName = NULL, windowLimits = NULL)
 {
     if (capabilities()["png"] == FALSE)
         output(OL$Error, "PNG output capability required")
@@ -43,7 +43,10 @@ writePng <- function (data, colourScale = 1, fileName = NULL)
     # (don't know why!)
     png(fileName, bg=scale$background, width=dims[1]+1, height=dims[2]+1)
     par(mai=c(0,0,0,0))
-    image(data, col=scale$colours, axes=FALSE, asp=dims[2]/dims[1])
+    if (is.null(windowLimits))
+        image(data, col=scale$colours, axes=FALSE, asp=dims[2]/dims[1])
+    else
+        image(data, col=scale$colours, axes=FALSE, asp=dims[2]/dims[1], zlim=sort(windowLimits))
     dev.off()
     
     invisible (fileName)
