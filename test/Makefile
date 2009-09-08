@@ -1,37 +1,42 @@
 BASH=/bin/bash
-DIFF=diff
-SED=sed
-TRACTOR=../bin/tractor
+ECHO=/bin/echo
 
-diff-file=/tmp/tractor_test.diff
+COLUMNS=40
+TRACTOR=../bin/tractor -q -z -i
+TRACTOR_HOME=..
+TRACTOR_FILETYPE=NIFTI_GZ
+TRACTOR_PATH=scripts
+export COLUMNS TRACTOR TRACTOR_HOME TRACTOR_FILETYPE TRACTOR_PATH
 
 all: run-tests
 
 clean:
-	@rm *.out
+	@rm -f `find . -name '*.out' -print`
+	@rm -f `find . -name '*.Rdata' -print`
+	@rm -rf tmp/* data/session-12dir/tractor/fdt.track
+
+fullclean: clean
+	@rm -f `find . -name '*.save' -print`
 
 run-tests:
-	@for file in `ls -1 *.sh`; do \
-		outfile=`echo $${file} | $(SED) 's/\.sh$$/\.out/'`; \
+	@for file in `find . -name '*.sh' -print | sort`; do \
+		outfile=`echo $${file} | sed 's/\.sh$$/\.out/'`; \
 		$(MAKE) $${outfile} || exit 1; \
 	done
+	@echo "All tests completed"
 
 create-tests:
-	@for file in `ls -1 *.sh`; do \
-		savefile=`echo $${file} | $(SED) 's/\.sh$$/\.save/'`; \
+	@for file in `find . -name '*.sh' -print | sort`; do \
+		savefile=`echo $${file} | sed 's/\.sh$$/\.save/'`; \
 		$(MAKE) $${savefile} || exit 1; \
 	done
 
 %.out: %.sh
-	@TRACTOR=$(TRACTOR) $(BASH) $< >$@ 2>&1
-	@-$(DIFF) $*.save $@ >$(diff-file)
-	@if [ -s $(diff-file) ]; then \
-		cat $(diff-file); \
-		rm $(diff-file); \
-		exit 1; \
-	else \
-		rm $(diff-file) ; \
-	fi
+	@$(ECHO) "`grep '#@desc' $< | sed 's/#@desc //'`... \c"
+	@$(BASH) $< >$@ 2>&1
+	@diff $*.save $@ && $(ECHO) "OK"
 
 %.save: %.sh
-	@TRACTOR=$(TRACTOR) $(BASH) $< >$@ 2>&1
+	@$(ECHO) "Updating test output for $@... \c"
+	@$(BASH) $< >$@ 2>&1 || ( echo ""; cat $@; exit 1 )
+	@$(ECHO) "done"
