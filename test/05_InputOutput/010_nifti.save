@@ -1,0 +1,6 @@
+Image dimensions : 96 x 96 x 25 voxels
+Coordinate origin: (1,1,1)
+Voxel dimensions : 2.5 x 2.5 x 5 mm
+Data type        : signed double, 32 bits/voxel
+Endianness       : little
+Value of image "nodif_brain" at location (49,58,14) is 225
