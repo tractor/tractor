@@ -13,7 +13,7 @@ all: run-tests
 clean:
 	@rm -f `find . -name '*.out' -print`
 	@rm -f `find . -name '*.Rdata' -print`
-	@rm -rf tmp/* data/session-12dir/tractor/fdt.track
+	@rm -rf tmp/* data/session-12dir/tractor/fdt.track/*
 
 fullclean: clean
 	@rm -f `find . -name '*.save' -print`
