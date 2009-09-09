@@ -40,3 +40,8 @@ install-extras:
 
 extras: install-extras
 
+clean:
+	@cd tests && $(MAKE) clean
+
+test:
+	@cd tests && $(MAKE) run-tests
