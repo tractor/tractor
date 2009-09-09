@@ -34,7 +34,7 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
     writeReportToYaml(results,fileName=reportFile)
 }
 
-describeExperiment <- function (scriptFile)
+describeExperiment <- function (scriptFile, fill = FALSE)
 {
     scriptFile <- expandFileName(scriptFile)
     inputLines <- readLines(scriptFile)
@@ -73,5 +73,12 @@ describeExperiment <- function (scriptFile)
         outputLines <- c(outputLines, descriptionString)
     }
     
-    cat(implode(c(outputLines,""), "\n"))
+    outputLines <- c(outputLines, "")
+    
+    if (fill == FALSE)
+        cat(implode(outputLines, "\n"))
+    else
+        lapply(strsplit(outputLines," ",fixed=TRUE), cat, fill=fill)
+    
+    invisible(NULL)
 }
