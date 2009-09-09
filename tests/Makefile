@@ -33,10 +33,10 @@ create-tests:
 
 %.out: %.sh
 	@$(ECHO) "`grep '#@desc' $< | sed 's/#@desc //'`... \c"
-	@$(BASH) $< >$@ 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
+	@$(BASH) $< >$@ 2>&1
 	@diff $*.save $@ && $(ECHO) "OK"
 
 %.save: %.sh
 	@$(ECHO) "Updating test output for $@... \c"
-	@$(BASH) $< >$@ 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
+	@$(BASH) $< >$@ 2>&1 || ( echo ""; cat $@; exit 1 )
 	@$(ECHO) "done"
