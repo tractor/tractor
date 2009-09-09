@@ -148,7 +148,7 @@ if [ $show_options -eq 1 ]; then
     }
     
     binpath=`dirname $0`
-    echo "library(tractor.base); describeExperiment('$script_file')" | R --slave --vanilla 2>&1 | ${binpath}/rfmt ${COLUMNS:-80}
+    echo "library(tractor.base); describeExperiment('$script_file', ${COLUMNS:-80})" | R --slave --vanilla 2>&1
     status=0
     exit
 fi
