@@ -23,12 +23,17 @@ runExperiment <- function ()
     vizThreshold <- getWithDefault("VisualisationThreshold", 0.01)
     showSeed <- getWithDefault("ShowSeedPoint", TRUE)
     
+    if (!createVolumes && !createImages)
+        output(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
+    
     seedMask <- newMriImageFromFile(seedMaskFile)
     if (seedMaskInStandardSpace)
         seedMask <- transformStandardSpaceImage(session, seedMask)
     
     seeds <- which(seedMask$getData() > 0, arr.ind=TRUE)
-    if (nrow(seeds) > 0 && (createVolumes || createImages))
+    if (nrow(seeds) == 0)
+        output(OL$Error, "Seed mask is empty")
+    else
     {
         if (is.null(thresholdLevel))
             validSeeds <- 1:nrow(seeds)
@@ -51,8 +56,6 @@ runExperiment <- function ()
                 writePngsForResult(ptResult, prefix=prefix, threshold=vizThreshold, showSeed=showSeed)
         }
     }
-    else
-        output(OL$Warning, "Nothing to do: seed mask is zero or you did not request volumes or images")
-        
+    
     invisible (NULL)
 }
