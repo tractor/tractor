@@ -73,10 +73,8 @@ describeExperiment <- function (scriptFile, fill = FALSE)
         outputLines <- c(outputLines, descriptionString)
     }
     
-    outputLines <- c(outputLines, "")
-    
     if (fill == FALSE)
-        cat(implode(outputLines, "\n"))
+        cat(implode(outputLines, "\n"), "\n")
     else
         lapply(strsplit(outputLines," ",fixed=TRUE), cat, fill=fill)
     
