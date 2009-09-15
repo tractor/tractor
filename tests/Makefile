@@ -21,17 +21,11 @@ fullclean: clean
 	@rm -f `find . -name '*.save' -print`
 
 run-tests:
-	@for file in `find . -name '*.sh' -print | sort`; do \
-		outfile=`echo $${file} | sed 's/\.sh$$/\.out/'`; \
-		$(MAKE) $${outfile} || exit 1; \
-	done
+	@$(MAKE) `find . -name '*.sh' -print | sort | sed 's/\.sh$$/\.out/'` || exit 1
 	@echo "All tests completed"
 
 create-tests:
-	@for file in `find . -name '*.sh' -print | sort`; do \
-		savefile=`echo $${file} | sed 's/\.sh$$/\.save/'`; \
-		$(MAKE) $${savefile} || exit 1; \
-	done
+	@$(MAKE) `find . -name '*.sh' -print | sort | sed 's/\.sh$$/\.save/'` || exit 1
 
 %.out: %.sh
 	@$(ECHO_N) "`grep '#@desc' $< | sed 's/#@desc //'`... "
