@@ -17,6 +17,7 @@ runExperiment <- function ()
     pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
     searchWidth <- getWithDefault("SearchWidth", 1)
     faThreshold <- getWithDefault("AnisotropyThreshold", 0.2)
+    nSamples <- getWithDefault("NumberOfSamples", 5000)
     resultsName <- getWithDefault("ResultsName", "results")
     
     reference <- getNTResource("reference", "hnt", list(tractName=tractName))
@@ -47,7 +48,7 @@ runExperiment <- function ()
         if (pointType == "mm")
             currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("t2")), useOrigin=TRUE)
         
-        result <- runNeighbourhoodTractography(currentSession, currentSeed, reference$getTract(), faThreshold, searchWidth)
+        result <- runNeighbourhoodTractography(currentSession, currentSeed, reference$getTract(), faThreshold, searchWidth, nSamples=nSamples)
         results <- c(results, list(result))
     }
     

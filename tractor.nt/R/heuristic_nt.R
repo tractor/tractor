@@ -1,4 +1,4 @@
-runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold = 0.2, searchWidth = 7)
+runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold = 0.2, searchWidth = 7, nSamples = 5000)
 {
     if (!isFieldTract(refTract))
         output(OL$Error, "Reference tract must be specified as a FieldTract object")
@@ -32,10 +32,10 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     reducedRefTract <- createReducedTractInfo(refTract)
     output(OL$Info, "Reference tract contains ", reducedRefTract$nVoxels, " nonzero voxels; length is ", reducedRefTract$length)
     
-    runProbtrackWithSession(session, candidateSeeds[validSeeds,], requireFile=TRUE)
+    runProbtrackWithSession(session, candidateSeeds[validSeeds,], requireFile=TRUE, nSamples=nSamples)
     for (d in validSeeds)
     {
-        candidateTract <- newFieldTractFromProbtrack(session, candidateSeeds[d,], expectExists=TRUE, threshold=0.01)
+        candidateTract <- newFieldTractFromProbtrack(session, candidateSeeds[d,], expectExists=TRUE, threshold=0.01, nSamples=nSamples)
         similarities[d] <- calculateSimilarity(reducedRefTract, candidateTract)
     }
     
