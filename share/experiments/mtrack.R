@@ -11,23 +11,27 @@ runExperiment <- function ()
     requireArguments("session directory")
     session <- newSessionFromDirectory(Arguments[1])
     
-    nSamples <- getWithDefault("NumberOfSamples", 5000)
     seedMaskFile <- getWithDefault("SeedMaskFile", NULL, "character", errorIfInvalid=TRUE, errorIfMissing=TRUE)
     seedMaskInStandardSpace <- getWithDefault("SeedMaskInStandardSpace", FALSE)
     waypointMaskFiles <- getWithDefault("WaypointMaskFiles", NULL, "character", errorIfInvalid=TRUE)
     waypointMasksInStandardSpace <- getWithDefault("WaypointMasksInStandardSpace", FALSE)
-        
-    createImages <- getWithDefault("CreateImages", FALSE)
+    nSamples <- getWithDefault("NumberOfSamples", 5000)
+    
     tractName <- getWithDefault("TractName", "tract")
+    createVolumes <- getWithDefault("CreateVolumes", TRUE)
+    createImages <- getWithDefault("CreateImages", FALSE)
     vizThreshold <- getWithDefault("VisualisationThreshold", 0.01)
     showSeed <- getWithDefault("ShowSeedPoint", TRUE)
+    
+    if (!createVolumes && !createImages)
+        output(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
     seedMask <- newMriImageFromFile(seedMaskFile)
     if (seedMaskInStandardSpace)
         seedMask <- transformStandardSpaceImage(session, seedMask)
     
     if (is.null(waypointMaskFiles))
-        result <- runProbtrackWithSession(session, mode="seedmask", seedMask=seedMask, requireImage=createImages, nSamples=nSamples)
+        result <- runProbtrackWithSession(session, mode="seedmask", seedMask=seedMask, requireImage=TRUE, nSamples=nSamples)
     else
     {
         waypointMasks <- list()
@@ -39,15 +43,14 @@ runExperiment <- function ()
             waypointMasks <- c(waypointMasks, list(waypointMask))
         }
         
-        result <- runProbtrackWithSession(session, mode="seedmask", seedMask=seedMask, waypointMasks=waypointMasks, requireImage=createImages, nSamples=nSamples)
+        result <- runProbtrackWithSession(session, mode="seedmask", seedMask=seedMask, waypointMasks=waypointMasks, requireImage=TRUE, nSamples=nSamples)
     }
     
-    if (createImages)
-    {
-        output(OL$Info, "Creating tract images")
+    output(OL$Info, "Creating tract images")
+    if (createVolumes)
         writeMriImageToFile(result$image, tractName)
+    if (createImages)
         writePngsForResult(result, prefix=tractName, threshold=vizThreshold, showSeed=showSeed)
-    }
     
     invisible (NULL)
 }
