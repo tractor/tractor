@@ -1,5 +1,6 @@
 BASH=/bin/bash
 ECHO=/bin/echo
+ECHO_N=/bin/echo -n
 DIFF=diff
 
 COLUMNS=40
@@ -33,11 +34,11 @@ create-tests:
 	done
 
 %.out: %.sh
-	@$(ECHO) "`grep '#@desc' $< | sed 's/#@desc //'`... \c"
+	@$(ECHO_N) "`grep '#@desc' $< | sed 's/#@desc //'`... "
 	@$(BASH) $< >$@ 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
 	@$(DIFF) $*.save $@ && $(ECHO) "OK"
 
 %.save: %.sh
-	@$(ECHO) "Updating test output for $@... \c"
+	@$(ECHO_N) "Updating test output for $@... "
 	@$(BASH) $< >$@ 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
 	@$(ECHO) "done"
