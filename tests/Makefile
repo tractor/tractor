@@ -1,5 +1,6 @@
 BASH=/bin/bash
 ECHO=/bin/echo
+DIFF=diff
 
 COLUMNS=40
 TRACTOR=../bin/tractor -q -z -i
@@ -33,10 +34,10 @@ create-tests:
 
 %.out: %.sh
 	@$(ECHO) "`grep '#@desc' $< | sed 's/#@desc //'`... \c"
-	@$(BASH) $< >$@ 2>&1
-	@diff $*.save $@ && $(ECHO) "OK"
+	@$(BASH) $< >$@ 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
+	@$(DIFF) $*.save $@ && $(ECHO) "OK"
 
 %.save: %.sh
 	@$(ECHO) "Updating test output for $@... \c"
-	@$(BASH) $< >$@ 2>&1 || ( echo ""; cat $@; exit 1 )
+	@$(BASH) $< >$@ 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
 	@$(ECHO) "done"
