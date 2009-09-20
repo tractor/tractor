@@ -18,6 +18,7 @@ runExperiment <- function ()
     
     pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
     isStandardSeed <- getWithDefault("SeedInMNISpace", FALSE)
+    nSamples <- getWithDefault("NumberOfSamples", 5000)
     tractName <- getWithDefault("TractName", "tract")
     
     lengthQuantile <- getWithDefault("LengthQuantile", 0.99)
@@ -28,7 +29,7 @@ runExperiment <- function ()
     options <- createTractOptionList("knot", lengthQuantile, registerToReference, NULL, NULL)
     returnValue <- referenceSplineTractWithOptions(options, session, seed)
     
-    reference <- newReferenceTractWithTract(returnValue$spline, nativeSeed=seed, session=session, options=returnValue$options)
+    reference <- newReferenceTractWithTract(returnValue$spline, nativeSeed=seed, session=session, options=returnValue$options, nSamples=nSamples)
     writeNTResource(reference, "reference", "pnt", list(tractName=tractName))
     
     invisible (returnValue$options)

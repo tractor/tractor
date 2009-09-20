@@ -31,10 +31,10 @@ splineTractWithOptions <- function (options, session, seed, refSession = NULL, n
     invisible (spline)
 }
 
-referenceSplineTractWithOptions <- function (options, refSession, refSeed)
+referenceSplineTractWithOptions <- function (options, refSession, refSeed, nSamples = 5000)
 {
     refOptions <- createTractOptionList(options$pointType, options$lengthQuantile, FALSE, NULL, options$maxPathLength)
-    refSpline <- splineTractWithOptions(refOptions, refSession, refSeed)
+    refSpline <- splineTractWithOptions(refOptions, refSession, refSeed, nSamples=nSamples)
     
     options$knotSpacing <- refSpline$getKnotSpacing()
     
