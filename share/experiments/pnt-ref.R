@@ -27,9 +27,9 @@ runExperiment <- function ()
     seed <- getNativeSpacePointForSession(session, seed, pointType, isStandardSeed)
     
     options <- createTractOptionList("knot", lengthQuantile, registerToReference, NULL, NULL)
-    returnValue <- referenceSplineTractWithOptions(options, session, seed)
+    returnValue <- referenceSplineTractWithOptions(options, session, seed, nSamples=nSamples)
     
-    reference <- newReferenceTractWithTract(returnValue$spline, nativeSeed=seed, session=session, options=returnValue$options, nSamples=nSamples)
+    reference <- newReferenceTractWithTract(returnValue$spline, nativeSeed=seed, session=session, options=returnValue$options)
     writeNTResource(reference, "reference", "pnt", list(tractName=tractName))
     
     invisible (returnValue$options)
