@@ -12,6 +12,7 @@ runExperiment <- function ()
 {
     tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
     datasetName <- getWithDefault("DatasetName", NULL, "character", errorIfMissing=TRUE)
+    modelName <- getWithDefault("ModelName", NULL, "character")
     resultsName <- getWithDefault("ResultsName", NULL, "character", errorIfMissing=TRUE)
     sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
     
@@ -21,7 +22,7 @@ runExperiment <- function ()
     mode <- getWithDefault("Mode", NULL, "character", errorIfMissing=TRUE, c("location","posterior","ratio","null-posterior"), errorIfInvalid=TRUE)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
-    model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName))
+    model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
     
     nSessions <- length(sessionList)
     

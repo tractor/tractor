@@ -37,8 +37,14 @@ getFileNameForNTResource <- function (type, mode, options = NULL, expectExists =
     }
     else if (type == "model")
     {
-        if (!any(c("datasetName","tractName") %in% names(options)))
-            output(OL$Error, "Dataset and tract names must be specified")
+        if ("modelName" %in% names(options))
+        {
+            fileName <- ensureFileSuffix(options$modelName, "Rdata")
+            if (!expectExists || file.exists(fileName))
+                return (fileName)
+        }
+        else if (!any(c("datasetName","tractName") %in% names(options)))
+            output(OL$Error, "Model or dataset and tract names must be specified")
         
         fileName <- ensureFileSuffix(paste(options$datasetName,"model",sep="_"), "Rdata")
         if (!expectExists || file.exists(fileName))
