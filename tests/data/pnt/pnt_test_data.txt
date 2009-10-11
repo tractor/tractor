@@ -1,0 +1,2 @@
+"pointType" "leftLength" "rightLength" "subject" "leftSimCosine1" "leftSimCosine2" "leftSimCosine3" "leftSimCosine4" "leftSimCosine5" "leftSimCosine6" "rightSimCosine1" "rightSimCosine2" "rightSimCosine3" "rightSimCosine4" "rightSimCosine5" "rightSimCosine6"
+"1" "knot" 10 11 1 NA 0.980020904551623 0.975982888266542 0.998707211819982 0.959959055544032 0.99857012026998 NA 0.999202577892374 0.994816080202053 0.990730654605913 0.977597409312683 0.987024564668221
