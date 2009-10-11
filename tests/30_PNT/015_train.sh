@@ -1,4 +1,4 @@
-#@desc Checking we can train symmetric and asymmetric PNT models
+#@desc Checking that we can train symmetric and asymmetric PNT models
 ${TRACTOR} pnt-train TractName:genu DatasetName:data/pnt/pnt_train_data
 ${TRACTOR} peek data/pnt/pnt_train_data_model
 ${TRACTOR} pnt-train TractName:genu DatasetName:data/pnt/pnt_train_data AsymmetricModel:true
