@@ -2,7 +2,6 @@ Object class: metatract.reference, tract.bspline, list.object, list
 ---
 Tract class        : tract.bspline
 In standard space  : FALSE
-Standard space seed: 46.62,75.66,39.58 (vox)
+Standard space seed: 46,75,39 (vox)
 Point type         : knot
 Length quantile    : 0.99
-Knot spacing       : 5.26

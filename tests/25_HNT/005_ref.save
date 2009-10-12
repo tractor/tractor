@@ -2,4 +2,4 @@ Object class: metatract.reference, tract.field, image.mri, metadata.image.mri, l
 ---
 Tract class        : tract.field
 In standard space  : FALSE
-Standard space seed: 46.62,75.66,39.58 (vox)
+Standard space seed: 46,75,39 (vox)
