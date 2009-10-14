@@ -133,7 +133,7 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
             slices <- NULL
         else if (rows == dataColumns && columns == dataRows)
         {
-            flag(OL$Warning, "Data matrix is transposed relative to acquisition matrix")
+            flag(OL$Info, "Data matrix is transposed relative to acquisition matrix")
             rows <- dataRows
             columns <- dataColumns
             slices <- NULL
@@ -201,8 +201,6 @@ newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE)
     fileMetadata <- metadata
     if (fileMetadata$getTagValue(0x0008, 0x0060) != "MR")
         output(OL$Error, "DICOM file does not contain MR image data")
-    if (!equivalent(fileMetadata$getTagValue(0x0020,0x0037), c(1,0,0,0,1,0)))
-        flag(OL$Warning, "DICOM file does not use LPS orientation slices - results may be unreliable")
     imageMetadata <- newMriImageMetadataFromDicomMetadata(fileMetadata)
     
     datatype <- imageMetadata$getDataType()
@@ -486,7 +484,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
 
     if (!volumePerDicomFile && nSlices>1 && length(firstLocs)==2 && diff(firstLocs)<0)
     {
-        flag(OL$Warning, "Slice location decreases between consecutive images - inverting slice order")
+        flag(OL$Info, "Slice location decreases between consecutive images - inverting slice order")
         indices <- alist(x=, y=, z=, t=)
         indices[[throughSliceDirection]] <- nSlices:1
         data <- do.call("[", c(list(data),indices,list(drop=FALSE)))
