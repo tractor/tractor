@@ -7,9 +7,9 @@
   Visualise \code{MriImage} objects.
 }
 \usage{
-createCombinedGraphics(images, modes, colourScales, axes = 1:3, sliceLoc = NULL, device = c("internal", "png"), alphaImages = NULL, prefix = "image", zoomFactor = 1, filter = "Mitchell")
-createProjectionGraphic(image, axis, device = c("internal", "png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell")
-createSliceGraphic(image, x = NA, y = NA, z = NA, device = c("internal", "png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell")
+createCombinedGraphics(images, modes, colourScales, axes = 1:3, sliceLoc = NULL, device = c("internal", "png"), alphaImages = NULL, prefix = "image", zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
+createProjectionGraphic(image, axis, device = c("internal", "png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
+createSliceGraphic(image, x = NA, y = NA, z = NA, device = c("internal", "png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
 }
 \arguments{
   \item{images}{A list of \code{\link{MriImage}} objects.}
@@ -24,6 +24,7 @@ createSliceGraphic(image, x = NA, y = NA, z = NA, device = c("internal", "png"),
   \item{prefix, file}{A file name or prefix (to which "axial", "coronal" or "sagittal" will be added) to be used when \code{device} is "png".}
   \item{zoomFactor}{Factor by which to enlarge the image. Applies only when \code{device} is "png".}
   \item{filter}{Interpolation filter to be used by ImageMagick.}
+  \item{windowLimits}{Numeric vector of length 2 giving the limits of the colour scale, or \code{NULL} for limits matching the range of the image data. Passed as the \code{zlim} argument to \code{\link{image}}.}
   \item{add}{Overlay the graphic on a previous one. Used only when \code{device} is "internal".}
 }
 \details{
@@ -37,4 +38,4 @@ createSliceGraphic(image, x = NA, y = NA, z = NA, device = c("internal", "png"),
   These functions are called for their side effects.
 }
 \author{Jon Clayden}
-\seealso{\code{\link{colours}}, \code{\link{rgb}}}
+\seealso{\code{\link{image}}, \code{\link{colours}}, \code{\link{rgb}}}
