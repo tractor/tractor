@@ -50,7 +50,7 @@ output <- function (level, ..., default = NULL, showDepth = TRUE, toReport = FAL
         if (toReport && isTRUE(getOption("tractorOutputErrors")))
             cat(paste(leadingSpace, "ERROR: ", ..., "\n", sep=""))
         
-        if (outputLevel == OL$Debug)
+        if (outputLevel == OL$Debug && !(callStrings[length(callStrings)] %~% "^(\\* )*stop\\("))
         {
             cat("--- Begin stack trace ---\n")
             for (i in 1:length(callStrings))
