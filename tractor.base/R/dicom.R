@@ -155,7 +155,7 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
             # Image upsampled or downsampled after acquisition, e.g. by zero filling
             slices <- NULL
             rows <- dataRows
-            colums <- dataColumns
+            columns <- dataColumns
         }
     }
     
@@ -492,7 +492,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
 
     if (!volumePerDicomFile && nSlices>1 && length(firstLocs)==2 && diff(firstLocs)<0)
     {
-        flag(OL$Info, "Slice location decreases between consecutive images - inverting slice order")
+        output(OL$Info, "Slice location decreases between consecutive images - inverting slice order")
         indices <- alist(x=, y=, z=, t=)
         indices[[throughSliceDirection]] <- nSlices:1
         data <- do.call("[", c(list(data),indices,list(drop=FALSE)))
