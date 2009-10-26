@@ -138,7 +138,7 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
             columns <- dataColumns
             slices <- NULL
         }
-        else if (identical(metadata$getTagValue(0x0008,0x0070), "SIEMENS"))
+        else if (identical(dicom$getTagValue(0x0008,0x0070), "SIEMENS"))
         {
             # Siemens mosaic format
             slices <- (dataRows/rows) * (dataColumns/columns)
