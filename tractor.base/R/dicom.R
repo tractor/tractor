@@ -138,8 +138,9 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
             columns <- dataColumns
             slices <- NULL
         }
-        else
+        else if (identical(metadata$getTagValue(0x0008,0x0070), "SIEMENS"))
         {
+            # Siemens mosaic format
             slices <- (dataRows/rows) * (dataColumns/columns)
             if (slices != floor(slices))
             {
@@ -148,6 +149,13 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
                 rows <- dataRows
                 columns <- dataColumns
             }
+        }
+        else
+        {
+            # Image upsampled or downsampled after acquisition, e.g. by zero filling
+            slices <- NULL
+            rows <- dataRows
+            colums <- dataColumns
         }
     }
     
