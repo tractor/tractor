@@ -7,7 +7,6 @@
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
-suppressPackageStartupMessages(require(tractor.private))
 
 runExperiment <- function ()
 {

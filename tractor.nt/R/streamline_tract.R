@@ -236,6 +236,80 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
     invisible (tract)
 }
 
+newStreamlineSetTractBySubsetting <- function (tract, indices)
+{
+    if (!isStreamlineSetTract(tract))
+        output(OL$Error, "The specified tract is not a StreamlineSetTract object")
+    if (length(indices) < 1)
+        output(OL$Error, "At least one streamline must be included in the subset")
+    
+    leftLengths <- tract$getLeftLengths()[indices]
+    rightLengths <- tract$getRightLengths()[indices]
+    leftPoints <- tract$getLeftPoints()[,,indices,drop=FALSE]
+    rightPoints <- tract$getRightPoints()[,,indices,drop=FALSE]
+    
+    newTract <- .StreamlineSetTract(tract$getSeedPoint(), leftLengths, rightLengths, leftPoints, rightPoints, tract$getMetadata())
+    invisible (newTract)
+}
+
+newStreamlineSetTractFromStreamline <- function (tract)
+{
+    if (!isStreamlineTract(tract))
+        output(OL$Error, "The specified tract is not a StreamlineTract object")
+    
+    line <- tract$getLine()
+    
+    leftLength <- tract$getSeedIndex()
+    rightLength <- nrow(line) - leftLength + 1
+    leftPoints <- line[leftLength:1,]
+    rightPoints <- line[leftLength:nrow(line),]
+    dim(leftPoints) <- c(dim(leftPoints), 1)
+    dim(rightPoints) <- c(dim(rightPoints), 1)
+    
+    newTract <- .StreamlineSetTract(tract$getSeedPoint(), leftLength, rightLength, leftPoints, rightPoints, tract$getMetadata())
+    invisible (newTract)
+}
+
+newStreamlineSetTractByTruncationToReference <- function (tract, reference, testSession)
+{
+    if (!isStreamlineSetTract(tract))
+        output(OL$Error, "The specified tract is not a StreamlineSetTract object")
+    if (!isReferenceTract(reference) || !isBSplineTract(reference))
+        output(OL$Error, "The specified reference tract is not valid")
+    
+    # Transform the reference tract into native space, find its length in this
+    # space, and use that to truncate the streamline set
+    refSession <- reference$getSourceSession()
+    refPoints <- getPointsForTract(reference$getTract(), reference$getTractOptions()$pointType)
+    
+    if (reference$getTractOptions()$registerToReference)
+    {
+        if (is.null(refSession))
+            transform <- getMniTransformForSession(testSession)
+        else
+            transform <- newAffineTransform3DFromFlirt(refSession$getImageFileNameByType("t2"), testSession$getImageFileNameByType("t2"))
+    
+        refPoints$points <- transformWorldPointsWithAffine(transform, refPoints$points)
+    }
+    
+    refSteps <- calculateStepVectors(refPoints$points, refPoints$seedPoint)
+    refLeftLength <- sum(apply(refSteps$left,1,vectorLength), na.rm=TRUE)
+    refRightLength <- sum(apply(refSteps$right,1,vectorLength), na.rm=TRUE)
+    
+    # TODO: Generalise this - we shouldn't assume that probtrackx was called with a step length of 0.5 mm
+    realStepLength <- 0.5
+    maxPointsLeft <- ceiling(refLeftLength / realStepLength)
+    maxPointsRight <- ceiling(refRightLength / realStepLength)
+    
+    leftLengths <- pmin(maxPointsLeft, tract$getLeftLengths())
+    rightLengths <- pmin(maxPointsRight, tract$getRightLengths())
+    leftPoints <- tract$getLeftPoints()[1:max(leftLengths),,,drop=FALSE]
+    rightPoints <- tract$getRightPoints()[1:max(rightLengths),,,drop=FALSE]
+    
+    newTract <- .StreamlineSetTract(tract$getSeedPoint(), leftLengths, rightLengths, leftPoints, rightPoints, tract$getMetadata())
+    invisible (newTract)
+}
+
 newStreamlineTractWithMetadata <- function (tract, metadata)
 {
     if (!isStreamlineTract(tract))

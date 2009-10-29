@@ -133,7 +133,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
     }
     else
     {
-        output(OL$Info, "Fitting B-spline model with fixed knot spacing of ", signif(knotSpacing,3))
+        flag(OL$Info, "Fitting B-spline model with fixed knot spacing of ", signif(knotSpacing,3))
         streamlineTract <- newStreamlineTractWithSpacingThreshold(streamlineTract, knotSpacing)
         nKnots <- floor(streamlineTract$getLineLength() / knotSpacing)
         bSpline <- fitBSplineModels(streamlineTract, nKnots)
