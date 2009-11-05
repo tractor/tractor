@@ -34,7 +34,7 @@ runExperiment <- function ()
         }
         
         if (!overlayOnBrain)
-            createCombinedGraphics(list(newImage), "p", regionColour, device="png", prefix=regionName)
+            createCombinedGraphics(list(newImage), "p", list(regionColour), device="png", prefix=regionName)
         else
         {
             brainImage <- getStandardImage("brain")
