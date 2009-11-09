@@ -156,7 +156,6 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
 
             subData[1:len,,i] <- sampleData[1:len,]
         }
-        output(OL$Info, "Done; analyzing subsample")
 
         # The estimated rightwards direction is the mean first step
         firstSteps <- subData[2,,] - subData[1,,]
@@ -296,8 +295,13 @@ newStreamlineSetTractByTruncationToReference <- function (tract, reference, test
     refLeftLength <- sum(apply(refSteps$left,1,vectorLength), na.rm=TRUE)
     refRightLength <- sum(apply(refSteps$right,1,vectorLength), na.rm=TRUE)
     
-    # TODO: Generalise this - we shouldn't assume that probtrackx was called with a step length of 0.5 mm
-    realStepLength <- 0.5
+    # Estimate the step length from the mean of the first ten gaps in the first streamline
+    testPoints <- tract$getLeftPoints()[1:10,,1]
+    if (tract$getCoordinateUnit() == "vox")
+        testPoints <- transformRVoxelToWorld(testPoints, tract$getImageMetadata())
+    realStepLength <- mean(apply(diff(testPoints), 1, vectorLength), na.rm=TRUE)
+    output(OL$Info, "Step length in streamline set is ", signif(realStepLength,3), " mm")
+    
     maxPointsLeft <- ceiling(refLeftLength / realStepLength)
     maxPointsRight <- ceiling(refRightLength / realStepLength)
     
