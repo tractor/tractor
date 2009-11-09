@@ -1,11 +1,5 @@
-#@args image file, [format]
-#@desc Reads and rewrites the specified Analyze/NIfTI image file using the specified
-#@desc file format. The format can be "ANALYZE" (for Analyze format), "NIFTI" (for
-#@desc single-file NIfTI), "NIFTI_PAIR" (NIfTI header/image pair), or any of these
-#@desc with "_GZ" appended for the equivalent formats compressed with gzip(1). If
-#@desc the format is not specified, it will be taken from the TRACTOR_FILETYPE
-#@desc environment variable. An Analyze/NIfTI data type code can also be specified
-#@desc with the TypeCode option, perhaps for compatibility with other software.
+#@args image file(s), [format]
+#@desc Reads and rewrites the specified Analyze/NIfTI image file(s) using the specified file format. Note that the original file will be REPLACED. The format can be "ANALYZE" (for Analyze format), "NIFTI" (for single-file NIfTI), "NIFTI_PAIR" (NIfTI header/image pair), or any of these with "_GZ" appended for the equivalent formats compressed with gzip(1). If the format is not specified, it will be taken from the TRACTOR_FILETYPE environment variable, or "NIFTI_GZ" if that is not set. An Analyze/NIfTI data type code can also be specified with the TypeCode option, perhaps for compatibility with other software.
 
 library(tractor.base)
 
@@ -17,14 +11,28 @@ runExperiment <- function ()
     if (!is.null(datatype))
         datatype <- getDataTypeByNiftiCode(datatype)
     
-    image <- newMriImageFromFile(Arguments[1])
-    
-    if (nArguments() > 1)
-        writeMriImageToFile(image, fileType=toupper(Arguments[2]), datatype=datatype)
+    # Last argument is interpreted as a file type if valid
+    if (nArguments() > 1 && isTRUE(toupper(Arguments[nArguments()]) %in% .FileTypes$typeNames))
+    {
+        fileType <- toupper(Arguments[nArguments()])
+        imageFileNames <- Arguments[-nArguments()]
+    }
     else if (is.null(getOption("tractorFileType")))
+    {
+        # This should never happen with current .First.lib(), but keeping check here to be sure
         output(OL$Error, "No default file type is available - format must be given")
+    }
     else
-        writeMriImageToFile(image, fileType=getOption("tractorFileType"), datatype=datatype)
+    {
+        fileType <- getOption("tractorFileType")
+        imageFileNames <- Arguments
+    }
+    
+    for (fileName in imageFileNames)
+    {
+        image <- newMriImageFromFile(fileName)
+        writeMriImageToFile(image, fileType=fileType, datatype=datatype)
+    }
     
     invisible(NULL)
 }
