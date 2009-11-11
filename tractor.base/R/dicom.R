@@ -573,6 +573,8 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
         types <- character(0)
         values <- character(0)
         
+        sequenceLevel <- 0
+        
         seek(connection, where=tagOffset)
         repeat
         {
@@ -586,7 +588,17 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
             }
             currentElement <- readBin(connection, "integer", n=1, size=2, signed=FALSE, endian=endian)
             
-            if (explicitTypes)
+            # Sequence related tags are always untyped
+            if (currentGroup == 0xfffe)
+            {
+                # End of sequence delimiter
+                if (sequenceLevel > 0 && currentElement == 0xe0dd)
+                    sequenceLevel <- sequenceLevel - 1
+                
+                lengthSize <- 4
+                type <- "UN"
+            }
+            else if (explicitTypes)
             {
                 type <- rawToCharQuiet(readBin(connection, "raw", n=2))
                 if (any(.Dicom$longTypes == type))
@@ -607,20 +619,36 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
             
             length <- readBin(connection, "integer", n=1, size=lengthSize, signed=FALSE, endian=endian)
             
-            if (any(c("OX","OW","OB","UN") == type))
+            output(OL$Debug, "Group ", sprintf("0x%04x",currentGroup), ", element ", sprintf("0x%04x",currentElement), ", type ", type, ", length ", length, ifelse(sequenceLevel>0," (in sequence)",""))
+            
+            if (any(c("OX","OW","OB","UN") == type) || sequenceLevel > 0)
             {
                 if ((currentGroup == 0x7fe0) && (currentElement == 0x0010))
                 {
                     dataOffset <- seek(connection, where=NA)
                     dataLength <- length
                 }
-                seek(connection, where=length, origin="current")
+                
+                if (type == "SQ" && length == -1)
+                    sequenceLevel <- sequenceLevel + 1
+                else if (length > 0)
+                    seek(connection, where=length, origin="current")
+                
                 next
             }
             
             groups <- c(groups, currentGroup)
             elements <- c(elements, currentElement)
             types <- c(types, type)
+            
+            # Handle sequences of indeterminate length (to date only seen in Philips data)
+            if (type == "SQ" && length == -1)
+            {
+                if (sequenceLevel == 0)
+                    values <- c(values, "(Sequence)")
+                sequenceLevel <- sequenceLevel + 1
+                next
+            }
             
             if (any(.Dicom$nonCharTypes$codes == type))
             {
