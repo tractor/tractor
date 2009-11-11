@@ -27,7 +27,7 @@ interpolatePng <- function (oldFile, newFile, newDims, filter = "Mitchell")
 
 writePng <- function (data, colourScale = 1, fileName = NULL, windowLimits = NULL)
 {
-    if (capabilities()["png"] == FALSE)
+    if (capabilities("png") == FALSE)
         output(OL$Error, "PNG output capability required")
     if (is.null(fileName))
         output(OL$Error, "File name must be specified")

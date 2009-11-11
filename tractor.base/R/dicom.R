@@ -31,7 +31,7 @@
             else
             {
                 value <- unlist(strsplit(as.vector(valueRow$values), "\\", fixed=TRUE))
-                if (capabilities()["iconv"] == TRUE)
+                if (capabilities("iconv") == TRUE)
                     value <- iconv(value, "", "LATIN1", sub="byte")
                 value <- gsub("^\\s*(.+?)\\s*$", "\\1", value, perl=TRUE)
                 
