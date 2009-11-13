@@ -574,6 +574,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
         values <- character(0)
         
         sequenceLevel <- 0
+        duplicateTags <- FALSE
         
         seek(connection, where=tagOffset)
         repeat
@@ -621,7 +622,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
             
             output(OL$Debug, "Group ", sprintf("0x%04x",currentGroup), ", element ", sprintf("0x%04x",currentElement), ", type ", type, ", length ", length, ifelse(sequenceLevel>0," (in sequence)",""))
             
-            if (any(c("OX","OW","OB","UN") == type) || sequenceLevel > 0)
+            if (any(c("OX","OW","OB","UN") == type) || (type == "SQ" && sequenceLevel > 0))
             {
                 if ((currentGroup == 0x7fe0) && (currentElement == 0x0010))
                 {
@@ -632,6 +633,14 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
                 if (type == "SQ" && length == -1)
                     sequenceLevel <- sequenceLevel + 1
                 else if (length > 0)
+                    seek(connection, where=length, origin="current")
+                
+                next
+            }
+            else if (any(groups==currentGroup & elements==currentElement))
+            {
+                duplicateTags <- TRUE
+                if (length > 0)
                     seek(connection, where=length, origin="current")
                 
                 next
@@ -660,7 +669,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
                     value <- readBin(connection, "integer", n=nValues, size=size, signed=.Dicom$nonCharTypes$isSigned[loc], endian=endian)
                 else
                     value <- readBin(connection, "double", n=nValues, size=size, endian=endian)
-                    
+                
                 if (nValues > 1)
                     values <- c(values, implode(value,sep="\\"))
                 else
@@ -676,6 +685,9 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
             invisible (NULL)
         else
         {
+            if (duplicateTags)
+                flag(OL$Warning, "Duplicated DICOM tags detected - only the first value will be kept")
+            
             tags <- data.frame(groups=groups, elements=elements, types=types, values=values, stringsAsFactors=FALSE)
             invisible (.DicomMetadata(fileName, tags, tagOffset, dataOffset, dataLength, explicitTypes, endian))
         }
