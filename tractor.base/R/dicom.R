@@ -126,21 +126,18 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
     if (is.na(columns))
         columns <- dataColumns
     
-    slices <- dicom$getTagValue(0x0019, 0x100a)
-    if (is.na(slices))
+    # Tags are "Siemens # images in mosaic", "# frames", "Philips # slices"
+    slices <- c(dicom$getTagValue(0x0019,0x100a), dicom$getTagValue(0x0028,0x0008), dicom$getTagValue(0x2001,0x1018))
+    if (all(is.na(slices)))
+        slices <- NULL
+    else
+        slices <- slices[!is.na(slices)][1]
+    
+    if (rows != dataRows || columns != dataColumns)
     {
-        if (rows == dataRows && columns == dataColumns)
-            slices <- NULL
-        else if (rows == dataColumns && columns == dataRows)
+        # Siemens mosaic format
+        if (identical(dicom$getTagValue(0x0008,0x0070), "SIEMENS"))
         {
-            flag(OL$Info, "Data matrix is transposed relative to acquisition matrix")
-            rows <- dataRows
-            columns <- dataColumns
-            slices <- NULL
-        }
-        else if (identical(dicom$getTagValue(0x0008,0x0070), "SIEMENS"))
-        {
-            # Siemens mosaic format
             slices <- (dataRows/rows) * (dataColumns/columns)
             if (slices != floor(slices))
             {
@@ -152,8 +149,11 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
         }
         else
         {
-            # Image upsampled or downsampled after acquisition, e.g. by zero filling
-            slices <- NULL
+            if (rows == dataColumns && columns == dataRows)
+                flag(OL$Info, "Data matrix is transposed relative to acquisition matrix")
+            else
+                flag(OL$Info, "Image has been upsampled or downsampled after acquisition")
+
             rows <- dataRows
             columns <- dataColumns
         }
@@ -231,18 +231,23 @@ newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE)
     }
     else if (nDims == 3)
     {
-        # Handle Siemens mosaic images, which encapsulate a whole 3D image in
-        # a single-frame DICOM file
-        mosaicDims <- c(fileMetadata$getTagValue(0x0028, 0x0010), fileMetadata$getTagValue(0x0028, 0x0011))
-        mosaicGrid <- mosaicDims / dims[1:2]
-        mosaicCellDims <- mosaicDims / mosaicGrid
-        gridColumns <- rep(1:mosaicGrid[2], times=mosaicDims[2], each=mosaicCellDims[1])
-        gridRows <- rep(1:mosaicGrid[1], each=mosaicCellDims[2]*mosaicDims[1])
-        
-        data <- array(NA, dim=dims)
-        sliceList <- tapply(pixels, list(gridColumns,gridRows), "[")
-        for (i in seq_len(dims[3]))
-            data[,,i] <- sliceList[[i]]
+        if (identical(fileMetadata$getTagValue(0x0008,0x0070), "SIEMENS"))
+        {
+            # Handle Siemens mosaic images, which encapsulate a whole 3D image in
+            # a single-frame DICOM file
+            mosaicDims <- c(fileMetadata$getTagValue(0x0028, 0x0010), fileMetadata$getTagValue(0x0028, 0x0011))
+            mosaicGrid <- mosaicDims / dims[1:2]
+            mosaicCellDims <- mosaicDims / mosaicGrid
+            gridColumns <- rep(1:mosaicGrid[2], times=mosaicDims[2], each=mosaicCellDims[1])
+            gridRows <- rep(1:mosaicGrid[1], each=mosaicCellDims[2]*mosaicDims[1])
+
+            data <- array(NA, dim=dims)
+            sliceList <- tapply(pixels, list(gridColumns,gridRows), "[")
+            for (i in seq_len(dims[3]))
+                data[,,i] <- sliceList[[i]]
+        }
+        else
+            data <- array(pixels, dim=dims)
         
         if (flipY)
             data <- data[,(dims[2]:1),]
