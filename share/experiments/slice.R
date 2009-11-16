@@ -19,6 +19,14 @@ runExperiment <- function ()
     x <- getWithDefault("X", NA, "numeric", errorIfInvalid=TRUE)
     y <- getWithDefault("Y", NA, "numeric", errorIfInvalid=TRUE)
     z <- getWithDefault("Z", NA, "numeric", errorIfInvalid=TRUE)
+    windowLimits <- getWithDefault("WindowLimits", NULL, "character")
+    
+    if (!is.null(windowLimits))
+    {
+        windowLimits <- splitAndConvertString(windowLimits, ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
+        if (length(windowLimits) != 2)
+            output(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
+    }
     
     point <- round(c(x,y,z))
     nas <- is.na(point)
@@ -31,5 +39,5 @@ runExperiment <- function ()
     
     point[nas] <- NA
     
-    createSliceGraphic(image, point[1], point[2], point[3], device="png", file=outputFile)
+    createSliceGraphic(image, point[1], point[2], point[3], device="png", file=outputFile, windowLimits=windowLimits)
 }

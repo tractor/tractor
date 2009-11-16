@@ -16,11 +16,19 @@ runExperiment <- function ()
     if (length(axis) != 1 || !(axis %in% 1:3))
         output(OL$Error, "Projection axis must be specified as a letter (x-z) or number (1-3)")
     
+    windowLimits <- getWithDefault("WindowLimits", NULL, "character")
+    if (!is.null(windowLimits))
+    {
+        windowLimits <- splitAndConvertString(windowLimits, ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
+        if (length(windowLimits) != 2)
+            output(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
+    }
+    
     if (nArguments() > 2)
         outputFile <- Arguments[3]
     else
         outputFile <- image$getSource()
 
     projectionNames <- c("sagittal", "coronal", "axial")    
-    createProjectionGraphic(image, axis, device="png", file=paste(outputFile,projectionNames[axis],sep="_"))
+    createProjectionGraphic(image, axis, device="png", file=paste(outputFile,projectionNames[axis],sep="_"), windowLimits=windowLimits)
 }
