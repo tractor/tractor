@@ -48,8 +48,6 @@ runExperiment <- function ()
     
     for (series in uniqueSeries)
     {
-        dir.create(file.path(directory, series))
-        
         matchingFiles <- which(seriesNumbers==series)
         if (length(matchingFiles) > 0)
         {
@@ -57,7 +55,9 @@ runExperiment <- function ()
             description <- metadata$getTagValue(0x0008, 0x103e)
             output(OL$Info, "Series ", series, " includes ", length(matchingFiles), " files; description is \"", description, "\"")
             
-            success <- file.copy(files[matchingFiles], file.path(directory,series,basename(files[matchingFiles])))
+            subdirectory <- paste(series, gsub("\\W","",description,perl=TRUE), sep="_")
+            dir.create(file.path(directory, subdirectory))
+            success <- file.copy(files[matchingFiles], file.path(directory,subdirectory,basename(files[matchingFiles])))
 
             if (!all(success))
                 output(OL$Warning, "Not all files copied successfully for series ", series, " - nothing will be deleted")
