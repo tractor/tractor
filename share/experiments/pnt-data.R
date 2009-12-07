@@ -22,7 +22,6 @@ runExperiment <- function ()
     nSamples <- getWithDefault("NumberOfSamples", 5000)
     datasetName <- getWithDefault("DatasetName", "data")
     resume <- getWithDefault("Resume", FALSE)
-    tempDirectory <- getWithDefault("TempDirectory", NULL)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     
@@ -60,15 +59,7 @@ runExperiment <- function ()
         }
         else
         {
-            if (!is.null(tempDirectory))
-            {
-                if (!file.exists(tempDirectory))
-                    dir.create(tempDirectory)
-                file.copy(sessionList[i], tempDirectory, recursive=TRUE)
-                currentSession <- newSessionFromDirectory(file.path(tempDirectory, basename(sessionList[i])))
-            }
-            else
-                currentSession <- newSessionFromDirectory(sessionList[i])
+            currentSession <- newSessionFromDirectory(sessionList[i])
         
             if (exists("seedMatrix"))
                 currentSeed <- seedMatrix[i,]
@@ -77,13 +68,10 @@ runExperiment <- function ()
         
             if (pointType == "mm")
                 currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("t2")), useOrigin=TRUE)
-            
+        
             splines <- calculateSplinesForNeighbourhood(currentSession, currentSeed, reference, searchWidth, faThreshold, nSamples)
             data <- createDataTableForSplines(splines, reference$getTract(), "knot", subjectId=i)
             write.table(data, file=sessionDatasetName)
-            
-            if (!is.null(tempDirectory))
-                unlink(currentSession$getBaseDirectory(), recursive=TRUE)
         }
         
         if (is.null(allData))
