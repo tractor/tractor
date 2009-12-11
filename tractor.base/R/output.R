@@ -30,8 +30,9 @@ output <- function (level, ..., default = NULL, showDepth = TRUE, toReport = FAL
     if (length(runExperimentCallLoc) == 1)
         callStrings <- callStrings[-seq_len(runExperimentCallLoc-1)]
     callStrings <- callStrings[setdiff(seq_along(callStrings), which(callStrings %~% "([tT]ryCatch|Error)"))]
+    stackDepth <- length(callStrings)
 
-    nStars <- ifelse(showDepth, length(callStrings), 0)
+    nStars <- ifelse(showDepth, stackDepth, 0)
     leadingSpace <- ifelse(usePrefix && (nStars > 0), implode(rep("* ", nStars)), "")
     if ((level < OL$Question) && (outputLevel <= level))
         cat(paste(leadingSpace, ifelse(usePrefix,prefixStrings[level],""), ..., "\n", sep=""))
@@ -50,7 +51,7 @@ output <- function (level, ..., default = NULL, showDepth = TRUE, toReport = FAL
         if (toReport && isTRUE(getOption("tractorOutputErrors")))
             cat(paste(leadingSpace, "ERROR: ", ..., "\n", sep=""))
         
-        if (outputLevel == OL$Debug && !(callStrings[length(callStrings)] %~% "^(\\* )*stop\\("))
+        if (outputLevel == OL$Debug && !(stackDepth > 1 && callStrings[stackDepth-1] %~% "^(\\* )*output\\("))
         {
             cat("--- Begin stack trace ---\n")
             for (i in 1:length(callStrings))
