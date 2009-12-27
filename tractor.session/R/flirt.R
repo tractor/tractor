@@ -67,6 +67,75 @@ deserialiseAffineTransform3D <- function (file = NULL, object = NULL)
     invisible (transform)
 }
 
+decomposeAffineTransform3D <- function (transform)
+{
+    if (!isAffineTransform3D(transform))
+        output(OL$Error, "The specified transformation is not an AffineTransform3D object")
+    if (transform$getTransformType() != "flirt")
+        output(OL$Error, "The specified transformation is not a FLIRT matrix")
+    
+    # Full matrix is rotationX %*% rotationY %*% rotationZ %*% skew %*% scale
+    matrix <- transform$getMatrix()
+    submatrix <- matrix[1:3,1:3]
+    sm <- list(x=submatrix[,1], y=submatrix[,2], z=submatrix[,3])
+    xLength <- vectorLength(sm$x)
+    yLength <- sqrt((sm$y %*% sm$y) - (sm$x %*% sm$y)^2 / xLength^2)
+    xyProj <- (sm$x %*% sm$y) / (xLength * yLength)
+    xNorm <- sm$x / xLength
+    yNorm <- (sm$y / yLength) - (xyProj * xNorm)
+    zLength <- sqrt((sm$z %*% sm$z) - (xNorm %*% sm$z)^2 - (yNorm %*% sm$z)^2)
+    xzProj <- (xNorm %*% sm$z) / zLength
+    yzProj <- (yNorm %*% sm$z) / zLength
+    
+    scales <- c(xLength, yLength, zLength)
+    scaleMatrix <- diag(scales)
+    skews <- c(xyProj, xzProj, yzProj)
+    skewMatrix <- diag(3)
+    skewMatrix[c(4,7,8)] <- skews
+    translation <- matrix[1:3,4]
+    
+    rotationMatrix <- submatrix %*% solve(scaleMatrix) %*% solve(skewMatrix)
+    pitchAngle <- asin(-rotationMatrix[1,3])
+    if (cos(pitchAngle) < 1e-4)
+    {
+        # Degenerate case (Gimbal lock) - fix yaw angle at zero
+        rollAngle <- atan2(-rotationMatrix[3,2], rotationMatrix[2,2])
+        yawAngle <- 0
+    }
+    else
+    {
+        rollAngle <- atan2(rotationMatrix[2,3], rotationMatrix[3,3])
+        yawAngle <- atan2(rotationMatrix[1,2], rotationMatrix[1,1])
+    }
+    angles <- c(rollAngle, pitchAngle, yawAngle)
+    
+    return (list(scaleMatrix=scaleMatrix, skewMatrix=skewMatrix, rotationMatrix=rotationMatrix, translation=translation, scales=scales, skews=skews, angles=angles))
+}
+
+readEddyCorrectTransformsForSession <- function (session, index = NULL)
+{
+    if (!isMriSession(session))
+        output(OL$Error, "Specified session is not an MriSession object")
+    
+    logFile <- file.path(session$getPreBedpostDirectory(), "data.ecclog")
+    if (!file.exists(logFile))
+        output(OL$Error, "Eddy current correction log not found")
+    logLines <- readLines(logFile)
+    logLines <- subset(logLines, logLines %~% "^[0-9\\-\\. ]+$")
+    
+    connection <- textConnection(logLines)
+    matrices <- as.matrix(read.table(connection))
+    close(connection)
+    
+    if (is.null(index))
+        index <- seq_len(nrow(matrices) / 4)
+    
+    imageMetadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("t2"))
+    transforms <- lapply(index, function (i) { .AffineTransform3D(matrices[(((i-1)*4)+1):(i*4),], "flirt", imageMetadata, imageMetadata) })
+    
+    invisible (transforms)
+}
+
 checkFlirtCacheForTransform <- function (sourceFile, destFile)
 {
     cacheIndexFile <- file.path(tempdir(), "flirt-cache", "index.txt")
