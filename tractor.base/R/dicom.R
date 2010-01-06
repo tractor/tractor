@@ -323,6 +323,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
 
     output(OL$Info, "Reading image information from ", nFiles, " files")
     seriesNumbers <- numeric(0)
+    seriesDescriptions <- character(0)
     acquisitionNumbers <- numeric(0)
     imageNumbers <- numeric(0)
     sliceLocations <- numeric(0)
@@ -346,6 +347,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         }
 
         seriesNumbers <- c(seriesNumbers, metadata$getTagValue(0x0020,0x0011))
+        seriesDescriptions <- c(seriesDescriptions, metadata$getTagValue(0x0008,0x103e))
         acquisitionNumbers <- c(acquisitionNumbers, metadata$getTagValue(0x0020,0x0012))
         imageNumbers <- c(imageNumbers, metadata$getTagValue(0x0020,0x0013))
         sliceLocations <- c(sliceLocations, metadata$getTagValue(0x0020,0x1041))
@@ -515,7 +517,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     imageMetadata <- newMriImageMetadataFromTemplate(images[[1]]$getMetadata(), imageDims=imageDims[dimsToKeep], voxelDims=voxelDims[dimsToKeep], origin=origin[dimsToKeep])
     image <- newMriImageWithData(data, imageMetadata)
     
-    returnValue <- list(image=image)
+    returnValue <- list(image=image, seriesDescriptions=unique(seriesDescriptions))
     if (readDiffusionParams)
         returnValue <- c(returnValue, list(bValues=volumeBValues, bVectors=volumeBVectors))
     

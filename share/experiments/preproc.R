@@ -28,11 +28,13 @@ runExperiment <- function ()
     stages <- getWithDefault("RunStages", "12345")
     skipCompleted <- getWithDefault("SkipCompletedStages", TRUE)
     dicomDir <- getWithDefault("DicomDirectory", NULL, "character")
+    useGradientCache <- getWithDefault("UseGradientCache", "never", validValues=c("first","second","never"))
+    rotateGradients <- getWithDefault("RotateGradients", FALSE)
     betIntensityThreshold <- getWithDefault("BetIntensityThreshold", 0.5)
     betVerticalGradient <- getWithDefault("BetVerticalGradient", 0)
     flipAxes <- getWithDefault("FlipGradientAxes", NULL, "character")
     nFibres <- getWithDefault("NumberOfFibres", NULL, "integer")
-    howRunBedpost <- getWithDefault("HowRunBedpost", "auto")
+    howRunBedpost <- getWithDefault("HowRunBedpost", "auto", validValues=c("auto","screen","bg","fg"))
     
     if (interactive && getOption("tractorOutputLevel") > OL$Info)
         setOutputLevel(OL$Info)
@@ -54,11 +56,31 @@ runExperiment <- function ()
         if (runStages[1] && (!skipCompleted || !imageFileExists(file.path(targetDir,"basic"))))
         {
             createFilesForSession(session, dicomDir, overwriteQuietly=(!interactive))
+            if (useGradientCache == "first" || (useGradientCache == "second" && !gradientDirectionsAvailableForSession(session)))
+            {
+                gradientSet <- checkGradientCacheForSession(session)
+                if (!is.null(gradientSet))
+                {
+                    output(OL$Info, "Gradient cache hit - using stored gradient scheme")
+                    write.table(t(gradientSet[,1:3]), file.path(targetDir,"bvecs"), row.names=FALSE, col.names=FALSE)
+                    write.table(t(gradientSet[,4,drop=FALSE]), file.path(targetDir,"bvals"), row.names=FALSE, col.names=FALSE)
+                }
+            }
+            
+            if (!gradientDirectionsAvailableForSession(session))
+                output(OL$Warning, "Diffusion gradient information not available - you need to create bvals and bvecs files manually")
+            
             reportFlags()
         }
     
         if (runStages[2] && (!skipCompleted || !imageFileExists(file.path(targetDir,"nodif"))))
+        {
+            updateGradientCacheFromSession(session)
             runEddyCorrectWithSession(session, ask=interactive)
+            
+            if (rotateGradients)
+                rotateGradientVectorsForSession(session)
+        }
     
         if (runStages[3] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("mask"))))
         {

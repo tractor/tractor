@@ -174,27 +174,15 @@ createFilesForSession <- function (session, dicomDir = NULL, overwriteQuietly = 
     targetDir <- session$getPreBedpostDirectory()
     writeMriImageToFile(info$image, file.path(targetDir,"basic"))
     info$image$summarise()
+    
+    seriesDescriptions <- implode(gsub("\\W","",info$seriesDescriptions,perl=TRUE), ",")
+    writeLines(seriesDescriptions, file.path(targetDir,"descriptions.txt"))
 
-    if (any(is.na(info$bValues)))
-        output(OL$Warning, "Diffusion b-values could not be found in the DICOM files; you need to create a bvals file manually")
-    else
+    if (all(!is.na(info$bValues)))
         write.table(matrix(info$bValues,nrow=1), file.path(targetDir,"bvals"), row.names=FALSE, col.names=FALSE)
 
-    if (any(is.na(info$bVectors)))
-        output(OL$Warning, "Diffusion gradient vectors could not be found in the DICOM files; you need to create a bvecs file manually")
-    else
+    if (all(!is.na(info$bVectors)))
         write.table(info$bVectors, file.path(targetDir,"bvecs"), row.names=FALSE, col.names=FALSE)
-}
-
-flipGradientVectorsForSession <- function (session, axes)
-{
-    if (!isMriSession(session))
-        output(OL$Error, "Specified session is not an MriSession object")
-    
-    fileName <- file.path(session$getPreBedpostDirectory(), "bvecs")
-    bvecs <- as.matrix(read.table(fileName))
-    bvecs[axes,] <- (-bvecs[axes,])
-    write.table(bvecs, fileName, row.names=FALSE, col.names=FALSE)
 }
 
 createCaminoFilesForSession <- function (session)
