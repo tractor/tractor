@@ -56,8 +56,10 @@ updateGradientCacheFromSession <- function (session)
     seriesDescriptions <- readLines(descriptionsFile, 1)
     
     cacheDirectory <- file.path(Sys.getenv("HOME"), ".tractor", "gradient-cache")
-    cacheIndexFile <- file.path(cacheDirectory, "index.txt")
+    if (!file.exists(cacheDirectory))
+        dir.create(cacheDirectory)
     
+    cacheIndexFile <- file.path(cacheDirectory, "index.txt")
     if (!file.exists(cacheIndexFile))
     {
         cacheIndex <- NULL
