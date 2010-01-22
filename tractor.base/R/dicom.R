@@ -138,11 +138,20 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
         # Siemens mosaic format
         if (identical(dicom$getTagValue(0x0008,0x0070), "SIEMENS"))
         {
-            slices <- (dataRows/rows) * (dataColumns/columns)
-            if (slices != floor(slices))
+            slicesPerRow <- dataRows / rows
+            slicesPerColumn <- dataColumns / columns
+            if (slicesPerRow == floor(slicesPerRow) && slicesPerColumn == floor(slicesPerColumn))
+                slices <- slicesPerRow * slicesPerColumn
+            else
             {
-                flag(OL$Warning, "Image dimensions are not a multiple of the acquisition matrix size")
-                slices <- NULL
+                if (rows == dataColumns && columns == dataRows)
+                    flag(OL$Info, "Data matrix is transposed relative to acquisition matrix")
+                else
+                {
+                    flag(OL$Warning, "Image dimensions are not a multiple of the acquisition matrix size")
+                    slices <- NULL
+                }
+                
                 rows <- dataRows
                 columns <- dataColumns
             }
