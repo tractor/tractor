@@ -140,9 +140,7 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
         {
             slicesPerRow <- dataRows / rows
             slicesPerColumn <- dataColumns / columns
-            if (slicesPerRow == floor(slicesPerRow) && slicesPerColumn == floor(slicesPerColumn))
-                slices <- slicesPerRow * slicesPerColumn
-            else
+            if (slicesPerRow != floor(slicesPerRow) || slicesPerColumn != floor(slicesPerColumn))
             {
                 if (rows == dataColumns && columns == dataRows)
                     flag(OL$Info, "Data matrix is transposed relative to acquisition matrix")
