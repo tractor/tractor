@@ -26,7 +26,7 @@ runExperiment <- function ()
     data <- read.table(ensureFileSuffix(datasetName,"txt"))
     
     if (is.null(alphaPriorMean))
-        results <- runMatchingEMForDataTable(data, reference$getTract(), lengthCutoff=maxKnotCount, alphaOffset=alphaOffset, nullPrior=nullPrior, asymmetricModel=asymmetricModel)
+        results <- runMatchingEMForDataTable(data, reference$getTract(), lengthCutoff=maxKnotCount, nullPrior=nullPrior, asymmetricModel=asymmetricModel)
     else
         results <- runMatchingEMForDataTable(data, reference$getTract(), lengthCutoff=maxKnotCount, lambda=1/alphaPriorMean, alphaOffset=alphaOffset, nullPrior=nullPrior, asymmetricModel=asymmetricModel)
     
@@ -38,11 +38,14 @@ runExperiment <- function ()
 
     model$summarise()
     
-    # This test is redundant with alphaOffset=1, but it's left in for now
-    alphas <- model$getAlphas()
-    subUnityCount <- sum(alphas < 1, na.rm=TRUE)
-    if (subUnityCount >= (length(alphas)/2))
-        output(OL$Warning, "Half or more of the alphas are less than one - something is probably wrong")
-    else if (subUnityCount > 0)
-        output(OL$Warning, subUnityCount, " alpha value(s) less than one - the reference tract is a poor guide in these regions")
+    # This test is redundant if a prior was used with alphaOffset >= 1
+    if (is.null(alphaPriorMean))
+    {
+        alphas <- model$getAlphas()
+        subUnityCount <- sum(alphas < 1, na.rm=TRUE)
+        if (subUnityCount >= (length(alphas)/2))
+            output(OL$Warning, "Half or more of the alphas are less than one - something is probably wrong")
+        else if (subUnityCount > 0)
+            output(OL$Warning, subUnityCount, " alpha value(s) less than one - the reference tract is a poor guide in these regions")
+    }
 }
