@@ -140,6 +140,8 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
         {
             slicesPerRow <- dataRows / rows
             slicesPerColumn <- dataColumns / columns
+            if (is.null(slices))
+                slices <- slicesPerRow * slicesPerColumn
             if (slicesPerRow != floor(slicesPerRow) || slicesPerColumn != floor(slicesPerColumn))
             {
                 if (rows == dataColumns && columns == dataRows)
