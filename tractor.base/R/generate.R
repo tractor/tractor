@@ -24,7 +24,12 @@ generateImageDataForShape <- function (type = c("cross","block"), dim, backgroun
         steps <- buildStepVectors(width)
         if (type == "cross")
             steps <- steps[, colSums(steps!=0) < 2]
-        data[t(centre+steps)] <- 1
+        
+        locs <- t(centre + steps)
+        outOfBounds <- as.logical(colSums(apply(locs,1,">",dim) + t(locs<=0)))
+        locs <- locs[!outOfBounds,]
+        
+        data[locs] <- 1
     }
     
     invisible (data)
