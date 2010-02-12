@@ -11,11 +11,11 @@ runExperiment <- function ()
     requireArguments("session directory")
     session <- newSessionFromDirectory(Arguments[1])
     
-    nSamples <- getWithDefault("NumberOfSamples", 5000)
     seedMaskFile <- getWithDefault("SeedMaskFile", NULL, "character", errorIfInvalid=TRUE, errorIfMissing=TRUE)
     seedMaskInStandardSpace <- getWithDefault("SeedMaskInStandardSpace", FALSE)
     thresholdType <- getWithDefault("SeedThresholdType", "fa")
     thresholdLevel <- getWithDefault("SeedThresholdLevel", NULL, "numeric", errorIfInvalid=TRUE)
+    nSamples <- getWithDefault("NumberOfSamples", 5000)
     
     createVolumes <- getWithDefault("CreateVolumes", FALSE)
     createImages <- getWithDefault("CreateImages", FALSE)
@@ -44,11 +44,11 @@ runExperiment <- function ()
             output(OL$Info, "Rejecting ", nrow(seeds)-length(validSeeds), " seed points as below threshold")
         }
         
-        runProbtrackWithSession(session, seeds[validSeeds,], requireFile=TRUE)
+        runProbtrackWithSession(session, seeds[validSeeds,], requireFile=TRUE, nSamples=nSamples)
         for (d in validSeeds)
         {
             prefix <- paste(tractName, implode(seeds[d,],sep="_"), sep="_")
-            ptResult <- runProbtrackWithSession(session, seeds[d,], requireImage=TRUE, expectExists=TRUE)
+            ptResult <- runProbtrackWithSession(session, seeds[d,], requireImage=TRUE, nSamples=nSamples, expectExists=TRUE)
             
             if (createVolumes)
                 writeMriImageToFile(ptResult$image, prefix)
