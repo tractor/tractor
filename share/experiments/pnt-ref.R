@@ -19,6 +19,7 @@ runExperiment <- function ()
     pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
     isStandardSeed <- getWithDefault("SeedInMNISpace", FALSE)
     nSamples <- getWithDefault("NumberOfSamples", 5000)
+    maxAngle <- getWithDefault("MaximumAngle", NULL, "numeric")
     tractName <- getWithDefault("TractName", "tract")
     
     lengthQuantile <- getWithDefault("LengthQuantile", 0.99)
@@ -27,7 +28,7 @@ runExperiment <- function ()
     seed <- getNativeSpacePointForSession(session, seed, pointType, isStandardSeed)
     
     options <- createTractOptionList("knot", lengthQuantile, registerToReference, NULL, NULL)
-    returnValue <- referenceSplineTractWithOptions(options, session, seed, nSamples=nSamples)
+    returnValue <- referenceSplineTractWithOptions(options, session, seed, nSamples=nSamples, maxAngle=maxAngle)
     
     reference <- newReferenceTractWithTract(returnValue$spline, nativeSeed=seed, session=session, options=returnValue$options)
     writeNTResource(reference, "reference", "pnt", list(tractName=tractName))

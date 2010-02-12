@@ -10,7 +10,7 @@ isTractOptionList <- function (object)
     return ("options.tract" %in% class(object))
 }
 
-splineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)
+streamlineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)
 {
     if (!isTractOptionList(options))
         output(OL$Error, "Tract representation options must be specified as a TractOptionList")
@@ -26,15 +26,23 @@ splineTractWithOptions <- function (options, session, seed, refSession = NULL, n
         
         streamline <- newStreamlineTractByTransformation(streamline, transform)
     }
+    
+    invisible (streamline)
+}
+
+splineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)
+{
+    streamline <- streamlineTractWithOptions(options, session, seed, refSession, nSamples, rightwardsVector)
     spline <- newBSplineTractFromStreamline(streamline, knotSpacing=options$knotSpacing)
     
     invisible (spline)
 }
 
-referenceSplineTractWithOptions <- function (options, refSession, refSeed, nSamples = 5000)
+referenceSplineTractWithOptions <- function (options, refSession, refSeed, nSamples = 5000, maxAngle = NULL)
 {
     refOptions <- createTractOptionList(options$pointType, options$lengthQuantile, FALSE, NULL, options$maxPathLength)
-    refSpline <- splineTractWithOptions(refOptions, refSession, refSeed, nSamples=nSamples)
+    streamline <- streamlineTractWithOptions(refOptions, refSession, refSeed, nSamples=nSamples)
+    refSpline <- newBSplineTractFromStreamlineWithConstraints(streamline, maxAngle=maxAngle)
     
     options$knotSpacing <- refSpline$getKnotSpacing()
     

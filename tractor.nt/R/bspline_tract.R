@@ -148,6 +148,42 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
     }
 }
 
+newBSplineTractFromStreamlineWithConstraints <- function (streamlineTract, ..., maxAngle = NULL)
+{
+    bSplineTract <- newBSplineTractFromStreamline(streamlineTract, ...)
+    
+    # Iterative spline fitting process
+    repeat
+    {
+        if (is.na(bSplineTract))
+            break
+        
+        if (!is.null(maxAngle))
+        {
+            steps <- characteriseSplineStepVectors(bSplineTract, "knot")
+
+            leftSharp <- which(steps$leftAngles > maxAngle)
+            rightSharp <- which(steps$rightAngles > maxAngle)
+
+            leftStop <- ifelse(length(leftSharp) > 0, min(leftSharp), steps$leftLength+1)
+            rightStop <- ifelse(length(rightSharp) > 0, min(rightSharp), steps$rightLength+1)
+            leftCount <- steps$leftLength - leftStop + 1
+            rightCount <- steps$rightLength - rightStop + 1
+        }
+
+        if (leftCount == 0 && rightCount == 0)
+            break
+        else
+        {
+            output(OL$Info, "Trimming ", leftCount, " left side and ", rightCount, " right side knots")
+            streamlineTract <- newStreamlineTractByTrimming(streamlineTract, leftCount*bSplineTract$getKnotSpacing(), rightCount*bSplineTract$getKnotSpacing())
+            bSplineTract <- newBSplineTractFromStreamline(streamlineTract, ...)
+        }
+    }
+    
+    invisible (bSplineTract)
+}
+
 getPointsForTract <- function (tract, pointType = c("control", "knot"))
 {
     if (!isBSplineTract(tract))
