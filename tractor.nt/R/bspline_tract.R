@@ -155,7 +155,7 @@ newBSplineTractFromStreamlineWithConstraints <- function (streamlineTract, ..., 
     # Iterative spline fitting process
     repeat
     {
-        if (is.na(bSplineTract))
+        if (!isBSplineTract(bSplineTract))
             break
         
         if (!is.null(maxAngle))

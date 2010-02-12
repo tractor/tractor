@@ -1,8 +1,5 @@
 #@args session directory, seed point
-#@desc Create a reference tract for probabilistic neighbourhood tractography. This
-#@desc requires a session and seed point. Users should not change the LengthQuantile
-#@desc and RegisterCandidatesToReference options from their defaults unless they know
-#@desc what they are doing.
+#@desc Create a reference tract for probabilistic neighbourhood tractography. This requires a session and seed point. A maximum angle between spline knots (in degrees) can be specified to avoid retaining aberrant parts of the tract distal to the seed. Users should not change the LengthQuantile and RegisterCandidatesToReference options from their defaults unless they know what they are doing.
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
@@ -28,7 +25,7 @@ runExperiment <- function ()
     seed <- getNativeSpacePointForSession(session, seed, pointType, isStandardSeed)
     
     options <- createTractOptionList("knot", lengthQuantile, registerToReference, NULL, NULL)
-    returnValue <- referenceSplineTractWithOptions(options, session, seed, nSamples=nSamples, maxAngle=maxAngle)
+    returnValue <- referenceSplineTractWithOptions(options, session, seed, nSamples=nSamples, maxAngle=(maxAngle/180*pi))
     
     reference <- newReferenceTractWithTract(returnValue$spline, nativeSeed=seed, session=session, options=returnValue$options)
     writeNTResource(reference, "reference", "pnt", list(tractName=tractName))
