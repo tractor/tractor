@@ -158,6 +158,8 @@ newBSplineTractFromStreamlineWithConstraints <- function (streamlineTract, ..., 
         if (!isBSplineTract(bSplineTract))
             break
         
+        leftCount <- rightCount <- 0
+        
         if (!is.null(maxAngle))
         {
             steps <- characteriseSplineStepVectors(bSplineTract, "knot")

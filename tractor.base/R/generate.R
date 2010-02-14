@@ -27,7 +27,7 @@ generateImageDataForShape <- function (type = c("cross","block"), dim, backgroun
         
         locs <- t(centre + steps)
         outOfBounds <- as.logical(colSums(apply(locs,1,">",dim) + t(locs<=0)))
-        locs <- locs[!outOfBounds,]
+        locs <- locs[!outOfBounds,,drop=FALSE]
         
         data[locs] <- 1
     }
