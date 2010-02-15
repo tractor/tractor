@@ -74,7 +74,12 @@ calculateSplinesForNeighbourhood <- function (testSession, testSeed, reference, 
         seed <- testSeed + stepVectors[,i]
         output(OL$Info, "Current seed point is ", implode(seed,sep=","), " (", i, "/", nSeeds, ")")
         
-        if (!is.na(fa$getDataAtPoint(seed)) && (fa$getDataAtPoint(seed) < faThreshold) && (i != middle))
+        if (any(seed <= 0 | seed > fa$getDimensions()))
+        {
+            output(OL$Info, "Skipping seed point because it's out of bounds")
+            splines <- c(splines, list(NA))
+        }
+        else if (!is.na(fa$getDataAtPoint(seed)) && (fa$getDataAtPoint(seed) < faThreshold) && (i != middle))
         {
             output(OL$Info, "Skipping seed point because FA < ", faThreshold)
             splines <- c(splines, list(NA))
