@@ -12,6 +12,9 @@ runExperiment <- function ()
     else
         fileName <- "."
     
+    if (!file.exists(fileName))
+        output(OL$Error, "Specified DICOM file or directory \"", fileName, "\" does not exist")
+    
     if (file.info(fileName)$isdir)
     {
         allFileNames <- list.files(fileName, full.names=TRUE)
