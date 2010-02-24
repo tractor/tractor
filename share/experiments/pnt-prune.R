@@ -15,7 +15,7 @@ runExperiment <- function ()
     resultsName <- getWithDefault("ResultsName", NULL, "character", errorIfMissing=TRUE)
     sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
     modelName <- getWithDefault("ModelName", NULL, "character")
-    sessionNumbers <- getWithDefault("SessionNumbers", NULL, "integer")
+    sessionNumbers <- getWithDefault("SessionNumbers", NULL, "character")
     
     nSamples <- getWithDefault("NumberOfSamples", 5000)
     subgroupSize <- getWithDefault("SubgroupSize", 500)
@@ -53,6 +53,8 @@ runExperiment <- function ()
     
     if (is.null(sessionNumbers))
         sessionNumbers <- 1:nSessions
+    else
+        sessionNumbers <- splitAndConvertString(sessionNumbers, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
     
     for (i in sessionNumbers)
     {

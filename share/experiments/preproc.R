@@ -25,7 +25,7 @@ runExperiment <- function ()
     targetDir <- session$getPreBedpostDirectory()
 
     interactive <- getWithDefault("Interactive", TRUE)
-    stages <- getWithDefault("RunStages", "12345")
+    stages <- getWithDefault("RunStages", "1-5")
     skipCompleted <- getWithDefault("SkipCompletedStages", TRUE)
     dicomDir <- getWithDefault("DicomDirectory", NULL, "character")
     useGradientCache <- getWithDefault("UseGradientCache", "never", validValues=c("first","second","never"))
