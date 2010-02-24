@@ -192,10 +192,18 @@ isValidAs <- function (value, mode)
     return (!any(is.na(coercedValue)))
 }
 
-splitAndConvertString <- function (string, split = "", mode = "character", errorIfInvalid = FALSE, ...)
+splitAndConvertString <- function (string, split = "", mode = "character", errorIfInvalid = FALSE, allowRanges = TRUE, ...)
 {
     values <- unlist(strsplit(string, split, ...))
-    values <- suppressWarnings(as(values, mode))
+    if (allowRanges && mode=="integer")
+    {
+        values <- unlist(lapply(values, function (x) {
+            x <- sub("(\\d)-", "\\1:", x, perl=TRUE)
+            eval(parse(text=x))
+        }))
+    }
+    else
+        values <- suppressWarnings(as(values, mode))
     
     if (errorIfInvalid && any(is.na(values)))
         output(OL$Error, "Specified list, \"", implode(string,sep=" "), "\", is not valid here")
