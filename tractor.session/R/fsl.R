@@ -105,7 +105,7 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     }
 }
 
-runBedpostWithSession <- function (session, nFibres = 2, how = c("auto","screen","bg","fg"), ask = TRUE)
+runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","screen"), ask = TRUE)
 {
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
@@ -128,25 +128,18 @@ runBedpostWithSession <- function (session, nFibres = 2, how = c("auto","screen"
     {
         unlink(session$getBedpostDirectory(), recursive=TRUE)
         
-        screenAvailable <- !is.null(locateExecutable("screen", errorIfMissing=FALSE))
-        if (how == "screen" || (how == "auto" && screenAvailable))
+        if (how == "screen")
         {
             output(OL$Info, "Starting bedpostx in a \"screen\" session")
             bedpostLoc <- locateExecutable("bedpostx", errorIfMissing=TRUE)
             paramString <- paste("-d -m", bedpostLoc, session$getPreBedpostDirectory(), "-n", nFibres, sep=" ")
             execute("screen", paramString, errorOnFail=TRUE)
         }
-        else if (how %in% c("auto","bg"))
-        {
-            output(OL$Info, "Starting bedpostx as a background process")
-            paramString <- paste(session$getPreBedpostDirectory(), "-n", nFibres, sep=" ")
-            execute("bedpostx", paramString, errorOnFail=TRUE, wait=FALSE)
-        }
         else
         {
-            output(OL$Info, "Starting bedpostx as a normal foreground process")
+            output(OL$Info, "Starting bedpostx as a ", ifelse(how=="fg","normal foreground","background"), " process")
             paramString <- paste(session$getPreBedpostDirectory(), "-n", nFibres, sep=" ")
-            execute("bedpostx", paramString, errorOnFail=TRUE)
+            execute("bedpostx", paramString, errorOnFail=TRUE, wait=(how=="fg"))
         }
     }
 }

@@ -34,7 +34,7 @@ runExperiment <- function ()
     betVerticalGradient <- getWithDefault("BetVerticalGradient", 0)
     flipAxes <- getWithDefault("FlipGradientAxes", NULL, "character")
     nFibres <- getWithDefault("NumberOfFibres", NULL, "integer")
-    howRunBedpost <- getWithDefault("HowRunBedpost", "auto", validValues=c("auto","screen","bg","fg"))
+    howRunBedpost <- getWithDefault("HowRunBedpost", "fg", validValues=c("fg","bg","screen"))
     
     if (interactive && getOption("tractorOutputLevel") > OL$Info)
         setOutputLevel(OL$Info)
