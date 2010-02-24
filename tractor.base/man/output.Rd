@@ -23,7 +23,7 @@ setOutputLevel(level, usePrefix = NA)
   \item{usePrefix}{If \code{TRUE} or \code{FALSE}, set the \code{tractorUseOutputPrefix} option appropriately. \code{NA} means leave this option at its current value.}
 }
 \details{
-  The \code{tractor.base} package uses its own system for reporting messages, which provides certain useful features over the standard R system, such as the incorporation of output , automatic generation of stack traces for debugging, and conditional reporting based on the current "output level".
+  The \code{tractor.base} package uses its own system for reporting messages, which provides certain useful features over the standard R system, such as the incorporation of output consolidation, automatic generation of stack traces for debugging, and conditional reporting based on the current "output level".
   
   The output level is set by the \code{setOutputLevel} function, and governs whether a particular call to \code{output} will actually report anything. Output levels are described by the \code{OL} object, a list with components \code{Debug}, \code{Verbose}, \code{Info}, \code{Warning}, \code{Question} and \code{Error}; and any call to \code{output} using a level lower than the current output level will produce no output. If \code{output} is called before \code{setOutputLevel}, the output level will default to \code{OL$Info}.
   
