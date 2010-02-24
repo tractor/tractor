@@ -45,7 +45,11 @@ runExperiment <- function ()
         flipAxes <- flipAxes[!is.na(flipAxes)]
     }
     
-    runStages <- 1:5 %in% splitAndConvertString(stages, "", "integer", fixed=TRUE, errorIfInvalid=TRUE)
+    stages <- splitAndConvertString(stages, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
+    # Handle old format RunStages values
+    if (any(stages > 5))
+        stages <- splitAndConvertString(as.character(stages), "", "integer", fixed=TRUE, errorIfInvalid=TRUE)
+    runStages <- 1:5 %in% stages
     if (all(!runStages))
         output(OL$Info, "Nothing to do")
     
