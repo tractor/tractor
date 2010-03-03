@@ -7,10 +7,12 @@ getColourScale <- function (n)
     else
     {
         colours <- list(gray(0:99/99),
-                        heat.colors(100))
+                        heat.colors(100),
+                        rainbow(100, start=0.7, end=0.1))
     
         background <- list("black",
-                           "red")
+                           "red",
+                           "blue")
     
         return (list(colours=colours[[n]], background=background[[n]]))
     }
