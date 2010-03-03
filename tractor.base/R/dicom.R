@@ -383,26 +383,34 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     if (nDicomFiles == 0)
         output(OL$Error, "No readable DICOM files were found")
     
-    firstSliceDirection <- which(abs(sliceOrientation[1:3]) == 1) * sum(sliceOrientation[1:3])
-    secondSliceDirection <- which(abs(sliceOrientation[4:6]) == 1) * sum(sliceOrientation[4:6])
-    if (length(firstSliceDirection) != 1 || length(secondSliceDirection) != 1)
+    # The sum() function recovers the sign in the sapply() call here
+    sliceOrientation <- lapply(list(1:3,4:6), function (i) sliceOrientation[i])
+    sliceDirections <- sapply(sliceOrientation, function (x) which(abs(x) == 1) * sum(x))
+    
+    # Oblique slices case
+    if (!is.numeric(sliceDirections) || length(sliceDirections) != 2)
     {
-        roundedSliceOrientation <- round(sliceOrientation)
-        firstSliceDirection <- which(abs(roundedSliceOrientation[1:3]) == 1) * sum(roundedSliceOrientation[1:3])
-        secondSliceDirection <- which(abs(roundedSliceOrientation[4:6]) == 1) * sum(roundedSliceOrientation[4:6])
+        sliceDirections <- sapply(sliceOrientation, function (x) {
+            currentSliceDirection <- which.max(abs(x))
+            currentSliceDirection * sign(x[currentSliceDirection])
+        })
         
-        if (length(firstSliceDirection) == 1 || length(secondSliceDirection) == 1)
-            output(OL$Warning, "Slices appear to be oblique: mean offset is ", signif(mean(abs(sliceOrientation-roundedSliceOrientation)),3))
+        if (sliceDirections[1] == sliceDirections[2])
+            output(OL$Error, "DICOM slice orientation information is complex or nonsensical")
         else
-            output(OL$Error, "Slice orientation information is missing or complex")
+        {
+            angles <- sapply(list(1,2), function (i) acos(abs(sliceOrientation[[i]][abs(sliceDirections[i])]) / vectorLength(sliceOrientation[[i]])))
+            angles <- round(angles / pi * 180, 2)
+            output(OL$Warning, "Slices appear to be oblique: rotations from axes are ", implode(angles," and "), " deg")
+        }
     }
     
-    sliceDirections <- abs(c(firstSliceDirection, secondSliceDirection))
-    throughSliceDirection <- setdiff(1:3, abs(c(firstSliceDirection,secondSliceDirection)))
+    absoluteSliceDirections <- abs(sliceDirections)
+    throughSliceDirection <- setdiff(1:3, absoluteSliceDirections)
     output(OL$Info, "Slice select direction is ", LETTERS[24:26][throughSliceDirection])
     
     # If not TRUE, the data need flipping or transposing
-    isSimpleCase <- (firstSliceDirection > 0 && secondSliceDirection > 0 && equivalent(setdiff(1:3,throughSliceDirection),sliceDirections))
+    isSimpleCase <- (all(sliceDirections > 0) && equivalent(setdiff(1:3,throughSliceDirection),absoluteSliceDirections))
     if (!isSimpleCase)
         output(OL$Info, "DICOM files do not use a \"simple\" slice arrangement")
 
@@ -428,11 +436,11 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
             output(OL$Error, "Number of files (", nDicomFiles, ") is not a multiple of the number of slices detected (", nSlices, ")")
         
         imageDims <- c(NA, NA, NA, nVolumes)
-        imageDims[sliceDirections] <- images[[1]]$getDimensions()
+        imageDims[absoluteSliceDirections] <- images[[1]]$getDimensions()
         imageDims[throughSliceDirection] <- nSlices
         
         voxelDims <- c(NA, NA, NA, 1)
-        voxelDims[sliceDirections] <- images[[1]]$getVoxelDimensions()
+        voxelDims[absoluteSliceDirections] <- images[[1]]$getVoxelDimensions()
         voxelDims[throughSliceDirection] <- sliceDim
     }
 
@@ -478,14 +486,14 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
                     {
                         loc <- alist(x=, y=, z=, t=)
                         loc[[throughSliceDirection]] <- slice
-                        if (firstSliceDirection < 0)
-                            loc[[sliceDirections[1]]] <- imageDims[sliceDirections[1]]:1
-                        if (secondSliceDirection < 0)
-                            loc[[sliceDirections[2]]] <- imageDims[sliceDirections[2]]:1
+                        if (sliceDirections[1] < 0)
+                            loc[[absoluteSliceDirections[1]]] <- imageDims[absoluteSliceDirections[1]]:1
+                        if (sliceDirections[2] < 0)
+                            loc[[absoluteSliceDirections[2]]] <- imageDims[absoluteSliceDirections[2]]:1
                         loc$t <- volume
 
                         sliceData <- images[[slicePos]]$getData()
-                        if (sliceDirections[1] > sliceDirections[2])
+                        if (absoluteSliceDirections[1] > absoluteSliceDirections[2])
                             sliceData <- t(sliceData)
 
                         data <- do.call("[<-", c(list(data),loc,list(sliceData)))
