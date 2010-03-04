@@ -294,3 +294,30 @@ newMriImageByThresholding <- function (image, level, defaultValue = 0)
     newImage <- newMriImageWithSimpleFunction(image, thresholdFunction)
     invisible (newImage)
 }
+
+newMriImageByTrimming <- function (image, clearance = 4)
+{
+    if (!isMriImage(image))
+        output(OL$Error, "The specified image is not an MriImage object")
+    
+    data <- image$getData()
+    dims <- image$getDimensions()
+    indices <- lapply(seq_len(image$getDimensionality()), function (i) {
+        dimMax <- apply(data, i, max)
+        toKeep <- which(is.finite(dimMax) & dimMax > 0)
+        if (length(toKeep) == 0)
+            output(OL$Error, "Trimming the image would remove its entire contents")
+        minLoc <- max(1, min(toKeep)-clearance)
+        maxLoc <- min(dims[i], max(toKeep)+clearance)
+        return (minLoc:maxLoc)
+    })
+    
+    data <- do.call("[", c(list(data),indices,list(drop=FALSE)))
+    newDims <- sapply(indices, length)
+    
+    # NB: Origin is not corrected here
+    metadata <- newMriImageMetadataFromTemplate(image$getMetadata(), imageDims=newDims)
+    newImage <- newMriImageWithData(data, metadata)
+    
+    invisible (newImage)
+}
