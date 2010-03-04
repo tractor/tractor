@@ -87,6 +87,40 @@ createProjectionGraphic <- function (image, axis, device = c("internal","png"), 
     }
 }
 
+createContactSheetGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL, clearance = NULL)
+{
+    if (!isMriImage(image))
+        output(OL$Error, "The specified image is not an MriImage object")
+    if (image$getDimensionality() != 3)
+        output(OL$Error, "The \"createContactSheetGraphic\" function only handles 3D images")
+    
+    device <- match.arg(device)
+    
+    if (!is.null(clearance))
+        image <- newMriImageByTrimming(image, clearance)
+    
+    dims <- image$getDimensions()
+    nColumns <- ceiling(sqrt(dims[axis]))
+    nRows <- ceiling(dims[axis] / nColumns)
+    axisRelevance <- axis != 1:3
+    
+    data <- matrix(NA, nrow=nRows*dims[axisRelevance][2], ncol=nColumns*dims[axisRelevance][1])
+    for (i in seq_len(dims[axis]))
+    {
+        chunkRow <- (i-1) %/% nRows + 1
+        chunkCol <- (i-1) %% nRows + 1
+        rows <- ((chunkRow-1):chunkRow) * dims[axisRelevance][1] + 1:0
+        cols <- ((chunkCol-1):chunkCol) * dims[axisRelevance][2] + 1:0
+        data[rows[1]:rows[2],cols[1]:cols[2]] <- image[,,i]
+    }
+    
+    if (device == "internal")
+        displayGraphic(data, colourScale, add=add, windowLimits=windowLimits)
+    else if (device == "png")
+    {
+    }
+}
+
 createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sliceLoc = NULL, device = c("internal","png"), alphaImages = NULL, prefix = "image", zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
 {
     if (!is.list(images) || !is.list(colourScales))
