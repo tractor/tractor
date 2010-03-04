@@ -87,7 +87,7 @@ createProjectionGraphic <- function (image, axis, device = c("internal","png"), 
     }
 }
 
-createContactSheetGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL, clearance = NULL)
+createContactSheetGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL, clearance = NULL, nColumns = NULL)
 {
     if (!isMriImage(image))
         output(OL$Error, "The specified image is not an MriImage object")
@@ -97,21 +97,34 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
     device <- match.arg(device)
     
     if (!is.null(clearance))
+    {
+        originalDims <- image$getDimensions()
+        if (length(clearance) == 1)
+        {
+            clearance <- rep(clearance, image$getDimensionality())
+            clearance[axis] <- 0
+        }
         image <- newMriImageByTrimming(image, clearance)
+        padding <- pmax(0, clearance - (originalDims - image$getDimensions()))
+    }
+    else
+        padding <- rep(0, image$getDimensionality())
     
     dims <- image$getDimensions()
-    nColumns <- ceiling(sqrt(dims[axis]))
+    if (is.null(nColumns))
+        nColumns <- ceiling(sqrt(dims[axis]))
     nRows <- ceiling(dims[axis] / nColumns)
     imageAxes <- axis != 1:3
+    padding <- padding[imageAxes]
     
-    data <- matrix(NA, nrow=nRows*dims[imageAxes][1], ncol=nColumns*dims[imageAxes][2])
+    data <- matrix(NA, nrow=nColumns*(dims[imageAxes][1]+2*padding[1]), ncol=nRows*(dims[imageAxes][2]+2*padding[2]))
     for (i in seq_len(dims[axis]))
     {
-        chunkRow <- (i-1) %% nColumns + 1
-        chunkCol <- (i-1) %/% nColumns + 1
-        rows <- ((chunkRow-1):chunkRow) * dims[imageAxes][1] + 1:0
-        cols <- ((chunkCol-1):chunkCol) * dims[imageAxes][2] + 1:0
-        data[rows[1]:rows[2],cols[1]:cols[2]] <- image[,,i]
+        chunkRow <- (i-1) %/% nColumns + 1
+        chunkCol <- (i-1) %% nColumns + 1
+        rows <- ((chunkCol-1):chunkCol) * dims[imageAxes][1] + 1:0 + (2*chunkCol-1)*padding[1]
+        cols <- ((chunkRow-1):chunkRow) * dims[imageAxes][2] + 1:0 + (2*chunkRow-1)*padding[2]
+        data[rows[1]:rows[2],cols[1]:cols[2]] <- extractDataFromMriImage(image, axis, i)
     }
     
     if (device == "internal")
@@ -119,7 +132,7 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
     else if (device == "png")
     {
         tempFile <- tempfile()
-        pngDims <- round(abs(image$getDimensions()[imageAxes] * image$getVoxelDimensions()[imageAxes] * zoomFactor))
+        pngDims <- round(abs(dim(data) * image$getVoxelDimensions()[imageAxes] * zoomFactor))
         writePng(data, colourScale, tempFile, windowLimits=windowLimits)
         interpolatePng(tempFile, file, pngDims, filter=filter)
         unlink(ensureFileSuffix(tempFile, "png"))
