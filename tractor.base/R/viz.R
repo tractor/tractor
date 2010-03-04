@@ -102,15 +102,15 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
     dims <- image$getDimensions()
     nColumns <- ceiling(sqrt(dims[axis]))
     nRows <- ceiling(dims[axis] / nColumns)
-    axisRelevance <- axis != 1:3
+    imageAxes <- axis != 1:3
     
-    data <- matrix(NA, nrow=nRows*dims[axisRelevance][2], ncol=nColumns*dims[axisRelevance][1])
+    data <- matrix(NA, nrow=nRows*dims[imageAxes][1], ncol=nColumns*dims[imageAxes][2])
     for (i in seq_len(dims[axis]))
     {
-        chunkRow <- (i-1) %/% nRows + 1
-        chunkCol <- (i-1) %% nRows + 1
-        rows <- ((chunkRow-1):chunkRow) * dims[axisRelevance][1] + 1:0
-        cols <- ((chunkCol-1):chunkCol) * dims[axisRelevance][2] + 1:0
+        chunkRow <- (i-1) %% nColumns + 1
+        chunkCol <- (i-1) %/% nColumns + 1
+        rows <- ((chunkRow-1):chunkRow) * dims[imageAxes][1] + 1:0
+        cols <- ((chunkCol-1):chunkCol) * dims[imageAxes][2] + 1:0
         data[rows[1]:rows[2],cols[1]:cols[2]] <- image[,,i]
     }
     
@@ -118,6 +118,11 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
         displayGraphic(data, colourScale, add=add, windowLimits=windowLimits)
     else if (device == "png")
     {
+        tempFile <- tempfile()
+        pngDims <- round(abs(image$getDimensions()[imageAxes] * image$getVoxelDimensions()[imageAxes] * zoomFactor))
+        writePng(data, colourScale, tempFile, windowLimits=windowLimits)
+        interpolatePng(tempFile, file, pngDims, filter=filter)
+        unlink(ensureFileSuffix(tempFile, "png"))
     }
 }
 
