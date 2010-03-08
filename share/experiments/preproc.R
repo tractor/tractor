@@ -1,16 +1,5 @@
 #@args [session directory]
-#@desc Runs the standard FSL-FDT preprocessing pipeline on the specified session
-#@desc directory (or "." if none is specified). This pipeline consists of five stages:
-#@desc (1) convert DICOM files into a 4D Analyze/NIfTI volume; (2) correct the data
-#@desc set for eddy current induced distortions; (3) create a mask to extract only
-#@desc brain voxels; (4, optional) calculate diffusion tensor characteristics such as
-#@desc principal eigenvectors and FA values; (5) run BEDPOSTX. The last stage takes
-#@desc many hours. If the pipeline was previously partly completed, the script will
-#@desc resume it where appropriate. (Starting from the beginning can be forced by
-#@desc specifying SkipCompletedStages:false.) The script asks the user about each stage
-#@desc unless Interactive:false is given. Note that BEDPOSTX will be run using a 2
-#@desc fibre model at each voxel by default - this is changed with the NumberOfFibres
-#@desc option.
+#@desc Runs the standard FSL-FDT preprocessing pipeline on the specified session directory (or "." if none is specified). This pipeline consists of five stages: (1) convert DICOM files into a 4D Analyze/NIfTI volume; (2) correct the data set for eddy current induced distortions; (3) create a mask to extract only brain voxels; (4, optional) calculate diffusion tensor characteristics such as principal eigenvectors and FA values; (5) run BEDPOSTX. The last stage takes many hours. If the pipeline was previously partly completed, the script will resume it where appropriate. (Starting from the beginning can be forced by specifying SkipCompletedStages:false.) The script asks the user about each stage unless Interactive:false is given. Note that BEDPOSTX will be run using a 2 fibre model at each voxel by default - this is changed with the NumberOfFibres option. Diffusion gradient directions will be rotated to compensate for the eddy current correction process as part of stage 2 if RotateGradients:true is given.
 #@interactive TRUE
 
 suppressPackageStartupMessages(require(tractor.session))
