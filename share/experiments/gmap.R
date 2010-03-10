@@ -74,7 +74,7 @@ runExperiment <- function ()
     if (createImages)
     {
         refTractFileName <- getFileNameForNTResource("reference", "hnt", list(tractName=tractName), expectExists=TRUE)
-        reference <- deserialiseReferenceTract(fileName)
+        reference <- deserialiseReferenceTract(refTractFileName)
         if (showReference && !isFieldTract(reference))
         {
             output(OL$Warning, "No HNT reference tract of the specified name is available - the reference tract will not be shown")
