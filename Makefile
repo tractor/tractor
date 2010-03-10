@@ -28,18 +28,6 @@ uninstall:
 uninstall-deprecated:
 	$(R) CMD REMOVE tractor.camino tractor.fsl
 
-install-extras:
-	@read -p "The install-extras target is deprecated - are you sure? [yn] " ans && [ $$ans = "y" ]
-	
-	@mkdir -p ~/.tractor
-	@$(INSTALL) -Cv -m 0644 share/experiments/*.R ~/.tractor
-	
-	@mkdir -p $(PREFIX)/bin $(PREFIX)/share/man/man1
-	@$(INSTALL) -Cv bin/tractor $(PREFIX)/bin
-	@$(INSTALL) -Cv -m 0644 man/man1/tractor.1 $(PREFIX)/share/man/man1
-
-extras: install-extras
-
 clean:
 	@cd tests && $(MAKE) clean
 
