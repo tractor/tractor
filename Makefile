@@ -1,6 +1,4 @@
-INSTALL=/usr/bin/install
 R=R
-PREFIX=/usr/local
 
 all:
 	@echo 'Nothing to compile - run "make install" to install packages'
