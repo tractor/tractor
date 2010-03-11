@@ -113,7 +113,7 @@ runExperiment <- function ()
                         if (is.null(flipAxes))
                         {
                             ans <- output(OL$Question, "Flip diffusion gradient vectors along which axes? [123; Enter for none]")
-                            flipAxes <- splitAndConvertString(ans, "", "integer", fixed=TRUE)
+                            flipAxes <- splitAndConvertString(ans, "", "integer", fixed=TRUE, allowRanges=FALSE)
                         }
                         if (length(flipAxes[!is.na(flipAxes)]) > 0)
                             flipGradientVectorsForSession(session, flipAxes)
