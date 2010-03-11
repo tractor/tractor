@@ -89,9 +89,15 @@ runExperiment <- function ()
                     else
                     {
                         output(OL$Info, "Previous intensity threshold was ", betIntensityThreshold, "; smaller values give larger brain outlines")
-                        betIntensityThreshold <- as.numeric(output(OL$Question, "Intensity threshold? [0 to 1]"))
+                        tempValue <- output(OL$Question, "Intensity threshold? [0 to 1; Enter for same as before]")
+                        if (tempValue != "")
+                            betIntensityThreshold <- as.numeric(tempValue)
+                        
                         output(OL$Info, "Previous vertical gradient was ", betVerticalGradient, "; positive values shift the outline downwards")
-                        betVerticalGradient <- as.numeric(output(OL$Question, "Vertical gradient? [-1 to 1]"))
+                        tempValue <- output(OL$Question, "Vertical gradient? [-1 to 1; Enter for same as before]")
+                        if (tempValue != "")
+                            betVerticalGradient <- as.numeric(tempValue)
+                        
                         runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
                     }
                     runBetAgain <- output(OL$Question, "Run brain extraction tool again? [yn; s to show the mask in fslview]")
