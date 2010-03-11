@@ -4,6 +4,7 @@
 \alias{newMriImageByExtraction}
 \alias{newMriImageByMasking}
 \alias{newMriImageByThresholding}
+\alias{newMriImageByTrimming}
 \alias{newMriImageFromTemplate}
 \alias{newMriImageWithBinaryFunction}
 \alias{newMriImageWithSimpleFunction}
@@ -11,7 +12,7 @@
 
 \title{Functions for creating MriImage objects from data}
 \description{
-  Functions for creating MriImage objects from data.
+  Functions for creating MriImage objects from data, including other images.
 }
 \usage{
 newMriImageWithData(data, metadata)
@@ -20,6 +21,7 @@ newMriImageFromTemplate(image, ...)
 newMriImageByExtraction(image, dim, loc)
 newMriImageByMasking(image, mask)
 newMriImageByThresholding(image, level, defaultValue = 0)
+newMriImageByTrimming(image, clearance = 4)
 
 newMriImageAsShapeOverlay(type = c("cross", "block"), baseImage, ...)
 generateImageDataForShape(type = c("cross", "block"), dim, background = 0, centre = NA, width = NA)
@@ -35,6 +37,7 @@ newMriImageWithBinaryFunction(image1, image2, fun, ..., newDataType = NULL)
   \item{mask}{An array of mode \code{logical} indicating which voxels are in the mask. Must have the same dimensions as the image.}
   \item{level}{A numeric value specifying the threshold level.}
   \item{defaultValue}{The value of the final image in voxels which are below threshold.}
+  \item{clearance}{The number of voxels' clearance left around a trimmed image.}
   \item{type}{The shape type to generate. A "block" is a cubic region of the image; a "cross" is the central line of the cube in each dimension.}
   \item{baseImage}{The \code{MriImage} to use as a base for the overlay.}
   \item{background}{The voxel value outside the shape.}
@@ -46,7 +49,7 @@ newMriImageWithBinaryFunction(image1, image2, fun, ..., newDataType = NULL)
 \details{
   All of these functions use data from arrays or \code{MriImage} objects to create a new \code{MriImage} object. \code{newMriImageWithData} is the basic function for creating an object from its constituents: an array of voxel values and an \code{MriImageMetadata} object. \code{newMriImageFromTemplate} takes an existing image, with its voxel data, and creates a new image, possibly with modifications to the metadata.
   
-  \code{newMriImageByExtraction} reduces the dimensionality of the source image by one, by extracting a single "line" of data along one dimension. \code{newMriImageByMasking} modifies the data by masking out unwanted voxels, and \code{newMriImageByThresholding} by thresholding. \code{newMriImageAsShapeOverlay} creates an image which contains a simple shape. \code{newMriImageWithSimpleFunction} and \code{newMriImageWithBinaryFunction} modify the image data by applying an arbitrary function to it. Any function that can be applied to numeric arrays, and expects one or two arguments, respectively, is suitable for \code{fun}.
+  \code{newMriImageByExtraction} reduces the dimensionality of the source image by one, by extracting a single "line" of data along one dimension. \code{newMriImageByMasking} modifies the data by masking out unwanted voxels, and \code{newMriImageByThresholding} by thresholding. \code{newMriImageByTrimming} trims empty space from the edges of an image, reducing the dimensions of the image and thus avoiding the storage of lots of zeroes. \code{newMriImageAsShapeOverlay} creates an image which contains a simple shape. \code{newMriImageWithSimpleFunction} and \code{newMriImageWithBinaryFunction} modify the image data by applying an arbitrary function to it. Any function that can be applied to numeric arrays, and expects one or two arguments, respectively, is suitable for \code{fun}.
 }
 \value{
   An \code{MriImage} object.
