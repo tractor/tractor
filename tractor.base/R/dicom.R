@@ -105,14 +105,14 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired, dictionar
 newMriImageMetadataFromDicom <- function (fileName)
 {
     fileMetadata <- newDicomMetadataFromFile(fileName)
-    if (fileMetadata$getTagValue(0x0008, 0x0060) != "MR")
-        output(OL$Error, "DICOM file does not contain MR image data")
-    
     invisible (newMriImageMetadataFromDicomMetadata(fileMetadata))
 }
 
 newMriImageMetadataFromDicomMetadata <- function (dicom)
 {
+    if (dicom$getTagValue(0x0008, 0x0060) != "MR")
+        flag(OL$Warning, "DICOM file does not contain MR image data")
+    
     acquisitionMatrix <- dicom$getTagValue(0x0018, 0x1310)
     rows <- max(acquisitionMatrix[1], acquisitionMatrix[3])
     columns <- max(acquisitionMatrix[2], acquisitionMatrix[4])
@@ -219,8 +219,6 @@ maskPixels <- function (pixels, metadata)
 newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE)
 {
     fileMetadata <- metadata
-    if (fileMetadata$getTagValue(0x0008, 0x0060) != "MR")
-        output(OL$Error, "DICOM file does not contain MR image data")
     imageMetadata <- newMriImageMetadataFromDicomMetadata(fileMetadata)
     
     datatype <- imageMetadata$getDataType()
