@@ -36,7 +36,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     probtrackDir <- session$getProbtrackDirectory()
     
     previousWorkingDir <- getwd()
-    workingDir <- file.path(tempdir(), "probtrackx")
+    workingDir <- file.path(tempdir(), paste("probtrackx",Sys.getpid(),sep="_"))
     if (!file.exists(workingDir))
         dir.create(workingDir)
     setwd(workingDir)
