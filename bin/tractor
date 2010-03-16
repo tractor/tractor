@@ -16,6 +16,7 @@ write_history=1
 show_options=0
 rprofile_backed_up=0
 quiet=0
+parallelisation_factor=1
 batch_mode=0
 verbose_level=0
 working_dir="."
@@ -28,7 +29,7 @@ usage()
     echo "tractor (program v1.5.0)"
     echo "Run a TractoR experiment script in R and report the results"
     echo
-    echo "Usage: tractor [-ldzqbri] [-v level] [-w working_dir] ..."
+    echo "Usage: tractor [-ldzqbri] [-v level] [-p factor] [-w working_dir] ..."
     echo "                              [-c config_file] script [arg1 [arg2 ...]]"
     echo "       tractor -o [-w working_dir] script"
     echo "       tractor -h"
@@ -50,6 +51,8 @@ usage()
     echo "  -v {0-3}    Produce verbose output: the level determines the amount of"
     echo "              extra information reported, from 0 (least, the default) to"
     echo "              3 (most)"
+    echo "  -p factor   Set the parallelisation factor for multicore systems (only"
+    echo "              used by certain scripts)"
     echo "  -w dir      Specify the working directory for the experiment, which"
     echo "              will be created if necessary (default .)"
     echo "  -c file     Specify a configuration file in YAML format"
@@ -66,7 +69,7 @@ usage()
     echo
 }
 
-set -- `getopt "hldozqbriv:w:c:" "$@"` || {
+set -- `getopt "hldozqbriv:p:w:c:" "$@"` || {
     usage 1>&2
     exit
 }
@@ -86,6 +89,7 @@ while [ $# -gt 0 ]
         -b) batch_mode=1 ;;
         -r) keep_report=1 ;;
         -v) shift; verbose_level=$1 ;;
+        -p) shift; parallelisation_factor=$1 ;;
         -w) shift; working_dir=`echo $1 | sed 's/\/$//'` ;;
         -c) shift; config_file="$config_file:$1" ;;
         --) shift; break ;;
@@ -182,7 +186,7 @@ q(runLast=FALSE)
 EOF
     R CMD BATCH --slave --vanilla $expect_file $log_file
 elif [ $interactive -eq 0 ]; then
-    echo "library(tractor.base); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args')" | R --slave --vanilla 2>&1 | tee $log_file
+    echo "library(tractor.base); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor)" | R --slave --vanilla 2>&1 | tee $log_file
 elif [ $expect_available -eq 0 ]; then
     output_level=`echo $output_level | sed 's/\\$/\\\\\\$/'`
     cat >"$expect_file" <<EOF

@@ -1,4 +1,4 @@
-bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outputLevel = OL$Warning, configFiles = "/dev/null", configText = "")
+bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outputLevel = OL$Warning, configFiles = "/dev/null", configText = "", parallelisationFactor = 1)
 {
     library(utils)
     library(graphics)
@@ -14,6 +14,17 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
     errorWrapper <- function (error)
     {
         output(OL$Error, error$message, toReport=TRUE)
+    }
+    
+    if (isValidAs(parallelisationFactor,"integer") && as.integer(parallelisationFactor) > 1)
+    {
+        if ("multicore" %in% row.names(installed.packages()))
+        {
+            library(multicore)
+            options(cores=as.integer(parallelisationFactor))
+        }
+        else
+            output(OL$Warning, "The \"multicore\" package is not installed - code will not be parallelised")
     }
     
     options(tractorOutputErrors=TRUE)
