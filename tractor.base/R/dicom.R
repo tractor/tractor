@@ -25,7 +25,7 @@
         
         getTagValue = function (group, element)
         {
-            valueRow <- subset(.tags, (groups == group & elements == element))
+            valueRow <- subset(.tags, (.tags$groups == group & .tags$elements == element))
             if (dim(valueRow)[1] == 0)
                 return (NA)
             else
@@ -93,7 +93,7 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired, dictionar
     if (is.null(dictionary))
         data("dictionary", envir=environment(NULL))
     
-    dictionaryRow <- subset(dictionary, (group==groupRequired & element==elementRequired))
+    dictionaryRow <- subset(dictionary, (dictionary$group==groupRequired & dictionary$element==elementRequired))
     if (nrow(dictionaryRow) == 0)
         description <- sprintf("Unknown (0x%04x, 0x%04x)", groupRequired, elementRequired)
     else
