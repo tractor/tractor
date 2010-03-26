@@ -20,8 +20,18 @@ install-nt:
 
 install: install-base install-session install-nt
 
+install-native:
+	$(R) CMD INSTALL multicore
+
+install-all: install install-native
+
 uninstall:
 	$(R) CMD REMOVE tractor.nt tractor.session tractor.base
+
+uninstall-native:
+	$(R) CMD REMOVE multicore
+
+uninstall-all: uninstall uninstall-native
 
 uninstall-deprecated:
 	$(R) CMD REMOVE tractor.camino tractor.fsl
