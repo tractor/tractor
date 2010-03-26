@@ -29,11 +29,12 @@ output <- function (level, ..., default = NULL, showDepth = TRUE, toReport = FAL
     runExperimentCallLoc <- which(callStrings %~% "^runExperiment")
     if (length(runExperimentCallLoc) == 1)
         callStrings <- callStrings[-seq_len(runExperimentCallLoc-1)]
-    callStrings <- callStrings[setdiff(seq_along(callStrings), which(callStrings %~% "([tT]ryCatch|Error)"))]
+    callStrings <- callStrings[setdiff(seq_along(callStrings), which(callStrings %~% "([tT]ryCatch|Error|cores|FUN)"))]
     stackDepth <- length(callStrings)
 
     nStars <- ifelse(showDepth, stackDepth, 0)
     leadingSpace <- ifelse(usePrefix && (nStars > 0), implode(rep("* ", nStars)), "")
+    leadingSpace <- paste(ifelse(isTRUE(getOption("tractorOutputPid")), paste("[",Sys.getpid(),"] ",sep=""), ""), leadingSpace, sep="")
     if ((level < OL$Question) && (outputLevel <= level))
         cat(paste(leadingSpace, ifelse(usePrefix,prefixStrings[level],""), ..., "\n", sep=""))
     else if (level == OL$Question)
