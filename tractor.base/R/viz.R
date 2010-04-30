@@ -139,7 +139,7 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
     }
 }
 
-createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sliceLoc = NULL, device = c("internal","png"), alphaImages = NULL, prefix = "image", zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
+createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sliceLoc = NULL, device = c("internal","png"), alphaImages = NULL, prefix = "image", zoomFactor = 1, filter = "Mitchell", windowLimits = NULL, clearance = NULL, nColumns = NULL)
 {
     if (!is.list(images) || !is.list(colourScales))
         output(OL$Error, "Images and colour scales must be given as lists")
@@ -150,9 +150,11 @@ createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sli
     if (!is.numeric(axes) || any(axes < 1 | axes > 3))
         output(OL$Error, "Projection axes must be specified as a combination of 1 (x), 2 (y) or 3 (z)")
     
-    modes <- match.arg(modes, c("slice","projection"), several.ok=TRUE)
+    modes <- match.arg(modes, c("slice","projection","contact"), several.ok=TRUE)
     if (any(modes == "slice") && is.null(sliceLoc))
         output(OL$Error, "Slice location must be specified")
+    if (any(modes == "contact") && !all(modes == "contact"))
+        output(OL$Error, "Contact slice mode must be used for all graphics or none")
     
     device <- match.arg(device)
     
@@ -187,11 +189,17 @@ createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sli
                     if (!is.null(alphaImages[[i]]))
                         createSliceGraphic(alphaImages[[i]], currentSliceLoc[1], currentSliceLoc[2], currentSliceLoc[3], device="png", colourScale=1, file=imageFiles[2*i], zoomFactor=zoomFactor, filter=filter)
                 }
-                else
+                else if (modes[i] == "projection")
                 {
                     createProjectionGraphic(images[[i]], axis, device="png", colourScale=colourScales[[i]], file=imageFiles[2*i-1], zoomFactor=zoomFactor, filter=filter, windowLimits=windowLimits[[i]])
                     if (!is.null(alphaImages[[i]]))
                         createProjectionGraphic(alphaImages[[i]], axis, device="png", colourScale=1, file=imageFiles[2*i], zoomFactor=zoomFactor, filter=filter)
+                }
+                else
+                {
+                    createContactSheetGraphic(images[[i]], axis, device="png", colourScale=colourScales[[i]], file=imageFiles[2*i-1], zoomFactor=zoomFactor, filter=filter, windowLimits=windowLimits[[i]], clearance=clearance, nColumns=nColumns)
+                    if (!is.null(alphaImages[[i]]))
+                        createContactSheetGraphic(alphaImages[[i]], axis, device="png", colourScale=1, file=imageFiles[2*i], zoomFactor=zoomFactor, filter=filter, clearance=clearance, nColumns=nColumns)
                 }
                 
                 if (i == 1)
