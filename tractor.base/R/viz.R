@@ -1,3 +1,11 @@
+interpolatePalette <- function (colours, n, ...)
+{
+    rampFunction <- colorRamp(colours)
+    colourMatrix <- round(rampFunction(0:(n-1)/(n-1)))
+    rgbStrings <- apply(colourMatrix, 1, function (x) sprintf("#%02X%02X%02X",x[1],x[2],x[3]))
+    return (rgbStrings)
+}
+
 getColourScale <- function (n)
 {
     if (is.list(n))
@@ -8,11 +16,13 @@ getColourScale <- function (n)
     {
         colours <- list(gray(0:99/99),
                         heat.colors(100),
-                        rainbow(100, start=0.7, end=0.1))
+                        rainbow(100, start=0.7, end=0.1),
+                        interpolatePalette(c("#2166AC","#67A9CF","#D1E5F0","#F7F7F7","#FDDBC7","#EF8A62","#B2182B"), 100))  # ColorBrewer "RdBu" diverging palette
     
         background <- list("black",
                            "red",
-                           "blue")
+                           "blue",
+                           "#F7F7F7")
     
         return (list(colours=colours[[n]], background=background[[n]]))
     }
