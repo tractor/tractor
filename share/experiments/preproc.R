@@ -68,7 +68,8 @@ runExperiment <- function ()
     
         if (runStages[2] && (!skipCompleted || !imageFileExists(file.path(targetDir,"nodif"))))
         {
-            updateGradientCacheFromSession(session)
+            if (isTRUE(updateGradientCacheFromSession(session)))
+                output(OL$Info, "Gradient directions inserted into cache for future reference")
             runEddyCorrectWithSession(session, ask=interactive)
             
             if (rotateGradients)
