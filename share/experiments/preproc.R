@@ -18,6 +18,7 @@ runExperiment <- function ()
     skipCompleted <- getWithDefault("SkipCompletedStages", TRUE)
     dicomDir <- getWithDefault("DicomDirectory", NULL, "character")
     useGradientCache <- getWithDefault("UseGradientCache", "second", validValues=c("first","second","never"))
+    forceCacheUpdate <- getWithDefault("ForceGradientCacheUpdate", FALSE)
     rotateGradients <- getWithDefault("RotateGradients", FALSE)
     betIntensityThreshold <- getWithDefault("BetIntensityThreshold", 0.5)
     betVerticalGradient <- getWithDefault("BetVerticalGradient", 0)
@@ -68,7 +69,7 @@ runExperiment <- function ()
     
         if (runStages[2] && (!skipCompleted || !imageFileExists(file.path(targetDir,"nodif"))))
         {
-            if (isTRUE(updateGradientCacheFromSession(session)))
+            if (isTRUE(updateGradientCacheFromSession(session, forceCacheUpdate)))
                 output(OL$Info, "Gradient directions inserted into cache for future reference")
             runEddyCorrectWithSession(session, ask=interactive)
             

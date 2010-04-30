@@ -41,11 +41,9 @@ checkGradientCacheForSession <- function (session)
     return (gradientSet)
 }
 
-updateGradientCacheFromSession <- function (session)
+updateGradientCacheFromSession <- function (session, force = FALSE)
 {
     if (!gradientDirectionsAvailableForSession(session))
-        return (FALSE)
-    if (!is.null(checkGradientCacheForSession(session)))
         return (FALSE)
     
     preBedpostDirectory <- session$getPreBedpostDirectory()
@@ -57,7 +55,7 @@ updateGradientCacheFromSession <- function (session)
     
     cacheDirectory <- file.path(Sys.getenv("HOME"), ".tractor", "gradient-cache")
     if (!file.exists(cacheDirectory))
-        dir.create(cacheDirectory)
+        dir.create(cacheDirectory, recursive=TRUE)
     
     cacheIndexFile <- file.path(cacheDirectory, "index.txt")
     if (!file.exists(cacheIndexFile))
@@ -68,7 +66,16 @@ updateGradientCacheFromSession <- function (session)
     else
     {
         cacheIndex <- read.table(cacheIndexFile, col.names=c("descriptions","number"))
-        number <- max(cacheIndex$number) + 1
+        cacheEntry <- subset(cacheIndex, descriptions==seriesDescriptions)
+        if (nrow(cacheEntry) == 0)
+            number <- max(cacheIndex$number) + 1
+        else if (!force)
+            return (FALSE)
+        else
+        {
+            cacheIndex <- subset(cacheIndex, descriptions!=seriesDescriptions)
+            number <- cacheEntry$number
+        }
     }
     
     bvecs <- as.matrix(read.table(file.path(preBedpostDirectory, "bvecs")))
