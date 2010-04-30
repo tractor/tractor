@@ -100,11 +100,6 @@ execute <- function (executable, paramString = NULL, errorOnFail = TRUE, silent 
     }
 }
 
-rawToCharQuiet <- function (...)
-{
-   suppressWarnings(rawToChar(...))
-}
-
 promote <- function (x, byrow = FALSE)
 {
     if (is.matrix(x))
@@ -288,4 +283,16 @@ producesError <- function (expr, silent = TRUE)
 {
     returnValue <- try(expr, silent)
     return ("try-error" %in% class(returnValue))
+}
+
+stripNul <- function (x, method = c("truncate","drop"))
+{
+    method <- match.arg(method)
+    nul <- which(x == 0L)
+    if (length(nul) == 0)
+        return (x)
+    else if (method == "truncate")
+        return (x[seq_len(nul[1]-1)])
+    else
+        return (x[-nul])
 }

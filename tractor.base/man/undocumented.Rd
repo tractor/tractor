@@ -31,7 +31,6 @@
 \alias{newMriImageMetadataFromNifti}
 \alias{producesError}
 \alias{promote}
-\alias{rawToCharQuiet}
 \alias{readDiffusionParametersFromMetadata}
 \alias{requireArguments}
 \alias{resolveVector}

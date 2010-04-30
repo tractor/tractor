@@ -565,7 +565,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
     if (checkFormat)
     {
         seek(connection, where=128)
-        str <- rawToCharQuiet(readBin(connection, "raw", n=4))
+        str <- rawToChar(stripNul(readBin(connection, "raw", n=4)))
         if (str == "DICM")
         {
             isDicomFile <- TRUE
@@ -585,7 +585,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
         endian <- setdiff(c("big","little"), .Platform$endian)
     
     seek(connection, where=2, origin="current")
-    type <- rawToCharQuiet(readBin(connection, "raw", n=2))
+    type <- rawToChar(stripNul(readBin(connection, "raw", n=2)))
     if (type == "UL")
         explicitTypes <- TRUE
     else
@@ -626,7 +626,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
             }
             else if (explicitTypes)
             {
-                type <- rawToCharQuiet(readBin(connection, "raw", n=2))
+                type <- rawToChar(stripNul(readBin(connection, "raw", n=2)))
                 if (any(.Dicom$longTypes == type))
                 {
                     seek(connection, where=2, origin="current")
@@ -701,7 +701,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
                     values <- c(values, as.character(value))
             }
             else
-                values <- c(values, rawToCharQuiet(readBin(connection, "raw", n=length)))
+                values <- c(values, rawToChar(stripNul(readBin(connection, "raw", n=length))))
         }
         
         close(connection)
