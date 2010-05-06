@@ -36,6 +36,7 @@
 \alias{resolveVector}
 \alias{restrict}
 \alias{splitAndConvertString}
+\alias{stripNul}
 \alias{superimposePng}
 \alias{vectorCrossProduct}
 \alias{vectorLength}
