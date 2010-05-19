@@ -49,10 +49,12 @@ referenceSplineTractWithOptions <- function (options, refSession, refSeed, nSamp
     invisible (list(spline=refSpline, options=options))
 }
 
-calculateSplinesForNeighbourhood <- function (testSession, testSeed, reference, searchWidth = 7, faThreshold = 0.2, nSamples = 5000)
+calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference, faThreshold = 0.2, nSamples = 5000)
 {
     if (!isReferenceTract(reference) || !isBSplineTract(reference))
         output(OL$Error, "The specified reference tract is not valid")
+    if (!isNeighbourhoodInfo(neighbourhood))
+        output(OL$Error, "The specified neighbourhood is not a NeighbourhoodInfo object")
     
     referenceSteps <- calculateSplineStepVectors(reference$getTract(), reference$getTractOptions()$pointType)
     if (nrow(referenceSteps$right) >= 2)
@@ -62,16 +64,16 @@ calculateSplinesForNeighbourhood <- function (testSession, testSeed, reference, 
     else
         output(OL$Error, "The specified reference tract has no length on either side")
     
-    fa <- testSession$getImageByType("fa")
+    fa <- session$getImageByType("fa")
     
-    nSeeds <- searchWidth ^ 3
-    stepVectors <- buildStepVectors(searchWidth)
+    seeds <- neighbourhood$vectors
+    nSeeds <- ncol(seeds)
     middle <- (nSeeds %/% 2) + 1
     
     splines <- list()
     for (i in 1:nSeeds)
     {
-        seed <- testSeed + stepVectors[,i]
+        seed <- seeds[,i]
         output(OL$Info, "Current seed point is ", implode(seed,sep=","), " (", i, "/", nSeeds, ")")
         
         if (any(seed <= 0 | seed > fa$getDimensions()))
@@ -86,7 +88,7 @@ calculateSplinesForNeighbourhood <- function (testSession, testSeed, reference, 
         }
         else
         {
-            spline <- splineTractWithOptions(reference$getTractOptions(), testSession, seed, reference$getSourceSession(), nSamples, rightwardsVector)
+            spline <- splineTractWithOptions(reference$getTractOptions(), session, seed, reference$getSourceSession(), nSamples, rightwardsVector)
             splines <- c(splines, list(spline))
         }
     }

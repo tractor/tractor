@@ -68,9 +68,10 @@ runExperiment <- function ()
         
             if (pointType == "mm")
                 currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("t2")), useOrigin=TRUE)
-        
-            splines <- calculateSplinesForNeighbourhood(currentSession, currentSeed, reference, searchWidth, faThreshold, nSamples)
-            data <- createDataTableForSplines(splines, reference$getTract(), "knot", subjectId=i)
+            
+            neighbourhood <- createNeighbourhoodInfo(centre=currentSeed, width=searchWidth)
+            splines <- calculateSplinesForNeighbourhood(currentSession, neighbourhood, reference, faThreshold, nSamples)
+            data <- createDataTableForSplines(splines, reference$getTract(), "knot", subjectId=i, neighbourhood=neighbourhood)
             write.table(data, file=sessionDatasetName)
         }
         

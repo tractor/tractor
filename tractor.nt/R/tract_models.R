@@ -147,12 +147,14 @@ calculateRescaledCosinesFromAngles <- function (angles, naRemove = TRUE)
     return (cosines)
 }
 
-createDataTableForSplines <- function (splines, refSpline, pointType, subjectId = NULL)
+createDataTableForSplines <- function (splines, refSpline, pointType, subjectId = NULL, neighbourhood = NULL)
 {
     if (!is.list(splines))
         output(OL$Error, "Spline tracts must be specified as a list of BSplineTract objects")
     if (!isBSplineTract(refSpline))
         output(OL$Error, "The specified reference tract is not a BSplineTract object")
+    if (!is.null(neighbourhood) && !isNeighbourhoodInfo(neighbourhood))
+        output(OL$Error, "The specified neighbourhood is not a NeighbourhoodInfo object")
     
     nSplines <- length(splines)
     rssv <- characteriseSplineStepVectors(refSpline, pointType=pointType)
@@ -180,6 +182,8 @@ createDataTableForSplines <- function (splines, refSpline, pointType, subjectId 
     data <- data.frame(pointType=rep(pointType,nSplines), leftLength=leftLengths, rightLength=rightLengths)
     if (!is.null(subjectId))
         data <- cbind(data, data.frame(subject=rep(subjectId,nSplines)))
+    if (!is.null(neighbourhood))
+        data <- cbind(data, data.frame(x=neighbourhood$vectors[1,], y=neighbourhood$vectors[2,], z=neighbourhood$vectors[3,]))
     data <- cbind(data, similarityCosines)
     
     invisible (data)
