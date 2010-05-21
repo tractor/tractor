@@ -21,7 +21,7 @@ install-nt:
 install: install-base install-session install-nt
 
 install-native:
-	$(R) CMD INSTALL multicore
+	cd lib && $(R) CMD INSTALL multicore
 
 install-all: install install-native
 
