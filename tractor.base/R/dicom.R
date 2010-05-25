@@ -397,7 +397,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
             output(OL$Error, "DICOM slice orientation information is complex or nonsensical")
         else
         {
-            angles <- sapply(list(1,2), function (i) acos(abs(sliceOrientation[[i]][abs(sliceDirections[i])]) / vectorLength(sliceOrientation[[i]])))
+            angles <- sapply(list(1,2), function (i) acos(abs(sliceOrientation[[i]][abs(sliceDirections[i])]) / sqrt(sum(sliceOrientation[[i]]^2))))
             angles <- round(angles / pi * 180, 2)
             output(OL$Warning, "Slices appear to be oblique: rotations from axes are ", implode(angles," and "), " deg")
         }

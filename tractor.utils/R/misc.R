@@ -1,5 +1,7 @@
 insertRowAt <- function (index, x, rowData)
 {
+    require(tractor.base)
+    
     x <- promote(x)
     end <- nrow(x)
     row <- matrix(rowData, nrow=1)
@@ -18,6 +20,8 @@ insertRowAt <- function (index, x, rowData)
 
 insertColumnAt <- function (index, x, colData)
 {
+    require(tractor.base)
+    
     x <- promote(x, byrow=TRUE)
     end <- ncol(x)
     col <- matrix(colData, ncol=1)
@@ -36,6 +40,8 @@ insertColumnAt <- function (index, x, colData)
 
 restrict <- function (x, fun = NULL, ..., invert = FALSE, na.rm=TRUE)
 {
+    require(tractor.base)
+    
     if (!is.vector(x))
         output(OL$Error, "The \"restrict\" function only works for vectors")
     if (is.null(fun))

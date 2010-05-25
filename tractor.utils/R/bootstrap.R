@@ -1,9 +1,10 @@
 bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outputLevel = OL$Warning, configFiles = "/dev/null", configText = "", parallelisationFactor = 1)
 {
     library(utils)
-    library(graphics)
     library(grDevices)
+    library(graphics)
     library(stats)
+    library(tractor.base)
     
     warningWrapper <- function (warning)
     {
@@ -47,7 +48,6 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
 
 describeExperiment <- function (scriptFile, fill = FALSE)
 {
-    scriptFile <- expandFileName(scriptFile)
     inputLines <- readLines(scriptFile)
     outputLines <- paste("OPTIONS for script", scriptFile, "(* required)", sep=" ")
     
@@ -58,7 +58,7 @@ describeExperiment <- function (scriptFile, fill = FALSE)
         if (!is.null(validValues))
         {
             otherValues <- (if (is.null(defaultValue)) validValues else validValues[-match(defaultValue,validValues)])
-            defaultValueString <- paste(defaultValueString, " [", implode(otherValues,","), "]", sep="")
+            defaultValueString <- paste(defaultValueString, " [", paste(otherValues,collapse=","), "]", sep="")
         }
         outputLines <<- c(outputLines, paste(leadString, name, ": ", defaultValueString, sep=""))
     }
@@ -73,19 +73,19 @@ describeExperiment <- function (scriptFile, fill = FALSE)
     relevantInputLines <- grep("#@args", inputLines, value=TRUE, fixed=TRUE)
     if (length(relevantInputLines) != 0)
     {
-        argsString <- implode(sub("^\\s*\\#\\@args\\s*", "", relevantInputLines, perl=TRUE), ", ")
+        argsString <- paste(sub("^\\s*\\#\\@args\\s*", "", relevantInputLines, perl=TRUE), collapse=", ")
         outputLines <- c(outputLines, paste("ARGUMENTS:", argsString, sep=" "))
     }
     
     relevantInputLines <- grep("#@desc", inputLines, value=TRUE, fixed=TRUE)
     if (length(relevantInputLines) != 0)
     {
-        descriptionString <- implode(sub("^\\s*\\#\\@desc\\s*", "", relevantInputLines, perl=TRUE), " ")
+        descriptionString <- paste(sub("^\\s*\\#\\@desc\\s*", "", relevantInputLines, perl=TRUE), collapse=" ")
         outputLines <- c(outputLines, descriptionString)
     }
     
     if (fill == FALSE)
-        cat(implode(outputLines, "\n"), "\n")
+        cat(paste(outputLines, "\n"), collapse="\n")
     else
         lapply(strsplit(outputLines," ",fixed=TRUE), cat, fill=fill)
     

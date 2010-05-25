@@ -1,5 +1,7 @@
 createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment = .GlobalEnv)
 {
+    require(tractor.base)
+    
     trimWhitespaceAndQuotes <- function (x)
     {
         if (x %~% "^\\s*$")
@@ -87,7 +89,7 @@ createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment =
             if (endLine > 1)
             {
                 allLines <- setdiff(2:endLine, grep("^\\s*#", lines, perl=TRUE))
-                textValue <- paste(c(textValue,lines[allLines]), collapse=" ")
+                textValue <- implode(c(textValue,lines[allLines]), sep=" ")
             }
             
             textValue <- gsub("[\\[\\]]", "", textValue, perl=TRUE)
@@ -106,7 +108,7 @@ createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment =
                         output(OL$Error, "Configuration file syntax error: unmatched quotation mark")
                     
                     endPiece <- endQuotePieces[1] + i - 1
-                    compositePiece <- paste(pieces[i:endPiece], collapse=",")
+                    compositePiece <- implode(pieces[i:endPiece], sep=",")
                     value <- c(value, trimWhitespaceAndQuotes(compositePiece))
                 }
                 else
@@ -130,6 +132,8 @@ createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment =
 
 writeReportToYaml <- function (results, fileName = "tractor_report.yaml")
 {
+    require(tractor.base)
+    
     if (!is.list(results))
         return (invisible(NULL))
     

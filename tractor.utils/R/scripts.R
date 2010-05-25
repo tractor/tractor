@@ -1,5 +1,7 @@
 splitAndConvertString <- function (string, split = "", mode = "character", errorIfInvalid = FALSE, allowRanges = TRUE, ...)
 {
+    require(tractor.base)
+    
     values <- unlist(strsplit(string, split, ...))
     if (allowRanges && mode=="integer")
     {
@@ -25,6 +27,8 @@ isValidAs <- function (value, mode)
 
 getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL)
 {
+    require(tractor.base)
+    
     reportInvalid <- function ()
     {
         level <- ifelse(errorIfInvalid, OL$Error, OL$Warning)
@@ -88,6 +92,8 @@ nArguments <- function ()
 
 requireArguments <- function (...)
 {
+    require(tractor.base)
+    
     args <- c(...)
     
     if (is.numeric(args) && nArguments() < args)

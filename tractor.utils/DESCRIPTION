@@ -4,7 +4,8 @@ Date: 2010-05-25
 Title: Miscellaneous functions used by TractoR scripts and packages
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
-Depends: R (>= 2.5.0)
+Depends: R (>= 2.5.0), utils
+Suggests: tractor.base
 Description: The tractor.utils package primarily provides functions that facilitate the interaction between the TractoR shell script and R, but some other utility functions are also included.
 License: GPL-2
 URL: http://code.google.com/p/tractor/
