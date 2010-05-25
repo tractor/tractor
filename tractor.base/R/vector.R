@@ -1,3 +1,12 @@
+resolveVector <- function (len, ...)
+{
+    vector <- c(...)
+    if (is.numeric(vector) && (length(vector) == len))
+        return (vector)
+    else
+        return (NULL)
+}
+
 vectorLength <- function (vector)
 {
     return (sqrt(sum(vector^2)))

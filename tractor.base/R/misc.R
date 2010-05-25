@@ -100,15 +100,6 @@ execute <- function (executable, paramString = NULL, errorOnFail = TRUE, silent 
     }
 }
 
-resolveVector <- function (len, ...)
-{
-    vector <- c(...)
-    if (is.numeric(vector) && (length(vector) == len))
-        return (vector)
-    else
-        return (NULL)
-}
-
 promote <- function (x, byrow = FALSE)
 {
     if (is.matrix(x))
