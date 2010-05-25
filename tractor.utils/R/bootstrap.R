@@ -81,7 +81,7 @@ describeExperiment <- function (scriptFile, fill = FALSE)
     if (length(relevantInputLines) != 0)
     {
         descriptionString <- paste(sub("^\\s*\\#\\@desc\\s*", "", relevantInputLines, perl=TRUE), collapse=" ")
-        outputLines <- c(outputLines, descriptionString)
+        outputLines <- c(outputLines, "", descriptionString)
     }
     
     if (fill == FALSE)
