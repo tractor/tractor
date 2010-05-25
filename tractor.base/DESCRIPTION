@@ -1,7 +1,7 @@
 Package: tractor.base
 Version: 1.4.2
 Date: 2010-05-06
-Title: Basic functions for the TractoR (tractography with R) bundle
+Title: A package for reading, manipulating and visualising magnetic resonance images
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
 Depends: R (>= 2.5.0), graphics, grDevices, stats, utils
