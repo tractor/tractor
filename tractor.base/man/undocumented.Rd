@@ -1,11 +1,8 @@
 \name{Undocumented}
 \alias{angleBetweenVectors}
-\alias{bootstrapExperiment}
 \alias{buildStepVectors}
 \alias{createNiftiMetadata}
-\alias{createWorkspaceFromYaml}
 \alias{cross}
-\alias{describeExperiment}
 \alias{deserialiseListObject}
 \alias{displayGraphic}
 \alias{ensureFileSuffix}
@@ -15,27 +12,20 @@
 \alias{getColourScale}
 \alias{getDescriptionForDicomTag}
 \alias{getParametersForFileType}
-\alias{getWithDefault}
 \alias{hasNiftiMagicString}
 \alias{inherit}
-\alias{insertColumnAt}
-\alias{insertRowAt}
+\alias{interpolatePalette}
 \alias{interpolatePng}
 \alias{locateExecutable}
 \alias{maskPixels}
 \alias{maximumIntensityProjection}
-\alias{nArguments}
 \alias{newMriImageFromAnalyze}
 \alias{newMriImageFromNifti}
 \alias{newMriImageMetadataFromAnalyze}
 \alias{newMriImageMetadataFromNifti}
-\alias{producesError}
 \alias{promote}
 \alias{readDiffusionParametersFromMetadata}
-\alias{requireArguments}
 \alias{resolveVector}
-\alias{restrict}
-\alias{splitAndConvertString}
 \alias{stripNul}
 \alias{superimposePng}
 \alias{vectorCrossProduct}
@@ -43,7 +33,6 @@
 \alias{writeMriImageToAnalyze}
 \alias{writeMriImageToNifti}
 \alias{writePng}
-\alias{writeReportToYaml}
 \title{Undocumented functions}
 \description{
   This page covers several functions which are included in the package primarily for internal use, and are therefore not fully documented.
