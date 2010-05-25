@@ -6,6 +6,9 @@ all:
 install-base:
 	$(R) CMD INSTALL tractor.base
 
+install-utils:
+	$(R) CMD INSTALL tractor.utils
+
 install-fsl:
 	@echo 'The fsl package is deprecated - run "make install-session" instead'
 
@@ -18,7 +21,7 @@ install-session:
 install-nt:
 	$(R) CMD INSTALL tractor.nt
 
-install: install-base install-session install-nt
+install: install-base install-utils install-session install-nt
 
 install-native:
 	cd lib && $(R) CMD INSTALL multicore
@@ -26,7 +29,7 @@ install-native:
 install-all: install install-native
 
 uninstall:
-	$(R) CMD REMOVE tractor.nt tractor.session tractor.base
+	$(R) CMD REMOVE tractor.nt tractor.session tractor.utils tractor.base
 
 uninstall-native:
 	$(R) CMD REMOVE multicore
