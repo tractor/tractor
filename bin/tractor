@@ -181,7 +181,7 @@ fi
 if [ $batch_mode -eq 1 ]; then
     cat >"$expect_file" <<EOF
 library(tractor.base)
-bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args')
+bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor)
 q(runLast=FALSE)
 EOF
     R CMD BATCH --slave --vanilla $expect_file $log_file
@@ -195,13 +195,13 @@ spawn R --quiet --vanilla
 set timeout 3
 send "library(tractor.base)\n"
 expect -re ">.+\r\n"
-send "bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args'); q()\n"
+send "bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor); q()\n"
 expect -re ">.+\r\n"
 interact
 EOF
     expect -f $expect_file | tee $log_file
 else
-    echo "library(tractor.base); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args'); q()" >.Rprofile
+    echo "library(tractor.base); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor); q()" >.Rprofile
     R --slave --no-save --no-restore --no-site-file --no-environ 2>&1 | tee $log_file
 fi
 
