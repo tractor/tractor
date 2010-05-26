@@ -36,6 +36,8 @@ runExperiment <- function ()
         output(OL$Error, "Results file does not describe a cubic search space")
     
     data <- read.table(ensureFileSuffix(datasetName,"txt"))
+    seedsInData <- all(c("x","y","z") %in% colnames(data))
+    subjectsInData <- ("subject" %in% colnames(data)) && (is.integer(data$subject))
     logLikelihoods <- calculateMatchedLogLikelihoodsForDataTable(data, model)
     
     refData <- createDataTableForSplines(list(reference$getTract()), reference$getTract(), reference$getTractOptions()$pointType)
@@ -45,7 +47,16 @@ runExperiment <- function ()
     {
         output(OL$Info, "Current session is ", sessionList[i])
         currentSession <- newSessionFromDirectory(sessionList[i])
-        currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
+        if (seedsInData)
+        {
+            if (subjectsInData)
+                currentData <- subset(data, subject==i)
+            else
+                currentData <- data[(((i-1)*nPoints)+1):(i*nPoints),]
+            currentSeed <- round(apply(currentData[,c("x","y","z")], 1, median))
+        }
+        else
+            currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
         currentPosteriors <- results$getTractPosteriors(i)
         output(OL$Info, "Neighbourhood centre point is ", implode(currentSeed,sep=","))
         
@@ -72,9 +83,15 @@ runExperiment <- function ()
         indices <- match(1:maxSeeds, ranks)
         currentPosteriors[setdiff(1:nPoints,indices)] <- NA
         
-        neighbourhoodInfo <- createNeighbourhoodInfo(searchWidth, centre=currentSeed)
         indices <- intersect(indices, which(currentPosteriors>=minPosterior))
-        seeds <- t(neighbourhoodInfo$vectors[,indices])
+        
+        if (seedsInData)
+            seeds <- as.matrix(currentData[indices,c("x","y","z")])
+        else
+        {
+            neighbourhoodInfo <- createNeighbourhoodInfo(searchWidth, centre=currentSeed)
+            seeds <- t(neighbourhoodInfo$vectors[,indices])
+        }
         
         for (j in 1:originalMaxSeeds)
         {
