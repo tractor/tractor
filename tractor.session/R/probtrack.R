@@ -46,6 +46,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     else
         outputStem <- tempfile()
     
+    fslVersion <- getFslVersion()
+    
     if (mode == "simple")
     {
         outputFile <- paste(outputStem, implode(seed,sep="_"), sep="_")
@@ -72,8 +74,12 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
                 system(paste("echo '", implode(seed,sep=" "), "' >", seedFile, sep=""))
             else if (is.matrix(seed))
                 write.table(seed, seedFile, row.names=FALSE, col.names=FALSE)
-
-            paramString <- paste("--opd --dir=", outputStem, " --mode=simple -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", outputStem, ifelse(verbose, " -V 2", ""), sep="")
+            
+            # FSL 4.1.5 changed the way the --dir and -o flags were used
+            if (!is.null(fslVersion) && fslVersion >= 40105)
+                paramString <- paste("--opd --dir=", dirname(outputStem), " --mode=simple -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", basename(outputStem), ifelse(verbose, " -V 2", ""), sep="")
+            else
+                paramString <- paste("--opd --dir=", outputStem, " --mode=simple -x ", seedFile, " --forcedir -s ", bedpostDir, "/merged -m ", bedpostDir, "/nodif_brain_mask -l -c 0.2 -S 2000 --steplength=0.5 -P ", nSamples, " -o ", outputStem, ifelse(verbose, " -V 2", ""), sep="")
             execute("probtrackx", paramString, errorOnFail=TRUE, silent=TRUE)
         
             unlink(seedFile)

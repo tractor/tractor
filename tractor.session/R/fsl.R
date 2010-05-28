@@ -1,3 +1,20 @@
+getFslVersion <- function ()
+{
+    fslHome <- Sys.getenv("FSLDIR")
+    if (!is.character(fslHome) || nchar(fslHome) == 0)
+        return (NULL)
+    
+    versionFile <- file.path(fslHome, "etc", "fslversion")
+    if (!file.exists(versionFile))
+        return (NULL)
+    
+    version <- as.integer(unlist(strsplit(readLines(versionFile)[1], ".", fixed=TRUE)))
+    if (length(version) != 3)
+        return (NULL)
+    else
+        return (sum(version * c(10000, 100, 1)))
+}
+
 runEddyCorrectWithSession <- function (session, ask = FALSE)
 {
     if (!isMriSession(session))
