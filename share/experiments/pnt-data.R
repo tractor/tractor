@@ -47,18 +47,15 @@ runExperiment <- function ()
             seedMatrix <- transformFslVoxelToRVoxel(seedMatrix)
     }
     
-    allData <- NULL
-    for (i in seq_along(sessionList))
-    {
+    parallelApply(seq_along(sessionList), function (i) {
         sessionDatasetName <- ensureFileSuffix(paste(datasetName,"_session",i,sep=""), "txt")
         
         if (resume && file.exists(sessionDatasetName))
-        {
-            data <- read.table(sessionDatasetName)
-            data$subject <- i
-        }
+            output(OL$Info, "Using existing output for session ", i)
         else
         {
+            output(OL$Info, "Calculating splines for session ", i)
+            
             currentSession <- newSessionFromDirectory(sessionList[i])
         
             if (exists("seedMatrix"))
@@ -74,11 +71,16 @@ runExperiment <- function ()
             data <- createDataTableForSplines(splines, reference$getTract(), "knot", subjectId=i, neighbourhood=neighbourhood)
             write.table(data, file=sessionDatasetName)
         }
+    })
+    
+    allData <- NULL
+    for (i in seq_along(sessionList))
+    {
+        sessionDatasetName <- ensureFileSuffix(paste(datasetName,"_session",i,sep=""), "txt")
+        data <- read.table(sessionDatasetName)
+        data$subject <- i
         
-        if (is.null(allData))
-            allData <- data
-        else
-            allData <- rbind(allData, data)
+        allData <- rbind(allData, data)
     }
     
     write.table(allData, file=ensureFileSuffix(datasetName,"txt"))
