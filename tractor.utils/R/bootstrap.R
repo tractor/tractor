@@ -17,6 +17,8 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
         output(OL$Error, error$message, toReport=TRUE)
     }
     
+    setOutputLevel(outputLevel)
+    
     if (isValidAs(parallelisationFactor,"integer") && as.integer(parallelisationFactor) > 1)
     {
         if ("multicore" %in% row.names(installed.packages()))
@@ -31,7 +33,6 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
     options(tractorOutputErrors=TRUE)
     results <- try(withCallingHandlers({
         source(scriptFile)
-        setOutputLevel(outputLevel)
         createWorkspaceFromYaml(configFiles)
         createWorkspaceFromYaml(text=configText)
         setwd(workingDirectory)
