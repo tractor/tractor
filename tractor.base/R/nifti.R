@@ -26,7 +26,7 @@ createNiftiMetadata <- function (fileNames)
         # The qform case
         if (is.vector(x))
         {
-            if (sum(x) > 1 || sum(x %in% 0:1) != 3)
+            if (sum(abs(x)) > 1 || sum(abs(x) %in% 0:1) != 3)
                 output(OL$Error, "Only diagonal xform rotation matrices are supported")
             a <- sqrt(1 - sum(x^2))
             diagonal <- c(a^2+x[1]^2-x[2]^2-x[3]^2, a^2+x[2]^2-x[1]^2-x[3]^2, qfactor*(a^2+x[3]^2-x[1]^2-x[2]^2))
