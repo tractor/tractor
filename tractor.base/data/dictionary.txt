@@ -666,4 +666,5 @@ group   element   type  description
 0x0019  0x10E0    'DS'  "GE Number of DW Volumes"
 0x0043  0x1039    'IS'  "GE Diffusion b-value"
 0x0043  0x1079    'US'  "GE Slices per Volume"
+0x0043  0x102F    'SS'  "GE Raw data type"
 0x2001  0x1018    'SL'  "Philips Number of Slices"
