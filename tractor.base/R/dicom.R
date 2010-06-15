@@ -172,7 +172,7 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
         }
     }
     
-    if (is.null(slices) || slices == 1)
+    if (is.null(slices) || slices <= 1)
     {
         nDims <- 2
         slices <- NULL
