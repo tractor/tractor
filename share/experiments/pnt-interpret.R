@@ -53,7 +53,7 @@ runExperiment <- function ()
                 currentData <- subset(data, subject==i)
             else
                 currentData <- data[(((i-1)*nPoints)+1):(i*nPoints),]
-            currentSeed <- round(apply(currentData[,c("x","y","z")], 1, median))
+            currentSeed <- round(apply(currentData[,c("x","y","z")], 2, median))
         }
         else
             currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)

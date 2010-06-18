@@ -15,9 +15,11 @@ runExperiment <- function ()
     tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
     resultsName <- getWithDefault("ResultsName", NULL, "character", errorIfMissing=TRUE)
     sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
+    datasetName <- getWithDefault("DatasetName", NULL, "character")
     
     maxSeeds <- getWithDefault("MaximumSeedPoints", 1, "integer")
     minPosterior <- getWithDefault("MinimumPosterior", 0, "numeric")
+    nSamples <- getWithDefault("NumberOfSamples", 5000, "integer")
     
     createVolumes <- getWithDefault("CreateVolumes", TRUE)
     createImages <- getWithDefault("CreateImages", FALSE)
@@ -48,12 +50,31 @@ runExperiment <- function ()
     if (vizThreshold == 0)
         vizThreshold <- NULL
     
+    if (is.null(datasetName))
+        seedsInData <- FALSE
+    else
+    {
+        data <- read.table(ensureFileSuffix(datasetName,"txt"))
+        seedsInData <- all(c("x","y","z") %in% colnames(data))
+        subjectsInData <- ("subject" %in% colnames(data)) && (is.integer(data$subject))
+    }
+    
     for (i in 1:nSessions)
     {
         output(OL$Info, "Generating tract for session ", i)
         
         currentSession <- newSessionFromDirectory(sessionList[i])
-        currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
+        if (seedsInData)
+        {
+            if (subjectsInData)
+                currentData <- subset(data, subject==i)
+            else
+                currentData <- data[(((i-1)*nPoints)+1):(i*nPoints),]
+            currentSeed <- round(apply(currentData[,c("x","y","z")], 2, median))
+        }
+        else
+            currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
+        
         currentPosteriors <- results$getTractPosteriors(i)
         
         ranks <- rank(currentPosteriors, na.last="keep")
@@ -71,7 +92,7 @@ runExperiment <- function ()
         indices <- match(1:maxSeeds, ranks)
         currentPosteriors[setdiff(1:nPoints,indices)] <- NA
         
-        ptResult <- runProbtrackForNeighbourhood(currentSession, currentSeed, width=searchWidth, weights=currentPosteriors, weightThreshold=minPosterior, requireImage=TRUE)
+        ptResult <- runProbtrackForNeighbourhood(currentSession, currentSeed, width=searchWidth, weights=currentPosteriors, weightThreshold=minPosterior, nSamples=nSamples, requireImage=TRUE)
         if (is.null(ptResult))
         {
             output(OL$Warning, "No seed points above threshold for session number ", i)

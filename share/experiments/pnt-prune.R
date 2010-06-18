@@ -56,12 +56,26 @@ runExperiment <- function ()
     else
         sessionNumbers <- splitAndConvertString(sessionNumbers, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
     
+    data <- read.table(ensureFileSuffix(datasetName,"txt"))
+    seedsInData <- all(c("x","y","z") %in% colnames(data))
+    subjectsInData <- ("subject" %in% colnames(data)) && (is.integer(data$subject))
+    
     for (i in sessionNumbers)
     {
         output(OL$Info, "Generating tract for session ", i)
         
         currentSession <- newSessionFromDirectory(sessionList[i])
-        currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
+        if (seedsInData)
+        {
+            if (subjectsInData)
+                currentData <- subset(data, subject==i)
+            else
+                currentData <- data[(((i-1)*nPoints)+1):(i*nPoints),]
+            currentSeed <- round(apply(currentData[,c("x","y","z")], 2, median))
+        }
+        else
+            currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
+        
         currentPosteriors <- results$getTractPosteriors(i)
         
         bestSeedIndex <- which.max(currentPosteriors)
@@ -91,7 +105,7 @@ runExperiment <- function ()
         medianLogLikelihood <- calculateMatchedLogLikelihoodsForDataTable(medianData, model)
         output(OL$Info, "Median line log-likelihood is ", round(medianLogLikelihood,3))
 
-        data <- NULL
+        sessionData <- NULL
         nGroups <- (nSamples - 1) %/% subgroupSize + 1
 
         output(OL$Info, "Creating complete data table...")
@@ -101,11 +115,11 @@ runExperiment <- function ()
             lastStreamline <- min(j*subgroupSize, nSamples)
             streamSubset <- newStreamlineSetTractBySubsetting(streamSet, firstStreamline:lastStreamline)
             splines <- calculateSplinesForStreamlineSetTract(streamSubset, currentSession, refSession, options)
-            data <- rbind(data, createDataTableForSplines(splines,reference$getTract(),"knot"))
+            sessionData <- rbind(sessionData, createDataTableForSplines(splines,reference$getTract(),"knot"))
             rm(splines)
         }
 
-        logLikelihoods <- calculateMatchedLogLikelihoodsForDataTable(data, model)
+        logLikelihoods <- calculateMatchedLogLikelihoodsForDataTable(sessionData, model)
         logLikelihoodRatios <- logLikelihoods - medianLogLikelihood
         keepProbabilities <- exp(pmin(logLikelihoodRatios,0))
         toAccept <- which(!is.na(keepProbabilities) & runif(length(keepProbabilities)) <= keepProbabilities)
