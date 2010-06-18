@@ -4,14 +4,13 @@ insertRowAt <- function (index, x, rowData)
     
     x <- promote(x)
     end <- nrow(x)
-    row <- matrix(rowData, nrow=1)
     
     if (index == 1)
-        result <- rbind(row, x)
+        result <- rbind(rowData, x)
     else if (index == end+1)
-        result <- rbind(x, row)
+        result <- rbind(x, rowData)
     else if (index > 1 && index <= end)
-        result <- rbind(x[1:(index-1),,drop=FALSE], row, x[index:end,,drop=FALSE])
+        result <- rbind(x[1:(index-1),,drop=FALSE], rowData, x[index:end,,drop=FALSE])
     else
         output(OL$Error, "Index (", index, ") is out of bounds")
     
@@ -24,14 +23,13 @@ insertColumnAt <- function (index, x, colData)
     
     x <- promote(x, byrow=TRUE)
     end <- ncol(x)
-    col <- matrix(colData, ncol=1)
     
     if (index == 1)
-        result <- cbind(col, x)
+        result <- cbind(colData, x)
     else if (index == end+1)
-        result <- cbind(x, col)
+        result <- cbind(x, colData)
     else if (index > 1 && index <= end)
-        result <- cbind(x[,1:(index-1),drop=FALSE], col, x[,index:end,drop=FALSE])
+        result <- cbind(x[,1:(index-1),drop=FALSE], colData, x[,index:end,drop=FALSE])
     else
         output(OL$Error, "Index (", index, ") is out of bounds")
     
