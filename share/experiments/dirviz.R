@@ -1,4 +1,4 @@
-#@desc Visualise major fibre directions in one slice of a diffusion MRI data set. The slice is selected by setting one of X, Y or Z. The source of the direction information can be "tensor" (in which case there is only one major direction per voxel) or "bedpost". Stage 4 or 5 of the "preproc" script, respectively, mast have already been run on the specified session.
+#@desc Visualise major fibre directions in one slice of a diffusion MRI data set. The slice is selected by setting one of X, Y or Z. The source of the direction information can be "tensor" (in which case there is only one major direction per voxel) or "bedpost". Stage 4 or 5 of the "preproc" script, respectively, must have already been run on the specified session. Directions will not be shown for components whose FA (for Source:tensor) or volume fraction (for Source:bedpost) are below the specified ThresholdLevel. Direction lengths are scaled by the corresponding FA or volume fraction values unless ScaleComponents:false is given.
 #@args session directory
 #@interactive TRUE
 
@@ -19,7 +19,7 @@ runExperiment <- function ()
     source <- getWithDefault("Source", "bedpost", validValues=c("bedpost","tensor"))
     thresholdLevel <- getWithDefault("ThresholdLevel", 0.05)
     windowLimits <- getWithDefault("WindowLimits", NULL, "character")
-    scaleComponents <- getWithDefault("ScaleComponents", FALSE)
+    scaleComponents <- getWithDefault("ScaleComponents", TRUE)
     
     faImage <- session$getImageByType("fa")
     maskImage <- session$getImageByType("mask")
@@ -46,7 +46,8 @@ runExperiment <- function ()
     
     createSliceGraphic(faImage, point[1], point[2], point[3], device="internal", windowLimits=windowLimits)
     
-    for (i in ifelse(source=="tensor",1,seq_len(session$nFibres())))
+    nDirections <- ifelse(source=="tensor", 1, session$nFibres())
+    for (i in seq_len(nDirections))
     {
         if (source == "bedpost")
         {
@@ -55,7 +56,7 @@ runExperiment <- function ()
         }
         else
         {
-            dyadsImage <- newMriImageFromFile(file.path(session$getPreBedpostDirectory(), "V1"))
+            dyadsImage <- newMriImageFromFile(file.path(session$getPreBedpostDirectory(), "dti_V1"))
             thresholdImage <- faImage
         }
         
@@ -83,7 +84,7 @@ runExperiment <- function ()
         segments((d1-1)/(dims[1]-1)-maskedData[,1]/(2*dims[1]), (d2-1)/(dims[2]-1)-maskedData[,2]/(2*dims[2]), (d1-1)/(dims[1]-1)+maskedData[,1]/(2*dims[1]), (d2-1)/(dims[2]-1)+maskedData[,2]/(2*dims[2]), lwd=3, col=col)
     }
     
-    ans <- output(OL$Question, "Copy figure to png file? [yn]")
+    ans <- output(OL$Question, "Copy figure to a high-resolution \"png\" file? [yn]")
     if (tolower(ans) == "y")
     {
         outputFileName <- paste(basename(session$getBaseDirectory()), "_", c("x","y","z")[throughPlaneAxis], point[throughPlaneAxis], "_", source, sep="")
