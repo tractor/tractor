@@ -113,6 +113,9 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
             knotSpacing <- streamlineTract$getLineLength() / nKnots
             currentStreamline <- newStreamlineTractWithSpacingThreshold(streamlineTract, knotSpacing)
             bSpline <- fitBSplineModels(currentStreamline, nKnots)
+            if (is.null(bSpline))
+                next
+            
             residualStandardErrors <- c(summary(bSpline$models[[1]])$sigma,
                                         summary(bSpline$models[[2]])$sigma,
                                         summary(bSpline$models[[3]])$sigma)

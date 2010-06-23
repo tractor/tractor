@@ -460,7 +460,7 @@ newStreamlineTractWithSpacingThreshold <- function (tract, maxSeparation)
     rightStop <- ifelse(length(rightWide) > 0, min(rightWide), nPoints)
     
     if (!identical(c(leftStop,rightStop), c(1,nPoints)))
-        output(OL$Info, "Truncating streamline to avoid large space between points")
+        flag(OL$Info, "Truncating streamline to avoid large space between points")
     
     newTract <- .StreamlineTract(line[leftStop:rightStop,], (seedPoint-leftStop+1), tract$getOriginalSeedPoint(), tract$getMetadata())
     invisible (newTract)
@@ -505,8 +505,8 @@ newStreamlineTractByTrimming <- function (tract, trimLeft, trimRight)
     leftSum <- cumsum(spacings)
     rightSum <- cumsum(rev(spacings))
     
-    leftStop <- ifelse(max(leftSum) > trimLeft, min(which(leftSum > trimLeft)), 1)
-    rightStop <- tract$nPoints() - ifelse(max(rightSum) > trimRight, min(which(rightSum > trimRight))-1, 0)
+    leftStop <- ifelse(max(leftSum) > trimLeft, min(which(leftSum > trimLeft))+1, 1)
+    rightStop <- tract$nPoints() - ifelse(max(rightSum) > trimRight, min(which(rightSum > trimRight)), 0)
     
     newTract <- .StreamlineTract(line[leftStop:rightStop,], (tract$getSeedIndex()-leftStop+1), tract$getOriginalSeedPoint(), tract$getMetadata())
     invisible (newTract)
