@@ -26,8 +26,7 @@ runExperiment <- function ()
     if (results$nSessions() != nSessions)
         output(OL$Error, "Length of the session list specified does not match the results file")
 
-    for (i in 1:nSessions)
-    {
+    parallelApply(seq_len(nSessions), function (i) {
         output(OL$Info, "Generating tract for session ", i)
         
         currentSession <- newSessionFromDirectory(sessionList[i])
@@ -40,5 +39,5 @@ runExperiment <- function ()
             writeMriImageToFile(ptResult$image, currentTractName)
         if (createImages)
             writePngsForResult(ptResult, prefix=currentTractName, threshold=vizThreshold, showSeed=showSeed)
-    }
+    })
 }

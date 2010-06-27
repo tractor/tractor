@@ -21,6 +21,7 @@ runExperiment <- function ()
     resultsName <- getWithDefault("ResultsName", "results")
     
     reference <- getNTResource("reference", "hnt", list(tractName=tractName))
+    nSessions <- length(sessionList)
     
     if (is.null(seedList))
         pointType <- "r"
@@ -35,9 +36,7 @@ runExperiment <- function ()
             seedMatrix <- transformFslVoxelToRVoxel(seedMatrix)
     }
 
-    results <- list()
-    for (i in seq_along(sessionList))
-    {
+    results <- parallelApply(seq_len(nSessions), function (i) {
         currentSession <- newSessionFromDirectory(sessionList[i])
 
         if (exists("seedMatrix"))
@@ -49,8 +48,8 @@ runExperiment <- function ()
             currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("t2")), useOrigin=TRUE)
         
         result <- runNeighbourhoodTractography(currentSession, currentSeed, reference$getTract(), faThreshold, searchWidth, nSamples=nSamples)
-        results <- c(results, list(result))
-    }
+        return (result)
+    })
     
     resultsObject <- newHeuristicNTResultsFromList(results)
     writeNTResource(resultsObject, "results", "hnt", list(resultsName=resultsName))

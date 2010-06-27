@@ -58,8 +58,7 @@ runExperiment <- function ()
     seedsInData <- all(c("x","y","z") %in% colnames(data))
     subjectsInData <- ("subject" %in% colnames(data)) && (is.integer(data$subject))
     
-    for (i in sessionNumbers)
-    {
+    parallelApply(sessionNumbers, function (i) {
         output(OL$Info, "Generating tract for session ", i)
         
         currentSession <- newSessionFromDirectory(sessionList[i])
@@ -152,5 +151,5 @@ runExperiment <- function ()
             writeMriImageToFile(visitationMap, currentTractName)
         if (createImages)
             writePngsForResult(fakeResult, prefix=currentTractName, threshold=1/(streamSet$nStreamlines()+1), showSeed=showSeed)
-    }
+    })
 }
