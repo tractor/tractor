@@ -4,7 +4,7 @@
 tractor \- Command line interface for the TractoR MRI analysis project
 
 .SH SYNOPSIS
-.B tractor \fR[\fB\-ldzqbri\fR] [\fB\-v \fIlevel\fR] [\fB\-w \fIworking_dir\fR] [\fB\-c \fIconfig_file\fR] \fIscript \fR[\fIarguments\fR]\fB
+.B tractor \fR[\fB\-ldzqbri\fR] [\fB\-v \fIlevel\fR] [\fB\-p \fIfactor\fR] [\fB\-w \fIworking_dir\fR] [\fB\-c \fIconfig_file\fR] \fIscript \fR[\fIarguments\fR]\fB
 .br
 .B tractor \-o \fR[\fB\-w \fIworking_dir\fR]\fB \fIscript\fB
 .br
@@ -48,6 +48,9 @@ Ignore any personal config file at ~/\.tractor/config.
 .TP
 .B \-v \fIlevel\fB
 Produce verbose output: the \fIlevel\fR determines the amount of extra information reported, from 0 (least, the default) to 3 (most).
+.TP
+.B \-p \fIfactor\fB
+Set the parallelisation factor for multicore systems. At most this number of threads will be created to do the main work of the \fIscript\fR. This option requires the "multicore" package for R, and is only used by certain scripts.
 .TP
 .B \-w \fIworking_dir\fB
 Specify the working directory for the experiment, which will be created if necessary (default is the current directory).
