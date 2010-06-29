@@ -21,6 +21,7 @@ runExperiment <- function ()
     faThreshold <- getWithDefault("AnisotropyThreshold", 0.2)
     nSamples <- getWithDefault("NumberOfSamples", 5000)
     datasetName <- getWithDefault("DatasetName", "data")
+    sessionNumbers <- getWithDefault("SessionNumbers", NULL, "character")
     resume <- getWithDefault("Resume", FALSE)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
@@ -47,7 +48,12 @@ runExperiment <- function ()
             seedMatrix <- transformFslVoxelToRVoxel(seedMatrix)
     }
     
-    parallelApply(seq_along(sessionList), function (i) {
+    if (is.null(sessionNumbers))
+        sessionNumbers <- seq_along(sessionList)
+    else
+        sessionNumbers <- splitAndConvertString(sessionNumbers, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
+    
+    parallelApply(sessionNumbers, function (i) {
         sessionDatasetName <- ensureFileSuffix(paste(datasetName,"_session",i,sep=""), "txt")
         
         if (resume && file.exists(sessionDatasetName))
@@ -56,10 +62,19 @@ runExperiment <- function ()
         {
             output(OL$Info, "Calculating splines for session ", i)
             
-            currentSession <- newSessionFromDirectory(sessionList[i])
+            # Allow for out of bounds session numbers (used by pnt-data-sge)
+            if (length(sessionList) == 1)
+                currentSession <- newSessionFromDirectory(sessionList)
+            else
+                currentSession <- newSessionFromDirectory(sessionList[i])
         
             if (exists("seedMatrix"))
-                currentSeed <- seedMatrix[i,]
+            {
+                if (length(sessionList) == 1)
+                    currentSeed <- drop(seedMatrix)
+                else
+                    currentSeed <- seedMatrix[i,]
+            }
             else
                 currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
         
@@ -73,16 +88,19 @@ runExperiment <- function ()
         }
     })
     
-    allData <- NULL
-    for (i in seq_along(sessionList))
+    if (is.null(sessionNumbers))
     {
-        sessionDatasetName <- ensureFileSuffix(paste(datasetName,"_session",i,sep=""), "txt")
-        data <- read.table(sessionDatasetName)
-        data$subject <- i
-        
-        allData <- rbind(allData, data)
+        allData <- NULL
+        for (i in seq_along(sessionList))
+        {
+            sessionDatasetName <- ensureFileSuffix(paste(datasetName,"_session",i,sep=""), "txt")
+            data <- read.table(sessionDatasetName)
+            data$subject <- i
+
+            allData <- rbind(allData, data)
+        }
+
+        write.table(allData, file=ensureFileSuffix(datasetName,"txt"))
+        unlink(ensureFileSuffix(paste(datasetName,"_session",seq_along(sessionList),sep=""), "txt"))
     }
-    
-    write.table(allData, file=ensureFileSuffix(datasetName,"txt"))
-    unlink(ensureFileSuffix(paste(datasetName,"_session",seq_along(sessionList),sep=""), "txt"))
 }
