@@ -11,21 +11,9 @@
     
     assign(".Camino", tempCamino, pos=pos)
     
-    fslHome <- Sys.getenv("FSLDIR")
-    if (is.character(fslHome) && nchar(fslHome) > 0)
-    {
-        fslHome <- expandFileName(fslHome)
-        candidatePaths <- c(file.path(fslHome,"data","standard","tissuepriors"), file.path(fslHome,"etc","standard"))
-        for (path in candidatePaths)
-        {
-            if (imageFileExists(file.path(path, "avg152T1_brain")))
-            {
-                assign(".StandardBrainPath", path, pos=pos)
-                break
-            }
-        }
-    }
-    
-    if (!exists(".StandardBrainPath"))
+    tractorHome <- Sys.getenv("TRACTOR_HOME")
+    if (imageFileExists(file.path(tractorHome, "share", "mni", "brain")))
+        assign(".StandardBrainPath", file.path(tractorHome,"share","mni"), pos=pos)
+    else
         assign(".StandardBrainPath", NULL, pos=pos)
 }
