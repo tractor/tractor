@@ -130,7 +130,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     if (is.null(index))
         index <- seq_len(nrow(matrices) / 4)
     
-    imageMetadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("t2"))
+    imageMetadata <- newMriImageMetadataFromFile(file.path(session$getPreBedpostDirectory(), "nodif"))
     transforms <- lapply(index, function (i) { .AffineTransform3D(matrices[(((i-1)*4)+1):(i*4),], "flirt", imageMetadata, imageMetadata) })
     
     invisible (transforms)
