@@ -70,6 +70,12 @@ newSimpleDiffusionSchemeWithDirections <- function (directions, bValues)
         invisible(.SimpleDiffusionScheme(bValues, gradientDirections))
     else if (is.matrix(directions))
     {
+        if (ncol(directions) == 3 && nrow(directions) != 3)
+        {
+            output(OL$Info, "Transposing gradient direction matrix")
+            directions <- t(directions)
+        }
+        
         # Find groups with the same b-value
         bValueRunLengths <- rle(bValues)
         subsetBreaks <- cumsum(c(0, bValueRunLengths$lengths))
