@@ -29,7 +29,7 @@ create-tests:
 %.out: %.sh
 	@$(ECHO_N) "`grep '#@desc' $< | sed 's/#@desc //'`... "
 	@$(BASH) $< >$@ 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
-	@$(DIFF) $*.save $@ && $(ECHO) "OK"
+	@$(DIFF) $*.save $@ && $(ECHO) "OK" || ( rm -f $@; exit 1 )
 
 %.save: %.sh
 	@$(ECHO_N) "Updating test output for $@... "
