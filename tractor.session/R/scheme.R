@@ -108,7 +108,7 @@ writeSimpleDiffusionSchemeForSession <- function (session, scheme)
     fslDir <- session$getPreBedpostDirectory()
     caminoDir <- session$getCaminoDirectory(createIfMissing=FALSE)
     
-    components <- expandSchemeComponents(scheme)
+    components <- scheme$expandComponents()
     
     if (file.exists(fslDir))
     {

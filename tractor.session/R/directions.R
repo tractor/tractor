@@ -46,9 +46,7 @@ updateGradientCacheFromSession <- function (session, force = FALSE)
     if (!gradientDirectionsAvailableForSession(session))
         return (FALSE)
     
-    preBedpostDirectory <- session$getPreBedpostDirectory()
-    
-    descriptionsFile <- file.path(preBedpostDirectory, "descriptions.txt")
+    descriptionsFile <- file.path(session$getPreBedpostDirectory(), "descriptions.txt")
     if (!file.exists(descriptionsFile))
         return (FALSE)
     seriesDescriptions <- readLines(descriptionsFile, 1)
@@ -78,12 +76,8 @@ updateGradientCacheFromSession <- function (session, force = FALSE)
         }
     }
     
-    bvecs <- as.matrix(read.table(file.path(preBedpostDirectory, "bvecs")))
-    bvecLengths <- apply(bvecs, 2, vectorLength)
-    bvecMatrix <- t(bvecs) / ifelse(bvecLengths==0, 1, bvecLengths)
-    
-    bvals <- unlist(read.table(file.path(preBedpostDirectory, "bvals")))
-    gradientSet <- cbind(bvecMatrix, bvals)
+    schemeComponents <- newSimpleDiffusionSchemeFromSession(session)$expandComponents()
+    gradientSet <- cbind(t(schemeComponents$directions), schemeComponents$bValues)
     write.table(gradientSet, file.path(cacheDirectory,paste("set",number,".txt",sep="")), row.names=FALSE, col.names=FALSE)
     
     cacheIndex <- rbind(cacheIndex, data.frame(descriptions=seriesDescriptions,number=number))
@@ -97,10 +91,10 @@ flipGradientVectorsForSession <- function (session, axes)
     if (!isMriSession(session))
         output(OL$Error, "Specified session is not an MriSession object")
     
-    fileName <- file.path(session$getPreBedpostDirectory(), "bvecs")
-    bvecs <- as.matrix(read.table(fileName))
-    bvecs[axes,] <- (-bvecs[axes,])
-    write.table(bvecs, fileName, row.names=FALSE, col.names=FALSE)
+    schemeComponents <- newSimpleDiffusionSchemeFromSession(session)$expandComponents()
+    schemeComponents$directions[axes,] <- (-schemeComponents$directions[axes,])
+    scheme <- newSimpleDiffusionSchemeWithDirections(schemeComponents$directions, schemeComponents$bValues)
+    writeSimpleDiffusionSchemeForSession(scheme, session)
 }
 
 rotateGradientVectorsForSession <- function (session)
@@ -111,8 +105,8 @@ rotateGradientVectorsForSession <- function (session)
     transforms <- readEddyCorrectTransformsForSession(session)
     decompositions <- lapply(transforms, decomposeAffineTransform3D)
     
-    fileName <- file.path(session$getPreBedpostDirectory(), "bvecs")
-    bvecs <- as.matrix(read.table(fileName))
-    bvecs <- sapply(1:ncol(bvecs), function (i) decompositions[[i]]$rotationMatrix %*% bvecs[,i])
-    write.table(bvecs, fileName, row.names=FALSE, col.names=FALSE)
+    schemeComponents <- newSimpleDiffusionSchemeFromSession(session)$expandComponents()
+    schemeComponents$directions <- sapply(1:ncol(schemeComponents$directions), function (i) decompositions[[i]]$rotationMatrix %*% schemeComponents$directions[,i])
+    scheme <- newSimpleDiffusionSchemeWithDirections(schemeComponents$directions, schemeComponents$bValues)
+    writeSimpleDiffusionSchemeForSession(scheme, session)
 }

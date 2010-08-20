@@ -178,11 +178,11 @@ createFilesForSession <- function (session, dicomDir = NULL, overwriteQuietly = 
     seriesDescriptions <- implode(gsub("\\W","",info$seriesDescriptions,perl=TRUE), ",")
     writeLines(seriesDescriptions, file.path(targetDir,"descriptions.txt"))
 
-    if (all(!is.na(info$bValues)))
-        write.table(matrix(info$bValues,nrow=1), file.path(targetDir,"bvals"), row.names=FALSE, col.names=FALSE)
-
-    if (all(!is.na(info$bVectors)))
-        write.table(info$bVectors, file.path(targetDir,"bvecs"), row.names=FALSE, col.names=FALSE)
+    if (all(!is.na(info$bValues)) && all(!is.na(info$bVectors)))
+    {
+        scheme <- newSimpleDiffusionSchemeWithDirections(info$bVectors, info$bValues)
+        writeSimpleDiffusionSchemeForSession(session, scheme)
+    }
 }
 
 createCaminoFilesForSession <- function (session)
@@ -206,16 +206,11 @@ createCaminoFilesForSession <- function (session)
     
     dir.create(caminoDir)
     
+    # Having created the Camino directory, reading and writing back the
+    # scheme is sufficient to create the Camino file
     output(OL$Info, "Creating a scheme file")
-    bvals <- unlist(read.table(file.path(sourceDir, "bvals")))
-    bvecs <- as.matrix(read.table(file.path(sourceDir, "bvecs")))
-    
-    bvecLengths <- apply(bvecs, 2, vectorLength)
-    bvecMatrix <- t(bvecs) / ifelse(bvecLengths==0, 1, bvecLengths)
-    bvecMatrix <- cbind(bvecMatrix, bvals)
-    lines <- apply(format(bvecMatrix), 1, implode, sep=" ")
-    lines <- c("VERSION: 2", lines)
-    writeLines(lines, file.path(caminoDir,"sequence.scheme"))
+    scheme <- newSimpleDiffusionSchemeFromSession(session)
+    writeSimpleDiffusionSchemeForSession(scheme, session)
     
     output(OL$Info, "Copying data and mask images")
     dataImage <- newMriImageFromFile(file.path(sourceDir,"data"))

@@ -92,6 +92,6 @@ runExperiment <- function ()
     bvals[lowBValueIndices] <- smallBValue
     
     output(OL$Info, "Writing bvals and bvecs files")
-    write.table(bvecs, file.path(targetDir,"bvecs"), row.names=FALSE, col.names=FALSE)
-    write.table(matrix(bvals,nrow=1), file.path(targetDir,"bvals"), row.names=FALSE, col.names=FALSE)
+    scheme <- newSimpleDiffusionSchemeWithDirections(bvecs, bvals)
+    writeSimpleDiffusionSchemeForSession(session, scheme)
 }

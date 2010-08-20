@@ -56,8 +56,8 @@ runExperiment <- function ()
                 if (!is.null(gradientSet))
                 {
                     output(OL$Info, "Gradient cache hit - using stored gradient scheme")
-                    write.table(t(gradientSet[,1:3]), file.path(targetDir,"bvecs"), row.names=FALSE, col.names=FALSE)
-                    write.table(t(gradientSet[,4,drop=FALSE]), file.path(targetDir,"bvals"), row.names=FALSE, col.names=FALSE)
+                    scheme <- newSimpleDiffusionSchemeWithDirections(t(gradientSet[,1:3]), gradientSet[,4])
+                    writeSimpleDiffusionSchemeForSession(session, scheme)
                 }
             }
             
