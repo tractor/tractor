@@ -12,8 +12,8 @@
         expandComponents = function ()
         {
             returnValue <- list()
-            returnValue$directions <- Reduce(cbind, scheme$getGradientDirections())
-            returnValue$bValues <- rep(scheme$getBValues(), scheme$nDirections())
+            returnValue$directions <- Reduce(cbind, .gradientDirections)
+            returnValue$bValues <- rep(.bValues, self$nDirections())
             return (returnValue)
         },
         
