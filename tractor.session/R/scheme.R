@@ -9,6 +9,14 @@
     .gradientDirections <- lapply(.gradientDirections, validateGradientDirections)
     
     self <- list(
+        expandComponents = function ()
+        {
+            returnValue <- list()
+            returnValue$directions <- Reduce(cbind, scheme$getGradientDirections())
+            returnValue$bValues <- rep(scheme$getBValues(), scheme$nDirections())
+            return (returnValue)
+        }
+        
         getBValues = function () { return (.bValues) },
         
         getGradientDirections = function () { return (.gradientDirections) },
@@ -50,18 +58,6 @@ validateGradientDirections <- function (directions)
     })
     
     return (directions)
-}
-
-expandSchemeComponents <- function (scheme)
-{
-    if (!isSimpleDiffusionScheme(scheme))
-        output(OL$Error, "Specified scheme is not a SimpleDiffusionScheme object")
-    
-    returnValue <- list()
-    returnValue$directions <- Reduce(cbind, scheme$getGradientDirections())
-    returnValue$bValues <- rep(scheme$getBValues(), scheme$nDirections())
-    
-    return (returnValue)
 }
 
 newSimpleDiffusionSchemeWithDirections <- function (directions, bValues)
