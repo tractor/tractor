@@ -26,7 +26,7 @@ expect_available=$?
 
 usage()
 {
-    echo "tractor (program v1.6.0)"
+    echo "tractor (program v1.6.1)"
     echo "Run a TractoR experiment script in R and report the results"
     echo
     echo "Usage: tractor [-ldzqbri] [-v level] [-p factor] [-w working_dir] ..."
@@ -152,7 +152,7 @@ if [ $show_options -eq 1 ]; then
     }
     
     binpath=`dirname $0`
-    echo "library(tractor.utils); describeExperiment('$script_file', ${COLUMNS:-80})" | R --slave --vanilla 2>&1
+    echo "library(utils); library(tractor.utils); describeExperiment('$script_file', ${COLUMNS:-80})" | R --slave --vanilla 2>&1
     status=0
     exit
 fi
@@ -180,19 +180,22 @@ fi
 
 if [ $batch_mode -eq 1 ]; then
     cat >"$expect_file" <<EOF
+library(utils)
 library(tractor.utils)
 bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor)
 q(runLast=FALSE)
 EOF
     R CMD BATCH --slave --vanilla $expect_file $log_file
 elif [ $interactive -eq 0 ]; then
-    echo "library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor)" | R --slave --vanilla 2>&1 | tee $log_file
+    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor)" | R --slave --vanilla 2>&1 | tee $log_file
 elif [ $expect_available -eq 0 ]; then
     output_level=`echo $output_level | sed 's/\\$/\\\\\\$/'`
     cat >"$expect_file" <<EOF
 log_user 0
 spawn R --quiet --vanilla
 set timeout 3
+send "library(utils)\n"
+expect -re ">.+\r\n"
 send "library(tractor.utils)\n"
 expect -re ">.+\r\n"
 send "bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor); q()\n"
@@ -201,7 +204,7 @@ interact
 EOF
     expect -f $expect_file | tee $log_file
 else
-    echo "library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor); q()" >.Rprofile
+    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor); q()" >.Rprofile
     R --slave --no-save --no-restore --no-site-file --no-environ 2>&1 | tee $log_file
 fi
 
