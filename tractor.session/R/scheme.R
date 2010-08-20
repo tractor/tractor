@@ -15,7 +15,7 @@
             returnValue$directions <- Reduce(cbind, scheme$getGradientDirections())
             returnValue$bValues <- rep(scheme$getBValues(), scheme$nDirections())
             return (returnValue)
-        }
+        },
         
         getBValues = function () { return (.bValues) },
         
