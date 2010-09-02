@@ -101,7 +101,10 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         
         seedFile <- tempfile()
         writeMriImageToFile(seedMask, seedFile)
-        seedCentre <- round(apply(which(seedMask$getData() > 0, arr.ind=TRUE), 2, median))
+        seedPoints <- which(seedMask$getData() > 0, arr.ind=TRUE)
+        seedCentre <- round(apply(seedPoints, 2, median))
+        
+        output(OL$Info, "There are ", nrow(seedPoints), " seed points within the mask")
         
         outputDir <- file.path(workingDir, "seedmask")
         outputFile <- file.path(outputDir, "fdt_paths")
@@ -122,6 +125,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         execute("probtrackx", paramString, errorOnFail=TRUE, silent=TRUE)
         
         nRetainedSamples <- as.numeric(readLines(file.path(outputDir, "waytotal")))
+        output(OL$Info, nRetainedSamples, " streamlines were retained, of ", nSamples*nrow(seedPoints), " generated")
+        
         result <- list(session=session, seed=as.vector(seedCentre), nSamples=nRetainedSamples)
         if (requireImage)
             result <- c(result, list(image=newMriImageFromFile(outputFile)))
