@@ -20,6 +20,7 @@ runExperiment <- function ()
     useGradientCache <- getWithDefault("UseGradientCache", "second", validValues=c("first","second","never"))
     forceCacheUpdate <- getWithDefault("ForceGradientCacheUpdate", FALSE)
     rotateGradients <- getWithDefault("RotateGradients", FALSE)
+    maskingMethod <- getWithDefault("MaskingMethod", "bet", validValues=c("bet","kmeans","fill"))
     betIntensityThreshold <- getWithDefault("BetIntensityThreshold", 0.5)
     betVerticalGradient <- getWithDefault("BetVerticalGradient", 0)
     flipAxes <- getWithDefault("FlipGradientAxes", NULL, "character")
@@ -79,32 +80,37 @@ runExperiment <- function ()
     
         if (runStages[3] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("mask"))))
         {
-            runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
-        
-            if (interactive)
+            if (maskingMethod == "bet")
             {
-                runBetAgain <- output(OL$Question, "Run brain extraction tool again? [yn; s to show the mask in fslview]")
-                while (tolower(runBetAgain) %in% c("y","s"))
+                runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
+
+                if (interactive)
                 {
-                    if (tolower(runBetAgain) == "s")
-                        runBetWithSession(session, showOnly=TRUE)
-                    else
-                    {
-                        output(OL$Info, "Previous intensity threshold was ", betIntensityThreshold, "; smaller values give larger brain outlines")
-                        tempValue <- output(OL$Question, "Intensity threshold? [0 to 1; Enter for same as before]")
-                        if (tempValue != "")
-                            betIntensityThreshold <- as.numeric(tempValue)
-                        
-                        output(OL$Info, "Previous vertical gradient was ", betVerticalGradient, "; positive values shift the outline downwards")
-                        tempValue <- output(OL$Question, "Vertical gradient? [-1 to 1; Enter for same as before]")
-                        if (tempValue != "")
-                            betVerticalGradient <- as.numeric(tempValue)
-                        
-                        runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
-                    }
                     runBetAgain <- output(OL$Question, "Run brain extraction tool again? [yn; s to show the mask in fslview]")
+                    while (tolower(runBetAgain) %in% c("y","s"))
+                    {
+                        if (tolower(runBetAgain) == "s")
+                            runBetWithSession(session, showOnly=TRUE)
+                        else
+                        {
+                            output(OL$Info, "Previous intensity threshold was ", betIntensityThreshold, "; smaller values give larger brain outlines")
+                            tempValue <- output(OL$Question, "Intensity threshold? [0 to 1; Enter for same as before]")
+                            if (tempValue != "")
+                                betIntensityThreshold <- as.numeric(tempValue)
+
+                            output(OL$Info, "Previous vertical gradient was ", betVerticalGradient, "; positive values shift the outline downwards")
+                            tempValue <- output(OL$Question, "Vertical gradient? [-1 to 1; Enter for same as before]")
+                            if (tempValue != "")
+                                betVerticalGradient <- as.numeric(tempValue)
+
+                            runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
+                        }
+                        runBetAgain <- output(OL$Question, "Run brain extraction tool again? [yn; s to show the mask in fslview]")
+                    }
                 }
             }
+            else
+                createMaskImageForSession(session, maskingMethod)
         }
     
         if (runStages[4] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("fa"))))
