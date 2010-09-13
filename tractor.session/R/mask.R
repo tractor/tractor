@@ -12,7 +12,7 @@ createMaskImageForSession <- function (session, method = c("kmeans","fill"))
     {
         output(OL$Info, "Using k-means clustering to identify \"foreground\" voxels")
         
-        kmeansResult <- kmeans(t2Image$getData(), 2)
+        kmeansResult <- kmeans(as.vector(t2Image$getData()), 2)
         highSignalCluster <- which.max(kmeansResult$centers)
         clusterSizes <- kmeansResult$size
         
