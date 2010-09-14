@@ -210,7 +210,7 @@ createCaminoFilesForSession <- function (session)
     # scheme is sufficient to create the Camino file
     output(OL$Info, "Creating a scheme file")
     scheme <- newSimpleDiffusionSchemeFromSession(session)
-    writeSimpleDiffusionSchemeForSession(scheme, session)
+    writeSimpleDiffusionSchemeForSession(session, scheme)
     
     output(OL$Info, "Copying data and mask images")
     dataImage <- newMriImageFromFile(file.path(sourceDir,"data"))

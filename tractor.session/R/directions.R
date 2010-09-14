@@ -94,7 +94,7 @@ flipGradientVectorsForSession <- function (session, axes)
     schemeComponents <- newSimpleDiffusionSchemeFromSession(session)$expandComponents()
     schemeComponents$directions[axes,] <- (-schemeComponents$directions[axes,])
     scheme <- newSimpleDiffusionSchemeWithDirections(schemeComponents$directions, schemeComponents$bValues)
-    writeSimpleDiffusionSchemeForSession(scheme, session)
+    writeSimpleDiffusionSchemeForSession(session, scheme)
 }
 
 rotateGradientVectorsForSession <- function (session)
@@ -108,5 +108,5 @@ rotateGradientVectorsForSession <- function (session)
     schemeComponents <- newSimpleDiffusionSchemeFromSession(session)$expandComponents()
     schemeComponents$directions <- sapply(1:ncol(schemeComponents$directions), function (i) decompositions[[i]]$rotationMatrix %*% schemeComponents$directions[,i])
     scheme <- newSimpleDiffusionSchemeWithDirections(schemeComponents$directions, schemeComponents$bValues)
-    writeSimpleDiffusionSchemeForSession(scheme, session)
+    writeSimpleDiffusionSchemeForSession(session, scheme)
 }
