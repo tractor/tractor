@@ -57,7 +57,11 @@ runExperiment <- function ()
             
             subdirectory <- paste(series, gsub("\\W","",description,perl=TRUE), sep="_")
             dir.create(file.path(directory, subdirectory))
-            success <- file.copy(files[matchingFiles], file.path(directory,subdirectory,basename(files[matchingFiles])))
+            
+            seriesFiles <- basename(files[matchingFiles])
+            duplicates <- duplicated(seriesFiles)
+            seriesFiles[duplicates] <- paste(seriesFiles[duplicates], seq_len(sum(duplicates)), sep="_")
+            success <- file.copy(files[matchingFiles], file.path(directory,subdirectory,seriesFiles))
 
             if (!all(success))
                 output(OL$Warning, "Not all files copied successfully for series ", series, " - nothing will be deleted")
