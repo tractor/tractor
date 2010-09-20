@@ -17,7 +17,7 @@ runExperiment <- function ()
     
     if (file.info(fileName)$isdir)
     {
-        allFileNames <- list.files(fileName, full.names=TRUE)
+        allFileNames <- list.files(fileName, full.names=TRUE, recursive=TRUE)
         allFileNames <- allFileNames[!file.info(allFileNames)$isdir]
         for (currentFileName in allFileNames)
         {
