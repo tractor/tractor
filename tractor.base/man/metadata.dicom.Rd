@@ -39,4 +39,4 @@ isDicomMetadata(object)
   \item{nTags()}{Retrieve the number of tags stored in this object.}
 }
 \author{Jon Clayden}
-\seealso{The DICOM standard, found online at \url{http://medical.nema.org/}. (Warning: may produce headaches!) Also \code{\link{dictionary}}, and \code{\link{newMriImageFromDicom}} for information on how to create MriImage objects from DICOM files.}
+\seealso{The DICOM standard, found online at \url{http://dicom.nema.org/}. (Warning: may produce headaches!) Also \code{\link{dictionary}}, and \code{\link{newMriImageFromDicom}} for information on how to create MriImage objects from DICOM files.}
