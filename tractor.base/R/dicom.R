@@ -106,6 +106,68 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired, dictionar
     return (description)
 }
 
+sortDicomDirectory <- function (directory, deleteOriginals = FALSE)
+{
+    if (!file.exists(directory) || !file.info(directory)$isdir)
+        output(OL$Error, "Specified path (", directory, ") does not exist or does not point to a directory")
+    
+    files <- expandFileName(list.files(directory, full.names=TRUE, recursive=TRUE))
+    files <- files[!file.info(files)$isdir]
+    nFiles <- length(files)
+
+    count <- 0
+    seriesNumbers <- numeric(nFiles)
+    
+    output(OL$Info, "Reading series numbers from ", nFiles, " files")
+    for (i in 1:nFiles)
+    {
+        metadata <- try(newDicomMetadataFromFile(files[i]), silent=TRUE)
+        if (is.null(metadata) || ("try-error" %in% class(metadata)))
+        {
+            output(OL$Info, "Skipping ", files[i])
+            seriesNumbers[i] <- NA
+        }
+        else
+        {
+            seriesNumbers[i] <- metadata$getTagValue(0x0020, 0x0011)
+            count <- count + 1
+            if (count %% 100 == 0)
+                output(OL$Verbose, "Done ", count)
+        }
+    }
+
+    nDicomFiles <- count
+    if (nDicomFiles == 0)
+        output(OL$Error, "No readable DICOM files were found")
+
+    uniqueSeries <- sort(unique(seriesNumbers))
+    output(OL$Info, "Found series ", implode(uniqueSeries,", "), "; creating subdirectories")
+    
+    for (series in uniqueSeries)
+    {
+        matchingFiles <- which(seriesNumbers==series)
+        if (length(matchingFiles) > 0)
+        {
+            metadata <- newDicomMetadataFromFile(files[matchingFiles[1]])
+            description <- metadata$getTagValue(0x0008, 0x103e)
+            output(OL$Info, "Series ", series, " includes ", length(matchingFiles), " files; description is \"", description, "\"")
+            
+            subdirectory <- paste(series, gsub("\\W","",description,perl=TRUE), sep="_")
+            dir.create(file.path(directory, subdirectory))
+            
+            seriesFiles <- basename(files[matchingFiles])
+            duplicates <- duplicated(seriesFiles)
+            seriesFiles[duplicates] <- paste(seriesFiles[duplicates], seq_len(sum(duplicates)), sep="_")
+            success <- file.copy(files[matchingFiles], file.path(directory,subdirectory,seriesFiles))
+
+            if (!all(success))
+                output(OL$Warning, "Not all files copied successfully for series ", series, " - nothing will be deleted")
+            else if (deleteOriginals)
+                unlink(files[matchingFiles])
+        }
+    }
+}
+
 newMriImageMetadataFromDicom <- function (fileName)
 {
     fileMetadata <- newDicomMetadataFromFile(fileName)
