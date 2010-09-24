@@ -181,7 +181,7 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     if (!isMriImage(image))
         output(OL$Error, "The specified image is not an MriImage object")
     
-    description <- "TractoR NIfTI writer v1.0.0"
+    description <- "TractoR NIfTI writer v1.0.1"
     fileFun <- (if (gzipped) gzfile else file)
     
     if (is.null(datatype))
@@ -245,8 +245,11 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     writeBin(charToRaw(description), connection, size=1)
     writeBin(raw(24+80-nchar(description)), connection)
     
-    # NIfTI xform block: sform and qform codes are hardcoded to 2 here
-    writeBin(as.integer(c(2,2)), connection, size=2)
+    # NIfTI xform block: sform and qform codes are hardcoded to 2 here unless the image is 2D
+    if (ndims == 2)
+        writeBin(as.integer(c(0,0)), connection, size=2)
+    else
+        writeBin(as.integer(c(2,2)), connection, size=2)
     writeBin(c(0,1,0,origin), connection, size=4)
     writeBin(sformRows, connection, size=4)
     
