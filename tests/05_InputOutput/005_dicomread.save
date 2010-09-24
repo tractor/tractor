@@ -1,7 +1,7 @@
-* * INFO: Reading series numbers from 4 files
-* * INFO: Found series 8, 9; creating subdirectories
-* * INFO: Series 8 includes 2 files; description is "DTIb3000s5"
-* * INFO: Series 9 includes 2 files; description is "fl3D_t1_sag"
+* * * INFO: Reading series numbers from 4 files
+* * * INFO: Found series 8, 9; creating subdirectories
+* * * INFO: Series 8 includes 2 files; description is "DTIb3000s5"
+* * * INFO: Series 9 includes 2 files; description is "fl3D_t1_sag"
 * * * INFO: Reading image information from 2 files
 INFO: [x2] Data matrix is transposed relative to acquisition matrix
 * * * INFO: Slice select direction is X
