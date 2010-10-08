@@ -32,7 +32,7 @@
         getImageByType = function (type, fibrePopulation = 1)
         {
             fileName <- self$getImageFileNameByType(type, fibrePopulation)
-            if (tolower(type) %in% c("fa","md") && !imageFileExists(fileName))
+            if (tolower(type) %in% c("fa","md","lax") && !imageFileExists(fileName))
                 runDtifitWithSession(self)
             if (tolower(type) == "lrad" && !imageFileExists(fileName))
                 createRadialDiffusivityMapForSession(self)
