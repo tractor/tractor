@@ -1,8 +1,10 @@
-newMriImageAsVisitationMap <- function (streamSet, metadata)
+newMriImageAsVisitationMap <- function (streamSet, metadata = NULL)
 {
     if (!isStreamlineSetTract(streamSet))
         output(OL$Error, "The specified tract is not a StreamlineSetTract object")
-    if (!isMriImageMetadata(metadata))
+    if (is.null(metadata))
+        metadata <- streamSet$getImageMetadata()
+    else if (!isMriImageMetadata(metadata))
         output(OL$Error, "The specified metadata is not valid")
     
     if (streamSet$isOriginAtSeed())
