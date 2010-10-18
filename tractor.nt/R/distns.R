@@ -39,11 +39,16 @@ evaluateBetaDistribution <- function (x, params, log = FALSE)
 fitRegularisedBetaDistribution <- function (data, alpha = NULL, beta = 1, lambda = 1, alphaOffset = 0, weights = NULL)
 {
     if (is.null(weights))
-        weightSum <- length(data)
+        weightSum <- 1
     else
         weightSum <- sum(weights, na.rm=TRUE)
     
     result <- fitBetaDistribution(data, alpha, beta, weights)
+    
+    # NB: The expression used to calculate alpha here is not self-normalising,
+    # so the relative scales of "weights" and "lambda" matter
+    # This is required to allow for multiple data points from a single subject,
+    # but care must be taken if using this function for other purposes
     if (!is.null(lambda) && is.null(alpha) && (beta == 1))
         result$alpha <- (result$alpha*weightSum) / (result$alpha*lambda + weightSum) + alphaOffset
     

@@ -217,7 +217,17 @@ newUninformativeTractModelFromDataTable <- function (data, maxLength = NULL, wei
 newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NULL, lambda = NULL, alphaOffset = 0, weights = NULL, asymmetric = FALSE)
 {
     if (is.null(weights))
-        weights <- rep(1,nrow(data))
+    {
+        if (is.null(data$subject))
+            output(OL$Error, "The 'subject' field must be present in the data table if weights are not specified")
+        
+        # Each subject needs normalising individually for the number of valid
+        # candidate tracts available
+        subjects <- factor(data$subject)
+        nTotalSplines <- tapply(data$leftLength, subjects, length)
+        nValidSplines <- tapply(!is.na(data$leftLength), subjects, sum)
+        weights <- unlist(lapply(seq_along(nValidSplines), function (i) rep(1,nTotalSplines[i]) / nValidSplines[i]))
+    }
     else if (length(weights) != nrow(data))
         output(OL$Error, "The weight vector must have the same length as the spline data table")
     weights[is.na(data$leftLength)] <- NA
