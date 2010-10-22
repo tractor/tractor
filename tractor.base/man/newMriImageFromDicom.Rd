@@ -29,4 +29,4 @@ newMriImageMetadataFromDicomMetadata(dicom)
   \item{bVectors}{Diffusion gradient vectors, if requested. Will be NA if the information could not be found in the files.}
 }
 \author{Jon Clayden}
-\seealso{\code{\link{DicomMetadata}}, \code{\link{MriImage}}, \code{\link{MriImageMetadata}}.}
+\seealso{\code{\link{DicomMetadata}}, \code{\link{MriImage}}, \code{\link{MriImageMetadata}}, \code{\link{sortDicomDirectory}}.}
