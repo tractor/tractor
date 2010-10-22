@@ -1,6 +1,6 @@
 Package: tractor.nt
-Version: 1.5.0
-Date: 2010-06-23
+Version: 1.6.0
+Date: 2010-10-18
 Title: Neighbourhood tractography methods for white matter segmentation
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
