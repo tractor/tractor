@@ -5,6 +5,8 @@ runExperiment <- function ()
 {
     requireArguments("image file")
     
+    digits <- getWithDefault("SignificantDigits", 6L)
+    
     image <- newMriImageFromFile(Arguments[1])
     if (nArguments() > 1)
     {
@@ -14,7 +16,7 @@ runExperiment <- function ()
     else
         locs <- which(!is.na(image$getData()), arr.ind=TRUE)
     
-    values <- image[locs]
+    values <- signif(image[locs], digits)
     cat(implode(values, sep="\n"))
     cat("\n")
 }
