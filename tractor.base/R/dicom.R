@@ -157,7 +157,8 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE)
             
             seriesFiles <- basename(files[matchingFiles])
             duplicates <- duplicated(seriesFiles)
-            seriesFiles[duplicates] <- paste(seriesFiles[duplicates], seq_len(sum(duplicates)), sep="_")
+            if (any(duplicates))
+                seriesFiles[duplicates] <- paste(seriesFiles[duplicates], seq_len(sum(duplicates)), sep="_")
             success <- file.copy(files[matchingFiles], file.path(directory,subdirectory,seriesFiles))
 
             if (!all(success))
