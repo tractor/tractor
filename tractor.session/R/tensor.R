@@ -139,5 +139,4 @@ createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwl
     }
     writeMap((fit$eigenvalues[2,]+fit$eigenvalues[3,]) / 2, "dti_Lrad")
     writeMap(fit$sse, "dti_sse")
-    writeMap(fit$sse / (fit$logS0^2), "dti_sse_scaled")
 }
