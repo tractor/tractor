@@ -71,7 +71,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
             # Create a temporary file containing the seed point coordinates
             seedFile <- tempfile()
             if (is.vector(seed))
-                system(paste("echo '", implode(seed,sep=" "), "' >", seedFile, sep=""))
+                execute("echo", paste("'", implode(seed,sep=" "), "' >", seedFile, sep=""))
             else if (is.matrix(seed))
                 write.table(seed, seedFile, row.names=FALSE, col.names=FALSE)
             
