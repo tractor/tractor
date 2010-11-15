@@ -68,5 +68,6 @@ trackWithSession <- function (session, x, y = NULL, z = NULL, ...)
     phiNames <- file.path(bedpostDir, paste("merged_ph",seq_len(nCompartments),"samples",sep=""))
     
     returnValue <- trackWithImages(x, y, z, maskName, avfNames, thetaNames, phiNames, ...)
+    returnValue$session <- session
     invisible (returnValue)
 }
