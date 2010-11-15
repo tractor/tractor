@@ -23,6 +23,8 @@ runExperiment <- function ()
     pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
     isStandardSeed <- getWithDefault("SeedInMNISpace", FALSE)
     
+    tracker <- getWithDefault("Tracker", "fsl", validValues=c("fsl","tractor"))
+    
     useGradientAscent <- getWithDefault("UseGradientAscent", FALSE)
     thresholdType <- getWithDefault("GradientAscentThresholdType", "fa")
     thresholdLevel <- getWithDefault("GradientAscentThresholdLevel", 0.2)
@@ -70,7 +72,13 @@ runExperiment <- function ()
     }
     
     output(OL$Info, "Using seed point ", implode(seed,","), " for tractography")
-    result <- runProbtrackWithSession(session, seed, mode="simple", requireImage=TRUE, nSamples=nSamples, force=force)
+    if (tracker == "fsl")
+        result <- runProbtrackWithSession(session, seed, mode="simple", requireImage=TRUE, nSamples=nSamples, force=force)
+    else
+    {
+        require("tractor.native")
+        result <- trackWithSession(session, seed, requireImage=TRUE, nSamples=nSamples)
+    }
         
     output(OL$Info, "Creating tract images")
     if (createVolumes)
