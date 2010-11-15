@@ -14,6 +14,7 @@ runExperiment <- function ()
 {
     tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
     sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
+    tracker <- getWithDefault("Tracker", "fsl", validValues=c("fsl","tractor"))
     seedPoint <- getWithDefault("SeedPoint", NULL, "character")
     seedList <- getWithDefault("SeedPointList", NULL, "integer")
     pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
@@ -82,7 +83,7 @@ runExperiment <- function ()
                 currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("t2")), useOrigin=TRUE)
             
             neighbourhood <- createNeighbourhoodInfo(centre=currentSeed, width=searchWidth)
-            splines <- calculateSplinesForNeighbourhood(currentSession, neighbourhood, reference, faThreshold, nSamples)
+            splines <- calculateSplinesForNeighbourhood(currentSession, neighbourhood, reference, faThreshold, nSamples, tracker=tracker)
             data <- createDataTableForSplines(splines, reference$getTract(), "knot", subjectId=i, neighbourhood=neighbourhood)
             write.table(data, file=sessionDatasetName)
         }
