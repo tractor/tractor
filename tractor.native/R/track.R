@@ -1,5 +1,11 @@
-trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNames, phiNames, nSamples = 5000, maxSteps = 2000, stepLength = 0.5, avfThreshold = 0.05, curvatureThreshold = 0.2, useLoopcheck = TRUE, requireImage = TRUE, requireStreamlineSet = FALSE)
+trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNames, phiNames, nSamples = 5000, maxSteps = 2000, stepLength = 0.5, avfThreshold = 0.05, curvatureThreshold = 0.2, useLoopcheck = TRUE, rightwardsVector = NULL, requireImage = TRUE, requireStreamlineSet = FALSE)
 {
+    if (!is.null(rightwardsVector) && (!is.numeric(rightwardsVector) || length(rightwardsVector) != 3))
+    {
+        flag(OL$Warning, "Rightwards vector specified is not a numeric 3-vector - ignoring it")
+        rightwardsVector <- NULL
+    }
+    
     seed <- resolveVector(len=3, x, y, z)
     maxStepsPerSide <- maxSteps / 2
     
@@ -23,6 +29,8 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
                               as.double(avfThreshold),
                               as.double(curvatureThreshold),
                               as.integer(useLoopcheck),
+                              as.integer(!is.null(rightwardsVector)),
+                              (if (is.null(rightwardsVector)) NA_real_ else as.double(rightwardsVector)),
                               visitation_counts=integer(prod(dims)),
                               left_lengths=(if (requireStreamlineSet) integer(nSamples) else NA_integer_),
                               right_lengths=(if (requireStreamlineSet) integer(nSamples) else NA_integer_),

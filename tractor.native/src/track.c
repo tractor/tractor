@@ -2,7 +2,7 @@
 
 #include <R.h>
 
-void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_names, char **phi_names, int *n_compartments, int *n_samples, int *max_steps, double *step_length, double *avf_threshold, double *curvature_threshold, int *use_loopcheck, int *visitation_counts, int *left_lengths, int *right_lengths, double *left_particles, double *right_particles, int *require_visitation_map, int *require_particles)
+void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_names, char **phi_names, int *n_compartments, int *n_samples, int *max_steps, double *step_length, double *avf_threshold, double *curvature_threshold, int *use_loopcheck, int *use_rightwards_vector, double *rightwards_vector, int *visitation_counts, int *left_lengths, int *right_lengths, double *left_particles, double *right_particles, int *require_visitation_map, int *require_particles)
 {
     int i, j, dir, sample, step, starting, max_steps_per_dir;
     int dim[4], loopcheck_dims[4], particles_dims[3], rounded_loc[3], loopcheck_loc[4], particles_loc[3], dim3[3];
@@ -86,13 +86,19 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
         for (k=0; k<dimprod; k++)
             visited[k] = 0;
         
-        for (dir=1; dir<=2; dir++)
+        // We go right first (dir=0), then left (dir=1)
+        for (dir=0; dir<=1; dir++)
         {
             for (i=0; i<3; i++)
             {
                 loc[i] = (double) (seed[i] - 1);
                 if (starting && sample==0)
-                    prev_step[i] = 0.0;
+                {
+                    if (*use_rightwards_vector)
+                        prev_step[i] = rightwards_vector[i];
+                    else
+                        prev_step[i] = 0.0;
+                }
                 else
                     prev_step[i] = starting ? first_step[i] : -first_step[i];
             }
