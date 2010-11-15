@@ -1,7 +1,7 @@
 R=R
 
 all:
-	@echo 'Nothing to compile - run "make install" to install packages'
+	@echo 'Run "make install" to install packages'
 
 install-base:
 	$(R) CMD INSTALL tractor.base
@@ -24,6 +24,7 @@ install-nt:
 install: install-base install-utils install-session install-nt
 
 install-native:
+	$(R) CMD INSTALL tractor.native
 	cd lib && $(R) CMD INSTALL multicore
 
 install-all: install install-native
@@ -32,7 +33,7 @@ uninstall:
 	$(R) CMD REMOVE tractor.nt tractor.session tractor.utils tractor.base
 
 uninstall-native:
-	$(R) CMD REMOVE multicore
+	$(R) CMD REMOVE tractor.native multicore
 
 uninstall-all: uninstall uninstall-native
 
