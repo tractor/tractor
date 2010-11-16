@@ -46,7 +46,7 @@ splineTractWithOptions <- function (options, session, seed, refSession = NULL, n
     invisible (spline)
 }
 
-referenceSplineTractWithOptions <- function (options, refSession, refSeed, nSamples = 5000, maxAngle = NULL)
+referenceSplineTractWithOptions <- function (options, refSession, refSeed, nSamples = 5000, maxAngle = NULL, tracker = "fsl")
 {
     refOptions <- createTractOptionList(options$pointType, options$lengthQuantile, FALSE, NULL, options$maxPathLength)
     streamline <- streamlineTractWithOptions(refOptions, refSession, refSeed, nSamples=nSamples, tracker=tracker)
