@@ -12,6 +12,7 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
     double voxdim[3], loc[3], old_step[3], prev_step[3], first_step[3], current_step[3];
     double *loopcheck;
     
+    // Read mask image and check datatype
     nifti_image *mask_image = nifti_image_read(*mask_name, 1);
     if (mask_image == NULL)
     {
@@ -20,11 +21,13 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
     }
     if (mask_image->datatype != DT_INT16)
     {
+        // NB: error() may not return, so free image first
         nifti_image_free(mask_image);
         error("Mask image does not use the expected data type (code %d)", mask_image->datatype);
         return;
     }
     
+    // Read AVF, theta and phi images and check datatypes
     nifti_image **avf_images = (nifti_image**) R_alloc(*n_compartments, sizeof(nifti_image*));
     nifti_image **theta_images = (nifti_image**) R_alloc(*n_compartments, sizeof(nifti_image*));
     nifti_image **phi_images = (nifti_image**) R_alloc(*n_compartments, sizeof(nifti_image*));
@@ -48,6 +51,7 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
         }
     }
     
+    // Read image and voxel dimensions from mask image header
     for (i=0; i<3; i++)
     {
         dim3[i] = mask_image->dim[i+1];
@@ -55,10 +59,13 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
     }
     dimprod = dim3[0] * dim3[1] * dim3[2];
     
+    // Maximum steps for each direction ("left" and "right")
     max_steps_per_dir = (*max_steps) / 2;
     
+    // Allocate visitation map vector
     visited = (int *) R_alloc(dimprod, sizeof(int));
     
+    // If using the loop check, allocate an image vector for it (1/5th resolution)
     if (*use_loopcheck)
     {   
         loopcheck_ratio = 5.0;
@@ -70,6 +77,7 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
         loopcheck = (double *) R_alloc(loopcheck_dimprod, sizeof(double));
     }
     
+    // Set dimensions for the streamline array if required
     if (*require_particles)
     {
         particles_dims[0] = max_steps_per_dir;
@@ -77,21 +85,27 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
         particles_dims[2] = (*n_samples);
     }
     
+    // Initialise R's random number generator
     GetRNGstate();
     
     for (sample=0; sample<(*n_samples); sample++)
     {
+        // Indicates first step for this sample
         starting = 1;
         
+        // Zero out boolean visitation tracker
         for (k=0; k<dimprod; k++)
             visited[k] = 0;
         
         // We go right first (dir=0), then left (dir=1)
-        for (dir=0; dir<=1; dir++)
+        for (dir=0; dir<2; dir++)
         {
+            // Initialise streamline front
             for (i=0; i<3; i++)
             {
+                // The seed is given in R coordinates - subtract 1 for C coordinates
                 loc[i] = (double) (seed[i] - 1);
+                
                 if (starting && sample==0)
                 {
                     if (*use_rightwards_vector)
@@ -103,14 +117,17 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
                     prev_step[i] = starting ? first_step[i] : -first_step[i];
             }
             
+            // Zero out loopcheck array if needed
             if (*use_loopcheck)
             {
                 for (k=0; k<loopcheck_dimprod; k++)
                     loopcheck[k] = 0.0;
             }
             
+            // Run the tracking
             for (step=0; step<max_steps_per_dir; step++)
             {
+                // Check that the current step location is in bounds
                 for (i=0; i<3; i++)
                     rounded_loc[i] = (int) round(loc[i]);
                 if (loc_in_bounds(rounded_loc, dim3, 3) == 0)
@@ -119,8 +136,10 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
                     break;
                 }
                 
+                // Index for current location
                 vector_loc = get_vector_loc(rounded_loc, dim3, 3);
                 
+                // Stop if outside the mask, otherwise mark visit
                 if (((int16_t *)(mask_image->data))[vector_loc] != 1)
                 {
                     step--;
@@ -132,6 +151,7 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
                     visitation_counts[vector_loc]++;
                 }
                 
+                // Store current (unrounded) location if required
                 if (*require_particles)
                 {
                     particles_loc[0] = step;
@@ -147,12 +167,14 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
                     }
                 }
                 
+                // Sample a direction (represented by theta and phi) and convert it to a Cartesian vector
                 if (starting)
                     sample_direction(loc, NULL, avf_images, theta_images, phi_images, dim3, *n_compartments, *avf_threshold, &theta, &phi);
                 else
                     sample_direction(loc, prev_step, avf_images, theta_images, phi_images, dim3, *n_compartments, *avf_threshold, &theta, &phi);
                 spherical_to_cartesian(theta, phi, current_step);
                 
+                // Perform loopcheck if requested: within the current 5x5x5 voxel block, has the streamline been going in the opposite direction?
                 if (*use_loopcheck)
                 {
                     for (i=0; i<3; i++)
@@ -174,7 +196,9 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
                     }
                 }
                 
-                if (starting && sample==0)
+                // Reverse the sampled direction if its inner product with the previous step is negative
+                // If there is no previous step (or rightwards vector), the sign is random
+                if (starting && sample==0 && !(*use_rightwards_vector))
                 {
                     uniform_sample = unif_rand();
                     sign = (uniform_sample > 0.5) ? 1.0 : -1.0;
@@ -187,12 +211,14 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
                     sign = (inner_prod > 0) ? 1.0 : -1.0;
                 }
                 
+                // Update streamline front and previous step
                 for (i=0; i<3; i++)
                 {
                     loc[i] = loc[i] + (sign * current_step[i] * (*step_length) / voxdim[i]);
                     prev_step[i] = sign * current_step[i];
                 }
                 
+                // Store the first step to ensure that subsequent samples go the same way
                 if (starting)
                 {
                     for (i=0; i<3; i++)
@@ -201,18 +227,21 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
                 }
             }
             
+            // Store the number of steps taken in each direction, if required
             if (*require_particles)
             {
                 if (dir == 1)
-                    left_lengths[sample] = step;
+                    left_lengths[sample] = step + 1;
                 else
-                    right_lengths[sample] = step;
+                    right_lengths[sample] = step + 1;
             }
         }
     }
     
+    // Clean up
     cleanup_fdt_images(mask_image, avf_images, theta_images, phi_images, *n_compartments);
     
+    // Tell R we've finished with the random number generator
     PutRNGstate();
 }
 
@@ -240,6 +269,7 @@ void sample_direction (double *point, double *reference_direction, nifti_image *
     double step_vector[3];
     double highest_inner_prod = -1;
     
+    // Probabilistic trilinear interpolation: select the sample location with probability in proportion to proximity
     for (i=0; i<3; i++)
     {
         dim4[i] = dim3[i];
@@ -256,12 +286,14 @@ void sample_direction (double *point, double *reference_direction, nifti_image *
             new_point[i] = (int) point_ceil;
     }
     
+    // Randomly choose a sample number
     dim4[3] = avf_images[0]->dim[4];
     new_point[3] = (int) round(unif_rand() * (dim4[3]-1));
     
     // NB: Currently assuming always at least one anisotropic compartment
     for (int i=0; i<n_compartments; i++)
     {
+        // Check AVF is above threshold
         avf = index_float_array((float *) avf_images[i]->data, new_point, dim4, 4);
         if (i == 0 || avf >= avf_threshold)
         {
@@ -275,6 +307,7 @@ void sample_direction (double *point, double *reference_direction, nifti_image *
             else
                 inner_prod = fabs(inner_product(step_vector, reference_direction, 3));
             
+            // If this direction is closer to the reference direction, choose it
             if (inner_prod > highest_inner_prod)
             {
                 highest_inner_prod = inner_prod;
@@ -283,6 +316,7 @@ void sample_direction (double *point, double *reference_direction, nifti_image *
         }
     }
     
+    // Set final theta and phi values
     *out_theta = index_float_array((float *) theta_images[closest_index]->data, new_point, dim4, 4);
     *out_phi = index_float_array((float *) phi_images[closest_index]->data, new_point, dim4, 4);
 }
