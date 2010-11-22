@@ -1,11 +1,4 @@
-#@desc Create B-spline tract representations and calculate characteristics of interest
-#@desc for a set of seed points in one or more brain volumes. This is a prerequisite
-#@desc for training or using a tract matching model. For training, a specific list of
-#@desc seed points will likely be required, in which case PointType should also be
-#@desc set. For using a model, the SeedPointList need not be given, in which case a
-#@desc region of width SearchWidth voxels around the reference tract seed point will
-#@desc be used, subject to the specified AnisotropyThreshold. The TractName specified
-#@desc must match that given to the "pnt-ref" experiment.
+#@desc Create B-spline tract representations and calculate characteristics of interest for a set of seed points in one or more brain volumes. This is a prerequisite for training or using a tract matching model. For training, a specific list of seed points will likely be required, in which case PointType should also be set. For using a model, the SeedPointList need not be given, in which case a region of width SearchWidth voxels around the reference tract seed point will be used, subject to the specified AnisotropyThreshold. The TractName specified must match that given to the "pnt-ref" experiment. If the SessionNumbers option is used to select a subset of the data sets, manual collation using "pnt-collate" will be required.
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
@@ -26,6 +19,8 @@ runExperiment <- function ()
     resume <- getWithDefault("Resume", FALSE)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
+    
+    collateData <- TRUE
     
     if (!is.null(seedPoint) && !is.null(seedList))
         output(OL$Error, "Only one of \"SeedPoint\" and \"SeedPointList\" should be given")
@@ -52,7 +47,10 @@ runExperiment <- function ()
     if (is.null(sessionNumbers))
         sessionNumbers <- seq_along(sessionList)
     else
+    {
         sessionNumbers <- splitAndConvertString(sessionNumbers, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
+        collateData <- FALSE
+    }
     
     parallelApply(sessionNumbers, function (i) {
         sessionDatasetName <- ensureFileSuffix(paste(datasetName,"_session",i,sep=""), "txt")
@@ -89,7 +87,7 @@ runExperiment <- function ()
         }
     })
     
-    if (is.null(sessionNumbers))
+    if (collateData)
     {
         allData <- NULL
         for (i in seq_along(sessionList))
