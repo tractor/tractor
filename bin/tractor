@@ -2,6 +2,7 @@
 
 status=1
 command="$0 $*"
+architecture=""
 keep_log=0
 keep_report=0
 tmpdir=${TMPDIR:-/tmp}
@@ -26,11 +27,11 @@ expect_available=$?
 
 usage()
 {
-    echo "tractor (program v1.6.1)"
+    echo "tractor (program v1.7.0)"
     echo "Run a TractoR experiment script in R and report the results"
     echo
-    echo "Usage: tractor [-ldzqbri] [-v level] [-p factor] [-w working_dir] ..."
-    echo "                              [-c config_file] script [arg1 [arg2 ...]]"
+    echo "Usage: tractor [-ldzqbri] [-v level] [-p factor] [-a architecture] ..."
+    echo "               [-w working_dir] [-c config_file] script [arg1 [arg2 ...]]"
     echo "       tractor -o [-w working_dir] script"
     echo "       tractor -h"
     echo
@@ -53,6 +54,8 @@ usage()
     echo "              3 (most)"
     echo "  -p factor   Set the parallelisation factor for multicore systems (only"
     echo "              used by certain scripts)"
+    echo "  -a arch     Specify a subarchitecture (e.g. 'x86_64'), which is passed"
+    echo "              to R: relevant only for multiarchitecture systems"
     echo "  -w dir      Specify the working directory for the experiment, which"
     echo "              will be created if necessary (default .)"
     echo "  -c file     Specify a configuration file in YAML format"
@@ -62,14 +65,14 @@ usage()
     echo "the specified script first, followed by any directory specified using the"
     echo "'-w' option, then ~/.tractor, and finally the share/experiments directory"
     echo "under \$TRACTOR_HOME. The \$TRACTOR_PATH environment variable can be used"
-    echo "to specify additional paths; the man page has details."
+    echo "to specify additional paths. The man page has details."
     echo
     echo "To find out what scripts are available, type \"tractor list\". To find out"
     echo "what a given script does, type \"tractor -o (script name)\"."
     echo
 }
 
-set -- `getopt "hldozqbriv:p:w:c:" "$@"` || {
+set -- `getopt "hldozqbriv:p:a:w:c:" "$@"` || {
     usage 1>&2
     exit
 }
@@ -90,6 +93,7 @@ while [ $# -gt 0 ]
         -r) keep_report=1 ;;
         -v) shift; verbose_level=$1 ;;
         -p) shift; parallelisation_factor=$1 ;;
+        -a) shift; architecture=$1 ;;
         -w) shift; working_dir=`echo $1 | sed 's/\/$//'` ;;
         -c) shift; config_file="$config_file:$1" ;;
         --) shift; break ;;
@@ -101,6 +105,12 @@ done
     echo "Error: No script name given; type tractor -h for help" 1>&2
     exit
 }
+
+if [ ! -z "${architecture}" ]; then
+    function R {
+        exec R --arch=${architecture} $*
+    }
+fi
 
 script_name=`echo $1 | sed 's/\.R$//'`
 
@@ -151,7 +161,6 @@ if [ $show_options -eq 1 ]; then
         [ $tput_available -eq 0 ] && COLUMNS=`tput cols`
     }
     
-    binpath=`dirname $0`
     echo "library(utils); library(tractor.utils); describeExperiment('$script_file', ${COLUMNS:-80})" | R --slave --vanilla 2>&1
     status=0
     exit
