@@ -211,6 +211,10 @@ send "bootstrapExperiment('$script_file', '$working_dir', '$report_file', $outpu
 expect -re ">.+\r\n"
 interact
 EOF
+    [ ! -z "${architecture}" ] && {
+        sed "s/R --quiet --vanilla/R --arch=${architecture} --quiet --vanilla/" $expect_file > ${expect_file}_tmp
+        mv ${expect_file}_tmp $expect_file
+    }
     expect -f $expect_file | tee $log_file
 else
     echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor); q()" >.Rprofile
