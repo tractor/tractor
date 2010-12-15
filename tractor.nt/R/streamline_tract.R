@@ -382,9 +382,9 @@ newStreamlineTractFromSet <- function (tract, method = c("median","single"), ori
         if (is.null(lengthQuantile))
             output(OL$Error, "Length quantile must be specified for the \"median\" method")
         
-        leftLength <- quantile(tract$getLeftLengths(), probs=lengthQuantile, names=FALSE)
-        rightLength <- quantile(tract$getRightLengths(), probs=lengthQuantile, names=FALSE)
-    
+        leftLength <- floor(quantile(tract$getLeftLengths(), probs=lengthQuantile, names=FALSE))
+        rightLength <- floor(quantile(tract$getRightLengths(), probs=lengthQuantile, names=FALSE))
+        
         leftLine <- apply(tract$getLeftPoints()[1:leftLength,,], 1:2, median, na.rm=TRUE)
         rightLine <- apply(tract$getRightPoints()[1:rightLength,,], 1:2, median, na.rm=TRUE)
     }
