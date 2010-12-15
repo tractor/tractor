@@ -16,6 +16,7 @@ runExperiment <- function ()
     sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
     modelName <- getWithDefault("ModelName", NULL, "character")
     sessionNumbers <- getWithDefault("SessionNumbers", NULL, "character")
+    tracker <- getWithDefault("Tracker", "fsl", validValues=c("fsl","tractor"))
     
     nSamples <- getWithDefault("NumberOfSamples", 5000)
     subgroupSize <- getWithDefault("SubgroupSize", 500)
@@ -85,7 +86,14 @@ runExperiment <- function ()
         neighbourhood <- createNeighbourhoodInfo(searchWidth, centre=currentSeed)
         bestSeed <- neighbourhood$vectors[,bestSeedIndex]
         
-        streamSet <- newStreamlineSetTractFromProbtrack(currentSession, bestSeed, nSamples=nSamples)
+        if (tracker == "tractor")
+        {
+            require("tractor.native")
+            result <- trackWithSession(currentSession, bestSeed, nSamples=nSamples, requireImage=FALSE, requireStreamlineSet=TRUE)
+            streamSet <- result$streamlineSet
+        }
+        else
+            streamSet <- newStreamlineSetTractFromProbtrack(currentSession, bestSeed, nSamples=nSamples)
         
         medianLine <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
         if (options$registerToReference)
