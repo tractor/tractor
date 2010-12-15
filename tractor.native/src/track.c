@@ -131,20 +131,14 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
                 for (i=0; i<3; i++)
                     rounded_loc[i] = (int) round(loc[i]);
                 if (loc_in_bounds(rounded_loc, dim3, 3) == 0)
-                {
-                    step--;
                     break;
-                }
                 
                 // Index for current location
                 vector_loc = get_vector_loc(rounded_loc, dim3, 3);
                 
                 // Stop if outside the mask, otherwise mark visit
                 if (((int16_t *)(mask_image->data))[vector_loc] != 1)
-                {
-                    step--;
                     break;
-                }
                 else if (visited[vector_loc] == 0)
                 {
                     visited[vector_loc] = 1;
@@ -231,9 +225,9 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
             if (*require_particles)
             {
                 if (dir == 1)
-                    left_lengths[sample] = step + 1;
+                    left_lengths[sample] = step;
                 else
-                    right_lengths[sample] = step + 1;
+                    right_lengths[sample] = step;
             }
         }
     }
