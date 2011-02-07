@@ -3334,14 +3334,16 @@ else
   { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
 fi
-fi
-
-
+else
+  { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
 ZLIB_HOME=/usr/local
 if test ! -f "${ZLIB_HOME}/include/zlib.h"
 then
         ZLIB_HOME=/usr
 fi
+fi
+
 
 #
 # Locate zlib, if wanted

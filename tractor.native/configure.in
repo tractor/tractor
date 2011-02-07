@@ -58,11 +58,12 @@ AC_INIT(tractor.native, 1.7.1)
 #   Macro released by the Autoconf Archive. When you make and distribute a
 #   modified version of the Autoconf Macro, you may extend this special
 #   exception to the GPL to apply to your modified version as well.
+#
+# Modified by Jon Clayden, 2011-02-07
 
 AC_DEFUN([CHECK_ZLIB],
-#
+
 # Handle user hints
-#
 [AC_MSG_CHECKING(if zlib is wanted)
 AC_ARG_WITH(zlib,
 [  --with-zlib=DIR root directory path of zlib installation [defaults to
@@ -78,17 +79,15 @@ AC_ARG_WITH(zlib,
   fi
 else
   AC_MSG_RESULT(no)
-fi])
-
+fi],
+[AC_MSG_RESULT(yes)
 ZLIB_HOME=/usr/local
 if test ! -f "${ZLIB_HOME}/include/zlib.h"
 then
         ZLIB_HOME=/usr
-fi
+fi])
 
-#
 # Locate zlib, if wanted
-#
 if test -n "${ZLIB_HOME}"
 then
         LIBS="-L${ZLIB_HOME}/lib"
@@ -100,16 +99,11 @@ then
         AC_LANG_RESTORE
         if test "$zlib_cv_libz" = "yes" -a "$zlib_cv_zlib_h" = "yes"
         then
-                #
                 # If both library and header were found, use them
-                #
-                AC_CHECK_LIB(z, inflateEnd)
                 AC_MSG_CHECKING(zlib in ${ZLIB_HOME})
                 AC_MSG_RESULT(ok)
         else
-                #
                 # If either header or library was not found, revert and bomb
-                #
                 AC_MSG_CHECKING(zlib in ${ZLIB_HOME})
                 LIBS=""
                 CFLAGS=""
