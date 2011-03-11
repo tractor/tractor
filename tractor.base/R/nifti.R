@@ -48,34 +48,62 @@ createNiftiMetadata <- function (fileNames)
     # The gzfile function can handle uncompressed files too
     connection <- gzfile(fileNames$headerFile, "rb")
     
-    size <- readBin(connection, "integer")
-    if (size == 348)
-        endian <- .Platform$endian
-    else
-        endian <- setdiff(c("big","little"), .Platform$endian)
-
-    seek(connection, where=40)
-    dims <- readBin(connection, "integer", n=8, size=2, endian=endian)
-    seek(connection, where=70)
-    typeCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
-    seek(connection, where=76)
-    voxelDims <- readBin(connection, "double", n=8, size=4, endian=endian)
-    dataOffset <- readBin(connection, "double", n=1, size=4, endian=endian)
-    slopeAndIntercept <- readBin(connection, "double", n=2, size=4, endian=endian)
-    seek(connection, where=123)
-    unitCode <- readBin(connection, "integer", n=1, size=1, endian=endian)
-    seek(connection, where=252)
-    qformCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
-    sformCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
-    quaternionParams <- readBin(connection, "double", n=6, size=4, endian=endian)
-    affine <- matrix(readBin(connection, "double", n=12, size=4, endian=endian), nrow=3, byrow=TRUE)
-    seek(connection, where=344)
-    magicString <- readBin(connection, "raw", n=4)
-
-    close(connection)
+    size <- readBin(connection, "integer", n=1, size=4)
     
-    if (!identical(magicString, c(charToRaw("ni1"),as.raw(0))) && !identical(magicString, c(charToRaw("n+1"),as.raw(0))))
-        output(OL$Error, "The file ", fileNames$headerFile, " is not a valid NIfTI file")
+    nonNativeEndian <- setdiff(c("big","little"), .Platform$endian)
+    endian <- switch(as.character(size), "348"=.Platform$endian, "556"=.Platform$endian, "23553"=nonNativeEndian, "11266"=nonNativeEndian)
+    niftiVersion <- switch(as.character(size), "348"=1, "556"=2, "23553"=1, "11266"=2)
+
+    if (niftiVersion == 1)
+    {
+        seek(connection, where=40)
+        dims <- readBin(connection, "integer", n=8, size=2, endian=endian)
+        seek(connection, where=70)
+        typeCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
+        seek(connection, where=76)
+        voxelDims <- readBin(connection, "double", n=8, size=4, endian=endian)
+        dataOffset <- readBin(connection, "double", n=1, size=4, endian=endian)
+        slopeAndIntercept <- readBin(connection, "double", n=2, size=4, endian=endian)
+        seek(connection, where=123)
+        unitCode <- readBin(connection, "integer", n=1, size=1, endian=endian)
+        seek(connection, where=252)
+        qformCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
+        sformCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
+        quaternionParams <- readBin(connection, "double", n=6, size=4, endian=endian)
+        affine <- matrix(readBin(connection, "double", n=12, size=4, endian=endian), nrow=3, byrow=TRUE)
+        seek(connection, where=344)
+        magicString <- readBin(connection, "raw", n=4)
+        
+        close(connection)
+        
+        if (!identical(magicString, c(charToRaw("ni1"),as.raw(0))) && !identical(magicString, c(charToRaw("n+1"),as.raw(0))))
+            output(OL$Error, "The file ", fileNames$headerFile, " is not a valid NIfTI file")
+    }
+    else
+    {
+        seek(connection, where=40)
+        dims <- readBin(connection, "integer", n=8, size=8, endian=endian)
+        seek(connection, where=130)
+        typeCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
+        seek(connection, where=136)
+        voxelDims <- readBin(connection, "double", n=8, size=8, endian=endian)
+        dataOffset <- readBin(connection, "double", n=1, size=8, endian=endian)
+        slopeAndIntercept <- readBin(connection, "double", n=2, size=8, endian=endian)
+        seek(connection, where=227)
+        unitCode <- readBin(connection, "integer", n=1, size=1, endian=endian)
+        seek(connection, where=372)
+        qformCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
+        sformCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
+        quaternionParams <- readBin(connection, "double", n=6, size=8, endian=endian)
+        affine <- matrix(readBin(connection, "double", n=12, size=8, endian=endian), nrow=3, byrow=TRUE)
+        seek(connection, where=536)
+        magicString <- readBin(connection, "raw", n=4)
+        
+        close(connection)
+        
+        if (!identical(magicString, c(charToRaw("ni2"),as.raw(0))) && !identical(magicString, c(charToRaw("n+2"),as.raw(0))))
+            output(OL$Error, "The file ", fileNames$headerFile, " is not a valid NIfTI file")
+    }
     
     ndims <- dims[1]
     dims <- dims[1:ndims + 1]
