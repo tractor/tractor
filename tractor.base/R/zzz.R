@@ -27,7 +27,9 @@
                        sizes=c(     1,          2,          4,          4,          8,          1,          2,          4),
                        isSigned=c(  FALSE,      TRUE,       TRUE,       TRUE,       TRUE,       TRUE,       FALSE,      FALSE)),
         units=list(unknown=0, m=1, mm=2, um=3),
-        xformCodes=list(unknown=0, scannerAnatomical=1, alignedAnatomical=2, talairach=3, mni=4))
+        xformCodes=list(unknown=0, scannerAnatomical=1, alignedAnatomical=2, talairach=3, mni=4),
+        magicStrings=list(list(c(charToRaw("ni1"),as.raw(0)), c(charToRaw("n+1"),as.raw(0))),
+                          list(c(charToRaw("ni2"),as.raw(0)), c(charToRaw("n+2"),as.raw(0)))))
     
     tempFileTypes <- list(
         typeNames=c(       "ANALYZE",  "NIFTI",    "NIFTI_PAIR",   "ANALYZE_GZ",   "NIFTI_GZ", "NIFTI_PAIR_GZ"),

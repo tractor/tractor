@@ -15,8 +15,7 @@ hasNiftiMagicString <- function (fileName)
     magicString <- readBin(connection, "raw", n=4)
     close(connection)
     
-    # NB: "\0" is not allowed as of R 2.8.0
-    return (identical(magicString, c(charToRaw("ni1"),as.raw(0))) || identical(magicString, c(charToRaw("n+1"),as.raw(0))))
+    return (any(sapply(unlist(.Nifti$magicStrings,recursive=FALSE), identical, magicString)))
 }
 
 createNiftiMetadata <- function (fileNames)
@@ -73,11 +72,6 @@ createNiftiMetadata <- function (fileNames)
         affine <- matrix(readBin(connection, "double", n=12, size=4, endian=endian), nrow=3, byrow=TRUE)
         seek(connection, where=344)
         magicString <- readBin(connection, "raw", n=4)
-        
-        close(connection)
-        
-        if (!identical(magicString, c(charToRaw("ni1"),as.raw(0))) && !identical(magicString, c(charToRaw("n+1"),as.raw(0))))
-            output(OL$Error, "The file ", fileNames$headerFile, " is not a valid NIfTI file")
     }
     else
     {
@@ -98,12 +92,13 @@ createNiftiMetadata <- function (fileNames)
         affine <- matrix(readBin(connection, "double", n=12, size=8, endian=endian), nrow=3, byrow=TRUE)
         seek(connection, where=536)
         magicString <- readBin(connection, "raw", n=4)
-        
-        close(connection)
-        
-        if (!identical(magicString, c(charToRaw("ni2"),as.raw(0))) && !identical(magicString, c(charToRaw("n+2"),as.raw(0))))
-            output(OL$Error, "The file ", fileNames$headerFile, " is not a valid NIfTI file")
     }
+    
+    close(connection)
+    
+    # Require exactly one match to a magic string suitable to the NIfTI version
+    if (sum(sapply(.Nifti$magicStrings[[niftiVersion]], identical, magicString)) != 1)
+        output(OL$Error, "The file ", fileNames$headerFile, " is not a valid NIfTI file")
     
     ndims <- dims[1]
     dims <- dims[1:ndims + 1]
