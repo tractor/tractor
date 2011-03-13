@@ -20,24 +20,42 @@ hasNiftiMagicString <- function (fileName)
 
 createNiftiMetadata <- function (fileNames)
 {
-    getRotationMatrixFromXform <- function (x, qfactor)
+    getXformMatrix <- function ()
     {
-        # The qform case
-        if (is.vector(x))
+        # With no information, assume Analyze orientation and zero origin
+        if (qformCode <= 0 && sformCode <= 0)
         {
-            if (sum(abs(x)) > 1 || sum(abs(x) %in% 0:1) != 3)
-                output(OL$Error, "Only diagonal xform rotation matrices are supported")
-            a <- sqrt(1 - sum(x^2))
-            diagonal <- c(a^2+x[1]^2-x[2]^2-x[3]^2, a^2+x[2]^2-x[1]^2-x[3]^2, qfactor*(a^2+x[3]^2-x[1]^2-x[2]^2))
-            return (diag(diagonal))
+            output(OL$Warning, "Nifti qform and sform codes are both zero in file ", fileNames$headerFile, " - orientation can only be guessed")
+            return (diag(c(-1, 1, 1, 1)))
         }
-        # The sform case
-        else if (is.matrix(x))
+        else if (qformCode > 0)
         {
-            if (!identical(abs(x), diag(3)))
-                output(OL$Error, "Only diagonal xform rotation matrices are supported")
-            x[3,3] <- qfactor * x[3,3]
-            return (x)
+            output(OL$Debug, "Using qform (code ", qformCode, ") for origin")
+            matrix <- diag(4)
+            matrix[1:3,4] <- quaternionParams[4:6]
+            q <- c(sqrt(1 - sum(quaternionParams[1:3]^2)), quaternionParams[1:3])
+
+            matrix[1:3,1:3] <- c(q[1]*q[1] + q[2]*q[2] - q[3]*q[3] - q[4]*q[4],
+                                 2*q[2]*q[3] + 2*q[1]*q[4],
+                                 2*q[2]*q[4] - 2*q[1]*q[3],
+                                 2*q[2]*q[3] - 2*q[1]*q[4],
+                                 q[1]*q[1] + q[3]*q[3] - q[2]*q[2] - q[4]*q[4],
+                                 2*q[3]*q[4] + 2*q[1]*q[2],
+                                 2*q[2]*q[4] + 2*q[1]*q[3],
+                                 2*q[3]*q[4] - 2*q[1]*q[2],
+                                 q[1]*q[1] + q[4]*q[4] - q[3]*q[3] - q[2]*q[2])
+
+            # The qfactor should be stored as 1 or -1, but the NIfTI standard says
+            # 0 should be treated as 1; this does that (the 0.1 is arbitrary)
+            qfactor <- sign(voxelDims[1] + 0.1)
+            matrix[1:3,1:3] <- matrix[1:3,1:3] * c(abs(voxelDims[2:3]), qfactor*abs(voxelDims[4]))
+
+            return (matrix)
+        }
+        else
+        {
+            output(OL$Debug, "Using sform (code ", sformCode, ") for origin")
+            return (rbind(affine, c(0,0,0,1)))
         }
     }
     
@@ -103,29 +121,8 @@ createNiftiMetadata <- function (fileNames)
     ndims <- dims[1]
     dims <- dims[1:ndims + 1]
     
-    if (qformCode == 0 && sformCode == 0)
-    {
-        output(OL$Debug, "Both qform and sform are zero - setting zero origin")
-        origin <- rep(0,5)
-        output(OL$Warning, "Nifti qform and sform codes are both zero in file ", fileNames$headerFile, " - orientation can only be guessed")
-        # This guess is the same as the one that FSL uses - assume the file
-        # uses the Analyze orientation convention
-        rotationMatrix <- diag(c(-1,1,1))
-    }
-    else if (qformCode > 0)
-    {
-        output(OL$Debug, "Using qform (code ", qformCode, ") for origin")
-        origin <- abs(round(quaternionParams[4:6] / voxelDims[2:4])) + 1
-        origin <- c(origin, 0, 0)
-        rotationMatrix <- getRotationMatrixFromXform(quaternionParams[1:3], voxelDims[1])
-    }
-    else
-    {
-        output(OL$Debug, "Using sform (code ", sformCode, ") for origin")
-        origin <- abs(round(affine[,4] / voxelDims[2:4])) + 1
-        origin <- c(origin, 0, 0)
-        rotationMatrix <- getRotationMatrixFromXform(affine[,1:3]/diag(voxelDims[2:4]), voxelDims[1])
-    }
+    xformMatrix <- getXformMatrix()
+    origin <- c(xformMatrix[1:3,4]+1, 0, 0)
     
     typeIndex <- which(.Nifti$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
@@ -139,13 +136,13 @@ createNiftiMetadata <- function (fileNames)
         unit <- NULL
     
     dimsToKeep <- which(dims > 1)
-    voxelDims[2:4] <- voxelDims[2:4] * sign(diag(rotationMatrix))
+    voxelDims[2:4] <- voxelDims[2:4] * sign(diag(xformMatrix)[1:3])
     imageMetadata <- .MriImageMetadata(dims[dimsToKeep], voxelDims[dimsToKeep+1], unit, fileNames$fileStem, datatype, origin[dimsToKeep], endian)
     
     storageMetadata <- list(dataOffset=dataOffset,
                             dataScalingSlope=slopeAndIntercept[1],
                             dataScalingIntercept=slopeAndIntercept[2],
-                            rotationMatrix=rotationMatrix)
+                            xformMatrix=xformMatrix)
     
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
@@ -181,6 +178,7 @@ newMriImageFromNifti <- function (fileNames)
     
     # The first test is for -1 because basic NIfTI storage convention is RAS,
     # whilst Analyze (and TractoR) use LAS - this is NOT a mistake
+    # FIXME: this needs updating for nondiagonal xforms
     matrixDiag <- diag(nifti$storageMetadata$rotationMatrix)
     orderX <- (if (matrixDiag[1] == -1) seq_len(dims[1]) else rev(seq_len(dims[1])))
     orderY <- (if (matrixDiag[2] == 1) seq_len(dims[2]) else rev(seq_len(dims[2])))
