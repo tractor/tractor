@@ -26,7 +26,7 @@ createNiftiMetadata <- function (fileNames)
         if (qformCode <= 0 && sformCode <= 0)
         {
             output(OL$Warning, "Nifti qform and sform codes are both zero in file ", fileNames$headerFile, " - orientation can only be guessed")
-            return (diag(c(-1, 1, 1, 1)))
+            return (diag(c(-abs(voxelDims[2]), abs(voxelDims[3:4]), 1)))
         }
         else if (qformCode > 0)
         {
@@ -35,15 +35,15 @@ createNiftiMetadata <- function (fileNames)
             matrix[1:3,4] <- quaternionParams[4:6]
             q <- c(sqrt(1 - sum(quaternionParams[1:3]^2)), quaternionParams[1:3])
 
-            matrix[1:3,1:3] <- c(q[1]*q[1] + q[2]*q[2] - q[3]*q[3] - q[4]*q[4],
+            matrix[1:3,1:3] <- c(  q[1]*q[1] +   q[2]*q[2] - q[3]*q[3] - q[4]*q[4],
                                  2*q[2]*q[3] + 2*q[1]*q[4],
                                  2*q[2]*q[4] - 2*q[1]*q[3],
                                  2*q[2]*q[3] - 2*q[1]*q[4],
-                                 q[1]*q[1] + q[3]*q[3] - q[2]*q[2] - q[4]*q[4],
+                                   q[1]*q[1] +   q[3]*q[3] - q[2]*q[2] - q[4]*q[4],
                                  2*q[3]*q[4] + 2*q[1]*q[2],
                                  2*q[2]*q[4] + 2*q[1]*q[3],
                                  2*q[3]*q[4] - 2*q[1]*q[2],
-                                 q[1]*q[1] + q[4]*q[4] - q[3]*q[3] - q[2]*q[2])
+                                   q[1]*q[1] +   q[4]*q[4] - q[3]*q[3] - q[2]*q[2])
 
             # The qfactor should be stored as 1 or -1, but the NIfTI standard says
             # 0 should be treated as 1; this does that (the 0.1 is arbitrary)
@@ -122,7 +122,7 @@ createNiftiMetadata <- function (fileNames)
     dims <- dims[1:ndims + 1]
     
     xformMatrix <- getXformMatrix()
-    origin <- c(xformMatrix[1:3,4]+1, 0, 0)
+    origin <- c(abs(round(xformMatrix[1:3,4]/voxelDims[2:4])) + 1, 0, 0)
     
     typeIndex <- which(.Nifti$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
@@ -176,23 +176,34 @@ newMriImageFromNifti <- function (fileNames)
     if (slope != 0 && !equivalent(c(slope,intercept), 1:0))
         data <- data * slope + intercept
     
-    # The first test is for -1 because basic NIfTI storage convention is RAS,
-    # whilst Analyze (and TractoR) use LAS - this is NOT a mistake
-    # FIXME: this needs updating for nondiagonal xforms
-    matrixDiag <- diag(nifti$storageMetadata$rotationMatrix)
-    orderX <- (if (matrixDiag[1] == -1) seq_len(dims[1]) else rev(seq_len(dims[1])))
-    orderY <- (if (matrixDiag[2] == 1) seq_len(dims[2]) else rev(seq_len(dims[2])))
-    if (nDims > 2)
-        orderZ <- (if (matrixDiag[3] == 1) seq_len(dims[3]) else rev(seq_len(dims[3])))
-    dimsToKeep <- setdiff(1:nDims, 1:3)
-    
-    if (nDims == 2)
-        data <- data[orderX, orderY]
-    else if (nDims == 3)
-        data <- data[orderX, orderY, orderZ]
+    rotationMatrix <- nifti$storageMetadata$xformMatrix[1:3,1:3]
+    diag(rotationMatrix) <- diag(rotationMatrix) / abs(nifti$imageMetadata$getVoxelDimensions()[1:3])
+    if (!all(rotationMatrix %in% c(-1,0,1)))
+        output(OL$Error, "NIfTI xform matrix is rotated")
     else
-        data <- array(apply(data, dimsToKeep, "[", orderX, orderY, orderZ), dim=dim(data))
+    {
+        dimPermutation <- apply(abs(rotationMatrix)==1, 2, which)
+        if (!identical(dimPermutation, 1:3))
+            data <- aperm(data, dimPermutation)
+        
+        ordering <- rowSums(rotationMatrix)
+        
+        # The first test is for -1 because basic NIfTI storage convention is RAS,
+        # whilst Analyze (and TractoR) use LAS - this is NOT a mistake
+        orderX <- (if (ordering[1] == -1) seq_len(dims[1]) else rev(seq_len(dims[1])))
+        orderY <- (if (ordering[2] == 1) seq_len(dims[2]) else rev(seq_len(dims[2])))
+        if (nDims > 2)
+            orderZ <- (if (ordering[3] == 1) seq_len(dims[3]) else rev(seq_len(dims[3])))
+        dimsToKeep <- setdiff(1:nDims, 1:3)
 
+        if (nDims == 2)
+            data <- data[orderX, orderY]
+        else if (nDims == 3)
+            data <- data[orderX, orderY, orderZ]
+        else
+            data <- array(apply(data, dimsToKeep, "[", orderX, orderY, orderZ), dim=dim(data))
+    }
+    
     image <- .MriImage(drop(data), nifti$imageMetadata)
     invisible (image)
 }
