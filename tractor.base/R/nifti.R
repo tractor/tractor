@@ -178,15 +178,15 @@ newMriImageFromNifti <- function (fileNames)
     
     rotationMatrix <- nifti$storageMetadata$xformMatrix[1:3,1:3]
     diag(rotationMatrix) <- diag(rotationMatrix) / abs(nifti$imageMetadata$getVoxelDimensions()[1:3])
-    if (!all(rotationMatrix %in% c(-1,0,1)))
+    if (!all(abs(round(rotationMatrix)-rotationMatrix) < 1e-3) || !all(round(rotationMatrix) %in% c(-1,0,1)))
         output(OL$Error, "NIfTI xform matrix is rotated")
     else
     {
-        dimPermutation <- apply(abs(rotationMatrix)==1, 2, which)
+        dimPermutation <- apply(abs(round(rotationMatrix))==1, 2, which)
         if (!identical(dimPermutation, 1:3))
             data <- aperm(data, dimPermutation)
         
-        ordering <- rowSums(rotationMatrix)
+        ordering <- colSums(round(rotationMatrix))
         
         # The first test is for -1 because basic NIfTI storage convention is RAS,
         # whilst Analyze (and TractoR) use LAS - this is NOT a mistake
