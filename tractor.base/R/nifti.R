@@ -135,7 +135,7 @@ createNiftiMetadata <- function (fileNames)
     if (length(unit) == 0)
         unit <- NULL
     
-    dimsToKeep <- which(dims > 1)
+    dimsToKeep <- 1:max(which(dims > 1))
     voxelDims[2:4] <- voxelDims[2:4] * sign(diag(xformMatrix)[1:3])
     imageMetadata <- .MriImageMetadata(dims[dimsToKeep], voxelDims[dimsToKeep+1], unit, fileNames$fileStem, datatype, origin[dimsToKeep], endian)
     
@@ -204,7 +204,7 @@ newMriImageFromNifti <- function (fileNames)
             data <- array(apply(data, dimsToKeep, "[", orderX, orderY, orderZ), dim=dim(data))
     }
     
-    image <- .MriImage(drop(data), nifti$imageMetadata)
+    image <- .MriImage(data, nifti$imageMetadata)
     invisible (image)
 }
 

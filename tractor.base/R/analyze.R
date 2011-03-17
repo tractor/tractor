@@ -32,7 +32,7 @@ newMriImageMetadataFromAnalyze <- function (fileNames)
         output(OL$Error, "Data type of file ", fileNames$imageFile, " (", typeCode, ") is not supported")
     datatype <- list(type=.Analyze$typesR[typeIndex], size=.Analyze$sizes[typeIndex], isSigned=.Analyze$isSigned[typeIndex])
     
-    dimsToKeep <- which(dims > 1)
+    dimsToKeep <- 1:max(which(dims > 1))
     metadata <- .MriImageMetadata(dims[dimsToKeep], voxelDims[dimsToKeep+1], NULL, fileNames$fileStem, datatype, origin[dimsToKeep], endian)
     
     invisible (metadata)
@@ -54,7 +54,7 @@ newMriImageFromAnalyze <- function (fileNames)
     data <- array(voxels, dim=dims)
     close(connection)
     
-    image <- .MriImage(drop(data), metadata)
+    image <- .MriImage(data, metadata)
     invisible (image)
 }
 
