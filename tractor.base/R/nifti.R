@@ -176,7 +176,11 @@ newMriImageFromNifti <- function (fileNames)
         data <- data * slope + intercept
     
     rotationMatrix <- nifti$storageMetadata$xformMatrix[1:3,1:3]
-    diag(rotationMatrix) <- diag(rotationMatrix) / abs(nifti$imageMetadata$getVoxelDimensions()[1:3])
+    if (nDims == 2)
+        diag(rotationMatrix) <- diag(rotationMatrix) / c(abs(nifti$imageMetadata$getVoxelDimensions()),1)
+    else
+        diag(rotationMatrix) <- diag(rotationMatrix) / abs(nifti$imageMetadata$getVoxelDimensions()[1:3])
+    
     if (!all(abs(round(rotationMatrix)-rotationMatrix) < 1e-3) || !all(round(rotationMatrix) %in% c(-1,0,1)))
         output(OL$Error, "NIfTI xform matrix is rotated")
     else
