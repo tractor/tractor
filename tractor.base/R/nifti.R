@@ -185,11 +185,11 @@ newMriImageFromNifti <- function (fileNames)
         output(OL$Error, "NIfTI xform matrix is rotated")
     else
     {
-        dimPermutation <- apply(abs(round(rotationMatrix))==1, 2, which)
+        dimPermutation <- apply(abs(round(rotationMatrix))==1, 1, which)
         if (!identical(dimPermutation, 1:3))
             data <- aperm(data, dimPermutation)
         
-        ordering <- colSums(round(rotationMatrix))
+        ordering <- rowSums(round(rotationMatrix))
         
         # The first test is for -1 because basic NIfTI storage convention is RAS,
         # whilst Analyze (and TractoR) use LAS - this is NOT a mistake
