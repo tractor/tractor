@@ -70,6 +70,9 @@ runExperiment <- function ()
     
         if (runStages[2] && (!skipCompleted || !imageFileExists(file.path(targetDir,"nodif"))))
         {
+            if (!is.null(flipAxes) && length(flipAxes) > 0)
+                flipGradientVectorsForSession(session, flipAxes)
+            
             if (isTRUE(updateGradientCacheFromSession(session, forceCacheUpdate)))
                 output(OL$Info, "Gradient directions inserted into cache for future reference")
             runEddyCorrectWithSession(session, ask=interactive)
@@ -115,38 +118,30 @@ runExperiment <- function ()
     
         if (runStages[4] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("fa"))))
         {
+            runDtifitWithSession(session)
+            
             if (interactive)
             {
-                runDtifitAgain <- "y"
-                while (tolower(runDtifitAgain) %in% c("y","s"))
+                repeat
                 {
-                    if (tolower(runDtifitAgain) == "s")
+                    runDtifitAgain <- tolower(output(OL$Question, "Run dtifit again? [yn; s to show principal directions in fslview]"))
+                    
+                    if (runDtifitAgain == "n")
+                        break
+                    else if (runDtifitAgain == "s")
                         runDtifitWithSession(session, showOnly=TRUE)
-                    else
+                    else if (runDtifitAgain == "y")
                     {
-                        if (is.null(flipAxes))
-                        {
-                            ans <- output(OL$Question, "Flip diffusion gradient vectors along which axes? [123; Enter for none]")
-                            flipAxes <- splitAndConvertString(ans, "", "integer", fixed=TRUE, allowRanges=FALSE)
-                        }
+                        ans <- output(OL$Question, "Flip diffusion gradient vectors along which axes? [123; Enter for none]")
+                        flipAxes <- splitAndConvertString(ans, "", "integer", fixed=TRUE, allowRanges=FALSE)
+                        
                         if (length(flipAxes[!is.na(flipAxes)]) > 0)
                             flipGradientVectorsForSession(session, flipAxes)
                         runDtifitWithSession(session)
                     }
-                    
-                    runDtifitAgain <- output(OL$Question, "Run dtifit again? [yn; s to show principal directions in fslview]")
-                    flipAxes <- NULL
                 }
             }
-            else
-            {
-                if (!is.null(flipAxes) && length(flipAxes[!is.na(flipAxes)]) > 0)
-                    flipGradientVectorsForSession(session, flipAxes)
-                runDtifitWithSession(session)
-            }
         }
-        else if (!is.null(flipAxes) && length(flipAxes) > 0)
-            flipGradientVectorsForSession(session, flipAxes)
         
         if (runStages[5])
         {
