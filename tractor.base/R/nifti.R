@@ -136,7 +136,14 @@ createNiftiMetadata <- function (fileNames)
     
     dimsToKeep <- 1:max(which(dims > 1))
     voxelDims[2:4] <- voxelDims[2:4] * sign(diag(xformMatrix)[1:3])
-    imageMetadata <- .MriImageMetadata(dims[dimsToKeep], voxelDims[dimsToKeep+1], unit, fileNames$fileStem, datatype, origin[dimsToKeep], endian)
+    
+    imageMetadata <- list(imageDims=dims[dimsToKeep],
+                          voxelDims=voxelDims[dimsToKeep+1],
+                          voxelUnit=unit,
+                          source=fileNames$fileStem,
+                          datatype=datatype,
+                          origin=origin[dimsToKeep],
+                          endian=endian)
     
     storageMetadata <- list(dataOffset=dataOffset,
                             dataScalingSlope=slopeAndIntercept[1],
@@ -148,67 +155,89 @@ createNiftiMetadata <- function (fileNames)
 
 newMriImageMetadataFromNifti <- function (fileNames)
 {
-    nifti <- createNiftiMetadata(fileNames)
-    invisible (nifti$imageMetadata)
+    invisible (newMriImageFromNifti(fileNames, metadataOnly=TRUE))
 }
 
-newMriImageFromNifti <- function (fileNames)
+newMriImageFromNifti <- function (fileNames, metadataOnly = FALSE)
 {
     nifti <- createNiftiMetadata(fileNames)
     
-    nVoxels <- prod(nifti$imageMetadata$getDimensions())
-    datatype <- nifti$imageMetadata$getDataType()
-    endian <- nifti$imageMetadata$getEndianness()
-    dims <- nifti$imageMetadata$getDimensions()
-    nDims <- nifti$imageMetadata$getDimensionality()
+    datatype <- nifti$imageMetadata$datatype
+    endian <- nifti$imageMetadata$endian
+    dims <- nifti$imageMetadata$imageDims
+    voxelDims <- nifti$imageMetadata$voxelDims
+    origin <- nifti$imageMetadata$origin
+    nVoxels <- prod(dims)
+    nDims <- length(dims)
     
-    connection <- gzfile(fileNames$imageFile, "rb")
-    if (fileNames$imageFile == fileNames$headerFile)
-        seek(connection, where=nifti$storageMetadata$dataOffset)
-    
-    voxels <- readBin(connection, what=datatype$type, n=nVoxels, size=datatype$size, signed=datatype$isSigned, endian=endian)
-    data <- array(voxels, dim=dims)
-    close(connection)
-    
-    slope <- nifti$storageMetadata$dataScalingSlope
-    intercept <- nifti$storageMetadata$dataScalingIntercept
-    if (slope != 0 && !equivalent(c(slope,intercept), 1:0))
-        data <- data * slope + intercept
+    if (!metadataOnly)
+    {
+        connection <- gzfile(fileNames$imageFile, "rb")
+        if (fileNames$imageFile == fileNames$headerFile)
+            seek(connection, where=nifti$storageMetadata$dataOffset)
+
+        voxels <- readBin(connection, what=datatype$type, n=nVoxels, size=datatype$size, signed=datatype$isSigned, endian=endian)
+        data <- array(voxels, dim=dims)
+        close(connection)
+
+        slope <- nifti$storageMetadata$dataScalingSlope
+        intercept <- nifti$storageMetadata$dataScalingIntercept
+        if (slope != 0 && !equivalent(c(slope,intercept), 1:0))
+            data <- data * slope + intercept
+    }
     
     rotationMatrix <- nifti$storageMetadata$xformMatrix[1:3,1:3]
     if (nDims == 2)
-        diag(rotationMatrix) <- diag(rotationMatrix) / c(abs(nifti$imageMetadata$getVoxelDimensions()),1)
+        diag(rotationMatrix) <- diag(rotationMatrix) / c(abs(voxelDims),1)
     else
-        diag(rotationMatrix) <- diag(rotationMatrix) / abs(nifti$imageMetadata$getVoxelDimensions()[1:3])
+        diag(rotationMatrix) <- diag(rotationMatrix) / abs(voxelDims[1:3])
     
     if (!all(abs(round(rotationMatrix)-rotationMatrix) < 1e-3) || !all(round(rotationMatrix) %in% c(-1,0,1)))
         output(OL$Error, "NIfTI xform matrix is rotated")
     else
     {
         dimPermutation <- apply(abs(round(rotationMatrix))==1, 1, which)
-        if (!identical(dimPermutation, 1:3))
-            data <- aperm(data, dimPermutation)
+        if (nDims > 3)
+            dimPermutation <- c(dimPermutation, 4:nDims)
+        if (!identical(dimPermutation, seq_len(nDims)))
+        {
+            if (!metadataOnly)
+                data <- aperm(data, dimPermutation)
+            dims <- dims[dimPermutation]
+            voxelDims <- voxelDims[dimPermutation]
+            origin <- origin[dimPermutation]
+        }
         
-        ordering <- rowSums(round(rotationMatrix))
+        if (!metadataOnly)
+        {
+            ordering <- rowSums(round(rotationMatrix))
         
-        # The first test is for -1 because basic NIfTI storage convention is RAS,
-        # whilst Analyze (and TractoR) use LAS - this is NOT a mistake
-        orderX <- (if (ordering[1] == -1) seq_len(dims[1]) else rev(seq_len(dims[1])))
-        orderY <- (if (ordering[2] == 1) seq_len(dims[2]) else rev(seq_len(dims[2])))
-        if (nDims > 2)
-            orderZ <- (if (ordering[3] == 1) seq_len(dims[3]) else rev(seq_len(dims[3])))
-        dimsToKeep <- setdiff(1:nDims, 1:3)
+            # The first test is for -1 because basic NIfTI storage convention is RAS,
+            # whilst Analyze (and TractoR) use LAS - this is NOT a mistake
+            orderX <- (if (ordering[1] == -1) seq_len(dims[1]) else rev(seq_len(dims[1])))
+            orderY <- (if (ordering[2] == 1) seq_len(dims[2]) else rev(seq_len(dims[2])))
+            if (nDims > 2)
+                orderZ <- (if (ordering[3] == 1) seq_len(dims[3]) else rev(seq_len(dims[3])))
+            dimsToKeep <- setdiff(1:nDims, 1:3)
 
-        if (nDims == 2)
-            data <- data[orderX, orderY]
-        else if (nDims == 3)
-            data <- data[orderX, orderY, orderZ]
-        else
-            data <- array(apply(data, dimsToKeep, "[", orderX, orderY, orderZ), dim=dim(data))
+            if (nDims == 2)
+                data <- data[orderX, orderY]
+            else if (nDims == 3)
+                data <- data[orderX, orderY, orderZ]
+            else
+                data <- array(apply(data, dimsToKeep, "[", orderX, orderY, orderZ), dim=dim(data))
+        }
     }
     
-    image <- .MriImage(data, nifti$imageMetadata)
-    invisible (image)
+    imageMetadata <- .MriImageMetadata(dims, voxelDims, nifti$imageMetadata$voxelUnit, nifti$imageMetadata$source, datatype, origin, endian)
+    
+    if (metadataOnly)
+        invisible (imageMetadata)
+    else
+    {
+        image <- .MriImage(data, imageMetadata)
+        invisible (image)
+    }
 }
 
 writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL)
