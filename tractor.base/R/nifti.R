@@ -187,16 +187,15 @@ newMriImageFromNifti <- function (fileNames, metadataOnly = FALSE)
     }
     
     rotationMatrix <- nifti$storageMetadata$xformMatrix[1:3,1:3]
-    if (nDims == 2)
-        diag(rotationMatrix) <- diag(rotationMatrix) / c(abs(voxelDims),1)
-    else
-        diag(rotationMatrix) <- diag(rotationMatrix) / abs(voxelDims[1:3])
+    absRotationMatrix <- abs(rotationMatrix)
+    tolerance <- 1e-3 * max(abs(voxelDims))
     
-    if (!all(abs(round(rotationMatrix)-rotationMatrix) < 1e-3) || !all(round(rotationMatrix) %in% c(-1,0,1)))
+    # The rotation matrix should have exactly one nonzero element per row and column
+    if (!equivalent(rowSums(absRotationMatrix > tolerance), c(1,1,1)) || !equivalent(colSums(absRotationMatrix > tolerance), c(1,1,1)))
         output(OL$Error, "NIfTI xform matrix is rotated")
     else
     {
-        dimPermutation <- apply(abs(round(rotationMatrix))==1, 1, which)
+        dimPermutation <- apply(absRotationMatrix > tolerance, 1, which)
         if (nDims > 3)
             dimPermutation <- c(dimPermutation, 4:nDims)
         if (!identical(dimPermutation, seq_len(nDims)))
@@ -210,7 +209,7 @@ newMriImageFromNifti <- function (fileNames, metadataOnly = FALSE)
         
         if (!metadataOnly)
         {
-            ordering <- rowSums(round(rotationMatrix))
+            ordering <- round(rowSums(rotationMatrix) / c(abs(voxelDims),rep(1,max(0,3-nDims))))
         
             # The first test is for -1 because basic NIfTI storage convention is RAS,
             # whilst Analyze (and TractoR) use LAS - this is NOT a mistake
