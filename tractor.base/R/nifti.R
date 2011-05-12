@@ -207,9 +207,12 @@ newMriImageFromNifti <- function (fileNames, metadataOnly = FALSE)
             origin <- origin[dimPermutation]
         }
         
+        # Fix signs of voxel dimensions to correspond to LAS
+        voxelDims <- abs(voxelDims) * c(-1, rep(1,nDims-1))
+        
         if (!metadataOnly)
         {
-            ordering <- round(rowSums(rotationMatrix) / c(abs(voxelDims),rep(1,max(0,3-nDims))))
+            ordering <- round(colSums(rotationMatrix) / c(abs(voxelDims),rep(1,max(0,3-nDims))))
         
             # The first test is for -1 because basic NIfTI storage convention is RAS,
             # whilst Analyze (and TractoR) use LAS - this is NOT a mistake
