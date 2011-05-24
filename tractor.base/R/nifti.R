@@ -121,7 +121,6 @@ createNiftiMetadata <- function (fileNames)
     dims <- dims[1:ndims + 1]
     
     xformMatrix <- getXformMatrix()
-    origin <- c(abs(round(xformMatrix[1:3,4]/voxelDims[2:4])) + 1, 0, 0)
     
     typeIndex <- which(.Nifti$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
@@ -142,7 +141,6 @@ createNiftiMetadata <- function (fileNames)
                           voxelUnit=unit,
                           source=fileNames$fileStem,
                           datatype=datatype,
-                          origin=origin[dimsToKeep],
                           endian=endian)
     
     storageMetadata <- list(dataOffset=dataOffset,
@@ -166,7 +164,6 @@ newMriImageFromNifti <- function (fileNames, metadataOnly = FALSE)
     endian <- nifti$imageMetadata$endian
     dims <- nifti$imageMetadata$imageDims
     voxelDims <- nifti$imageMetadata$voxelDims
-    origin <- nifti$imageMetadata$origin
     nVoxels <- prod(dims)
     nDims <- length(dims)
     
@@ -204,19 +201,29 @@ newMriImageFromNifti <- function (fileNames, metadataOnly = FALSE)
                 data <- aperm(data, dimPermutation)
             dims <- dims[dimPermutation]
             voxelDims <- voxelDims[dimPermutation]
-            origin <- origin[dimPermutation]
         }
         
         # Fix signs of voxel dimensions to correspond to LAS
         voxelDims <- abs(voxelDims) * c(-1, rep(1,nDims-1))
         
+        # Figure out which dimensions need to be flipped
+        ordering <- round(colSums(rotationMatrix) / c(abs(voxelDims),rep(1,max(0,3-nDims))))
+        ordering <- ordering * c(-1, rep(1,nDims-1))
+        
+        if (nDims == 2)
+        {
+            origin <- 1 - ordering[1:2] * round(nifti$storageMetadata$xformMatrix[1:2,4]/voxelDims[1:2],2)
+            origin <- ifelse(ordering[1:2] == c(1,1), origin, dims-origin+1)
+        }
+        else
+        {
+            origin <- c(1 - ordering[1:3] * round(nifti$storageMetadata$xformMatrix[1:3,4]/voxelDims[1:3],2), rep(0,nDims-3))
+            origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], dims[1:3]-origin[1:3]+1)
+        }
+        
         if (!metadataOnly)
         {
-            ordering <- round(colSums(rotationMatrix) / c(abs(voxelDims),rep(1,max(0,3-nDims))))
-        
-            # The first test is for -1 because basic NIfTI storage convention is RAS,
-            # whilst Analyze (and TractoR) use LAS - this is NOT a mistake
-            orderX <- (if (ordering[1] == -1) seq_len(dims[1]) else rev(seq_len(dims[1])))
+            orderX <- (if (ordering[1] == 1) seq_len(dims[1]) else rev(seq_len(dims[1])))
             orderY <- (if (ordering[2] == 1) seq_len(dims[2]) else rev(seq_len(dims[2])))
             if (nDims > 2)
                 orderZ <- (if (ordering[3] == 1) seq_len(dims[3]) else rev(seq_len(dims[3])))
