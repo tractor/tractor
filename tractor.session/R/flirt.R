@@ -179,7 +179,7 @@ updateFlirtCacheWithTransform <- function (transform, sourceFile, destFile)
 
 newAffineTransform3DFromFlirt <- function (source, dest, outfile = NULL, refweight = NULL)
 {
-    getImageAndFileName <- function (input)
+    getImageMetadataAndFileName <- function (input)
     {
         isTemporary <- FALSE
         
@@ -194,21 +194,21 @@ newAffineTransform3DFromFlirt <- function (source, dest, outfile = NULL, refweig
             else
                 fileName <- input$getSource()
             
-            image <- input
+            metadata <- input$getMetadata()
         }
         else if (is.character(input) && (length(input) == 1))
         {
             fileName <- input
-            image <- newMriImageFromFile(fileName)
+            metadata <- newMriImageMetadataFromFile(fileName, warnIfNotLas=TRUE)
         }
         else
             output(OL$Error, "Source and destination must be specified as file names or MriImage objects")
         
-        return (list(image=image, fileName=fileName, isTemporary=isTemporary))
+        return (list(metadata=metadata, fileName=fileName, isTemporary=isTemporary))
     }
     
-    source <- getImageAndFileName(source)
-    dest <- getImageAndFileName(dest)
+    source <- getImageMetadataAndFileName(source)
+    dest <- getImageMetadataAndFileName(dest)
 
     transform <- checkFlirtCacheForTransform(source$fileName, dest$fileName)
     if (is.null(transform))
@@ -221,7 +221,7 @@ newAffineTransform3DFromFlirt <- function (source, dest, outfile = NULL, refweig
             refweightExpression <- NULL
         else
         {
-            refweight <- getImageAndFileName(refweight)
+            refweight <- getImageMetadataAndFileName(refweight)
             refweightExpression <- paste(" -refweight", refweight$fileName, sep=" ")
         }
         
@@ -234,7 +234,7 @@ newAffineTransform3DFromFlirt <- function (source, dest, outfile = NULL, refweig
         execute("flirt", paramString, errorOnFail=TRUE)
         
         transformMatrix <- as.matrix(read.table(matrixFile))
-        transform <- .AffineTransform3D(transformMatrix, "flirt", source$image$getMetadata(), dest$image$getMetadata())
+        transform <- .AffineTransform3D(transformMatrix, "flirt", source$metadata, dest$metadata)
         
         if (!source$isTemporary && !dest$isTemporary)
             updateFlirtCacheWithTransform(transform, source$fileName, dest$fileName)

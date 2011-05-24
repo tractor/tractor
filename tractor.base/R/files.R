@@ -79,26 +79,26 @@ removeImageFilesWithName <- function (fileName)
     unlink(files)
 }
 
-newMriImageMetadataFromFile <- function (fileName, fileType = NULL)
+newMriImageMetadataFromFile <- function (fileName, fileType = NULL, warnIfNotLas = FALSE)
 {
     fileNames <- identifyImageFileNames(fileName, fileType)
     
     if (fileNames$format == "Analyze")
         metadata <- newMriImageMetadataFromAnalyze(fileNames)
     else if (fileNames$format == "Nifti")
-        metadata <- newMriImageMetadataFromNifti(fileNames)
+        metadata <- newMriImageMetadataFromNifti(fileNames, warnIfNotLas=warnIfNotLas)
     
     invisible (metadata)
 }
 
-newMriImageFromFile <- function (fileName, fileType = NULL)
+newMriImageFromFile <- function (fileName, fileType = NULL, warnIfNotLas = FALSE)
 {
     fileNames <- identifyImageFileNames(fileName, fileType)
     
     if (fileNames$format == "Analyze")
         image <- newMriImageFromAnalyze(fileNames)
     else if (fileNames$format == "Nifti")
-        image <- newMriImageFromNifti(fileNames)
+        image <- newMriImageFromNifti(fileNames, warnIfNotLas=warnIfNotLas)
     
     invisible (image)
 }

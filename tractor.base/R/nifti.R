@@ -151,12 +151,12 @@ createNiftiMetadata <- function (fileNames)
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
 
-newMriImageMetadataFromNifti <- function (fileNames)
+newMriImageMetadataFromNifti <- function (fileNames, warnIfNotLas = FALSE)
 {
-    invisible (newMriImageFromNifti(fileNames, metadataOnly=TRUE))
+    invisible (newMriImageFromNifti(fileNames, metadataOnly=TRUE, warnIfNotLas=warnIfNotLas))
 }
 
-newMriImageFromNifti <- function (fileNames, metadataOnly = FALSE)
+newMriImageFromNifti <- function (fileNames, metadataOnly = FALSE, warnIfNotLas = FALSE)
 {
     nifti <- createNiftiMetadata(fileNames)
     
@@ -197,6 +197,8 @@ newMriImageFromNifti <- function (fileNames, metadataOnly = FALSE)
             dimPermutation <- c(dimPermutation, 4:nDims)
         if (!identical(dimPermutation, seq_len(nDims)))
         {
+            if (warnIfNotLas)
+                flag(OL$Warning, "NIfTI image is not stored in the LAS convention - problems may occur")
             if (!metadataOnly)
                 data <- aperm(data, dimPermutation)
             dims <- dims[dimPermutation]
@@ -209,6 +211,9 @@ newMriImageFromNifti <- function (fileNames, metadataOnly = FALSE)
         # Figure out which dimensions need to be flipped
         ordering <- round(colSums(rotationMatrix) / c(abs(voxelDims),rep(1,max(0,3-nDims))))
         ordering <- ordering * c(-1, rep(1,nDims-1))
+        
+        if (warnIfNotLas && any(ordering < 0))
+            flag(OL$Warning, "NIfTI image is not stored in the LAS convention - problems may occur")
         
         if (nDims == 2)
         {
