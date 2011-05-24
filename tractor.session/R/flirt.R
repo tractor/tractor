@@ -163,7 +163,7 @@ updateFlirtCacheWithTransform <- function (transform, sourceFile, destFile)
         
     cacheDir <- file.path(tempdir(), "flirt-cache")
     cacheIndexFile <- file.path(cacheDir, "index.txt")
-    transformFile <- paste(tempfile("transform-",cacheDir), "Rdata", sep=".")
+    transformFile <- ensureFileSuffix(tempfile("transform-",cacheDir), "Rdata")
     
     if (!file.exists(cacheDir))
         dir.create(cacheDir)
@@ -225,8 +225,8 @@ newAffineTransform3DFromFlirt <- function (source, dest, outfile = NULL, refweig
             refweightExpression <- paste(" -refweight", refweight$fileName, sep=" ")
         }
         
-        matrixFile <- paste(tempfile(), ".mat", sep="")
-        logFile <- paste(tempfile(), ".log", sep="")
+        matrixFile <- ensureFileSuffix(tempfile(), "mat")
+        logFile <- ensureFileSuffix(tempfile(), "log")
         
         output(OL$Info, "Registering 3D volumes together with FLIRT")
         
