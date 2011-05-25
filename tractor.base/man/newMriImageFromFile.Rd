@@ -10,8 +10,8 @@
   Functions for reading, writing, locating and removing MRI images stored in NIfTI and Analyze formats.
 }
 \usage{
-newMriImageFromFile(fileName, fileType = NULL)
-newMriImageMetadataFromFile(fileName, fileType = NULL)
+newMriImageFromFile(fileName, fileType = NULL, warnIfNotLas = FALSE)
+newMriImageMetadataFromFile(fileName, fileType = NULL, warnIfNotLas = FALSE)
 writeMriImageToFile(image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
 
 identifyImageFileNames(fileName, fileType = NULL, errorIfMissing = TRUE)
@@ -22,6 +22,7 @@ removeImageFilesWithName(fileName)
   \item{fileName}{A file name, with or without appropriate extension.}
   \item{image}{An MriImage object.}
   \item{fileType}{A character vector of length one, giving the file type required or expected. If this option is missing, the file type used for writing images will be taken from the \code{tractorFileType} option. See Details.}
+  \item{warnIfNotLas}{If TRUE, a warning will be raised if the image is not stored in the LAS convention which TractoR uses internally. This should be used when a mismatch between the \code{MriImage} object and the file may cause problems.}
   \item{datatype}{A storage data type. See \code{\link{getDataTypeByNiftiCode}}.}
   \item{overwrite}{Logical value: overwrite an existing image file? An error will be raised if there is an existing file and this is set to FALSE.}
   \item{errorIfMissing}{Logical value: raise an error if no suitable files were found?}
