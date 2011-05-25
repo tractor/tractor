@@ -1,21 +1,21 @@
 runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode = c("simple","seedmask"), seedMask = NULL, waypointMasks = NULL, requireFile = !force, requireParticlesDir = FALSE, requireImage = FALSE, nSamples = 5000, verbose = FALSE, force = FALSE, expectExists = FALSE)
 {
-    if (!isMriSession(session))
-        output(OL$Error, "Specified session is not an MriSession object")
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
     if (!session$isPreprocessed())
-        output(OL$Error, "The specified session has not yet been fully preprocessed")
+        report(OL$Error, "The specified session has not yet been fully preprocessed")
     
     mode <- match.arg(mode)
     
-    if (mode == "seedmask" && !isMriImage(seedMask))
-        output(OL$Error, "Seed point mask must be specified in this mode")
+    if (mode == "seedmask" && !is(seedMask, "MriImage"))
+        report(OL$Error, "Seed point mask must be specified in this mode")
     if (!is.null(waypointMasks) && (!is.list(waypointMasks) || !isMriImage(waypointMasks[[1]])))
-        output(OL$Error, "Waypoint masks must be specified as a list of MriImage objects")
+        report(OL$Error, "Waypoint masks must be specified as a list of MriImage objects")
     
     if (mode == "simple")
     {
         if (is.null(x))
-            output(OL$Error, "Seed point(s) must be specified in this mode")
+            report(OL$Error, "Seed point(s) must be specified in this mode")
         else if (is.vector(x))
             originalSeed <- resolveVector(len=3, x, y, z)
         else if (is.matrix(x))
@@ -27,13 +27,13 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
             requireImage <- FALSE
         }
         else
-            output(OL$Error, "Seed point(s) must be specified as a vector or matrix")
+            report(OL$Error, "Seed point(s) must be specified as a vector or matrix")
         
         seed <- transformRVoxelToFslVoxel(originalSeed)
     }
     
-    bedpostDir <- session$getBedpostDirectory()
-    probtrackDir <- session$getProbtrackDirectory()
+    bedpostDir <- session$getDirectory("bedpost")
+    probtrackDir <- session$getDirectory("probtrack")
     
     previousWorkingDir <- getwd()
     workingDir <- file.path(tempdir(), paste("probtrackx",Sys.getpid(),sep="_"))
@@ -53,11 +53,11 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         outputFile <- paste(outputStem, implode(seed,sep="_"), sep="_")
         
         if (!requireParticlesDir && !force && imageFileExists(outputFile))
-            output(OL$Verbose, "Output for this seed point already exists")
+            report(OL$Verbose, "Output for this seed point already exists")
         else
         {
             if (expectExists)
-                output(OL$Warning, "Output for this seed point was expected to exist, but it does not")
+                report(OL$Warning, "Output for this seed point was expected to exist, but it does not")
             
             # The 'requireParticlesDir' option implies the 'verbose' option
             if (requireParticlesDir)
@@ -66,7 +66,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
             if (verbose && file.exists("particles"))
                 unlink("particles", recursive=TRUE)
         
-            output(OL$Info, "Performing single seed tractography with ", nSamples, " samples")
+            report(OL$Info, "Performing single seed tractography with ", nSamples, " samples")
 
             # Create a temporary file containing the seed point coordinates
             seedFile <- tempfile()
@@ -97,14 +97,14 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     }
     else if (mode == "seedmask")
     {
-        output(OL$Info, "Performing seed mask tractography with ", nSamples, " samples per seed")
+        report(OL$Info, "Performing seed mask tractography with ", nSamples, " samples per seed")
         
         seedFile <- tempfile()
         writeMriImageToFile(seedMask, seedFile)
         seedPoints <- which(seedMask$getData() > 0, arr.ind=TRUE)
         seedCentre <- round(apply(seedPoints, 2, median))
         
-        output(OL$Info, "There are ", nrow(seedPoints), " seed points within the mask")
+        report(OL$Info, "There are ", nrow(seedPoints), " seed points within the mask")
         
         outputDir <- file.path(workingDir, "seedmask")
         outputFile <- file.path(outputDir, "fdt_paths")
@@ -125,7 +125,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         execute("probtrackx", paramString, errorOnFail=TRUE, silent=TRUE)
         
         nRetainedSamples <- as.numeric(readLines(file.path(outputDir, "waytotal")))
-        output(OL$Info, nRetainedSamples, " streamlines were retained, of ", nSamples*nrow(seedPoints), " generated")
+        report(OL$Info, nRetainedSamples, " streamlines were retained, of ", nSamples*nrow(seedPoints), " generated")
         
         result <- list(session=session, seed=as.vector(seedCentre), nSamples=nRetainedSamples)
         if (requireImage)
@@ -143,7 +143,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
 
 runProbtrackForNeighbourhood <- function (session, x, y = NULL, z = NULL, width = 7, mask = FALSE, weights = NULL, weightThreshold = 1e-3, nSamples = 5000, ...)
 {
-    if (isNeighbourhoodInfo(x))
+    if (is.list(x))
         neighbourhoodInfo <- x
     else
     {
@@ -153,7 +153,7 @@ runProbtrackForNeighbourhood <- function (session, x, y = NULL, z = NULL, width 
     
     if (mask)
     {
-        metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("t2"))
+        metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("maskedb0"))
         data <- generateImageDataForShape("block", metadata$getDimensions(), centre=centre, width=width)
         seedMask <- newMriImageWithData(data, metadata)
         result <- runProbtrackWithSession(session, seedMask=seedMask, mode="seedmask", nSamples=nSamples, ...)
@@ -161,15 +161,15 @@ runProbtrackForNeighbourhood <- function (session, x, y = NULL, z = NULL, width 
     else if (!is.null(weights))
     {
         if (length(weights) != ncol(neighbourhoodInfo$vectors))
-            output(OL$Error, "Number of weights must match the number of points in the seed neighbourhood")
+            report(OL$Error, "Number of weights must match the number of points in the seed neighbourhood")
         
         validSeeds <- which(weights >= weightThreshold)
         nValidSeeds <- length(validSeeds)
-        output(OL$Info, nValidSeeds, " seed point(s) have weights above the threshold of ", weightThreshold)
+        report(OL$Info, nValidSeeds, " seed point(s) have weights above the threshold of ", weightThreshold)
         
         if (nValidSeeds > 0)
         {
-            metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("t2"))
+            metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("maskedb0"))
             sequence <- match(sort(weights[validSeeds]), weights)
             seeds <- t(neighbourhoodInfo$vectors[,sequence])
             runProbtrackWithSession(session, seeds, mode="simple", requireFile=TRUE, nSamples=nSamples)

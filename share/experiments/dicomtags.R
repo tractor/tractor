@@ -5,7 +5,7 @@ library(tractor.base)
 
 runExperiment <- function ()
 {
-    descriptions <- getWithDefault("Descriptions", TRUE)
+    descriptions <- getConfigVariable("Descriptions", TRUE)
     
     if (nArguments() > 0)
         fileName <- implode(Arguments, sep=" ")
@@ -13,7 +13,7 @@ runExperiment <- function ()
         fileName <- "."
     
     if (!file.exists(fileName))
-        output(OL$Error, "Specified DICOM file or directory \"", fileName, "\" does not exist")
+        report(OL$Error, "Specified DICOM file or directory \"", fileName, "\" does not exist")
     
     if (file.info(fileName)$isdir)
     {
@@ -24,18 +24,18 @@ runExperiment <- function ()
             metadata <- newDicomMetadataFromFile(currentFileName)
             if (!is.null(metadata))
             {
-                output(OL$Info, "Displaying tags for file \"", currentFileName, "\"")
+                report(OL$Info, "Displaying tags for file \"", currentFileName, "\"")
                 break
             }
         }
         if (!exists("metadata") || is.null(metadata))
-            output(OL$Error, "The directory \"", fileName, "\" appears to contain no readable DICOM files")
+            report(OL$Error, "The directory \"", fileName, "\" appears to contain no readable DICOM files")
     }
     else
     {
         metadata <- newDicomMetadataFromFile(fileName)
         if (is.null(metadata))
-            output(OL$Error, "The file \"", fileName, "\" appears not to be a DICOM file or is unreadable")
+            report(OL$Error, "The file \"", fileName, "\" appears not to be a DICOM file or is unreadable")
     }
     
     print(metadata, descriptions=descriptions)

@@ -26,26 +26,26 @@ runExperiment <- function ()
         }
         
         if (is.null(fileName))
-            output(OL$Error, "No DICOM files found under the current path")
+            report(OL$Error, "No DICOM files found under the current path")
     }
     
-    breakDownLevel <- getWithDefault("BreakdownLevel", 1, "integer")
-    numberOnly <- getWithDefault("NumberOnly", FALSE)
+    breakDownLevel <- getConfigVariable("BreakdownLevel", 1, "integer")
+    numberOnly <- getConfigVariable("NumberOnly", FALSE)
     
     if (breakDownLevel < 1 || breakDownLevel > 3)
-        output(OL$Error, "BreakdownLevel must be between 1 and 3")
+        report(OL$Error, "BreakdownLevel must be between 1 and 3")
     
-    output(OL$Info, "Reading date information from file \"", basename(fileName), "\"")
+    report(OL$Info, "Reading date information from file \"", basename(fileName), "\"")
     metadata <- newDicomMetadataFromFile(fileName)
     
     studyDate <- as.Date(metadata$getTagValue(0x0008,0x0020), "%Y%m%d")
     dateOfBirth <- as.Date(metadata$getTagValue(0x0010,0x0030), "%Y%m%d")
     
     if (is.na(studyDate) || is.na(dateOfBirth))
-        output(OL$Error, "Cannot read study date and birth date tags")
+        report(OL$Error, "Cannot read study date and birth date tags")
     
-    output(OL$Verbose, "Study date is ", format(studyDate,"%Y-%m-%d"), " (yyyy-mm-dd)")
-    output(OL$Verbose, "Patient's birth date is ", format(dateOfBirth,"%Y-%m-%d"))
+    report(OL$Verbose, "Study date is ", format(studyDate,"%Y-%m-%d"), " (yyyy-mm-dd)")
+    report(OL$Verbose, "Patient's birth date is ", format(dateOfBirth,"%Y-%m-%d"))
     
     studyYear <- as.integer(format(studyDate, "%Y"))
     candidateYearsForLastBirthdate <- c(studyYear, studyYear-1)
@@ -82,6 +82,6 @@ runExperiment <- function ()
                                paste(round(fractionalYears,3), " year(s)", sep=""),
                                paste(years, " year(s) and ", remainingDays, " day(s)", sep=""),
                                paste(years, " year(s), ", months, " month(s) and ", days, " day(s)", sep=""))
-        output(OL$Info, "Age at study date is ", outputString)
+        report(OL$Info, "Age at study date is ", outputString)
     }
 }

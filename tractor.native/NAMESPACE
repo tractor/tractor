@@ -1,0 +1,9 @@
+useDynLib(tractor.native)
+
+import(tractor.base)
+importFrom(tractor.nt, newStreamlineTractMetadataFromImageMetadata)
+
+importClassesFrom(tractor.session, MriSession)
+importClassesFrom(tractor.nt, StreamlineTractMetadata, StreamlineSetTract)
+
+export(trackWithSession, trackWithImages)

@@ -1,22 +1,22 @@
 evaluateDistribution <- function (x, params, log = FALSE)
 {
-    if ("distribution.beta" %in% class(params))
+    if (is(params, "betaDistribution"))
         return (evaluateBetaDistribution(x, params, log))
-    if ("distribution.gaussian" %in% class(params))
+    else if (is(params, "gaussianDistribution"))
         return (evaluateGaussianDistribution(x, params, log))
-    if ("distribution.multinomial" %in% class(params))
+    else if (is(params, "multinomialDistribution"))
         return (evaluateMultinomialDistribution(x, params, log))
 }
 
 fitBetaDistribution <- function (data, alpha = NULL, beta = 1, weights = NULL)
 {
     if (!is.vector(data))
-        output(OL$Error, "Beta distribution fit requires a vector of data")
+        report(OL$Error, "Beta distribution fit requires a vector of data")
         
     if (is.null(weights))
         weights <- rep(1, length(data))
     else if (length(weights) != length(data))
-        output(OL$Error, "Data and weight vectors must have the same length")
+        report(OL$Error, "Data and weight vectors must have the same length")
     
     data <- data[!is.na(weights)]
     weights <- weights[!is.na(weights)]
@@ -25,14 +25,14 @@ fitBetaDistribution <- function (data, alpha = NULL, beta = 1, weights = NULL)
         alpha <- (-sum(weights)) / sum(weights*log(data))
     
     result <- list(alpha=alpha, beta=beta)
-    class(result) <- c("distribution.beta", "list")
+    class(result) <- "betaDistribution"
     return (result)
 }
 
 evaluateBetaDistribution <- function (x, params, log = FALSE)
 {
-    if (!("distribution.beta" %in% class(params)))
-        output(OL$Error, "The specified object does not describe a beta distribution")
+    if (!is(params, "betaDistribution"))
+        report(OL$Error, "The specified object does not describe a beta distribution")
     return (dbeta(x, params$alpha, params$beta, ncp=0, log=log))
 }
 
@@ -58,9 +58,9 @@ fitRegularisedBetaDistribution <- function (data, alpha = NULL, beta = 1, lambda
 fitGaussianDistribution <- function (data, mu = NULL, sigma = NULL)
 {
     if (!is.vector(data))
-        output(OL$Error, "Gaussian distribution fit requires a vector of data")
+        report(OL$Error, "Gaussian distribution fit requires a vector of data")
     if (length(data) == 0)
-        output(OL$Error, "Data vector is empty!")
+        report(OL$Error, "Data vector is empty!")
     
     if (is.null(mu))
         mu <- mean(data)
@@ -68,26 +68,26 @@ fitGaussianDistribution <- function (data, mu = NULL, sigma = NULL)
         sigma <- sqrt(sum((data - mu)^2) / length(data))
 	
     result <- list(mu=mu, sigma=sigma)
-    class(result) <- c("distribution.gaussian", "list")
+    class(result) <- "gaussianDistribution"
     return (result)
 }
 
 evaluateGaussianDistribution <- function (x, params, log = FALSE)
 {
-    if (!("distribution.gaussian" %in% class(params)))
-        output(OL$Error, "The specified object does not describe a Gaussian distribution")
+    if (!is(params, "gaussianDistribution"))
+        report(OL$Error, "The specified object does not describe a Gaussian distribution")
     return (dnorm(x, mean=params$mu, sd=params$sigma, log=log))
 }
 
 fitMultinomialDistribution <- function (data, const = 0, values = NULL, weights = NULL)
 {
     if (!is.vector(data))
-        output(OL$Error, "Multinomial distribution fit requires a vector of data")
+        report(OL$Error, "Multinomial distribution fit requires a vector of data")
     
     if (is.null(weights))
         weights <- rep(1, length(data))
     else if (length(weights) != length(data))
-        output(OL$Error, "Data and weight vectors must have the same length")
+        report(OL$Error, "Data and weight vectors must have the same length")
     
     data <- data[!is.na(weights)]
     weights <- weights[!is.na(weights)]
@@ -105,26 +105,26 @@ fitMultinomialDistribution <- function (data, const = 0, values = NULL, weights 
         counts <- rep(0, length(values))
         locs <- match(dataValues, values)
         if (sum(is.na(locs)) != 0)
-            output(OL$Error, "Some multinomial fit data are not amongst the specified allowable values")
+            report(OL$Error, "Some multinomial fit data are not amongst the specified allowable values")
         counts[locs] <- as.vector(hist)
         counts <- counts + const
     }
     
     probs <- counts / sum(counts)
     result <- list(probs=probs, values=values)
-    class(result) <- c("distribution.multinomial", "list")
+    class(result) <- "multinomialDistribution"
     return (result)
 }
 
 evaluateMultinomialDistribution <- function (x, params, log = FALSE)
 {
-    if (!("distribution.multinomial" %in% class(params)))
-        output(OL$Error, "The specified object does not describe a multinomial distribution")
+    if (!is(params, "multinomialDistribution"))
+        report(OL$Error, "The specified object does not describe a multinomial distribution")
     
     if (is.na(x))
         return (NA)
     if (!is.numeric(x))
-        output(OL$Error, "Multinomial data must be numeric")
+        report(OL$Error, "Multinomial data must be numeric")
     
     if (length(x) == length(params$probs))
         return (dmultinom(x, prob=params$probs, log=log))
@@ -135,12 +135,12 @@ evaluateMultinomialDistribution <- function (x, params, log = FALSE)
         if (length(loc) != 1)
         {
             loc <- which.min(abs(params$values - x))
-            output(OL$Warning, "The specified value (", x, ") is not valid for this distribution; treating as ", params$values[loc])
+            report(OL$Warning, "The specified value (", x, ") is not valid for this distribution; treating as ", params$values[loc])
         }
         
         y[loc] <- 1
         return (dmultinom(y, size=1, prob=params$probs, log=log))
     }
     else
-        output(OL$Error, "Multinomial data must be specified as a single number or full vector of frequencies")
+        report(OL$Error, "Multinomial data must be specified as a single number or full vector of frequencies")
 }

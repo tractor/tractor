@@ -20,24 +20,23 @@ runExperiment <- function ()
     else
         smallBValue <- 0
     
-    targetDir <- session$getPreBedpostDirectory()
-    metadata <- newMriImageMetadataFromFile(file.path(targetDir,"basic"))
+    metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("rawdata", "diffusion"))
     
     bvecs <- as.matrix(read.table(fileName))
     if (nrow(bvecs) != 3)
     {
         if (ncol(bvecs) == 3)
         {
-            output(OL$Info, "Transposing gradient vector matrix")
+            report(OL$Info, "Transposing gradient vector matrix")
             bvecs <- t(bvecs)
         }
         else
-            output(OL$Error, "The gradient vector matrix must have one dimension equal to 3")
+            report(OL$Error, "The gradient vector matrix must have one dimension equal to 3")
     }
     
     nVectorsFile <- ncol(bvecs)
     nVectorsImage <- metadata$getDimensions()[4]
-    output(OL$Info, "Gradient vector matrix has ", nVectorsFile, " columns; data image contains ", nVectorsImage, " volumes")
+    report(OL$Info, "Gradient vector matrix has ", nVectorsFile, " columns; data image contains ", nVectorsImage, " volumes")
     
     bvals <- rep(NA, nVectorsImage)
     
@@ -48,8 +47,8 @@ runExperiment <- function ()
     }
     else
     {
-        output(OL$Info, "Loading data image for more information")
-        dataImage <- newMriImageFromFile(file.path(targetDir,"basic"))
+        report(OL$Info, "Loading data image for more information")
+        dataImage <- session$getImageByType("rawdata", "diffusion")
         
         meanIntensities <- numeric(nVectorsImage)
         for (i in seq_len(nVectorsImage))
@@ -60,13 +59,13 @@ runExperiment <- function ()
         if (nVectorsFile != nVectorsImage)
         {
             if (!(nVectorsFile %in% kMeansResult$size))
-                output(OL$Error, "K-means cluster sizes are ", kMeansResult$size[1], " and ", kMeansResult$size[2], " - neither matches your text file")
+                report(OL$Error, "K-means cluster sizes are ", kMeansResult$size[1], " and ", kMeansResult$size[2], " - neither matches your text file")
             else
             {
                 highBValueCluster <- which(kMeansResult$size == nVectorsFile)
                 lowBValueCluster <- ifelse(highBValueCluster==1, 2, 1)
                 if (kMeansResult$centers[highBValueCluster] > kMeansResult$centers[lowBValueCluster])
-                    output(OL$Warning, "High b-value images seem to have higher mean signal")
+                    report(OL$Warning, "High b-value images seem to have higher mean signal")
             }
         }
         else
@@ -77,7 +76,7 @@ runExperiment <- function ()
         
         highBValueIndices <- which(kMeansResult$cluster == highBValueCluster)
         lowBValueIndices <- which(kMeansResult$cluster == lowBValueCluster)
-        output(OL$Info, "Image volume(s) ", implode(lowBValueIndices,sep=", ",finalSep=" and "), " appear(s) to have lower diffusion weighting")
+        report(OL$Info, "Image volume(s) ", implode(lowBValueIndices,sep=", ",finalSep=" and "), " appear(s) to have lower diffusion weighting")
         
         if (nVectorsFile != nVectorsImage)
         {
@@ -91,7 +90,7 @@ runExperiment <- function ()
     bvals[highBValueIndices] <- largeBValue
     bvals[lowBValueIndices] <- smallBValue
     
-    output(OL$Info, "Writing bvals and bvecs files")
+    report(OL$Info, "Writing bvals and bvecs files")
     scheme <- newSimpleDiffusionSchemeWithDirections(bvecs, bvals)
     writeSimpleDiffusionSchemeForSession(session, scheme)
 }

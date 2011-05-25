@@ -9,7 +9,7 @@ runExperiment <- function ()
 {    
     session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
     
-    mode <- getWithDefault("Mode", "rotation", validValues=c("rotation","translation","scale","skew"))
+    mode <- getConfigVariable("Mode", "rotation", validValues=c("rotation","translation","scale","skew"))
     
     ylab <- switch(mode, rotation="rotation angle, deg", translation="translation, mm", scale="scale factor", skew="skew")
     legend <- switch(mode, rotation=c("X (roll)","Y (pitch)","Z (yaw)"),
@@ -33,7 +33,7 @@ runExperiment <- function ()
     
     print(xyplot(x + y + z ~ index, data, allow.multiple=TRUE, type="l", lwd=2, xlab="volume number", ylab=ylab, auto.key=list(space="right",text=legend,lines=TRUE,points=FALSE)))
     
-    ans <- output(OL$Question, "Copy figure to pdf file? [yn]")
+    ans <- report(OL$Question, "Copy figure to pdf file? [yn]")
     if (tolower(ans) == "y")
         dev.print(pdf, file=paste(mode,"s.pdf",sep=""))
 }

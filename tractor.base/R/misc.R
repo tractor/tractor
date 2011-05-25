@@ -1,12 +1,3 @@
-"%~%" <- function (X, Y)
-{
-    if (!is.character(X) || !is.character(Y) || length(Y) != 1)
-        output(OL$Error, "Parameters for matching on a regular expression are not valid")
-    
-    matchLocs <- regexpr(Y, X, perl=TRUE)
-    return (!(matchLocs == -1))
-}
-
 implode <- function (strings, sep = "", finalSep = NULL)
 {
     strings <- as.character(strings)
@@ -76,7 +67,7 @@ locateExecutable <- function (fileName, errorIfMissing = TRUE)
     if (sum(filesExist) == 0)
     {
         if (errorIfMissing)
-            output(OL$Error, "Required executable \"", fileName, "\" is not available on the system path")
+            report(OL$Error, "Required executable \"", fileName, "\" is not available on the system path")
         else
             return (NULL)
     }
@@ -93,9 +84,9 @@ execute <- function (executable, paramString = NULL, errorOnFail = TRUE, silent 
     if (!is.null(execLoc))
     {
         execString <- paste(execLoc, paramString, sep=" ")
-        if (silent && getOption("tractorOutputLevel") > OL$Debug)
+        if (silent && getOption("outputLevel") > OL$Debug)
             execString <- paste(execString, ">/dev/null 2>&1", sep=" ")
-        output(OL$Debug, execString)
+        report(OL$Debug, execString)
         system(execString, ...)
     }
 }

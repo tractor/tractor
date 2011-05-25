@@ -1,10 +1,7 @@
 bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outputLevel = OL$Warning, configFiles = "/dev/null", configText = "", parallelisationFactor = 1)
 {
-    library(utils)
-    library(grDevices)
-    library(graphics)
-    library(stats)
-    library(tractor.base)
+    for (packageName in c("utils","grDevices","graphics","stats","methods","reportr","tractor.base"))
+        library(packageName, character.only=TRUE)
     
     warningWrapper <- function (warning)
     {
@@ -14,37 +11,47 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
     
     errorWrapper <- function (error)
     {
-        output(OL$Error, error$message, toReport=TRUE)
+        report(OL$Error, error$message, outputErrors=TRUE)
     }
     
     setOutputLevel(outputLevel)
     
     if (isValidAs(parallelisationFactor,"integer") && as.integer(parallelisationFactor) > 1)
     {
-        if ("multicore" %in% row.names(installed.packages()))
+        if (system.file(package="multicore") != "")
         {
             library(multicore)
             options(cores=as.integer(parallelisationFactor))
         }
         else
-            output(OL$Warning, "The \"multicore\" package is not installed - code will not be parallelised")
+            report(OL$Warning, "The \"multicore\" package is not installed - code will not be parallelised")
     }
     
-    options(tractorOutputErrors=TRUE)
+    options(outputErrors=TRUE)
     results <- try(withCallingHandlers({
         source(scriptFile)
-        createWorkspaceFromYaml(configFiles)
-        createWorkspaceFromYaml(text=configText)
+        
+        config <- readYaml(configFiles)
+        config <- readYaml(text=configText, init=config)
+        if (!is.null(config[[".unlabelled"]]))
+        {
+            assign("Arguments", config[[".unlabelled"]], envir=globalenv())
+            config[[".unlabelled"]] <- NULL
+        }
+        assign("ConfigVariables", config, envir=globalenv())
+        
         setwd(workingDirectory)
         
         if (!exists("runExperiment"))
-            output(OL$Error, "The experiment script does not contain a \"runExperiment\" function")
+            report(OL$Error, "The experiment script does not contain a \"runExperiment\" function")
         runExperiment()
     }, warning=warningWrapper, error=errorWrapper), silent=TRUE)
-    options(tractorOutputErrors=FALSE)
+    options(outputErrors=FALSE)
     
     reportFlags()
-    writeReportToYaml(results,fileName=reportFile)
+    
+    if (is.list(results))
+        writeYaml(results, fileName=reportFile)
 }
 
 describeExperiment <- function (scriptFile, fill = FALSE)
@@ -52,7 +59,7 @@ describeExperiment <- function (scriptFile, fill = FALSE)
     inputLines <- readLines(scriptFile)
     outputLines <- paste("OPTIONS for script", scriptFile, "(* required)", sep=" ")
     
-    getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL)
+    getConfigVariable <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL)
     {
         leadString <- ifelse(errorIfMissing, " * ", "   ")
         defaultValueString <- ifelse(is.null(defaultValue), "NULL", as.character(defaultValue))
@@ -64,7 +71,7 @@ describeExperiment <- function (scriptFile, fill = FALSE)
         outputLines <<- c(outputLines, paste(leadString, name, ": ", defaultValueString, sep=""))
     }
     
-    relevantInputLines <- grep("getWithDefault", inputLines, value=TRUE, fixed=TRUE)
+    relevantInputLines <- grep("getConfigVariable", inputLines, value=TRUE, fixed=TRUE)
     for (currentLine in relevantInputLines)
         eval(parse(text=currentLine))
     

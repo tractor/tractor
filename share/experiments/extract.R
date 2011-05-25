@@ -9,10 +9,10 @@ runExperiment <- function ()
     image <- newMriImageFromFile(Arguments[1])
     values <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
     
-    createImages <- getWithDefault("CreateImages", FALSE)
-    overlayOnBrain <- getWithDefault("OverlayOnBrain", FALSE)
-    regionColour <- getWithDefault("RegionColour", "green")
-    regionName <- getWithDefault("RegionName", "region")
+    createImages <- getConfigVariable("CreateImages", FALSE)
+    overlayOnBrain <- getConfigVariable("OverlayOnBrain", FALSE)
+    regionColour <- getConfigVariable("RegionColour", "green")
+    regionName <- getConfigVariable("RegionName", "region")
     
     selectionFunction <- function (x)
     {
@@ -29,7 +29,7 @@ runExperiment <- function ()
     {
         if (overlayOnBrain && is.null(getFileNameForStandardImage("brain",errorIfMissing=FALSE)))
         {
-            output(OL$Warning, "Cannot find standard brain volumes - no overlay possible")
+            report(OL$Warning, "Cannot find standard brain volumes - no overlay possible")
             overlayOnBrain <- FALSE
         }
         
@@ -39,7 +39,7 @@ runExperiment <- function ()
         {
             brainImage <- getStandardImage("brain")
             if (!equivalent(newImage$getFieldOfView(), brainImage$getFieldOfView()))
-                output(OL$Error, "The specified image is not in standard space")
+                report(OL$Error, "The specified image is not in standard space")
             
             points <- which(newImage$getData()==1, arr.ind=TRUE)
             sliceLoc <- as.vector(apply(points, 2, median))

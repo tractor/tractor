@@ -7,20 +7,19 @@ runExperiment <- function ()
 {
     session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
     
-    if (getOption("tractorOutputLevel") > OL$Info)
+    if (getOption("outputLevel") > OL$Info)
         setOutputLevel(OL$Info)
-    options(tractorUseOutputPrefix=FALSE)
+    options(useOutputPrefix=FALSE)
     
-    stagesComplete <- c(imageFileExists(file.path(session$getPreBedpostDirectory(), "basic")),
-                        imageFileExists(file.path(session$getPreBedpostDirectory(), "nodif")),
-                        imageFileExists(session$getImageFileNameByType("mask")),
-                        imageFileExists(session$getImageFileNameByType("fa")),
+    stagesComplete <- c(imageFileExists(session$getImageFileNameByType("rawdata","diffusion")),
+                        imageFileExists(session$getImageFileNameByType("refb0","diffusion")),
+                        imageFileExists(session$getImageFileNameByType("mask","diffusion")),
+                        imageFileExists(session$getImageFileNameByType("fa","diffusion")),
                         session$isPreprocessed())
     
-    output(OL$Info, "Session directory:             ", session$getBaseDirectory())
-    output(OL$Info, "Working directory exists:      ", file.exists(session$getWorkingDirectory()))
-    output(OL$Info, "Preprocessing stages complete: ", implode(which(stagesComplete), ","))
-    output(OL$Info, "Multifibre preprocessing:      ", !session$usesOldBedpost())
-    output(OL$Info, "Number of fibres per voxel:    ", session$nFibres())
-    output(OL$Info, "Camino files created:          ", file.exists(file.path(session$getCaminoDirectory(createIfMissing=FALSE), "sequence.scheme")))
+    report(OL$Info, "Session directory:             ", session$getDirectory())
+    report(OL$Info, "Working directory exists:      ", file.exists(session$getDirectory("root")))
+    report(OL$Info, "Preprocessing stages complete: ", implode(which(stagesComplete), ","))
+    report(OL$Info, "Number of fibres per voxel:    ", session$nFibres())
+    report(OL$Info, "Camino files created:          ", file.exists(file.path(session$getDirectory("camino"), "sequence.scheme")))
 }

@@ -28,13 +28,13 @@ interpolatePng <- function (oldFile, newFile, newDims, filter = "Mitchell")
 writePng <- function (data, colourScale = 1, fileName = NULL, windowLimits = NULL)
 {
     if (capabilities("png") == FALSE)
-        output(OL$Error, "PNG output capability required")
+        report(OL$Error, "PNG output capability required")
     if (is.null(fileName))
-        output(OL$Error, "File name must be specified")
+        report(OL$Error, "File name must be specified")
         
     dims <- dim(data)
     if (length(dims) != 2)
-        output(OL$Error, "Can only write 2D array data to a PNG file")
+        report(OL$Error, "Can only write 2D array data to a PNG file")
     
     fileName <- ensureFileSuffix(fileName, "png")
     scale <- getColourScale(colourScale)

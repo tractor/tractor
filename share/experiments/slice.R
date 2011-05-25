@@ -15,17 +15,17 @@ runExperiment <- function ()
     else
         outputFile <- image$getSource()
     
-    pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
-    x <- getWithDefault("X", NA, "numeric", errorIfInvalid=TRUE)
-    y <- getWithDefault("Y", NA, "numeric", errorIfInvalid=TRUE)
-    z <- getWithDefault("Z", NA, "numeric", errorIfInvalid=TRUE)
-    windowLimits <- getWithDefault("WindowLimits", NULL, "character")
+    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
+    x <- getConfigVariable("X", NA, "numeric", errorIfInvalid=TRUE)
+    y <- getConfigVariable("Y", NA, "numeric", errorIfInvalid=TRUE)
+    z <- getConfigVariable("Z", NA, "numeric", errorIfInvalid=TRUE)
+    windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
     
     if (!is.null(windowLimits))
     {
         windowLimits <- splitAndConvertString(windowLimits, ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
         if (length(windowLimits) != 2)
-            output(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
+            report(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
     }
     
     point <- round(c(x,y,z))

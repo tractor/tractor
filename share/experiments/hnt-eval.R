@@ -11,14 +11,14 @@ suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()
 {
-    tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
-    sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
-    seedList <- getWithDefault("SeedPointList", NULL, "integer")
-    pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
-    searchWidth <- getWithDefault("SearchWidth", 1)
-    faThreshold <- getWithDefault("AnisotropyThreshold", 0.2)
-    nSamples <- getWithDefault("NumberOfSamples", 5000)
-    resultsName <- getWithDefault("ResultsName", "results")
+    tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
+    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
+    seedList <- getConfigVariable("SeedPointList", NULL, "integer")
+    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
+    searchWidth <- getConfigVariable("SearchWidth", 1)
+    faThreshold <- getConfigVariable("AnisotropyThreshold", 0.2)
+    nSamples <- getConfigVariable("NumberOfSamples", 5000)
+    resultsName <- getConfigVariable("ResultsName", "results")
     
     reference <- getNTResource("reference", "hnt", list(tractName=tractName))
     nSessions <- length(sessionList)
@@ -28,7 +28,7 @@ runExperiment <- function ()
     else
     {
         if (is.null(pointType))
-            output(OL$Error, "Point type must be specified with the seed list")
+            report(OL$Error, "Point type must be specified with the seed list")
 
         seedMatrix <- matrix(seedList, ncol=3, byrow=TRUE)
 
@@ -45,7 +45,7 @@ runExperiment <- function ()
             currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
 
         if (pointType == "mm")
-            currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("t2")), useOrigin=TRUE)
+            currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("maskedb0")), useOrigin=TRUE)
         
         result <- runNeighbourhoodTractography(currentSession, currentSeed, reference$getTract(), faThreshold, searchWidth, nSamples=nSamples)
         return (result)

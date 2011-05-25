@@ -5,32 +5,32 @@ suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()
 {
-    tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
-    sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
-    tracker <- getWithDefault("Tracker", "fsl", validValues=c("fsl","tractor"))
-    seedPoint <- getWithDefault("SeedPoint", NULL, "character")
-    seedList <- getWithDefault("SeedPointList", NULL, "integer")
-    pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
-    searchWidth <- getWithDefault("SearchWidth", 1)
-    faThreshold <- getWithDefault("AnisotropyThreshold", 0.2)
-    nSamples <- getWithDefault("NumberOfSamples", 5000)
-    datasetName <- getWithDefault("DatasetName", "data")
-    sessionNumbers <- getWithDefault("SessionNumbers", NULL, "character")
-    resume <- getWithDefault("Resume", FALSE)
+    tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
+    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
+    tracker <- getConfigVariable("Tracker", "fsl", validValues=c("fsl","tractor"))
+    seedPoint <- getConfigVariable("SeedPoint", NULL, "character")
+    seedList <- getConfigVariable("SeedPointList", NULL, "integer")
+    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
+    searchWidth <- getConfigVariable("SearchWidth", 1)
+    faThreshold <- getConfigVariable("AnisotropyThreshold", 0.2)
+    nSamples <- getConfigVariable("NumberOfSamples", 5000)
+    datasetName <- getConfigVariable("DatasetName", "data")
+    sessionNumbers <- getConfigVariable("SessionNumbers", NULL, "character")
+    resume <- getConfigVariable("Resume", FALSE)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     
     collateData <- TRUE
     
     if (!is.null(seedPoint) && !is.null(seedList))
-        output(OL$Error, "Only one of \"SeedPoint\" and \"SeedPointList\" should be given")
+        report(OL$Error, "Only one of \"SeedPoint\" and \"SeedPointList\" should be given")
     
     if (is.null(seedPoint) && is.null(seedList))
         pointType <- "r"
     else
     {
         if (is.null(pointType))
-            output(OL$Error, "Point type must be specified with the seed point(s)")
+            report(OL$Error, "Point type must be specified with the seed point(s)")
         
         if (!is.null(seedList))
             seedMatrix <- matrix(seedList, ncol=3, byrow=TRUE)
@@ -56,10 +56,10 @@ runExperiment <- function ()
         sessionDatasetName <- ensureFileSuffix(paste(datasetName,"_session",i,sep=""), "txt")
         
         if (resume && file.exists(sessionDatasetName))
-            output(OL$Info, "Using existing output for session ", i)
+            report(OL$Info, "Using existing output for session ", i)
         else
         {
-            output(OL$Info, "Calculating splines for session ", i)
+            report(OL$Info, "Calculating splines for session ", i)
             
             # Allow for out of bounds session numbers (used by pnt-data-sge)
             if (length(sessionList) == 1)
@@ -78,7 +78,7 @@ runExperiment <- function ()
                 currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
         
             if (pointType == "mm")
-                currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("t2")), useOrigin=TRUE)
+                currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("maskedb0")), useOrigin=TRUE)
             
             neighbourhood <- createNeighbourhoodInfo(centre=currentSeed, width=searchWidth)
             splines <- calculateSplinesForNeighbourhood(currentSession, neighbourhood, reference, faThreshold, nSamples, tracker=tracker)

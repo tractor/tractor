@@ -22,7 +22,7 @@ buildStepVectors <- function (width)
 createNeighbourhoodInfo <- function (width, dim = 3, centre = rep(0,dim))
 {
     if (dim != 3)
-        output(OL$Error, "Only neighbourhoods in 3 dimensions are supported for now")
+        report(OL$Error, "Only neighbourhoods in 3 dimensions are supported for now")
     
     vectors <- buildStepVectors(width) + centre
     
@@ -31,11 +31,6 @@ createNeighbourhoodInfo <- function (width, dim = 3, centre = rep(0,dim))
     normalised <- unnormalised / (lengths %o% lengths)
     
     info <- list(width=width, dim=dim, centre=centre, vectors=vectors, innerProducts=normalised)
-    class(info) <- c("info.neighbourhood", "list")
+    class(info) <- "neighbourhoodInfo"
     invisible (info)
-}
-
-isNeighbourhoodInfo <- function (object)
-{
-    return ("info.neighbourhood" %in% class(object))
 }

@@ -1,7 +1,7 @@
 BASH=/bin/bash
 ECHO=/bin/echo
 ECHO_N=/bin/echo -n
-DIFF=diff
+DIFF=diff -b
 
 COLUMNS=40
 TRACTOR=../bin/tractor -q -z -i
@@ -22,6 +22,9 @@ fullclean: clean
 run-tests:
 	@$(MAKE) `find . -name '*.sh' -print | sort | sed 's/\.sh$$/\.out/'` || exit 1
 	@echo "All tests completed"
+
+debug-tests:
+	@$(MAKE) run-tests TRACTOR="$(TRACTOR) -d"
 
 create-tests:
 	@$(MAKE) `find . -name '*.sh' -print | sort | sed 's/\.sh$$/\.save/'` || exit 1

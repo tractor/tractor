@@ -1,9 +1,9 @@
 displayProbtrackResult <- function (probtrackResult, axes = 1:3, colourScale = 2, baseImage = "fa", ...)
 {
     if (!is.numeric(axes) || any(axes < 1 | axes > 3))
-        output(OL$Error, "Projection axes must be specified as a combination of 1 (x), 2 (y) or 3 (z)")
+        report(OL$Error, "Projection axes must be specified as a combination of 1 (x), 2 (y) or 3 (z)")
     
-    if (!isMriImage(baseImage))
+    if (!is(baseImage, "MriImage"))
         baseImage <- probtrackResult$session$getImageByType(baseImage)
     images <- createWeightingAndMetricImagesForResult(probtrackResult, ...)
     finalImage <- newMriImageWithBinaryFunction(images$metric, images$weight, "*")
@@ -20,7 +20,7 @@ displayProbtrackResult <- function (probtrackResult, axes = 1:3, colourScale = 2
 
 writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zoomFactor = 1, prefix = "tract", baseImage = "fa", showSeed = FALSE, ...)
 {
-    if (!isMriImage(baseImage))
+    if (!is(baseImage, "MriImage"))
         baseImage <- probtrackResult$session$getImageByType(baseImage)
     imageDims <- baseImage$getDimensions()
     
@@ -50,7 +50,7 @@ createWeightingAndMetricImages <- function (image, session = NULL, type = c("wei
         mode <- "binary"
     }
     else if (is.null(session))
-        output(OL$Error, "A session must be specified for metric ", toupper(type))
+        report(OL$Error, "A session must be specified for metric ", toupper(type))
     else
     {
         metricImage <- session$getImageByType(type)
@@ -83,7 +83,7 @@ createWeightingAndMetricImagesForResult <- function (probtrackResult, threshold 
     else if (!is.null(probtrackResult$fileName))
         tractImage <- newMriImageFromFile(probtrackResult$fileName)
     else
-        output(OL$Error, "Cannot use a result containing no tract image or file name")
+        report(OL$Error, "Cannot use a result containing no tract image or file name")
     
     if (!is.null(threshold))
         threshold <- threshold * probtrackResult$nSamples

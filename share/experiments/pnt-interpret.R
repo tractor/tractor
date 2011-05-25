@@ -10,16 +10,16 @@ suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()
 {
-    tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
-    datasetName <- getWithDefault("DatasetName", NULL, "character", errorIfMissing=TRUE)
-    modelName <- getWithDefault("ModelName", NULL, "character")
-    resultsName <- getWithDefault("ResultsName", NULL, "character", errorIfMissing=TRUE)
-    sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
+    tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
+    datasetName <- getConfigVariable("DatasetName", NULL, "character", errorIfMissing=TRUE)
+    modelName <- getConfigVariable("ModelName", NULL, "character")
+    resultsName <- getConfigVariable("ResultsName", NULL, "character", errorIfMissing=TRUE)
+    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
     
-    originalMaxSeeds <- getWithDefault("MaximumSeedPoints", 1, "integer")
-    minPosterior <- getWithDefault("MinimumPosterior", 0, "numeric")
+    originalMaxSeeds <- getConfigVariable("MaximumSeedPoints", 1, "integer")
+    minPosterior <- getConfigVariable("MinimumPosterior", 0, "numeric")
     
-    mode <- getWithDefault("Mode", NULL, "character", errorIfMissing=TRUE, c("location","posterior","ratio","null-posterior"), errorIfInvalid=TRUE)
+    mode <- getConfigVariable("Mode", NULL, "character", errorIfMissing=TRUE, c("location","posterior","ratio","null-posterior"), errorIfInvalid=TRUE)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
@@ -28,12 +28,12 @@ runExperiment <- function ()
     
     results <- getNTResource("results", "pnt", list(resultsName=resultsName))
     if (results$nSessions() != nSessions)
-        output(OL$Error, "Length of the session list specified does not match the results file")
+        report(OL$Error, "Length of the session list specified does not match the results file")
     nPoints <- results$nPoints()
 
     searchWidth <- round(nPoints^(1/3))
     if (searchWidth^3 != nPoints)
-        output(OL$Error, "Results file does not describe a cubic search space")
+        report(OL$Error, "Results file does not describe a cubic search space")
     
     data <- read.table(ensureFileSuffix(datasetName,"txt"))
     seedsInData <- all(c("x","y","z") %in% colnames(data))
@@ -45,7 +45,7 @@ runExperiment <- function ()
     
     for (i in 1:nSessions)
     {
-        output(OL$Info, "Current session is ", sessionList[i])
+        report(OL$Info, "Current session is ", sessionList[i])
         currentSession <- newSessionFromDirectory(sessionList[i])
         if (seedsInData)
         {
@@ -58,7 +58,7 @@ runExperiment <- function ()
         else
             currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
         currentPosteriors <- results$getTractPosteriors(i)
-        output(OL$Info, "Neighbourhood centre point is ", implode(currentSeed,sep=","))
+        report(OL$Info, "Neighbourhood centre point is ", implode(currentSeed,sep=","))
         
         if (mode == "null-posterior")
         {
@@ -72,7 +72,7 @@ runExperiment <- function ()
         
         if (all(is.na(ranks)))
         {
-            output(OL$Warning, "No match data available for session number ", i)
+            report(OL$Warning, "No match data available for session number ", i)
             next
         }
         

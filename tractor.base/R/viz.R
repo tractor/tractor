@@ -30,12 +30,12 @@ getColourScale <- function (n)
 
 maximumIntensityProjection <- function (image, axis)
 {
-    if (!isMriImage(image))
-        output(OL$Error, "The specified image is not an MriImage object")
+    if (!is(image, "MriImage"))
+        report(OL$Error, "The specified image is not an MriImage object")
     
     nDims <- image$getDimensionality()
     if (!(axis %in% 1:nDims))
-        output(OL$Error, "Specified axis is not relevant for this image")
+        report(OL$Error, "Specified axis is not relevant for this image")
     
     planeAxes <- setdiff(1:nDims, axis)
     result <- apply(image$getData(), planeAxes, max)
@@ -45,10 +45,10 @@ maximumIntensityProjection <- function (image, axis)
 
 createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
 {
-    if (!isMriImage(image))
-        output(OL$Error, "The specified image is not an MriImage object")
+    if (!is(image, "MriImage"))
+        report(OL$Error, "The specified image is not an MriImage object")
     if (image$getDimensionality() != 3)
-        output(OL$Error, "The \"createSliceGraphic\" function only handles 3D images")
+        report(OL$Error, "The \"createSliceGraphic\" function only handles 3D images")
     
     device <- match.arg(device)
     
@@ -58,9 +58,9 @@ createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("inter
     planeLoc <- c(x, y, z)[axisRelevance]
     
     if (length(which(axisRelevance)) != 1)
-        output(OL$Error, "Exactly one of x, y and z must be specified")
+        report(OL$Error, "Exactly one of x, y and z must be specified")
     if (planeLoc < 1 || planeLoc > dims[axisRelevance])
-        output(OL$Error, "Specified plane (", axisShortNames[axisRelevance], " = ", planeLoc, ") is out of bounds")
+        report(OL$Error, "Specified plane (", axisShortNames[axisRelevance], " = ", planeLoc, ") is out of bounds")
     
     slice <- extractDataFromMriImage(image, which(axisRelevance), planeLoc)
     
@@ -78,8 +78,8 @@ createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("inter
 
 createProjectionGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
 {
-    if (!isMriImage(image))
-        output(OL$Error, "The specified image is not an MriImage object")
+    if (!is(image, "MriImage"))
+        report(OL$Error, "The specified image is not an MriImage object")
     
     device <- match.arg(device)
     projection <- maximumIntensityProjection(image, axis)
@@ -99,10 +99,10 @@ createProjectionGraphic <- function (image, axis, device = c("internal","png"), 
 
 createContactSheetGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL, clearance = NULL, nColumns = NULL)
 {
-    if (!isMriImage(image))
-        output(OL$Error, "The specified image is not an MriImage object")
+    if (!is(image, "MriImage"))
+        report(OL$Error, "The specified image is not an MriImage object")
     if (image$getDimensionality() != 3)
-        output(OL$Error, "The \"createContactSheetGraphic\" function only handles 3D images")
+        report(OL$Error, "The \"createContactSheetGraphic\" function only handles 3D images")
     
     device <- match.arg(device)
     
@@ -152,29 +152,29 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
 createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sliceLoc = NULL, device = c("internal","png"), alphaImages = NULL, prefix = "image", zoomFactor = 1, filter = "Mitchell", windowLimits = NULL, clearance = NULL, nColumns = NULL)
 {
     if (!is.list(images) || !is.list(colourScales))
-        output(OL$Error, "Images and colour scales must be given as lists")
+        report(OL$Error, "Images and colour scales must be given as lists")
     if (!is.null(alphaImages) && !is.list(alphaImages))
-        output(OL$Error, "Alpha images must be specified in a list")
+        report(OL$Error, "Alpha images must be specified in a list")
     if (!is.null(windowLimits) && !is.list(windowLimits))
-        output(OL$Error, "Window limits must be specified in a list")
+        report(OL$Error, "Window limits must be specified in a list")
     if (!is.numeric(axes) || any(axes < 1 | axes > 3))
-        output(OL$Error, "Projection axes must be specified as a combination of 1 (x), 2 (y) or 3 (z)")
+        report(OL$Error, "Projection axes must be specified as a combination of 1 (x), 2 (y) or 3 (z)")
     
     modes <- match.arg(modes, c("slice","projection","contact"), several.ok=TRUE)
     if (any(modes == "slice") && is.null(sliceLoc))
-        output(OL$Error, "Slice location must be specified")
+        report(OL$Error, "Slice location must be specified")
     if (any(modes == "contact") && !all(modes == "contact"))
-        output(OL$Error, "Contact slice mode must be used for all graphics or none")
+        report(OL$Error, "Contact slice mode must be used for all graphics or none")
     
     device <- match.arg(device)
     
     nImages <- length(images)
     if (!all(c(length(modes),length(colourScales)) == nImages))
-        output(OL$Error, "Lengths of 'images', 'modes' and 'colourScales' do not all match")
+        report(OL$Error, "Lengths of 'images', 'modes' and 'colourScales' do not all match")
     if (!is.null(alphaImages) && length(alphaImages) != nImages)
-        output(OL$Error, "Lengths of 'images' and 'alphaImages' do not match")
+        report(OL$Error, "Lengths of 'images' and 'alphaImages' do not match")
     if (!is.null(windowLimits) && length(windowLimits) != nImages)
-        output(OL$Error, "Lengths of 'images' and 'windowLimits' do not match")
+        report(OL$Error, "Lengths of 'images' and 'windowLimits' do not match")
     
     if (device == "png")
     {
@@ -231,5 +231,5 @@ createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sli
         }
     }
     else
-        output(OL$Warning, "The 'createCombinedGraphics' function only supports the \"png\" device for now")
+        report(OL$Warning, "The 'createCombinedGraphics' function only supports the \"png\" device for now")
 }

@@ -10,13 +10,13 @@ suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()
 {
-    tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
-    datasetName <- getWithDefault("DatasetName", NULL, "character", errorIfMissing=TRUE)
-    maxKnotCount <- getWithDefault("MaximumKnotCount", NULL, "integer")
-    asymmetricModel <- getWithDefault("AsymmetricModel", FALSE)
-    alphaPriorMean <- getWithDefault("AlphaPriorMean", NULL, "numeric")
-    nullPrior <- getWithDefault("NullPrior", NULL, "numeric")
-    resultsName <- getWithDefault("ResultsName", "results")
+    tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
+    datasetName <- getConfigVariable("DatasetName", NULL, "character", errorIfMissing=TRUE)
+    maxKnotCount <- getConfigVariable("MaximumKnotCount", NULL, "integer")
+    asymmetricModel <- getConfigVariable("AsymmetricModel", FALSE)
+    alphaPriorMean <- getConfigVariable("AlphaPriorMean", NULL, "numeric")
+    nullPrior <- getConfigVariable("NullPrior", NULL, "numeric")
+    resultsName <- getConfigVariable("ResultsName", "results")
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     
@@ -44,8 +44,8 @@ runExperiment <- function ()
         alphas <- model$getAlphas()
         subUnityCount <- sum(alphas < 1, na.rm=TRUE)
         if (subUnityCount >= (length(alphas)/2))
-            output(OL$Warning, "Half or more of the alphas are less than one - something is probably wrong")
+            report(OL$Warning, "Half or more of the alphas are less than one - something is probably wrong")
         else if (subUnityCount > 0)
-            output(OL$Warning, subUnityCount, " alpha value(s) less than one - the reference tract is a poor guide in these regions")
+            report(OL$Warning, subUnityCount, " alpha value(s) less than one - the reference tract is a poor guide in these regions")
     }
 }

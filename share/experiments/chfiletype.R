@@ -7,12 +7,12 @@ runExperiment <- function ()
 {
     requireArguments("image file")
 
-    datatype <- getWithDefault("TypeCode", NULL, "integer")
+    datatype <- getConfigVariable("TypeCode", NULL, "integer")
     if (!is.null(datatype))
         datatype <- getDataTypeByNiftiCode(datatype)
     
     # Last argument is interpreted as a file type if valid
-    if (nArguments() > 1 && isTRUE(toupper(Arguments[nArguments()]) %in% .FileTypes$typeNames))
+    if (nArguments() > 1 && isTRUE(toupper(Arguments[nArguments()]) %in% tractor.base:::.FileTypes$typeNames))
     {
         fileType <- toupper(Arguments[nArguments()])
         imageFileNames <- Arguments[-nArguments()]
@@ -20,7 +20,7 @@ runExperiment <- function ()
     else if (is.null(getOption("tractorFileType")))
     {
         # This should never happen with current .First.lib(), but keeping check here to be sure
-        output(OL$Error, "No default file type is available - format must be given")
+        report(OL$Error, "No default file type is available - format must be given")
     }
     else
     {

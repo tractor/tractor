@@ -14,15 +14,15 @@ runExperiment <- function ()
     requireArguments("volume prefix")
     fileStem <- Arguments[1]
     
-    sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
-    metricName <- getWithDefault("Metric", NULL, "character", validValues=c("weight","AVF","FA","MD","Lax","Lrad"))
-    mode <- getWithDefault("AveragingMode", "binary", validValues=c("binary","weighted"))
-    baseThreshold <- getWithDefault("WeightThreshold", 0.01)
-    thresholdMode <- getWithDefault("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
+    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
+    metricName <- getConfigVariable("Metric", NULL, "character", validValues=c("weight","AVF","FA","MD","Lax","Lrad"))
+    mode <- getConfigVariable("AveragingMode", "binary", validValues=c("binary","weighted"))
+    baseThreshold <- getConfigVariable("WeightThreshold", 0.01)
+    thresholdMode <- getConfigVariable("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
     
     for (i in seq_along(sessionList))
     {
-        output(OL$Info, "Current session is ", sessionList[i])
+        report(OL$Info, "Current session is ", sessionList[i])
         
         fileName <- paste(fileStem, i, sep="")
         if (!imageFileExists(fileName))

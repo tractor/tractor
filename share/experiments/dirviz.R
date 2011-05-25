@@ -10,16 +10,16 @@ runExperiment <- function ()
     session <- newSessionFromDirectory(Arguments[1])
     
     if (!session$isPreprocessed())
-        output(OL$Error, "This session is not yet fully preprocessed")
+        report(OL$Error, "This session is not yet fully preprocessed")
     
-    x <- getWithDefault("X", NA, "numeric", errorIfInvalid=TRUE)
-    y <- getWithDefault("Y", NA, "numeric", errorIfInvalid=TRUE)
-    z <- getWithDefault("Z", NA, "numeric", errorIfInvalid=TRUE)
-    pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
-    source <- getWithDefault("Source", "bedpost", validValues=c("bedpost","tensor"))
-    thresholdLevel <- getWithDefault("ThresholdLevel", 0.05)
-    windowLimits <- getWithDefault("WindowLimits", NULL, "character")
-    scaleComponents <- getWithDefault("ScaleComponents", TRUE)
+    x <- getConfigVariable("X", NA, "numeric", errorIfInvalid=TRUE)
+    y <- getConfigVariable("Y", NA, "numeric", errorIfInvalid=TRUE)
+    z <- getConfigVariable("Z", NA, "numeric", errorIfInvalid=TRUE)
+    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
+    source <- getConfigVariable("Source", "bedpost", validValues=c("bedpost","tensor"))
+    thresholdLevel <- getConfigVariable("ThresholdLevel", 0.05)
+    windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
+    scaleComponents <- getConfigVariable("ScaleComponents", TRUE)
     
     faImage <- session$getImageByType("fa")
     maskImage <- session$getImageByType("mask")
@@ -28,13 +28,13 @@ runExperiment <- function ()
     {
         windowLimits <- splitAndConvertString(windowLimits, ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
         if (length(windowLimits) != 2)
-            output(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
+            report(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
     }
     
     point <- round(c(x,y,z))
     throughPlaneAxis <- which(!is.na(point))
     if (length(throughPlaneAxis) != 1)
-        output(OL$Error, "Exactly one of X, Y or Z must be specified")
+        report(OL$Error, "Exactly one of X, Y or Z must be specified")
     inPlaneAxes <- setdiff(1:3, throughPlaneAxis)
     
     point[inPlaneAxes] <- 1
@@ -51,12 +51,12 @@ runExperiment <- function ()
     {
         if (source == "bedpost")
         {
-            dyadsImage <- newMriImageFromFile(file.path(session$getBedpostDirectory(), paste("dyads",i,sep="")))
+            dyadsImage <- session$getImageByType("dyads", "bedpost", index=i)
             thresholdImage <- session$getImageByType("avf", i)
         }
         else
         {
-            dyadsImage <- newMriImageFromFile(file.path(session$getPreBedpostDirectory(), "dti_V1"))
+            dyadsImage <- session$getImageByType("eigenvector", "diffusion", index=1)
             thresholdImage <- faImage
         }
         
@@ -84,10 +84,10 @@ runExperiment <- function ()
         segments((d1-1)/(dims[1]-1)-maskedData[,1]/(2*dims[1]), (d2-1)/(dims[2]-1)-maskedData[,2]/(2*dims[2]), (d1-1)/(dims[1]-1)+maskedData[,1]/(2*dims[1]), (d2-1)/(dims[2]-1)+maskedData[,2]/(2*dims[2]), lwd=3, col=col)
     }
     
-    ans <- output(OL$Question, "Copy figure to a high-resolution \"png\" file? [yn]")
+    ans <- report(OL$Question, "Copy figure to a high-resolution \"png\" file? [yn]")
     if (tolower(ans) == "y")
     {
-        outputFileName <- paste(basename(session$getBaseDirectory()), "_", c("x","y","z")[throughPlaneAxis], point[throughPlaneAxis], "_", source, sep="")
+        outputFileName <- paste(basename(session$getDirectory()), "_", c("x","y","z")[throughPlaneAxis], point[throughPlaneAxis], "_", source, sep="")
         dev.print(png, filename=ensureFileSuffix(outputFileName,"png"), width=16*dims[1], height=16*dims[2], bg="black")
     }
     

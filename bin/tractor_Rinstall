@@ -1,0 +1,38 @@
+#! /bin/bash
+
+status=1
+tmpdir=${TMPDIR:-/tmp}
+log_file="$tmpdir/tractor_Rinstall$$_log"
+trap 'rm -f $log_file; exit $status' 0 1 2 15
+
+export R_INSTALL_VANILLA=yes
+
+usage()
+{
+    echo "tractor_Rinstall (program v1.0.0)"
+    echo "TractoR-specific wrapper for installing R packages"
+    echo
+    echo "Usage: tractor_Rinstall pkg_path [pkg_path ...]"
+    echo
+}
+
+[ $# -lt 1 ] && {
+    usage 1>&2
+    exit
+}
+
+while [ $# -gt 0 ]; do
+    name=`basename "$1"`
+    echo -n "Installing R package \"${name}\"... "
+    R CMD INSTALL "${1}" > $log_file 2>&1
+    if [ $? -eq 0 ]; then
+        echo "OK"
+    else
+        echo "failed"
+        cat $log_file
+        exit
+    fi
+    shift
+done
+
+status=0

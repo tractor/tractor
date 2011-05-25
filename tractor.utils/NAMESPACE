@@ -1,0 +1,4 @@
+import(reportr)
+importFrom(tractor.base, promote, implode)
+
+exportPattern("^[^\\.]")

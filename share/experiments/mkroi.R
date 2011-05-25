@@ -14,15 +14,15 @@ runExperiment <- function ()
     
     centre <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
     if (!exists("centre") || length(centre) != 3)
-        output(OL$Error, "Centre point must be given as a single vector in 3D space, comma or space separated")
+        report(OL$Error, "Centre point must be given as a single vector in 3D space, comma or space separated")
     
-    pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
-    isStandardPoint <- getWithDefault("CentreInMNISpace", FALSE)
+    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
+    isStandardPoint <- getConfigVariable("CentreInMNISpace", FALSE)
     
-    width <- getWithDefault("Width", 7)
-    roiName <- getWithDefault("ROIName", "roi")
+    width <- getConfigVariable("Width", 7)
+    roiName <- getConfigVariable("ROIName", "roi")
     
-    t2Image <- session$getImageByType("t2")
+    t2Image <- session$getImageByType("maskedb0")
     centre <- getNativeSpacePointForSession(session, centre, pointType, isStandardPoint)
     
     roiImage <- newMriImageAsShapeOverlay("block", t2Image, centre=round(centre), width=width)

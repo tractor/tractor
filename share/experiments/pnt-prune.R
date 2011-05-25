@@ -10,22 +10,22 @@ suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()
 {
-    tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
-    datasetName <- getWithDefault("DatasetName", NULL, "character", errorIfMissing=TRUE)
-    resultsName <- getWithDefault("ResultsName", NULL, "character", errorIfMissing=TRUE)
-    sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
-    modelName <- getWithDefault("ModelName", NULL, "character")
-    sessionNumbers <- getWithDefault("SessionNumbers", NULL, "character")
-    tracker <- getWithDefault("Tracker", "fsl", validValues=c("fsl","tractor"))
+    tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
+    datasetName <- getConfigVariable("DatasetName", NULL, "character", errorIfMissing=TRUE)
+    resultsName <- getConfigVariable("ResultsName", NULL, "character", errorIfMissing=TRUE)
+    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
+    modelName <- getConfigVariable("ModelName", NULL, "character")
+    sessionNumbers <- getConfigVariable("SessionNumbers", NULL, "character")
+    tracker <- getConfigVariable("Tracker", "fsl", validValues=c("fsl","tractor"))
     
-    nSamples <- getWithDefault("NumberOfSamples", 5000)
-    subgroupSize <- getWithDefault("SubgroupSize", 500)
-    truncate <- getWithDefault("TruncateToReference", TRUE)
-    randomSeed <- getWithDefault("RandomSeed", NULL, "integer")
+    nSamples <- getConfigVariable("NumberOfSamples", 5000)
+    subgroupSize <- getConfigVariable("SubgroupSize", 500)
+    truncate <- getConfigVariable("TruncateToReference", TRUE)
+    randomSeed <- getConfigVariable("RandomSeed", NULL, "integer")
     
-    createVolumes <- getWithDefault("CreateVolumes", TRUE)
-    createImages <- getWithDefault("CreateImages", FALSE)
-    showSeed <- getWithDefault("ShowSeedPoint", TRUE)
+    createVolumes <- getConfigVariable("CreateVolumes", TRUE)
+    createImages <- getConfigVariable("CreateImages", FALSE)
+    showSeed <- getConfigVariable("ShowSeedPoint", TRUE)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     refSession <- reference$getSourceSession()
@@ -37,18 +37,18 @@ runExperiment <- function ()
     model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
     
     if (!createVolumes && !createImages)
-        output(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
+        report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
     nSessions <- length(sessionList)
     
     results <- getNTResource("results", "pnt", list(resultsName=resultsName))
     if (results$nSessions() != nSessions)
-        output(OL$Error, "Length of the session list specified does not match the results file")
+        report(OL$Error, "Length of the session list specified does not match the results file")
     nPoints <- results$nPoints()
 
     searchWidth <- round(nPoints^(1/3))
     if (searchWidth^3 != nPoints)
-        output(OL$Error, "Results file does not describe a cubic search space")
+        report(OL$Error, "Results file does not describe a cubic search space")
     
     if (is.null(sessionNumbers))
         sessionNumbers <- 1:nSessions
@@ -60,7 +60,7 @@ runExperiment <- function ()
     subjectsInData <- ("subject" %in% colnames(data)) && (is.integer(data$subject))
     
     parallelApply(sessionNumbers, function (i) {
-        output(OL$Info, "Generating tract for session ", i)
+        report(OL$Info, "Generating tract for session ", i)
         
         currentSession <- newSessionFromDirectory(sessionList[i])
         if (seedsInData)
@@ -79,7 +79,7 @@ runExperiment <- function ()
         bestSeedIndex <- which.max(currentPosteriors)
         if (length(bestSeedIndex) == 0)
         {
-            output(OL$Warning, "No match data available for session number ", i)
+            report(OL$Warning, "No match data available for session number ", i)
             next
         }
         
@@ -101,19 +101,19 @@ runExperiment <- function ()
             if (is.null(refSession))
                 transform <- newAffineTransform3DByInversion(getMniTransformForSession(currentSession))
             else
-                transform <- newAffineTransform3DFromFlirt(currentSession$getImageFileNameByType("t2"), refSession$getImageFileNameByType("t2"))
+                transform <- newAffineTransform3DFromFlirt(currentSession$getImageFileNameByType("maskedb0"), refSession$getImageFileNameByType("maskedb0"))
 
             transformedMedianLine <- newStreamlineTractByTransformation(medianLine, transform)
         }
         medianSpline <- newBSplineTractFromStreamline(transformedMedianLine, knotSpacing=options$knotSpacing)
         medianData <- createDataTableForSplines(list(medianSpline), reference$getTract(), "knot")
         medianLogLikelihood <- calculateMatchedLogLikelihoodsForDataTable(medianData, model)
-        output(OL$Info, "Median line log-likelihood is ", round(medianLogLikelihood,3))
+        report(OL$Info, "Median line log-likelihood is ", round(medianLogLikelihood,3))
 
         sessionData <- NULL
         nGroups <- (nSamples - 1) %/% subgroupSize + 1
 
-        output(OL$Info, "Creating complete data table...")
+        report(OL$Info, "Creating complete data table...")
         for (j in 1:nGroups)
         {
             firstStreamline <- subgroupSize * (j-1) + 1
@@ -132,24 +132,24 @@ runExperiment <- function ()
         
         if (length(toAccept) == 0)
         {
-            output(OL$Warning, "All streamlines rejected for session ", i, " - using median line")
+            report(OL$Warning, "All streamlines rejected for session ", i, " - using median line")
             lineMetadata <- newStreamlineTractMetadataFromImageMetadata(medianLine$getImageMetadata(), FALSE, "vox")
             medianLine <- newStreamlineTractWithMetadata(medianLine, lineMetadata)
             streamSet <- newStreamlineSetTractFromStreamline(medianLine)
         }
         else
         {
-            output(OL$Info, "Rejecting ", length(toReject), " streamlines, of which ", sum(is.na(keepProbabilities)), " are missing")
+            report(OL$Info, "Rejecting ", length(toReject), " streamlines, of which ", sum(is.na(keepProbabilities)), " are missing")
             streamSet <- newStreamlineSetTractBySubsetting(streamSet, toAccept)
         }
         
         if (truncate)
         {
-            output(OL$Info, "Truncating streamlines to the length of the reference tract")
+            report(OL$Info, "Truncating streamlines to the length of the reference tract")
             streamSet <- newStreamlineSetTractByTruncationToReference(streamSet, reference, currentSession)
         }
         
-        output(OL$Info, "Creating visitation map")
+        report(OL$Info, "Creating visitation map")
         metadata <- newMriImageMetadataFromFile(currentSession$getImageFileNameByType("fa"))
         visitationMap <- newMriImageAsVisitationMap(streamSet, metadata)
         fakeResult <- list(image=visitationMap, nSamples=streamSet$nStreamlines(), session=currentSession, seed=bestSeed)

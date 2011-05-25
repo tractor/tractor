@@ -7,8 +7,8 @@ createDiffusionTensorFromComponents <- function (components)
 
 estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), requireMetrics = TRUE, convergenceLevel = 1e-2)
 {
-    if (!isSimpleDiffusionScheme(scheme))
-        output(OL$Error, "The specified scheme object is not valid")
+    if (!is(scheme, "SimpleDiffusionScheme"))
+        report(OL$Error, "The specified scheme object is not valid")
     
     method <- match.arg(method)
     
@@ -22,7 +22,7 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
     }))
     bMatrix <- bMatrix * (-components$bValues)
     
-    output(OL$Info, "Fitting tensors by ordinary least-squares", ifelse(method=="iwls"," (for initialisation)",""))
+    report(OL$Info, "Fitting tensors by ordinary least-squares", ifelse(method=="iwls"," (for initialisation)",""))
     solution <- lsfit(bMatrix, t(logData))
     
     if (method == "iwls")
@@ -49,7 +49,7 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
             return (c(tempSolution$coefficients, tempSolution$residuals))
         }
         
-        output(OL$Info, "Applying iterative weighted least-squares")
+        report(OL$Info, "Applying iterative weighted least-squares")
         values <- sapply(1:nrow(data), weightedLeastSquaresFit)
         
         solution$coefficients <- values[1:7,]
@@ -74,7 +74,7 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
             return (c(md,fa))
         }
         
-        output(OL$Info, "Calculating tensor eigensystems")
+        report(OL$Info, "Calculating tensor eigensystems")
         eigensystems <- apply(returnValue$tensors, 2, calculateEigensystem)
         metrics <- apply(eigensystems[1:3,,drop=FALSE], 2, calculateMetrics)
         
@@ -86,30 +86,28 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
 
 createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwls"))
 {
-    if (!isMriSession(session))
-        output(OL$Error, "Specified session is not an MriSession object")
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
     
     method <- match.arg(method)
     
     scheme <- newSimpleDiffusionSchemeFromSession(session)
     
-    maskImage <- session$getImageByType("mask")
+    maskImage <- session$getImageByType("mask", "diffusion")
     intraMaskLocs <- which(maskImage$getData() > 0, arr.ind=TRUE)
     imageDims <- maskImage$getDimensions()
     
-    dataImage <- newMriImageFromFile(file.path(session$getPreBedpostDirectory(), "data"))
+    dataImage <- session$getImageByType("data", "diffusion")
     data <- apply(dataImage$getData(), 4, "[", intraMaskLocs)
     rm(dataImage)
     
-    output(OL$Info, "Fitting diffusion tensors for ", nrow(intraMaskLocs), " voxels")
+    report(OL$Info, "Fitting diffusion tensors for ", nrow(intraMaskLocs), " voxels")
     fit <- estimateDiffusionTensors(data, scheme, method=method)
     
     scalarMetadata <- newMriImageMetadataFromTemplate(maskImage$getMetadata(), datatype=getDataTypeByNiftiCode(16))
     scalarData <- array(NA, dim=imageDims)
     vectorMetadata <- newMriImageMetadataFromTemplate(maskImage$getMetadata(), imageDims=c(imageDims,3), voxelDims=c(maskImage$getVoxelDimensions(),1), origin=c(maskImage$getOrigin(),0), datatype=getDataTypeByNiftiCode(16))
     vectorData <- array(NA, dim=c(imageDims,3))
-    
-    targetDir <- session$getPreBedpostDirectory()
     
     writeMap <- function (values, name, vector = FALSE)
     {
@@ -125,18 +123,18 @@ createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwl
             image <- newMriImageWithData(scalarData, scalarMetadata)
         }
         
-        writeMriImageToFile(image, file.path(targetDir,name))
+        writeMriImageToFile(image, name)
     }
     
-    output(OL$Info, "Writing tensor metric maps")
-    writeMap(exp(fit$logS0), "dti_S0")
-    writeMap(fit$fa, "dti_FA")
-    writeMap(fit$md, "dti_MD")
+    report(OL$Info, "Writing tensor metric maps")
+    writeMap(exp(fit$logS0), session$getImageFileNameByType("logS0","diffusion"))
+    writeMap(fit$fa, session$getImageFileNameByType("fa","diffusion"))
+    writeMap(fit$md, session$getImageFileNameByType("md","diffusion"))
     for (i in 1:3)
     {
-        writeMap(fit$eigenvalues[i,], paste("dti_L",i,sep=""))
-        writeMap(t(fit$eigenvectors[,i,]), paste("dti_V",i,sep=""), vector=TRUE)
+        writeMap(fit$eigenvalues[i,], session$getImageFileNameByType("eigenvalue","diffusion",index=i))
+        writeMap(t(fit$eigenvectors[,i,]), session$getImageFileNameByType("eigenvector","diffusion",index=i), vector=TRUE)
     }
-    writeMap((fit$eigenvalues[2,]+fit$eigenvalues[3,]) / 2, "dti_Lrad")
-    writeMap(fit$sse, "dti_sse")
+    writeMap((fit$eigenvalues[2,]+fit$eigenvalues[3,]) / 2, session$getImageFileNameByType("radialdiff","diffusion"))
+    writeMap(fit$sse, session$getImageFileNameByType("sse","diffusion"))
 }

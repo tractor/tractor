@@ -1,5 +1,5 @@
 #@args [directory]
-#@desc Sort a directory containing DICOM files (default ".") into subdirectories by series number (as given in DICOM tag 0020,0011). The original files will not be deleted or otherwise moved unless DeleteOriginals:true is given.
+#@desc Sort a directory containing DICOM files (default ".") into subdirectories by series number (as given in DICOM tag 0020,0011). The DICOM files will be copied into the new subdirectories and their file names disambiguated if necessary. The original files will then be deleted to avoid duplicate storage, unless DeleteOriginals:false is given.
 
 library(tractor.base)
 
@@ -10,7 +10,7 @@ runExperiment <- function ()
     else
         directory <- expandFileName(Arguments[1])
     
-    deleteOriginals <- getWithDefault("DeleteOriginals", FALSE)
+    deleteOriginals <- getConfigVariable("DeleteOriginals", TRUE)
     
     sortDicomDirectory(directory, deleteOriginals)
 }

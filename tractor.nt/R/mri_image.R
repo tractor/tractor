@@ -1,14 +1,14 @@
 newMriImageAsVisitationMap <- function (streamSet, metadata = NULL)
 {
-    if (!isStreamlineSetTract(streamSet))
-        output(OL$Error, "The specified tract is not a StreamlineSetTract object")
+    if (!is(streamSet, "StreamlineSetTract"))
+        report(OL$Error, "The specified tract is not a StreamlineSetTract object")
     if (is.null(metadata))
         metadata <- streamSet$getImageMetadata()
-    else if (!isMriImageMetadata(metadata))
-        output(OL$Error, "The specified metadata is not valid")
+    else if (!is(metadata, "MriImageMetadata"))
+        report(OL$Error, "The specified metadata is not valid")
     
     if (streamSet$isOriginAtSeed())
-        output(OL$Error, "Cannot create visitation maps for transformed streamline sets at the moment")
+        report(OL$Error, "Cannot create visitation maps for transformed streamline sets at the moment")
     
     dims <- metadata$getDimensions()
     

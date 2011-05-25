@@ -1,7 +1,5 @@
 splitAndConvertString <- function (string, split = "", mode = "character", errorIfInvalid = FALSE, allowRanges = TRUE, ...)
 {
-    require(tractor.base)
-    
     values <- unlist(strsplit(string, split, ...))
     if (allowRanges && mode=="integer")
     {
@@ -14,7 +12,7 @@ splitAndConvertString <- function (string, split = "", mode = "character", error
         values <- suppressWarnings(as(values, mode))
     
     if (errorIfInvalid && any(is.na(values)))
-        output(OL$Error, "Specified list, \"", implode(string,sep=" "), "\", is not valid here")
+        report(OL$Error, "Specified list, \"", implode(string,sep=" "), "\", is not valid here")
     else
         return (values)
 }
@@ -25,15 +23,13 @@ isValidAs <- function (value, mode)
     return (!any(is.na(coercedValue)))
 }
 
-getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL)
+getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL)
 {
-    require(tractor.base)
-    
     reportInvalid <- function ()
     {
         level <- ifelse(errorIfInvalid, OL$Error, OL$Warning)
         message <- paste("The configuration variable \"", name, "\" does not have a suitable and unambiguous value", ifelse(errorIfInvalid,""," - using default"), sep="")
-        output(level, message)
+        report(level, message)
     }
     
     matchAgainstValidValues <- function (currentValue)
@@ -57,16 +53,16 @@ getWithDefault <- function (name, defaultValue, mode = NULL, errorIfMissing = FA
     if (is.null(mode) && !is.null(defaultValue))
         mode <- mode(defaultValue)
     
-    if (!exists(name))
+    if (!exists("ConfigVariables") || !(name %in% names(ConfigVariables)))
     {
         if (errorIfMissing)
-            output(OL$Error, "The configuration variable \"", name, "\" must be specified")
+            report(OL$Error, "The configuration variable \"", name, "\" must be specified")
         else
             return (defaultValue)
     }
     else
     {
-        value <- get(name)
+        value <- ConfigVariables[[name]]
         if (is.null(mode) || mode == "NULL")
             return (matchAgainstValidValues(value))
         else if (!isValidAs(value, mode))
@@ -92,14 +88,12 @@ nArguments <- function ()
 
 requireArguments <- function (...)
 {
-    require(tractor.base)
-    
     args <- c(...)
     
     if (is.numeric(args) && nArguments() < args)
-        output(OL$Error, "At least ", args, " argument(s) must be specified")
+        report(OL$Error, "At least ", args, " argument(s) must be specified")
     else if (is.character(args) && nArguments() < length(args))
-        output(OL$Error, "At least ", length(args), " argument(s) must be specified: ", implode(args,", "))
+        report(OL$Error, "At least ", length(args), " argument(s) must be specified: ", implode(args,", "))
 }
 
 producesError <- function (expr, silent = TRUE)

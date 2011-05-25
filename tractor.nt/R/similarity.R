@@ -1,11 +1,8 @@
 findVoxelValues <- function (tract, centre, unvisited, searchNeighbourhood)
 {
-    if (!isNeighbourhoodInfo(searchNeighbourhood))
-        output(OL$Error, "Specified search neighbourhood is not a NeighbourhoodInfo object")
-    
     dims <- tract$getDimensions()
     if (!identical(dim(unvisited), dims))
-        output(OL$Error, "The unvisited array must have the same dimensions as the tract data")
+        report(OL$Error, "The unvisited array must have the same dimensions as the tract data")
     
     indices <- searchNeighbourhood$vectors + centre
     indices <- replace(indices, which(indices < 1 | indices > dims), NA)
@@ -40,10 +37,10 @@ calculateMatchingScore <- function (refTract, candTract, trueLengths = FALSE, bi
             return (maxLocs)
     }
     
-    if (!isFieldTract(refTract) || !isFieldTract(candTract))
-        output(OL$Error, "Reference and candidate tracts must be specified as FieldTract objects")
+    if (!is(refTract,"FieldTract") || !is(candTract,"FieldTract"))
+        report(OL$Error, "Reference and candidate tracts must be specified as FieldTract objects")
     if (!equivalent(refTract$getVoxelDimensions(), candTract$getVoxelDimensions(), signMatters=FALSE, tolerance=1e-3))
-        output(OL$Error, "Reference and candidate tracts must have the same voxel dimensions")
+        report(OL$Error, "Reference and candidate tracts must have the same voxel dimensions")
     
     refDims <- refTract$getDimensions()
     candDims <- candTract$getDimensions()
@@ -137,20 +134,15 @@ createReducedTractInfo <- function (tract, biasSteps = FALSE, maxReps = NA)
     match <- calculateMatchingScore(tract, tract, biasReferenceSteps=biasSteps, maxReps=maxReps)
     reducedTract <- newFieldTractByMasking(tract, match$refMask)
     result <- list(tract=reducedTract, nVoxels=match$score, length=match$length)
-    class(result) <- c("info.tract.reduced", "list")
+    class(result) <- "reducedTractInfo"
     invisible (result)
-}
-
-isReducedTractInfo <- function (object)
-{
-    return ("info.tract.reduced" %in% class(object))
 }
 
 calculateSimilarity <- function (reference, candidate)
 {
-    if (!isReducedTractInfo(reference))
+    if (!is.list(reference))
         reference <- createReducedTractInfo(reference)
-    if (!isReducedTractInfo(candidate))
+    if (!is.list(candidate))
         candidate <- createReducedTractInfo(candidate)
     
     match <- calculateMatchingScore(reference$tract, candidate$tract)
@@ -163,9 +155,9 @@ calculateSimilarity <- function (reference, candidate)
     if (!is.finite(lengthSimilarity))
         lengthSimilarity <- 0
     if ((shapeSimilarity > 1) || (lengthSimilarity > 1))
-        output(OL$Warning, "Score component greater than one (", max(shapeSimilarity,lengthSimilarity), ")")
+        report(OL$Warning, "Score component greater than one (", max(shapeSimilarity,lengthSimilarity), ")")
     if ((shapeSimilarity < 0) || (lengthSimilarity < 0))
-        output(OL$Warning, "Score component less than zero (", min(shapeSimilarity,lengthSimilarity), ")")
+        report(OL$Warning, "Score component less than zero (", min(shapeSimilarity,lengthSimilarity), ")")
     
     similarity <- sqrt(shapeSimilarity * lengthSimilarity)
     return (similarity)

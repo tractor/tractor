@@ -14,14 +14,14 @@ runExperiment <- function ()
     if (is.na(axis))
         axis <- which(tolower(Arguments[2]) == c("x","y","z"))
     if (length(axis) != 1 || !(axis %in% 1:3))
-        output(OL$Error, "Projection axis must be specified as a letter (x-z) or number (1-3)")
+        report(OL$Error, "Projection axis must be specified as a letter (x-z) or number (1-3)")
     
-    windowLimits <- getWithDefault("WindowLimits", NULL, "character")
+    windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
     if (!is.null(windowLimits))
     {
         windowLimits <- splitAndConvertString(windowLimits, ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
         if (length(windowLimits) != 2)
-            output(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
+            report(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
     }
     
     if (nArguments() > 2)

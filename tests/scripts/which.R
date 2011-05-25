@@ -4,7 +4,7 @@ runExperiment <- function ()
 {
     requireArguments("image file", "operator", "value")
     
-    useArrayIndices <- getWithDefault("ArrayIndices", TRUE)
+    useArrayIndices <- getConfigVariable("ArrayIndices", TRUE)
     
     image <- newMriImageFromFile(Arguments[1])
     operator <- get(switch(Arguments[2], eq="==", gt=">", lt="<", ge=">=", le="<="))

@@ -1,7 +1,5 @@
-createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment = .GlobalEnv)
+readYaml <- function (fileName = NULL, text = NULL, init = list())
 {
-    require(tractor.base)
-    
     trimWhitespaceAndQuotes <- function (x)
     {
         if (x %~% "^\\s*$")
@@ -15,6 +13,8 @@ createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment =
         }
     }
     
+    mapping <- init
+    
     if (!is.null(fileName))
     {
         fileNames <- unlist(strsplit(fileName, ":", fixed=TRUE))
@@ -25,14 +25,14 @@ createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment =
                 fileNames <- fileNames[-emptyLocs]
             
             for (file in fileNames)
-                createWorkspaceFromYaml(file, environment=environment)
+                mapping <- readYaml(file, init=mapping)
             
-            return (invisible(NULL))
+            return (mapping)
         }
     }
     
     if (!is.null(fileName) && !file.exists(fileName))
-        output(OL$Error, "Configuration file ", fileName, " does not exist")
+        report(OL$Error, "YAML file ", fileName, " does not exist")
     
     if (!is.null(fileName))
     {
@@ -45,9 +45,9 @@ createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment =
         usingFile <- FALSE
     }
     else
-        output(OL$Error, "File name or YAML text must be specified")
+        report(OL$Error, "File name or YAML text must be specified")
     
-    arguments <- character(0)
+    unlabelled <- character(0)
     repeat
     {
         if (length(lines) == 0)
@@ -66,24 +66,24 @@ createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment =
         key <- sub("^\\s+", "", key, perl=TRUE)
         textValue <- sub("^\\s*\\w+\\s*:\\s*", "", lines[1], perl=TRUE)
         
-        if (key == textValue)
+        if (key == sub("^\\s+","",lines[1],perl=TRUE))
         {
             if (usingFile)
-                output(OL$Warning, "A line in the configuration file ", fileName, " has no key")
+                report(OL$Warning, "A line in the YAML file ", fileName, " has no key")
             else
-                arguments <- c(arguments, textValue)
+                unlabelled <- c(unlabelled, textValue)
             
             lines <- lines[-1]
             next
         }
-        output(OL$Debug, "Key is ", key, "; value is ", textValue)
+        report(OL$Debug, "Key is ", key, "; value is ", textValue)
 
         # Values starting with a square bracket are sequences (vectors in R)
         if (regexpr("[", textValue, fixed=TRUE) == 1)
         {
             endBracketLines <- setdiff(grep("]", lines, fixed=TRUE), grep("^\\s*#", lines, perl=TRUE))
             if (length(endBracketLines) == 0)
-                output(OL$Error, "Configuration file syntax error: unmatched bracket")
+                report(OL$Error, "YAML syntax error: unmatched bracket")
             
             endLine <- endBracketLines[1]
             if (endLine > 1)
@@ -105,7 +105,7 @@ createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment =
                 {
                     endQuotePieces <- grep("\"\\s*$", pieces[i:length(pieces)], perl=TRUE)
                     if (length(endQuotePieces) == 0)
-                        output(OL$Error, "Configuration file syntax error: unmatched quotation mark")
+                        report(OL$Error, "YAML syntax error: unmatched quotation mark")
                     
                     endPiece <- endQuotePieces[1] + i - 1
                     compositePiece <- implode(pieces[i:endPiece], sep=",")
@@ -123,28 +123,32 @@ createWorkspaceFromYaml <- function (fileName = NULL, text = NULL, environment =
             lines <- lines[-1]
         }
         
-        assign(key, value, pos=environment)
+        mapping[[key]] <- value
     }
     
-    if (length(arguments) > 0)
-        assign("Arguments", arguments, pos=environment)
+    if (length(unlabelled) > 0)
+        mapping[[".unlabelled"]] <- unlabelled
+    
+    return (mapping)
 }
 
-writeReportToYaml <- function (results, fileName = "tractor_report.yaml")
+writeYaml <- function (mapping, fileName, capitaliseLabels = TRUE)
 {
-    require(tractor.base)
-    
-    if (!is.list(results))
+    if (!is.list(mapping))
         return (invisible(NULL))
     
     lines <- character(0)
-    for (i in seq_along(results))
+    for (i in seq_along(mapping))
     {
-        label <- sub("^([a-z])", "\\U\\1", names(results)[i], perl=TRUE)
-        if (length(results[[i]]) > 1)
-            value <- paste("[", implode(results[[i]],", "), "]")
+        if (capitaliseLabels)
+            label <- sub("^([a-z])", "\\U\\1", names(mapping)[i], perl=TRUE)
         else
-            value <- results[[i]]
+            label <- names(mapping)[i]
+        
+        if (length(mapping[[i]]) > 1)
+            value <- paste("[", implode(mapping[[i]],", "), "]")
+        else
+            value <- mapping[[i]]
         line <- paste(label, value, sep=": ")
         lines <- c(lines, line)
     }

@@ -12,24 +12,24 @@ suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()
 {
-    tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
-    resultsName <- getWithDefault("ResultsName", NULL, "character", errorIfMissing=TRUE)
-    sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
-    datasetName <- getWithDefault("DatasetName", NULL, "character")
+    tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
+    resultsName <- getConfigVariable("ResultsName", NULL, "character", errorIfMissing=TRUE)
+    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
+    datasetName <- getConfigVariable("DatasetName", NULL, "character")
     
-    maxSeeds <- getWithDefault("MaximumSeedPoints", 1, "integer")
-    minPosterior <- getWithDefault("MinimumPosterior", 0, "numeric")
-    nSamples <- getWithDefault("NumberOfSamples", 5000, "integer")
+    maxSeeds <- getConfigVariable("MaximumSeedPoints", 1, "integer")
+    minPosterior <- getConfigVariable("MinimumPosterior", 0, "numeric")
+    nSamples <- getConfigVariable("NumberOfSamples", 5000, "integer")
     
-    createVolumes <- getWithDefault("CreateVolumes", TRUE)
-    createImages <- getWithDefault("CreateImages", FALSE)
-    vizThreshold <- getWithDefault("VisualisationThreshold", 0.01)
-    showSeed <- getWithDefault("ShowSeedPoint", TRUE)
+    createVolumes <- getConfigVariable("CreateVolumes", TRUE)
+    createImages <- getConfigVariable("CreateImages", FALSE)
+    vizThreshold <- getConfigVariable("VisualisationThreshold", 0.01)
+    showSeed <- getConfigVariable("ShowSeedPoint", TRUE)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     
     if (!createVolumes && !createImages)
-        output(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
+        report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
     nSessions <- length(sessionList)
     
@@ -37,13 +37,13 @@ runExperiment <- function ()
     if (results$nSessions() != nSessions)
     {
         nSessions <- min(nSessions, results$nSessions())
-        output(OL$Warning, "Length of the session list does not match the results file - using ", nSessions, " sessions only")
+        report(OL$Warning, "Length of the session list does not match the results file - using ", nSessions, " sessions only")
     }
     nPoints <- results$nPoints()
 
     searchWidth <- round(nPoints^(1/3))
     if (searchWidth^3 != nPoints)
-        output(OL$Error, "Results file does not describe a cubic search space")
+        report(OL$Error, "Results file does not describe a cubic search space")
     
     if (vizThreshold == 0)
         vizThreshold <- NULL
@@ -58,7 +58,7 @@ runExperiment <- function ()
     }
     
     parallelApply(seq_len(nSessions), function (i) {
-        output(OL$Info, "Generating tract for session ", i)
+        report(OL$Info, "Generating tract for session ", i)
         
         currentSession <- newSessionFromDirectory(sessionList[i])
         if (seedsInData)
@@ -80,7 +80,7 @@ runExperiment <- function ()
         
         if (all(is.na(ranks)))
         {
-            output(OL$Warning, "No match data available for session number ", i)
+            report(OL$Warning, "No match data available for session number ", i)
             next
         }
         
@@ -92,7 +92,7 @@ runExperiment <- function ()
         ptResult <- runProbtrackForNeighbourhood(currentSession, currentSeed, width=searchWidth, weights=currentPosteriors, weightThreshold=minPosterior, nSamples=nSamples, requireImage=TRUE)
         if (is.null(ptResult))
         {
-            output(OL$Warning, "No seed points above threshold for session number ", i)
+            report(OL$Warning, "No seed points above threshold for session number ", i)
             next
         }
         

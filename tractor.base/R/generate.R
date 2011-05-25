@@ -17,9 +17,9 @@ generateImageDataForShape <- function (type = c("cross","block"), dim, backgroun
     if (type %in% c("cross","block"))
     {
         if (is.na(centre) || is.na(width))
-            output(OL$Error, "The ", type, " shape requires a centre and width")
+            report(OL$Error, "The ", type, " shape requires a centre and width")
         if (width %% 2 != 1)
-            output(OL$Error, "Width in voxels should be an odd number")
+            report(OL$Error, "Width in voxels should be an odd number")
         
         steps <- buildStepVectors(width)
         if (type == "cross")

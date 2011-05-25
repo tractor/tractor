@@ -11,20 +11,20 @@ runExperiment <- function ()
     requireArguments("session directory")
     session <- newSessionFromDirectory(Arguments[1])
     
-    seedMaskFile <- getWithDefault("SeedMaskFile", NULL, "character", errorIfInvalid=TRUE, errorIfMissing=TRUE)
-    seedMaskInStandardSpace <- getWithDefault("SeedMaskInStandardSpace", FALSE)
-    thresholdType <- getWithDefault("SeedThresholdType", "fa")
-    thresholdLevel <- getWithDefault("SeedThresholdLevel", NULL, "numeric", errorIfInvalid=TRUE)
-    nSamples <- getWithDefault("NumberOfSamples", 5000)
+    seedMaskFile <- getConfigVariable("SeedMaskFile", NULL, "character", errorIfInvalid=TRUE, errorIfMissing=TRUE)
+    seedMaskInStandardSpace <- getConfigVariable("SeedMaskInStandardSpace", FALSE)
+    thresholdType <- getConfigVariable("SeedThresholdType", "fa")
+    thresholdLevel <- getConfigVariable("SeedThresholdLevel", NULL, "numeric", errorIfInvalid=TRUE)
+    nSamples <- getConfigVariable("NumberOfSamples", 5000)
     
-    createVolumes <- getWithDefault("CreateVolumes", FALSE)
-    createImages <- getWithDefault("CreateImages", FALSE)
-    tractName <- getWithDefault("TractName", "tract")
-    vizThreshold <- getWithDefault("VisualisationThreshold", 0.01)
-    showSeed <- getWithDefault("ShowSeedPoint", TRUE)
+    createVolumes <- getConfigVariable("CreateVolumes", FALSE)
+    createImages <- getConfigVariable("CreateImages", FALSE)
+    tractName <- getConfigVariable("TractName", "tract")
+    vizThreshold <- getConfigVariable("VisualisationThreshold", 0.01)
+    showSeed <- getConfigVariable("ShowSeedPoint", TRUE)
     
     if (!createVolumes && !createImages)
-        output(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
+        report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
     seedMask <- newMriImageFromFile(seedMaskFile)
     if (seedMaskInStandardSpace)
@@ -32,7 +32,7 @@ runExperiment <- function ()
     
     seeds <- which(seedMask$getData() > 0, arr.ind=TRUE)
     if (nrow(seeds) == 0)
-        output(OL$Error, "Seed mask is empty")
+        report(OL$Error, "Seed mask is empty")
     else
     {
         if (is.null(thresholdLevel))
@@ -41,7 +41,7 @@ runExperiment <- function ()
         {
             thresholdImage <- session$getImageByType(tolower(thresholdType))
             validSeeds <- which(thresholdImage[seeds] >= thresholdLevel)
-            output(OL$Info, "Rejecting ", nrow(seeds)-length(validSeeds), " seed points as below threshold")
+            report(OL$Info, "Rejecting ", nrow(seeds)-length(validSeeds), " seed points as below threshold")
         }
         
         runProbtrackWithSession(session, seeds[validSeeds,], requireFile=TRUE, nSamples=nSamples)

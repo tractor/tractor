@@ -1,61 +1,48 @@
-.BSplineTract <- function (.splineBasis, .splineModels, .knotLocations, .seedKnot)
-{
-    .degree <- attr(.splineBasis, "degree")
-    .nKnots <- length(attr(.splineBasis, "knots"))
-    .knotSpacings <- diff(attr(.splineBasis, "knots"))
+BSplineTract <- setRefClass("BSplineTract", contains="SerialisableObject", fields=list(splineDegree="integer",splineModels="list",knotPositions="numeric",knotLocations="matrix",seedKnot="integer"), methods=list(
+    initialize = function (...)
+    {
+        object <- initFields(...)
+        
+        knotSpacings <- diff(knotPositions)
+        if (length(knotSpacings) > 0 && !equivalent(knotSpacings, rep(knotSpacings[1],length(knotSpacings))))
+            report(OL$Error, "Knots are not equally spaced")
+        
+        return (object)
+    },
     
-    # This is a uniform B-spline, so knots should be equally spaced
-    if (!equivalent(.knotSpacings, rep(.knotSpacings[1],length(.knotSpacings))))
-        output(OL$Error, "Knots are not equally spaced")
+    getControlPoints = function ()
+    {
+        nKnots <- .self$nKnots()
+        controlPoints <- array(NA, dim=c(nKnots+splineDegree,3))
+        indices <- 2:(nKnots+splineDegree+1)
+        controlPoints[,1] <- splineModels[[1]]$coefficients[indices] + splineModels[[1]]$coefficients[1]
+        controlPoints[,2] <- splineModels[[2]]$coefficients[indices] + splineModels[[2]]$coefficients[1]
+        controlPoints[,3] <- splineModels[[3]]$coefficients[indices] + splineModels[[3]]$coefficients[1]
+        return (controlPoints)
+    },
     
-    self <- list(
-        getControlPoints = function ()
-        {
-            controlPoints <- array(NA, dim=c(.nKnots+.degree,3))
-            indices <- 2:(.nKnots+.degree+1)
-            controlPoints[,1] <- .splineModels[[1]]$coefficients[indices] + .splineModels[[1]]$coefficients[1]
-            controlPoints[,2] <- .splineModels[[2]]$coefficients[indices] + .splineModels[[2]]$coefficients[1]
-            controlPoints[,3] <- .splineModels[[3]]$coefficients[indices] + .splineModels[[3]]$coefficients[1]
-            return (controlPoints)
-        },
-        
-        getKnotLocations = function () { return (.knotLocations) },
-        
-        getKnotPositions = function () { return (attr(.splineBasis, "knots")) },
-        
-        getKnotSpacing = function () { return (.knotSpacings[1]) },
-        
-        getLineAtPoints = function (tValues)
-        {
-            locsX <- as.vector(predict(.splineModels[[1]], data.frame(t=tValues)))
-            locsY <- as.vector(predict(.splineModels[[2]], data.frame(t=tValues)))
-            locsZ <- as.vector(predict(.splineModels[[3]], data.frame(t=tValues)))
-            return (matrix(c(locsX, locsY, locsZ), ncol=3))
-        },
-        
-        getSeedControlPoint = function () { return (.seedKnot+1) },
-        
-        getSeedKnot = function () { return (.seedKnot) },
-        
-        nControlPoints = function () { return (.nKnots+.degree) },
-        
-        nKnots = function () { return (.nKnots) }
-    )
+    getKnotLocations = function () { return (knotLocations) },
     
-    class(self) <- c("tract.bspline", "list.object", "list")
-    invisible (self)
-}
-
-isBSplineTract <- function (object)
-{
-    return ("tract.bspline" %in% class(object))
-}
-
-deserialiseBSplineTract <- function (file = NULL, object = NULL)
-{
-    tract <- deserialiseListObject(file, object, .BSplineTract)
-    invisible (tract)
-}
+    getKnotPositions = function () { return (knotPositions) },
+    
+    getKnotSpacing = function () { return (diff(knotPositions)[1]) },
+    
+    getLineAtPoints = function (tValues)
+    {
+        locsX <- as.vector(predict(splineModels[[1]], data.frame(t=tValues)))
+        locsY <- as.vector(predict(splineModels[[2]], data.frame(t=tValues)))
+        locsZ <- as.vector(predict(splineModels[[3]], data.frame(t=tValues)))
+        return (matrix(c(locsX, locsY, locsZ), ncol=3))
+    },
+    
+    getSeedControlPoint = function () { return (seedKnot+1) },
+    
+    getSeedKnot = function () { return (seedKnot) },
+    
+    nControlPoints = function () { return (.self$nKnots() + splineDegree) },
+    
+    nKnots = function () { return (length(knotPositions)) }
+))
 
 newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, maxResidError = 0.1)
 {
@@ -63,7 +50,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
     {
         if (nKnots == 0)
         {
-            output(OL$Info, "Streamline is too short to fit a B-spline")
+            report(OL$Info, "Streamline is too short to fit a B-spline")
             return (NULL)
         }
         
@@ -107,7 +94,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
     
     if (is.null(knotSpacing))
     {
-        output(OL$Info, "Fitting B-spline model for accuracy")
+        report(OL$Info, "Fitting B-spline model for accuracy")
         for (nKnots in 1:100)
         {
             knotSpacing <- streamlineTract$getLineLength() / nKnots
@@ -121,18 +108,18 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
                                         summary(bSpline$models[[3]])$sigma)
             meanError <- mean(residualStandardErrors)
             if (is.nan(meanError))
-                output(OL$Error, "Knot spacing now too narrow - no fit possible for residual error threshold of ", signif(maxResidError,3))
+                report(OL$Error, "Knot spacing now too narrow - no fit possible for residual error threshold of ", signif(maxResidError,3))
             else if (meanError <= maxResidError)
             {
                 knotSpacing <- diff(attr(bSpline$basis, "knots"))[1]
-                output(OL$Info, "Spline with ", nKnots, " knots has mean residual error of ", signif(meanError,3))
-                output(OL$Info, "Knot spacing is ", signif(knotSpacing,3))
+                report(OL$Info, "Spline with ", nKnots, " knots has mean residual error of ", signif(meanError,3))
+                report(OL$Info, "Knot spacing is ", signif(knotSpacing,3))
                 break
             }
         }
         
         if (is.null(knotSpacing))
-            output(OL$Error, "Cannot fit a model with 100 or less knots and residual error below ", maxResidError)
+            report(OL$Error, "Cannot fit a model with 100 or less knots and residual error below ", maxResidError)
     }
     else
     {
@@ -146,7 +133,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         invisible (NA)
     else
     {
-        bSplineTract <- .BSplineTract(bSpline$basis, bSpline$models, bSpline$knotLocs, bSpline$seedKnot)
+        bSplineTract <- BSplineTract$new(splineDegree=attr(bSpline$basis,"degree"), splineModels=bSpline$models, knotPositions=attr(bSpline$basis,"knots"), knotLocations=bSpline$knotLocs, seedKnot=bSpline$seedKnot)
         invisible (bSplineTract)
     }
 }
@@ -158,7 +145,7 @@ newBSplineTractFromStreamlineWithConstraints <- function (streamlineTract, ..., 
     # Iterative spline fitting process
     repeat
     {
-        if (!isBSplineTract(bSplineTract))
+        if (!is(bSplineTract, "BSplineTract"))
             break
         
         leftCount <- rightCount <- 0
@@ -180,7 +167,7 @@ newBSplineTractFromStreamlineWithConstraints <- function (streamlineTract, ..., 
             break
         else
         {
-            output(OL$Info, "Trimming ", leftCount, " left side and ", rightCount, " right side knots")
+            report(OL$Info, "Trimming ", leftCount, " left side and ", rightCount, " right side knots")
             streamlineTract <- newStreamlineTractByTrimming(streamlineTract, leftCount*bSplineTract$getKnotSpacing(), rightCount*bSplineTract$getKnotSpacing())
             bSplineTract <- newBSplineTractFromStreamline(streamlineTract, ...)
         }
@@ -191,8 +178,8 @@ newBSplineTractFromStreamlineWithConstraints <- function (streamlineTract, ..., 
 
 getPointsForTract <- function (tract, pointType = c("control", "knot"))
 {
-    if (!isBSplineTract(tract))
-        output(OL$Error, "The specified tract is not a valid BSplineTract object")
+    if (!is(tract, "BSplineTract"))
+        report(OL$Error, "The specified tract is not a valid BSplineTract object")
     
     pointType <- match.arg(pointType)
     

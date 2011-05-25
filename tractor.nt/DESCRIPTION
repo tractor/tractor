@@ -1,11 +1,12 @@
 Package: tractor.nt
-Version: 1.7.0
-Date: 2010-12-15
+Version: 2.0.0
+Date: 2010-10-18
 Title: Neighbourhood tractography methods for white matter segmentation
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
-Depends: R (>= 2.5.0), splines, tractor.base
-Suggests: tractor.session
+Depends: R (>= 2.5.0), splines
+Imports: reportr, tractor.base, tractor.session
 Description: The tractor.nt package provides a reference implementation for white matter segmentation with neighbourhood tractography (NT). Functions for performing both heuristic and model-based NT are included.
+LazyLoad: yes
 License: GPL-2
 URL: http://code.google.com/p/tractor/

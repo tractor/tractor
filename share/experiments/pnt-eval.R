@@ -5,9 +5,9 @@ suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()
 {
-    datasetName <- getWithDefault("DatasetName", NULL, "character", errorIfMissing=TRUE)
-    modelName <- getWithDefault("ModelName", NULL, "character", errorIfMissing=TRUE)
-    resultsName <- getWithDefault("ResultsName", "results")
+    datasetName <- getConfigVariable("DatasetName", NULL, "character", errorIfMissing=TRUE)
+    modelName <- getConfigVariable("ModelName", NULL, "character", errorIfMissing=TRUE)
+    resultsName <- getConfigVariable("ResultsName", "results")
     
     model <- getNTResource("model", "pnt", list(modelName=modelName))
     

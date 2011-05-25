@@ -3,7 +3,7 @@ getFileNameForStandardImage <- function (name = c("brain","white","grey","gray",
     if (is.null(.StandardBrainPath))
     {
         if (errorIfMissing)
-            output(OL$Error, "Cannot find standard brain volumes")
+            report(OL$Error, "Cannot find standard brain volumes")
         else
             return (NULL)
     }

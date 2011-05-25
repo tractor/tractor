@@ -14,16 +14,16 @@ runExperiment <- function ()
         axis <- as.numeric(Arguments[2])
     
     if (length(axis) != 1 || !(axis %in% 1:3))
-        output(OL$Error, "Slice axis must be specified as a letter (x-z) or number (1-3)")
+        report(OL$Error, "Slice axis must be specified as a letter (x-z) or number (1-3)")
     
-    clearance <- getWithDefault("Clearance", 4, "integer")
-    nColumns <- getWithDefault("Columns", NULL, "integer")
-    windowLimits <- getWithDefault("WindowLimits", NULL, "character")
+    clearance <- getConfigVariable("Clearance", 4, "integer")
+    nColumns <- getConfigVariable("Columns", NULL, "integer")
+    windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
     if (!is.null(windowLimits))
     {
         windowLimits <- splitAndConvertString(windowLimits, ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
         if (length(windowLimits) != 2)
-            output(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
+            report(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
     }
     
     if (nArguments() > 2)

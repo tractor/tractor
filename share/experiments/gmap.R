@@ -9,25 +9,25 @@ runExperiment <- function ()
     requireArguments("volume prefix")
     fileStem <- Arguments[1]
     
-    sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
-    tractName <- getWithDefault("TractName", NULL, "character")
-    sessionNumbers <- getWithDefault("SessionNumbers", NULL, "character")
+    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
+    tractName <- getConfigVariable("TractName", NULL, "character")
+    sessionNumbers <- getConfigVariable("SessionNumbers", NULL, "character")
     
-    windowLimits <- getWithDefault("WindowLimits", NULL, "character")
-    baseThreshold <- getWithDefault("ThresholdLevel", 0.01)
-    thresholdMode <- getWithDefault("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
-    binarise <- getWithDefault("Binarise", TRUE)
-    createImages <- getWithDefault("CreateImages", FALSE)
-    showReference <- getWithDefault("ShowReferenceTract", FALSE)
+    windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
+    baseThreshold <- getConfigVariable("ThresholdLevel", 0.01)
+    thresholdMode <- getConfigVariable("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
+    binarise <- getConfigVariable("Binarise", TRUE)
+    createImages <- getConfigVariable("CreateImages", FALSE)
+    showReference <- getConfigVariable("ShowReferenceTract", FALSE)
     
     if (createImages && is.null(tractName))
-        output(OL$Error, "Tract name must be specified if the CreateImages option is set")
+        report(OL$Error, "Tract name must be specified if the CreateImages option is set")
     
     if (!is.null(windowLimits))
     {
         windowLimits <- splitAndConvertString(windowLimits, ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
         if (length(windowLimits) != 2)
-            output(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
+            report(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
     }
     
     finalImage <- NULL
@@ -39,12 +39,12 @@ runExperiment <- function ()
     
     for (i in sessionNumbers)
     {
-        output(OL$Info, "Current session is ", sessionList[i])
+        report(OL$Info, "Current session is ", sessionList[i])
         
         imageFileName <- paste(fileStem, i, sep="")
         if (!imageFileExists(imageFileName))
         {
-            output(OL$Warning, "No image available for session ", i)
+            report(OL$Warning, "No image available for session ", i)
             next
         }
         
@@ -66,7 +66,7 @@ runExperiment <- function ()
     }
     
     if (is.null(finalImage))
-        output(OL$Error, "No image information available")
+        report(OL$Error, "No image information available")
     
     outputName <- paste(tractName, "_group_map", sep="")
     writeMriImageToFile(finalImage, outputName)
@@ -74,10 +74,10 @@ runExperiment <- function ()
     if (createImages)
     {
         refTractFileName <- getFileNameForNTResource("reference", "hnt", list(tractName=tractName), expectExists=TRUE)
-        reference <- deserialiseReferenceTract(refTractFileName)
-        if (showReference && !isFieldTract(reference))
+        reference <- deserialiseReferenceObject(refTractFileName)
+        if (showReference && !is(reference,"FieldTract"))
         {
-            output(OL$Warning, "No HNT reference tract of the specified name is available - the reference tract will not be shown")
+            report(OL$Warning, "No HNT reference tract of the specified name is available - the reference tract will not be shown")
             showReference <- FALSE
         }
         

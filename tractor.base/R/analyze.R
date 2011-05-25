@@ -1,7 +1,9 @@
-newMriImageMetadataFromAnalyze <- function (fileNames)
+readAnalyze <- function (fileNames)
 {
+    if (!is.list(fileNames))
+        fileNames <- identifyImageFileNames(fileNames)
     if (!file.exists(fileNames$headerFile))
-        output(OL$Error, "Header file ", fileNames$headerFile, " not found")
+        report(OL$Error, "Header file ", fileNames$headerFile, " not found")
     
     connection <- gzfile(fileNames$headerFile, "rb")
     size <- readBin(connection, "integer")
@@ -29,39 +31,23 @@ newMriImageMetadataFromAnalyze <- function (fileNames)
     
     typeIndex <- which(.Analyze$typeCodes == typeCode)
     if (length(typeIndex) != 1)
-        output(OL$Error, "Data type of file ", fileNames$imageFile, " (", typeCode, ") is not supported")
-    datatype <- list(type=.Analyze$typesR[typeIndex], size=.Analyze$sizes[typeIndex], isSigned=.Analyze$isSigned[typeIndex])
+        report(OL$Error, "Data type of file ", fileNames$imageFile, " (", typeCode, ") is not supported")
+    datatype <- list(type=.Analyze$rTypes[typeIndex], size=.Analyze$sizes[typeIndex], isSigned=.Analyze$isSigned[typeIndex])
     
     dimsToKeep <- 1:max(which(dims > 1))
-    metadata <- .MriImageMetadata(dims[dimsToKeep], voxelDims[dimsToKeep+1], NULL, fileNames$fileStem, datatype, origin[dimsToKeep], endian)
+    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=NULL, source=fileNames$fileStem, datatype=datatype, endian=endian)
     
-    invisible (metadata)
-}
-
-newMriImageFromAnalyze <- function (fileNames)
-{
-    if (!file.exists(fileNames$imageFile)) 
-        output(OL$Error, "Image file ", fileNames$imageFile, " not found")
+    xformMatrix <- diag(c(-1,1,1,1) * abs(c(voxelDims[2:4],1)))
+    xformMatrix[1:3,4] <- pmax(0,origin[1:3]-1) * abs(voxelDims[2:4]) * c(1,-1,-1)
+    storageMetadata <- list(dataOffset=0, dataScalingSlope=1, dataScalingIntercept=0, xformMatrix=xformMatrix)
     
-    metadata <- newMriImageMetadataFromAnalyze(fileNames)
-    nVoxels <- prod(metadata$getDimensions())
-    datatype <- metadata$getDataType()
-    endian <- metadata$getEndianness()
-    dims <- metadata$getDimensions()
-    
-    connection <- gzfile(fileNames$imageFile, "rb")
-    voxels <- readBin(connection, what=datatype$type, n=nVoxels, size=datatype$size, signed=datatype$isSigned, endian=endian)
-    data <- array(voxels, dim=dims)
-    close(connection)
-    
-    image <- .MriImage(data, metadata)
-    invisible (image)
+    invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
 
 writeMriImageToAnalyze <- function (image, fileNames, gzipped = FALSE, datatype = NULL)
 {
-    if (!isMriImage(image))
-        output(OL$Error, "The specified image is not an MriImage object")
+    if (!is(image, "MriImage"))
+        report(OL$Error, "The specified image is not an MriImage object")
     
     fileFun <- (if (gzipped) gzfile else file)
     
@@ -69,28 +55,28 @@ writeMriImageToAnalyze <- function (image, fileNames, gzipped = FALSE, datatype 
     {
         datatype <- image$getDataType()
         if (is.null(datatype))
-            output(OL$Error, "The data type is not stored with the image; it must be specified")
+            report(OL$Error, "The data type is not stored with the image; it must be specified")
     }
     
     # Try to match the datatype exactly; failing that, and if the data will
     # fit, invert isSigned and try again; if that fails too, we have to give up
-    datatypeMatches <- (.Analyze$typesR == datatype$type) & (.Analyze$sizes == datatype$size) & (.Analyze$isSigned == datatype$isSigned)
+    datatypeMatches <- (.Analyze$rTypes == datatype$type) & (.Analyze$sizes == datatype$size) & (.Analyze$isSigned == datatype$isSigned)
     if (sum(datatypeMatches) != 1)
     {
         signedMax <- 2^(datatype$size*8-1) - 1
         flipOkay <- (!datatype$isSigned && max(image) <= signedMax) || (datatype$isSigned && min(image) >= 0)
         if (flipOkay)
         {
-            output(OL$Info, "Trying to change datatype to comply with Analyze standard")
-            datatypeMatches <- (.Analyze$typesR == datatype$type) & (.Analyze$sizes == datatype$size) & (.Analyze$isSigned == !datatype$isSigned)
+            report(OL$Info, "Trying to change datatype to comply with Analyze standard")
+            datatypeMatches <- (.Analyze$rTypes == datatype$type) & (.Analyze$sizes == datatype$size) & (.Analyze$isSigned == !datatype$isSigned)
         }
     }
     if (sum(datatypeMatches) != 1)
-        output(OL$Error, "No supported Analyze datatype is appropriate for this file")
+        report(OL$Error, "No supported Analyze datatype is appropriate for this file")
     typeIndex <- which(datatypeMatches)
     
     data <- image$getData()
-    if (.Analyze$typesR[typeIndex] == "integer")
+    if (.Analyze$rTypes[typeIndex] == "integer")
         data <- as.integer(data)
     else
         data <- as.double(data)

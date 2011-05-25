@@ -1,0 +1,12 @@
+import(reportr)
+
+exportClasses(SerialisableObject, MriImageMetadata, MriImage, DicomMetadata)
+
+S3method("[", MriImage)
+S3method("[<-", MriImage)
+S3method(Math, MriImage)
+S3method(Ops, MriImage)
+S3method(Summary, MriImage)
+S3method(print, DicomMetadata)
+
+exportPattern("^[^\\.]")

@@ -13,28 +13,16 @@ runExperiment <- function ()
     fileName <- ensureFileSuffix(Arguments[1], "Rdata")
     
     if (!file.exists(fileName))
-        output(OL$Error, "File ", fileName, " does not exist")
+        report(OL$Error, "File ", fileName, " does not exist")
     
     setOutputLevel(OL$Info, FALSE)
     
-    object <- deserialiseListObject(file=fileName, raw=TRUE)
+    object <- deserialiseReferenceObject(file=fileName, raw=TRUE)
     if (!is.null(attr(object,"originalClass")))
-        output(OL$Info, "Object class: ", implode(attr(object,"originalClass"),", "))
+        report(OL$Info, "Object class: ", implode(attr(object,"originalClass"),", "))
     
-    if (isDeserialisable(object, "metatract.reference"))
-        object <- deserialiseReferenceTract(NULL, object)
-    else if (isDeserialisable(object, "results.nt.heuristic"))
-        object <- deserialiseHeuristicNTResults(NULL, object)
-    else if (isDeserialisable(object, "results.nt.probabilistic"))
-        object <- deserialiseProbabilisticNTResults(NULL, object)
-    else if (isDeserialisable(object, "model.tract.matching"))
-        object <- deserialiseMatchingTractModel(NULL, object)
-    else
-        output(OL$Error, "Unknown class - cannot deserialise")
+    object <- deserialiseReferenceObject(object=object)
     
-    if (!is.null(object$summarise))
-    {
-        cat("---\n")
-        object$summarise()
-    }
+    cat("---\n")
+    print(object)
 }

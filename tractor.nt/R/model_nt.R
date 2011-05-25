@@ -1,20 +1,12 @@
 createTractOptionList <- function (pointType = "knot", lengthQuantile = 0.99, registerToReference = TRUE, knotSpacing = NULL, maxPathLength = NULL)
 {
     options <- list(pointType=pointType, lengthQuantile=lengthQuantile, registerToReference=registerToReference, knotSpacing=knotSpacing, maxPathLength=maxPathLength)
-    class(options) <- c("options.tract", "list")
+    class(options) <- "tractOptions"
     invisible (options)
-}
-
-isTractOptionList <- function (object)
-{
-    return ("options.tract" %in% class(object))
 }
 
 streamlineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL, tracker = "fsl")
 {
-    if (!isTractOptionList(options))
-        output(OL$Error, "Tract representation options must be specified as a TractOptionList")
-    
     if (tracker == "tractor")
     {
         require("tractor.native")
@@ -30,7 +22,7 @@ streamlineTractWithOptions <- function (options, session, seed, refSession = NUL
         if (is.null(refSession))
             transform <- newAffineTransform3DByInversion(getMniTransformForSession(session))
         else
-            transform <- newAffineTransform3DFromFlirt(session$getImageFileNameByType("t2"), refSession$getImageFileNameByType("t2"))
+            transform <- newAffineTransform3DFromFlirt(session$getImageFileNameByType("maskedb0"), refSession$getImageFileNameByType("maskedb0"))
         
         streamline <- newStreamlineTractByTransformation(streamline, transform)
     }
@@ -59,10 +51,8 @@ referenceSplineTractWithOptions <- function (options, refSession, refSeed, nSamp
 
 calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference, faThreshold = 0.2, nSamples = 5000, tracker = "fsl")
 {
-    if (!isReferenceTract(reference) || !isBSplineTract(reference))
-        output(OL$Error, "The specified reference tract is not valid")
-    if (!isNeighbourhoodInfo(neighbourhood))
-        output(OL$Error, "The specified neighbourhood is not a NeighbourhoodInfo object")
+    if (!is(reference,"ReferenceTract") || !is(reference$getTract(),"BSplineTract"))
+        report(OL$Error, "The specified reference tract is not valid")
     
     referenceSteps <- calculateSplineStepVectors(reference$getTract(), reference$getTractOptions()$pointType)
     if (nrow(referenceSteps$right) >= 2)
@@ -70,7 +60,7 @@ calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference,
     else if (nrow(referenceSteps$left) >= 2)
         rightwardsVector <- (-referenceSteps$left[2,])
     else
-        output(OL$Error, "The specified reference tract has no length on either side")
+        report(OL$Error, "The specified reference tract has no length on either side")
     
     fa <- session$getImageByType("fa")
     
@@ -82,16 +72,16 @@ calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference,
     for (i in 1:nSeeds)
     {
         seed <- seeds[,i]
-        output(OL$Info, "Current seed point is ", implode(seed,sep=","), " (", i, "/", nSeeds, ")")
+        report(OL$Info, "Current seed point is ", implode(seed,sep=","), " (", i, "/", nSeeds, ")")
         
         if (any(seed <= 0 | seed > fa$getDimensions()))
         {
-            output(OL$Info, "Skipping seed point because it's out of bounds")
+            report(OL$Info, "Skipping seed point because it's out of bounds")
             splines <- c(splines, list(NA))
         }
         else if (!is.na(fa$getDataAtPoint(seed)) && (fa$getDataAtPoint(seed) < faThreshold) && (i != middle))
         {
-            output(OL$Info, "Skipping seed point because FA < ", faThreshold)
+            report(OL$Info, "Skipping seed point because FA < ", faThreshold)
             splines <- c(splines, list(NA))
         }
         else
@@ -106,10 +96,8 @@ calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference,
 
 calculateSplinesForStreamlineSetTract <- function (tract, testSession, refSession, options)
 {
-    if (!isStreamlineSetTract(tract))
-        output(OL$Error, "The specified tract is not a StreamlineSetTract object")
-    if (!isTractOptionList(options))
-        output(OL$Error, "Tract representation options must be specified as a TractOptionList")
+    if (!is(tract, "StreamlineSetTract"))
+        report(OL$Error, "The specified tract is not a StreamlineSetTract object")
     
     nSamples <- tract$nStreamlines()
     
@@ -122,7 +110,7 @@ calculateSplinesForStreamlineSetTract <- function (tract, testSession, refSessio
             if (is.null(refSession))
                 transform <- newAffineTransform3DByInversion(getMniTransformForSession(testSession))
             else
-                transform <- newAffineTransform3DFromFlirt(testSession$getImageFileNameByType("t2"), refSession$getImageFileNameByType("t2"))
+                transform <- newAffineTransform3DFromFlirt(testSession$getImageFileNameByType("maskedb0"), refSession$getImageFileNameByType("maskedb0"))
 
             streamline <- newStreamlineTractByTransformation(streamline, transform)
         }
@@ -131,7 +119,7 @@ calculateSplinesForStreamlineSetTract <- function (tract, testSession, refSessio
         splines <- c(splines, list(spline))
         
         if (i %% 50 == 0)
-            output(OL$Verbose, "Done ", i)
+            report(OL$Verbose, "Done ", i)
     }
     
     invisible (splines)
@@ -167,10 +155,10 @@ calculatePosteriorsForDataTable <- function (data, matchingModel)
 
 runMatchingEMForDataTable <- function (data, refSpline, lengthCutoff = NULL, lambda = NULL, alphaOffset = 0, nullPrior = NULL, asymmetricModel = FALSE)
 {
-    if (!isBSplineTract(refSpline))
-        output(OL$Error, "Reference tract must be specified as a BSplineTract object")
+    if (!is(refSpline,"BSplineTract"))
+        report(OL$Error, "Reference tract must be specified as a BSplineTract object")
     if (is.null(data$subject))
-        output(OL$Error, "The 'subject' field must be present in the data table")
+        report(OL$Error, "The 'subject' field must be present in the data table")
     
     subjects <- factor(data$subject)
     nSubjects <- nlevels(subjects)
@@ -182,13 +170,13 @@ runMatchingEMForDataTable <- function (data, refSpline, lengthCutoff = NULL, lam
         nullPriors <- 1/(nValidSplines+1)
     else
         nullPriors <- rep(nullPrior, nSubjects)
-    output(OL$Verbose, "Null priors are ", implode(round(nullPriors,5),sep=", "))
+    report(OL$Verbose, "Null priors are ", implode(round(nullPriors,5),sep=", "))
     
     nullPriors <- as.list(nullPriors)
     
     if (is.null(lengthCutoff))
         lengthCutoff <- max(data$leftLength, data$rightLength, na.rm=TRUE)
-    output(OL$Verbose, "Length cutoff is ", lengthCutoff)
+    report(OL$Verbose, "Length cutoff is ", lengthCutoff)
     
     tractPriors <- list()
     for (s in levels(subjects))
@@ -200,7 +188,7 @@ runMatchingEMForDataTable <- function (data, refSpline, lengthCutoff = NULL, lam
     
     previousLogEvidence <- -Inf
     previousAlphas <- NULL
-    output(OL$Info, "Starting EM algorithm")
+    report(OL$Info, "Starting EM algorithm")
     
     repeat
     {
@@ -211,13 +199,13 @@ runMatchingEMForDataTable <- function (data, refSpline, lengthCutoff = NULL, lam
         uninformativeLogLikelihoods <- calculateUninformativeLogLikelihoodsForDataTable(data, uninformativeModel)
         
         nMatchedBetter <- sum(matchedLogLikelihoods>uninformativeLogLikelihoods, na.rm=TRUE)
-        output(OL$Verbose, nMatchedBetter, " tracts are explained better by the matching model")
+        report(OL$Verbose, nMatchedBetter, " tracts are explained better by the matching model")
         
         alphas <- matchingModel$getAlphas()
         if (!is.null(previousAlphas))
         {
             meanDifference <- mean(abs(alphas - previousAlphas))
-            output(OL$Verbose, "Mean difference in alpha parameters is ", meanDifference)
+            report(OL$Verbose, "Mean difference in alpha parameters is ", meanDifference)
             if (meanDifference < 0.1)
                 break
         }
@@ -232,7 +220,7 @@ runMatchingEMForDataTable <- function (data, refSpline, lengthCutoff = NULL, lam
             logEvidence <- logEvidence + posteriors$logEvidence
         }
         
-        output(OL$Verbose, "Log-evidence is ", logEvidence)        
+        report(OL$Verbose, "Log-evidence is ", logEvidence)        
         if (abs(logEvidence-previousLogEvidence) < 0.1)
             break
         previousLogEvidence <- logEvidence

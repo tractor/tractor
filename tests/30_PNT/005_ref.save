@@ -1,6 +1,6 @@
-Object class: metatract.reference, tract.bspline, list.object, list
+Object class: ReferenceTract
 ---
-Tract class        : tract.bspline
+Tract class        : BSplineTract
 In standard space  : FALSE
 Standard space seed: 46,75,39 (vox)
 Point type         : knot

@@ -1,27 +1,27 @@
 setOutputLevel <- function (level, usePrefix = NA)
 {
     if (level %in% OL$Debug:OL$Error)
-        options(tractorOutputLevel=level)
+        options(outputLevel=level)
     if (usePrefix %in% c(TRUE,FALSE))
-        options(tractorUseOutputPrefix=usePrefix)
+        options(useOutputPrefix=usePrefix)
 }
 
-output <- function (level, ..., default = NULL, showDepth = TRUE, toReport = FALSE)
+report <- function (level, ..., default = NULL, showDepth = TRUE, outputErrors = FALSE)
 {
-    if (is.null(getOption("tractorOutputLevel")))
+    if (is.null(getOption("outputLevel")))
     {
         cat("INFO: Output level is not set; defaulting to \"Info\"\n")
-        options(tractorOutputLevel=OL$Info)
+        options(outputLevel=OL$Info)
     }
     
-    outputLevel <- getOption("tractorOutputLevel")
+    outputLevel <- getOption("outputLevel")
     if ((level < OL$Question) && (outputLevel > level))
         return (invisible(NULL))
     
     reportFlags()
     
     prefixStrings <- c("DEBUG: ", "VERBOSE: ", "INFO: ", "WARNING: ")
-    usePrefix <- getOption("tractorUseOutputPrefix")
+    usePrefix <- getOption("useOutputPrefix")
     if (is.null(usePrefix))
         usePrefix <- TRUE
     
@@ -33,8 +33,8 @@ output <- function (level, ..., default = NULL, showDepth = TRUE, toReport = FAL
     stackDepth <- length(callStrings)
 
     nStars <- ifelse(showDepth, stackDepth, 0)
-    leadingSpace <- ifelse(usePrefix && (nStars > 0), implode(rep("* ", nStars)), "")
-    leadingSpace <- paste(ifelse(isTRUE(getOption("tractorOutputPid")), paste("[",Sys.getpid(),"] ",sep=""), ""), leadingSpace, sep="")
+    leadingSpace <- ifelse(usePrefix && (nStars > 0), paste(rep("* ", nStars),collapse=""), "")
+    leadingSpace <- paste(ifelse(isTRUE(getOption("outputPid")), paste("[",Sys.getpid(),"] ",sep=""), ""), leadingSpace, sep="")
     if ((level < OL$Question) && (outputLevel <= level))
         cat(paste(leadingSpace, ifelse(usePrefix,prefixStrings[level],""), ..., "\n", sep=""))
     else if (level == OL$Question)
@@ -49,7 +49,7 @@ output <- function (level, ..., default = NULL, showDepth = TRUE, toReport = FAL
     }
     else if (level == OL$Error)
     {
-        if (toReport && isTRUE(getOption("tractorOutputErrors")))
+        if (outputErrors && isTRUE(getOption("outputErrors")))
             cat(paste(leadingSpace, "ERROR: ", ..., "\n", sep=""))
         
         if (outputLevel == OL$Debug && !(stackDepth > 1 && callStrings[stackDepth-1] %~% "^(\\* )*output\\("))
@@ -67,30 +67,30 @@ flag <- function (level, ...)
 {
     currentFlag <- list(list(level=level, message=paste(...,sep="")))
     
-    if (is.null(.TractorFlags))
-        .TractorFlags <<- currentFlag
+    if (!exists(".ReportrFlags") || is.null(.ReportrFlags))
+        .ReportrFlags <<- currentFlag
     else
-        .TractorFlags <<- c(.TractorFlags, currentFlag)
+        .ReportrFlags <<- c(.ReportrFlags, currentFlag)
 }
 
 reportFlags <- function ()
 {
-    if (!is.null(.TractorFlags))
+    if (exists(".ReportrFlags") && !is.null(.ReportrFlags))
     {
-        levels <- unlist(lapply(.TractorFlags, "[[", "level"))
-        messages <- unlist(lapply(.TractorFlags, "[[", "message"))
+        levels <- unlist(lapply(.ReportrFlags, "[[", "level"))
+        messages <- unlist(lapply(.ReportrFlags, "[[", "message"))
         
-        # This is before the call to output() to avoid infinite recursion
-        .TractorFlags <<- NULL
+        # This is before the call to report() to avoid infinite recursion
+        .ReportrFlags <<- NULL
         
         for (message in unique(messages))
         {
             locs <- which(messages == message)
             level <- max(levels[locs])
             if (length(locs) == 1)
-                output(level, message, showDepth=FALSE)
+                report(level, message, showDepth=FALSE)
             else
-                output(level, paste("[x",length(locs),"] ",message,sep=""), showDepth=FALSE)
+                report(level, paste("[x",length(locs),"] ",message,sep=""), showDepth=FALSE)
         }
     }
 }

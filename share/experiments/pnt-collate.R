@@ -25,7 +25,7 @@ runExperiment <- function ()
                 subjects2 <- suppressWarnings(as.numeric(subjects2))
 
                 if (any(is.na(subjects1)) || any(is.na(subjects2)))
-                    output(OL$Error, "Subject fields in both data tables must be numeric")
+                    report(OL$Error, "Subject fields in both data tables must be numeric")
                 
                 newSubjects2 <- subjects2 + max(subjects1)
                 table2$subject <- newSubjects2[subjectLocs2]
@@ -39,9 +39,9 @@ runExperiment <- function ()
         return (finalTable)
     }
     
-    tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
-    searchWidth <- getWithDefault("SearchWidth", NULL, "numeric")
-    datasetName <- getWithDefault("DatasetName", "data")
+    tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
+    searchWidth <- getConfigVariable("SearchWidth", NULL, "numeric")
+    datasetName <- getConfigVariable("DatasetName", "data")
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     
@@ -86,7 +86,7 @@ runExperiment <- function ()
                 for (s in names(partialSessions))
                     highestSeed <- max(highestSeed, as.numeric(names(partialSessions[[s]])))
                 searchWidth <- ceiling(highestSeed^(1/3))
-                output(OL$Info, "Guessing search width at ", searchWidth)
+                report(OL$Info, "Guessing search width at ", searchWidth)
             }
             maxSeeds <- round(searchWidth^3)
             
@@ -98,15 +98,15 @@ runExperiment <- function ()
                 s <- as.character(sessionNumber)
                 if (s %in% names(completeSessions))
                 {
-                    output(OL$Verbose, "Reading data for session ", s, " (single file)")
+                    report(OL$Verbose, "Reading data for session ", s, " (single file)")
                     subData <- read.table(file.path(dirName, completeSessions[[s]]))
                     
                     if (s %in% names(partialSessions))
-                        output(OL$Warning, "Data for session ", s, " was found in both single and multiple file forms; the latter will be ignored")
+                        report(OL$Warning, "Data for session ", s, " was found in both single and multiple file forms; the latter will be ignored")
                 }
                 else
                 {
-                    output(OL$Verbose, "Reading data for session ", s, " (multiple files)")
+                    report(OL$Verbose, "Reading data for session ", s, " (multiple files)")
                     subData <- NULL
                     for (seedNumber in 1:maxSeeds)
                     {
@@ -120,9 +120,9 @@ runExperiment <- function ()
                 }
                 
                 if (length(unique(subData$subject)) > 1)
-                    output(OL$Warning, "Data for session ", s, " contains more than one session identifier")
+                    report(OL$Warning, "Data for session ", s, " contains more than one session identifier")
                 if (as.character(subData$subject[1]) != s)
-                    output(OL$Warning, "The stored identifier for session ", s, ", ", subData$subject[1], ", does not match the file name")
+                    report(OL$Warning, "The stored identifier for session ", s, ", ", subData$subject[1], ", does not match the file name")
                 
                 data <- mergeDataTables(data, subData, allowIdClashes=FALSE)
             }
@@ -131,6 +131,6 @@ runExperiment <- function ()
         allData <- mergeDataTables(allData, data, allowIdClashes=FALSE)
     }
     
-    output(OL$Info, "Writing out complete data table")
+    report(OL$Info, "Writing out complete data table")
     write.table(allData, file=ensureFileSuffix(datasetName,"txt"))
 }

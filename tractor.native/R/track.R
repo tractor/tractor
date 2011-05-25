@@ -15,7 +15,7 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
     lengths <- sapply(list(avfNames,thetaNames,phiNames), length)
     nCompartments <- lengths[1]
     if (!all(lengths == nCompartments))
-        output(OL$Error, "AVF, theta and phi image names must be given for every anisotropic compartment")
+        report(OL$Error, "AVF, theta and phi image names must be given for every anisotropic compartment")
     
     result <- .C("track_fdt", as.integer(seed),
                               as.character(maskName),
@@ -49,12 +49,10 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
     }
     if (requireStreamlineSet)
     {
-        require("tractor.nt")
-        
         dim(result$left_particles) <- c(maxStepsPerSide, 3, nSamples)
         dim(result$right_particles) <- c(maxStepsPerSide, 3, nSamples)
-        streamlineMetadata <- .StreamlineTractMetadata(FALSE, "vox", metadata)
-        returnValue$streamlineSet <- .StreamlineSetTract(seed, result$left_lengths, result$right_lengths, result$left_particles[1:max(result$left_lengths),,], result$right_particles[1:max(result$right_lengths),,], streamlineMetadata)
+        streamlineMetadata <- newStreamlineTractMetadataFromImageMetadata(metadata, FALSE, "vox")
+        returnValue$streamlineSet <- StreamlineSetTract$new(seedPoint=seed, leftLengths=result$left_lengths, rightLengths=result$right_lengths, leftPoints=result$left_particles[1:max(result$left_lengths),,], rightPoints=result$right_particles[1:max(result$right_lengths),,], metadata=streamlineMetadata)
     }
     
     invisible (returnValue)
@@ -62,18 +60,15 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
 
 trackWithSession <- function (session, x, y = NULL, z = NULL, ...)
 {
-    require("tractor.session")
-    
-    if (!isMriSession(session))
-        output(OL$Error, "Specified session is not an MriSession object")
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
     
     nCompartments <- session$nFibres()
-    bedpostDir <- session$getBedpostDirectory()
     
-    maskName <- session$getImageFileNameByType("mask")
-    avfNames <- file.path(bedpostDir, paste("merged_f",seq_len(nCompartments),"samples",sep=""))
-    thetaNames <- file.path(bedpostDir, paste("merged_th",seq_len(nCompartments),"samples",sep=""))
-    phiNames <- file.path(bedpostDir, paste("merged_ph",seq_len(nCompartments),"samples",sep=""))
+    maskName <- session$getImageFileNameByType("mask", "diffusion")
+    avfNames <- session$getImageFileNameByType("avfsamples", "bedpost", index=1:nCompartments)
+    thetaNames <- session$getImageFileNameByType("thetasamples", "bedpost", index=1:nCompartments)
+    phiNames <- session$getImageFileNameByType("phisamples", "bedpost", index=1:nCompartments)
     
     returnValue <- trackWithImages(x, y, z, maskName, avfNames, thetaNames, phiNames, ...)
     returnValue$session <- session

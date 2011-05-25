@@ -5,8 +5,8 @@ runExperiment <- function ()
 {
     requireArguments("image file")
     
-    baseThreshold <- getWithDefault("ThresholdLevel", NULL, "numeric")
-    thresholdMode <- getWithDefault("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
+    baseThreshold <- getConfigVariable("ThresholdLevel", NULL, "numeric")
+    thresholdMode <- getConfigVariable("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
     
     image <- newMriImageFromFile(Arguments[1])
     

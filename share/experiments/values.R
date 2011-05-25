@@ -5,7 +5,7 @@ runExperiment <- function ()
 {
     requireArguments("image file")
     
-    digits <- getWithDefault("SignificantDigits", 6L)
+    digits <- getConfigVariable("SignificantDigits", 6L)
     
     image <- newMriImageFromFile(Arguments[1])
     if (nArguments() > 1)

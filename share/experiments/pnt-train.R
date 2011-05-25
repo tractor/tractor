@@ -9,10 +9,10 @@ suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()
 {
-    tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
-    datasetName <- getWithDefault("DatasetName", NULL, "character", errorIfMissing=TRUE)
-    maxKnotCount <- getWithDefault("MaximumKnotCount", NULL, "integer")
-    asymmetricModel <- getWithDefault("AsymmetricModel", FALSE)
+    tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
+    datasetName <- getConfigVariable("DatasetName", NULL, "character", errorIfMissing=TRUE)
+    maxKnotCount <- getConfigVariable("MaximumKnotCount", NULL, "integer")
+    asymmetricModel <- getConfigVariable("AsymmetricModel", FALSE)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
 

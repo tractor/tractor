@@ -2,7 +2,7 @@ getDataTypeByNiftiCode <- function (code)
 {
     typeIndex <- which(.Nifti$datatypes$codes == code)
     if (length(typeIndex) != 1)
-        output(OL$Error, "Specified NIfTI data type code is not valid")
+        report(OL$Error, "Specified NIfTI data type code is not valid")
     datatype <- list(type=.Nifti$datatypes$rTypes[typeIndex], size=.Nifti$datatypes$sizes[typeIndex], isSigned=.Nifti$datatypes$isSigned[typeIndex])
     
     return (datatype)
@@ -18,19 +18,19 @@ hasNiftiMagicString <- function (fileName)
     return (any(sapply(unlist(.Nifti$magicStrings,recursive=FALSE), identical, magicString)))
 }
 
-createNiftiMetadata <- function (fileNames)
+readNifti <- function (fileNames)
 {
     getXformMatrix <- function ()
     {
         # With no information, assume Analyze orientation and zero origin
         if (qformCode <= 0 && sformCode <= 0)
         {
-            output(OL$Warning, "Nifti qform and sform codes are both zero in file ", fileNames$headerFile, " - orientation can only be guessed")
+            report(OL$Warning, "Nifti qform and sform codes are both zero in file ", fileNames$headerFile, " - orientation can only be guessed")
             return (diag(c(-abs(voxelDims[2]), abs(voxelDims[3:4]), 1)))
         }
         else if (qformCode > 0)
         {
-            output(OL$Debug, "Using qform (code ", qformCode, ") for origin")
+            report(OL$Debug, "Using qform (code ", qformCode, ") for origin")
             matrix <- diag(4)
             matrix[1:3,4] <- quaternionParams[4:6]
             q <- c(sqrt(1 - sum(quaternionParams[1:3]^2)), quaternionParams[1:3])
@@ -54,13 +54,15 @@ createNiftiMetadata <- function (fileNames)
         }
         else
         {
-            output(OL$Debug, "Using sform (code ", sformCode, ") for origin")
+            report(OL$Debug, "Using sform (code ", sformCode, ") for origin")
             return (rbind(affine, c(0,0,0,1)))
         }
     }
     
+    if (!is.list(fileNames))
+        fileNames <- identifyImageFileNames(fileNames)
     if (!file.exists(fileNames$headerFile))
-        output(OL$Error, "Header file ", fileNames$headerFile, " not found")
+        report(OL$Error, "Header file ", fileNames$headerFile, " not found")
         
     # The gzfile function can handle uncompressed files too
     connection <- gzfile(fileNames$headerFile, "rb")
@@ -115,7 +117,7 @@ createNiftiMetadata <- function (fileNames)
     
     # Require exactly one match to a magic string suitable to the NIfTI version
     if (sum(sapply(.Nifti$magicStrings[[niftiVersion]], identical, magicString)) != 1)
-        output(OL$Error, "The file ", fileNames$headerFile, " is not a valid NIfTI file")
+        report(OL$Error, "The file ", fileNames$headerFile, " is not a valid NIfTI file")
     
     ndims <- dims[1]
     dims <- dims[1:ndims + 1]
@@ -124,7 +126,7 @@ createNiftiMetadata <- function (fileNames)
     
     typeIndex <- which(.Nifti$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
-        output(OL$Error, "Data type of file ", fileNames$imageFile, " (", typeCode, ") is not supported")
+        report(OL$Error, "Data type of file ", fileNames$imageFile, " (", typeCode, ") is not supported")
     datatype <- getDataTypeByNiftiCode(typeCode)
     
     # We're only interested in the bottom 3 bits (the spatial unit)
@@ -136,128 +138,17 @@ createNiftiMetadata <- function (fileNames)
     dimsToKeep <- 1:max(which(dims > 1))
     voxelDims[2:4] <- voxelDims[2:4] * sign(diag(xformMatrix)[1:3])
     
-    imageMetadata <- list(imageDims=dims[dimsToKeep],
-                          voxelDims=voxelDims[dimsToKeep+1],
-                          voxelUnit=unit,
-                          source=fileNames$fileStem,
-                          datatype=datatype,
-                          endian=endian)
+    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=unit, source=fileNames$fileStem, datatype=datatype, endian=endian)
     
-    storageMetadata <- list(dataOffset=dataOffset,
-                            dataScalingSlope=slopeAndIntercept[1],
-                            dataScalingIntercept=slopeAndIntercept[2],
-                            xformMatrix=xformMatrix)
+    storageMetadata <- list(dataOffset=dataOffset, dataScalingSlope=slopeAndIntercept[1], dataScalingIntercept=slopeAndIntercept[2], xformMatrix=xformMatrix)
     
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
 
-newMriImageMetadataFromNifti <- function (fileNames, warnIfNotLas = FALSE)
-{
-    invisible (newMriImageFromNifti(fileNames, metadataOnly=TRUE, warnIfNotLas=warnIfNotLas))
-}
-
-newMriImageFromNifti <- function (fileNames, metadataOnly = FALSE, warnIfNotLas = FALSE)
-{
-    nifti <- createNiftiMetadata(fileNames)
-    
-    datatype <- nifti$imageMetadata$datatype
-    endian <- nifti$imageMetadata$endian
-    dims <- nifti$imageMetadata$imageDims
-    voxelDims <- nifti$imageMetadata$voxelDims
-    nVoxels <- prod(dims)
-    nDims <- length(dims)
-    
-    if (!metadataOnly)
-    {
-        connection <- gzfile(fileNames$imageFile, "rb")
-        if (fileNames$imageFile == fileNames$headerFile)
-            seek(connection, where=nifti$storageMetadata$dataOffset)
-
-        voxels <- readBin(connection, what=datatype$type, n=nVoxels, size=datatype$size, signed=datatype$isSigned, endian=endian)
-        data <- array(voxels, dim=dims)
-        close(connection)
-
-        slope <- nifti$storageMetadata$dataScalingSlope
-        intercept <- nifti$storageMetadata$dataScalingIntercept
-        if (slope != 0 && !equivalent(c(slope,intercept), 1:0))
-            data <- data * slope + intercept
-    }
-    
-    rotationMatrix <- nifti$storageMetadata$xformMatrix[1:3,1:3]
-    absRotationMatrix <- abs(rotationMatrix)
-    tolerance <- 1e-3 * max(abs(voxelDims))
-    
-    # The rotation matrix should have exactly one nonzero element per row and column
-    if (!equivalent(rowSums(absRotationMatrix > tolerance), c(1,1,1)) || !equivalent(colSums(absRotationMatrix > tolerance), c(1,1,1)))
-        output(OL$Error, "NIfTI xform matrix is rotated")
-    else
-    {
-        dimPermutation <- apply(absRotationMatrix > tolerance, 1, which)
-        if (nDims > 3)
-            dimPermutation <- c(dimPermutation, 4:nDims)
-        if (!identical(dimPermutation, seq_len(nDims)))
-        {
-            if (warnIfNotLas)
-                flag(OL$Warning, "NIfTI image is not stored in the LAS convention - problems may occur")
-            if (!metadataOnly)
-                data <- aperm(data, dimPermutation)
-            dims <- dims[dimPermutation]
-            voxelDims <- voxelDims[dimPermutation]
-        }
-        
-        # Fix signs of voxel dimensions to correspond to LAS
-        voxelDims <- abs(voxelDims) * c(-1, rep(1,nDims-1))
-        
-        # Figure out which dimensions need to be flipped
-        ordering <- round(colSums(rotationMatrix) / c(abs(voxelDims),rep(1,max(0,3-nDims))))
-        ordering <- ordering * c(-1, rep(1,nDims-1))
-        
-        if (warnIfNotLas && any(ordering < 0))
-            flag(OL$Warning, "NIfTI image is not stored in the LAS convention - problems may occur")
-        
-        if (nDims == 2)
-        {
-            origin <- 1 - ordering[1:2] * round(nifti$storageMetadata$xformMatrix[1:2,4]/voxelDims[1:2],2)
-            origin <- ifelse(ordering[1:2] == c(1,1), origin, dims-origin+1)
-        }
-        else
-        {
-            origin <- c(1 - ordering[1:3] * round(nifti$storageMetadata$xformMatrix[1:3,4]/voxelDims[1:3],2), rep(0,nDims-3))
-            origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], dims[1:3]-origin[1:3]+1)
-        }
-        
-        if (!metadataOnly)
-        {
-            orderX <- (if (ordering[1] == 1) seq_len(dims[1]) else rev(seq_len(dims[1])))
-            orderY <- (if (ordering[2] == 1) seq_len(dims[2]) else rev(seq_len(dims[2])))
-            if (nDims > 2)
-                orderZ <- (if (ordering[3] == 1) seq_len(dims[3]) else rev(seq_len(dims[3])))
-            dimsToKeep <- setdiff(1:nDims, 1:3)
-
-            if (nDims == 2)
-                data <- data[orderX, orderY]
-            else if (nDims == 3)
-                data <- data[orderX, orderY, orderZ]
-            else
-                data <- array(apply(data, dimsToKeep, "[", orderX, orderY, orderZ), dim=dim(data))
-        }
-    }
-    
-    imageMetadata <- .MriImageMetadata(dims, voxelDims, nifti$imageMetadata$voxelUnit, nifti$imageMetadata$source, datatype, origin, endian)
-    
-    if (metadataOnly)
-        invisible (imageMetadata)
-    else
-    {
-        image <- .MriImage(data, imageMetadata)
-        invisible (image)
-    }
-}
-
 writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL)
 {
-    if (!isMriImage(image))
-        output(OL$Error, "The specified image is not an MriImage object")
+    if (!is(image, "MriImage"))
+        report(OL$Error, "The specified image is not an MriImage object")
     
     description <- "TractoR NIfTI writer v1.0.1"
     fileFun <- (if (gzipped) gzfile else file)
@@ -266,12 +157,12 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     {
         datatype <- image$getDataType()
         if (is.null(datatype))
-            output(OL$Error, "The data type is not stored with the image; it must be specified")
+            report(OL$Error, "The data type is not stored with the image; it must be specified")
     }
     
     datatypeMatches <- (.Nifti$datatypes$rTypes == datatype$type) & (.Nifti$datatypes$sizes == datatype$size) & (.Nifti$datatypes$isSigned == datatype$isSigned)
     if (length(which(datatypeMatches)) != 1)
-        output(OL$Error, "No supported NIfTI datatype is appropriate for this file")
+        report(OL$Error, "No supported NIfTI datatype is appropriate for this file")
     typeIndex <- which(datatypeMatches)
     
     data <- image$getData()

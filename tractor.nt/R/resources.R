@@ -14,7 +14,7 @@ getFileNameForNTResource <- function (type, mode, options = NULL, expectExists =
     if (type == "reference")
     {
         if (!("tractName" %in% names(options)))
-            output(OL$Error, "Tract name must be specified")
+            report(OL$Error, "Tract name must be specified")
             
         fileName <- ensureFileSuffix(paste(options$tractName,"ref",sep="_"), "Rdata")
         if (!expectExists || file.exists(fileName))
@@ -22,18 +22,18 @@ getFileNameForNTResource <- function (type, mode, options = NULL, expectExists =
         else if (file.exists(file.path(standardRefTractDir, fileName)))
             return (file.path(standardRefTractDir, fileName))
         else
-            output(OL$Error, "No reference for tract name \"", options$tractName, "\" was found")
+            report(OL$Error, "No reference for tract name \"", options$tractName, "\" was found")
     }
     else if (type == "results")
     {
         if (!("resultsName" %in% names(options)))
-            output(OL$Error, "Results name must be specified")
+            report(OL$Error, "Results name must be specified")
         
         fileName <- ensureFileSuffix(options$resultsName, "Rdata")
         if (!expectExists || file.exists(fileName))
             return (fileName)
         else
-            output(OL$Error, "No results file with name \"", options$resultsName, "\" was found")
+            report(OL$Error, "No results file with name \"", options$resultsName, "\" was found")
     }
     else if (type == "model")
     {
@@ -44,7 +44,7 @@ getFileNameForNTResource <- function (type, mode, options = NULL, expectExists =
                 return (fileName)
         }
         else if (!any(c("datasetName","tractName") %in% names(options)))
-            output(OL$Error, "Model or dataset and tract names must be specified")
+            report(OL$Error, "Model or dataset and tract names must be specified")
         
         fileName <- ensureFileSuffix(paste(options$datasetName,"model",sep="_"), "Rdata")
         if (!expectExists || file.exists(fileName))
@@ -54,7 +54,7 @@ getFileNameForNTResource <- function (type, mode, options = NULL, expectExists =
         if (file.exists(fileName))
             return (fileName)
         else
-            output(OL$Error, "No suitable model was found")
+            report(OL$Error, "No suitable model was found")
     }
 }
 
@@ -67,27 +67,21 @@ getNTResource <- function (type, mode, options = NULL)
     
     if (type == "reference")
     {
-        reference <- deserialiseReferenceTract(fileName)
-        if ((mode == "hnt" && !isFieldTract(reference)) || (mode == "pnt" && !isBSplineTract(reference)))
-            output(OL$Error, "The specified reference tract is not in the correct form")
+        reference <- deserialiseReferenceObject(fileName)
+        if ((mode == "hnt" && !is(reference$getTract(),"FieldTract")) || (mode == "pnt" && !is(reference$getTract(),"BSplineTract")))
+            report(OL$Error, "The specified reference tract is not in the correct form")
         else
             return (invisible(reference))
     }
-    else if (type == "results")
+    else
     {
-        deserialiseFunction <- match.fun(ifelse(mode=="hnt", "deserialiseHeuristicNTResults", "deserialiseProbabilisticNTResults"))
-        results <- deserialiseFunction(fileName)
-        return (invisible(results))
-    }
-    else if (type == "model")
-    {
-        model <- deserialiseMatchingTractModel(fileName)
-        return (invisible(model))
+        object <- deserialiseReferenceObject(fileName)
+        return (invisible(object))
     }
 }
 
 writeNTResource <- function (object, type, mode, options = NULL)
 {
     fileName <- getFileNameForNTResource(type, mode, options)
-    serialiseListObject(object, file=fileName)
+    object$serialise(file=fileName)
 }

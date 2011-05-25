@@ -1,27 +1,27 @@
 gradientDirectionsAvailableForSession <- function (session)
 {
-    if (!isMriSession(session))
-        output(OL$Error, "Specified session is not an MriSession object")
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
     
-    paths <- file.path(session$getPreBedpostDirectory(), c("bvals","bvecs"))
+    paths <- file.path(session$getDirectory("fdt"), c("bvals","bvecs"))
     return (all(file.exists(paths)))
 }
 
 saveSeriesDescriptionsForSession <- function (session, descriptions)
 {
-    if (!isMriSession(session))
-        output(OL$Error, "Specified session is not an MriSession object")
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
     
     descriptionString <- implode(gsub("\\W","",descriptions,perl=TRUE), ",")
-    writeLines(descriptionString, file.path(session$getPreBedpostDirectory(),"descriptions.txt"))
+    writeLines(descriptionString, file.path(session$getDirectory("diffusion"),"descriptions.txt"))
 }
 
 checkGradientCacheForSession <- function (session)
 {
-    if (!isMriSession(session))
-        output(OL$Error, "Specified session is not an MriSession object")
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
     
-    descriptionsFile <- file.path(session$getPreBedpostDirectory(), "descriptions.txt")
+    descriptionsFile <- file.path(session$getDirectory("diffusion"), "descriptions.txt")
     if (!file.exists(descriptionsFile))
         return (NULL)
     seriesDescriptions <- readLines(descriptionsFile, 1)
@@ -46,7 +46,7 @@ updateGradientCacheFromSession <- function (session, force = FALSE)
     if (!gradientDirectionsAvailableForSession(session))
         return (FALSE)
     
-    descriptionsFile <- file.path(session$getPreBedpostDirectory(), "descriptions.txt")
+    descriptionsFile <- file.path(session$getDirectory("diffusion"), "descriptions.txt")
     if (!file.exists(descriptionsFile))
         return (FALSE)
     seriesDescriptions <- readLines(descriptionsFile, 1)
@@ -88,8 +88,8 @@ updateGradientCacheFromSession <- function (session, force = FALSE)
 
 flipGradientVectorsForSession <- function (session, axes)
 {
-    if (!isMriSession(session))
-        output(OL$Error, "Specified session is not an MriSession object")
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
     
     schemeComponents <- newSimpleDiffusionSchemeFromSession(session)$expandComponents()
     schemeComponents$directions[axes,] <- (-schemeComponents$directions[axes,])
@@ -99,8 +99,8 @@ flipGradientVectorsForSession <- function (session, axes)
 
 rotateGradientVectorsForSession <- function (session)
 {
-    if (!isMriSession(session))
-        output(OL$Error, "Specified session is not an MriSession object")
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
     
     transforms <- readEddyCorrectTransformsForSession(session)
     decompositions <- lapply(transforms, decomposeAffineTransform3D)

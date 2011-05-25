@@ -9,10 +9,10 @@ suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()
 {
-    tractName <- getWithDefault("TractName", NULL, "character", errorIfMissing=TRUE)
-    resultsName <- getWithDefault("ResultsName", NULL, "character", errorIfMissing=TRUE)
-    sessionList <- getWithDefault("SessionList", NULL, "character", errorIfMissing=TRUE)
-    mode <- getWithDefault("Mode", NULL, "character", errorIfMissing=TRUE, validValues=c("location","similarity"), errorIfInvalid=TRUE)
+    tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
+    resultsName <- getConfigVariable("ResultsName", NULL, "character", errorIfMissing=TRUE)
+    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
+    mode <- getConfigVariable("Mode", NULL, "character", errorIfMissing=TRUE, validValues=c("location","similarity"), errorIfInvalid=TRUE)
     
     reference <- getNTResource("reference", "hnt", list(tractName=tractName))
     
@@ -20,13 +20,13 @@ runExperiment <- function ()
     
     results <- getNTResource("results", "hnt", list(resultsName=resultsName))
     if (results$nSessions() != nSessions)
-        output(OL$Error, "Length of the session list specified does not match the results file")
+        report(OL$Error, "Length of the session list specified does not match the results file")
 
     for (i in 1:nSessions)
     {
-        output(OL$Info, "Current session is ", sessionList[i])
+        report(OL$Info, "Current session is ", sessionList[i])
         result <- results$getResult(i)
-        output(OL$Info, "Neighbourhood centre point is ", implode(result$naiveSeed,sep=","))
+        report(OL$Info, "Neighbourhood centre point is ", implode(result$naiveSeed,sep=","))
         
         value <- ifelse(mode=="location", implode(result$bestSeed,sep=","), result$bestSimilarity)
         cat(paste(value, "\n", sep=""))

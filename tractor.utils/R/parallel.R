@@ -2,7 +2,7 @@ parallelApply <- function (x, fun, ..., preschedule = TRUE, setSeed = TRUE, sile
 {
     if (exists("mclapply"))
     {
-        oldOption <- options(tractorOutputPid=TRUE)
+        oldOption <- options(outputPid=TRUE)
         returnValue <- mclapply(x, fun, ..., mc.preschedule=preschedule, mc.set.seed=setSeed, mc.silent=silent, mc.cores=cores)
         options(oldOption)
         return (returnValue)

@@ -1,143 +1,98 @@
-.UninformativeTractModel <- function (.lengthDistributions, .refLengths, .pointType)
-{
-    self <- list(
-        # The selection of the left distribution here is arbitrary - it is
-        # assumed that the length cutoff is the same on both sides
-        getMaximumLength = function () { return (max(.lengthDistributions$left$values)) },
-        
-        getPointType = function () { return (.pointType) },
-        
-        getLeftLengthDistribution = function () { return (.lengthDistributions$left) },
-        
-        getRightLengthDistribution = function () { return (.lengthDistributions$right) },
-        
-        getRefLeftLength = function () { return (.refLengths$left) },
-        
-        getRefRightLength = function () { return (.refLengths$right) },
-        
-        summarise = function ()
-        {
-            output(OL$Info, "Ref tract lengths : ", self$getRefLeftLength(), " (left), ", self$getRefRightLength(), " (right)")
-            output(OL$Info, "Length cutoff     : ", self$getMaximumLength())
-            output(OL$Info, "Point type        : ", self$getPointType())
-        },
+UninformativeTractModel <- setRefClass("UninformativeTractModel", contains="SerialisableObject", fields=list(lengthDistributions="list",refLengths="list",pointType="character"), methods=list(
+    # The selection of the left distribution here is arbitrary - it is
+    # assumed that the length cutoff is the same on both sides
+    getMaximumLength = function () { return (max(lengthDistributions$left$values)) },
+    
+    getPointType = function () { return (pointType) },
+    
+    getLeftLengthDistribution = function () { return (lengthDistributions$left) },
+    
+    getRightLengthDistribution = function () { return (lengthDistributions$right) },
+    
+    getRefLeftLength = function () { return (refLengths$left) },
+    
+    getRefRightLength = function () { return (refLengths$right) },
+    
+    summarise = function ()
+    {
+        report(OL$Info, "Ref tract lengths : ", getRefLeftLength(), " (left), ", getRefRightLength(), " (right)")
+        report(OL$Info, "Length cutoff     : ", getMaximumLength())
+        report(OL$Info, "Point type        : ", getPointType())
+    }
+))
 
-        summarize = function () { self$summarise() }
-    )
-    
-    class(self) <- c("model.tract.uninformative", "list.object", "list")
-    invisible (self)
-}
-
-.MatchingTractModel <- function (.cosineDistributions, .lengthDistributions, .refSpline, .pointType)
-{
-    if (!isBSplineTract(.refSpline))
-        output(OL$Error, "The specified reference tract is not a BSplineTract object")
-    if (!is.list(.cosineDistributions) || !all(c("left","right") %in% names(.cosineDistributions)))
-        output(OL$Error, "Cosine distributions for left and right sides of the tract are not both present")
-    
-    ssv <- characteriseSplineStepVectors(.refSpline, pointType=.pointType)
-    .refLengths <- list(left=ssv$leftLength, right=ssv$rightLength)
-    rm(ssv)
-    
-    self <- list(
-        getAlphas = function (side = c("left","right"))
+MatchingTractModel <- setRefClass("MatchingTractModel", contains="SerialisableObject", fields=list(cosineDistributions="list",lengthDistributions="list",refSpline="BSplineTract",refLengths="list",pointType="character"), methods=list(
+    initialize = function (..., refSpline = nilObject())
+    {
+        object <- initFields(..., refSpline=refSpline)
+        
+        if (!is.nilObject(refSpline))
         {
-            side <- match.arg(side)
-            alphas <- numeric(0)
-            for (i in 1:length(.cosineDistributions[[side]]))
-                alphas <- c(alphas, as.list(.cosineDistributions[[side]][[i]])$alpha)
-            return (alphas)
-        },
+            ssv <- characteriseSplineStepVectors(object$refSpline, pointType=object$pointType)
+            object$refLengths <- list(left=ssv$leftLength, right=ssv$rightLength)
+        }
         
-        getCosineDistribution = function (pos, side = c("left","right"))
-        {
-            side <- match.arg(side)
-            if ((pos < 1) || (pos > length(.cosineDistributions[[side]])))
-                return (NA)
-            else
-                return (.cosineDistributions[[side]][[pos]])
-        },
-        
-        getMaximumLength = function () { return (max(.lengthDistributions$left$values)) },
-        
-        getPointType = function () { return (.pointType) },
-        
-        getLengthDistribution = function (side = c("left","right"))
-        {
-            side <- match.arg(side)
-            return (.lengthDistributions[[side]])
-        },
-        
-        getRefLeftLength = function () { return (.refLengths$left) },
-        
-        getRefRightLength = function () { return (.refLengths$right) },
-        
-        getRefSpline = function () { return (.refSpline) },
-        
-        isAsymmetric = function ()
-        {
-            minLength <- min(length(.cosineDistributions$left), length(.cosineDistributions$right))
-            return (!equivalent(.cosineDistributions$left[1:minLength], .cosineDistributions$right[1:minLength]))
-        },
-        
-        summarise = function ()
-        {
-            output(OL$Info, "Asymmetric model  : ", self$isAsymmetric())
-            if (self$isAsymmetric())
-            {
-                output(OL$Info, "Alphas (left)     : ", implode(round(self$getAlphas("left"),2), sep=", "))
-                output(OL$Info, "Alphas (right)    : ", implode(round(self$getAlphas("right"),2), sep=", "))
-            }
-            else
-            {
-                longerSide <- ifelse(length(.cosineDistributions$left) > length(.cosineDistributions$right), "left", "right")
-                output(OL$Info, "Alphas            : ", implode(round(self$getAlphas(longerSide),2), sep=", "))
-            }
-            output(OL$Info, "Ref tract lengths : ", self$getRefLeftLength(), " (left), ", self$getRefRightLength(), " (right)")
-            output(OL$Info, "Length cutoff     : ", self$getMaximumLength())
-            output(OL$Info, "Point type        : ", self$getPointType())
-        },
-        
-        summarize = function () { self$summarise() }
-    )
+        return (object)
+    },
     
-    class(self) <- c("model.tract.matching", "list.object", "list")
-    invisible (self)
-}
-
-isUninformativeTractModel <- function (object)
-{
-    return ("model.tract.uninformative" %in% class(object))
-}
-
-isMatchingTractModel <- function (object)
-{
-    return ("model.tract.matching" %in% class(object))
-}
-
-deserialiseUninformativeTractModel <- function (file = NULL, object = NULL)
-{
-    model <- deserialiseListObject(file, object, .UninformativeTractModel)
-    invisible (model)
-}
-
-deserialiseMatchingTractModel <- function (file = NULL, object = NULL)
-{
-    if (is.null(object))
-        object <- deserialiseListObject(file, raw=TRUE)
+    getAlphas = function (side = c("left","right"))
+    {
+        side <- match.arg(side)
+        alphas <- numeric(0)
+        for (i in 1:length(cosineDistributions[[side]]))
+            alphas <- c(alphas, as.list(cosineDistributions[[side]][[i]])$alpha)
+        return (alphas)
+    },
     
-    if (isDeserialisable(object$refSpline, "tract.bspline"))
-        object$refSpline <- deserialiseBSplineTract(object=object$refSpline)
-    else
-        output(OL$Error, "Deserialised object contains no valid reference spline")
+    getCosineDistribution = function (pos, side = c("left","right"))
+    {
+        side <- match.arg(side)
+        if ((pos < 1) || (pos > length(cosineDistributions[[side]])))
+            return (NA)
+        else
+            return (cosineDistributions[[side]][[pos]])
+    },
     
-    if (is.null(object$cosineDistributions$left))
-        object$cosineDistributions <- list(left=object$cosineDistributions, right=object$cosineDistributions)
+    getMaximumLength = function () { return (max(lengthDistributions$left$values)) },
     
-    model <- deserialiseListObject(NULL, object, .MatchingTractModel)
-    invisible (model)
-}
+    getPointType = function () { return (pointType) },
+    
+    getLengthDistribution = function (side = c("left","right"))
+    {
+        side <- match.arg(side)
+        return (lengthDistributions[[side]])
+    },
+    
+    getRefLeftLength = function () { return (refLengths$left) },
+    
+    getRefRightLength = function () { return (refLengths$right) },
+    
+    getRefSpline = function () { return (refSpline) },
+    
+    isAsymmetric = function ()
+    {
+        minLength <- min(length(cosineDistributions$left), length(cosineDistributions$right))
+        return (!equivalent(cosineDistributions$left[1:minLength], cosineDistributions$right[1:minLength]))
+    },
+    
+    summarise = function ()
+    {
+        report(OL$Info, "Asymmetric model  : ", .self$isAsymmetric())
+        if (.self$isAsymmetric())
+        {
+            report(OL$Info, "Alphas (left)     : ", implode(round(.self$getAlphas("left"),2), sep=", "))
+            report(OL$Info, "Alphas (right)    : ", implode(round(.self$getAlphas("right"),2), sep=", "))
+        }
+        else
+        {
+            longerSide <- ifelse(length(cosineDistributions$left) > length(cosineDistributions$right), "left", "right")
+            report(OL$Info, "Alphas            : ", implode(round(.self$getAlphas(longerSide),2), sep=", "))
+        }
+        report(OL$Info, "Ref tract lengths : ", .self$getRefLeftLength(), " (left), ", .self$getRefRightLength(), " (right)")
+        report(OL$Info, "Length cutoff     : ", .self$getMaximumLength())
+        report(OL$Info, "Point type        : ", .self$getPointType())
+    }
+))
 
 calculateRescaledCosinesFromAngles <- function (angles, naRemove = TRUE)
 {
@@ -150,11 +105,9 @@ calculateRescaledCosinesFromAngles <- function (angles, naRemove = TRUE)
 createDataTableForSplines <- function (splines, refSpline, pointType, subjectId = NULL, neighbourhood = NULL)
 {
     if (!is.list(splines))
-        output(OL$Error, "Spline tracts must be specified as a list of BSplineTract objects")
-    if (!isBSplineTract(refSpline))
-        output(OL$Error, "The specified reference tract is not a BSplineTract object")
-    if (!is.null(neighbourhood) && !isNeighbourhoodInfo(neighbourhood))
-        output(OL$Error, "The specified neighbourhood is not a NeighbourhoodInfo object")
+        report(OL$Error, "Spline tracts must be specified as a list of BSplineTract objects")
+    if (!is(refSpline,"BSplineTract"))
+        report(OL$Error, "The specified reference tract is not a BSplineTract object")
     
     nSplines <- length(splines)
     rssv <- characteriseSplineStepVectors(refSpline, pointType=pointType)
@@ -166,7 +119,7 @@ createDataTableForSplines <- function (splines, refSpline, pointType, subjectId 
     
     for (i in seq_along(splines))
     {
-        if (isTRUE(is.na(splines[[i]])))
+        if (identical(splines[[i]], NA))
             next
 
         ssv <- characteriseSplineStepVectors(splines[[i]], pointType=pointType)
@@ -194,7 +147,7 @@ newUninformativeTractModelFromDataTable <- function (data, maxLength = NULL, wei
     if (!is.null(weights))
     {
         if (length(weights) != nrow(data))
-            output(OL$Error, "The weight vector must have the same length as the spline data table")
+            report(OL$Error, "The weight vector must have the same length as the spline data table")
         
         weights[is.na(data$leftLength)] <- NA       
     }
@@ -210,7 +163,7 @@ newUninformativeTractModelFromDataTable <- function (data, maxLength = NULL, wei
     refRightLength <- length(grep("^rightSimCosine", colnames(data)))
     refLengths <- list(left=refLeftLength, right=refRightLength)
 
-    model <- .UninformativeTractModel(lengthDistributions, refLengths, as.character(data$pointType[1]))
+    model <- UninformativeTractModel$new(lengthDistributions=lengthDistributions, refLengths=refLengths, pointType=as.character(data$pointType[1]))
     invisible (model)
 }
 
@@ -219,7 +172,7 @@ newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NUL
     if (is.null(weights))
     {
         if (is.null(data$subject))
-            output(OL$Error, "The 'subject' field must be present in the data table if weights are not specified")
+            report(OL$Error, "The 'subject' field must be present in the data table if weights are not specified")
         
         # Each subject needs normalising individually for the number of valid
         # candidate tracts available
@@ -229,7 +182,7 @@ newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NUL
         weights <- unlist(lapply(seq_along(nValidSplines), function (i) rep(1,nTotalSplines[i]) / nValidSplines[i]))
     }
     else if (length(weights) != nrow(data))
-        output(OL$Error, "The weight vector must have the same length as the spline data table")
+        report(OL$Error, "The weight vector must have the same length as the spline data table")
     weights[is.na(data$leftLength)] <- NA
     
     refLeftLength <- length(grep("^leftSimCosine", colnames(data)))
@@ -261,14 +214,14 @@ newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NUL
         }
     }
     
-    model <- .MatchingTractModel(cosineDistributions, lengthDistributions, refSpline, as.character(data$pointType[1]))
+    model <- MatchingTractModel$new(cosineDistributions=cosineDistributions, lengthDistributions=lengthDistributions, refSpline=refSpline, pointType=as.character(data$pointType[1]))
     invisible (model)
 }
 
 calculateUninformativeLogLikelihoodsForDataTable <- function (data, uninformativeModel)
 {
-    if (!isUninformativeTractModel(uninformativeModel))
-        output(OL$Error, "The specified model is not an UninformativeTractModel object")
+    if (!is(uninformativeModel, "UninformativeTractModel"))
+        report(OL$Error, "The specified model is not an UninformativeTractModel object")
     
     # The evaluateMultinomialDistribution function is not vectorised at present
     lls <- numeric(nrow(data))
@@ -284,8 +237,8 @@ calculateUninformativeLogLikelihoodsForDataTable <- function (data, uninformativ
 
 calculateMatchedLogLikelihoodsForDataTable <- function (data, matchingModel)
 {
-    if (!isMatchingTractModel(matchingModel))
-        output(OL$Error, "The specified model is not a MatchingTractModel object")
+    if (!is(matchingModel, "MatchingTractModel"))
+        report(OL$Error, "The specified model is not a MatchingTractModel object")
     
     lls <- numeric(nrow(data))
     for (i in 1:nrow(data))

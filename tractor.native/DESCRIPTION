@@ -1,11 +1,12 @@
 Package: tractor.native
-Version: 1.7.1
-Date: 2011-02-07
+Version: 2.0.0
+Date: 2010-11-12
 Title: Compiled code for the TractoR package
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
-Depends: R (>= 2.5.0), tractor.base
-Suggests: tractor.session, tractor.nt
+Depends: R (>= 2.5.0)
+Imports: tractor.base, tractor.session, tractor.nt
 Description: The tractor.native package provides interfaces to native functions.
+LazyLoad: yes
 License: GPL-2
 URL: http://code.google.com/p/tractor/

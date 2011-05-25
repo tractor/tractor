@@ -1,7 +1,7 @@
 newMriImageFromCamino <- function (fileName, metadata)
 {
-    if (!isMriImageMetadata(metadata))
-        output(OL$Error, "The specified metadata is not an MriImageMetadata object")
+    if (!is(metadata, "MriImageMetadata"))
+        report(OL$Error, "The specified metadata is not an MriImageMetadata object")
     
     dims <- metadata$getDimensions()
     if (length(dims) == 4)
@@ -14,8 +14,8 @@ newMriImageFromCamino <- function (fileName, metadata)
     endian <- ifelse(substr(suffix,1,1)=="B", "big", "little")
     typeIndex <- which(.Camino$typeNames == substr(suffix,2,nchar(suffix)))
     if (length(typeIndex) != 1)
-        output(OL$Error, "The specified file name does not have a standard Camino suffix")
-    datatype <- list(type=.Camino$typesR[typeIndex], size=.Camino$sizes[typeIndex], isSigned=.Camino$isSigned[typeIndex])
+        report(OL$Error, "The specified file name does not have a standard Camino suffix")
+    datatype <- list(type=.Camino$rTypes[typeIndex], size=.Camino$sizes[typeIndex], isSigned=.Camino$isSigned[typeIndex])
     
     connection <- gzfile(fileName, "rb")
     voxels <- readBin(connection, what=datatype$type, n=nVoxels, size=datatype$size, signed=datatype$isSigned, endian=endian)
@@ -34,8 +34,8 @@ newMriImageFromCamino <- function (fileName, metadata)
 
 writeMriImageToCamino <- function (image, fileName, gzipped = FALSE, datatype = NULL)
 {
-    if (!isMriImage(image))
-        output(OL$Error, "The specified image is not an MriImage object")
+    if (!is(image, "MriImage"))
+        report(OL$Error, "The specified image is not an MriImage object")
     
     fileFun <- (if (gzipped) gzfile else file)
     
@@ -43,28 +43,28 @@ writeMriImageToCamino <- function (image, fileName, gzipped = FALSE, datatype = 
     {
         datatype <- image$getDataType()
         if (is.null(datatype))
-            output(OL$Error, "The data type is not stored with the image; it must be specified")
+            report(OL$Error, "The data type is not stored with the image; it must be specified")
     }
     
     # Try to match the datatype exactly; failing that, and if the data will
     # fit, invert isSigned and try again; if that fails too, we have to give up
-    datatypeMatches <- (.Camino$typesR == datatype$type) & (.Camino$sizes == datatype$size) & (.Camino$isSigned == datatype$isSigned)
+    datatypeMatches <- (.Camino$rTypes == datatype$type) & (.Camino$sizes == datatype$size) & (.Camino$isSigned == datatype$isSigned)
     if (sum(datatypeMatches) != 1)
     {
         signedMax <- 2^(datatype$size*8-1) - 1
         flipOkay <- (!datatype$isSigned && max(image) <= signedMax) || (datatype$isSigned && min(image) >= 0)
         if (flipOkay)
         {
-            output(OL$Info, "Trying to change datatype to suit Camino")
-            datatypeMatches <- (.Camino$typesR == datatype$type) & (.Camino$sizes == datatype$size) & (.Camino$isSigned == !datatype$isSigned)
+            report(OL$Info, "Trying to change datatype to suit Camino")
+            datatypeMatches <- (.Camino$rTypes == datatype$type) & (.Camino$sizes == datatype$size) & (.Camino$isSigned == !datatype$isSigned)
         }
     }
     if (sum(datatypeMatches) != 1)
-        output(OL$Error, "No supported Camino datatype is appropriate for this file")
+        report(OL$Error, "No supported Camino datatype is appropriate for this file")
     typeIndex <- which(datatypeMatches)
     
     data <- image$getData()
-    storage.mode(data) <- .Camino$typesR[typeIndex]
+    storage.mode(data) <- .Camino$rTypes[typeIndex]
     
     # Camino uses voxel-ordered data files
     if (image$getDimensionality() == 4)

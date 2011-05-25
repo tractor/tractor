@@ -18,28 +18,28 @@ runExperiment <- function ()
     
     seed <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
     if (!exists("seed") || length(seed) != 3)
-        output(OL$Error, "Seed point must be given as a single vector in 3D space, comma or space separated")
+        report(OL$Error, "Seed point must be given as a single vector in 3D space, comma or space separated")
     
-    pointType <- getWithDefault("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
-    isStandardSeed <- getWithDefault("SeedInMNISpace", FALSE)
+    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
+    isStandardSeed <- getConfigVariable("SeedInMNISpace", FALSE)
     
-    tracker <- getWithDefault("Tracker", "fsl", validValues=c("fsl","tractor"))
+    tracker <- getConfigVariable("Tracker", "fsl", validValues=c("fsl","tractor"))
     
-    useGradientAscent <- getWithDefault("UseGradientAscent", FALSE)
-    thresholdType <- getWithDefault("GradientAscentThresholdType", "fa")
-    thresholdLevel <- getWithDefault("GradientAscentThresholdLevel", 0.2)
+    useGradientAscent <- getConfigVariable("UseGradientAscent", FALSE)
+    thresholdType <- getConfigVariable("GradientAscentThresholdType", "fa")
+    thresholdLevel <- getConfigVariable("GradientAscentThresholdLevel", 0.2)
     
-    nSamples <- getWithDefault("NumberOfSamples", 5000)
-    force <- getWithDefault("Force", FALSE)
+    nSamples <- getConfigVariable("NumberOfSamples", 5000)
+    force <- getConfigVariable("Force", FALSE)
     
-    createVolumes <- getWithDefault("CreateVolumes", TRUE)
-    createImages <- getWithDefault("CreateImages", FALSE)
-    tractName <- getWithDefault("TractName", "tract")
-    vizThreshold <- getWithDefault("VisualisationThreshold", 0.01)
-    showSeed <- getWithDefault("ShowSeedPoint", TRUE)
+    createVolumes <- getConfigVariable("CreateVolumes", TRUE)
+    createImages <- getConfigVariable("CreateImages", FALSE)
+    tractName <- getConfigVariable("TractName", "tract")
+    vizThreshold <- getConfigVariable("VisualisationThreshold", 0.01)
+    showSeed <- getConfigVariable("ShowSeedPoint", TRUE)
     
     if (!createVolumes && !createImages)
-        output(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
+        report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
     seed <- getNativeSpacePointForSession(session, seed, pointType, isStandardSeed)
     
@@ -56,7 +56,7 @@ runExperiment <- function ()
             
             if (equivalent(neighbourhood$vectors[,nextLoc], currentSeed))
             {
-                output(OL$Warning, "Dead end reached")
+                report(OL$Warning, "Dead end reached")
                 break
             }
             else
@@ -65,13 +65,13 @@ runExperiment <- function ()
                 currentValue <- thresholdImage$getDataAtPoint(currentSeed)
             }
             
-            output(OL$Verbose, "Ascending to voxel ", implode(currentSeed,","), " with ", toupper(thresholdType), " value ", currentValue)
+            report(OL$Verbose, "Ascending to voxel ", implode(currentSeed,","), " with ", toupper(thresholdType), " value ", currentValue)
         }
         
         seed <- currentSeed
     }
     
-    output(OL$Info, "Using seed point ", implode(seed,","), " for tractography")
+    report(OL$Info, "Using seed point ", implode(seed,","), " for tractography")
     if (tracker == "fsl")
         result <- runProbtrackWithSession(session, seed, mode="simple", requireImage=TRUE, nSamples=nSamples, force=force)
     else
@@ -80,7 +80,7 @@ runExperiment <- function ()
         result <- trackWithSession(session, seed, requireImage=TRUE, nSamples=nSamples)
     }
         
-    output(OL$Info, "Creating tract images")
+    report(OL$Info, "Creating tract images")
     if (createVolumes)
         writeMriImageToFile(result$image, tractName)
     if (createImages)

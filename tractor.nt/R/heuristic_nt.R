@@ -1,9 +1,9 @@
 runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold = 0.2, searchWidth = 7, nSamples = 5000)
 {
-    if (!isFieldTract(refTract))
-        output(OL$Error, "Reference tract must be specified as a FieldTract object")
+    if (!is(refTract, "FieldTract"))
+        report(OL$Error, "Reference tract must be specified as a FieldTract object")
     if (!is.numeric(seed) || !is.vector(seed) || (length(seed) != 3))
-        output(OL$Error, "Central seed point must be specified as a numeric vector of length 3")
+        report(OL$Error, "Central seed point must be specified as a numeric vector of length 3")
     
     searchNeighbourhood <- createNeighbourhoodInfo(searchWidth, centre=seed)
     candidateSeeds <- t(searchNeighbourhood$vectors)
@@ -12,25 +12,25 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     middle <- (nSeeds %/% 2) + 1
     similarities <- rep(NA, searchWidth^3)
     
-    output(OL$Info, "Starting neighbourhood tractography with FA threshold of ", faThreshold, " and search width of ", searchWidth)
+    report(OL$Info, "Starting neighbourhood tractography with FA threshold of ", faThreshold, " and search width of ", searchWidth)
     
     faImage <- session$getImageByType("fa")
     fas <- faImage[candidateSeeds]
     validSeeds <- c(middle, which(fas >= faThreshold))
     validSeeds <- validSeeds[!duplicated(validSeeds)]
-    output(OL$Info, "Rejecting ", nSeeds-length(validSeeds), " candidate seed points below the FA threshold")
+    report(OL$Info, "Rejecting ", nSeeds-length(validSeeds), " candidate seed points below the FA threshold")
     
     if (!equivalent(refTract$getVoxelDimensions(), faImage$getVoxelDimensions(), signMatters=FALSE, tolerance=1e-3))
     {
-        output(OL$Info, "Resampling reference tract to the resolution of the session's native space")
+        report(OL$Info, "Resampling reference tract to the resolution of the session's native space")
         newRefImage <- resampleImageToDimensions(refTract$getImage(), faImage$getVoxelDimensions())
         newRefSeed <- round(transformWorldToRVoxel(transformRVoxelToWorld(refTract$getSeedPoint(), refTract$getImage()$getMetadata()), newRefImage$getMetadata()))
         refTract <- newFieldTractFromMriImage(newRefImage, newRefSeed)
     }
     
-    output(OL$Info, "Creating reduced reference tract")
+    report(OL$Info, "Creating reduced reference tract")
     reducedRefTract <- createReducedTractInfo(refTract)
-    output(OL$Info, "Reference tract contains ", reducedRefTract$nVoxels, " nonzero voxels; length is ", reducedRefTract$length)
+    report(OL$Info, "Reference tract contains ", reducedRefTract$nVoxels, " nonzero voxels; length is ", reducedRefTract$length)
     
     runProbtrackWithSession(session, candidateSeeds[validSeeds,], requireFile=TRUE, nSamples=nSamples)
     for (d in validSeeds)
@@ -44,8 +44,8 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     bestSimilarity <- similarities[bestLoc]
     bestSeed <- candidateSeeds[bestLoc,]
     
-    output(OL$Info, "Naive similarity is ", round(naiveSimilarity,3), " at location ", implode(seed,","))
-    output(OL$Info, "Best similarity is ", round(bestSimilarity,3), " at location ", implode(bestSeed,","))
+    report(OL$Info, "Naive similarity is ", round(naiveSimilarity,3), " at location ", implode(seed,","))
+    report(OL$Info, "Best similarity is ", round(bestSimilarity,3), " at location ", implode(bestSeed,","))
     
     return (list(naiveSimilarity=naiveSimilarity, naiveSeed=seed, bestSimilarity=bestSimilarity, bestSeed=bestSeed))
 }

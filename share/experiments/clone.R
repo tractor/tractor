@@ -12,7 +12,7 @@ runExperiment <- function ()
         sourceFiles <- list.files(from, all.files=all.files, full.names=TRUE)
         sourceFiles <- sourceFiles[!(basename(sourceFiles) %in% c(".",".."))]
         
-        output(OL$Info, "Creating directory ", to)
+        report(OL$Info, "Creating directory ", to)
         success <- dir.create(to)
         targetFiles <- file.path(to, basename(sourceFiles))
         
@@ -22,7 +22,7 @@ runExperiment <- function ()
                 success <- success && recursiveDirectoryCopy(sourceFiles[i], targetFiles[i], all.files=all.files)
             else
             {
-                output(OL$Verbose, "Copying file ", targetFiles[i])
+                report(OL$Verbose, "Copying file ", targetFiles[i])
                 success <- success && file.copy(sourceFiles[i], targetFiles[i], overwrite=TRUE)
             }
         }
@@ -32,8 +32,8 @@ runExperiment <- function ()
     
     requireArguments("session directory", "target directory")
     
-    deleteOriginal <- getWithDefault("DeleteOriginal", FALSE, errorIfInvalid=TRUE)
-    copyHidden <- getWithDefault("CopyHidden", FALSE)
+    deleteOriginal <- getConfigVariable("DeleteOriginal", FALSE, errorIfInvalid=TRUE)
+    copyHidden <- getConfigVariable("CopyHidden", FALSE)
     
     session <- newSessionFromDirectory(Arguments[1])
     
@@ -41,13 +41,13 @@ runExperiment <- function ()
     if (file.exists(targetDir))
     {
         if (!file.info(targetDir)$isdir)
-            output(OL$Error, "Target is not a directory")
+            report(OL$Error, "Target is not a directory")
         
-        targetSessionDir <- file.path(targetDir, basename(session$getBaseDirectory()))
+        targetSessionDir <- file.path(targetDir, basename(session$getDirectory()))
         
         if (file.exists(targetSessionDir))
         {
-            ans <- output(OL$Question, "Directory ", targetSessionDir, " already exists - delete it? [yn]")
+            ans <- report(OL$Question, "Directory ", targetSessionDir, " already exists - delete it? [yn]")
             if (tolower(ans) == "y")
                 unlink(targetSessionDir, recursive=TRUE)
             else
@@ -59,13 +59,13 @@ runExperiment <- function ()
     
     success <- dir.create(targetSessionDir, showWarnings=FALSE)
     if (!success)
-        output(OL$Error, "Could not create new session directory")
+        report(OL$Error, "Could not create new session directory")
     
-    success <- recursiveDirectoryCopy(session$getWorkingDirectory(), file.path(targetSessionDir,basename(session$getWorkingDirectory())), all.files=copyHidden)
+    success <- recursiveDirectoryCopy(session$getDirectory("root"), file.path(targetSessionDir,basename(session$getDirectory("root"))), all.files=copyHidden)
     if (!success)
-        output(OL$Warning, "Not all files copied successfully - nothing will be deleted")
+        report(OL$Warning, "Not all files copied successfully - nothing will be deleted")
     else if (deleteOriginal)
-        unlink(session$getWorkingDirectory(), recursive=TRUE)
+        unlink(session$getDirectory("root"), recursive=TRUE)
     
     return (invisible(NULL))
 }
