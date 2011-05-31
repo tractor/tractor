@@ -18,6 +18,18 @@ implode <- function (strings, sep = "", finalSep = NULL)
     }
 }
 
+relativePath <- function (path, referencePath)
+{
+    mainPieces <- strsplit(expandFileName(path), .Platform$file.sep, fixed=TRUE)[[1]]
+    refPieces <- strsplit(expandFileName(referencePath), .Platform$file.sep, fixed=TRUE)[[1]]
+    
+    shorterLength <- min(length(mainPieces), length(refPieces))
+    firstDifferentPiece <- min(which(mainPieces[1:shorterLength] != refPieces[1:shorterLength])[1], shorterLength, na.rm=TRUE)
+    newPieces <- c(rep("..", length(refPieces)-firstDifferentPiece), mainPieces[firstDifferentPiece:length(mainPieces)])
+    
+    return (implode(newPieces, sep=.Platform$file.sep))
+}
+
 expandFileName <- function (fileName)
 {
     fileName <- path.expand(fileName)
