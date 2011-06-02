@@ -1,10 +1,6 @@
 gradientDirectionsAvailableForSession <- function (session)
 {
-    if (!is(session, "MriSession"))
-        report(OL$Error, "Specified session is not an MriSession object")
-    
-    paths <- file.path(session$getDirectory("fdt"), c("bvals","bvecs"))
-    return (all(file.exists(paths)))
+    return (!is.null(newSimpleDiffusionSchemeFromSession(session)))
 }
 
 saveSeriesDescriptionsForSession <- function (session, descriptions)

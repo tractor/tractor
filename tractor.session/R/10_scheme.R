@@ -16,8 +16,8 @@ SimpleDiffusionScheme <- setRefClass("SimpleDiffusionScheme", contains="Serialis
     expandComponents = function ()
     {
         returnValue <- list()
-        returnValue$directions <- Reduce(cbind, .gradientDirections)
-        returnValue$bValues <- rep(.bValues, .self$nDirections())
+        returnValue$directions <- Reduce(cbind, gradientDirections)
+        returnValue$bValues <- rep(bValues, .self$nDirections())
         return (returnValue)
     },
     
@@ -83,27 +83,38 @@ newSimpleDiffusionSchemeFromSession <- function (session)
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    directory <- session$getDirectory("fdt")
-    bValues <- unlist(read.table(file.path(directory, "bvals")))
-    directions <- as.matrix(read.table(file.path(directory, "bvecs")))
-    names(bValues) <- NULL
-    dimnames(directions) <- NULL
-    
-    scheme <- newSimpleDiffusionSchemeWithDirections(directions, bValues)
-    invisible(scheme)
+    fileName <- file.path(session$getDirectory("diffusion"), "directions.txt")
+    if (file.exists(fileName))
+    {
+        gradientSet <- as.matrix(read.table(fileName))
+        dimnames(gradientSet) <- NULL
+        
+        scheme <- newSimpleDiffusionSchemeWithDirections(t(gradientSet[,1:3]), gradientSet[,4])
+        invisible(scheme)
+    }
+    else
+        invisible(NULL)
 }
 
-writeSimpleDiffusionSchemeForSession <- function (session, scheme)
+writeSimpleDiffusionSchemeForSession <- function (session, scheme, thirdPartyOnly = FALSE)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     if (!is(scheme, "SimpleDiffusionScheme"))
         report(OL$Error, "Specified scheme is not a SimpleDiffusionScheme object")
     
+    diffusionDir <- session$getDirectory("diffusion")
     fslDir <- session$getDirectory("fdt")
     caminoDir <- session$getDirectory("camino")
     
     components <- scheme$expandComponents()
+    gradientSet <- cbind(t(components$directions), components$bValues)
+    
+    if (!thirdPartyOnly)
+    {
+        lines <- apply(format(gradientSet,scientific=FALSE,drop0trailing=TRUE), 1, implode, sep=" ")
+        writeLines(lines, file.path(diffusionDir,"directions.txt"))
+    }
     
     if (file.exists(fslDir))
     {
@@ -113,8 +124,7 @@ writeSimpleDiffusionSchemeForSession <- function (session, scheme)
     
     if (file.exists(caminoDir))
     {
-        bvecMatrix <- cbind(t(components$directions), components$bValues)
-        lines <- apply(format(bvecMatrix), 1, implode, sep=" ")
+        lines <- apply(format(gradientSet), 1, implode, sep=" ")
         lines <- c("VERSION: 2", lines)
         writeLines(lines, file.path(caminoDir,"sequence.scheme"))
     }
