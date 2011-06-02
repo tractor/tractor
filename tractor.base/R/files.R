@@ -81,7 +81,32 @@ removeImageFilesWithName <- function (fileName)
     unlink(files)
 }
 
-copyImageFiles <- function (from, to, deleteOriginals = FALSE)
+symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE)
+{
+    if (length(from) != length(to))
+        report(OL$Error, "The number of source and target file names must match")
+    
+    suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)
+    
+    for (i in seq_along(from))
+    {
+        info <- identifyImageFileNames(from[i])
+        currentSource <- unique(c(info$headerFile, info$imageFile))
+        currentTarget <- unique(ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix), strip=suffixes))
+        
+        if (overwrite && any(file.exists(currentTarget)))
+            unlink(currentTarget)
+        if (relative)
+        {
+            for (j in seq_along(currentSource))
+                currentSource[j] <- relativePath(currentSource[j], currentTarget[j])
+        }
+        
+        file.symlink(currentSource, currentTarget)
+    }
+}
+
+copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE)
 {
     if (length(from) != length(to))
         report(OL$Error, "The number of source and target file names must match")
@@ -94,7 +119,7 @@ copyImageFiles <- function (from, to, deleteOriginals = FALSE)
         currentSource <- c(info$headerFile, info$imageFile)
         currentTarget <- ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix), strip=suffixes)
         
-        success <- file.copy(unique(currentSource), unique(currentTarget))
+        success <- file.copy(unique(currentSource), unique(currentTarget), overwrite=overwrite)
         
         if (all(success) && deleteOriginals)
             removeImageFilesWithName(from[i])
@@ -157,8 +182,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, warn
         voxelDims <- abs(voxelDims) * c(-1, rep(1,nDims-1))
         
         # Figure out which dimensions need to be flipped
-        ordering <- round(colSums(rotationMatrix) / c(abs(voxelDims),rep(1,max(0,3-nDims))))
-        ordering <- ordering * c(-1, rep(1,nDims-1))
+        ordering <- round(colSums(rotationMatrix) / c(abs(voxelDims[1:min(3,nDims)]),rep(1,max(0,3-nDims))))
+        ordering <- ordering * c(-1, 1, 1)
         
         if (warnIfNotLas && any(ordering < 0))
             flag(OL$Warning, "NIfTI image is not stored in the LAS convention - problems may occur")
