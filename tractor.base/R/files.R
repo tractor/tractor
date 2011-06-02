@@ -162,7 +162,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, warn
     
     # The rotation matrix should have exactly one nonzero element per row and column
     if (!equivalent(rowSums(absRotationMatrix > tolerance), c(1,1,1)) || !equivalent(colSums(absRotationMatrix > tolerance), c(1,1,1)))
-        output(OL$Error, "NIfTI xform matrix is rotated")
+        report(OL$Error, "NIfTI xform matrix is rotated")
     else
     {
         dimPermutation <- apply(absRotationMatrix > tolerance, 1, which)

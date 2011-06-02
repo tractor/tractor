@@ -122,7 +122,7 @@ runExperiment <- function ()
             {
                 repeat
                 {
-                    runDtifitAgain <- tolower(output(OL$Question, "Run dtifit again? [yn; s to show principal directions in fslview]"))
+                    runDtifitAgain <- tolower(report(OL$Question, "Run dtifit again? [yn; s to show principal directions in fslview]"))
                     
                     if (runDtifitAgain == "n")
                         break

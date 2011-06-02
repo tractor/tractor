@@ -10,7 +10,7 @@ readMgh <- function (fileNames)
     
     version <- readBin(connection, "integer", n=1, size=4, endian="big")
     if (version != 1)
-        output(OL$Error, "Only version 1 MGH/MGZ files are supported")
+        report(OL$Error, "Only version 1 MGH/MGZ files are supported")
     
     dims <- readBin(connection, "integer", n=4, size=4, endian="big")
     typeCode <- readBin(connection, "integer", n=1, size=4, endian="big")
@@ -32,7 +32,7 @@ readMgh <- function (fileNames)
     
     typeIndex <- which(.Mgh$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
-        output(OL$Error, "Specified MGH data type code is not valid")
+        report(OL$Error, "Specified MGH data type code is not valid")
     datatype <- list(type=.Mgh$datatypes$rTypes[typeIndex], size=.Mgh$datatypes$sizes[typeIndex], isSigned=.Mgh$datatypes$isSigned[typeIndex])
     
     dimsToKeep <- 1:max(which(dims > 1))
