@@ -95,9 +95,9 @@ MriImage <- setRefClass("MriImage", contains="MriImageMetadata", fields=list(dat
     getSparseness = function ()
     {
         if (.self$isSparse())
-            return (nrow(data$getCoordinates()) / prod(.self$getDimensions()))
+            return (1 - (nrow(data$getCoordinates()) / prod(.self$getDimensions())))
         else
-            return (sum(data != 0) / prod(.self$getDimensions()))
+            return (sum(data == 0) / prod(.self$getDimensions()))
     },
     
     isSparse = function () { return (is(data,"SparseArray")) }
@@ -146,6 +146,23 @@ Summary.MriImage <- function (..., na.rm = FALSE)
     
     result <- get(.Generic)((...)$getData())
     return (result)
+}
+
+newMriImageWithDataRepresentation <- function (image, representation = c("dense","coordlist"))
+{
+    if (!is(image, "MriImage"))
+        report(OL$Error, "Specified image is not an MriImage object")
+    
+    representation <- match.arg(representation)
+    
+    if (image$isSparse() && representation == "dense")
+        newImage <- newMriImageWithData(as(image$getData(), "array"), image$getMetadata())
+    else if (!image$isSparse() && representation == "coordlist")
+        newImage <- newMriImageWithData(newSparseArrayFromArray(image$getData()), image$getMetadata())
+    else
+        newImage <- image
+    
+    invisible(newImage)
 }
 
 newMriImageMetadataFromTemplate <- function (metadata, imageDims = NA, voxelDims = NA, voxelUnit = NA, source = "internal", datatype = NA, origin = NA, endian = NA)
