@@ -34,7 +34,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             {
                 requiredDir <- file.path(directory, requiredDir)
                 if (createIfMissing && !file.exists(requiredDir))
-                    dir.create(requiredDir)
+                    dir.create(requiredDir, recursive=TRUE)
                 return (requiredDir)
             }
         }
@@ -56,7 +56,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     {
         objectDir <- file.path(getDirectory("root"), "objects")
         if (!file.exists(objectDir))
-            dir.create(objectDir)
+            dir.create(objectDir, recursive=TRUE)
         return (objectDir)
     },
     
@@ -111,7 +111,12 @@ getImageFileNameForSession <- function (session, type, place = NULL, index = 1)
         map <- map[!duplicated(names(map))]
     }
     
+    names(map) <- tolower(names(map))
+    
     fileName <- map[[type]]
+    if (is.null(fileName))
+        report(OL$Error, "Image type \"", type, "\" is not valid")
+    
     if (fileName %~% "\\%")
     {
         if (length(index) > 1)
@@ -225,7 +230,7 @@ createFilesForSession <- function (session, dicomDir = NULL, overwriteQuietly = 
     
     info <- newMriImageFromDicomDirectory(dicomDir, readDiffusionParams=TRUE)
     
-    dir.create(workingDir)
+    session$getDirectory("diffusion", createIfMissing=TRUE)
     writeMriImageToFile(info$image, session$getImageFileNameByType("rawdata","diffusion"))
     info$image$summarise()
     

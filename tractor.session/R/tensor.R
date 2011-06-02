@@ -127,7 +127,7 @@ createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwl
     }
     
     report(OL$Info, "Writing tensor metric maps")
-    writeMap(exp(fit$logS0), session$getImageFileNameByType("logS0","diffusion"))
+    writeMap(exp(fit$logS0), session$getImageFileNameByType("s0","diffusion"))
     writeMap(fit$fa, session$getImageFileNameByType("fa","diffusion"))
     writeMap(fit$md, session$getImageFileNameByType("md","diffusion"))
     for (i in 1:3)
