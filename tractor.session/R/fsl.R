@@ -19,13 +19,13 @@ runEddyCorrectWithSession <- function (session, ask = FALSE)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
-    
     if (!imageFileExists(session$getImageFileNameByType("rawdata","diffusion")))
-        report(OL$Error, "The specified session does not contain a \"basic\" 4D image")
-    if (!all(file.exists(file.path(session$getDirectory("fdt"), c("bvals","bvecs")))))
-        report(OL$Error, "The specified session does not contain \"bvals\" and \"bvecs\" files")
+        report(OL$Error, "The specified session does not contain a raw data image")
     
     scheme <- newSimpleDiffusionSchemeFromSession(session)
+    if (is.null(scheme))
+        report(OL$Error, "The specified session does not contain gradient direction information")
+    
     schemeComponents <- scheme$expandComponents()
     minBValue <- min(scheme$getBValues())
     if (minBValue != 0)
@@ -73,6 +73,41 @@ runEddyCorrectWithSession <- function (session, ask = FALSE)
     data <- session$getImageByType("data","diffusion")
     refVolume <- newMriImageByExtraction(data, 4, choice)
     writeMriImageToFile(refVolume, session$getImageFileNameByType("refb0"))
+    
+    targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
+    file.rename(file.path(session$getDirectory("diffusion"),"data.ecclog"), file.path(targetDir,"data.ecclog"))
+}
+
+createFdtFilesForSession <- function (session, overwriteExisting = FALSE)
+{
+    targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
+    dataImageName <- session$getImageFileNameByType("data", "fdt")
+    maskImageName <- session$getImageFileNameByType("mask", "fdt")
+    
+    if (overwriteExisting || !file.exists(file.path(targetDir,"bvals")) || !file.exists(file.path(targetDir,"bvecs")))
+    {
+        scheme <- newSimpleDiffusionSchemeFromSession(session)
+        if (is.null(scheme))
+            report(OL$Error, "The specified session does not contain gradient direction information")
+        
+        writeSimpleDiffusionSchemeForSession(session, scheme, thirdPartyOnly=TRUE)
+    }
+    if (overwriteExisting || !imageFileExists(dataImageName))
+    {
+        targetDataImageName <- session$getImageFileNameByType("data", "diffusion")
+        if (!imageFileExists(targetDataImageName))
+            report(OL$Error, "Data image has not been created yet")
+        
+        symlinkImageFiles(targetDataImageName, dataImageName, overwrite=TRUE)
+    }
+    if (overwriteExisting || !imageFileExists(maskImageName))
+    {
+        targetMaskImageName <- session$getImageFileNameByType("mask", "diffusion")
+        if (!imageFileExists(targetMaskImageName))
+            report(OL$Error, "Mask image has not been created yet")
+        
+        symlinkImageFiles(targetMaskImageName, maskImageName, overwrite=TRUE)
+    }
 }
 
 runDtifitWithSession <- function (session, showOnly = FALSE)
@@ -80,25 +115,29 @@ runDtifitWithSession <- function (session, showOnly = FALSE)
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    targetDir <- session$getDirectory("fdt")
-    if (!file.exists(file.path(targetDir,"bvals")) || !file.exists(file.path(targetDir,"bvecs")) || !imageFileExists(session$getImageFileNameByType("data","diffusion")) || !imageFileExists(session$getImageFileNameByType("mask","diffusion")))
-        report(OL$Error, "Some required files are missing - run eddy_correct and bet first")
+    targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
+    createFdtFilesForSession(session)
     
     if (showOnly)
     {
-        if (!imageFileExists(session$getImageFileNameByType("fa")))
+        if (!imageFileExists(session$getImageFileNameByType("fa","diffusion")))
             report(OL$Warning, "Cannot display tensor directions because dtifit has not yet been run")
         else
         {
-            paramString <- paste(session$getImageFileNameByType("fa"), session$getImageFileNameByType("eigenvector","diffusion",index=1), sep=" ")
+            paramString <- paste(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1), sep=" ")
             execute("fslview", paramString, errorOnFail=TRUE, wait=FALSE)
         }
     }
     else
     {
         report(OL$Info, "Running dtifit to do tensor fitting...")
-        paramString <- paste("-k", session$getImageFileNameByType("data","diffusion"), "-m", session$getImageFileNameByType("mask","diffusion"), "-r", file.path(targetDir,"bvecs"), "-b", file.path(targetDir,"bvals"), "-o", file.path(session$getDirectory("diffusion"),"dti"), sep=" ")
+        paramString <- paste("-k", session$getImageFileNameByType("data","fdt"), "-m", session$getImageFileNameByType("mask","fdt"), "-r", file.path(targetDir,"bvecs"), "-b", file.path(targetDir,"bvals"), "-o", file.path(targetDir,"dti"), sep=" ")
         execute("dtifit", paramString, errorOnFail=TRUE)
+        
+        names <- c("s0", "fa", "md", "eigenvalue", "eigenvalue", "eigenvalue", "eigenvector", "eigenvector", "eigenvector")
+        indices <- c(1, 1, 1, 1:3, 1:3)
+        for (i in seq_along(names))
+            symlinkImageFiles(session$getImageFileNameByType(names[i],"fdt",indices[i]), session$getImageFileNameByType(names[i],"diffusion",indices[i]), overwrite=TRUE)
     }
 }
 
@@ -118,8 +157,10 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     else
     {
         report(OL$Info, "Running FSL's brain extraction tool...")
-        paramString <- paste(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("maskedb0"), "-m -v -f", intensityThreshold, "-g", verticalGradient, sep=" ")
+        paramString <- paste(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("maskedb0"), "-m -f", intensityThreshold, "-g", verticalGradient, sep=" ")
         execute("bet", paramString, errorOnFail=TRUE)
+        
+        copyImageFiles(paste(session$getImageFileNameByType("maskedb0"),"mask",sep="_"), session$getImageFileNameByType("mask","diffusion"), overwrite=TRUE, deleteOriginals=TRUE)
     }
 }
 
@@ -130,15 +171,14 @@ runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","scre
     
     how <- match.arg(how)
     
-    targetDir <- session$getDirectory("fdt")
-    if (!file.exists(file.path(targetDir,"bvals")) || !file.exists(file.path(targetDir,"bvecs")) || !imageFileExists(session$getImageFileNameByType("data","diffusion")) || !imageFileExists(session$getImageFileNameByType("mask","diffusion")))
-        report(OL$Error, "Some required files are missing - run eddy_correct and bet first")
+    targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
+    createFdtFilesForSession(session)
     
     if (!ask)
         ans <- "y"
     else
     {
-        execute("bedpostx_datacheck", session$getDirectory("diffusion"), errorOnFail=TRUE)
+        execute("bedpostx_datacheck", session$getDirectory("fdt"), errorOnFail=TRUE)
         ans <- report(OL$Question, "Okay to start bedpostx [yn]?")
     }
     
@@ -150,13 +190,13 @@ runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","scre
         {
             report(OL$Info, "Starting bedpostx in a \"screen\" session")
             bedpostLoc <- locateExecutable("bedpostx", errorIfMissing=TRUE)
-            paramString <- paste("-d -m", bedpostLoc, session$getDirectory("diffusion"), "-n", nFibres, sep=" ")
+            paramString <- paste("-d -m", bedpostLoc, session$getDirectory("fdt"), "-n", nFibres, sep=" ")
             execute("screen", paramString, errorOnFail=TRUE)
         }
         else
         {
             report(OL$Info, "Starting bedpostx as a ", ifelse(how=="fg","normal foreground","background"), " process")
-            paramString <- paste(session$getDirectory("diffusion"), "-n", nFibres, sep=" ")
+            paramString <- paste(session$getDirectory("fdt"), "-n", nFibres, sep=" ")
             execute("bedpostx", paramString, errorOnFail=TRUE, wait=(how=="fg"))
         }
     }
