@@ -14,7 +14,7 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     
     report(OL$Info, "Starting neighbourhood tractography with FA threshold of ", faThreshold, " and search width of ", searchWidth)
     
-    faImage <- session$getImageByType("fa")
+    faImage <- session$getImageByType("fa", "diffusion")
     fas <- faImage[candidateSeeds]
     validSeeds <- c(middle, which(fas >= faThreshold))
     validSeeds <- validSeeds[!duplicated(validSeeds)]

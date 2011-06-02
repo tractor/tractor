@@ -21,8 +21,8 @@ runExperiment <- function ()
     windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
     scaleComponents <- getConfigVariable("ScaleComponents", TRUE)
     
-    faImage <- session$getImageByType("fa")
-    maskImage <- session$getImageByType("mask")
+    faImage <- session$getImageByType("fa", "diffusion")
+    maskImage <- session$getImageByType("mask", "diffusion")
     
     if (!is.null(windowLimits))
     {

@@ -114,7 +114,7 @@ runExperiment <- function ()
                 createMaskImageForSession(session, maskingMethod)
         }
     
-        if (runStages[4] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("fa"))))
+        if (runStages[4] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("fa","diffusion"))))
         {
             runDtifitWithSession(session)
             

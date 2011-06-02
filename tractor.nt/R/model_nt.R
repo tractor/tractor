@@ -62,7 +62,7 @@ calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference,
     else
         report(OL$Error, "The specified reference tract has no length on either side")
     
-    fa <- session$getImageByType("fa")
+    fa <- session$getImageByType("fa", "diffusion")
     
     seeds <- neighbourhood$vectors
     nSeeds <- ncol(seeds)

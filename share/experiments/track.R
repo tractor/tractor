@@ -45,7 +45,7 @@ runExperiment <- function ()
     
     if (useGradientAscent)
     {
-        thresholdImage <- session$getImageByType(tolower(thresholdType))
+        thresholdImage <- session$getImageByType(tolower(thresholdType), "diffusion")
         currentSeed <- seed
         currentValue <- thresholdImage$getDataAtPoint(seed)
         

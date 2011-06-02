@@ -43,9 +43,9 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     getImageByType = function (type, place = NULL, index = 1)
     {
         fileName <- getImageFileNameByType(type, place, index)
-        if (tolower(type) %in% c("fa","md","lax") && !imageFileExists(fileName))
+        if (tolower(type) %in% c("fa","md","axialdiff") && !imageFileExists(fileName))
             runDtifitWithSession(.self)
-        if (tolower(type) == "lrad" && !imageFileExists(fileName))
+        if (tolower(type) == "radialdiff" && !imageFileExists(fileName))
             createRadialDiffusivityMapForSession(.self)
         return (newMriImageFromFile(fileName))
     },

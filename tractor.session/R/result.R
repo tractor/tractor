@@ -4,7 +4,7 @@ displayProbtrackResult <- function (probtrackResult, axes = 1:3, colourScale = 2
         report(OL$Error, "Projection axes must be specified as a combination of 1 (x), 2 (y) or 3 (z)")
     
     if (!is(baseImage, "MriImage"))
-        baseImage <- probtrackResult$session$getImageByType(baseImage)
+        baseImage <- probtrackResult$session$getImageByType(baseImage, "diffusion")
     images <- createWeightingAndMetricImagesForResult(probtrackResult, ...)
     finalImage <- newMriImageWithBinaryFunction(images$metric, images$weight, "*")
     
@@ -21,7 +21,7 @@ displayProbtrackResult <- function (probtrackResult, axes = 1:3, colourScale = 2
 writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zoomFactor = 1, prefix = "tract", baseImage = "fa", showSeed = FALSE, ...)
 {
     if (!is(baseImage, "MriImage"))
-        baseImage <- probtrackResult$session$getImageByType(baseImage)
+        baseImage <- probtrackResult$session$getImageByType(baseImage, "diffusion")
     imageDims <- baseImage$getDimensions()
     
     images <- createWeightingAndMetricImagesForResult(probtrackResult, ...)
@@ -40,7 +40,7 @@ writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zo
     }
 }
 
-createWeightingAndMetricImages <- function (image, session = NULL, type = c("weight","avf","fa","md","lax","lrad"), mode = c("weighted","log","binary"), threshold = NULL)
+createWeightingAndMetricImages <- function (image, session = NULL, type = c("weight","fa","md","axialdiff","radialdiff"), mode = c("weighted","log","binary"), threshold = NULL)
 {
     type <- match.arg(type)
     
@@ -53,7 +53,7 @@ createWeightingAndMetricImages <- function (image, session = NULL, type = c("wei
         report(OL$Error, "A session must be specified for metric ", toupper(type))
     else
     {
-        metricImage <- session$getImageByType(type)
+        metricImage <- session$getImageByType(type, "diffusion")
         mode <- match.arg(mode)
     }
 
