@@ -11,5 +11,5 @@ INFO: [x2] Data matrix is transposed relative to acquisition matrix
 * * * INFO: Coordinate origin: (1,1,1)
 * * * INFO: Voxel dimensions : 1 x 1 x 1 mm
 * * * INFO: Data type        : unsigned integer, 16 bits/voxel
-* * * INFO: Endianness       : little
+* * * INFO: Additional tags  : 0
 Value of image "t1" at location (1,145,139) is 205

@@ -1,7 +1,10 @@
-MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject", fields=list(imagedims="integer",voxdims="numeric",voxunit="character",source="character",datatype="list",origin="numeric",endian="character"), methods=list(
-    initialize = function (imagedims = NULL, voxdims = NULL, voxunit = NULL, source = "internal", datatype = NULL, origin = NULL, endian = .Platform$endian, ...)
+MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject", fields=list(imagedims="integer",voxdims="numeric",voxunit="character",source="character",datatype="list",origin="numeric",tags="list"), methods=list(
+    initialize = function (imagedims = NULL, voxdims = NULL, voxunit = NULL, source = "internal", datatype = NULL, origin = NULL, tags = list(), ...)
     {
-        object <- initFields(imagedims=imagedims, voxdims=voxdims, voxunit=voxunit, source=source, datatype=datatype, origin=origin, endian=endian)
+        if (length(tags) != 0 && !all(c("keys","values") %in% names(tags)))
+            report(OL$Error, "Tag list must be empty, or else contain \"keys\" and \"values\" components")
+        
+        object <- initFields(imagedims=imagedims, voxdims=voxdims, voxunit=voxunit, source=source, datatype=datatype, origin=origin, tags=tags)
         
         if (!is.null(datatype) && !all(c("type","size","isSigned") %in% names(object$datatype)))
         {
@@ -18,25 +21,30 @@ MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject
     
     getDimensions = function () { return (imagedims) },
     
-    getEndianness = function () { return (endian) },
-    
     getFieldOfView = function () { return (abs(voxdims) * imagedims) },
     
     getOrigin = function () { return (origin) },
     
     getSource = function () { return (source) },
     
+    getTag = function (key)
+    {
+        if (!is.null(tags$keys) && !is.null(tags$values) && any(key == tags$keys))
+        {
+            rawValues <- tags$values[which(ket == tags$keys)]
+            return (strsplit(implode(rawValues,sep=""), "\\s*\\\\\\s*", perl=TRUE))
+        }
+        else
+            return (NA_character_)
+    },
+    
+    getTags = function () { return (tags) },
+    
     getVoxelDimensions = function () { return (voxdims) },
     
     getVoxelUnit = function () { return (voxunit) },
     
     isInternal = function () { return (source == "internal") },
-    
-    setEndianness = function (newEndian)
-    {
-        if (newEndian %in% c("big","little"))
-            endian <<- newEndian
-    },
     
     setSource = function (newSource)
     {
@@ -59,7 +67,7 @@ MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject
         report(OL$Info, "Coordinate origin: (", implode(round(origin,2), sep=","), ")")
         report(OL$Info, "Voxel dimensions : ", implode(round(abs(voxdims),5), sep=" x "), " ", voxunit)
         report(OL$Info, "Data type        : ", datatypeString)
-        report(OL$Info, "Endianness       : ", endian)
+        report(OL$Info, "Additional tags  : ", length(tags$keys))
     }
 ))
 
@@ -165,7 +173,7 @@ newMriImageWithDataRepresentation <- function (image, representation = c("dense"
     invisible(newImage)
 }
 
-newMriImageMetadataFromTemplate <- function (metadata, imageDims = NA, voxelDims = NA, voxelUnit = NA, source = "internal", datatype = NA, origin = NA, endian = NA)
+newMriImageMetadataFromTemplate <- function (metadata, imageDims = NA, voxelDims = NA, voxelUnit = NA, source = "internal", datatype = NA, origin = NA, tags = NA)
 {
     if (!is(metadata, "MriImageMetadata"))
         report(OL$Error, "The specified metadata template is not valid")
@@ -177,20 +185,20 @@ newMriImageMetadataFromTemplate <- function (metadata, imageDims = NA, voxelDims
                    source=source,
                    datatype=datatype,
                    origin=origin,
-                   endian=endian)
+                   tags=tags)
     params <- params[!is.na(params)]
     
     composite <- c(params, template)
     composite <- composite[!duplicated(names(composite))]
     
-    newMetadata <- MriImageMetadata$new(imagedims=composite$imagedims, voxdims=composite$voxdims, voxunit=composite$voxunit, source=composite$source, datatype=composite$datatype, origin=composite$origin, endian=composite$endian)
+    newMetadata <- MriImageMetadata$new(imagedims=composite$imagedims, voxdims=composite$voxdims, voxunit=composite$voxunit, source=composite$source, datatype=composite$datatype, origin=composite$origin, tags=composite$tags)
     invisible (newMetadata)
 }
 
 newMriImageWithData <- function (data, metadata)
 {
     # Do not use the metadata object supplied because it is mutable and we
-    # don't want changes (to e.g. endianness) to affect multiple images
+    # don't want changes (to e.g. source) to affect multiple images
     metadataDuplicate <- newMriImageMetadataFromTemplate(metadata)
     image <- MriImage$new(data, metadataDuplicate)
     invisible (image)
@@ -271,7 +279,7 @@ newMriImageByExtraction <- function (image, dim, loc)
     
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
     metadata <- image$getMetadata()$serialise()
-    newMetadata <- MriImageMetadata$new(imagedims=metadata$imagedims[dimsToKeep], voxdims=metadata$voxdims[dimsToKeep], voxunit=metadata$voxunit, source="internal", datatype=metadata$datatype, origin=metadata$origin[dimsToKeep], endian=metadata$endian)
+    newMetadata <- MriImageMetadata$new(imagedims=metadata$imagedims[dimsToKeep], voxdims=metadata$voxdims[dimsToKeep], voxunit=metadata$voxunit, source="internal", datatype=metadata$datatype, origin=metadata$origin[dimsToKeep], tags=metadata$tags)
         
     image <- MriImage$new(newData, newMetadata)
     invisible (image)

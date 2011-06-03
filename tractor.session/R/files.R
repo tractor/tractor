@@ -25,7 +25,7 @@ newMriImageFromCamino <- function (fileName, metadata)
     if (length(dims) == 4)
         data <- aperm(data, c(2,3,4,1))
     
-    finalMetadata <- newMriImageMetadataFromTemplate(metadata, datatype=datatype, endian=endian)
+    finalMetadata <- newMriImageMetadataFromTemplate(metadata, datatype=datatype)
     image <- newMriImageWithData(drop(data), finalMetadata)
     image$setSource(fileName)
     

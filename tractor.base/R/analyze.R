@@ -35,11 +35,11 @@ readAnalyze <- function (fileNames)
     datatype <- list(type=.Analyze$rTypes[typeIndex], size=.Analyze$sizes[typeIndex], isSigned=.Analyze$isSigned[typeIndex])
     
     dimsToKeep <- 1:max(which(dims > 1))
-    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=NULL, source=fileNames$fileStem, datatype=datatype, endian=endian)
+    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=NULL, source=fileNames$fileStem, datatype=datatype, tags=list())
     
     xformMatrix <- diag(c(-1,1,1,1) * abs(c(voxelDims[2:4],1)))
     xformMatrix[1:3,4] <- pmax(0,origin[1:3]-1) * abs(voxelDims[2:4]) * c(1,-1,-1)
-    storageMetadata <- list(dataOffset=0, dataScalingSlope=1, dataScalingIntercept=0, xformMatrix=xformMatrix)
+    storageMetadata <- list(dataOffset=0, dataScalingSlope=1, dataScalingIntercept=0, xformMatrix=xformMatrix, endian=endian)
     
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
@@ -122,8 +122,5 @@ writeMriImageToAnalyze <- function (image, fileNames, gzipped = FALSE, datatype 
     close(connection)
     
     if (image$isInternal())
-    {
         image$setSource(expandFileName(fileNames$fileStem))
-        image$setEndianness(.Platform$endian)
-    }
 }

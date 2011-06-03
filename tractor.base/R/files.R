@@ -134,7 +134,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, warn
     info <- readFun(fileNames)
     
     datatype <- info$imageMetadata$datatype
-    endian <- info$imageMetadata$endian
+    endian <- info$storageMetadata$endian
     dims <- info$imageMetadata$imageDims
     voxelDims <- info$imageMetadata$voxelDims
     nVoxels <- prod(dims)
@@ -216,7 +216,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, warn
         }
     }
     
-    imageMetadata <- MriImageMetadata$new(imagedims=dims, voxdims=voxelDims, voxunit=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, datatype=datatype, origin=origin, endian=endian)
+    imageMetadata <- MriImageMetadata$new(imagedims=dims, voxdims=voxelDims, voxunit=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, datatype=datatype, origin=origin, tags=info$imageMetadata$tags)
     
     if (metadataOnly)
         invisible (imageMetadata)

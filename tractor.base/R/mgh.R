@@ -36,9 +36,9 @@ readMgh <- function (fileNames)
     datatype <- list(type=.Mgh$datatypes$rTypes[typeIndex], size=.Mgh$datatypes$sizes[typeIndex], isSigned=.Mgh$datatypes$isSigned[typeIndex])
     
     dimsToKeep <- 1:max(which(dims > 1))
-    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep], voxelUnit=NULL, source=fileNames$fileStem, datatype=datatype, endian="big")
+    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep], voxelUnit=NULL, source=fileNames$fileStem, datatype=datatype, tags=list())
     
-    storageMetadata <- list(dataOffset=284, dataScalingSlope=1, dataScalingIntercept=0, xformMatrix=xformMatrix)
+    storageMetadata <- list(dataOffset=284, dataScalingSlope=1, dataScalingIntercept=0, xformMatrix=xformMatrix, endian="big")
     
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
@@ -115,8 +115,5 @@ writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE, datatype = NU
     close(connection)
     
     if (image$isInternal())
-    {
         image$setSource(expandFileName(fileNames$fileStem))
-        image$setEndianness("big")
-    }
 }

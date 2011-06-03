@@ -138,9 +138,9 @@ readNifti <- function (fileNames)
     dimsToKeep <- 1:max(which(dims > 1))
     voxelDims[2:4] <- voxelDims[2:4] * sign(diag(xformMatrix)[1:3])
     
-    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=unit, source=fileNames$fileStem, datatype=datatype, endian=endian)
+    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=unit, source=fileNames$fileStem, datatype=datatype, tags=list())
     
-    storageMetadata <- list(dataOffset=dataOffset, dataScalingSlope=slopeAndIntercept[1], dataScalingIntercept=slopeAndIntercept[2], xformMatrix=xformMatrix)
+    storageMetadata <- list(dataOffset=dataOffset, dataScalingSlope=slopeAndIntercept[1], dataScalingIntercept=slopeAndIntercept[2], xformMatrix=xformMatrix, endian=endian)
     
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
@@ -239,8 +239,5 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     close(connection)
     
     if (image$isInternal())
-    {
         image$setSource(expandFileName(fileNames$fileStem))
-        image$setEndianness(.Platform$endian)
-    }
 }
