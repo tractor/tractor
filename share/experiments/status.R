@@ -14,8 +14,7 @@ runExperiment <- function ()
     stagesComplete <- c(imageFileExists(session$getImageFileNameByType("rawdata","diffusion")),
                         imageFileExists(session$getImageFileNameByType("refb0","diffusion")),
                         imageFileExists(session$getImageFileNameByType("mask","diffusion")),
-                        imageFileExists(session$getImageFileNameByType("fa","diffusion")),
-                        session$isPreprocessed())
+                        imageFileExists(session$getImageFileNameByType("fa","diffusion")))
     
     report(OL$Info, "Session directory:             ", session$getDirectory())
     report(OL$Info, "Working directory exists:      ", file.exists(session$getDirectory("root")))

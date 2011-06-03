@@ -62,18 +62,18 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getObjectFileName = function (object) { return (file.path(getObjectDirectory(), ensureFileSuffix(object,"Rdata"))) },
     
-    isPreprocessed = function () { return (imageFileExists(getImageFileNameByType("avf"))) },
+    isPreprocessed = function () { return (imageFileExists(getImageFileNameByType("mask","diffusion"))) },
     
     nFibres = function ()
     {
-        if (!isPreprocessed())
-            return (NA)
-        
         i <- 1
         while (imageFileExists(getImageFileNameByType("avf",index=i)))
             i <- i + 1
-
-        return (i-1)
+        
+        if (i == 1)
+            return (NA)
+        else
+            return (i-1)
     }
 ))
 
@@ -151,6 +151,15 @@ updateSessionHierarchy <- function (session)
         {
             newFdtDirectory <- session$getDirectory("fdt", createIfMissing=TRUE)
             file.rename(file.path(diffusionDirectory,filesToMoveBack), file.path(newFdtDirectory,filesToMoveBack))
+        }
+        
+        newFdtDirectory <- session$getDirectory("fdt")
+        if (file.exists(file.path(newFdtDirectory,"bvals")) && file.exists(file.path(newFdtDirectory,"bvecs")))
+        {
+            bValues <- unlist(read.table(file.path(newFdtDirectory, "bvals")))
+            bVectors <- as.matrix(read.table(file.path(newFdtDirectory, "bvecs")))
+            scheme <- newSimpleDiffusionSchemeWithDirections(bVectors, bValues)
+            writeSimpleDiffusionSchemeForSession(session, scheme)
         }
     }
 }

@@ -164,7 +164,7 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     }
 }
 
-runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","screen"), ask = TRUE)
+runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","screen"))
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
@@ -174,30 +174,19 @@ runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","scre
     targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
     createFdtFilesForSession(session)
     
-    if (!ask)
-        ans <- "y"
+    unlink(session$getDirectory("bedpost"), recursive=TRUE)
+    
+    if (how == "screen")
+    {
+        report(OL$Info, "Starting bedpostx in a \"screen\" session")
+        bedpostLoc <- locateExecutable("bedpostx", errorIfMissing=TRUE)
+        paramString <- paste("-d -m", bedpostLoc, targetDir, "-n", nFibres, sep=" ")
+        execute("screen", paramString, errorOnFail=TRUE)
+    }
     else
     {
-        execute("bedpostx_datacheck", session$getDirectory("fdt"), errorOnFail=TRUE)
-        ans <- report(OL$Question, "Okay to start bedpostx [yn]?")
-    }
-    
-    if (tolower(ans) == "y")
-    {
-        unlink(session$getDirectory("bedpost"), recursive=TRUE)
-        
-        if (how == "screen")
-        {
-            report(OL$Info, "Starting bedpostx in a \"screen\" session")
-            bedpostLoc <- locateExecutable("bedpostx", errorIfMissing=TRUE)
-            paramString <- paste("-d -m", bedpostLoc, session$getDirectory("fdt"), "-n", nFibres, sep=" ")
-            execute("screen", paramString, errorOnFail=TRUE)
-        }
-        else
-        {
-            report(OL$Info, "Starting bedpostx as a ", ifelse(how=="fg","normal foreground","background"), " process")
-            paramString <- paste(session$getDirectory("fdt"), "-n", nFibres, sep=" ")
-            execute("bedpostx", paramString, errorOnFail=TRUE, wait=(how=="fg"))
-        }
+        report(OL$Info, "Starting bedpostx as a ", ifelse(how=="fg","normal foreground","background"), " process")
+        paramString <- paste(targetDir, "-n", nFibres, sep=" ")
+        execute("bedpostx", paramString, errorOnFail=TRUE, wait=(how=="fg"))
     }
 }

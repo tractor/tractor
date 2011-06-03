@@ -1,5 +1,5 @@
 #@args [session directory]
-#@desc Runs the standard FSL-FDT preprocessing pipeline on the specified session directory (or "." if none is specified). This pipeline consists of five stages: (1) convert DICOM files into a 4D Analyze/NIfTI volume; (2) correct the data set for eddy current induced distortions; (3) create a mask to extract only brain voxels; (4, optional) calculate diffusion tensor characteristics such as principal eigenvectors and FA values; (5) run BEDPOSTX. The last stage takes many hours. If the pipeline was previously partly completed, the script will resume it where appropriate. (Starting from the beginning can be forced by specifying SkipCompletedStages:false.) The script asks the user about each stage unless Interactive:false is given. Note that BEDPOSTX will be run using a 2 fibre model at each voxel by default - this is changed with the NumberOfFibres option. Diffusion gradient directions will be rotated to compensate for the eddy current correction process as part of stage 2 if RotateGradients:true is given.
+#@desc Runs the standard FSL-FDT preprocessing pipeline on the specified session directory (or "." if none is specified). This pipeline consists of four stages: (1) convert DICOM files into a 4D Analyze/NIfTI volume; (2) correct the data set for eddy current induced distortions; (3) create a mask to extract only brain voxels; (4, optional) calculate diffusion tensor characteristics such as principal eigenvectors and FA values. If the pipeline was previously partly completed, the script will resume it where appropriate. (Starting from the beginning can be forced by specifying SkipCompletedStages:false.) The script asks the user about each stage unless Interactive:false is given. Diffusion gradient directions will be rotated to compensate for the eddy current correction process as part of stage 2 if RotateGradients:true is given.
 #@interactive TRUE
 
 suppressPackageStartupMessages(require(tractor.session))
@@ -12,7 +12,7 @@ runExperiment <- function ()
         session <- newSessionFromDirectory(Arguments[1])
     
     interactive <- getConfigVariable("Interactive", TRUE)
-    stages <- getConfigVariable("RunStages", "1-5")
+    stages <- getConfigVariable("RunStages", "1-4")
     skipCompleted <- getConfigVariable("SkipCompletedStages", TRUE)
     dicomDir <- getConfigVariable("DicomDirectory", NULL, "character")
     useGradientCache <- getConfigVariable("UseGradientCache", "second", validValues=c("first","second","never"))
@@ -22,8 +22,6 @@ runExperiment <- function ()
     betIntensityThreshold <- getConfigVariable("BetIntensityThreshold", 0.3)
     betVerticalGradient <- getConfigVariable("BetVerticalGradient", 0)
     flipAxes <- getConfigVariable("FlipGradientAxes", NULL, "character")
-    nFibres <- getConfigVariable("NumberOfFibres", NULL, "integer")
-    howRunBedpost <- getConfigVariable("HowRunBedpost", "fg", validValues=c("fg","bg","screen"))
     
     if (interactive && getOption("outputLevel") > OL$Info)
         setOutputLevel(OL$Info)
@@ -35,17 +33,11 @@ runExperiment <- function ()
     }
     
     stages <- splitAndConvertString(stages, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
-    # Handle old format RunStages values
-    if (any(stages > 5))
-        stages <- splitAndConvertString(as.character(stages), "", "integer", fixed=TRUE, errorIfInvalid=TRUE)
-    runStages <- 1:5 %in% stages
+    runStages <- 1:4 %in% stages
     if (all(!runStages))
         report(OL$Info, "Nothing to do")
     
-    if (skipCompleted && session$isPreprocessed() && (is.null(nFibres) || session$nFibres() == nFibres))
-        report(OL$Info, "This session directory is already preprocessed")
-    else try(
-    {
+    try({
         if (runStages[1] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("rawdata","diffusion"))))
         {
             createFilesForSession(session, dicomDir, overwriteQuietly=(!interactive))
@@ -140,14 +132,7 @@ runExperiment <- function ()
                 }
             }
         }
-        
-        if (runStages[5])
-        {
-            if (is.null(nFibres))
-                nFibres <- 2
-            runBedpostWithSession(session, nFibres, how=howRunBedpost, ask=interactive)
-        }
-    } )
+    })
     
     invisible (NULL)
 }
