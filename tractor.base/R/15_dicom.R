@@ -105,7 +105,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE)
     nFiles <- length(files)
 
     count <- 0
-    seriesNumbers <- numeric(nFiles)
+    seriesNumbers <- integer(nFiles)
     
     report(OL$Info, "Reading series numbers from ", nFiles, " files")
     for (i in 1:nFiles)
@@ -132,6 +132,8 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE)
     uniqueSeries <- sort(unique(seriesNumbers))
     report(OL$Info, "Found series ", implode(uniqueSeries,", "), "; creating subdirectories")
     
+    numberWidth <- nchar(as.character(max(uniqueSeries)))
+    
     for (series in uniqueSeries)
     {
         matchingFiles <- which(seriesNumbers==series)
@@ -141,7 +143,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE)
             description <- metadata$getTagValue(0x0008, 0x103e)
             report(OL$Info, "Series ", series, " includes ", length(matchingFiles), " files; description is \"", description, "\"")
             
-            subdirectory <- paste(series, gsub("\\W","",description,perl=TRUE), sep="_")
+            subdirectory <- paste(sprintf(paste("%0",numberWidth,"d",sep=""),series), gsub("\\W","",description,perl=TRUE), sep="_")
             dir.create(file.path(directory, subdirectory))
             
             seriesFiles <- basename(files[matchingFiles])
