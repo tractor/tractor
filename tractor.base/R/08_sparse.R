@@ -193,6 +193,12 @@ setMethod("[<-", "SparseArray", function (x, i, j, ..., value) {
     return (x)
 })
 
+setAs("array", "SparseArray", function (from) {
+    coordinates <- which(from != 0, arr.ind=TRUE)
+    object <- SparseArray$new(data=from[coordinates], coords=coordinates, dims=dim(from))
+    return (object)
+})
+
 setAs("SparseArray", "array", function (from) {
     data <- array(vector(mode=storage.mode(from$getData()),length=1), dim=from$getDimensions())
     data[from$getCoordinates()] <- from$getData()
@@ -204,18 +210,12 @@ as.array.SparseArray <- function (x)
     as(x, "array")
 }
 
+dim.SparseArray <- function (x)
+{
+    x$getDimensions()
+}
+
 newSparseArrayWithData <- function (data, coordinates, dims)
 {
     invisible (SparseArray$new(data=data, coords=coordinates, dims=dims))
-}
-
-newSparseArrayFromArray <- function (data)
-{
-    if (!is.array(data))
-        report(OL$Error, "Specified data is not in the form of an array")
-    
-    coordinates <- which(data != 0, arr.ind=TRUE)
-    result <- SparseArray$new(data=data[coordinates], coords=coordinates, dims=dim(data))
-    
-    invisible (result)
 }

@@ -158,7 +158,7 @@ newMriImageWithDataRepresentation <- function (image, representation = c("dense"
     if (image$isSparse() && representation == "dense")
         newImage <- newMriImageWithData(as(image$getData(), "array"), image$getMetadata())
     else if (!image$isSparse() && representation == "coordlist")
-        newImage <- newMriImageWithData(newSparseArrayFromArray(image$getData()), image$getMetadata())
+        newImage <- newMriImageWithData(as(image$getData(), "SparseArray"), image$getMetadata())
     else
         newImage <- image
     
