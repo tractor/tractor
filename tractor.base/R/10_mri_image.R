@@ -117,9 +117,30 @@ MriImage <- setRefClass("MriImage", contains="MriImageMetadata", fields=list(dat
 
 setAs("MriImage", "array", function (from) as(from$getData(),"array"))
 
+setAs("array", "MriImage", function (from) {
+    if (storage.mode(from) == "integer")
+        datatype <- getDataTypeByNiftiCode(8)
+    else if (storage.mode(from) == "double")
+        datatype <- getDataTypeByNiftiCode(64)
+    else
+        report(OL$Error, "There is no MriImage data type to handle arrays of mode \"", storage.mode(from), "\"")
+    
+    nDims <- length(dim(from))
+    origin <- c(1, 1, 1, 0, 0, 0)[1:nDims]
+    metadata <- MriImageMetadata$new(imagedims=dim(from), voxdims=rep(1,nDims), voxunit=NULL, source="internal", datatype=datatype, origin=origin, tags=list())
+    image <- newMriImageWithData(from, metadata)
+    
+    return (image)
+})
+
 as.array.MriImage <- function (x)
 {
     as(x, "array")
+}
+
+dim.MriImage <- function (x)
+{
+    x$getDimensions()
 }
 
 "[.MriImage" <- function (x, ...)
