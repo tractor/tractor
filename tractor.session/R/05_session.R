@@ -232,7 +232,7 @@ createFilesForSession <- function (session, dicomDir = NULL, overwriteQuietly = 
     
     session$getDirectory("diffusion", createIfMissing=TRUE)
     writeMriImageToFile(info$image, session$getImageFileNameByType("rawdata","diffusion"))
-    info$image$summarise()
+    print(info$image)
     
     seriesDescriptions <- implode(gsub("\\W","",info$seriesDescriptions,perl=TRUE), ",")
     writeLines(seriesDescriptions, file.path(session$getDirectory("diffusion"),"descriptions.txt"))

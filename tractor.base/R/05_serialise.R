@@ -30,7 +30,20 @@ SerialisableObject <- setRefClass("SerialisableObject", methods=list(
 setMethod("show", "SerialisableObject", function (object)
 {
     if ("summarise" %in% object$getRefClass()$methods())
-        object$summarise()
+    {
+        summaryList <- object$summarise()
+        if (is.list(summaryList) && all(c("labels","values") %in% names(summaryList)))
+        {
+            labelLengths <- nchar(summaryList$labels)
+            maxLabelLength <- max(labelLengths)
+            nValues <- min(length(summaryList$labels), length(summaryList$values))
+            
+            oldOption <- options(useOutputPrefix=FALSE)
+            for (i in seq_len(nValues))
+                report(OL$Info, implode(rep(" ",maxLabelLength-labelLengths[i]),sep=""), summaryList$labels[i], " : ", summaryList$values[i])
+            options(oldOption)
+        }
+    }
     else
         cat(paste("An object of class \"", class(object)[1], "\"\n", sep=""))
 })

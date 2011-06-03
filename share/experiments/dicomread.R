@@ -15,5 +15,5 @@ runExperiment <- function ()
     info <- newMriImageFromDicomDirectory(Arguments[1])
     reportFlags()
     writeMriImageToFile(info$image, fileName)
-    info$image$summarise()
+    print(info$image)
 }

@@ -36,7 +36,7 @@ runExperiment <- function ()
     model <- results$mm
     writeNTResource(model, "model", "pnt", list(tractName=tractName,datasetName=datasetName))
 
-    model$summarise()
+    print(model)
     
     # This test is redundant if a prior was used with alphaOffset >= 1
     if (is.null(alphaPriorMean))

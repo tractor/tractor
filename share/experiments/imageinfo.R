@@ -8,5 +8,5 @@ runExperiment <- function ()
     requireArguments("image file")
     setOutputLevel(OL$Info, FALSE)
     fileName <- implode(Arguments, sep=" ")
-    newMriImageMetadataFromFile(fileName)$summarise()
+    print(newMriImageMetadataFromFile(fileName))
 }

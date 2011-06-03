@@ -29,8 +29,9 @@ SimpleDiffusionScheme <- setRefClass("SimpleDiffusionScheme", contains="Serialis
     
     summarise = function ()
     {
-        report(OL$Info, "Number of gradient directions: ", implode(nDirections(),", "))
-        report(OL$Info, "Diffusion b-values           : ", implode(round(bValues),", "), " s/mm^2")
+        labels <- c("Number of gradient directions", "Diffusion b-values")
+        values <- c(implode(nDirections(),", "), paste(implode(round(bValues),", "), "s/mm^2"))
+        return (list(labels=labels, values=values))
     }
 ))
 

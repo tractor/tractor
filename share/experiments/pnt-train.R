@@ -20,5 +20,5 @@ runExperiment <- function ()
     model <- newMatchingTractModelFromDataTable(data, reference$getTract(), maxLength=maxKnotCount, asymmetric=asymmetricModel)
     
     writeNTResource(model, "model", "pnt", list(tractName=tractName,datasetName=datasetName))
-    model$summarise()
+    print(model)
 }

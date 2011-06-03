@@ -15,9 +15,9 @@ UninformativeTractModel <- setRefClass("UninformativeTractModel", contains="Seri
     
     summarise = function ()
     {
-        report(OL$Info, "Ref tract lengths : ", getRefLeftLength(), " (left), ", getRefRightLength(), " (right)")
-        report(OL$Info, "Length cutoff     : ", getMaximumLength())
-        report(OL$Info, "Point type        : ", getPointType())
+        labels <- c("Ref tract lengths", "Length cutoff", "Point type")
+        values <- c(paste(getRefLeftLength(), " (left), ", getRefRightLength(), " (right)",sep=""), getMaximumLength(), getPointType())
+        return (list(labels=labels, values=values))
     }
 ))
 
@@ -77,20 +77,21 @@ MatchingTractModel <- setRefClass("MatchingTractModel", contains="SerialisableOb
     
     summarise = function ()
     {
-        report(OL$Info, "Asymmetric model  : ", .self$isAsymmetric())
         if (.self$isAsymmetric())
         {
-            report(OL$Info, "Alphas (left)     : ", implode(round(.self$getAlphas("left"),2), sep=", "))
-            report(OL$Info, "Alphas (right)    : ", implode(round(.self$getAlphas("right"),2), sep=", "))
+            labels <- c("Asymmetric model", "Alphas (left)", "Alphas (right)")
+            values <- c(TRUE, implode(round(.self$getAlphas("left"),2),sep=", "), implode(round(.self$getAlphas("right"),2),sep=", "))
         }
         else
         {
             longerSide <- ifelse(length(cosineDistributions$left) > length(cosineDistributions$right), "left", "right")
-            report(OL$Info, "Alphas            : ", implode(round(.self$getAlphas(longerSide),2), sep=", "))
+            labels <- c("Asymmetric model", "Alphas")
+            values <- c(FALSE, implode(round(.self$getAlphas(longerSide),2),sep=", "))
         }
-        report(OL$Info, "Ref tract lengths : ", .self$getRefLeftLength(), " (left), ", .self$getRefRightLength(), " (right)")
-        report(OL$Info, "Length cutoff     : ", .self$getMaximumLength())
-        report(OL$Info, "Point type        : ", .self$getPointType())
+        
+        labels <- c(labels, "Ref tract lengths", "Length cutoff", "Point type")
+        values <- c(values, paste(.self$getRefLeftLength(), " (left), ", .self$getRefRightLength(), " (right)", sep=""), .self$getMaximumLength(), .self$getPointType())
+        return (list(labels=labels, values=values))
     }
 ))
 

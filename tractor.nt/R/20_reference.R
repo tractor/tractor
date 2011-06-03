@@ -29,19 +29,27 @@ ReferenceTract <- setRefClass("ReferenceTract", contains="SerialisableObject", f
     
     summarise = function ()
     {
-        report(OL$Info, "Tract class        : ", class(tract)[1])
-        report(OL$Info, "In standard space  : ", .self$inStandardSpace())
-        report(OL$Info, "Standard space seed: ", implode(round(standardSeed,2), ","), " (", seedUnit, ")")
+        labels <- c("Tract class", "In standard space", "Standard space seed")
+        values <- c(class(tract)[1], .self$inStandardSpace(), paste(implode(round(standardSeed,2), ","), " (", seedUnit, ")",sep=""))
+        
         if (!is.null(session))
-            report(OL$Info, "Source session     : ", session$getDirectory())
+        {
+            labels <- c(labels, "Source session")
+            values <- c(values, session$getDirectory())
+        }
         if (length(options) > 0)
         {
-            report(OL$Info, "Point type         : ", options$pointType)
-            report(OL$Info, "Length quantile    : ", options$lengthQuantile)
-            report(OL$Info, "Knot spacing       : ", round(options$knotSpacing,2))
+            labels <- c(labels, "Point type", "Length quantile", "Knot spacing")
+            values <- c(values, options$pointType, options$lengthQuantile, round(options$knotSpacing,2))
+            
             if (!is.null(options$maxPathLength))
-                report(OL$Info, "Maximum knot count : ", options$maxPathLength)
+            {
+                labels <- c(labels, "Maximum knot count")
+                values <- c(values, options$maxPathLength)
+            }
         }
+        
+        return (list(labels=labels, values=values))
     }
 ))
 

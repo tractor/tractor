@@ -62,12 +62,9 @@ MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject
             datatypeString <- paste(datatypeString, " ", datatype$type, ", ", datatype$size*8, " bits/voxel", sep="")
         }
         
-        report(OL$Info, "Image source     : ", source)
-        report(OL$Info, "Image dimensions : ", implode(imagedims, sep=" x "), " voxels")
-        report(OL$Info, "Coordinate origin: (", implode(round(origin,2), sep=","), ")")
-        report(OL$Info, "Voxel dimensions : ", implode(round(abs(voxdims),5), sep=" x "), " ", voxunit)
-        report(OL$Info, "Data type        : ", datatypeString)
-        report(OL$Info, "Additional tags  : ", length(tags$keys))
+        labels <- c("Image source", "Image dimensions", "Coordinate origin", "Voxel dimensions", "Data type", "Additional tags")
+        values <- c(source, paste(implode(imagedims, sep=" x "),"voxels",sep=" "), paste("(",implode(round(origin,2), sep=","),")",sep=""), paste(implode(round(abs(voxdims),5), sep=" x "),voxunit,sep=" "), datatypeString, length(tags$keys))
+        return (list(labels=labels, values=values))
     }
 ))
 
@@ -108,7 +105,14 @@ MriImage <- setRefClass("MriImage", contains="MriImageMetadata", fields=list(dat
             return (sum(data == 0) / prod(.self$getDimensions()))
     },
     
-    isSparse = function () { return (is(data,"SparseArray")) }
+    isSparse = function () { return (is(data,"SparseArray")) },
+    
+    summarise = function ()
+    {
+        parentValue <- callSuper()
+        sparseness <- paste(round(.self$getSparseness()*100,2), "% (", ifelse(.self$isSparse(),"sparse","dense"), " storage)", sep="")
+        return (list(labels=c(parentValue$labels,"Sparseness"), values=c(parentValue$values,sparseness)))
+    }
 ))
 
 setAs("MriImage", "array", function (from) as(from$getData(),"array"))

@@ -3,10 +3,7 @@ HeuristicNTResults <- setRefClass("HeuristicNTResults", contains="SerialisableOb
     
     nSessions = function () { return (length(results)) },
     
-    summarise = function ()
-    {
-        report(OL$Info, "Number of sessions: ", .self$nSessions())
-    }
+    summarise = function () { return (list(labels="Number of sessions", values=.self$nSessions())) }
 ))
 
 setClassUnion("UninformativeTractModelOrNull", c("UninformativeTractModel","NULL"))
@@ -43,9 +40,10 @@ ProbabilisticNTResults <- setRefClass("ProbabilisticNTResults", contains="Serial
     nSessions = function () { return (length(tractPosteriors)) },
     
     summarise = function ()
-    {
-        report(OL$Info, "Number of sessions: ", .self$nSessions())
-        report(OL$Info, "Seeds per session : ", .self$nPoints())
+    { 
+        labels <- c("Number of sessions", "Seeds per session")
+        values <- c(.self$nSessions(), .self$nPoints())
+        return (list(labels=labels, values=values))
     }
 ))
 
