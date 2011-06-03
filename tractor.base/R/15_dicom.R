@@ -110,7 +110,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE)
     report(OL$Info, "Reading series numbers from ", nFiles, " files")
     for (i in 1:nFiles)
     {
-        metadata <- try(newDicomMetadataFromFile(files[i]), silent=TRUE)
+        metadata <- try(newDicomMetadataFromFile(files[i], stopTag=c(0x0020,0x0011)), silent=TRUE)
         if (is.null(metadata) || ("try-error" %in% class(metadata)))
         {
             report(OL$Info, "Skipping ", files[i])
@@ -137,7 +137,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE)
         matchingFiles <- which(seriesNumbers==series)
         if (length(matchingFiles) > 0)
         {
-            metadata <- newDicomMetadataFromFile(files[matchingFiles[1]])
+            metadata <- newDicomMetadataFromFile(files[matchingFiles[1]], stopTag=c(0x0008,0x103e))
             description <- metadata$getTagValue(0x0008, 0x103e)
             report(OL$Info, "Series ", series, " includes ", length(matchingFiles), " files; description is \"", description, "\"")
             
@@ -599,7 +599,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     invisible (returnValue)
 }
 
-newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary = NULL)
+newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary = NULL, stopTag = NULL)
 {
     fileName <- expandFileName(fileName)
     
@@ -759,6 +759,13 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
             }
             else
                 values <- c(values, rawToChar(stripNul(readBin(connection, "raw", n=length))))
+            
+            if (!is.null(stopTag) && currentGroup == stopTag[1] && currentElement == stopTag[2])
+            {
+                dataOffset <- NA
+                dataLength <- NA
+                break
+            }
         }
         
         close(connection)
