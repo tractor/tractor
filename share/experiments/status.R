@@ -7,18 +7,15 @@ runExperiment <- function ()
 {
     session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
     
-    if (getOption("outputLevel") > OL$Info)
-        setOutputLevel(OL$Info)
-    options(useOutputPrefix=FALSE)
-    
     stagesComplete <- c(imageFileExists(session$getImageFileNameByType("rawdata","diffusion")),
                         imageFileExists(session$getImageFileNameByType("refb0","diffusion")),
                         imageFileExists(session$getImageFileNameByType("mask","diffusion")),
                         imageFileExists(session$getImageFileNameByType("fa","diffusion")))
     
-    report(OL$Info, "Session directory:             ", session$getDirectory())
-    report(OL$Info, "Working directory exists:      ", file.exists(session$getDirectory("root")))
-    report(OL$Info, "Preprocessing stages complete: ", implode(which(stagesComplete), ","))
-    report(OL$Info, "Number of fibres per voxel:    ", session$nFibres())
-    report(OL$Info, "Camino files created:          ", file.exists(file.path(session$getDirectory("camino"), "sequence.scheme")))
+    labels <- c("Session directory", "Working directory exists", "Preprocessing stages complete", "Number of fibres per voxel", "Camino files created")
+    values <- c(session$getDirectory(), file.exists(session$getDirectory("root")), implode(which(stagesComplete),","), session$nFibres(), file.exists(file.path(session$getDirectory("camino"),"sequence.scheme")))
+    
+    if (getOption("outputLevel") > OL$Info)
+        setOutputLevel(OL$Info)
+    printLabelledValues(labels, values)
 }

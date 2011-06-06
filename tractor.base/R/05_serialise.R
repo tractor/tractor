@@ -33,16 +33,7 @@ setMethod("show", "SerialisableObject", function (object)
     {
         summaryList <- object$summarise()
         if (is.list(summaryList) && all(c("labels","values") %in% names(summaryList)))
-        {
-            labelLengths <- nchar(summaryList$labels)
-            maxLabelLength <- max(labelLengths)
-            nValues <- min(length(summaryList$labels), length(summaryList$values))
-            
-            oldOption <- options(useOutputPrefix=FALSE)
-            for (i in seq_len(nValues))
-                report(OL$Info, implode(rep(" ",maxLabelLength-labelLengths[i]),sep=""), summaryList$labels[i], " : ", summaryList$values[i])
-            options(oldOption)
-        }
+            printLabelledValues(summaryList$labels, summaryList$values)
     }
     else
         cat(paste("An object of class \"", class(object)[1], "\"\n", sep=""))

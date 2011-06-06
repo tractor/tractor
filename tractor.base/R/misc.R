@@ -18,6 +18,23 @@ implode <- function (strings, sep = "", finalSep = NULL)
     }
 }
 
+printLabelledValues <- function (labels, values, outputLevel = OL$Info)
+{
+    if (length(labels) != length(values))
+        report(OL$Error, "Labels and values should be of the same length")
+    
+    labelLengths <- nchar(labels)
+    maxLabelLength <- max(labelLengths)
+    nValues <- length(values)
+    
+    oldOption <- options(useOutputPrefix=FALSE)
+    for (i in seq_len(nValues))
+        report(outputLevel, implode(rep(" ",maxLabelLength-labelLengths[i]),sep=""), labels[i], " : ", values[i])
+    options(oldOption)
+    
+    invisible(NULL)
+}
+
 relativePath <- function (path, referencePath)
 {
     mainPieces <- strsplit(expandFileName(path), .Platform$file.sep, fixed=TRUE)[[1]]
@@ -43,7 +60,7 @@ expandFileName <- function (fileName)
         fileName <- sub("/[^/]*[^./][^/]*/\\.\\.(?=/)", "", fileName, perl=TRUE)
     fileName <- gsub("/*\\.?$", "", fileName, perl=TRUE)
     
-    return(fileName)
+    return (fileName)
 }
 
 ensureFileSuffix <- function (fileName, suffix, strip = NULL)

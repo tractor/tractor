@@ -2,33 +2,39 @@
 
 runExperiment <- function ()
 {
+    labels <- character(0)
+    values <- character(0)
+    
     sysInfo <- Sys.info()
     if (!is.null(sysInfo))
     {
-        report(OL$Info, "Machine:             ", sysInfo["machine"])
-        report(OL$Info, "OS name:             ", sysInfo["sysname"])
-        report(OL$Info, "OS release:          ", sysInfo["release"])
+        labels <- c(labels, "Machine", "OS name", "OS release")
+        values <- c(values, sysInfo["machine"], sysInfo["sysname"], sysInfo["release"])
     }
     
     tractorVersion <- readLines(file.path(Sys.getenv("TRACTOR_HOME"), "VERSION"))
-    report(OL$Info, "TractoR version:     ", tractorVersion[1])
-    
     rBuild <- R.Version()
-    report(OL$Info, "R version:           ", rBuild$major, ".", rBuild$minor)
-    report(OL$Info, "R build platform:    ", rBuild$platform)
+    labels <- c(labels, "TractoR version", "R version", "R build platform")
+    values <- c(values, tractorVersion[1], paste(rBuild$major,rBuild$minor,sep="."), rBuild$platform)
+    
+    labels <- c(labels, "FSL version", "ImageMagick version")
     
     fslVersionFile <- file.path(Sys.getenv("FSLDIR"), "etc", "fslversion")
     if (file.exists(fslVersionFile))
-        report(OL$Info, "FSL version:         ", readLines(fslVersionFile)[1])
+        values <- c(values, readLines(fslVersionFile)[1])
     else
-        report(OL$Info, "FSL version:         N/A (not found)")
+        values <- c(values, "N/A (not found)")
     
     convertLoc <- locateExecutable("convert", errorIfMissing=FALSE)
     if (is.null(convertLoc))
-        report(OL$Info, "ImageMagick version: N/A (not found)")
+        values <- c(values, "N/A (not found)")
     else
     {
         versionString <- execute("convert", "-version", intern=TRUE)[1]
-        report(OL$Info, "ImageMagick version: ", sub("^.+ImageMagick ([0-9.-]+) .+$","\\1",versionString))
+        values <- c(values, sub("^.+ImageMagick ([0-9.-]+) .+$","\\1",versionString))
     }
+    
+    if (getOption("outputLevel") > OL$Info)
+        setOutputLevel(OL$Info)
+    printLabelledValues(labels, values)
 }
