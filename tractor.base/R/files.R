@@ -168,6 +168,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, warn
         dimPermutation <- apply(absRotationMatrix > tolerance, 1, which)
         if (nDims > 3)
             dimPermutation <- c(dimPermutation, 4:nDims)
+        else if (nDims < 3)
+            dimPermutation <- dimPermutation[1:nDims]
         if (!identical(dimPermutation, seq_len(nDims)))
         {
             if (warnIfNotLas)
