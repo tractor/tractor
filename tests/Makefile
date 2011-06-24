@@ -1,7 +1,7 @@
 BASH=/bin/bash
 ECHO=/bin/echo
 ECHO_N=/bin/echo -n
-DIFF=diff
+DIFF=diff -b
 
 COLUMNS=40
 TRACTOR=../bin/tractor -q -z -i
