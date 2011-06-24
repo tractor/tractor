@@ -2,6 +2,8 @@
 
 runExperiment <- function ()
 {
+    setOutputLevel(OL$Info, FALSE)
+    
     sysInfo <- Sys.info()
     if (!is.null(sysInfo))
     {
