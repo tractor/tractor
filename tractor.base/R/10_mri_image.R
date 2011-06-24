@@ -63,7 +63,7 @@ MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject
         }
         
         labels <- c("Image source", "Image dimensions", "Coordinate origin", "Voxel dimensions", "Data type", "Additional tags")
-        values <- c(source, paste(implode(imagedims, sep=" x "),"voxels",sep=" "), paste("(",implode(round(origin,2), sep=","),")",sep=""), paste(implode(round(abs(voxdims),5), sep=" x "),voxunit,sep=" "), datatypeString, length(tags$keys))
+        values <- c(source, paste(implode(imagedims, sep=" x "),"voxels",sep=" "), paste("(",implode(round(origin,2), sep=","),")",sep=""), paste(implode(round(abs(voxdims),5), sep=" x "),ifelse(voxunit=="unknown","(units unknown)",voxunit),sep=" "), datatypeString, length(tags$keys))
         return (list(labels=labels, values=values))
     }
 ))
