@@ -102,7 +102,7 @@ MriImage <- setRefClass("MriImage", contains="MriImageMetadata", fields=list(dat
         if (.self$isSparse())
             return (1 - (nrow(data$getCoordinates()) / prod(.self$getDimensions())))
         else
-            return (sum(data == 0) / prod(.self$getDimensions()))
+            return (sum(data==0 | is.na(data)) / prod(.self$getDimensions()))
     },
     
     isSparse = function () { return (is(data,"SparseArray")) },

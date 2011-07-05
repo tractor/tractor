@@ -194,7 +194,7 @@ setMethod("[<-", "SparseArray", function (x, i, j, ..., value) {
 })
 
 setAs("array", "SparseArray", function (from) {
-    coordinates <- which(from != 0, arr.ind=TRUE)
+    coordinates <- which(!is.na(from) & from != 0, arr.ind=TRUE)
     object <- SparseArray$new(data=from[coordinates], coords=coordinates, dims=dim(from))
     return (object)
 })
