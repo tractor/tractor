@@ -1,6 +1,36 @@
  NEWS/ChangeLog for multicore
 ------------------------------
 
+0.1-5	2011-03-09
+    o	fix an issue in mclapply() and mc.prechedule = FALSE when NULL
+	results are involved (thanks to Ralf Tautenhahn for reporting)
+
+0.1-4	2011-02-11
+    o	added (experimental) support for Windows
+	Note: it (sort of) works on Windows 2k and XP only. Vista and
+	Windows 7 is not supported due to changes to the kernel. Since
+	Vista it becomes increasingly unlikely that multicore will be
+	possible on Windows in general.
+
+    o	added cores detection for FreeBSD (thanks to Gunnar Schaefer)
+
+    o	added pvec() function which splits up the call of a vectorized
+	map function across cores and re-combines them. It is useful
+	for computation on large vectors.
+
+    o	added mc.cleanup argument (by default TRUE) which terminates
+	child processes in the case of user interrupt (or error) in
+	the master process.
+
+    o	children() allows to check the status of a subset of active
+	processes using the select argument.
+
+    o	multicore now attempts to automatically disable event loop
+	processing on Mac OS X in forked children. For Quartz
+	Cocoa event loop this requires R 2.12.2 or higher.
+	This allows the use of multicore in R for Mac GUI.
+
+
 0.1-3	2009-02-02
     o	simplify the internal management of child processes and
 	consequently remove bugs that lead to poor feeding of cores

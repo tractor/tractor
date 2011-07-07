@@ -18,6 +18,7 @@ mcparallel <- parallel
 
 collect <- function(jobs, wait=TRUE, timeout=0, intermediate=FALSE) {
   if (missing(jobs)) jobs <- children()
+  if (!length(jobs)) return (NULL)
   if (isTRUE(intermediate)) intermediate <- str
   if (!wait) {
     s <- selectChildren(jobs, timeout)

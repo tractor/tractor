@@ -9,7 +9,7 @@
   Functions for management of parallel children processes
 }
 \description{
-  \code{children} returns all currently active children
+  \code{children} returns currently active children
  
   \code{readChild} reads data from a given child process
 
@@ -28,7 +28,7 @@
   \code{\link{mclapply}}, \code{\link{parallel}} and friends instead.
 }
 \usage{
-children()
+children(select)
 readChild(child)
 readChildren(timeout = 0)
 selectChildren(children = NULL, timeout = 0)
@@ -36,6 +36,9 @@ sendChildStdin(child, what)
 kill(process, signal = SIGINT)
 }
 \arguments{
+\item{select}{if omitted, all active children are returned, otherwise
+  \code{select} should be a list of processes and only those form the
+  list that are active will be returned.}
 \item{child}{child process (object of the class \code{childProcess}) or a
 process ID (pid)}
 \item{timeout}{timeout (in seconds, fractions supported) to wait

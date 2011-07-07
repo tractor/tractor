@@ -10,7 +10,8 @@
   element of \code{X}.
 }
 \usage{
-mclapply(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE, mc.silent = FALSE, mc.cores = getOption("cores"))
+mclapply(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
+         mc.silent = FALSE, mc.cores = getOption("cores"), mc.cleanup = TRUE)
 }
 \arguments{
 \item{X}{a vector (atomic or list) or an expressions vector.  Other
@@ -34,7 +35,16 @@ current) seed.}
 \item{mc.silent}{if set to \code{TRUE} then all output on stdout will be
 suppressed for all parallel processes spawned (stderr is not affected).}
 \item{mc.cores}{The number of cores to use, i.e. how many processes
-will be spawned (at most)}
+  will be spawned (at most)}
+\item{mc.cleanup}{if set to \code{TRUE} then all children that have been
+  spawned by this function will be killed (by sending \code{SIGTERM})
+  before this function returns. Under normal circumstances
+  \code{mclapply} waits for the children to deliver results, so this
+  option usually has only effect when \code{mclapply} is interrupted.
+  If set to \code{FALSE} then child processes are collected, but not
+  forcefully terminated. As a special case this argument can be set to
+  the signal value that should be used to kill the children instead of
+  \code{SIGTERM}.}
 }
 \value{
  A list.
@@ -56,7 +66,7 @@ will be spawned (at most)}
   In addition, each process is running the job inside \code{try(...,
   silent=TRUE)} so if error occur they will be stored as
   \code{try-error} objects in the list.
-
+  
   Note: the number of file descriptors is usually limited by the
   operating system, so you may have trouble using more than 100 cores
   or so (see \code{ulimit -n} or similar in your OS documentation)
@@ -71,6 +81,8 @@ will be spawned (at most)}
   # use the same random numbers for all values
   set.seed(1)
   mclapply(1:30, rnorm, mc.preschedule=FALSE, mc.set.seed=FALSE)
+  # something a bit bigger - albeit still useless :P
+  unlist(mclapply(1:32, function(x) sum(rnorm(1e7))))
 }
 \author{Simon Urbanek}
 \keyword{interface}

@@ -1,5 +1,5 @@
 exportPattern("^SIG")
 export(fork, readChild, readChildren, selectChildren, children, kill, exit, sendMaster, sendChildStdin, processID)
-export(mclapply, parallel, collect, mcparallel)
+export(mclapply, parallel, collect, mcparallel, pvec)
 S3method(print, process)
 useDynLib(multicore)

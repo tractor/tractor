@@ -28,7 +28,7 @@ readChild <- function(child) {
 }
 
 selectChildren <- function(children=NULL, timeout=0) {
-  if (is.null(children)) children <- integer(0)
+  if (!length(children)) children <- integer(0)
   if (inherits(children, "process")) children <- processID(children)
   if (is.list(children)) children <- unlist(lapply(children, function(x) if (inherits(x, "process")) x$pid else stop("children must be a list of processes or a single process")))
   if (!is.numeric(children)) stop("children must be a list of processes or a single process")
@@ -68,8 +68,9 @@ exit <- function(exit.code=0L, send=NULL) {
   .Call("mc_exit", as.integer(exit.code), PACKAGE="multicore")
 }
 
-children <- function() {
+children <- function(select) {
   p <- .Call("mc_children", PACKAGE="multicore")
+  if (!missing(select)) p <- p[p %in% processID(select)]
   lapply(p, function(x) structure(list(pid=x), class=c("childProcess", "process")))
 }
 

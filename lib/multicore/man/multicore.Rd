@@ -16,7 +16,9 @@ actual spawning is very fast as well since no new R instance needs to
 be started.
 }
 \section{Pivotal functions}{
-\code{\link{mclapply}} - parallelized verson of \code{\link{lapply}}
+\code{\link{mclapply}} - parallelized version of \code{\link{lapply}}
+
+\code{\link{pvec}} - parallelization of vectorized functions
 
 \code{\link{parallel}} and \code{\link{collect}} - functions to
 evaluate R expressions in parallel and collect the results.
@@ -56,7 +58,12 @@ By default functions that spawn jobs across cores use the
 \code{"cores"} option (see \code{\link{options}}) to determine how
 many cores (or CPUs) will be used (unless specified directly). If this
 option is not set, \emph{multicore} uses by default as many cores as
-there are available.
+there are available. (Note: \emph{cores} in this document refer to
+virtual cores. Modern CPUs can have more virutal cores than physical
+cores to accommodate simultaneous multithreading. For example, a machine
+with two quad-core Xeon W5590 processors has combined eight physical
+cores but 16 virtual cores. Also note that it is often beneficial to
+schedule more tasks than cores.)
 
 The number of available cores is determined on startup using the
 (non-exported) \code{detectCores()} function. It should work on most
@@ -80,7 +87,7 @@ memory is directly shared.
 
 However, the copy shares everything including any user interface
 elements. This can cause havoc since let's say one window now suddenly
-belongs to two processes. Therefore \emph{multicomp} should be
+belongs to two processes. Therefore \emph{multicore} should be
 preferrably used in console R and code executed in parallel may
 never use GUIs or on-screen devices.
 

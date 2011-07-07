@@ -1,10 +1,11 @@
-# this envoronment holda any volatile variables we may want to keep inside the package
+# this envoronment holds any volatile variables we may want to keep inside the package
 volatile <- new.env(TRUE, emptyenv())
 
 # detect the number of [virtual] CPUs (cores)
 detectCores <- function(all.tests = FALSE) {
   # feel free to add tests - those are the only ones I could test [SU]
   systems <- list(darwin  = "/usr/sbin/sysctl -n hw.ncpu 2>/dev/null",
+  	          freebsd = "/sbin/sysctl -n hw.ncpu 2>/dev/null",
                   linux   = "grep processor /proc/cpuinfo 2>/dev/null|wc -l",
 		  irix    = c("hinv |grep Processors|sed 's: .*::'", "hinv|grep '^Processor '|wc -l"),
 		  solaris = "/usr/sbin/psrinfo -v|grep 'Status of.*processor'|wc -l")
