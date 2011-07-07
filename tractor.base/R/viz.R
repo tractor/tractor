@@ -47,22 +47,30 @@ createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("inter
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
-    if (image$getDimensionality() != 3)
-        report(OL$Error, "The \"createSliceGraphic\" function only handles 3D images")
     
     device <- match.arg(device)
     
-    dims <- image$getDimensions()
-    axisShortNames <- c("x", "y", "z")
-    axisRelevance <- !is.na(c(x, y, z))
-    planeLoc <- c(x, y, z)[axisRelevance]
-    
-    if (length(which(axisRelevance)) != 1)
-        report(OL$Error, "Exactly one of x, y and z must be specified")
-    if (planeLoc < 1 || planeLoc > dims[axisRelevance])
-        report(OL$Error, "Specified plane (", axisShortNames[axisRelevance], " = ", planeLoc, ") is out of bounds")
-    
-    slice <- extractDataFromMriImage(image, which(axisRelevance), planeLoc)
+    if (image$getDimensionality() == 2)
+    {
+        axisRelevance <- c(FALSE, FALSE)
+        slice <- image$getData()
+    }
+    else if (image$getDimensionality() == 3)
+    {
+        dims <- image$getDimensions()
+        axisShortNames <- c("x", "y", "z")
+        axisRelevance <- !is.na(c(x, y, z))
+        planeLoc <- c(x, y, z)[axisRelevance]
+
+        if (length(which(axisRelevance)) != 1)
+            report(OL$Error, "Exactly one of x, y and z must be specified")
+        if (planeLoc < 1 || planeLoc > dims[axisRelevance])
+            report(OL$Error, "Specified plane (", axisShortNames[axisRelevance], " = ", planeLoc, ") is out of bounds")
+
+        slice <- extractDataFromMriImage(image, which(axisRelevance), planeLoc)
+    }
+    else
+        report(OL$Error, "The \"createSliceGraphic\" function only handles 2D and 3D images")
     
     if (device == "internal")
         displayGraphic(slice, colourScale, add=add, windowLimits=windowLimits)

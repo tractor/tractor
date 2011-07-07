@@ -3,6 +3,12 @@ displayGraphic <- function (data, colourScale = 1, add = FALSE, windowLimits = N
     dims <- dim(data)
     scale <- getColourScale(colourScale)
     
+    if (!is.null(windowLimits))
+    {
+        data[data < min(windowLimits)] <- min(windowLimits)
+        data[data > max(windowLimits)] <- max(windowLimits)
+    }
+    
     if (add)
     {
         data <- replace(data, which(data==0), NA)
