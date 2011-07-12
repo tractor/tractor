@@ -7,7 +7,7 @@ createDiffusionTensorFromComponents <- function (components)
 
 estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), requireMetrics = TRUE, convergenceLevel = 1e-2)
 {
-    if (!is(scheme, "SimpleDiffusionScheme"))
+    if (!is(scheme, "SimpleDiffusionScheme") && !is.matrix(scheme))
         report(OL$Error, "The specified scheme object is not valid")
     
     method <- match.arg(method)
@@ -15,12 +15,17 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
     data <- promote(data, byrow=TRUE)
     logData <- ifelse(data==0, 0, log(data))
     
-    components <- scheme$expandComponents()
-    bMatrix <- t(apply(components$directions, 2, function (column) {
-        mat <- column %o% column
-        return (c(mat[1,1], 2*mat[1,2], 2*mat[1,3], mat[2,2], 2*mat[2,3], mat[3,3]))
-    }))
-    bMatrix <- bMatrix * (-components$bValues)
+    if (is.matrix(scheme))
+        bMatrix <- (-scheme)
+    else
+    {
+        components <- scheme$expandComponents()
+        bMatrix <- t(apply(components$directions, 2, function (column) {
+            mat <- column %o% column
+            return (c(mat[1,1], 2*mat[1,2], 2*mat[1,3], mat[2,2], 2*mat[2,3], mat[3,3]))
+        }))
+        bMatrix <- bMatrix * (-components$bValues)
+    }
     
     report(OL$Info, "Fitting tensors by ordinary least-squares", ifelse(method=="iwls"," (for initialisation)",""))
     solution <- lsfit(bMatrix, t(logData))
@@ -57,7 +62,7 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
     }
     
     coeffs <- promote(solution$coefficients)
-    returnValue <- list(logS0=coeffs[1,], tensors=coeffs[2:7,,drop=FALSE], sse=colSums(solution$residuals^2))
+    returnValue <- list(logS0=coeffs[1,], tensors=coeffs[2:7,,drop=FALSE], sse=colSums(promote(solution$residuals)^2))
     
     if (requireMetrics)
     {
