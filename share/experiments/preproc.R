@@ -1,5 +1,5 @@
 #@args [session directory]
-#@desc Runs the standard FSL-FDT preprocessing pipeline on the specified session directory (or "." if none is specified). This pipeline consists of four stages: (1) convert DICOM files into a 4D Analyze/NIfTI volume; (2) correct the data set for eddy current induced distortions; (3) create a mask to extract only brain voxels; (4, optional) calculate diffusion tensor characteristics such as principal eigenvectors and FA values. If the pipeline was previously partly completed, the script will resume it where appropriate. (Starting from the beginning can be forced by specifying SkipCompletedStages:false.) The script asks the user about each stage unless Interactive:false is given. Diffusion gradient directions will be rotated to compensate for the eddy current correction process as part of stage 2 if RotateGradients:true is given.
+#@desc Runs the standard FSL-FDT preprocessing pipeline on the specified session directory (or "." if none is specified). This pipeline consists of four stages: (1) convert DICOM files into a 4D Analyze/NIfTI volume; (2) correct the data set for eddy current induced distortions; (3) create a mask to extract only brain voxels; (4, optional) calculate diffusion tensor characteristics such as principal eigenvectors and FA values. If the pipeline was previously partly completed, the script will resume it where appropriate. (Starting from the beginning can be forced by specifying SkipCompletedStages:false.) The script asks the user about each stage unless Interactive:false is given.
 #@interactive TRUE
 
 suppressPackageStartupMessages(require(tractor.session))
@@ -17,7 +17,6 @@ runExperiment <- function ()
     dicomDir <- getConfigVariable("DicomDirectory", NULL, "character")
     useGradientCache <- getConfigVariable("UseGradientCache", "second", validValues=c("first","second","never"))
     forceCacheUpdate <- getConfigVariable("ForceGradientCacheUpdate", FALSE)
-    rotateGradients <- getConfigVariable("RotateGradients", FALSE)
     maskingMethod <- getConfigVariable("MaskingMethod", "bet", validValues=c("bet","kmeans","fill"))
     betIntensityThreshold <- getConfigVariable("BetIntensityThreshold", 0.3)
     betVerticalGradient <- getConfigVariable("BetVerticalGradient", 0)
@@ -66,9 +65,6 @@ runExperiment <- function ()
             if (isTRUE(updateGradientCacheFromSession(session, forceCacheUpdate)))
                 report(OL$Info, "Gradient directions inserted into cache for future reference")
             runEddyCorrectWithSession(session, ask=interactive)
-            
-            if (rotateGradients)
-                rotateGradientVectorsForSession(session)
         }
     
         if (runStages[3] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("mask","diffusion"))))
