@@ -14,8 +14,8 @@ runExperiment <- function ()
     
     tractorVersion <- readLines(file.path(Sys.getenv("TRACTOR_HOME"), "VERSION"))
     rBuild <- R.Version()
-    labels <- c(labels, "TractoR version", "R version", "R build platform")
-    values <- c(values, tractorVersion[1], paste(rBuild$major,rBuild$minor,sep="."), rBuild$platform)
+    labels <- c(labels, "TractoR home directory", "TractoR version", "R version", "R build platform")
+    values <- c(values, Sys.getenv("TRACTOR_HOME"), tractorVersion[1], paste(rBuild$major,rBuild$minor,sep="."), rBuild$platform)
     
     labels <- c(labels, "FSL version", "ImageMagick version")
     
