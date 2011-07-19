@@ -218,7 +218,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, warn
         }
     }
     
-    imageMetadata <- MriImageMetadata$new(imagedims=dims, voxdims=voxelDims, voxunit=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, datatype=datatype, origin=origin, tags=info$imageMetadata$tags)
+    imageMetadata <- MriImageMetadata$new(imagedims=dims, voxdims=voxelDims, voxunit=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, datatype=datatype, origin=origin, storedXform=info$storageMetadata$xformMatrix, tags=info$imageMetadata$tags)
     
     if (metadataOnly)
         invisible (imageMetadata)
