@@ -119,6 +119,10 @@ copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE
         currentSource <- c(info$headerFile, info$imageFile)
         currentTarget <- ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix), strip=suffixes)
         
+        # Don't try to copy an image onto itself
+        if (all(currentSource == currentTarget))
+            next
+        
         success <- file.copy(unique(currentSource), unique(currentTarget), overwrite=overwrite)
         
         if (all(success) && deleteOriginals)
