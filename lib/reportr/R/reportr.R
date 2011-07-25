@@ -1,65 +1,134 @@
-setOutputLevel <- function (level, usePrefix = NA)
+setOutputLevel <- function (level)
 {
     if (level %in% OL$Debug:OL$Error)
-        options(outputLevel=level)
-    if (usePrefix %in% c(TRUE,FALSE))
-        options(useOutputPrefix=usePrefix)
+        options(reportrOutputLevel=level)
 }
 
-report <- function (level, ..., default = NULL, showDepth = TRUE, outputErrors = FALSE)
+getOutputLevel <- function ()
 {
-    if (is.null(getOption("outputLevel")))
+    if (is.null(getOption("reportrOutputLevel")))
     {
-        cat("INFO: Output level is not set; defaulting to \"Info\"\n")
-        options(outputLevel=OL$Info)
+        cat("INFO: Output level is not set; defaulting to \"Info\"\n", file=stderr())
+        options(reportrOutputLevel=OL$Info)
+        return (OL$Info)
     }
+    else
+        return (getOption("reportrOutputLevel"))
+}
+
+withReportrHandlers <- function (expr)
+{
+    withCallingHandlers(expr, warning=function (w) {
+        flag(OL$Warning, w$message)
+        invokeRestart("muffleWarning")
+    }, error=function (e) {
+        report(OL$Error, e$message)
+    })
+}
+
+.getCallStack <- function ()
+{
+    callStrings <- as.character(sys.calls())
     
-    outputLevel <- getOption("outputLevel")
-    if ((level < OL$Question) && (outputLevel > level))
+    handlerFunLoc <- which(callStrings %~% "^withReportrHandlers\\(")
+    if (length(handlerFunLoc) > 0)
+        callStrings <- callStrings[-seq_len(handlerFunLoc[length(handlerFunLoc)]+1)]
+    
+    reportrFunLoc <- which(callStrings %~% "^(ask|flag|report|reportFlags)\\(")
+    if (length(reportrFunLoc) > 0)
+        callStrings <- callStrings[-(reportrFunLoc[length(reportrFunLoc)]:length(callStrings))]
+    
+    if (!is.null(getOption("reportrStackFilterIn")))
+        callStrings <- callStrings[callStrings %~% as.character(getOption("reportrStackFilterIn"))[1]]
+    if (!is.null(getOption("reportrStackFilterOut")))
+        callStrings <- callStrings[callStrings %!~% as.character(getOption("reportrStackFilterOut"))[1]]
+    
+    return (callStrings)
+}
+
+.buildPrefix <- function (level, format = NULL)
+{
+    if (!is.null(format))
+        prefix <- as.character(format)[1]
+    else if (is.null(getOption("reportrPrefixFormat")))
+        prefix <- "%d(%f) %L: "
+    else
+        prefix <- as.character(getOption("reportrPrefixFormat"))[1]
+    
+    if (prefix == "")
+        return (prefix)
+    else
+    {
+        if (prefix %~% "\\%(d|f)")
+            stack <- .getCallStack()
+
+        if (prefix %~% "\\%d")
+            prefix <- gsub("%d", paste(rep("* ",length(stack)),collapse=""), prefix, fixed=TRUE)
+        if (prefix %~% "\\%f")
+            prefix <- gsub("%f", sub("^([\\w.]+)\\(.+$","\\1",stack[length(stack)],perl=TRUE), prefix, fixed=TRUE)
+        if (prefix %~% "\\%l")
+            prefix <- gsub("%l", tolower(names(OL)[which(OL==level)]), prefix, fixed=TRUE)
+        if (prefix %~% "\\%L")
+            prefix <- gsub("%L", toupper(names(OL)[which(OL==level)]), prefix, fixed=TRUE)
+        if (prefix %~% "\\%p")
+            prefix <- gsub("%p", Sys.getpid(), prefix, fixed=TRUE)
+
+        return (prefix)
+    }
+}
+
+.buildMessage <- function (...)
+{
+    message <- paste(..., sep="")
+    keep <- TRUE
+    
+    if (!is.null(getOption("reportrMessageFilterIn")))
+        keep <- keep & (message %~% as.character(getOption("reportrMessageFilterIn"))[1])
+    if (!is.null(getOption("reportrMessageFilterOut")))
+        keep <- keep & (message %!~% as.character(getOption("reportrMessageFilterOut"))[1])
+    
+    if (keep)
+        return (message)
+    else
+        return (NULL)
+}
+
+ask <- function (..., default = NULL, prefixFormat = NULL)
+{
+    outputLevel <- getOutputLevel()
+    message <- .buildMessage(...)
+    if (outputLevel > OL$Question || is.null(message))
+        return (default)
+    else
+    {
+        reportFlags()
+        ans <- readline(paste(.buildPrefix(OL$Question,prefixFormat), message, " ", sep=""))
+        return (ans)
+    }
+}
+
+report <- function (level, ..., prefixFormat = NULL)
+{
+    outputLevel <- getOutputLevel()
+    message <- .buildMessage(...)
+    if (outputLevel > level || is.null(message))
         return (invisible(NULL))
     
     reportFlags()
+    cat(paste(.buildPrefix(level,prefixFormat), message, "\n", sep=""), file=stderr())
     
-    prefixStrings <- c("DEBUG: ", "VERBOSE: ", "INFO: ", "WARNING: ")
-    usePrefix <- getOption("useOutputPrefix")
-    if (is.null(usePrefix))
-        usePrefix <- TRUE
-    
-    callStrings <- as.character(sys.calls())
-    runExperimentCallLoc <- which(callStrings %~% "^runExperiment")
-    if (length(runExperimentCallLoc) == 1)
-        callStrings <- callStrings[-seq_len(runExperimentCallLoc-1)]
-    callStrings <- callStrings[setdiff(seq_along(callStrings), which(callStrings %~% "([tT]ryCatch|Error|cores|FUN)"))]
-    stackDepth <- length(callStrings)
-
-    nStars <- ifelse(showDepth, stackDepth, 0)
-    leadingSpace <- ifelse(usePrefix && (nStars > 0), paste(rep("* ", nStars),collapse=""), "")
-    leadingSpace <- paste(ifelse(isTRUE(getOption("outputPid")), paste("[",Sys.getpid(),"] ",sep=""), ""), leadingSpace, sep="")
-    if ((level < OL$Question) && (outputLevel <= level))
-        cat(paste(leadingSpace, ifelse(usePrefix,prefixStrings[level],""), ..., "\n", sep=""))
-    else if (level == OL$Question)
+    if (level == OL$Error)
     {
-        if (outputLevel == OL$Error)
-            return (default)
-        else
+        if (outputLevel == OL$Debug)
         {
-            ans <- readline(paste(leadingSpace, ifelse(usePrefix,"QUESTION: ",""), ..., " ", sep=""))
-            return (ans)
+            stack <- .getCallStack()
+            cat("--- Begin stack trace ---\n", file=stderr())
+            for (i in 1:length(stack))
+                cat(rep("* ", i), stack[i], "\n", sep="", file=stderr())
+            cat("---  End stack trace  ---\n", file=stderr())
         }
-    }
-    else if (level == OL$Error)
-    {
-        if (outputErrors && isTRUE(getOption("outputErrors")))
-            cat(paste(leadingSpace, "ERROR: ", ..., "\n", sep=""))
         
-        if (outputLevel == OL$Debug && !(stackDepth > 1 && callStrings[stackDepth-1] %~% "^(\\* )*output\\("))
-        {
-            cat("--- Begin stack trace ---\n")
-            for (i in 1:length(callStrings))
-                cat(rep("* ", i), callStrings[i], "\n", sep="")
-            cat("---  End stack trace  ---\n")
-        }
-        stop(..., call.=FALSE)
+        invokeRestart("abort")
     }
 }
 
@@ -88,9 +157,9 @@ reportFlags <- function ()
             locs <- which(messages == message)
             level <- max(levels[locs])
             if (length(locs) == 1)
-                report(level, message, showDepth=FALSE)
+                report(level, message, prefixFormat="%L: ")
             else
-                report(level, paste("[x",length(locs),"] ",message,sep=""), showDepth=FALSE)
+                report(level, paste("[x",length(locs),"] ",message,sep=""), prefixFormat="%L: ")
         }
     }
 }
