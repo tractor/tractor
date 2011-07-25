@@ -34,7 +34,7 @@ runExperiment <- function ()
         values <- c(values, sub("^.+ImageMagick ([0-9.-]+) .+$","\\1",versionString))
     }
     
-    if (getOption("outputLevel") > OL$Info)
+    if (getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
     printLabelledValues(labels, values)
 }

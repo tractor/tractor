@@ -15,11 +15,11 @@ runExperiment <- function ()
     if (!file.exists(fileName))
         report(OL$Error, "File ", fileName, " does not exist")
     
-    setOutputLevel(OL$Info, FALSE)
+    setOutputLevel(OL$Info)
     
     object <- deserialiseReferenceObject(file=fileName, raw=TRUE)
     if (!is.null(attr(object,"originalClass")))
-        report(OL$Info, "Object class: ", implode(attr(object,"originalClass"),", "))
+        report(OL$Info, "An object of class \"", implode(attr(object,"originalClass"),", "), "\"", prefixFormat="")
     
     object <- deserialiseReferenceObject(object=object)
     

@@ -27,10 +27,8 @@ printLabelledValues <- function (labels, values, outputLevel = OL$Info)
     maxLabelLength <- max(labelLengths)
     nValues <- length(values)
     
-    oldOption <- options(useOutputPrefix=FALSE)
     for (i in seq_len(nValues))
-        report(outputLevel, implode(rep(" ",maxLabelLength-labelLengths[i]),sep=""), labels[i], " : ", values[i])
-    options(oldOption)
+        report(outputLevel, implode(rep(" ",maxLabelLength-labelLengths[i]),sep=""), labels[i], " : ", values[i], prefixFormat="")
     
     invisible(NULL)
 }
@@ -113,7 +111,7 @@ execute <- function (executable, paramString = NULL, errorOnFail = TRUE, silent 
     if (!is.null(execLoc))
     {
         execString <- paste(execLoc, paramString, sep=" ")
-        if (silent && getOption("outputLevel") > OL$Debug)
+        if (silent && getOutputLevel() > OL$Debug)
             execString <- paste(execString, ">/dev/null 2>&1", sep=" ")
         report(OL$Debug, execString)
         system(execString, ...)

@@ -22,7 +22,7 @@ runExperiment <- function ()
     betVerticalGradient <- getConfigVariable("BetVerticalGradient", 0)
     flipAxes <- getConfigVariable("FlipGradientAxes", NULL, "character")
     
-    if (interactive && getOption("outputLevel") > OL$Info)
+    if (interactive && getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
     
     if (!is.null(flipAxes))
