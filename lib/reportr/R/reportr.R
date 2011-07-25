@@ -2,14 +2,15 @@ setOutputLevel <- function (level)
 {
     if (level %in% OL$Debug:OL$Error)
         options(reportrOutputLevel=level)
+    invisible(NULL)
 }
 
 getOutputLevel <- function ()
 {
     if (is.null(getOption("reportrOutputLevel")))
     {
-        cat("INFO: Output level is not set; defaulting to \"Info\"\n", file=stderr())
-        options(reportrOutputLevel=OL$Info)
+        setOutputLevel(OL$Info)
+        report(OL$Info, "Output level is not set; defaulting to \"Info\"")
         return (OL$Info)
     }
     else
@@ -51,7 +52,7 @@ withReportrHandlers <- function (expr)
     if (!is.null(format))
         prefix <- as.character(format)[1]
     else if (is.null(getOption("reportrPrefixFormat")))
-        prefix <- "%d(%f) %L: "
+        prefix <- "%d%L: "
     else
         prefix <- as.character(getOption("reportrPrefixFormat"))[1]
     
