@@ -33,7 +33,7 @@ runExperiment <- function ()
     
     print(xyplot(x + y + z ~ index, data, allow.multiple=TRUE, type="l", lwd=2, xlab="volume number", ylab=ylab, auto.key=list(space="right",text=legend,lines=TRUE,points=FALSE)))
     
-    ans <- report(OL$Question, "Copy figure to pdf file? [yn]")
+    ans <- ask("Copy figure to pdf file? [yn]")
     if (tolower(ans) == "y")
         dev.print(pdf, file=paste(mode,"s.pdf",sep=""))
 }

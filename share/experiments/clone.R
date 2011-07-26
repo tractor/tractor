@@ -47,7 +47,7 @@ runExperiment <- function ()
         
         if (file.exists(targetSessionDir))
         {
-            ans <- report(OL$Question, "Directory ", targetSessionDir, " already exists - delete it? [yn]")
+            ans <- ask("Directory ", targetSessionDir, " already exists - delete it? [yn]")
             if (tolower(ans) == "y")
                 unlink(targetSessionDir, recursive=TRUE)
             else

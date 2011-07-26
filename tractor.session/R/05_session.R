@@ -223,7 +223,7 @@ createFilesForSession <- function (session, dicomDir = NULL, overwriteQuietly = 
         if (overwriteQuietly)
             ans <- "y"
         else
-            ans <- report(OL$Question, "Internal directory ", workingDir, " exists. This operation will DESTROY it. Continue? [yn]")
+            ans <- ask("Internal directory ", workingDir, " exists. This operation will DESTROY it. Continue? [yn]")
         
         if (tolower(ans) != "y")
             return (invisible(NULL))
@@ -261,7 +261,7 @@ createCaminoFilesForSession <- function (session)
     caminoDir <- session$getDirectory("camino")
     if (file.exists(caminoDir))
     {
-        ans <- report(OL$Question, "Internal directory ", caminoDir, " exists. This operation will DESTROY it. Continue? [yn]")
+        ans <- ask("Internal directory ", caminoDir, " exists. This operation will DESTROY it. Continue? [yn]")
         if (tolower(ans) != "y")
             return (invisible(NULL))
         else

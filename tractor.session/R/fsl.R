@@ -51,7 +51,7 @@ runEddyCorrectWithSession <- function (session, ask = FALSE)
         
         while (!(choice %in% zeroes))
         {
-            choice <- report(OL$Question, "Use which one as the reference [s to show in fslview]?")
+            choice <- ask("Use which one as the reference [s to show in fslview]?")
             if (tolower(choice) == "s")
             {
                 # fslview is fussy about data types, so write the image into

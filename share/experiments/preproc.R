@@ -75,7 +75,7 @@ runExperiment <- function ()
 
                 if (interactive)
                 {
-                    runBetAgain <- report(OL$Question, "Run brain extraction tool again? [yn; s to show the mask in fslview]")
+                    runBetAgain <- ask("Run brain extraction tool again? [yn; s to show the mask in fslview]")
                     while (tolower(runBetAgain) %in% c("y","s"))
                     {
                         if (tolower(runBetAgain) == "s")
@@ -83,18 +83,18 @@ runExperiment <- function ()
                         else
                         {
                             report(OL$Info, "Previous intensity threshold was ", betIntensityThreshold, "; smaller values give larger brain outlines")
-                            tempValue <- report(OL$Question, "Intensity threshold? [0 to 1; Enter for same as before]")
+                            tempValue <- ask("Intensity threshold? [0 to 1; Enter for same as before]")
                             if (tempValue != "")
                                 betIntensityThreshold <- as.numeric(tempValue)
 
                             report(OL$Info, "Previous vertical gradient was ", betVerticalGradient, "; positive values shift the outline downwards")
-                            tempValue <- report(OL$Question, "Vertical gradient? [-1 to 1; Enter for same as before]")
+                            tempValue <- ask("Vertical gradient? [-1 to 1; Enter for same as before]")
                             if (tempValue != "")
                                 betVerticalGradient <- as.numeric(tempValue)
 
                             runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
                         }
-                        runBetAgain <- report(OL$Question, "Run brain extraction tool again? [yn; s to show the mask in fslview]")
+                        runBetAgain <- ask("Run brain extraction tool again? [yn; s to show the mask in fslview]")
                     }
                 }
             }
@@ -110,7 +110,7 @@ runExperiment <- function ()
             {
                 repeat
                 {
-                    runDtifitAgain <- tolower(report(OL$Question, "Run dtifit again? [yn; s to show principal directions in fslview]"))
+                    runDtifitAgain <- tolower(ask("Run dtifit again? [yn; s to show principal directions in fslview]"))
                     
                     if (runDtifitAgain == "n")
                         break
@@ -118,7 +118,7 @@ runExperiment <- function ()
                         runDtifitWithSession(session, showOnly=TRUE)
                     else if (runDtifitAgain == "y")
                     {
-                        ans <- report(OL$Question, "Flip diffusion gradient vectors along which axes? [123; Enter for none]")
+                        ans <- ask("Flip diffusion gradient vectors along which axes? [123; Enter for none]")
                         flipAxes <- splitAndConvertString(ans, "", "integer", fixed=TRUE, allowRanges=FALSE)
                         
                         if (length(flipAxes[!is.na(flipAxes)]) > 0)

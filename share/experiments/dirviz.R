@@ -84,7 +84,7 @@ runExperiment <- function ()
         segments((d1-1)/(dims[1]-1)-maskedData[,1]/(2*dims[1]), (d2-1)/(dims[2]-1)-maskedData[,2]/(2*dims[2]), (d1-1)/(dims[1]-1)+maskedData[,1]/(2*dims[1]), (d2-1)/(dims[2]-1)+maskedData[,2]/(2*dims[2]), lwd=3, col=col)
     }
     
-    ans <- report(OL$Question, "Copy figure to a high-resolution \"png\" file? [yn]")
+    ans <- ask("Copy figure to a high-resolution \"png\" file? [yn]")
     if (tolower(ans) == "y")
     {
         outputFileName <- paste(basename(session$getDirectory()), "_", c("x","y","z")[throughPlaneAxis], point[throughPlaneAxis], "_", source, sep="")

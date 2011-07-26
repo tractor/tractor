@@ -12,7 +12,7 @@ runExperiment <- function ()
     writeMriImageToFile(image, fileStem, fileType="ANALYZE_GZ")
     execute("fslview", fileStem, wait=FALSE)
     
-    report(OL$Question, "Press Enter to exit:")
+    ask("Press Enter to exit:")
     
     removeImageFilesWithName(fileStem)
     invisible(NULL)
