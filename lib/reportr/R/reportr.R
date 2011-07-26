@@ -135,7 +135,10 @@ report <- function (level, ..., prefixFormat = NULL)
 
 flag <- function (level, ...)
 {
-    currentFlag <- list(list(level=level, message=paste(...,sep="")))
+    message <- .buildMessage(...)
+    if (is.null(message))
+        return (invisible(NULL))
+    currentFlag <- list(list(level=level, message=message))
     
     if (!exists(".ReportrFlags") || is.null(.ReportrFlags))
         .ReportrFlags <<- currentFlag
