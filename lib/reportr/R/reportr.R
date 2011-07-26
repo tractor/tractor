@@ -140,21 +140,21 @@ flag <- function (level, ...)
         return (invisible(NULL))
     currentFlag <- list(list(level=level, message=message))
     
-    if (!exists(".ReportrFlags") || is.null(.ReportrFlags))
-        .ReportrFlags <<- currentFlag
+    if (!exists("reportrFlags",.Workspace) || is.null(.Workspace$reportrFlags))
+        .Workspace$reportrFlags <- currentFlag
     else
-        .ReportrFlags <<- c(.ReportrFlags, currentFlag)
+        .Workspace$reportrFlags <- c(.Workspace$reportrFlags, currentFlag)
 }
 
 reportFlags <- function ()
 {
-    if (exists(".ReportrFlags") && !is.null(.ReportrFlags))
+    if (exists("reportrFlags",.Workspace) && !is.null(.Workspace$reportrFlags))
     {
-        levels <- unlist(lapply(.ReportrFlags, "[[", "level"))
-        messages <- unlist(lapply(.ReportrFlags, "[[", "message"))
+        levels <- unlist(lapply(.Workspace$reportrFlags, "[[", "level"))
+        messages <- unlist(lapply(.Workspace$reportrFlags, "[[", "message"))
         
         # This is before the call to report() to avoid infinite recursion
-        .ReportrFlags <<- NULL
+        .Workspace$reportrFlags <- NULL
         
         for (message in unique(messages))
         {

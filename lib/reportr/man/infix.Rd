@@ -1,4 +1,4 @@
-\name{\%~\%}
+\name{infix}
 \alias{\%~\%}
 \alias{\%!~\%}
 \title{Test a character vector for a match against a regular expression}
