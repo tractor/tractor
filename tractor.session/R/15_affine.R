@@ -172,7 +172,16 @@ newAffineTransform3DFromFlirt <- function (source, dest, outfile = NULL, refweig
         else if (is.character(input) && (length(input) == 1))
         {
             fileName <- input
-            metadata <- newMriImageMetadataFromFile(fileName, warnIfNotLas=TRUE)
+            metadata <- newMriImageMetadataFromFile(fileName)
+            if (!is.na(metadata$getStoredXformMatrix()[1,1]))
+            {
+                xform <- metadata$getStoredXformMatrix()
+                diagonal <- diag(xform)[1:3]
+                tolerance <- 1e-3 * max(abs(diagonal))
+                if (any(diagonal*c(-1,1,1) < 0) || !equivalent(xform[1:3,1:3],diag(diagonal),tolerance=tolerance))
+                    flag(OL$Warning, "NIfTI image is not stored in the LAS convention - problems may occur")
+            }
+            
         }
         else
             report(OL$Error, "Source and destination must be specified as file names or MriImage objects")

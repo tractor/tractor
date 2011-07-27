@@ -130,7 +130,7 @@ copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE
     }
 }
 
-readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, warnIfNotLas = FALSE)
+readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE)
 {
     fileNames <- identifyImageFileNames(fileName, fileType)
     
@@ -176,8 +176,6 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, warn
             dimPermutation <- dimPermutation[1:nDims]
         if (!identical(dimPermutation, seq_len(nDims)))
         {
-            if (warnIfNotLas)
-                flag(OL$Warning, "NIfTI image is not stored in the LAS convention - problems may occur")
             if (!metadataOnly)
                 data <- aperm(data, dimPermutation)
             dims <- dims[dimPermutation]
@@ -190,9 +188,6 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, warn
         # Figure out which dimensions need to be flipped
         ordering <- round(colSums(rotationMatrix) / c(abs(voxelDims[1:min(3,nDims)]),rep(1,max(0,3-nDims))))
         ordering <- ordering * c(-1, 1, 1)
-        
-        if (warnIfNotLas && any(ordering < 0))
-            flag(OL$Warning, "NIfTI image is not stored in the LAS convention - problems may occur")
         
         if (nDims == 2)
         {
@@ -233,14 +228,14 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, warn
     }
 }
 
-newMriImageMetadataFromFile <- function (fileName, fileType = NULL, warnIfNotLas = FALSE)
+newMriImageMetadataFromFile <- function (fileName, fileType = NULL)
 {
-    invisible (readImageFile(fileName, fileType, metadataOnly=TRUE, warnIfNotLas=warnIfNotLas))
+    invisible (readImageFile(fileName, fileType, metadataOnly=TRUE))
 }
 
-newMriImageFromFile <- function (fileName, fileType = NULL, warnIfNotLas = FALSE)
+newMriImageFromFile <- function (fileName, fileType = NULL)
 {
-    invisible (readImageFile(fileName, fileType, metadataOnly=FALSE, warnIfNotLas=warnIfNotLas))
+    invisible (readImageFile(fileName, fileType, metadataOnly=FALSE))
 }
 
 writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
