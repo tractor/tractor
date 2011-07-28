@@ -28,7 +28,8 @@ readMgh <- function (fileNames)
     
     close(connection)
     
-    xformMatrix[,4] <- xformMatrix[,4] + c(dims[1]/2, -dims[2]/2, dims[3]/2, 0) * c(abs(voxelDims), 1)
+    diag(xformMatrix) <- diag(xformMatrix) * c(abs(voxelDims), 1)
+    xformMatrix[,4] <- xformMatrix[,4] - c(dims[1]/2, dims[2]/2, dims[3]/2, 0) * diag(xformMatrix)
     
     typeIndex <- which(.Mgh$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
@@ -90,16 +91,17 @@ writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE, datatype = NU
     else
         fullDims <- c(dims, rep(1,4-ndims))
     
-    fullVoxelDims <- c(abs(image$getVoxelDimensions()), rep(0,3-ndims))[1:3]
+    fullVoxelDims <- c(image$getVoxelDimensions(), rep(0,3-ndims))[1:3]
     
-    origin <- (image$getOrigin() - c(fullDims[1]/2, -fullDims[2]/2, fullDims[3]/2) - 1) * abs(image$getVoxelDimensions())
+    origin <- image$getOrigin()
     if (length(origin) > 3)
         origin <- origin[1:3]
     else if (length(origin) < 3)
         origin <- c(origin, rep(0,3-length(origin)))
-    xformMatrix <- matrix(c(-fullVoxelDims[1], 0, 0, origin[1],
-                             0, fullVoxelDims[2], 0, origin[2],
-                             0, 0, fullVoxelDims[3], origin[3]), nrow=3, byrow=TRUE)
+    origin <- (origin + fullDims[1:3]/2 - 1) * fullVoxelDims
+    xformlikeMatrix <- matrix(c(-1, 0, 0, origin[1],
+                                 0, 1, 0, origin[2],
+                                 0, 0, 1, origin[3]), nrow=3, byrow=TRUE)
     
     connection <- fileFun(fileNames$headerFile, "w+b")
     
@@ -108,8 +110,8 @@ writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE, datatype = NU
     writeBin(as.integer(.Mgh$datatypes$codes[typeIndex]), connection, size=4, endian="big")
     writeBin(raw(4), connection)
     writeBin(as.integer(1), connection, size=2, endian="big")
-    writeBin(as.double(fullVoxelDims), connection, size=4, endian="big")
-    writeBin(as.double(xformMatrix), connection, size=4, endian="big")
+    writeBin(as.double(abs(fullVoxelDims)), connection, size=4, endian="big")
+    writeBin(as.double(xformlikeMatrix), connection, size=4, endian="big")
     
     writeBin(data, connection, size=.Mgh$datatypes$sizes[typeIndex], endian="big")
     close(connection)
