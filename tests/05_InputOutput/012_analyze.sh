@@ -1,8 +1,8 @@
 #@desc Checking that Analyze reader and file format convertor work
-${TRACTOR} imageinfo data/analyze/nodif_brain | grep -v source
-${TRACTOR} value data/analyze/nodif_brain 49 58 14
-cp data/analyze/nodif_brain.* tmp/
-${TRACTOR} chfiletype tmp/nodif_brain NIFTI_GZ
-${TRACTOR} imageinfo tmp/nodif_brain | grep -v source
-${TRACTOR} value tmp/nodif_brain 49 58 14
-rm -f tmp/nodif_brain.*
+${TRACTOR} imageinfo data/analyze/maskedb0 | grep -v source
+${TRACTOR} value data/analyze/maskedb0 49 58 14
+cp data/analyze/maskedb0.* tmp/
+${TRACTOR} chfiletype tmp/maskedb0 NIFTI_GZ
+${TRACTOR} imageinfo tmp/maskedb0 | grep -v source
+${TRACTOR} value tmp/maskedb0 49 58 14
+rm -f tmp/maskedb0.*
