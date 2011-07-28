@@ -113,6 +113,10 @@ writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE, datatype = NU
     writeBin(as.double(abs(fullVoxelDims)), connection, size=4, endian="big")
     writeBin(as.double(xformlikeMatrix), connection, size=4, endian="big")
     
+    paddingBytes <- 284 - seek(connection, where=NA)
+    if (paddingBytes > 0)
+        writeBin(raw(paddingBytes), connection)
+    
     writeBin(data, connection, size=.Mgh$datatypes$sizes[typeIndex], endian="big")
     close(connection)
     
