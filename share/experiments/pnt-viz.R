@@ -1,11 +1,4 @@
-#@desc Visualise the results of evaluating a data set against a PNT model, creating
-#@desc Analyze/NIfTI volumes (with CreateVolumes:true) and/or projection images
-#@desc (CreateImages:true) of the best matching tracts for each session. The number
-#@desc of seed points contributing to the final tract is affected by the options
-#@desc MaximumSeedPoints and MinimumPosterior. In the default case a single seed
-#@desc point will always be used, but with MaximumSeedPoints:5 MinimumPosterior:0.01,
-#@desc for example, then up to 5 seeds will contribute, if that many have matching
-#@desc posterior probabilities of at least 0.01.
+#@desc Visualise the results of evaluating a data set against a PNT model, creating Analyze/NIfTI/MGH volumes (with CreateVolumes:true) and/or projection images (CreateImages:true) of the best matching tracts for each session. The number of seed points contributing to the final tract is affected by the options MaximumSeedPoints and MinimumPosterior. In the default case a single seed point will always be used, but with MaximumSeedPoints:5 MinimumPosterior:0.01, for example, then up to 5 seeds will contribute, if that many have matching posterior probabilities of at least 0.01.
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))

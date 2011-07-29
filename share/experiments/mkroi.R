@@ -1,8 +1,5 @@
 #@args session directory, centre point
-#@desc Create an Analyze/NIfTI volume containing a cuboidal region of interest with
-#@desc fixed voxel width in all dimensions. A session directory must be specified in
-#@desc addition to the ROI centre point so that the script can identify the correct
-#@desc diffusion space to use. The output file name is set with the ROIName option.
+#@desc Create an Analyze/NIfTI/MGH volume containing a cuboidal region of interest with fixed voxel width in all dimensions. A session directory must be specified in addition to the ROI centre point so that the script can identify the correct diffusion space to use. The output file name is set with the ROIName option.
 
 suppressPackageStartupMessages(require(tractor.session))
 

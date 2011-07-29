@@ -1,5 +1,5 @@
 #@args source file
-#@desc Convert an Analyze or NIfTI image file to a data stream for use with Camino.
+#@desc Convert an Analyze, NIfTI or MGH image file to a data stream for use with Camino.
 
 suppressPackageStartupMessages(require(tractor.session))
 

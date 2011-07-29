@@ -1,5 +1,5 @@
 #@args image file
-#@desc List the key metadata parameters of the specified Analyze or NIfTI image volume.
+#@desc List the key metadata parameters of the specified Analyze, NIfTI or MGH image volume.
 
 library(tractor.base)
 

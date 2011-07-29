@@ -1,5 +1,5 @@
 #@args image file, slice axis, [output file name]
-#@desc Create a contact sheet graphic showing all the slices of the specified Analyze/NIfTI volume in a matrix of images. The slice axis should be "x" for sagittal slices, "y" for coronal and "z" for axial. The number of columns in the layout can be controlled with the Columns options, while the Clearance option sets the amount of space left around each slice in the graphic (in voxels).
+#@desc Create a contact sheet graphic showing all the slices of the specified Analyze/NIfTI/MGH volume in a matrix of images. The slice axis should be "x" for sagittal slices, "y" for coronal and "z" for axial. The number of columns in the layout can be controlled with the Columns options, while the Clearance option sets the amount of space left around each slice in the graphic (in voxels).
 
 library(tractor.base)
 

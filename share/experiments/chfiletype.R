@@ -1,5 +1,5 @@
 #@args image file(s), [format]
-#@desc Reads and rewrites the specified Analyze/NIfTI image file(s) using the specified file format. Note that the original file will be REPLACED. The format can be "ANALYZE" (for Analyze format), "NIFTI" (for single-file NIfTI), "NIFTI_PAIR" (NIfTI header/image pair), or any of these with "_GZ" appended for the equivalent formats compressed with gzip(1). If the format is not specified, it will be taken from the TRACTOR_FILETYPE environment variable, or "NIFTI_GZ" if that is not set. An Analyze/NIfTI data type code can also be specified with the TypeCode option, perhaps for compatibility with other software.
+#@desc Reads and rewrites the specified Analyze/NIfTI/MGH image file(s) using the specified file format. Note that the original file will be REPLACED. The format can be "ANALYZE" (for Analyze format), "NIFTI" (for single-file NIfTI), "NIFTI_PAIR" (NIfTI header/image pair), "MGH" (for MGH format), or any of these with "_GZ" appended for the equivalent formats compressed with gzip(1). If the format is not specified, it will be taken from the TRACTOR_FILETYPE environment variable, or "NIFTI_GZ" if that is not set. An Analyze/NIfTI data type code can also be specified with the TypeCode option, perhaps for compatibility with other software.
 
 library(tractor.base)
 

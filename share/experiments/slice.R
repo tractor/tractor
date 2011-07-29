@@ -1,7 +1,5 @@
 #@args image file, [output file name]
-#@desc Create a 2D slice image from the specified Analyze/NIfTI volume. Exactly one
-#@desc of the X, Y and Z options must be specified, giving the location on the
-#@desc appropriate axis where the slice should be taken.
+#@desc Create a 2D slice image from the specified Analyze/NIfTI/MGH volume. Exactly one of the X, Y and Z options must be specified, giving the location on the appropriate axis where the slice should be taken.
 
 suppressPackageStartupMessages(require(tractor.session))
 
