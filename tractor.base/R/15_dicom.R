@@ -440,6 +440,9 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     if (nDicomFiles == 0)
         report(OL$Error, "No readable DICOM files were found")
     
+    if (length(unique(seriesDescriptions)) > 1)
+        report(OL$Warning, "DICOM directory contains more than one unique series description - merging them may not make sense")
+    
     # The sum() function recovers the sign in the sapply() call here
     sliceOrientation <- lapply(list(1:3,4:6), function (i) sliceOrientation[i])
     sliceDirections <- sapply(sliceOrientation, function (x) which(abs(x) == 1) * sum(x))
