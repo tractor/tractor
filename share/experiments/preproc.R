@@ -6,23 +6,20 @@ suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {
-    if (nArguments() == 0)
-        session <- newSessionFromDirectory(".")
-    else
-        session <- newSessionFromDirectory(Arguments[1])
+    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
     
+    statusOnly <- getConfigVariable("StatusOnly", FALSE)
     interactive <- getConfigVariable("Interactive", TRUE)
     stages <- getConfigVariable("RunStages", "1-4")
     skipCompleted <- getConfigVariable("SkipCompletedStages", TRUE)
     dicomDir <- getConfigVariable("DicomDirectory", NULL, "character")
     useGradientCache <- getConfigVariable("UseGradientCache", "second", validValues=c("first","second","never"))
-    forceCacheUpdate <- getConfigVariable("ForceGradientCacheUpdate", FALSE)
-    maskingMethod <- getConfigVariable("MaskingMethod", "bet", validValues=c("bet","kmeans","fill"))
+    flipAxes <- getConfigVariable("FlipGradientAxes", NULL, "character")
+    maskingMethod <- getConfigVariable("MaskingMethod", "kmeans", validValues=c("bet","kmeans","fill"))
     betIntensityThreshold <- getConfigVariable("BetIntensityThreshold", 0.3)
     betVerticalGradient <- getConfigVariable("BetVerticalGradient", 0)
-    flipAxes <- getConfigVariable("FlipGradientAxes", NULL, "character")
     
-    if (interactive && getOutputLevel() > OL$Info)
+    if ((interactive || statusOnly) && getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
     
     if (!is.null(flipAxes))
@@ -36,10 +33,51 @@ runExperiment <- function ()
     if (all(!runStages))
         report(OL$Info, "Nothing to do")
     
-    try({
-        if (runStages[1] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("rawdata","diffusion"))))
+    stagesComplete <- c(imageFileExists(session$getImageFileNameByType("rawdata","diffusion")),
+                        imageFileExists(session$getImageFileNameByType("refb0","diffusion")),
+                        imageFileExists(session$getImageFileNameByType("data","diffusion")),
+                        imageFileExists(session$getImageFileNameByType("mask","diffusion")))
+
+    if (statusOnly)
+        printLabelledValues("Stages completed", implode(which(stagesComplete),", "))
+    else
+    {
+        if (runStages[1] && (!skipCompleted || !stagesComplete[1]))
         {
-            createFilesForSession(session, dicomDir, overwriteQuietly=(!interactive))
+            workingDir <- session$getDirectory("root")
+            if (file.exists(workingDir))
+            {
+                if (interactive)
+                {
+                    ans <- ask("Internal directory ", workingDir, " exists. This operation will DESTROY it. Continue? [yn]")
+                    if (tolower(ans) != "y")
+                        return (invisible(NULL))
+                }
+                
+                unlink(workingDir, recursive=TRUE)
+            }
+
+            if (is.null(dicomDir))
+                dicomDir <- session$getDirectory()
+            else if (dicomDir %!~% "^/")
+                dicomDir <- file.path(session$getDirectory(), dicomDir)
+            dicomDir <- gsub("//+", "/", dicomDir, perl=TRUE)
+
+            info <- newMriImageFromDicomDirectory(dicomDir, readDiffusionParams=TRUE)
+
+            session$getDirectory("diffusion", createIfMissing=TRUE)
+            writeMriImageToFile(info$image, session$getImageFileNameByType("rawdata","diffusion"))
+            print(info$image)
+
+            seriesDescriptions <- implode(gsub("\\W","",info$seriesDescriptions,perl=TRUE), ",")
+            writeLines(seriesDescriptions, file.path(session$getDirectory("diffusion"),"descriptions.txt"))
+
+            if (all(!is.na(info$bValues)) && all(!is.na(info$bVectors)))
+            {
+                scheme <- newSimpleDiffusionSchemeWithDirections(info$bVectors, info$bValues)
+                writeSimpleDiffusionSchemeForSession(session, scheme)
+            }
+            
             if (useGradientCache == "first" || (useGradientCache == "second" && !gradientDirectionsAvailableForSession(session)))
             {
                 gradientSet <- checkGradientCacheForSession(session)
@@ -53,21 +91,65 @@ runExperiment <- function ()
             
             if (!gradientDirectionsAvailableForSession(session))
                 report(OL$Warning, "Diffusion gradient information not available - you need to create bvals and bvecs files manually")
-            
-            reportFlags()
+            else
+            {
+                if (!is.null(flipAxes) && length(flipAxes) > 0)
+                    flipGradientVectorsForSession(session, flipAxes)
+                if (isTRUE(updateGradientCacheFromSession(session)))
+                    report(OL$Info, "Gradient directions inserted into cache for future reference")
+            }
         }
     
-        if (runStages[2] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("refb0","diffusion"))))
+        if (runStages[2] && (!skipCompleted || !stagesComplete[2]))
         {
-            if (!is.null(flipAxes) && length(flipAxes) > 0)
-                flipGradientVectorsForSession(session, flipAxes)
+            scheme <- newSimpleDiffusionSchemeFromSession(session)
+            if (is.null(scheme))
+                report(OL$Error, "No b-value or gradient direction information is available")
+
+            schemeComponents <- scheme$expandComponents()
+            minBValue <- min(scheme$getBValues())
+
+            zeroes <- which(schemeComponents$bValues == minBValue)
+            if (length(zeroes) == 1)
+            {
+                choice <- zeroes
+                report(OL$Info, "Volume ", choice, " is the only T2-weighted (b=", minBValue, ") volume in the data set")
+            }
+            else if (!interactive)
+            {
+                choice <- zeroes[1]
+                report(OL$Info, "Using volume ", choice, " with b=", minBValue, " as the reference volume")
+            }
+            else
+            {
+                report(OL$Info, "Volumes ", implode(zeroes,sep=", ",finalSep=" and "), " are T2-weighted (b=", minBValue, ")")
+                choice <- -1
+
+                while (!(choice %in% zeroes))
+                {
+                    choice <- ask("Use which one as the reference [s to show in fslview]?")
+                    if (tolower(choice) == "s")
+                        showImagesInFslview(session$getImageByType("rawdata","diffusion"), writeToAnalyzeFirst=TRUE)
+                    else
+                        choice <- as.integer(choice)
+                }
+            }
             
-            if (isTRUE(updateGradientCacheFromSession(session, forceCacheUpdate)))
-                report(OL$Info, "Gradient directions inserted into cache for future reference")
-            runEddyCorrectWithSession(session, ask=interactive)
+            writeLines(choice, file.path(session$getDirectory("diffusion"),"refb0-index.txt"))
+            
+            report(OL$Info, "Extracting reference volume")
+            data <- session$getImageByType("data","diffusion")
+            refVolume <- newMriImageByExtraction(data, 4, choice)
+            writeMriImageToFile(refVolume, session$getImageFileNameByType("refb0"))
         }
-    
-        if (runStages[3] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("mask","diffusion"))))
+        
+        if (runStages[3] && (!skipCompleted || !stagesComplete[3]))
+        {
+            refVolume <- as.integer(readLines(file.path(session$getDirectory("diffusion"),"refb0-index.txt")))
+            runEddyCorrectWithSession(session, refVolume)
+        }
+        
+        if (runStages[4] && (!skipCompleted || !stagesComplete[4]))
         {
             if (maskingMethod == "bet")
             {
@@ -75,8 +157,8 @@ runExperiment <- function ()
 
                 if (interactive)
                 {
-                    runBetAgain <- ask("Run brain extraction tool again? [yn; s to show the mask in fslview]")
-                    while (tolower(runBetAgain) %in% c("y","s"))
+                    runBetAgain <- ask("Is the brain extraction satisfactory? [yn; s to show the mask in fslview]")
+                    while (tolower(runBetAgain) %in% c("n","s"))
                     {
                         if (tolower(runBetAgain) == "s")
                             runBetWithSession(session, showOnly=TRUE)
@@ -94,41 +176,14 @@ runExperiment <- function ()
 
                             runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
                         }
-                        runBetAgain <- ask("Run brain extraction tool again? [yn; s to show the mask in fslview]")
+                        runBetAgain <- ask("Is the brain extraction satisfactory? [yn; s to show the mask in fslview]")
                     }
                 }
             }
             else
                 createMaskImageForSession(session, maskingMethod)
         }
-    
-        if (runStages[4] && (!skipCompleted || !imageFileExists(session$getImageFileNameByType("fa","diffusion"))))
-        {
-            runDtifitWithSession(session)
-            
-            if (interactive)
-            {
-                repeat
-                {
-                    runDtifitAgain <- tolower(ask("Run dtifit again? [yn; s to show principal directions in fslview]"))
-                    
-                    if (runDtifitAgain == "n")
-                        break
-                    else if (runDtifitAgain == "s")
-                        runDtifitWithSession(session, showOnly=TRUE)
-                    else if (runDtifitAgain == "y")
-                    {
-                        ans <- ask("Flip diffusion gradient vectors along which axes? [123; Enter for none]")
-                        flipAxes <- splitAndConvertString(ans, "", "integer", fixed=TRUE, allowRanges=FALSE)
-                        
-                        if (length(flipAxes[!is.na(flipAxes)]) > 0)
-                            flipGradientVectorsForSession(session, flipAxes)
-                        runDtifitWithSession(session)
-                    }
-                }
-            }
-        }
-    })
+    }
     
     invisible (NULL)
 }
