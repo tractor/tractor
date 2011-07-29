@@ -10,7 +10,7 @@ getOutputLevel <- function ()
     if (is.null(getOption("reportrOutputLevel")))
     {
         setOutputLevel(OL$Info)
-        report(OL$Info, "Output level is not set; defaulting to \"Info\"")
+        report(OL$Info, "Output level is not set; defaulting to \"Info\"", prefixFormat="")
         return (OL$Info)
     }
     else
@@ -19,7 +19,10 @@ getOutputLevel <- function ()
 
 withReportrHandlers <- function (expr)
 {
-    withCallingHandlers(expr, warning=function (w) {
+    withCallingHandlers(expr, message=function (m) {
+        report(OL$Info, sub("\n$","",m$message,perl=TRUE))
+        invokeRestart("muffleMessage")
+    }, warning=function (w) {
         flag(OL$Warning, w$message)
         invokeRestart("muffleWarning")
     }, error=function (e) {

@@ -42,7 +42,7 @@ withReportrHandlers(expr)
   
   The call \code{report(OL$Error,\dots)} is largely similar to \code{stop(\dots)} in most cases, except that a stack trace will be printed if the current output level is \code{Debug}. The "abort" restart is invoked in any case. No other standard conditions are signalled by \code{report}.
   
-  The \code{withReportrHandlers} function evaluates \code{expr} in a context in which R errors and warnings will be handled by reportr, rather than by the standard R functions.
+  The \code{withReportrHandlers} function evaluates \code{expr} in a context in which R errors, warnings and messages will be handled by reportr, rather than by the standard R functions.
   
   The \code{prefixFormat} argument to \code{report} and \code{ask} controls how the output message is formatted. It takes the form of a \code{\link{sprintf}}-style format string, but with different expansions for percent-escapes. Specifically, \code{"\%d"} expands to a series of stars indicating the current stack depth; \code{"\%f"} gives the name of the function calling \code{report} or \code{ask}; \code{"\%l"} and \code{"\%L"} give lower and upper case versions of the level of the message, respectively; and \code{"\%p"} expands to the ID of the current R process (see \code{\link{Sys.getpid}}). The default is \code{"\%d\%L: "}, giving a prefix such as \code{"* * INFO: "}, but this default can be overridden by setting the \code{reportrPrefixFormat} option.
   
