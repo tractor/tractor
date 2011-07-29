@@ -48,57 +48,16 @@ showImagesInFslview <- function (..., writeToAnalyzeFirst = FALSE, wait = FALSE)
     invisible(unlist(imageFileNames))
 }
 
-runEddyCorrectWithSession <- function (session, ask = FALSE)
+runEddyCorrectWithSession <- function (session, refVolume)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     if (!imageFileExists(session$getImageFileNameByType("rawdata","diffusion")))
         report(OL$Error, "The specified session does not contain a raw data image")
     
-    scheme <- newSimpleDiffusionSchemeFromSession(session)
-    if (is.null(scheme))
-        report(OL$Error, "The specified session does not contain gradient direction information")
-    
-    schemeComponents <- scheme$expandComponents()
-    minBValue <- min(scheme$getBValues())
-    if (minBValue != 0)
-        report(OL$Info, "Minimal b-value in this data set is ", minBValue, " rather than 0")
-    
-    zeroes <- which(schemeComponents$bValues == minBValue)
-    if (length(zeroes) == 0)
-        report(OL$Error, "No b-values are specified for this data set")
-    else if (length(zeroes) == 1)
-    {
-        choice <- zeroes
-        report(OL$Info, "Volume ", choice, " is the only T2 weighted volume in the data set")
-    }
-    else if (!ask)
-    {
-        choice <- zeroes[1]
-        report(OL$Info, "Using volume ", choice, " as the reference volume")
-    }
-    else
-    {
-        report(OL$Info, "Volumes ", implode(zeroes,sep=", ",finalSep=" and "), " are T2 weighted")
-        choice <- -1
-        
-        while (!(choice %in% zeroes))
-        {
-            choice <- ask("Use which one as the reference [s to show in fslview]?")
-            if (tolower(choice) == "s")
-                showImagesInFslview(session$getImageByType("rawdata","diffusion"), writeToAnalyzeFirst=TRUE)
-            else
-                choice <- as.numeric(choice)
-        }
-    }
-    
     report(OL$Info, "Running eddy_correct to remove eddy current induced artefacts...")
-    paramString <- paste(session$getImageFileNameByType("rawdata","diffusion"), session$getImageFileNameByType("data","diffusion"), choice-1, sep=" ")
+    paramString <- paste(session$getImageFileNameByType("rawdata","diffusion"), session$getImageFileNameByType("data","diffusion"), refVolume-1, sep=" ")
     execute("eddy_correct", paramString, errorOnFail=TRUE)
-    
-    data <- session$getImageByType("data","diffusion")
-    refVolume <- newMriImageByExtraction(data, 4, choice)
-    writeMriImageToFile(refVolume, session$getImageFileNameByType("refb0"))
     
     targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
     file.rename(file.path(session$getDirectory("diffusion"),"data.ecclog"), file.path(targetDir,"data.ecclog"))
