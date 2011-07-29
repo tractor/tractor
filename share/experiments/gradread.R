@@ -1,10 +1,5 @@
 #@args session directory, text file, large b-value, [small b-value]
-#@desc Create the "bvals" and "bvecs" files required for preprocessing from a text
-#@desc file, which should contain the diffusion gradient vectors applied to the
-#@desc data set. This script is considerably more flexible than FSL-FDT, allowing
-#@desc for the gradient vectors to be given either one-per-column or one-per-row,
-#@desc normalised or unnormalised, and with or without zeroes for b=0 measurements.
-#@desc The small b-value is assumed to be zero if it is not explicitly specified.
+#@desc Read diffusion gradient directions from a text file, and update the specified session directory. The text file should contain the diffusion gradient vectors applied to the data set, given either one-per-column or one-per-row, normalised or unnormalised, and with or without zeroes for b=0 measurements. The small b-value is assumed to be zero if it is not explicitly specified.
 
 suppressPackageStartupMessages(require(tractor.session))
 
@@ -90,7 +85,7 @@ runExperiment <- function ()
     bvals[highBValueIndices] <- largeBValue
     bvals[lowBValueIndices] <- smallBValue
     
-    report(OL$Info, "Writing bvals and bvecs files")
+    report(OL$Info, "Writing gradient direction files")
     scheme <- newSimpleDiffusionSchemeWithDirections(bvecs, bvals)
     writeSimpleDiffusionSchemeForSession(session, scheme)
 }
