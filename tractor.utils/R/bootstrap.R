@@ -1,5 +1,7 @@
 bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outputLevel = OL$Warning, configFiles = "/dev/null", configText = "", parallelisationFactor = 1)
 {
+    on.exit(quit(save="no"))
+    
     for (packageName in c("utils","grDevices","graphics","stats","methods","reportr","tractor.base"))
         library(packageName, character.only=TRUE)
     
@@ -16,7 +18,7 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
             report(OL$Warning, "The \"multicore\" package is not installed - code will not be parallelised")
     }
     
-    results <- try(withReportrHandlers({
+    results <- withReportrHandlers({
         source(scriptFile)
         
         config <- readYaml(configFiles)
@@ -33,7 +35,7 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
         if (!exists("runExperiment"))
             report(OL$Error, "The experiment script does not contain a \"runExperiment\" function")
         runExperiment()
-    }))
+    })
     
     reportFlags()
     

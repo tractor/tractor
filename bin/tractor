@@ -192,7 +192,6 @@ if [ $batch_mode -eq 1 ]; then
 library(utils)
 library(tractor.utils)
 bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor)
-q(runLast=FALSE)
 EOF
     R CMD BATCH --slave --vanilla $expect_file $log_file
 elif [ $interactive -eq 0 ]; then
@@ -207,7 +206,7 @@ send "library(utils)\n"
 expect -re ">.+\r\n"
 send "library(tractor.utils)\n"
 expect -re ">.+\r\n"
-send "bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor); q()\n"
+send "bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor)\n"
 expect -re ">.+\r\n"
 interact
 EOF
@@ -217,7 +216,7 @@ EOF
     }
     expect -f $expect_file | tee $log_file
 else
-    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor); q()" >.Rprofile
+    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor)" >.Rprofile
     R --slave --no-save --no-restore --no-site-file --no-environ 2>&1 | tee $log_file
 fi
 
