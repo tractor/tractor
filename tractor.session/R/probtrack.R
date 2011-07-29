@@ -2,7 +2,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
-    if (is.na(getBedpostNumberOfFibresForSession(session))
+    if (is.na(getBedpostNumberOfFibresForSession(session)))
         report(OL$Error, "The \"bedpost\" program has not yet been run for this session")
     
     mode <- match.arg(mode)
