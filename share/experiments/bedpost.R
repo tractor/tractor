@@ -8,7 +8,7 @@ runExperiment <- function ()
     session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
     
     nFibres <- getConfigVariable("NumberOfFibres", 2, "integer")
-    howRunBedpost <- getConfigVariable("HowRun", "fg", validValues=c("fg","bg","screen"))
+    howRunBedpost <- getConfigVariable("Context", "fg", validValues=c("fg","bg","screen"))
     force <- getConfigVariable("Force", FALSE)
     
     if (!force && imageFileExists(session$getImageFileNameByType("avf")))
