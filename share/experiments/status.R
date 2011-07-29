@@ -13,7 +13,7 @@ runExperiment <- function ()
                         imageFileExists(session$getImageFileNameByType("fa","diffusion")))
     
     labels <- c("Session directory", "Working directory exists", "Preprocessing stages complete", "Number of fibres per voxel", "Camino files created")
-    values <- c(session$getDirectory(), file.exists(session$getDirectory("root")), implode(which(stagesComplete),","), session$nFibres(), file.exists(file.path(session$getDirectory("camino"),"sequence.scheme")))
+    values <- c(session$getDirectory(), file.exists(session$getDirectory("root")), implode(which(stagesComplete),","), getBedpostNumberOfFibresForSession(session), file.exists(file.path(session$getDirectory("camino"),"sequence.scheme")))
     
     if (getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)

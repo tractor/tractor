@@ -9,9 +9,6 @@ runExperiment <- function ()
     requireArguments("session directory")
     session <- newSessionFromDirectory(Arguments[1])
     
-    if (!session$isPreprocessed())
-        report(OL$Error, "This session is not yet fully preprocessed")
-    
     x <- getConfigVariable("X", NA, "numeric", errorIfInvalid=TRUE)
     y <- getConfigVariable("Y", NA, "numeric", errorIfInvalid=TRUE)
     z <- getConfigVariable("Z", NA, "numeric", errorIfInvalid=TRUE)
@@ -41,12 +38,15 @@ runExperiment <- function ()
     if (pointType == "fsl")
         point <- transformFslVoxelToRVoxel(point)
     else if (pointType == "mm")
-        point <- transformWorldToRVoxel(point, image$getMetadata(), useOrigin=TRUE)
+        point <- transformWorldToRVoxel(point, faImage$getMetadata(), useOrigin=TRUE)
     point[inPlaneAxes] <- NA
     
     createSliceGraphic(faImage, point[1], point[2], point[3], device="internal", windowLimits=windowLimits)
     
-    nDirections <- ifelse(source=="tensor", 1, session$nFibres())
+    nDirections <- ifelse(source=="tensor", 1, getBedpostNumberOfFibresForSession(session))
+    if (is.na(nDirections))
+        report(OL$Error, "The \"bedpost\" program has not yet been run for this session")
+    
     for (i in seq_len(nDirections))
     {
         if (source == "bedpost")

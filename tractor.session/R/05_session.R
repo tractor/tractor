@@ -58,28 +58,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         return (objectDir)
     },
     
-    getObjectFileName = function (object) { return (file.path(getObjectDirectory(), ensureFileSuffix(object,"Rdata"))) },
-    
-    isPreprocessed = function () { return (imageFileExists(getImageFileNameByType("mask","diffusion"))) },
-    
-    nFibres = function ()
-    {
-        i <- 1
-        while (imageFileExists(getImageFileNameByType("avf",index=i)))
-            i <- i + 1
-        
-        if (i == 1)
-            return (NA)
-        else
-            return (i-1)
-    }
+    getObjectFileName = function (object) { return (file.path(getObjectDirectory(), ensureFileSuffix(object,"Rdata"))) }
 ))
 
-newSessionFromDirectory <- function (directory, createFiles = FALSE, dicomDir = NULL)
+newSessionFromDirectory <- function (directory)
 {
     session <- MriSession$new(directory)
-    if (createFiles)
-        createFilesForSession(session, dicomDir)
     invisible (session)
 }
 
@@ -210,44 +194,6 @@ standardiseSessionHierarchy <- function (session)
             
             unlink(file.path(directory, "map.yaml"))
         }
-    }
-}
-
-createFilesForSession <- function (session, dicomDir = NULL, overwriteQuietly = FALSE)
-{
-    workingDir <- session$getDirectory("root")
-    if (file.exists(workingDir))
-    {
-        if (overwriteQuietly)
-            ans <- "y"
-        else
-            ans <- ask("Internal directory ", workingDir, " exists. This operation will DESTROY it. Continue? [yn]")
-        
-        if (tolower(ans) != "y")
-            return (invisible(NULL))
-        else
-            unlink(workingDir, recursive=TRUE)
-    }
-    
-    if (is.null(dicomDir))
-        dicomDir <- session$getDirectory()
-    else if (!(dicomDir %~% "^/"))
-        dicomDir <- file.path(session$getDirectory(), dicomDir)
-    dicomDir <- gsub("//+", "/", dicomDir, perl=TRUE)
-    
-    info <- newMriImageFromDicomDirectory(dicomDir, readDiffusionParams=TRUE)
-    
-    session$getDirectory("diffusion", createIfMissing=TRUE)
-    writeMriImageToFile(info$image, session$getImageFileNameByType("rawdata","diffusion"))
-    print(info$image)
-    
-    seriesDescriptions <- implode(gsub("\\W","",info$seriesDescriptions,perl=TRUE), ",")
-    writeLines(seriesDescriptions, file.path(session$getDirectory("diffusion"),"descriptions.txt"))
-
-    if (all(!is.na(info$bValues)) && all(!is.na(info$bVectors)))
-    {
-        scheme <- newSimpleDiffusionSchemeWithDirections(info$bVectors, info$bValues)
-        writeSimpleDiffusionSchemeForSession(session, scheme)
     }
 }
 

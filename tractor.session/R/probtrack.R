@@ -2,8 +2,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
-    if (!session$isPreprocessed())
-        report(OL$Error, "The specified session has not yet been fully preprocessed")
+    if (is.na(getBedpostNumberOfFibresForSession(session))
+        report(OL$Error, "The \"bedpost\" program has not yet been run for this session")
     
     mode <- match.arg(mode)
     
@@ -33,7 +33,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     }
     
     bedpostDir <- session$getDirectory("bedpost")
-    probtrackDir <- session$getDirectory("probtrack")
+    probtrackDir <- session$getDirectory("probtrack", createIfMissing=TRUE)
     
     previousWorkingDir <- getwd()
     workingDir <- file.path(tempdir(), paste("probtrackx",Sys.getpid(),sep="_"))
