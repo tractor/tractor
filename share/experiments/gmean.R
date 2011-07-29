@@ -1,11 +1,5 @@
 #@args volume prefix
-#@desc Calculate the mean or weighted mean value of a metric within the nonzero region
-#@desc of a group of brain volumes (usually tractography output) whose file names are
-#@desc assumed to have the form of the specified volume prefix followed by a number
-#@desc corresponding to the location in the SessionList. The metric can be FA, MD, Lax,
-#@desc Lrad or AVF, and the specified image can be used as a binary mask (the default)
-#@desc or as a set of weights (with AveragingMode:weighted). In the latter case any
-#@desc weight threshold given is ignored.
+#@desc Calculate the mean or weighted mean value of a metric within the nonzero region of a group of brain volumes (usually tractography output) whose file names are assumed to have the form of the specified volume prefix followed by a number corresponding to the location in the SessionList. The specified image can be used as a binary mask (the default) or as a set of weights (with AveragingMode:weighted). In the latter case any weight threshold given is ignored.
 
 suppressPackageStartupMessages(require(tractor.session))
 
@@ -15,7 +9,7 @@ runExperiment <- function ()
     fileStem <- Arguments[1]
     
     sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
-    metricName <- getConfigVariable("Metric", NULL, "character", validValues=c("weight","AVF","FA","MD","Lax","Lrad"))
+    metricName <- getConfigVariable("Metric", NULL, "character", validValues=c("weight","FA","MD","axialdiff","radialdiff"))
     mode <- getConfigVariable("AveragingMode", "binary", validValues=c("binary","weighted"))
     baseThreshold <- getConfigVariable("WeightThreshold", 0.01)
     thresholdMode <- getConfigVariable("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
