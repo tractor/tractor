@@ -16,8 +16,8 @@ runExperiment <- function ()
     y <- getConfigVariable("Y", NA, "numeric", errorIfInvalid=TRUE)
     z <- getConfigVariable("Z", NA, "numeric", errorIfInvalid=TRUE)
     pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
-    source <- getConfigVariable("Source", "bedpost", validValues=c("bedpost","tensor"))
-    thresholdLevel <- getConfigVariable("ThresholdLevel", 0.05)
+    source <- getConfigVariable("Source", "tensor", validValues=c("bedpost","tensor"))
+    thresholdLevel <- getConfigVariable("ThresholdLevel", 0.2)
     windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
     scaleComponents <- getConfigVariable("ScaleComponents", TRUE)
     
@@ -52,7 +52,7 @@ runExperiment <- function ()
         if (source == "bedpost")
         {
             dyadsImage <- session$getImageByType("dyads", "bedpost", index=i)
-            thresholdImage <- session$getImageByType("avf", i)
+            thresholdImage <- session$getImageByType("avf", "bedpost", index=i)
         }
         else
         {
