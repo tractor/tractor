@@ -5,15 +5,12 @@
 runExperiment <- function ()
 {
     requireArguments("image file")
-    
-    image <- newMriImageFromFile(Arguments[1])
-    
-    fileStem <- tempfile()
-    writeMriImageToFile(image, fileStem, fileType="ANALYZE_GZ")
-    execute("fslview", fileStem, wait=FALSE)
+    fileNames <- showImagesInFslview(Arguments[1], writeToAnalyzeFirst=TRUE)
     
     ask("Press Enter to exit:")
     
-    removeImageFilesWithName(fileStem)
+    for (fileName in fileNames)
+        removeImageFilesWithName(fileName)
+    
     invisible(NULL)
 }

@@ -15,6 +15,39 @@ getFslVersion <- function ()
         return (sum(version * c(10000, 100, 1)))
 }
 
+showImagesInFslview <- function (..., writeToAnalyzeFirst = FALSE, wait = FALSE)
+{
+    imageFileNames <- lapply(list(...), function (i) {
+        if (!is.character(i) && !is(i,"MriImage"))
+            report(OL$Error, "Images must be specified as MriImage objects or file names")
+        if (writeToAnalyzeFirst)
+        {
+            # fslview is fussy about data types, so write the image into
+            # Analyze format to avoid a crash
+            imageLoc <- tempfile()
+            if (is.character(i))
+                i <- newMriImageFromFile(i)
+            writeMriImageToFile(i, imageLoc, fileType="ANALYZE_GZ")
+            return (imageLoc)
+        }
+        else
+        {
+            if (is.character(i))
+                return (i)
+            else
+                return (i$getSource())
+        }
+    })
+    
+    execute("fslview", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait)
+    
+    # If we're not waiting for fslview we can't delete the image yet
+    if (writeToAnalyzeFirst && wait)
+        lapply(imageFileNames, removeImageFilesWithName)
+    
+    invisible(unlist(imageFileNames))
+}
+
 runEddyCorrectWithSession <- function (session, ask = FALSE)
 {
     if (!is(session, "MriSession"))
@@ -53,14 +86,7 @@ runEddyCorrectWithSession <- function (session, ask = FALSE)
         {
             choice <- ask("Use which one as the reference [s to show in fslview]?")
             if (tolower(choice) == "s")
-            {
-                # fslview is fussy about data types, so write the image into
-                # Analyze format to avoid a crash
-                image <- session$getImageByType("rawdata", "diffusion")
-                imageLoc <- tempfile()
-                writeMriImageToFile(image, imageLoc, fileType="ANALYZE_GZ")
-                execute("fslview", imageLoc, errorOnFail=TRUE, wait=FALSE)
-            }
+                showImagesInFslview(session$getImageByType("rawdata","diffusion"), writeToAnalyzeFirst=TRUE)
             else
                 choice <- as.numeric(choice)
         }
@@ -123,10 +149,7 @@ runDtifitWithSession <- function (session, showOnly = FALSE)
         if (!imageFileExists(session$getImageFileNameByType("fa","diffusion")))
             report(OL$Warning, "Cannot display tensor directions because dtifit has not yet been run")
         else
-        {
-            paramString <- paste(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1), sep=" ")
-            execute("fslview", paramString, errorOnFail=TRUE, wait=FALSE)
-        }
+            showImagesInFslview(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1))
     }
     else
     {
@@ -147,13 +170,10 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
         report(OL$Error, "Specified session is not an MriSession object")
     
     if (!imageFileExists(session$getImageFileNameByType("refb0")))
-        report(OL$Error, "A reference b=0 image file has not yet been corrected - run eddy_correct first")
+        report(OL$Error, "A reference b=0 image file has not yet been created - run eddy_correct first")
     
     if (showOnly)
-    {
-        paramString <- paste(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("mask","diffusion"), sep=" ")
-        execute("fslview", paramString, errorOnFail=TRUE, wait=FALSE)
-    }
+        showImagesInFslview(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("mask","diffusion"))
     else
     {
         report(OL$Info, "Running FSL's brain extraction tool...")
