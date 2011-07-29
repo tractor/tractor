@@ -13,7 +13,7 @@ runExperiment <- function ()
     
     seedMaskFile <- getConfigVariable("SeedMaskFile", NULL, "character", errorIfInvalid=TRUE, errorIfMissing=TRUE)
     seedMaskInStandardSpace <- getConfigVariable("SeedMaskInStandardSpace", FALSE)
-    thresholdType <- getConfigVariable("SeedThresholdType", "fa")
+    thresholdType <- getConfigVariable("SeedThresholdType", "FA", validValues=c("FA","MD","axialdiff","radialdiff"))
     thresholdLevel <- getConfigVariable("SeedThresholdLevel", NULL, "numeric", errorIfInvalid=TRUE)
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     

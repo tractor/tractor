@@ -26,7 +26,7 @@ runExperiment <- function ()
     tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"))
     
     useGradientAscent <- getConfigVariable("UseGradientAscent", FALSE)
-    thresholdType <- getConfigVariable("GradientAscentThresholdType", "fa")
+    thresholdType <- getConfigVariable("GradientAscentThresholdType", "FA", validValues=c("FA","MD","axialdiff","radialdiff"))
     thresholdLevel <- getConfigVariable("GradientAscentThresholdLevel", 0.2)
     
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
@@ -65,7 +65,7 @@ runExperiment <- function ()
                 currentValue <- thresholdImage$getDataAtPoint(currentSeed)
             }
             
-            report(OL$Verbose, "Ascending to voxel ", implode(currentSeed,","), " with ", toupper(thresholdType), " value ", currentValue)
+            report(OL$Verbose, "Ascending to voxel ", implode(currentSeed,","), " with ", thresholdType, " value ", currentValue)
         }
         
         seed <- currentSeed
