@@ -17,7 +17,7 @@ runExperiment <- function ()
     pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
     searchWidth <- getConfigVariable("SearchWidth", 1)
     faThreshold <- getConfigVariable("AnisotropyThreshold", 0.2)
-    nSamples <- getConfigVariable("NumberOfSamples", 5000)
+    nSamples <- getConfigVariable("NumberOfSamples", 1000)
     resultsName <- getConfigVariable("ResultsName", "results")
     
     reference <- getNTResource("reference", "hnt", list(tractName=tractName))

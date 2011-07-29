@@ -12,7 +12,7 @@ runExperiment <- function ()
     tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
     datasetName <- getConfigVariable("DatasetName", NULL, "character", errorIfMissing=TRUE)
     maxKnotCount <- getConfigVariable("MaximumKnotCount", NULL, "integer")
-    asymmetricModel <- getConfigVariable("AsymmetricModel", FALSE)
+    asymmetricModel <- getConfigVariable("AsymmetricModel", TRUE)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
 

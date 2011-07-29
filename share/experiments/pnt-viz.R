@@ -12,7 +12,7 @@ runExperiment <- function ()
     
     maxSeeds <- getConfigVariable("MaximumSeedPoints", 1, "integer")
     minPosterior <- getConfigVariable("MinimumPosterior", 0, "numeric")
-    nSamples <- getConfigVariable("NumberOfSamples", 5000, "integer")
+    nSamples <- getConfigVariable("NumberOfSamples", 1000, "integer")
     
     createVolumes <- getConfigVariable("CreateVolumes", TRUE)
     createImages <- getConfigVariable("CreateImages", FALSE)
