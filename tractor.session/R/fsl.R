@@ -95,7 +95,7 @@ createFdtFilesForSession <- function (session, overwriteExisting = FALSE)
     }
 }
 
-runDtifitWithSession <- function (session, showOnly = FALSE)
+runDtifitWithSession <- function (session)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
@@ -103,27 +103,17 @@ runDtifitWithSession <- function (session, showOnly = FALSE)
     targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
     createFdtFilesForSession(session)
     
-    if (showOnly)
-    {
-        if (!imageFileExists(session$getImageFileNameByType("fa","diffusion")))
-            report(OL$Warning, "Cannot display tensor directions because dtifit has not yet been run")
-        else
-            showImagesInFslview(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1))
-    }
-    else
-    {
-        report(OL$Info, "Running dtifit to do tensor fitting...")
-        paramString <- paste("-k", session$getImageFileNameByType("data","fdt"), "-m", session$getImageFileNameByType("mask","fdt"), "-r", file.path(targetDir,"bvecs"), "-b", file.path(targetDir,"bvals"), "-o", file.path(targetDir,"dti"), sep=" ")
-        execute("dtifit", paramString, errorOnFail=TRUE)
-        
-        names <- c("s0", "fa", "md", "eigenvalue", "eigenvalue", "eigenvalue", "eigenvector", "eigenvector", "eigenvector")
-        indices <- c(1, 1, 1, 1:3, 1:3)
-        for (i in seq_along(names))
-            symlinkImageFiles(session$getImageFileNameByType(names[i],"fdt",indices[i]), session$getImageFileNameByType(names[i],"diffusion",indices[i]), overwrite=TRUE)
-    }
+    report(OL$Info, "Running dtifit to do tensor fitting...")
+    paramString <- paste("-k", session$getImageFileNameByType("data","fdt"), "-m", session$getImageFileNameByType("mask","fdt"), "-r", file.path(targetDir,"bvecs"), "-b", file.path(targetDir,"bvals"), "-o", file.path(targetDir,"dti"), sep=" ")
+    execute("dtifit", paramString, errorOnFail=TRUE)
+    
+    names <- c("s0", "fa", "md", "eigenvalue", "eigenvalue", "eigenvalue", "eigenvector", "eigenvector", "eigenvector")
+    indices <- c(1, 1, 1, 1:3, 1:3)
+    for (i in seq_along(names))
+        symlinkImageFiles(session$getImageFileNameByType(names[i],"fdt",indices[i]), session$getImageFileNameByType(names[i],"diffusion",indices[i]), overwrite=TRUE)
 }
 
-runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradient = 0, showOnly = FALSE)
+runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradient = 0)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
@@ -131,16 +121,11 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     if (!imageFileExists(session$getImageFileNameByType("refb0")))
         report(OL$Error, "A reference b=0 image file has not yet been created - run eddy_correct first")
     
-    if (showOnly)
-        showImagesInFslview(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("mask","diffusion"))
-    else
-    {
-        report(OL$Info, "Running FSL's brain extraction tool...")
-        paramString <- paste(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("maskedb0"), "-m -f", intensityThreshold, "-g", verticalGradient, sep=" ")
-        execute("bet", paramString, errorOnFail=TRUE)
-        
-        copyImageFiles(paste(session$getImageFileNameByType("maskedb0"),"mask",sep="_"), session$getImageFileNameByType("mask","diffusion"), overwrite=TRUE, deleteOriginals=TRUE)
-    }
+    report(OL$Info, "Running FSL's brain extraction tool...")
+    paramString <- paste(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("maskedb0"), "-m -f", intensityThreshold, "-g", verticalGradient, sep=" ")
+    execute("bet", paramString, errorOnFail=TRUE)
+    
+    copyImageFiles(paste(session$getImageFileNameByType("maskedb0"),"mask",sep="_"), session$getImageFileNameByType("mask","diffusion"), overwrite=TRUE, deleteOriginals=TRUE)
 }
 
 runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","screen"))

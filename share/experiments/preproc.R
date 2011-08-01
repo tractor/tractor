@@ -161,7 +161,7 @@ runExperiment <- function ()
                     while (tolower(runBetAgain) %in% c("n","s"))
                     {
                         if (tolower(runBetAgain) == "s")
-                            runBetWithSession(session, showOnly=TRUE)
+                            showImagesInFslview(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("mask","diffusion"))
                         else
                         {
                             report(OL$Info, "Previous intensity threshold was ", betIntensityThreshold, "; smaller values give larger brain outlines")
