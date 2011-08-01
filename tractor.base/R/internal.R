@@ -1,4 +1,4 @@
-displayGraphic <- function (data, colourScale = 1, add = FALSE, windowLimits = NULL)
+displayGraphic <- function (data, colourScale = 1, add = FALSE, windowLimits = NULL, asp = NULL)
 {
     dims <- dim(data)
     scale <- getColourScale(colourScale)
@@ -19,11 +19,14 @@ displayGraphic <- function (data, colourScale = 1, add = FALSE, windowLimits = N
     }
     else
     {
+        if (is.null(asp))
+            asp <- dims[2] / dims[1]
+        
         oldPars <- par(mai=c(0,0,0,0), bg=scale$background)
         if (is.null(windowLimits))
-            image(data, col=scale$colours, axes=FALSE, asp=dims[2]/dims[1])
+            image(data, col=scale$colours, axes=FALSE, asp=asp)
         else
-            image(data, col=scale$colours, axes=FALSE, asp=dims[2]/dims[1], zlim=sort(windowLimits))
+            image(data, col=scale$colours, axes=FALSE, asp=asp, zlim=sort(windowLimits))
         par(oldPars)
     }
 }

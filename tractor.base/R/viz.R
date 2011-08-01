@@ -73,7 +73,10 @@ createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("inter
         report(OL$Error, "The \"createSliceGraphic\" function only handles 2D and 3D images")
     
     if (device == "internal")
-        displayGraphic(slice, colourScale, add=add, windowLimits=windowLimits)
+    {
+        fieldOfView <- image$getFieldOfView()[!axisRelevance]
+        displayGraphic(slice, colourScale, add=add, windowLimits=windowLimits, asp=fieldOfView[2]/fieldOfView[1])
+    }
     else if (device == "png")
     {
         tempFile <- tempfile()
@@ -91,12 +94,15 @@ createProjectionGraphic <- function (image, axis, device = c("internal","png"), 
     
     device <- match.arg(device)
     projection <- maximumIntensityProjection(image, axis)
+    imageAxes <- !(1:3 %in% axis)
     
     if (device == "internal")
-        displayGraphic(projection, colourScale, add=add, windowLimits=windowLimits)
+    {
+        fieldOfView <- image$getFieldOfView()[imageAxes]
+        displayGraphic(projection, colourScale, add=add, windowLimits=windowLimits, asp=fieldOfView[2]/fieldOfView[1])
+    }
     else if (device == "png")
     {
-        imageAxes <- !(1:3 %in% axis)
         tempFile <- tempfile()
         pngDims <- round(abs(image$getDimensions()[imageAxes] * image$getVoxelDimensions()[imageAxes] * zoomFactor))
         writePng(projection, colourScale, tempFile, windowLimits=windowLimits)
@@ -146,7 +152,10 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
     }
     
     if (device == "internal")
-        displayGraphic(data, colourScale, add=add, windowLimits=windowLimits)
+    {
+        fieldOfView <- abs(dim(data) * image$getVoxelDimensions()[imageAxes])
+        displayGraphic(data, colourScale, add=add, windowLimits=windowLimits, asp=fieldOfView[2]/fieldOfView[1])
+    }
     else if (device == "png")
     {
         tempFile <- tempfile()
