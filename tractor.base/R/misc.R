@@ -18,7 +18,7 @@ implode <- function (strings, sep = "", finalSep = NULL)
     }
 }
 
-printLabelledValues <- function (labels, values, outputLevel = OL$Info)
+printLabelledValues <- function (labels, values, outputLevel = OL$Info, leftJustify = FALSE)
 {
     if (length(labels) != length(values))
         report(OL$Error, "Labels and values should be of the same length")
@@ -28,7 +28,12 @@ printLabelledValues <- function (labels, values, outputLevel = OL$Info)
     nValues <- length(values)
     
     for (i in seq_len(nValues))
-        report(outputLevel, implode(rep(" ",maxLabelLength-labelLengths[i]),sep=""), labels[i], " : ", values[i], prefixFormat="")
+    {
+        if (leftJustify)
+            report(outputLevel, "  ", labels[i], implode(rep(" ",maxLabelLength-labelLengths[i]),sep=""), " : ", values[i], prefixFormat="")
+        else
+            report(outputLevel, implode(rep(" ",maxLabelLength-labelLengths[i]),sep=""), labels[i], " : ", values[i], prefixFormat="")
+    }
     
     invisible(NULL)
 }
