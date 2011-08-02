@@ -143,6 +143,8 @@ updateSessionHierarchy <- function (session)
             scheme <- newSimpleDiffusionSchemeWithDirections(bVectors, bValues)
             writeSimpleDiffusionSchemeForSession(session, scheme)
         }
+        
+        createFdtFilesForSession(session)
     }
 }
 
