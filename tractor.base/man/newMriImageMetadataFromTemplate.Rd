@@ -5,7 +5,8 @@
 Duplicates an MriImageMetadata object, possibly with modification.
 }
 \usage{
-newMriImageMetadataFromTemplate(metadata, imageDims = NA, voxelDims = NA, voxelUnit = NA, datatype = NA, origin = NA, tags = NA)
+newMriImageMetadataFromTemplate(metadata, imageDims = NA, voxelDims = NA, voxelUnit = NA,
+                                  datatype = NA, origin = NA, tags = NA)
 }
 \arguments{
   \item{metadata}{An existing \code{\link{MriImageMetadata}} object.}

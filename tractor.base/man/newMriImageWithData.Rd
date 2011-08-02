@@ -26,7 +26,8 @@ newMriImageByThresholding(image, level, defaultValue = 0)
 newMriImageByTrimming(image, clearance = 4)
 
 newMriImageAsShapeOverlay(type = c("cross", "block"), baseImage, ...)
-generateImageDataForShape(type = c("cross", "block"), dim, background = 0, centre = NA, width = NA)
+generateImageDataForShape(type = c("cross", "block"), dim, background = 0,
+                            centre = NA, width = NA)
 
 newMriImageWithSimpleFunction(image, fun, ..., newDataType = NULL)
 newMriImageWithBinaryFunction(image1, image2, fun, ..., newDataType = NULL)

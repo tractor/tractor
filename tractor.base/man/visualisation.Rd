@@ -8,10 +8,22 @@
   Visualise \code{MriImage} objects.
 }
 \usage{
-createCombinedGraphics(images, modes, colourScales, axes = 1:3, sliceLoc = NULL, device = c("internal", "png"), alphaImages = NULL, prefix = "image", zoomFactor = 1, filter = "Mitchell", windowLimits = NULL, clearance = NULL, nColumns = NULL)
-createProjectionGraphic(image, axis, device = c("internal", "png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
-createSliceGraphic(image, x = NA, y = NA, z = NA, device = c("internal", "png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
-createContactSheetGraphic(image, axis, device = c("internal", "png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL, clearance = NULL, nColumns = NULL)
+createCombinedGraphics(images, modes, colourScales, axes = 1:3, sliceLoc = NULL,
+                         device = c("internal", "png"), alphaImages = NULL,
+                         prefix = "image", zoomFactor = 1, filter = "Mitchell",
+                         windowLimits = NULL, clearance = NULL, nColumns = NULL)
+
+createProjectionGraphic(image, axis, device = c("internal", "png"), colourScale = 1,
+                          add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell",
+                          windowLimits = NULL)
+
+createSliceGraphic(image, x = NA, y = NA, z = NA, device = c("internal", "png"),
+                     colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1,
+                     filter = "Mitchell", windowLimits = NULL)
+
+createContactSheetGraphic(image, axis, device = c("internal", "png"), colourScale = 1,
+                            add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell",
+                            windowLimits = NULL, clearance = NULL, nColumns = NULL)
 }
 \arguments{
   \item{images}{A list of \code{\link{MriImage}} objects.}
