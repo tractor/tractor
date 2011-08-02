@@ -135,15 +135,19 @@ setAs("array", "MriImage", function (from) {
     return (image)
 })
 
-setMethod("[", "MriImage", function (x, i, j, ..., drop = TRUE) { return (x$getData()[i,j,...,drop=drop]) })
+"[.MriImage" <- function (x, ...)
+{
+    return (x$getData()[...])
+}
 
-setMethod("[<-", "MriImage", function (x, i, j, ..., value) {
+"[<-.MriImage" <- function (x, ..., value)
+{
     data <- x$getData()
-    data[i,j,...] <- value
+    data[...] <- value
     newImage <- MriImage$new(data, x$getMetadata())
     newImage$setSource("internal")
     return (newImage)
-})
+}
 
 as.array.MriImage <- function (x, ...)
 {
@@ -170,16 +174,30 @@ Ops.MriImage <- function (e1, e2)
     return (newImage)
 }
 
-Summary.MriImage <- function (..., na.rm = FALSE)
+Summary.MriImage <- function (x, ..., na.rm = FALSE)
 {
     if (nargs() > 2)
-        report(OL$Error, "Function ", .Generic, " is not defined for more than one image object")
+        report(OL$Error, "Function \"", .Generic, "\" is not defined for more than one image object")
     
-    result <- get(.Generic)((...)$getData())
+    result <- get(.Generic)(x$getData())
     return (result)
 }
 
-setMethod("Math", "MriImage", Math.MriImage)
+setMethod("[", "MriImage", function (x, i, j, ..., drop = TRUE) {
+    if (missing(j))
+        return (get("[.MriImage")(x, i, ..., drop=drop))
+    else
+        return (get("[.MriImage")(x, i, j, ..., drop=drop))
+})
+
+setMethod("[<-", "MriImage", function (x, i, j, ..., value) {
+    if (missing(j))
+        return (get("[<-.MriImage")(x, i, ..., value=value))
+    else
+        return (get("[<-.MriImage")(x, i, j, ..., value=value))
+})
+
+setMethod("Math", "MriImage", function (x) { Math.MriImage(x) })
 
 setMethod("Ops", "MriImage", Ops.MriImage)
 
