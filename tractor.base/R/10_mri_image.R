@@ -135,7 +135,7 @@ setAs("array", "MriImage", function (from) {
     return (image)
 })
 
-as.array.MriImage <- function (x)
+as.array.MriImage <- function (x, ...)
 {
     as(x, "array")
 }

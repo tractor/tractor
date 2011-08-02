@@ -205,7 +205,7 @@ setAs("SparseArray", "array", function (from) {
     return (data)
 })
 
-as.array.SparseArray <- function (x)
+as.array.SparseArray <- function (x, ...)
 {
     as(x, "array")
 }
