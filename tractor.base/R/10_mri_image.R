@@ -197,7 +197,7 @@ setMethod("[<-", "MriImage", function (x, i, j, ..., value) {
         return (get("[<-.MriImage")(x, i, j, ..., value=value))
 })
 
-setMethod("Math", "MriImage", function (x) { Math.MriImage(x) })
+# setMethod("Math", "MriImage", Math.MriImage)
 
 setMethod("Ops", "MriImage", Ops.MriImage)
 
