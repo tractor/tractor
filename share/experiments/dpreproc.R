@@ -1,5 +1,5 @@
 #@args [session directory]
-#@desc Runs the standard FSL-FDT preprocessing pipeline on the specified session directory (or "." if none is specified). This pipeline consists of four stages: (1) convert DICOM files into a 4D Analyze/NIfTI/MGH volume; (2) correct the data set for eddy current induced distortions; (3) create a mask to extract only brain voxels; (4, optional) calculate diffusion tensor characteristics such as principal eigenvectors and FA values. If the pipeline was previously partly completed, the script will resume it where appropriate. (Starting from the beginning can be forced by specifying SkipCompletedStages:false.) The script asks the user about each stage unless Interactive:false is given.
+#@desc Run a standard preprocessing pipeline on the diffusion data in the specified session directory (or "." if none is specified). This pipeline consists of four stages: (1) convert DICOM files into a 4D Analyze/NIfTI/MGH volume; (2) identify a volume with little or no diffusion weighting to use as an anatomical reference; (3) correct the data set for eddy current induced distortions; (4) create a mask to identify voxels which are within the brain. Stage 3 is currently performed using FSL "eddy_correct", so FSL must be installed for this stage. Stage 4 can use FSL's brain extraction tool for accuracy, but the default is to use a k-means approach, which is quicker, has no parameters, and may be more successful for nonbrain data. If the pipeline was previously partly completed, the script will resume it where appropriate. (Starting from the beginning can be forced by specifying SkipCompletedStages:false.) Giving StatusOnly:true will report which stages have been run. The script asks the user about each stage unless Interactive:false is given.
 #@interactive TRUE
 
 suppressPackageStartupMessages(require(tractor.session))
@@ -39,7 +39,7 @@ runExperiment <- function ()
                         imageFileExists(session$getImageFileNameByType("mask","diffusion")))
 
     if (statusOnly)
-        printLabelledValues("Stages completed", implode(which(stagesComplete),", "))
+        printLabelledValues(c("Session directory","Stages completed"), c(session$getDirectory(),implode(which(stagesComplete),", ")))
     else
     {
         if (runStages[1] && (!skipCompleted || !stagesComplete[1]))
