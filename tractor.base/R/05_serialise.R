@@ -1,4 +1,6 @@
 SerialisableObject <- setRefClass("SerialisableObject", methods=list(
+    methods = function () { return (.self$getRefClass()$methods()) },
+    
     serialise = function (file = NULL)
     {
         originalClass <- class(.self)
@@ -29,7 +31,7 @@ SerialisableObject <- setRefClass("SerialisableObject", methods=list(
 
 setMethod("show", "SerialisableObject", function (object)
 {
-    if ("summarise" %in% object$getRefClass()$methods())
+    if ("summarise" %in% object$methods())
     {
         summaryList <- object$summarise()
         if (is.list(summaryList) && all(c("labels","values") %in% names(summaryList)))
