@@ -5,9 +5,11 @@
 \alias{identifyImageFileNames}
 \alias{imageFileExists}
 \alias{removeImageFilesWithName}
-\title{Working with MRI images stored in NIfTI and Analyze formats}
+\alias{copyImageFiles}
+\alias{symlinkImageFiles}
+\title{Working with MRI images stored in NIfTI, Analyze and MGH formats}
 \description{
-  Functions for reading, writing, locating and removing MRI images stored in NIfTI and Analyze formats.
+Functions for reading, writing, locating, copying and removing MRI images stored in NIfTI, Analyze and MGH formats.
 }
 \usage{
 newMriImageFromFile(fileName, fileType = NULL)
@@ -17,28 +19,35 @@ writeMriImageToFile(image, fileName = NULL, fileType = NA, datatype = NULL, over
 identifyImageFileNames(fileName, fileType = NULL, errorIfMissing = TRUE)
 imageFileExists(fileName, fileType = NULL)
 removeImageFilesWithName(fileName)
+copyImageFiles(from, to, overwrite = FALSE, deleteOriginals = FALSE)
+symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE)
 }
 \arguments{
-  \item{fileName}{A file name, with or without appropriate extension.}
+  \item{fileName, from, to}{File names, with or without appropriate extension.}
   \item{image}{An MriImage object.}
   \item{fileType}{A character vector of length one, giving the file type required or expected. If this option is missing, the file type used for writing images will be taken from the \code{tractorFileType} option. See Details.}
   \item{datatype}{A storage data type. See \code{\link{getDataTypeByNiftiCode}}.}
-  \item{overwrite}{Logical value: overwrite an existing image file? An error will be raised if there is an existing file and this is set to FALSE.}
+  \item{overwrite}{Logical value: overwrite an existing image file? For \code{writeMriImageToFile}, an error will be raised if there is an existing file and this is set to FALSE.}
   \item{errorIfMissing}{Logical value: raise an error if no suitable files were found?}
+  \item{deleteOriginals}{Logical value: if \code{TRUE}, \code{copyImageFiles} performs a move rather than a copy.}
+  \item{relative}{Logical value: if \code{TRUE}, the path stored in the symlink will be relative (e.g. \code{"../some_dir/some_image.nii"}) rather than absolute (e.g. \code{"/path/to/some_dir/some_image.nii"}).}
 }
 \details{
-  NIfTI and Analyze are related formats for storing magnetic resonance images. NIfTI is a more recent extension of Analyze, and contains more specific information about, for example, the orientation of the image. Its use is therefore recommended where possible. These formats use a number of different file extensions, but the details are abstracted away from the user by these functions.
+  NIfTI and Analyze are related formats for storing magnetic resonance images. NIfTI is a more recent extension of Analyze, and contains more specific information about, for example, the orientation of the image. Its use is therefore recommended where possible. MGH format is used by the popular image processing package FreeSurfer. These formats use a number of different file extensions, but the details are abstracted away from the user by these functions.
   
-  TractoR does not allow for files with the same basic name using multiple Analyze/NIfTI formats in a single directory (e.g. "foo.nii" AND "foo.img"), and these functions will produce an error if multiple compatible files exist.
+  TractoR does not allow for files with the same basic name using multiple Analyze/NIfTI/MGH formats in a single directory (e.g. \code{"foo.nii"} AND \code{"foo.img"}), and these functions will produce an error if multiple compatible files exist.
 
-  Suitable values for \code{fileType} (and the \code{tractorFileType} option, which is used as a default) are \code{ANALYZE}, \code{NIFTI}, \code{NIFTI_PAIR} (the two-file NIfTI format), \code{ANALYZE_GZ}, \code{NIFTI_GZ} and \code{NIFTI_PAIR_GZ}. The latter three are gzipped versions of the former three. \code{NIFTI_GZ} is recommended unless there is a need for one of the others. This is the default value for the \code{tractorFileType} option, but that can be changed using a call to \code{\link{options}}, or by setting the \code{TRACTOR_FILETYPE} environment variable before loading the tractor.base package.
+  Suitable values for \code{fileType} (and the \code{tractorFileType} option, which is used as a default) are \code{ANALYZE}, \code{NIFTI}, \code{NIFTI_PAIR} (the two-file NIfTI format), \code{MGH}, \code{ANALYZE_GZ}, \code{NIFTI_GZ}, \code{NIFTI_PAIR_GZ} and \code{MGH_GZ}. The latter four are gzipped versions of the former four. \code{NIFTI_GZ} is recommended unless there is a need for one of the others. This is the default value for the \code{tractorFileType} option, but that can be changed using a call to \code{\link{options}}, or by setting the \code{TRACTOR_FILETYPE} environment variable before loading the tractor.base package.
+  
+  Since multiple files may be involved, copying, moving or symlinking image files is not trivial. \code{copyImageFiles} and \code{symlinkImageFiles} are wrappers around the standard functions \code{\link{file.copy}} and \code{\link{file.symlink}} which handle this complexity.
 }
 \value{
-  \code{newMriImageFromFile} and \code{newMriImageMetadataFromFile} return the appropriate image or metadata object. \code{imageFileExists} returns TRUE if an existing file with the specified name exists (all file extensions are checked), and FALSE otherwise. \code{removeImageFilesWithName} returns the result of \code{\link{unlink}}() applied to all relevant files. \code{writeMriImageToFile} and \code{identifyImageFileNames} return a list with the following elements, describing the identified or written files:
+  \code{newMriImageFromFile} and \code{newMriImageMetadataFromFile} return the appropriate image or metadata object. \code{imageFileExists} returns \code{TRUE} if an existing file with the specified name exists (all file extensions are checked), and \code{FALSE} otherwise. \code{removeImageFilesWithName} returns the result of \code{\link{unlink}} applied to all relevant files. \code{writeMriImageToFile} and \code{identifyImageFileNames} return a list with the following elements, describing the identified or written files:
   \item{fileStem}{The file name without extension.}
   \item{headerFile}{The full header file name.}
   \item{imageFile}{The full image file name.}
-  \item{format}{The format of the files ("Nifti" or "Analyze"). Not returned by \code{writeMriImageToFile}.}
+  \item{format}{The format of the files (\code{"Nifti"}, \code{"Analyze"} or \code{"Mgh"}). Not returned by \code{writeMriImageToFile}.}
+  \code{copyImageFiles} and \code{symlinkImageFiles} are called for their side effects.
 }
 \author{Jon Clayden}
-\seealso{The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}), \code{\link{MriImage}}, \code{\link{MriImageMetadata}}, \code{\link{getDataTypeByNiftiCode}} and \code{\link{unlink}}.}
+\seealso{The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}), \code{\linkS4class{MriImage}}, \code{\linkS4class{MriImageMetadata}}, \code{\link{getDataTypeByNiftiCode}} and \code{\link{unlink}}.}

@@ -3,7 +3,7 @@
 \alias{deserialiseReferenceObject}
 \title{List object serialisation and deserialisation}
 \description{
-  Rather than using \R's \code{\link{save}} and \code{\link{load}} functions directly for reference objects, TractoR uses the \code{\link{SerialisableObject}} class and these functions to save and load objects. The main difference is that this approach stores only the data in the object, and not the functions which operate on them. This helps backward compatibility when new member functions are added.
+  Rather than using \R's \code{\link{save}} and \code{\link{load}} functions directly for reference objects, TractoR uses the \code{\linkS4class{SerialisableObject}} class and these functions to save and load objects. The main difference is that this approach stores only the data in the object, and not the functions which operate on them. This helps backward compatibility when new member functions are added.
 }
 \usage{
 isDeserialisable(object, expectedClass = NULL)
@@ -24,4 +24,4 @@ deserialiseReferenceObject(file = NULL, object = NULL, raw = FALSE)
   \code{isDeserialisable} returns \code{TRUE} if the \code{object} is deserialisable and inherits from the specified class. \code{deserialiseReferenceObject} returns a raw or reconstituted object after deserialisation.
 }
 \author{Jon Clayden}
-\seealso{\code{\link{SerialisableObject}}, \code{\link{save}}, \code{\link{load}}, \code{\link{writeMriImageToFile}}.}
+\seealso{\code{\linkS4class{SerialisableObject}}, \code{\link{save}}, \code{\link{load}}, \code{\link{writeMriImageToFile}}.}
