@@ -1,4 +1,10 @@
-     Working directory exists : TRUE
-Preprocessing stages complete : 2,3,4
-   Number of fibres per voxel : 1
-         Camino files created : FALSE
+GENERAL:
+  Working directory exists : TRUE
+
+DIFFUSION:
+  Preprocessing complete        : TRUE
+  Diffusion b-values            : 0, 1000 s/mm^2
+  Number of gradient directions : 1, 12
+  Diffusion tensors fitted      : TRUE
+  FSL BEDPOST run               : TRUE (1 fibre(s) per voxel)
+  Camino files created          : FALSE
