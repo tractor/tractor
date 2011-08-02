@@ -1,4 +1,4 @@
-#@desc Plot rotation angles, translations, scales or skews over the time course of an acquisition. These are obtained by reading and decomposing the transformation matrices created by FSL's eddy_correct. The "preproc" script must therefore have been run, up to at least stage 2, on the session directory (default ".") before running this experiment.
+#@desc Plot rotation angles, translations, scales or skews over the time course of an acquisition. These are obtained by reading and decomposing the transformation matrices created by FSL's eddy_correct. The "dpreproc" script must therefore have been run, up to at least stage 3, on the session directory (default ".") before running this experiment.
 #@args [session directory]
 #@interactive TRUE
 
