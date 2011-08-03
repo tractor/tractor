@@ -20,6 +20,15 @@ install-nt:
 	@$(INSTALL) tractor.nt
 
 install: install-libs install-base install-utils install-session install-nt
+	@echo
+	@echo "Installation complete. You may wish to add the following lines"
+	@echo "to your ~/.bashrc file:"
+	@echo
+	@echo "  export TRACTOR_HOME=`pwd`"
+	@echo '  export PATH=$${TRACTOR_HOME}/bin:$${PATH}'
+	@echo '  export MANPATH=$${TRACTOR_HOME}/man:$${MANPATH}'
+	@echo
+	@echo "The ~/.bashrc file can be created if it does not already exist."
 
 install-native:
 	@$(INSTALL) tractor.native
