@@ -41,7 +41,7 @@ Run in quiet mode. The tractor program will not produce any output of its own.
 Run R in batch mode, which is entirely noninteractive, and will produce no output until it finishes running (except to a log file, with '\-l'). This can be useful when running multiple experiments in parallel.
 .TP
 .B \-i
-Ignore any personal config file at ~/\.tractor/config.
+Ignore any personal config files in ~/\.tractor.
 .TP
 .B \-v \fIlevel\fB
 Produce verbose output: the \fIlevel\fR determines the amount of extra information reported, from 0 (least) to 3 (most). The default is 1.
@@ -59,7 +59,7 @@ Specify the working directory for the experiment, which will be created if neces
 Specify a configuration file in YAML format.
 
 .SH SETTING DEFAULT OPTIONS
-Since version 1.1.0 of the \fBtractor\fR program, it has been possible to set up user-specific defaults for each of the options that the program supports. To do this, a user can create a file at ~/\.tractor/config which sets any or all of the following variables, using \fBbash\fR(1) syntax. (This file is ignored if \fBtractor\fR is run with the '\-i' flag.) Note that 'off' and 'on' are represented by the numbers 0 and 1, respectively.
+It is possible to set up user-specific defaults for each of the options that the program supports. To do this, a user can create a file at ~/\.tractor/config which sets any or all of the following variables, using \fBbash\fR(1) syntax. (This file is ignored if \fBtractor\fR is run with the '\-i' flag.) Note that 'off' and 'on' are represented by the numbers 0 and 1, respectively.
 .TP
 .PP
 \fBName\fR             \fBEquivalent flag\fR       \fBDefault value\fR
@@ -107,7 +107,7 @@ Param3: [ /data/subject1,
 .br
           /data/subject2 ]
 .PP
-Note that all parameter names begin with an upper case letter, and lists of values may span more than one line. Multiple configuration files may be specified on the command line (using several '\-c' flags), in which case they are read in the order given, with any duplicate parameters in later files overriding the values set in earlier ones.
+Note that all parameter names begin with an upper case letter, and lists of values may span more than one line. Multiple configuration files may be specified on the command line (using several '\-c' flags), in which case they are read in the order given, with any duplicate parameters in later files overriding the values set in earlier ones. Default parameters for a particular script can be specified in a YAML file in the ~/\.tractor directory whose name corresponds to the script; for example, defaults for the 'dpreproc' script would be put in ~/\.tractor/dpreproc.yaml. (Such files are ignored if \fBtractor\fR is run with the '\-i' flag.) 
 .PP
 Configuration parameters may also be specified directly on the command line, after the script name, although in that case there must be \fIno space\fR between the colon and the value. Lists of values cannot be specified in this way.
 .PP

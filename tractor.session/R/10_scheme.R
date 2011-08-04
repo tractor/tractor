@@ -113,7 +113,7 @@ writeSimpleDiffusionSchemeForSession <- function (session, scheme, thirdPartyOnl
     
     if (!thirdPartyOnly)
     {
-        lines <- sub("\\.0+\\s*$", "", apply(format(a,scientific=FALSE),1,implode,sep="  "), perl=TRUE)
+        lines <- sub("\\.0+\\s*$", "", apply(format(gradientSet,scientific=FALSE),1,implode,sep="  "), perl=TRUE)
         writeLines(lines, file.path(diffusionDir,"directions.txt"))
     }
     

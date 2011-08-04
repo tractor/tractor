@@ -135,10 +135,10 @@ runExperiment <- function ()
                 }
             }
             
-            writeLines(choice, file.path(session$getDirectory("diffusion"),"refb0-index.txt"))
+            writeLines(as.character(choice), file.path(session$getDirectory("diffusion"),"refb0-index.txt"))
             
             report(OL$Info, "Extracting reference volume")
-            data <- session$getImageByType("data","diffusion")
+            data <- session$getImageByType("rawdata", "diffusion")
             refVolume <- newMriImageByExtraction(data, 4, choice)
             writeMriImageToFile(refVolume, session$getImageFileNameByType("refb0"))
         }
@@ -161,7 +161,7 @@ runExperiment <- function ()
                     while (tolower(runBetAgain) %in% c("n","s"))
                     {
                         if (tolower(runBetAgain) == "s")
-                            showImagesInFslview(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("mask","diffusion"))
+                            showImagesInFslview(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("mask","diffusion"), writeToAnalyzeFirst=TRUE)
                         else
                         {
                             report(OL$Info, "Previous intensity threshold was ", betIntensityThreshold, "; smaller values give larger brain outlines")

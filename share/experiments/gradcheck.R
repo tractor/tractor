@@ -39,7 +39,6 @@ runExperiment <- function ()
             dim(currentData) <- c(prod(dim(currentData))/dim(currentData)[3], dim(currentData)[3])
             currentData <- currentData[maskData>0,]
             fit <- estimateDiffusionTensors(currentData, scheme, method="ls")
-            print(sapply(fit$eigenvalues,which.max))
             
             fullEigenvectors <- fit$eigenvectors[,1,fit$fa>=faThreshold]
             eigenvectors <- fullEigenvectors[inPlaneAxes,]

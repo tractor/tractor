@@ -46,7 +46,7 @@ usage()
     echo "  -b          Run R in batch mode, which is entirely noninteractive, and"
     echo "              will produce no output until it finishes running: this can"
     echo "              be useful when running multiple experiments in parallel"
-    echo "  -i          Ignore any personal config file at ~/.tractor/config"
+    echo "  -i          Ignore any personal config files in ~/.tractor"
     echo "  -v {0-3}    Produce verbose output: the level determines the amount of"
     echo "              extra information reported, from 0 (least) to 3 (most)"
     echo "  -p factor   Set the parallelisation factor for multicore systems (only"
