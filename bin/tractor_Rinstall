@@ -9,7 +9,7 @@ export R_INSTALL_VANILLA=yes
 
 usage()
 {
-    echo "tractor_Rinstall (program v1.0.0)"
+    echo "tractor_Rinstall (program v2.0.0)"
     echo "TractoR-specific wrapper for installing R packages"
     echo
     echo "Usage: tractor_Rinstall pkg_path [pkg_path ...]"

@@ -1,10 +1,10 @@
 Package: tractor.utils
 Version: 2.0.0
-Date: 2010-06-18
+Date: 2011-07-29
 Title: Miscellaneous functions used by TractoR scripts and packages
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
-Depends: R (>= 2.5.0), utils
+Depends: R (>= 2.12.1), utils
 Imports: reportr, tractor.base
 Description: The tractor.utils package primarily provides functions that facilitate the interaction between the TractoR shell script and R, but some other utility functions are also included.
 LazyLoad: yes
