@@ -1,16 +1,4 @@
 DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(source="character",tags="data.frame",tagOffset="integer",dataOffset="integer",dataLength="integer",explicitTypes="logical",endian="character"), methods=list(
-    getAvailableTags = function ()
-    {
-        nTags <- .self$nTags()
-        tagList <- list()
-        if (nTags > 0)
-        {
-            for (i in 1:nTags)
-                tagList <- c(tagList, list(list(group=tags[i,1],element=tags[i,2])))
-        }
-        return (tagList)
-    },
-
     getDataLength = function () { return (dataLength) },
     
     getDataOffset = function () { return (dataOffset) },
@@ -18,6 +6,8 @@ DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fie
     getEndianness = function () { return (endian) },
     
     getSource = function () { return (source) },
+    
+    getTags = function () { return (tags) },
     
     getTagOffset = function () { return (tagOffset) },
     
@@ -45,7 +35,8 @@ DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fie
 
 print.DicomMetadata <- function (x, descriptions = FALSE, ...)
 {
-    tags <- x$getAvailableTags()
+    tags <- x$getTags()
+    nTags <- nrow(tags)
     if (descriptions && !exists("dictionary"))
     {
         # First set to NULL to keep package checker happy
@@ -53,28 +44,28 @@ print.DicomMetadata <- function (x, descriptions = FALSE, ...)
         data("dictionary", package="tractor.base", envir=environment(NULL))
     }
     
-    if (length(tags) > 0)
+    if (nTags > 0)
     {
         if (descriptions)
         {
             cat("DESCRIPTION", rep(" ",19), "VALUE\n", sep="")
-            for (tag in tags)
+            for (i in seq_len(nTags))
             {
-                description <- getDescriptionForDicomTag(tag$group, tag$element, dictionary)
+                description <- getDescriptionForDicomTag(tags$groups[i], tags$elements[i], dictionary)
                 cat(" ", substr(description, 1, 27), sep="")
                 nSpaces <- max(3, 30-nchar(description))
                 cat(rep(" ",nSpaces), sep="")
-                cat(implode(x$getTagValue(tag$group,tag$element), sep=", "))
+                cat(implode(x$getTagValue(tags$groups[i],tags$elements[i]), sep=", "))
                 cat("\n")
             }
         }
         else
         {
             cat("GROUP    ELEMENT  VALUE\n")
-            for (tag in tags)
+            for (i in seq_len(nTags))
             {
-                cat(sprintf(" 0x%04x   0x%04x   ", tag$group, tag$element))
-                cat(implode(x$getTagValue(tag$group,tag$element), sep=", "))
+                cat(sprintf(" 0x%04x   0x%04x   ", tags$groups[i], tags$elements[i]))
+                cat(implode(x$getTagValue(tags$groups[i],tags$elements[i]), sep=", "))
                 cat("\n")
             }
         }
