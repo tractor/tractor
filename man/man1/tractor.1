@@ -4,7 +4,7 @@
 tractor \- Command line interface for the TractoR MRI analysis project
 
 .SH SYNOPSIS
-.B tractor \fR[\fB\-ldzqbri\fR] [\fB\-v \fIlevel\fR] [\fB\-p \fIfactor\fR] [\fB\-a \fIarchitecture\fR] [\fB\-w \fIworking_dir\fR] [\fB\-c \fIconfig_file\fR] \fIscript \fR[\fIarguments\fR]\fB
+.B tractor \fR[\fB\-ldzqbi\fR] [\fB\-v \fIlevel\fR] [\fB\-p \fIfactor\fR] [\fB\-a \fIarchitecture\fR] [\fB\-w \fIworking_dir\fR] [\fB\-c \fIconfig_file\fR] \fIscript \fR[\fIarguments\fR]\fB
 .br
 .B tractor \-o \fR[\fB\-w \fIworking_dir\fR]\fB \fIscript\fB
 .br
@@ -40,14 +40,11 @@ Run in quiet mode. The tractor program will not produce any output of its own.
 .B \-b
 Run R in batch mode, which is entirely noninteractive, and will produce no output until it finishes running (except to a log file, with '\-l'). This can be useful when running multiple experiments in parallel.
 .TP
-.B \-r
-Produce a report file in the working directory (if anything is reported by the experiment \fIscript\fR).
-.TP
 .B \-i
 Ignore any personal config file at ~/\.tractor/config.
 .TP
 .B \-v \fIlevel\fB
-Produce verbose output: the \fIlevel\fR determines the amount of extra information reported, from 0 (least, the default) to 3 (most).
+Produce verbose output: the \fIlevel\fR determines the amount of extra information reported, from 0 (least) to 3 (most). The default is 1.
 .TP
 .B \-p \fIfactor\fB
 Set the parallelisation factor for multicore systems. At most this number of threads will be created to do the main work of the \fIscript\fR. This option requires the "multicore" package for R, and is only used by certain scripts.
@@ -77,9 +74,7 @@ quiet            -q                    0
 .br
 batch_mode       -b                    0
 .br
-keep_report      -r                    0
-.br
-verbose_level    -v                    0
+verbose_level    -v                    1
 .br
 parallelisation_factor
 .br
@@ -96,7 +91,7 @@ Thus, if you do not want a history file to ever be created, and you want moderat
 .PP
 write_history=0
 .br
-verbose_level=1
+verbose_level=2
 .PP
 Note that the names of any default configuration files (described below) given to the 'config_file' named option in this way should be separated by colons.
 
@@ -127,9 +122,9 @@ tractor dpreproc
 which runs the 'dpreproc' script with no arguments or configuration parameters. It is more common, however, that some extra information does need to be supplied.
 .TP
 .PP
-tractor \-v1 track /data/subject1 34,23,17 PointType:fsl
+tractor \-v2 track /data/subject1 34,23,17 PointType:fsl
 .PP
-This example runs the 'track' script, generating moderately verbose output ('\-v1'). It passes two unnamed arguments, a session directory ('/data/subject1') and a seed point ('34,23,17'); and one named parameter, 'PointType', is set to 'fsl'. (This tells the script that the seed point is a voxel location using the FSL convention of indexing from zero. R, by contrast, indexes from one.)
+This example runs the 'track' script, generating moderately verbose output ('\-v2'). It passes two unnamed arguments, a session directory ('/data/subject1') and a seed point ('34,23,17'); and one named parameter, 'PointType', is set to 'fsl'. (This tells the script that the seed point is a voxel location using the FSL convention of indexing from zero. R, by contrast, indexes from one.)
 
 .SH ENVIRONMENT VARIABLES
 At present the \fBtractor\fR program makes use of two environment variables, \fBTRACTOR_HOME\fR and \fBTRACTOR_PATH\fR, when looking for \fIscript\fR files. If no \fIscript\fR is found in the current or working directory, or in ~/\.tractor, the program next searches any directories given by the \fBTRACTOR_PATH\fR environment variable. (The format of this variable is the same as the standard \fBPATH\fR, with multiple directories separated by colons.) The default search location, \fB$TRACTOR_HOME\fR/share/experiments, is searched last. 

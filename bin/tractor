@@ -19,7 +19,7 @@ rprofile_backed_up=0
 quiet=0
 parallelisation_factor=1
 batch_mode=0
-verbose_level=0
+verbose_level=1
 working_dir="."
 
 type expect >/dev/null 2>&1
@@ -27,10 +27,10 @@ expect_available=$?
 
 usage()
 {
-    echo "tractor (program v1.7.0)"
+    echo "tractor (command-line interface v1.7.0)"
     echo "Run a TractoR experiment script in R and report the results"
     echo
-    echo "Usage: tractor [-ldzqbri] [-v level] [-p factor] [-a architecture] ..."
+    echo "Usage: tractor [-ldzqbi] [-v level] [-p factor] [-a architecture] ..."
     echo "               [-w working_dir] [-c config_file] script [arg1 [arg2 ...]]"
     echo "       tractor -o [-w working_dir] script"
     echo "       tractor -h"
@@ -46,12 +46,9 @@ usage()
     echo "  -b          Run R in batch mode, which is entirely noninteractive, and"
     echo "              will produce no output until it finishes running: this can"
     echo "              be useful when running multiple experiments in parallel"
-    echo "  -r          Produce a report file in the working directory (if anything"
-    echo "              is reported by the experiment script)"
     echo "  -i          Ignore any personal config file at ~/.tractor/config"
     echo "  -v {0-3}    Produce verbose output: the level determines the amount of"
-    echo "              extra information reported, from 0 (least, the default) to"
-    echo "              3 (most)"
+    echo "              extra information reported, from 0 (least) to 3 (most)"
     echo "  -p factor   Set the parallelisation factor for multicore systems (only"
     echo "              used by certain scripts)"
     echo "  -a arch     Specify a subarchitecture (e.g. 'x86_64'), which is passed"
@@ -76,6 +73,8 @@ set -- `getopt "hldozqbriv:p:a:w:c:" "$@"` || {
     usage 1>&2
     exit
 }
+
+[ -z "${TRACTOR_HOME}" ] && echo "Warning: The TRACTOR_HOME environment variable is not set"
 
 supress_config=`echo "$@" | grep -c '\-i' -`
 [ $supress_config -eq 0 -a -f "$HOME/.tractor/config" ] && source "$HOME/.tractor/config"
@@ -113,6 +112,8 @@ if [ ! -z "${architecture}" ]; then
 fi
 
 script_name=`echo $1 | sed 's/\.R$//'`
+
+[ $supress_config -eq 0 -a -f "$HOME/.tractor/${script_name}.yaml" ] && config_file="$HOME/.tractor/${script_name}.yaml:$config_file"
 
 [ $keep_log -eq 1 ] && log_file="$working_dir/tractor_${script_name}.log"
 
