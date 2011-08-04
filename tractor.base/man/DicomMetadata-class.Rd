@@ -31,7 +31,7 @@ showClass("DicomMetadata")
 }
 \section{Class-Based Methods}{
   \describe{
-    \item{\code{getAvailableTags()}:}{Retrieve a list of lists representing all available tags. Each element of the outer list has identifying elements \code{"group"} and \code{"element"}. See the DICOM standard for more information.}
+    \item{\code{getTags()}:}{Retrieve the data frame containing all available tags, which has columns \code{"groups"}, \code{"elements"}, \code{"types"} and \code{"values"}. See the DICOM standard for more information.}
     \item{\code{getTagValue(group, element)}:}{Retrieve the value of the tag with specified group and element numbers, usually given in hex.}
     \item{\code{getTagOffset()}:}{Retrieve the byte offset of useful tags in the file.}
     \item{\code{getDataOffset()}:}{Retrieve the byte offset of the data in the DICOM file.}

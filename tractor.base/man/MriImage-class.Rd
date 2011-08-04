@@ -15,7 +15,7 @@
 
 \title{Class \code{"MriImage"}}
 \description{
-This class represents an MRI image. An object of this class is made up of some voxel data, stored as a sparse or dense numeric array, and an \code{\linkS4class{MriImageMetadata}} object, which stores extra information about the image, such as the file it was read from, the voxel dimensions, and so on. Since the class inherits from \code{\linkS4class{MriImageMetadata}}, any object can be treated as an object of that class where needed. The group generic functions \code{\link{Math}}, \code{\link{Ops}} and \code{\link{Summary}} are defined for this class, as are methods for coercing to and from a standard R \code{\link{array}}.
+This class represents an MRI image. An object of this class is made up of some voxel data, stored as a sparse or dense numeric array, and an \code{\linkS4class{MriImageMetadata}} object, which stores extra information about the image, such as the file it was read from, the voxel dimensions, and so on. Since the class inherits from \code{\linkS4class{MriImageMetadata}}, any object can be treated as an object of that class where needed. The group generic functions \code{\link{Math}}, \code{\link{Ops}} and \code{\link{Summary}} are defined for this class, as are methods for coercing to and from a standard \R \code{\link{array}}.
 }
 \section{Extends}{
 Class \code{"\linkS4class{MriImageMetadata}"}, directly.

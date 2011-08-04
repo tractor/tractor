@@ -4,7 +4,7 @@ ECHO_N=/bin/echo -n
 DIFF=diff -b
 
 COLUMNS=40
-TRACTOR=../bin/tractor -q -z -i
+TRACTOR=../bin/tractor -q -z -i -v0
 TRACTOR_HOME=..
 TRACTOR_FILETYPE=NIFTI_GZ
 TRACTOR_PATH=scripts

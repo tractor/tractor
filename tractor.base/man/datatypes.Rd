@@ -8,12 +8,12 @@
 getDataTypeByNiftiCode(code)
 }
 \arguments{
-  \item{code}{A numeric value indicating the data type code required. Supported values in TractoR are 2 (8 bit unsigned integer), 4 (16 bit signed integer), 8 (32 bit signed integer), 16 (32 bit floating point), 64 (64 bit floating point), 256 (8 bit signed integer), 512 (16 bit unsigned integer) and 768 (32 bit unsigned integer).}
+  \item{code}{A numeric value indicating the data type code required. Supported values in TractoR are 2 (8-bit unsigned integer), 4 (16-bit signed integer), 8 (32-bit signed integer), 16 (32-bit floating point), 64 (64-bit floating point), 256 (8-bit signed integer), 512 (16-bit unsigned integer) and 768 (32-bit unsigned integer).}
 }
 \value{
   A list with the following elements
   \item{type}{An \R storage mode, either \code{integer} or \code{double}.}
-  \item{size}{The number of bytes per voxel in this data type.}
+  \item{size}{The number of bytes (not bits) per voxel in this data type.}
   \item{isSigned}{Logical value indicating whether data values are signed.}
 }
 \author{Jon Clayden}

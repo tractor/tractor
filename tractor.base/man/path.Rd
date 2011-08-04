@@ -1,4 +1,4 @@
-\name{ensureFileSuffix}
+\name{path manipulation}
 \alias{ensureFileSuffix}
 \alias{expandFileName}
 \alias{relativePath}

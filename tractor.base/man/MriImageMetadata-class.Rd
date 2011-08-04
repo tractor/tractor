@@ -38,7 +38,7 @@ showClass("MriImageMetadata")
     \item{\code{getDimensions()}:}{Retrieve an integer vector giving the dimensions of the image in voxels.}
     \item{\code{getDimensionality()}:}{Retrieve an integer vector of length 1 giving the number of dimensions in the image.}
     \item{\code{getVoxelDimensions()}:}{Retrieve a numeric vector giving the dimensions of the image voxels in spatial units, typically mm.}
-    \item{\code{getVoxelUnit()}:}{Retrieve the spatial unit used by getVoxelDimensions(). The most common value is \code{"mm"}.}
+    \item{\code{getVoxelUnit()}:}{Retrieve the spatial unit used by \code{getVoxelDimensions()}. The most common value is \code{"mm"}. Can be the empty string if undefined.}
     \item{\code{getDataType()}:}{Retrieve a list describing the storage data type of the image. See \code{\link{getDataTypeByNiftiCode}} for details.}
     \item{\code{getOrigin()}:}{Retrieve the coordinate origin of the image.}
     \item{\code{getSource()}:}{Retrieve a character vector of length 1 giving the source file for the image. Returns \code{"internal"} if the image was not read from a file.}

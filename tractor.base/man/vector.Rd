@@ -1,4 +1,4 @@
-\name{vectorLength}
+\name{vector functions}
 \alias{vectorLength}
 \alias{vectorCrossProduct}
 \alias{angleBetweenVectors}

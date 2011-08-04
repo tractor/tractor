@@ -34,7 +34,7 @@ install-native:
 	@$(INSTALL) tractor.native
 	@$(INSTALL) lib/multicore
 
-install-all: install install-native
+install-all: install-libs install-base install-utils install-session install-nt install-native
 
 uninstall:
 	$(R) CMD REMOVE tractor.nt tractor.session tractor.utils tractor.base reportr

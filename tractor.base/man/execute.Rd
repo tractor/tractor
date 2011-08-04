@@ -3,7 +3,7 @@
 \alias{locateExecutable}
 \title{Find or run an external executable file}
 \description{
-The \code{execute} function is a wrapper around the \code{\link{system}} function in base R, which echoes the command being run (including the full path to the executable) if the reportr output level is \code{Debug}. \code{locateExecutable} simply returns the path to an executable file on the system \code{PATH}.
+The \code{execute} function is a wrapper around the \code{\link{system}} function in base \R, which echoes the command being run (including the full path to the executable) if the reportr output level is \code{Debug}. \code{locateExecutable} simply returns the path to an executable file on the system \code{PATH}.
 }
 \usage{
 execute(executable, paramString = NULL, errorOnFail = TRUE, silent = FALSE, ...)

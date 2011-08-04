@@ -39,7 +39,7 @@ symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE)
 
   Suitable values for \code{fileType} (and the \code{tractorFileType} option, which is used as a default) are \code{ANALYZE}, \code{NIFTI}, \code{NIFTI_PAIR} (the two-file NIfTI format), \code{MGH}, \code{ANALYZE_GZ}, \code{NIFTI_GZ}, \code{NIFTI_PAIR_GZ} and \code{MGH_GZ}. The latter four are gzipped versions of the former four. \code{NIFTI_GZ} is recommended unless there is a need for one of the others. This is the default value for the \code{tractorFileType} option, but that can be changed using a call to \code{\link{options}}, or by setting the \code{TRACTOR_FILETYPE} environment variable before loading the tractor.base package.
   
-  Since multiple files may be involved, copying, moving or symlinking image files is not trivial. \code{copyImageFiles} and \code{symlinkImageFiles} are wrappers around the standard functions \code{\link{file.copy}} and \code{\link{file.symlink}} which handle this complexity.
+  Since multiple files may be involved, copying, moving or symlinking images is not trivial. \code{copyImageFiles} and \code{symlinkImageFiles} are wrappers around the standard functions \code{\link{file.copy}} and \code{\link{file.symlink}} which handle this complexity.
 }
 \value{
   \code{newMriImageFromFile} and \code{newMriImageMetadataFromFile} return the appropriate image or metadata object. \code{imageFileExists} returns \code{TRUE} if an existing file with the specified name exists (all file extensions are checked), and \code{FALSE} otherwise. \code{removeImageFilesWithName} returns the result of \code{\link{unlink}} applied to all relevant files. \code{writeMriImageToFile} and \code{identifyImageFileNames} return a list with the following elements, describing the identified or written files:
@@ -50,4 +50,4 @@ symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE)
   \code{copyImageFiles} and \code{symlinkImageFiles} are called for their side effects.
 }
 \author{Jon Clayden}
-\seealso{The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}), \code{\linkS4class{MriImage}}, \code{\linkS4class{MriImageMetadata}}, \code{\link{getDataTypeByNiftiCode}} and \code{\link{unlink}}.}
+\seealso{The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}); \code{\linkS4class{MriImage}}, \code{\linkS4class{MriImageMetadata}}, \code{\link{getDataTypeByNiftiCode}} and \code{\link{unlink}}.}
