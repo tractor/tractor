@@ -5,7 +5,7 @@ FieldTract <- setRefClass("FieldTract", contains="MriImage", fields=list(seed="n
             import(image, "MriImage")
         else
             callSuper(...)
-        return (initFields(seed=seed))
+        return (initFields(seed=as.numeric(seed)))
     },
     
     getImage = function () { return (export("MriImage")) },
