@@ -1,2 +1,4 @@
 /config.h
 /Makevars
+/*.o
+/*.so
