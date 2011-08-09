@@ -25,7 +25,7 @@ StreamlineTract <- setRefClass("StreamlineTract", contains="StreamlineTractMetad
         else
             callSuper(...)
         
-        object <- initFields(line=line, seedIndex=seedIndex, originalSeedPoint=originalSeedPoint)
+        object <- initFields(line=line, seedIndex=as.integer(seedIndex), originalSeedPoint=as.numeric(originalSeedPoint))
 
         if (dim(object$line)[2] != 3)
             report(OL$Error, "Streamline must be specified as a matrix with 3 columns")        

@@ -3,13 +3,13 @@ setClassUnion("Tract", c("FieldTract","BSplineTract"))
 setClassUnion("MriSessionOrNull", c("MriSession","NULL"))
 
 ReferenceTract <- setRefClass("ReferenceTract", contains="SerialisableObject", fields=list(tract="Tract",standardSeed="numeric",seedUnit="character",session="MriSessionOrNull",options="list"), methods=list(
-    initialize = function (tract = nilObject(), standardSeed = NULL, seedUnit = NULL, session = NULL, options = list())
+    initialize = function (tract = nilObject(), standardSeed = NULL, seedUnit = "", session = NULL, options = list())
     {
-        object <- initFields(tract=tract, standardSeed=standardSeed, seedUnit=seedUnit, session=session, options=options)
+        object <- initFields(tract=tract, standardSeed=as.numeric(standardSeed), seedUnit=seedUnit, session=session, options=options)
         
         if (length(object$options) > 0)
             names(object$options) <- names(options)
-        if (length(object$seedUnit) > 0 && !(object$seedUnit %in% c("vox","mm")))
+        if (!(object$seedUnit %in% c("vox","mm","")))
             report(OL$Error, "Seed point units must be \"vox\" or \"mm\"")
         
         return (object)

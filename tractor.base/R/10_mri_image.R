@@ -1,15 +1,15 @@
 MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject", fields=list(imagedims="integer",voxdims="numeric",voxunit="character",source="character",datatype="list",origin="numeric",storedXform="matrix",tags="list"), methods=list(
-    initialize = function (imagedims = NULL, voxdims = NULL, voxunit = NULL, source = "internal", datatype = NULL, origin = NULL, storedXform = NA, tags = list(), ...)
+    initialize = function (imagedims = NULL, voxdims = NULL, voxunit = "", source = "internal", datatype = NULL, origin = NULL, storedXform = NA, tags = list(), ...)
     {
         if (length(tags) != 0 && !all(c("keys","values") %in% names(tags)))
             report(OL$Error, "Tag list must be empty, or else contain \"keys\" and \"values\" components")
         
-        object <- initFields(imagedims=imagedims, voxdims=voxdims, voxunit=voxunit, source=source, datatype=datatype, origin=origin, storedXform=storedXform, tags=tags)
+        object <- initFields(imagedims=as.integer(imagedims), voxdims=as.numeric(voxdims), voxunit=voxunit, source=source, datatype=as.list(datatype), origin=as.numeric(origin), storedXform=as.matrix(storedXform), tags=tags)
         
         if (!is.null(datatype) && !all(c("type","size","isSigned") %in% names(object$datatype)))
         {
             flag(OL$Warning, "Specified image data type is not valid - ignoring it")
-            object$datatype <- NULL
+            object$datatype <- list()
         }
         
         return (object)
@@ -56,7 +56,7 @@ MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject
     
     summarise = function ()
     {
-        if (is.null(datatype))
+        if (length(datatype) == 0)
             datatypeString <- "undefined"
         else
         {
@@ -129,7 +129,7 @@ setAs("array", "MriImage", function (from) {
     
     nDims <- length(dim(from))
     origin <- c(1, 1, 1, 0, 0, 0)[1:nDims]
-    metadata <- MriImageMetadata$new(imagedims=dim(from), voxdims=rep(1,nDims), voxunit=NULL, source="internal", datatype=datatype, origin=origin, storedXform=NA, tags=list())
+    metadata <- MriImageMetadata$new(imagedims=dim(from), voxdims=rep(1,nDims), datatype=datatype, origin=origin)
     image <- newMriImageWithData(from, metadata)
     
     return (image)
@@ -237,7 +237,7 @@ newMriImageMetadataFromTemplate <- function (metadata, imageDims = NA, voxelDims
     composite <- c(params, template)
     composite <- composite[!duplicated(names(composite))]
     
-    newMetadata <- MriImageMetadata$new(imagedims=composite$imagedims, voxdims=composite$voxdims, voxunit=composite$voxunit, source="internal", datatype=composite$datatype, origin=composite$origin, storedXform=NA, tags=composite$tags)
+    newMetadata <- MriImageMetadata$new(imagedims=composite$imagedims, voxdims=composite$voxdims, voxunit=composite$voxunit, datatype=composite$datatype, origin=composite$origin, tags=composite$tags)
     invisible (newMetadata)
 }
 
@@ -325,7 +325,7 @@ newMriImageByExtraction <- function (image, dim, loc)
     
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
     metadata <- image$getMetadata()$serialise()
-    newMetadata <- MriImageMetadata$new(imagedims=metadata$imagedims[dimsToKeep], voxdims=metadata$voxdims[dimsToKeep], voxunit=metadata$voxunit, source="internal", datatype=metadata$datatype, origin=metadata$origin[dimsToKeep], storedXform=NA, tags=metadata$tags)
+    newMetadata <- MriImageMetadata$new(imagedims=metadata$imagedims[dimsToKeep], voxdims=metadata$voxdims[dimsToKeep], voxunit=metadata$voxunit, datatype=metadata$datatype, origin=metadata$origin[dimsToKeep], tags=metadata$tags)
         
     image <- MriImage$new(newData, newMetadata)
     invisible (image)
