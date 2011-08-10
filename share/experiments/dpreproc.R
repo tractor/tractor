@@ -35,8 +35,8 @@ runExperiment <- function ()
     
     stagesComplete <- c(imageFileExists(session$getImageFileNameByType("rawdata","diffusion")),
                         imageFileExists(session$getImageFileNameByType("refb0","diffusion")),
-                        imageFileExists(session$getImageFileNameByType("data","diffusion")),
-                        imageFileExists(session$getImageFileNameByType("mask","diffusion")))
+                        imageFileExists(session$getImageFileNameByType("mask","diffusion")),
+                        imageFileExists(session$getImageFileNameByType("data","diffusion")))
 
     if (statusOnly)
         printLabelledValues(c("Session directory","Stages completed"), c(session$getDirectory(),implode(which(stagesComplete),", ")))
@@ -145,12 +145,6 @@ runExperiment <- function ()
         
         if (runStages[3] && (!skipCompleted || !stagesComplete[3]))
         {
-            refVolume <- as.integer(readLines(file.path(session$getDirectory("diffusion"),"refb0-index.txt")))
-            runEddyCorrectWithSession(session, refVolume)
-        }
-        
-        if (runStages[4] && (!skipCompleted || !stagesComplete[4]))
-        {
             if (maskingMethod == "bet")
             {
                 runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
@@ -182,6 +176,12 @@ runExperiment <- function ()
             }
             else
                 createMaskImageForSession(session, maskingMethod)
+        }
+        
+        if (runStages[4] && (!skipCompleted || !stagesComplete[4]))
+        {
+            refVolume <- as.integer(readLines(file.path(session$getDirectory("diffusion"),"refb0-index.txt")))
+            runEddyCorrectWithSession(session, refVolume)
         }
     }
     
