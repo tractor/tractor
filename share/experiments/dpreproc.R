@@ -1,5 +1,5 @@
 #@args [session directory]
-#@desc Run a standard preprocessing pipeline on the diffusion data in the specified session directory (or "." if none is specified). This pipeline consists of four stages: (1) convert DICOM files into a 4D Analyze/NIfTI/MGH volume; (2) identify a volume with little or no diffusion weighting to use as an anatomical reference; (3) correct the data set for eddy current induced distortions; (4) create a mask to identify voxels which are within the brain. Stage 3 is currently performed using FSL "eddy_correct", so FSL must be installed for this stage. Stage 4 can use FSL's brain extraction tool for accuracy, but the default is to use a k-means approach, which is quicker, has no parameters, and may be more successful for nonbrain data. If the pipeline was previously partly completed, the script will resume it where appropriate. (Starting from the beginning can be forced by specifying SkipCompletedStages:false.) Giving StatusOnly:true will report which stages have been run. The script asks the user about each stage unless Interactive:false is given.
+#@desc Run a standard preprocessing pipeline on the diffusion data in the specified session directory (or "." if none is specified). This pipeline consists of four stages: (1) convert DICOM files into a 4D Analyze/NIfTI/MGH volume; (2) identify a volume with little or no diffusion weighting to use as an anatomical reference; (3) correct the data set for eddy current induced distortions; (4) create a mask to identify voxels which are within the brain. Stage 3 is currently performed using FSL "eddy_correct", so FSL must be installed for this stage. Stage 4 can use FSL's brain extraction tool for accuracy, but the default is to use a k-means clustering approach, which is quicker, and may be more successful for nonbrain data. (The NumberOfClusters option can be increased if the mask does not cover the whole region of interest.) If the pipeline was previously partly completed, the script will resume it where appropriate. (Starting from the beginning can be forced by specifying SkipCompletedStages:false.) Giving StatusOnly:true will report which stages have been run. The script asks the user about each stage unless Interactive:false is given.
 #@interactive TRUE
 
 suppressPackageStartupMessages(require(tractor.session))
@@ -18,6 +18,7 @@ runExperiment <- function ()
     maskingMethod <- getConfigVariable("MaskingMethod", "kmeans", validValues=c("bet","kmeans","fill"))
     betIntensityThreshold <- getConfigVariable("BetIntensityThreshold", 0.3)
     betVerticalGradient <- getConfigVariable("BetVerticalGradient", 0)
+    nClusters <- getConfigVariable("NumberOfClusters", 2, "integer")
     
     if ((interactive || statusOnly) && getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
@@ -181,7 +182,7 @@ runExperiment <- function ()
                 }
             }
             else
-                createMaskImageForSession(session, maskingMethod)
+                createMaskImageForSession(session, maskingMethod, nClusters=nClusters)
         }
     }
     

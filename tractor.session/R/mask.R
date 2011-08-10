@@ -1,26 +1,26 @@
-createMaskImageForSession <- function (session, method = c("kmeans","fill"))
+createMaskImageForSession <- function (session, method = c("kmeans","fill"), nClusters = 2)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
     method <- match.arg(method)
     
-    targetDir <- session$getDirectory("diffusion")
-    t2Image <- session$getImageByType("refb0")
+    t2Image <- session$getImageByType("refb0", "diffusion")
     
     if (method == "kmeans")
     {
         report(OL$Info, "Using k-means clustering to identify \"foreground\" voxels")
         
-        kmeansResult <- kmeans(as.vector(t2Image$getData()), 2)
-        highSignalCluster <- which.max(kmeansResult$centers)
+        kmeansResult <- kmeans(as.vector(t2Image$getData()), nClusters)
+        lowSignalCluster <- which.min(kmeansResult$centers)
+        otherClusters <- setdiff(1:nClusters, lowSignalCluster)
         clusterSizes <- kmeansResult$size
         
-        report(OL$Info, round(clusterSizes[highSignalCluster]/sum(clusterSizes)*100,2), "% of voxels are classified as foreground")
+        report(OL$Info, round(sum(clusterSizes[otherClusters])/sum(clusterSizes)*100,2), "% of voxels are classified as foreground")
         
         maskData <- array(0L, dim=t2Image$getDimensions())
-        maskData[kmeansResult$cluster == highSignalCluster] <- 1L
-        t2Image[kmeansResult$cluster != highSignalCluster] <- 0L
+        maskData[kmeansResult$cluster != lowSignalCluster] <- 1L
+        t2Image[kmeansResult$cluster == lowSignalCluster] <- 0L
     }
     else if (method == "fill")
     {
