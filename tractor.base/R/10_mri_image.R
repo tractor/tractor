@@ -184,17 +184,15 @@ Summary.MriImage <- function (x, ..., na.rm = FALSE)
 }
 
 setMethod("[", "MriImage", function (x, i, j, ..., drop = TRUE) {
-    if (missing(j))
-        return (get("[.MriImage")(x, i, ..., drop=drop))
-    else
-        return (get("[.MriImage")(x, i, j, ..., drop=drop))
+    return (x$getData()[i,j,...])
 })
 
 setMethod("[<-", "MriImage", function (x, i, j, ..., value) {
-    if (missing(j))
-        return (get("[<-.MriImage")(x, i, ..., value=value))
-    else
-        return (get("[<-.MriImage")(x, i, j, ..., value=value))
+    data <- x$getData()
+    data[i,j,...] <- value
+    newImage <- MriImage$new(data, x$getMetadata())
+    newImage$setSource("internal")
+    return (newImage)
 })
 
 # setMethod("Math", "MriImage", Math.MriImage)
