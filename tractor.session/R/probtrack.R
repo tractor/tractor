@@ -40,11 +40,14 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     if (!file.exists(workingDir))
         dir.create(workingDir)
     setwd(workingDir)
+
+    tempDirectory <- file.path(tempdir(), paste("temp",Sys.getpid(),sep="_"))
+    dir.create(tempDirectory)
     
     if (requireFile && mode == "simple")
         outputStem <- file.path(probtrackDir, "IMAGE")
     else
-        outputStem <- tempfile()
+        outputStem <- tempfile(tmpdir=tempDirectory)
     
     fslVersion <- getFslVersion()
     
@@ -69,7 +72,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
             report(OL$Info, "Performing single seed tractography with ", nSamples, " samples")
 
             # Create a temporary file containing the seed point coordinates
-            seedFile <- tempfile()
+            seedFile <- tempfile(tmpdir=tempDirectory)
             if (is.vector(seed))
                 execute("echo", paste("'", implode(seed,sep=" "), "' >", seedFile, sep=""))
             else if (is.matrix(seed))
