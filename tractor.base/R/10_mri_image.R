@@ -189,7 +189,10 @@ setMethod("[", "MriImage", function (x, i, j, ..., drop = TRUE) {
 })
 
 setMethod("[<-", "MriImage", function (x, i, j, ..., value) {
-    x$data[i,j,...] <- value
+    if (missing(j))
+        x$data[i] <- value
+    else
+        x$data[i,j,...] <- value
     x$setSource("internal")
     return (x)
 })
