@@ -104,7 +104,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     {
         report(OL$Info, "Performing seed mask tractography with ", nSamples, " samples per seed")
         
-        seedFile <- tempfile()
+        seedFile <- tempfile(tmpdir=tempDir)
         writeMriImageToFile(seedMask, seedFile)
         seedPoints <- which(seedMask$getData() > 0, arr.ind=TRUE)
         seedCentre <- round(apply(seedPoints, 2, median))
@@ -118,10 +118,10 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
             waypointString <- NULL
         else
         {
-            waypointFiles <- tempfile(rep("waypoint",length(waypointMasks)))
+            waypointFiles <- tempfile(rep("waypoint",length(waypointMasks)), tmpdir=tempDir)
             for (i in seq_along(waypointMasks))
                 writeMriImageToFile(waypointMasks[[i]], waypointFiles[i])
-            waypointListFile <- tempfile()
+            waypointListFile <- tempfile(tmpdir=tempDir)
             writeLines(waypointFiles, waypointListFile)
             waypointString <- paste(" --waypoints=", waypointListFile, sep="")
         }
@@ -141,7 +141,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         removeImageFilesWithName(seedFile)
         unlink(outputDir, recursive=TRUE)
     }
-
+    
+    unlink(tempDir, recursive=TRUE)
     invisible (result)
 }
 
