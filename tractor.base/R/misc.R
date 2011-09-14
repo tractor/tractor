@@ -53,8 +53,9 @@ relativePath <- function (path, referencePath)
 expandFileName <- function (fileName)
 {
     fileName <- path.expand(fileName)
-    if (length(grep("^/", fileName)) == 0)
-        fileName <- file.path(getwd(), fileName)
+    
+    # A leading slash, with (Windows) or without (Unix) a letter and colon, indicates an absolute path
+    fileName <- ifelse(fileName %~% "^([A-Za-z]:)?/", fileName, file.path(getwd(),fileName))
     
     # Remove all instances of '/.' (which are redundant), recursively collapse
     # instances of '/..', and remove trailing slashes
