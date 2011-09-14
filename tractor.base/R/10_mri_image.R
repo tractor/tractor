@@ -51,7 +51,7 @@ MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject
     setSource = function (newSource)
     {
         if (is.character(newSource) && (length(newSource) == 1))
-            source <<- newSource
+            .self$source <- newSource
     },
     
     summarise = function ()
@@ -135,18 +135,16 @@ setAs("array", "MriImage", function (from) {
     return (image)
 })
 
-"[.MriImage" <- function (x, ...)
+"[.MriImage" <- function (x, ..., drop = TRUE)
 {
-    return (x$getData()[...])
+    return (x$getData()[...,drop=drop])
 }
 
 "[<-.MriImage" <- function (x, ..., value)
 {
-    data <- x$getData()
-    data[...] <- value
-    newImage <- MriImage$new(data, x$getMetadata())
-    newImage$setSource("internal")
-    return (newImage)
+    x$data[...] <- value
+    x$setSource("internal")
+    return (x)
 }
 
 as.array.MriImage <- function (x, ...)
@@ -184,15 +182,16 @@ Summary.MriImage <- function (x, ..., na.rm = FALSE)
 }
 
 setMethod("[", "MriImage", function (x, i, j, ..., drop = TRUE) {
-    return (x$getData()[i,j,...])
+    if (missing(j))
+        return (x$getData()[i])
+    else
+        return (x$getData()[i,j,...,drop=drop])
 })
 
 setMethod("[<-", "MriImage", function (x, i, j, ..., value) {
-    data <- x$getData()
-    data[i,j,...] <- value
-    newImage <- MriImage$new(data, x$getMetadata())
-    newImage$setSource("internal")
-    return (newImage)
+    x$data[i,j,...] <- value
+    x$setSource("internal")
+    return (x)
 })
 
 # setMethod("Math", "MriImage", Math.MriImage)
