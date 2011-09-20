@@ -50,10 +50,10 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getImageFileNameByType = function (type, place = NULL, index = 1) { return (getImageFileNameForSession(.self, type, place, index)) },
     
-    getObjectDirectory = function ()
+    getObjectDirectory = function (createIfMissing = TRUE)
     {
         objectDir <- file.path(getDirectory("root"), "objects")
-        if (!file.exists(objectDir))
+        if (createIfMissing && !file.exists(objectDir))
             dir.create(objectDir, recursive=TRUE)
         return (objectDir)
     },
@@ -145,6 +145,10 @@ updateSessionHierarchy <- function (session)
         }
         
         createFdtFilesForSession(session)
+        
+        objectDirectory <- session$getObjectDirectory(createIfMissing=FALSE)
+        if (file.exists(objectDirectory))
+            unlink(objectDirectory, recursive=TRUE)
     }
 }
 
