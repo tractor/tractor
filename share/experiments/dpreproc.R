@@ -24,8 +24,9 @@ runExperiment <- function ()
     
     if (!is.null(flipAxes))
     {
-        flipAxes <- splitAndConvertString(flipAxes, "", "integer", fixed=TRUE, errorIfInvalid=TRUE)
-        flipAxes <- flipAxes[!is.na(flipAxes)]
+        if (flipAxes %~% "\\d")
+            report(OL$Warning, "The \"FlipGradientAxes\" option should be specified as a comma-separated list of axis labels, as in \"x,y\"")
+        flipAxes <- which(letters[24:26] %in% splitAndConvertString(flipAxes, ",", fixed=TRUE))
     }
     
     stages <- splitAndConvertString(stages, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
