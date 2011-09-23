@@ -278,7 +278,7 @@ newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE)
     
     connection <- file(fileMetadata$getSource(), "rb")
     seek(connection, where=fileMetadata$getDataOffset())
-    pixels <- readBin(connection, "integer", n=nPixels, size=datatype$size, signed=datatype$isSigned, endian=endian)
+    pixels <- readBin(connection, "integer", n=nPixels, size=datatype$size, signed=ifelse(datatype$size > 2, TRUE, datatype$isSigned), endian=endian)
     pixels <- maskPixels(pixels, fileMetadata)
     close(connection)
     
@@ -696,7 +696,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
                     type <- "UN"
             }
             
-            length <- readBin(connection, "integer", n=1, size=lengthSize, signed=FALSE, endian=endian)
+            length <- readBin(connection, "integer", n=1, size=lengthSize, signed=ifelse(lengthSize > 2, TRUE, FALSE), endian=endian)
             
             report(OL$Debug, "Group ", sprintf("0x%04x",currentGroup), ", element ", sprintf("0x%04x",currentElement), ", type ", type, ", length ", length, ifelse(sequenceLevel>0," (in sequence)",""))
             
@@ -744,7 +744,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
                 nValues <- length/size
                 
                 if (.Dicom$nonCharTypes$rTypes[loc] == "integer")
-                    value <- readBin(connection, "integer", n=nValues, size=size, signed=.Dicom$nonCharTypes$isSigned[loc], endian=endian)
+                    value <- readBin(connection, "integer", n=nValues, size=size, signed=ifelse(size > 2, TRUE, .Dicom$nonCharTypes$isSigned[loc]), endian=endian)
                 else
                     value <- readBin(connection, "double", n=nValues, size=size, endian=endian)
                 
@@ -774,7 +774,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
                 flag(OL$Warning, "Duplicated DICOM tags detected - only the first value will be kept")
             
             tags <- data.frame(groups=groups, elements=elements, types=types, values=values, stringsAsFactors=FALSE)
-            invisible (DicomMetadata$new(source=fileName, tags=tags, tagOffset=tagOffset, dataOffset=dataOffset, dataLength=dataLength, explicitTypes=explicitTypes, endian=endian))
+            invisible (DicomMetadata$new(source=fileName, tags=tags, tagOffset=as.integer(tagOffset), dataOffset=as.integer(dataOffset), dataLength=as.integer(dataLength), explicitTypes=explicitTypes, endian=endian))
         }
     }
     else

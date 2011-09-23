@@ -1,7 +1,10 @@
-parallelApply <- function (x, fun, ..., preschedule = TRUE, setSeed = TRUE, silent = FALSE, cores = getOption("cores"))
+parallelApply <- function (x, fun, ..., preschedule = TRUE, setSeed = TRUE, silent = FALSE, cores = NULL)
 {
     if (exists("mclapply"))
     {
+        if (is.null(cores))
+            cores <- c(getOption("mc.cores"), getOption("cores"), 2L)[1]
+        
         oldOption <- getOption("reportrPrefixFormat")
         if (is.null(oldOption))
             options(reportrPrefixFormat="[%p] %d%L: ")

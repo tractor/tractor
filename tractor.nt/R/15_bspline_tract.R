@@ -133,7 +133,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         invisible (NA)
     else
     {
-        bSplineTract <- BSplineTract$new(splineDegree=attr(bSpline$basis,"degree"), splineModels=bSpline$models, knotPositions=attr(bSpline$basis,"knots"), knotLocations=bSpline$knotLocs, seedKnot=bSpline$seedKnot)
+        bSplineTract <- BSplineTract$new(splineDegree=as.integer(attr(bSpline$basis,"degree")), splineModels=bSpline$models, knotPositions=attr(bSpline$basis,"knots"), knotLocations=bSpline$knotLocs, seedKnot=as.integer(bSpline$seedKnot))
         invisible (bSplineTract)
     }
 }

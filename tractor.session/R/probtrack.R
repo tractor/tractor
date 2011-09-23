@@ -39,15 +39,17 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     workingDir <- file.path(tempdir(), paste("probtrackx",Sys.getpid(),sep="_"))
     if (!file.exists(workingDir))
         dir.create(workingDir)
+    on.exit(setwd(previousWorkingDir))
     setwd(workingDir)
 
-    tempDirectory <- file.path(tempdir(), paste("temp",Sys.getpid(),sep="_"))
-    dir.create(tempDirectory)
+    tempDir <- file.path(tempdir(), paste("temp",Sys.getpid(),sep="_"))
+    if (!file.exists(tempDir))
+        dir.create(tempDir)
     
     if (requireFile && mode == "simple")
         outputStem <- file.path(probtrackDir, "IMAGE")
     else
-        outputStem <- tempfile(tmpdir=tempDirectory)
+        outputStem <- tempfile(tmpdir=tempDir)
     
     fslVersion <- getFslVersion()
     
@@ -72,7 +74,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
             report(OL$Info, "Performing single seed tractography with ", nSamples, " samples")
 
             # Create a temporary file containing the seed point coordinates
-            seedFile <- tempfile(tmpdir=tempDirectory)
+            seedFile <- tempfile(tmpdir=tempDir)
             if (is.vector(seed))
                 execute("echo", paste("'", implode(seed,sep=" "), "' >", seedFile, sep=""))
             else if (is.matrix(seed))
@@ -102,7 +104,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     {
         report(OL$Info, "Performing seed mask tractography with ", nSamples, " samples per seed")
         
-        seedFile <- tempfile()
+        seedFile <- tempfile(tmpdir=tempDir)
         writeMriImageToFile(seedMask, seedFile)
         seedPoints <- which(seedMask$getData() > 0, arr.ind=TRUE)
         seedCentre <- round(apply(seedPoints, 2, median))
@@ -116,10 +118,10 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
             waypointString <- NULL
         else
         {
-            waypointFiles <- tempfile(rep("waypoint",length(waypointMasks)))
+            waypointFiles <- tempfile(rep("waypoint",length(waypointMasks)), tmpdir=tempDir)
             for (i in seq_along(waypointMasks))
                 writeMriImageToFile(waypointMasks[[i]], waypointFiles[i])
-            waypointListFile <- tempfile()
+            waypointListFile <- tempfile(tmpdir=tempDir)
             writeLines(waypointFiles, waypointListFile)
             waypointString <- paste(" --waypoints=", waypointListFile, sep="")
         }
@@ -139,8 +141,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         removeImageFilesWithName(seedFile)
         unlink(outputDir, recursive=TRUE)
     }
-
-    setwd(previousWorkingDir)
+    
+    unlink(tempDir, recursive=TRUE)
     invisible (result)
 }
 

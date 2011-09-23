@@ -9,7 +9,12 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
     
     if (isValidAs(parallelisationFactor,"integer") && as.integer(parallelisationFactor) > 1)
     {
-        if (system.file(package="multicore") != "")
+        if (system.file(package="parallel") != "")
+        {
+            library(parallel)
+            options(mc.cores=as.integer(parallelisationFactor))
+        }
+        else if (system.file(package="multicore") != "")
         {
             library(multicore)
             options(cores=as.integer(parallelisationFactor))
