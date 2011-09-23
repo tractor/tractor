@@ -24,7 +24,7 @@ usage()
 while [ $# -gt 0 ]; do
     name=`basename "$1"`
     echo -n "Installing R package \"${name}\"... "
-    R CMD INSTALL "${1}" > $log_file 2>&1
+    R CMD INSTALL --clean "${1}" > $log_file 2>&1
     if [ $? -eq 0 ]; then
         echo "OK"
     else
