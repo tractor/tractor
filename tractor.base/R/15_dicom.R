@@ -774,7 +774,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
                 flag(OL$Warning, "Duplicated DICOM tags detected - only the first value will be kept")
             
             tags <- data.frame(groups=groups, elements=elements, types=types, values=values, stringsAsFactors=FALSE)
-            invisible (DicomMetadata$new(source=fileName, tags=tags, tagOffset=tagOffset, dataOffset=dataOffset, dataLength=dataLength, explicitTypes=explicitTypes, endian=endian))
+            invisible (DicomMetadata$new(source=fileName, tags=tags, tagOffset=as.integer(tagOffset), dataOffset=as.integer(dataOffset), dataLength=as.integer(dataLength), explicitTypes=explicitTypes, endian=endian))
         }
     }
     else

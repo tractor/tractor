@@ -210,7 +210,7 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
     t2Metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("maskedb0"))
     metadata <- newStreamlineTractMetadataFromImageMetadata(t2Metadata, FALSE, "vox")
     
-    tract <- StreamlineSetTract$new(seedPoint=seed, leftLengths=leftLengths, rightLengths=rightLengths, leftPoints=leftData, rightPoints=rightData, metadata=metadata)
+    tract <- StreamlineSetTract$new(seedPoint=seed, leftLengths=as.integer(leftLengths), rightLengths=as.integer(rightLengths), leftPoints=leftData, rightPoints=rightData, metadata=metadata)
     invisible (tract)
 }
 
@@ -226,7 +226,7 @@ newStreamlineSetTractBySubsetting <- function (tract, indices)
     leftPoints <- tract$getLeftPoints()[,,indices,drop=FALSE]
     rightPoints <- tract$getRightPoints()[,,indices,drop=FALSE]
     
-    newTract <- StreamlineSetTract$new(seedPoint=tract$getSeedPoint(), leftLengths=leftLengths, rightLengths=rightLengths, leftPoints=leftPoints, rightPoints=rightPoints, metadata=tract$getMetadata())
+    newTract <- StreamlineSetTract$new(seedPoint=tract$getSeedPoint(), leftLengths=as.integer(leftLengths), rightLengths=as.integer(rightLengths), leftPoints=leftPoints, rightPoints=rightPoints, metadata=tract$getMetadata())
     invisible (newTract)
 }
 
@@ -244,7 +244,7 @@ newStreamlineSetTractFromStreamline <- function (tract)
     dim(leftPoints) <- c(dim(leftPoints), 1)
     dim(rightPoints) <- c(dim(rightPoints), 1)
     
-    newTract <- StreamlineSetTract$new(seedPoint=tract$getSeedPoint(), leftLengths=leftLength, rightLengths=rightLength, leftPoints=leftPoints, rightPoints=rightPoints, metadata=tract$getMetadata())
+    newTract <- StreamlineSetTract$new(seedPoint=tract$getSeedPoint(), leftLengths=as.integer(leftLength), rightLengths=as.integer(rightLength), leftPoints=leftPoints, rightPoints=rightPoints, metadata=tract$getMetadata())
     invisible (newTract)
 }
 
@@ -289,7 +289,7 @@ newStreamlineSetTractByTruncationToReference <- function (tract, reference, test
     leftPoints <- tract$getLeftPoints()[1:max(leftLengths),,,drop=FALSE]
     rightPoints <- tract$getRightPoints()[1:max(rightLengths),,,drop=FALSE]
     
-    newTract <- StreamlineSetTract$new(seedPoint=tract$getSeedPoint(), leftLengths=leftLengths, rightLengths=rightLengths, leftPoints=leftPoints, rightPoints=rightPoints, metadata=tract$getMetadata())
+    newTract <- StreamlineSetTract$new(seedPoint=tract$getSeedPoint(), leftLengths=as.integer(leftLengths), rightLengths=as.integer(rightLengths), leftPoints=leftPoints, rightPoints=rightPoints, metadata=tract$getMetadata())
     invisible (newTract)
 }
 
@@ -330,7 +330,7 @@ newStreamlineTractWithMetadata <- function (tract, metadata)
 
 newStreamlineTractFromLine <- function (line, seedIndex, originalSeedPoint, metadata)
 {
-    streamline <- StreamlineTract$new(line=line, seedIndex=seedIndex, originalSeedPoint=originalSeedPoint, metadata=metadata)
+    streamline <- StreamlineTract$new(line=line, seedIndex=as.integer(seedIndex), originalSeedPoint=originalSeedPoint, metadata=metadata)
     invisible (streamline)
 }
 

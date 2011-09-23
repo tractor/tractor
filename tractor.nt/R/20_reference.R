@@ -5,7 +5,10 @@ setClassUnion("MriSessionOrNull", c("MriSession","NULL"))
 ReferenceTract <- setRefClass("ReferenceTract", contains="SerialisableObject", fields=list(tract="Tract",standardSeed="numeric",seedUnit="character",session="MriSessionOrNull",options="list"), methods=list(
     initialize = function (tract = nilObject(), standardSeed = NULL, seedUnit = "", session = NULL, options = list())
     {
-        object <- initFields(tract=tract, standardSeed=as.numeric(standardSeed), seedUnit=seedUnit, session=session, options=options)
+        if (is.nilObject(tract))
+            object <- initFields(tract=as(tract,"BSplineTract"), standardSeed=as.numeric(standardSeed), seedUnit=seedUnit, session=session, options=as.list(options))
+        else
+            object <- initFields(tract=tract, standardSeed=as.numeric(standardSeed), seedUnit=seedUnit, session=session, options=as.list(options))
         
         if (length(object$options) > 0)
             names(object$options) <- names(options)

@@ -24,7 +24,7 @@ UninformativeTractModel <- setRefClass("UninformativeTractModel", contains="Seri
 MatchingTractModel <- setRefClass("MatchingTractModel", contains="SerialisableObject", fields=list(cosineDistributions="list",lengthDistributions="list",refSpline="BSplineTract",refLengths="list",pointType="character"), methods=list(
     initialize = function (..., refSpline = nilObject())
     {
-        object <- initFields(..., refSpline=refSpline)
+        object <- initFields(..., refSpline=as(refSpline,"BSplineTract"))
         
         if (!is.nilObject(refSpline))
         {
