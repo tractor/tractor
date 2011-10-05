@@ -6,22 +6,22 @@ readAnalyze <- function (fileNames)
         report(OL$Error, "Header file ", fileNames$headerFile, " not found")
     
     connection <- gzfile(fileNames$headerFile, "rb")
-    size <- readBin(connection, "integer")
+    size <- readBin(connection, "integer", size=4)
     if (size == 348)
         endian <- .Platform$endian
     else
         endian <- setdiff(c("big","little"), .Platform$endian)
 
-    seek(connection, where=40)
+    readBin(connection, "raw", n=36)
     dims <- readBin(connection, "integer", n=8, size=2, endian=endian)
-    seek(connection, where=70)
+    readBin(connection, "raw", n=14)
     typeCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
-    seek(connection, where=76)
+    readBin(connection, "raw", n=4)
     voxelDims <- readBin(connection, "double", n=8, size=4, endian=endian)
 
     # SPM and FSL use the (char[10]) originator field to store a coordinate
     # origin - if not used as such this field should be all zero
-    seek(connection, where=253)
+    readBin(connection, "raw", n=45)
     origin <- readBin(connection, "integer", n=5, size=2, endian=endian)
 
     close(connection)

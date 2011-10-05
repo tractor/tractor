@@ -1,8 +1,10 @@
 MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject", fields=list(imagedims="integer",voxdims="numeric",voxunit="character",source="character",datatype="list",origin="numeric",storedXform="matrix",tags="list"), methods=list(
-    initialize = function (imagedims = NULL, voxdims = NULL, voxunit = "", source = "internal", datatype = NULL, origin = NULL, storedXform = NA, tags = list(), ...)
+    initialize = function (imagedims = NULL, voxdims = NULL, voxunit = NULL, source = "internal", datatype = NULL, origin = NULL, storedXform = NA, tags = list(), ...)
     {
         if (length(tags) != 0 && !all(c("keys","values") %in% names(tags)))
             report(OL$Error, "Tag list must be empty, or else contain \"keys\" and \"values\" components")
+        if (is.null(voxunit))
+            voxunit <- "unknown"
         
         object <- initFields(imagedims=as.integer(imagedims), voxdims=as.numeric(voxdims), voxunit=voxunit, source=source, datatype=as.list(datatype), origin=as.numeric(origin), storedXform=as.matrix(storedXform), tags=tags)
         
