@@ -1,12 +1,12 @@
  Image dimensions : 96 x 96 x 25 voxels
 Coordinate origin : (1,1,1)
- Voxel dimensions : 2.5 x 2.5 x 5 
+ Voxel dimensions : 2.5 x 2.5 x 5 (units unknown)
         Data type : signed double, 32 bits/voxel
   Additional tags : 0
 Value of image "maskedb0" at location (49,58,14) is 225
  Image dimensions : 96 x 96 x 25 voxels
 Coordinate origin : (1,1,1)
- Voxel dimensions : 2.5 x 2.5 x 5 
+ Voxel dimensions : 2.5 x 2.5 x 5 (units unknown)
         Data type : signed double, 32 bits/voxel
   Additional tags : 0
 Value of image "maskedb0" at location (49,58,14) is 225
