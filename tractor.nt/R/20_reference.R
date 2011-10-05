@@ -2,9 +2,16 @@ setClassUnion("Tract", c("FieldTract","BSplineTract"))
 
 setClassUnion("MriSessionOrNull", c("MriSession","NULL"))
 
-ReferenceTract <- setRefClass("ReferenceTract", contains="SerialisableObject", fields=list(tract="Tract",standardSeed="numeric",seedUnit="character",session="MriSessionOrNull",options="list"), methods=list(
-    initialize = function (tract = nilObject(), standardSeed = NULL, seedUnit = "", session = NULL, options = list())
+setOldClass("tractOptions")
+
+ReferenceTract <- setRefClass("ReferenceTract", contains="SerialisableObject", fields=list(tract="Tract",standardSeed="numeric",seedUnit="character",session="MriSessionOrNull",options="tractOptions"), methods=list(
+    initialize = function (tract = nilObject(), standardSeed = NULL, seedUnit = "", session = NULL, options = NULL)
     {
+        if (is.null(options))
+            options <- structure(list(), class="tractOptions")
+        else if (is.list(options) && !identical(class(options),"tractOptions"))
+            options <- structure(options, class="tractOptions")
+        
         if (is.nilObject(tract))
             object <- initFields(tract=as(tract,"BSplineTract"), standardSeed=as.numeric(standardSeed), seedUnit=seedUnit, session=session, options=as.list(options))
         else
