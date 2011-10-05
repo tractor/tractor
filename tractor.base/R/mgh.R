@@ -14,7 +14,7 @@ readMgh <- function (fileNames)
     
     dims <- readBin(connection, "integer", n=4, size=4, endian="big")
     typeCode <- readBin(connection, "integer", n=1, size=4, endian="big")
-    seek(connection, where=28)
+    readBin(connection, "raw", n=4)
     orientationStored <- as.logical(readBin(connection, "integer", n=1, size=2, endian="big"))
     voxelDims <- readBin(connection, "double", n=3, size=4, endian="big")
     
@@ -112,10 +112,7 @@ writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE, datatype = NU
     writeBin(as.integer(1), connection, size=2, endian="big")
     writeBin(as.double(abs(fullVoxelDims)), connection, size=4, endian="big")
     writeBin(as.double(xformlikeMatrix), connection, size=4, endian="big")
-    
-    paddingBytes <- 284 - seek(connection, where=NA)
-    if (paddingBytes > 0)
-        writeBin(raw(paddingBytes), connection)
+    writeBin(raw(194), connection)
     
     writeBin(data, connection, size=.Mgh$datatypes$sizes[typeIndex], endian="big")
     close(connection)

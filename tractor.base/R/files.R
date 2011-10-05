@@ -148,7 +148,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE)
     {
         connection <- gzfile(fileNames$imageFile, "rb")
         if (fileNames$imageFile == fileNames$headerFile)
-            seek(connection, where=info$storageMetadata$dataOffset)
+            readBin(connection, "raw", n=info$storageMetadata$dataOffset)
 
         voxels <- readBin(connection, what=datatype$type, n=nVoxels, size=datatype$size, signed=datatype$isSigned, endian=endian)
         data <- array(voxels, dim=dims)
@@ -166,7 +166,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE)
     
     # The rotation matrix should have exactly one nonzero element per row and column
     if (!equivalent(rowSums(absRotationMatrix > tolerance), c(1,1,1)) || !equivalent(colSums(absRotationMatrix > tolerance), c(1,1,1)))
-        report(OL$Error, "NIfTI xform matrix is rotated")
+        report(OL$Error, "The image is stored in a rotated frame of reference")
     else
     {
         dimPermutation <- apply(absRotationMatrix > tolerance, 1, which)

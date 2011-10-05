@@ -21,7 +21,7 @@
     units=list(unknown=0, m=1, mm=2, um=3),
     xformCodes=list(unknown=0, scannerAnatomical=1, alignedAnatomical=2, talairach=3, mni=4),
     magicStrings=list(list(c(charToRaw("ni1"),as.raw(0)), c(charToRaw("n+1"),as.raw(0))),
-                 list(c(charToRaw("ni2"),as.raw(0)), c(charToRaw("n+2"),as.raw(0)))))
+                      list(c(charToRaw("ni2"),as.raw(0)), c(charToRaw("n+2"),as.raw(0)))))
 
 .Mgh <- list(
     datatypes=list(codes=c(     0,          4,          1,          3      ),
