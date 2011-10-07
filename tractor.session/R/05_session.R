@@ -100,12 +100,7 @@ getImageFileNameForSession <- function (session, type, place = NULL, index = 1)
         report(OL$Error, "Image type \"", type, "\" is not valid")
     
     if (fileName %~% "\\%")
-    {
-        if (length(index) > 1)
-            fileName <- sapply(1:3, function(i) sub("%",as.character(i),fileName,fixed=TRUE))
-        else
-            fileName <- sub("%", as.character(index), fileName, fixed=TRUE)
-    }
+        fileName <- sapply(index, function(i) sub("%",as.character(i),fileName,fixed=TRUE))
     
     filePath <- file.path(directory, fileName)
     
