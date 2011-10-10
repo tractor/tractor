@@ -5,7 +5,8 @@ tmpdir=${TMPDIR:-/tmp}
 log_file="$tmpdir/tractor_Rinstall$$_log"
 trap 'rm -f $log_file; exit $status' 0 1 2 15
 
-export R_INSTALL_VANILLA=yes
+export R_INSTALL_VANILLA=1
+export R_COMPILE_PKGS=1
 
 usage()
 {
