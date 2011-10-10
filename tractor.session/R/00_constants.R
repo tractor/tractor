@@ -13,4 +13,4 @@
     fdt=list(data="data", mask="nodif_brain_mask", s0="dti_S0", fa="dti_FA", md="dti_MD", eigenvalue="dti_L%", eigenvector="dti_V%"),
     bedpost=list(dyads="dyads%", avf="mean_f%samples", theta="mean_th%samples", phi="mean_ph%samples", avfsamples="merged_f%samples", thetasamples="merged_th%samples", phisamples="merged_ph%samples"))
 
-.FdtDiffusionMap <- list(rawdata="basic", data="data", refb0="nodif", mask="nodif_brain_mask", maskedb0="nodif_brain", s0="dti_S0", fa="dti_FA", md="dti_MD", eigenvalue="dti_L%", eigenvector="dti_V%", radialdiff="dti_Lrad")
+.FdtDiffusionMap <- list(rawdata="basic", data="data", refb0="nodif", mask="nodif_brain_mask", maskedb0="nodif_brain", s0="dti_S0", fa="dti_FA", md="dti_MD", eigenvalue="dti_L%", eigenvector="dti_V%", axialdiff="dti_L1", radialdiff="dti_Lrad")
