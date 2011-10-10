@@ -86,30 +86,36 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired, dictionar
     return (description)
 }
 
-sortDicomDirectory <- function (directory, deleteOriginals = FALSE)
+sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "series")
 {
     if (!file.exists(directory) || !file.info(directory)$isdir)
         report(OL$Error, "Specified path (", directory, ") does not exist or does not point to a directory")
+    
+    sortOn <- match.arg(sortOn, c("series","subject"), several.ok=TRUE)
+    currentSort <- sortOn[1]
+    remainingSorts <- sortOn[-1]
+    identifierTag <- switch(currentSort, series=c(0x0020,0x0011), subject=c(0x0010,0x0010))
+    descriptionTag <- switch(currentSort, series=c(0x0008,0x103e), subject=c(0x0010,0x0010))
     
     files <- expandFileName(list.files(directory, full.names=TRUE, recursive=TRUE))
     files <- files[!file.info(files)$isdir]
     nFiles <- length(files)
 
     count <- 0
-    seriesNumbers <- integer(nFiles)
+    identifiers <- character(nFiles)
     
-    report(OL$Info, "Reading series numbers from ", nFiles, " files")
+    report(OL$Info, "Reading ", currentSort, " identifiers from ", nFiles, " files")
     for (i in 1:nFiles)
     {
-        metadata <- try(newDicomMetadataFromFile(files[i], stopTag=c(0x0020,0x0011)), silent=TRUE)
+        metadata <- try(newDicomMetadataFromFile(files[i], stopTag=identifierTag), silent=TRUE)
         if (is.null(metadata) || ("try-error" %in% class(metadata)))
         {
             report(OL$Info, "Skipping ", files[i])
-            seriesNumbers[i] <- NA
+            identifiers[i] <- NA_character_
         }
         else
         {
-            seriesNumbers[i] <- metadata$getTagValue(0x0020, 0x0011)
+            identifiers[i] <- as.character(metadata$getTagValue(identifierTag[1], identifierTag[2]))
             count <- count + 1
             if (count %% 100 == 0)
                 report(OL$Verbose, "Done ", count)
@@ -120,33 +126,44 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE)
     if (nDicomFiles == 0)
         report(OL$Error, "No readable DICOM files were found")
 
-    uniqueSeries <- sort(unique(seriesNumbers))
-    report(OL$Info, "Found series ", implode(uniqueSeries,", "), "; creating subdirectories")
+    uniqueIdentifiers <- sort(unique(identifiers))
+    report(OL$Info, "Found ", switch(currentSort,series="series",subject="subjects"), " ", implode(uniqueIdentifiers,", "), "; creating subdirectories")
     
-    numberWidth <- nchar(as.character(max(uniqueSeries)))
+    identifierWidth <- max(nchar(uniqueIdentifiers))
     
-    for (series in uniqueSeries)
+    for (id in uniqueIdentifiers)
     {
-        matchingFiles <- which(seriesNumbers==series)
+        matchingFiles <- which(identifiers==id)
         if (length(matchingFiles) > 0)
         {
-            metadata <- newDicomMetadataFromFile(files[matchingFiles[1]], stopTag=c(0x0008,0x103e))
-            description <- metadata$getTagValue(0x0008, 0x103e)
-            report(OL$Info, "Series ", series, " includes ", length(matchingFiles), " files; description is \"", description, "\"")
+            metadata <- newDicomMetadataFromFile(files[matchingFiles[1]], stopTag=descriptionTag)
+            description <- metadata$getTagValue(descriptionTag[1], descriptionTag[2])
             
-            subdirectory <- paste(sprintf(paste("%0",numberWidth,"d",sep=""),series), gsub("\\W","",description,perl=TRUE), sep="_")
+            if (currentSort == "series")
+            {
+                report(OL$Info, "Series ", id, " includes ", length(matchingFiles), " files; description is \"", description, "\"")
+                subdirectory <- paste(sprintf(paste("%0",identifierWidth,"d",sep=""),as.integer(id)), gsub("\\W","",description,perl=TRUE), sep="_")
+            }
+            else if (currentSort == "subject")
+            {
+                report(OL$Info, "Subject ", id, " includes ", length(matchingFiles), " files")
+                subdirectory <- gsub("\\W", "", description, perl=TRUE)
+            }
             dir.create(file.path(directory, subdirectory))
             
-            seriesFiles <- basename(files[matchingFiles])
-            duplicates <- duplicated(seriesFiles)
+            currentIdFiles <- basename(files[matchingFiles])
+            duplicates <- duplicated(currentIdFiles)
             if (any(duplicates))
-                seriesFiles[duplicates] <- paste(seriesFiles[duplicates], seq_len(sum(duplicates)), sep="_")
-            success <- file.copy(files[matchingFiles], file.path(directory,subdirectory,seriesFiles))
-
+                currentIdFiles[duplicates] <- paste(currentIdFiles[duplicates], seq_len(sum(duplicates)), sep="_")
+            success <- file.copy(files[matchingFiles], file.path(directory,subdirectory,currentIdFiles))
+            
             if (!all(success))
-                report(OL$Warning, "Not all files copied successfully for series ", series, " - nothing will be deleted")
+                report(OL$Warning, "Not all files copied successfully for ", currentSort, " ", id, " - nothing will be deleted")
             else if (deleteOriginals)
                 unlink(files[matchingFiles])
+            
+            if (length(remainingSorts) > 0)
+                sortDicomDirectory(file.path(directory,subdirectory), TRUE, sortOn=remainingSorts)
         }
     }
 }
