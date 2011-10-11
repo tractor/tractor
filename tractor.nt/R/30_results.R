@@ -14,9 +14,9 @@ ProbabilisticNTResults <- setRefClass("ProbabilisticNTResults", contains="Serial
     getNullPosterior = function (pos = NULL)
     {
         if (is.null(pos))
-            return (nullPosterior)
+            return (nullPosteriors)
         else
-            return (nullPosterior[[pos]])
+            return (nullPosteriors[[pos]])
     },
     
     getTractPosteriors = function (pos = NULL)
