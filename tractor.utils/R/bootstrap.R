@@ -6,6 +6,7 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
         library(packageName, character.only=TRUE)
     
     setOutputLevel(outputLevel)
+    options(reportrStackTraceLevel=OL$Warning)
     
     if (isValidAs(parallelisationFactor,"integer") && as.integer(parallelisationFactor) > 1)
     {
