@@ -6,7 +6,7 @@ Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
 Depends: R (>= 2.12.1), graphics, grDevices, methods, stats, utils
 Imports: reportr
-Description: The tractor.base package consists of functions for working with magnetic resonance images. It can read and write image files stored in Analyze, NIfTI and DICOM formats (DICOM support is read only), generate images for use as regions of interest, and manipulate and visualise images.
+Description: The tractor.base package consists of functions for working with magnetic resonance images. It can read and write image files stored in Analyze, NIfTI, MGH and DICOM formats (DICOM support is read only), generate images for use as regions of interest, and manipulate and visualise images.
 LazyLoad: yes
 License: GPL-2
-URL: http://code.google.com/p/tractor/
+URL: https://github.com/jonclayden/tractor

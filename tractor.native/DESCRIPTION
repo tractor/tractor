@@ -9,4 +9,4 @@ Imports: tractor.base, tractor.session, tractor.nt
 Description: The tractor.native package provides interfaces to native functions.
 LazyLoad: yes
 License: GPL-2
-URL: http://code.google.com/p/tractor/
+URL: https://github.com/jonclayden/tractor

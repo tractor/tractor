@@ -9,4 +9,4 @@ Imports: reportr, tractor.base, tractor.session
 Description: The tractor.nt package provides a reference implementation for white matter segmentation with neighbourhood tractography (NT). Functions for performing both heuristic and model-based NT are included.
 LazyLoad: yes
 License: GPL-2
-URL: http://code.google.com/p/tractor/
+URL: https://github.com/jonclayden/tractor
