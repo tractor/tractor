@@ -22,4 +22,8 @@ isListObject(object)
   \code{isListObject} returns TRUE if \code{object} is a list object. \code{print.list.object} is only called for its side-effect.
 }
 \author{Jon Clayden}
+\references{
+Please cite the following reference when using TractoR in your work:
+
+J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A. Clark (2011). TractoR: Magnetic Resonance Imaging and Tractography with R. Journal of Statistical Software, 44(8), 1-18. URL http://www.jstatsoft.org/v44/i08/.}
 \seealso{At the time of writing, section 10.7 of "An Introduction to R", on scope, gives an example of the principle behind the object-as-a-list-of-functions approach used here.}

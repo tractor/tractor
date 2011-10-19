@@ -28,4 +28,8 @@ deserialiseMriImageMetadata(file = NULL, object = NULL)
   If \code{file} is NULL, \code{serialiseListObject} returns a serialised object ready to be passed to \code{save}. Otherwise it saves the object to the specified file and returns nothing. \code{isDeserialisable} returns TRUE if the \code{object} is deserialisable and inherits from the specified class.
 }
 \author{Jon Clayden}
+\references{
+Please cite the following reference when using TractoR in your work:
+
+J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A. Clark (2011). TractoR: Magnetic Resonance Imaging and Tractography with R. Journal of Statistical Software, 44(8), 1-18. URL http://www.jstatsoft.org/v44/i08/.}
 \seealso{\code{\link{save}}, \code{\link{load}}, \code{\link{list.object}}, \code{\link{writeMriImageToFile}}.}

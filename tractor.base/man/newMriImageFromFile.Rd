@@ -42,4 +42,8 @@ removeImageFilesWithName(fileName)
   \item{format}{The format of the files ("Nifti" or "Analyze"). Not returned by \code{writeMriImageToFile}.}
 }
 \author{Jon Clayden}
+\references{
+Please cite the following reference when using TractoR in your work:
+
+J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A. Clark (2011). TractoR: Magnetic Resonance Imaging and Tractography with R. Journal of Statistical Software, 44(8), 1-18. URL http://www.jstatsoft.org/v44/i08/.}
 \seealso{The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}), \code{\link{MriImage}}, \code{\link{MriImageMetadata}}, \code{\link{getDataTypeByNiftiCode}} and \code{\link{unlink}}.}

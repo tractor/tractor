@@ -28,4 +28,8 @@ isMriImage(object)
   \code{isMriImage} returns TRUE if \code{object} is an MriImage object.
 }
 \author{Jon Clayden}
+\references{
+Please cite the following reference when using TractoR in your work:
+
+J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A. Clark (2011). TractoR: Magnetic Resonance Imaging and Tractography with R. Journal of Statistical Software, 44(8), 1-18. URL http://www.jstatsoft.org/v44/i08/.}
 \seealso{\code{\link{list.object}} and \code{\link{metadata.image.mri}}, both of which the \code{image.mri} class extends. \code{\link{[.image.mri}} for extracting and replacing voxel data in an MriImage object. Also the group generic functions \code{\link{Math}}, \code{\link{Ops}} and \code{\link{Summary}} (in the \code{base} package), and \code{\link{newMriImageWithBinaryFunction}}.}
