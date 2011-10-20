@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{MriImageMetadata}
 \alias{MriImageMetadata}
 \alias{metadata.image.mri}

@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{implode}
 \alias{implode}
 \title{Create a character string by concatenating the elements of a vector}

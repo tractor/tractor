@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{NeighbourhoodInfo}
 \alias{NeighbourhoodInfo}
 \alias{info.neighbourhood}

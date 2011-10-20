@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{equivalent}
 \alias{equivalent}
 \title{Test two numeric vectors for equivalence}

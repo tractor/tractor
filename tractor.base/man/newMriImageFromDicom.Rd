@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{newMriImageFromDicom}
 \alias{newMriImageFromDicom}
 \alias{newMriImageFromDicomDirectory}

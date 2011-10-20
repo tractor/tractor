@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{sortDicomDirectory}
 \alias{sortDicomDirectory}
 \title{Sort a directory of DICOM files into series}

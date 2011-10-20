@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{output}
 \alias{OL}
 \alias{output}

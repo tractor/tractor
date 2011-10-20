@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{newMriImageFromFile}
 \alias{newMriImageFromFile}
 \alias{newMriImageMetadataFromFile}

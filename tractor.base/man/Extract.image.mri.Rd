@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{[.image.mri}
 \alias{[.image.mri}
 \alias{[<-.image.mri}

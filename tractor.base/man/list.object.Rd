@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{list.object}
 \alias{list.object}
 \alias{isListObject}

@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{data types}
 \alias{getDataTypeByNiftiCode}
 \title{MriImage data types}

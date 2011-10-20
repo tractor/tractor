@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{\%~\%}
 \alias{\%~\%}
 \title{Test a character vector for a match against a regular expression}

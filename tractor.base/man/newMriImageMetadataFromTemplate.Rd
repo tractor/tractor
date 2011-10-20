@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{newMriImageMetadataFromTemplate}
 \alias{newMriImageMetadataFromTemplate}
 \title{Duplicates an MriImageMetadata object, possibly with modification}

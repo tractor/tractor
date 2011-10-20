@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{MriImage}
 \alias{MriImage}
 \alias{image.mri}

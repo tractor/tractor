@@ -1,3 +1,4 @@
+\encoding{UTF-8}
 \name{DicomMetadata}
 \alias{DicomMetadata}
 \alias{isDicomMetadata}
