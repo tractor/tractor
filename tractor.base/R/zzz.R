@@ -46,7 +46,7 @@
     assign(".Nifti", tempNifti, pos=pos)
     assign(".FileTypes", tempFileTypes, pos=pos)
     assign("OL", tempOL, pos=pos)
-    assign(".TractorFlags", NULL, pos=pos)
+    assign(".Workspace", new.env(), pos=pos)
     
     if (is.null(getOption("tractorFileType")))
     {

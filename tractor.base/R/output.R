@@ -67,21 +67,21 @@ flag <- function (level, ...)
 {
     currentFlag <- list(list(level=level, message=paste(...,sep="")))
     
-    if (is.null(.TractorFlags))
-        .TractorFlags <<- currentFlag
+    if (!exists("tractorFlags",.Workspace) || is.null(.Workspace$tractorFlags))
+        .Workspace$tractorFlags <- currentFlag
     else
-        .TractorFlags <<- c(.TractorFlags, currentFlag)
+        .Workspace$tractorFlags <- c(.Workspace$tractorFlags, currentFlag)
 }
 
 reportFlags <- function ()
 {
-    if (!is.null(.TractorFlags))
+    if (exists("tractorFlags",.Workspace) && !is.null(.Workspace$tractorFlags))
     {
-        levels <- unlist(lapply(.TractorFlags, "[[", "level"))
-        messages <- unlist(lapply(.TractorFlags, "[[", "message"))
+        levels <- unlist(lapply(.Workspace$tractorFlags, "[[", "level"))
+        messages <- unlist(lapply(.Workspace$tractorFlags, "[[", "message"))
         
         # This is before the call to output() to avoid infinite recursion
-        .TractorFlags <<- NULL
+        .Workspace$tractorFlags <- NULL
         
         for (message in unique(messages))
         {
