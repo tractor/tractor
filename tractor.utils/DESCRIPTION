@@ -9,4 +9,4 @@ Imports: reportr, tractor.base
 Description: The tractor.utils package primarily provides functions that facilitate the interaction between the TractoR shell script and R, but some other utility functions are also included.
 LazyLoad: yes
 License: GPL-2
-URL: http://code.google.com/p/tractor/
+URL: https://github.com/jonclayden/tractor/
