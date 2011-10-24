@@ -23,6 +23,11 @@ For \code{vectorLength}, the Euclidean norm or length of the specified vector, g
 The \code{resolveVector} function concatenates the values given in \code{\dots}, and if the result is a vector of length \code{len} then it is returned. If not, \code{NULL} is returned.
 }
 \author{Jon Clayden}
+\references{
+Please cite the following reference when using TractoR in your work:
+
+J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A. Clark (2011). TractoR: Magnetic resonance imaging and tractography with R. Journal of Statistical Software 44(8):1-18. URL http://www.jstatsoft.org/v44/i08/.
+}
 \seealso{
 \code{\link{crossprod}} for the matrix cross product.
 }
