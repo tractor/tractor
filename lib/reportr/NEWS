@@ -2,6 +2,19 @@ Significant changes to the reportr package are laid out below for each release.
 
 =================================================================================
 
+VERSION 1.0.0
+
+- Errors generated within the expression passed to withReportrHandlers() are now
+  reported with information on the call, if available. Relevant information
+  should therefore no longer be lost when using reportr, as opposed to the
+  standard R error-reporting system.
+- A "reportrStackTraceLevel" option is now available, allowing for the
+  generation of stack traces at lower output levels than Error if required. The
+  default behaviour is as before.
+- The clearFlags() function has been added, which removes any pending flags.
+
+=================================================================================
+
 VERSION 0.2.0
 
 - Substantial reworking of the package for greater generality. New functions
