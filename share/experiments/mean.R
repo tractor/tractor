@@ -25,7 +25,7 @@ runExperiment <- function ()
     
     images <- createWeightingAndMetricImages(image, session, type=tolower(metric), mode=mode, threshold=threshold)
     finalImage <- newMriImageWithBinaryFunction(images$metric, images$weight, "*")
-    metric <- sum(finalImage$getData()) / sum(images$weight$getData())
+    metric <- sum(finalImage$getData(),na.rm=TRUE) / sum(images$weight$getData(),na.rm=TRUE)
     
     cat(paste(metric, "\n", sep=""))
 }
