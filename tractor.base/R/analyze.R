@@ -21,7 +21,7 @@ readAnalyze <- function (fileNames)
 
     # SPM and FSL use the (char[10]) originator field to store a coordinate
     # origin - if not used as such this field should be all zero
-    readBin(connection, "raw", n=45)
+    readBin(connection, "raw", n=145)
     origin <- readBin(connection, "integer", n=5, size=2, endian=endian)
 
     close(connection)
