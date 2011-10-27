@@ -74,7 +74,7 @@ runExperiment <- function ()
         if (all(is.na(ranks)))
         {
             report(OL$Warning, "No match data available for session number ", i)
-            next
+            return (invisible(NULL))
         }
         
         if (maxRank < maxSeeds)
@@ -86,7 +86,7 @@ runExperiment <- function ()
         if (is.null(ptResult))
         {
             report(OL$Warning, "No seed points above threshold for session number ", i)
-            next
+            return (invisible(NULL))
         }
         
         currentTractName <- paste(tractName, "_session", i, sep="")

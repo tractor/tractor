@@ -1,6 +1,6 @@
 Package: tractor.session
-Version: 2.0.4
-Date: 2011-10-07
+Version: 2.0.6
+Date: 2011-10-24
 Title: Functions for maintaining and working with scan sessions
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
@@ -9,4 +9,4 @@ Imports: reportr, tractor.base
 Description: The tractor.session package provides functions for working with TractoR sessions, which are file hierarchies which represent an MRI scan session. It also provides wrapper functions for interacting between the TractoR bundle and the FMRIB Software Library (FSL; see http://www.fmrib.ox.ac.uk/fsl/) and Camino (http://www.camino.org.uk). The package exposes to R several FSL and Camino tools employed in a typical tractography workflow.
 LazyLoad: yes
 License: GPL-2
-URL: https://github.com/jonclayden/tractor
+URL: https://github.com/jonclayden/tractor/

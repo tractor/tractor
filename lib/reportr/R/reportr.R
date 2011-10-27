@@ -26,7 +26,10 @@ withReportrHandlers <- function (expr)
         flag(OL$Warning, w$message)
         invokeRestart("muffleWarning")
     }, error=function (e) {
-        report(OL$Error, e$message)
+        if (is.null(e$call))
+            report(OL$Error, e$message)
+        else
+            report(OL$Error, e$message, " (in \"", as.character(e$call)[1], "(", paste(as.character(e$call)[-1],collapse=", "), ")\")")
     })
 }
 
@@ -121,9 +124,12 @@ report <- function (level, ..., prefixFormat = NULL)
     reportFlags()
     cat(paste(.buildPrefix(level,prefixFormat), message, "\n", sep=""), file=stderr())
     
-    if (level == OL$Error)
+    if (outputLevel == OL$Debug)
     {
-        if (outputLevel == OL$Debug)
+        stackTraceLevel <- getOption("reportrStackTraceLevel")
+        if (is.null(stackTraceLevel))
+            stackTraceLevel <- OL$Error
+        if (level >= stackTraceLevel)
         {
             stack <- .getCallStack()
             cat("--- Begin stack trace ---\n", file=stderr())
@@ -131,13 +137,26 @@ report <- function (level, ..., prefixFormat = NULL)
                 cat(rep("* ", i), stack[i], "\n", sep="", file=stderr())
             cat("---  End stack trace  ---\n", file=stderr())
         }
-        
-        invokeRestart("abort")
     }
+    
+    if (level == OL$Error)
+        invokeRestart("abort")
 }
 
 flag <- function (level, ...)
 {
+    if (getOutputLevel() == OL$Debug)
+    {
+        stackTraceLevel <- getOption("reportrStackTraceLevel")
+        if (is.null(stackTraceLevel))
+            stackTraceLevel <- OL$Error
+        if (level >= stackTraceLevel)
+        {
+            report(level, ...)
+            return (invisible(NULL))
+        }
+    }
+    
     message <- .buildMessage(...)
     if (is.null(message))
         return (invisible(NULL))
@@ -157,7 +176,7 @@ reportFlags <- function ()
         messages <- unlist(lapply(.Workspace$reportrFlags, "[[", "message"))
         
         # This is before the call to report() to avoid infinite recursion
-        .Workspace$reportrFlags <- NULL
+        clearFlags()
         
         for (message in unique(messages))
         {
@@ -169,4 +188,9 @@ reportFlags <- function ()
                 report(level, paste("[x",length(locs),"] ",message,sep=""), prefixFormat="%L: ")
         }
     }
+}
+
+clearFlags <- function ()
+{
+    .Workspace$reportrFlags <- NULL
 }
