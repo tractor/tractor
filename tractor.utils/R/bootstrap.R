@@ -5,6 +5,9 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
     for (packageName in c("utils","grDevices","graphics","stats","methods","reportr","tractor.base"))
         library(packageName, character.only=TRUE)
     
+    if (capabilities()["aqua"])
+        options(device="quartz")
+    
     setOutputLevel(outputLevel)
     options(reportrStackTraceLevel=OL$Warning)
     
