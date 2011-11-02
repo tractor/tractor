@@ -1,2 +1,1 @@
-Welcome to the TractoR package. For installation instructions, please see the INSTALL file. For general information on the package, its capabilities and conventions, please see the [project wiki](https://github.com/jonclayden/tractor/wiki).
-
+Welcome to the TractoR package. For installation instructions, please see the INSTALL file. For general information on the package, its capabilities and conventions, please see the [TractoR paper](http://www.jstatsoft.org/v44/i08/) and/or the [project wiki](https://github.com/jonclayden/tractor/wiki).
