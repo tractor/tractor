@@ -9,7 +9,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     
     if (mode == "seedmask" && !is(seedMask, "MriImage"))
         report(OL$Error, "Seed point mask must be specified in this mode")
-    if (!is.null(waypointMasks) && (!is.list(waypointMasks) || !isMriImage(waypointMasks[[1]])))
+    if (!is.null(waypointMasks) && (!is.list(waypointMasks) || !is(waypointMasks[[1]],"MriImage")))
         report(OL$Error, "Waypoint masks must be specified as a list of MriImage objects")
     
     if (mode == "simple")
