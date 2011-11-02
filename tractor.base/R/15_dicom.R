@@ -14,7 +14,7 @@ DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fie
     getTagValue = function (group, element)
     {
         valueRow <- subset(tags, (tags$groups == group & tags$elements == element))
-        if (dim(valueRow)[1] == 0)
+        if (dim(valueRow)[1] == 0 || valueRow$values == "")
             return (NA)
         else
         {
@@ -126,7 +126,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     if (nDicomFiles == 0)
         report(OL$Error, "No readable DICOM files were found")
 
-    uniqueIdentifiers <- sort(unique(identifiers))
+    uniqueIdentifiers <- na.omit(sort(unique(identifiers)))
     report(OL$Info, "Found ", switch(currentSort,series="series",subject="subjects"), " ", implode(uniqueIdentifiers,", "), "; creating subdirectories")
     
     identifierWidth <- max(nchar(uniqueIdentifiers))

@@ -17,10 +17,10 @@ DESCRIPTION                   VALUE
  Series Time                   000000.000000
  Acquisition Time              000000.000000
  Image Time                    000000.000000
- Accession Number              
+ Accession Number              NA
  Modality                      MR
  Manufacturer                   
- Referring Physician's Name    
+ Referring Physician's Name    NA
  Station Name                   
  Study Description              
  Series Description            fl3D_t1_sag
@@ -33,7 +33,7 @@ DESCRIPTION                   VALUE
  Patient's Weight              NA
  Scanning Sequence             GR
  Sequence Variant              SP
- Scan Options                  
+ Scan Options                  NA
  MR Acquisition Type           3D
  Sequence Name                 *fl3d1
  Angio Flag                    N
@@ -72,7 +72,7 @@ DESCRIPTION                   VALUE
  Image Position (Patient)      -17.245762825012, -128.9491519928, 121.22033882141
  Image Orientation (Patient)   0, 1, 0, 0, 0, -1
  Frame of Reference UID        1.3.12.2.1107.5.2.30.25471.20080910140448828.0.0.0
- Position Reference Indicato   
+ Position Reference Indicato   NA
  Slice Location                -17.245762825012
  Samples per Pixel             1
  Photometric Interpretation    MONOCHROME2
