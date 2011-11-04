@@ -25,11 +25,14 @@ StreamlineTract <- setRefClass("StreamlineTract", contains="StreamlineTractMetad
         else
             callSuper(...)
         
-        object <- initFields(line=line, seedIndex=as.integer(seedIndex), originalSeedPoint=as.numeric(originalSeedPoint))
+        object <- initFields(line=promote(line,byrow=TRUE), seedIndex=as.integer(seedIndex), originalSeedPoint=as.numeric(originalSeedPoint))
 
         if (dim(object$line)[2] != 3)
             report(OL$Error, "Streamline must be specified as a matrix with 3 columns")        
-        object$pointSpacings <- apply(diff(object$line), 1, vectorLength)
+        if (dim(object$line)[1] == 1)
+            object$pointSpacings <- numeric(0)
+        else
+            object$pointSpacings <- apply(diff(object$line), 1, vectorLength)
         
         return (object)
     },
@@ -351,8 +354,8 @@ newStreamlineTractFromSet <- function (tract, method = c("median","single"), ori
         leftLength <- floor(quantile(tract$getLeftLengths(), probs=lengthQuantile, names=FALSE))
         rightLength <- floor(quantile(tract$getRightLengths(), probs=lengthQuantile, names=FALSE))
         
-        leftLine <- apply(tract$getLeftPoints()[1:leftLength,,], 1:2, median, na.rm=TRUE)
-        rightLine <- apply(tract$getRightPoints()[1:rightLength,,], 1:2, median, na.rm=TRUE)
+        leftLine <- apply(tract$getLeftPoints()[1:leftLength,,,drop=FALSE], 1:2, median, na.rm=TRUE)
+        rightLine <- apply(tract$getRightPoints()[1:rightLength,,,drop=FALSE], 1:2, median, na.rm=TRUE)
     }
     else if (method == "single")
     {
@@ -413,6 +416,9 @@ newStreamlineTractWithSpacingThreshold <- function (tract, maxSeparation)
     spacings <- tract$getPointSpacings()
     seedPoint <- tract$getSeedIndex()
     nPoints <- tract$nPoints()
+
+    if (length(spacings) == 0)
+        return (invisible(tract))
     
     wide <- which(spacings > maxSeparation)
     leftWide <- wide[which(wide < seedPoint)]
