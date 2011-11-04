@@ -54,7 +54,7 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
         dim(result$left_particles) <- c(maxStepsPerSide, 3, nSamples)
         dim(result$right_particles) <- c(maxStepsPerSide, 3, nSamples)
         streamlineMetadata <- .StreamlineTractMetadata(FALSE, "vox", metadata)
-        returnValue$streamlineSet <- .StreamlineSetTract(seed, result$left_lengths, result$right_lengths, result$left_particles[1:max(result$left_lengths),,], result$right_particles[1:max(result$right_lengths),,], streamlineMetadata)
+        returnValue$streamlineSet <- .StreamlineSetTract(seed, result$left_lengths, result$right_lengths, result$left_particles[1:max(result$left_lengths),,,drop=FALSE], result$right_particles[1:max(result$right_lengths),,,drop=FALSE], streamlineMetadata)
     }
     
     invisible (returnValue)

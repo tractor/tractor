@@ -385,8 +385,8 @@ newStreamlineTractFromSet <- function (tract, method = c("median","single"), ori
         leftLength <- floor(quantile(tract$getLeftLengths(), probs=lengthQuantile, names=FALSE))
         rightLength <- floor(quantile(tract$getRightLengths(), probs=lengthQuantile, names=FALSE))
         
-        leftLine <- apply(tract$getLeftPoints()[1:leftLength,,], 1:2, median, na.rm=TRUE)
-        rightLine <- apply(tract$getRightPoints()[1:rightLength,,], 1:2, median, na.rm=TRUE)
+        leftLine <- apply(tract$getLeftPoints()[1:leftLength,,,drop=FALSE], 1:2, median, na.rm=TRUE)
+        rightLine <- apply(tract$getRightPoints()[1:rightLength,,,drop=FALSE], 1:2, median, na.rm=TRUE)
     }
     else if (method == "single")
     {
@@ -447,6 +447,9 @@ newStreamlineTractWithSpacingThreshold <- function (tract, maxSeparation)
     spacings <- tract$getPointSpacings()
     seedPoint <- tract$getSeedIndex()
     nPoints <- tract$nPoints()
+
+    if (length(spacings) == 0)
+        return (invisible(tract))
     
     wide <- which(spacings > maxSeparation)
     leftWide <- wide[which(wide < seedPoint)]
