@@ -158,3 +158,11 @@ stripNul <- function (x, method = c("truncate","drop"))
     else
         return (x[-nul])
 }
+
+threadSafeTempFile <- function (pattern = "file")
+{
+    tempDir <- file.path(tempdir(), paste("temp",Sys.getpid(),sep="_"))
+    if (!file.exists(tempDir))
+        dir.create(tempDir)
+    return (tempfile(pattern=pattern, tmpdir=tempDir))
+}

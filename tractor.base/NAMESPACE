@@ -27,6 +27,7 @@ export(relativePath)
 export(promote)
 export(expandFileName)
 export(ensureFileSuffix)
+export(threadSafeTempFile)
 
 export(locateExecutable)
 export(execute)

@@ -24,7 +24,7 @@ showImagesInFslview <- function (..., writeToAnalyzeFirst = FALSE, wait = FALSE)
         {
             # fslview is fussy about data types, so write the image into
             # Analyze format to avoid a crash
-            imageLoc <- tempfile()
+            imageLoc <- threadSafeTempFile()
             if (is.character(i))
                 i <- newMriImageFromFile(i)
             writeMriImageToFile(i, imageLoc, fileType="ANALYZE_GZ")
