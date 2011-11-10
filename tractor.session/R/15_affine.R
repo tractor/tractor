@@ -133,7 +133,8 @@ updateFlirtCacheWithTransform <- function (transform, sourceFile, destFile)
 {
     if (!is.null(checkFlirtCacheForTransform(sourceFile, destFile)))
         return (FALSE)
-        
+    
+    # Not using thread-safe directory here, because all threads need to see the cache
     cacheDir <- file.path(tempdir(), "flirt-cache")
     cacheIndexFile <- file.path(cacheDir, "index.txt")
     transformFile <- ensureFileSuffix(tempfile("transform-",cacheDir), "Rdata")
@@ -160,7 +161,7 @@ newAffineTransform3DFromFlirt <- function (source, dest, outfile = NULL, refweig
         {
             if (input$isInternal() || !file.exists(input$getSource()))
             {
-                fileName <- tempfile()
+                fileName <- threadSafeTempFile()
                 writeMriImageToFile(input, fileName)
                 isTemporary <- TRUE
             }
@@ -207,8 +208,8 @@ newAffineTransform3DFromFlirt <- function (source, dest, outfile = NULL, refweig
             refweightExpression <- paste(" -refweight", refweight$fileName, sep=" ")
         }
         
-        matrixFile <- ensureFileSuffix(tempfile(), "mat")
-        logFile <- ensureFileSuffix(tempfile(), "log")
+        matrixFile <- ensureFileSuffix(threadSafeTempFile(), "mat")
+        logFile <- ensureFileSuffix(threadSafeTempFile(), "log")
         
         report(OL$Info, "Registering 3D volumes together with FLIRT")
         
@@ -253,7 +254,7 @@ resampleImageToDimensions <- function (image, voxelDims = NULL, imageDims = NULL
     if (is.null(imageDims))
         imageDims <- round(image$getFieldOfView() / abs(voxelDims))
     
-    tempFiles <- tempfile(rep("file",4))
+    tempFiles <- threadSafeTempFile(rep("file",4))
     
     writeMriImageToFile(image, tempFiles[1])
     write.table(diag(4), tempFiles[2], row.names=FALSE, col.names=FALSE)
@@ -380,11 +381,11 @@ transformStandardSpaceImage <- function (session, image, toStandard = FALSE)
         dest <- session$getImageFileNameByType("maskedb0")
     }
     
-    xfmFile <- ensureFileSuffix(tempfile(), "mat")
+    xfmFile <- ensureFileSuffix(threadSafeTempFile(), "mat")
     write.table(xfm$getMatrix(), xfmFile, row.names=FALSE, col.names=FALSE)
     report(OL$Info, "Transforming image ", ifelse(toStandard,"to","from"), " standard space")
     
-    imageFiles <- tempfile(rep("image",2))
+    imageFiles <- threadSafeTempFile(rep("image",2))
     writeMriImageToFile(image, imageFiles[1])
     
     paramString <- paste("-in", imageFiles[1], "-ref", dest, "-applyxfm -init", xfmFile, "-out", imageFiles[2], sep=" ")

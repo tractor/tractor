@@ -79,7 +79,7 @@ createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("inter
     }
     else if (device == "png")
     {
-        tempFile <- tempfile()
+        tempFile <- threadSafeTempFile()
         pngDims <- round(abs(dims[!axisRelevance] * image$getVoxelDimensions()[!axisRelevance] * zoomFactor))
         writePng(slice, colourScale, tempFile, windowLimits=windowLimits)
         interpolatePng(tempFile, file, pngDims, filter=filter)
@@ -103,7 +103,7 @@ createProjectionGraphic <- function (image, axis, device = c("internal","png"), 
     }
     else if (device == "png")
     {
-        tempFile <- tempfile()
+        tempFile <- threadSafeTempFile()
         pngDims <- round(abs(image$getDimensions()[imageAxes] * image$getVoxelDimensions()[imageAxes] * zoomFactor))
         writePng(projection, colourScale, tempFile, windowLimits=windowLimits)
         interpolatePng(tempFile, file, pngDims, filter=filter)
@@ -158,7 +158,7 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
     }
     else if (device == "png")
     {
-        tempFile <- tempfile()
+        tempFile <- threadSafeTempFile()
         pngDims <- round(abs(dim(data) * image$getVoxelDimensions()[imageAxes] * zoomFactor))
         writePng(data, colourScale, tempFile, windowLimits=windowLimits)
         interpolatePng(tempFile, file, pngDims, filter=filter)
@@ -196,8 +196,8 @@ createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sli
     if (device == "png")
     {
         projectionNames <- c("sagittal", "coronal", "axial")
-        imageFiles <- tempfile(rep(prefix, 2*nImages))
-        combinedFiles <- tempfile(rep(prefix, 2))
+        imageFiles <- threadSafeTempFile(rep(prefix, 2*nImages))
+        combinedFiles <- threadSafeTempFile(rep(prefix, 2))
         
         for (axis in axes)
         {
