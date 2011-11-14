@@ -196,6 +196,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE)
         }
         else
         {
+            report(OL$Debug, "Image orientation is ", implode(c("I","P","R","","L","A","S")[dimPermutation[1:3]*ordering+4],sep=""))
             origin <- c(1 - ordering[1:3] * round(info$storageMetadata$xformMatrix[1:3,4]/voxelDims[1:3],2), rep(0,nDims-3))
             origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], dims[1:3]-origin[1:3]+1)
         }
