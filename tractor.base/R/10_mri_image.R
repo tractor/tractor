@@ -185,14 +185,14 @@ Summary.MriImage <- function (x, ..., na.rm = FALSE)
 
 setMethod("[", "MriImage", function (x, i, j, ..., drop = TRUE) {
     if (missing(j))
-        return (x$getData()[i])
+        return (x$getData()[i,...,drop=drop])
     else
         return (x$getData()[i,j,...,drop=drop])
 })
 
 setMethod("[<-", "MriImage", function (x, i, j, ..., value) {
     if (missing(j))
-        x$data[i] <- value
+        x$data[i,...] <- value
     else
         x$data[i,j,...] <- value
     x$setSource("internal")
