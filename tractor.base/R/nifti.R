@@ -33,7 +33,11 @@ readNifti <- function (fileNames)
             report(OL$Debug, "Using qform (code ", qformCode, ") for origin")
             matrix <- diag(4)
             matrix[1:3,4] <- quaternionParams[4:6]
-            q <- c(sqrt(1 - sum(quaternionParams[1:3]^2)), quaternionParams[1:3])
+            
+            if (sum(quaternionParams[1:3]^2) == 1)
+                q <- c(0, quaternionParams[1:3])
+            else
+                q <- c(sqrt(1 - sum(quaternionParams[1:3]^2)), quaternionParams[1:3])
 
             matrix[1:3,1:3] <- c(  q[1]*q[1] +   q[2]*q[2] - q[3]*q[3] - q[4]*q[4],
                                  2*q[2]*q[3] + 2*q[1]*q[4],
@@ -48,7 +52,7 @@ readNifti <- function (fileNames)
             # The qfactor should be stored as 1 or -1, but the NIfTI standard says
             # 0 should be treated as 1; this does that (the 0.1 is arbitrary)
             qfactor <- sign(voxelDims[1] + 0.1)
-            matrix[1:3,1:3] <- matrix[1:3,1:3] * c(abs(voxelDims[2:3]), qfactor*abs(voxelDims[4]))
+            matrix[1:3,1:3] <- matrix[1:3,1:3] * rep(c(abs(voxelDims[2:3]), qfactor*abs(voxelDims[4])), each=3)
 
             return (matrix)
         }

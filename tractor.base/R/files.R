@@ -185,8 +185,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE)
         # Fix signs of voxel dimensions to correspond to LAS
         voxelDims <- abs(voxelDims) * c(-1, rep(1,nDims-1))
         
-        # Figure out which dimensions need to be flipped
-        ordering <- round(colSums(rotationMatrix) / c(abs(voxelDims[1:min(3,nDims)]),rep(1,max(0,3-nDims))))
+        # Figure out which dimensions need to be flipped - we sum by row because the data dimensions have already been permuted
+        ordering <- round(rowSums(rotationMatrix) / c(abs(voxelDims[1:min(3,nDims)]),rep(1,max(0,3-nDims))))
         ordering <- ordering * c(-1, 1, 1)
         
         if (nDims == 2)
@@ -196,7 +196,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE)
         }
         else
         {
-            report(OL$Debug, "Image orientation is ", implode(c("I","P","R","","L","A","S")[dimPermutation[1:3]*ordering+4],sep=""))
+            report(OL$Debug, "Image orientation is ", implode(c("I","P","R","","L","A","S")[(1:3)*ordering+4][dimPermutation[1:3]],sep=""))
             origin <- c(1 - ordering[1:3] * round(info$storageMetadata$xformMatrix[1:3,4]/voxelDims[1:3],2), rep(0,nDims-3))
             origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], dims[1:3]-origin[1:3]+1)
         }
