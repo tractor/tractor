@@ -6,7 +6,8 @@ library(tractor.base)
 runExperiment <- function ()
 {
     requireArguments("image file")
-    setOutputLevel(OL$Info)
+    if (getOutputLevel() > OL$Info)
+        setOutputLevel(OL$Info)
     fileName <- implode(Arguments, sep=" ")
     print(newMriImageMetadataFromFile(fileName))
 }
