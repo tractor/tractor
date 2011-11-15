@@ -137,6 +137,51 @@ setAs("array", "MriImage", function (from) {
     return (image)
 })
 
+setAs("MriImage", "nifti", function (from) {
+    options(niftiAuditTrail=FALSE)
+    require(oro.nifti)
+    
+    datatype <- from$getDataType()
+    datatypeMatches <- (.Nifti$datatypes$rTypes == datatype$type) & (.Nifti$datatypes$sizes == datatype$size) & (.Nifti$datatypes$isSigned == datatype$isSigned)
+    if (length(which(datatypeMatches)) != 1)
+        report(OL$Error, "No supported NIfTI datatype is appropriate for this file")
+    typeIndex <- which(datatypeMatches)
+    
+    data <- as(from$getData(), "array")
+    storage.mode(data) <- .Nifti$datatypes$rTypes[typeIndex]
+    
+    # The 8 below is for seconds; we default to 10 (mm/sec)
+    unitName <- from$getVoxelUnit()
+    unitCode <- as.numeric(.Nifti$units[which(names(.Nifti$units) == unitName)])
+    if (length(unitCode) == 0)
+        unitCode <- 10
+    else
+        unitCode <- unitCode + 8
+    
+    nDims <- from$getDimensionality()
+    fullDims <- c(nDims, abs(from$getDimensions()), rep(1,7-nDims))
+    fullVoxelDims <- c(-1, abs(from$getVoxelDimensions()), rep(0,7-nDims))
+    
+    origin <- (from$getOrigin() - 1) * abs(from$getVoxelDimensions())
+    if (length(origin) > 3)
+        origin <- origin[1:3]
+    else if (length(origin) < 3)
+        origin <- c(origin, rep(0,3-length(origin)))
+    origin <- ifelse(origin < 0, rep(0,3), origin)
+    origin[2:3] <- -origin[2:3]
+    sformRows <- c(-fullVoxelDims[2], 0, 0, origin[1],
+                    0, fullVoxelDims[3], 0, origin[2],
+                    0, 0, fullVoxelDims[4], origin[3])
+    
+    xformCode <- ifelse(from$getDimensionality() == 2, 0, 2)
+    
+    return (new("nifti", .Data=data, dim_=fullDims, datatype=.Nifti$datatypes$codes[typeIndex], bitpix=8*.Nifti$datatypes$sizes[typeIndex], pixdim=fullVoxelDims, xyzt_units=unitCode, qform_code=xformCode, sform_code=xformCode, quatern_b=0, quatern_c=1, quatern_d=0, qoffset_x=origin[1], qoffset_y=origin[2], qoffset_z=origin[3], srow_x=sformRows[1:4], srow_y=sformRows[5:8], srow_z=sformRows[9:12], cal_min=min(data), cal_max=max(data)))
+})
+
+# setAs("nifti", "MriImage", function (from) {
+#     
+# })
+
 "[.MriImage" <- function (x, ..., drop = TRUE)
 {
     return (x$getData()[...,drop=drop])
