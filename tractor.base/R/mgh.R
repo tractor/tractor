@@ -28,8 +28,17 @@ readMgh <- function (fileNames)
     
     close(connection)
     
-    diag(xformMatrix) <- diag(xformMatrix) * c(abs(voxelDims), 1)
-    xformMatrix[,4] <- xformMatrix[,4] - c(dims[1]/2, dims[2]/2, dims[3]/2, 0) * diag(xformMatrix)
+    absRotationMatrix <- abs(xformMatrix[1:3,1:3])
+    tolerance <- 1e-3 * max(abs(voxelDims))
+    
+    # The rotation matrix should have exactly one nonzero element per row and column
+    if (!equivalent(rowSums(absRotationMatrix > tolerance), c(1,1,1)) || !equivalent(colSums(absRotationMatrix > tolerance), c(1,1,1)))
+        report(OL$Error, "The image is stored in a rotated frame of reference")
+    
+    # Locate the nonzero elements of the rotation matrix
+    indices <- cbind(1:3, apply(absRotationMatrix > tolerance, 1, which))
+    xformMatrix[indices] <- xformMatrix[indices] * abs(voxelDims)
+    xformMatrix[1:3,4] <- xformMatrix[1:3,4] - c(dims[1]/2, dims[2]/2, dims[3]/2) * xformMatrix[indices]
     
     typeIndex <- which(.Mgh$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
