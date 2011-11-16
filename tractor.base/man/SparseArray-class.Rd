@@ -27,7 +27,7 @@ All reference classes extend and inherit methods from \code{"\linkS4class{envRef
 \references{
 Please cite the following reference when using TractoR in your work:
 
-J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A. Clark (2011). TractoR: Magnetic resonance imaging and tractography with R. Journal of Statistical Software 44(8):1-18. URL http://www.jstatsoft.org/v44/i08/.
+J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A. Clark (2011). TractoR: Magnetic resonance imaging and tractography with R. Journal of Statistical Software 44(8):1-18. \url{http://www.jstatsoft.org/v44/i08/}.
 }
 \note{
 Using the current ``coordinate list'' storage convention, there is rarely any data size benefit to storing an array in this form unless it is at least 75\% sparse. Since \code{SparseArray} is a reference class, however, there may be some benefit in terms of avoiding duplication of the array on modification.
