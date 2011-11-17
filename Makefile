@@ -41,9 +41,12 @@ install-nt:
 install-track:
 	@$(INSTALL) tractor.track
 
+install-graph:
+	@$(INSTALL) tractor.graph
+
 install: build
 	@rm -f install.log
-	@$(MAKE) install-libs install-base install-utils install-reg install-session install-nt install-track post-install-info
+	@$(MAKE) install-libs install-base install-utils install-reg install-session install-nt install-track install-graph post-install-info
 
 install-local:
 	@mkdir -p lib/R
@@ -52,7 +55,7 @@ install-local:
 install-all: install
 
 uninstall:
-	$(R) CMD REMOVE tractor.track tractor.nt tractor.session tractor.reg tractor.utils tractor.base
+	$(R) CMD REMOVE tractor.graph tractor.track tractor.nt tractor.session tractor.reg tractor.utils tractor.base
 
 uninstall-local:
 	@rm -rf lib/R
