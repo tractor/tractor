@@ -21,7 +21,7 @@ runExperiment <- function ()
         {
             metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("data","diffusion"))
             dims <- paste(implode(metadata$getDimensions(), " x "), "voxels", sep=" ")
-            voxelDims <- paste(implode(abs(metadata$getVoxelDimensions())," x "), ifelse(metadata$getVoxelUnit()=="","",paste(" ",metadata$getVoxelUnit(),sep="")), sep="")
+            voxelDims <- paste(implode(abs(round(metadata$getVoxelDimensions(),3))," x "), ifelse(metadata$getVoxelUnit()=="","",paste(" ",metadata$getVoxelUnit(),sep="")), sep="")
         }
         else
             dims <- voxelDims <- NA
