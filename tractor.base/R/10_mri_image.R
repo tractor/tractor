@@ -138,8 +138,9 @@ setAs("array", "MriImage", function (from) {
 })
 
 setAs("MriImage", "nifti", function (from) {
-    options(niftiAuditTrail=FALSE)
-    require(oro.nifti)
+    if (is.null(getOption("niftiAuditTrail")))
+        options(niftiAuditTrail=FALSE)
+    suppressPackageStartupMessages(require(oro.nifti))
     
     datatype <- from$getDataType()
     datatypeMatches <- (.Nifti$datatypes$rTypes == datatype$type) & (.Nifti$datatypes$sizes == datatype$size) & (.Nifti$datatypes$isSigned == datatype$isSigned)
@@ -178,9 +179,40 @@ setAs("MriImage", "nifti", function (from) {
     return (new("nifti", .Data=data, dim_=fullDims, datatype=.Nifti$datatypes$codes[typeIndex], bitpix=8*.Nifti$datatypes$sizes[typeIndex], pixdim=fullVoxelDims, xyzt_units=unitCode, qform_code=xformCode, sform_code=xformCode, quatern_b=0, quatern_c=1, quatern_d=0, qoffset_x=origin[1], qoffset_y=origin[2], qoffset_z=origin[3], srow_x=sformRows[1:4], srow_y=sformRows[5:8], srow_z=sformRows[9:12], cal_min=min(data), cal_max=max(data)))
 })
 
-# setAs("nifti", "MriImage", function (from) {
-#     
-# })
+setAs("nifti", "MriImage", function (from) {
+    if (is.null(getOption("niftiAuditTrail")))
+        options(niftiAuditTrail=FALSE)
+    suppressPackageStartupMessages(require(oro.nifti))
+    
+    nDims <- from@dim_[1]
+    voxelDims <- from@pixdim[seq_len(nDims)+1]
+    voxelDims3D <- c(voxelDims, rep(0,max(0,3-nDims))) * c(-1,1,1)
+    
+    spatialUnitCode <- packBits(intToBits(from@xyzt_units) & intToBits(7), "integer")
+    voxelUnit <- names(.Nifti$units)[which(.Nifti$units == spatialUnitCode)]
+    if (length(voxelUnit) == 0)
+        voxelUnit <- NULL
+    
+    if (from@qform_code > 0)
+    {
+        if (!equivalent(c(from@quatern_b,from@quatern_c,from@quatern_d), c(0,1,0)))
+            report(OL$Error, "Only images using the LAS orientation convention can be converted at present")
+        origin <- c(from@qoffset_x, from@qoffset_y, from@qoffset_z)
+    }
+    else if (from@sform_code > 0)
+    {
+        if (!equivalent(c(from@srow_x[1:3],from@srow_y[1:3],from@srow_z[1:3]), c(-voxelDims3D[1],0,0,0,voxelDims3D[2],0,0,0,voxelDims3D[3])))
+            report(OL$Error, "Only images using the LAS orientation convention can be converted at present")
+        origin <- c(from@srow_x[4], from@srow_y[4], from@srow_z[4])
+    }
+    else
+        origin <- rep(0, 3)
+    
+    metadata <- MriImageMetadata$new(imagedims=from@dim_[seq_len(nDims)+1], voxdims=voxelDims, voxunit=voxelUnit, datatype=getDataTypeByNiftiCode(from@datatype), origin=c(1-origin/voxelDims3D,rep(0,max(0,3-nDims))))
+    image <- newMriImageWithData(from@.Data, metadata)
+    
+    return (image)
+})
 
 "[.MriImage" <- function (x, ..., drop = TRUE)
 {
