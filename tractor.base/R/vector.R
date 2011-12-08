@@ -34,3 +34,16 @@ angleBetweenVectors <- function (v1, v2)
         return (acos(cosine))
     }
 }
+
+matrixToVectorLocs <- function (matrixLocs, dims)
+{
+    nDims <- length(dims)
+    matrixLocs <- promote(matrixLocs, byrow=TRUE)
+    jumps <- c(1, cumprod(dims))
+    return (rowSums((matrixLocs - 1) * rep(jumps[1:nDims],each=nrow(matrixLocs))) + 1)
+}
+
+vectorToMatrixLocs <- function (vectorLocs, dims)
+{
+    return (arrayInd(vectorLocs, dims))
+}

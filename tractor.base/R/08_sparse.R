@@ -31,13 +31,6 @@ setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
     data <- x$getData()
     coords <- x$getCoordinates()
     
-    matrixToVectorLocs <- function (matrixLocs)
-    {
-        matrixLocs <- promote(matrixLocs, byrow=TRUE)
-        jumps <- c(1, cumprod(dims))
-        vectorLocs <- rowSums((matrixLocs - 1) * rep(jumps[1:nDims],each=nrow(matrixLocs))) + 1
-    }
-    
     if (nArgs < 2)
         return (data)
     else if (nArgs == 2)
@@ -50,7 +43,7 @@ setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
             # Matrix indexing, one row per point: convert to vector and drop through
             if (ncol(index) != nDims)
                 report(OL$Error, "Number of dimensions given does not match image")
-            index <- matrixToVectorLocs(index)
+            index <- matrixToVectorLocs(index, dims)
         }
         
         # Vector indexing, one number per point
@@ -58,7 +51,7 @@ setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
             report(OL$Error, "Zero and negative indices are not yet supported")
         
         returnValue <- vector(mode=storage.mode(data), length=length(index))
-        dataLocs <- match(index, matrixToVectorLocs(coords), 0L)
+        dataLocs <- match(index, matrixToVectorLocs(coords,dims), 0L)
         returnValue[dataLocs > 0] <- data[dataLocs]
     }
     else if (nArgs != (nDims + 1))
@@ -121,13 +114,6 @@ setMethod("[<-", "SparseArray", function (x, i, j, ..., value) {
     data <- x$getData()
     coords <- x$getCoordinates()
     
-    matrixToVectorLocs <- function (matrixLocs)
-    {
-        matrixLocs <- promote(matrixLocs, byrow=TRUE)
-        jumps <- c(1, cumprod(dims))
-        vectorLocs <- rowSums((matrixLocs - 1) * rep(jumps[1:nDims],each=nrow(matrixLocs))) + 1
-    }
-    
     if (nArgs < 2)
         return (data)
     else if (nArgs == 2)
@@ -140,7 +126,7 @@ setMethod("[<-", "SparseArray", function (x, i, j, ..., value) {
             # Matrix indexing, one row per point: convert to vector and drop through
             if (ncol(index) != nDims)
                 report(OL$Error, "Number of dimensions given does not match image")
-            index <- matrixToVectorLocs(index)
+            index <- matrixToVectorLocs(index, dims)
         }
         
         # Vector indexing, one number per point
@@ -165,7 +151,7 @@ setMethod("[<-", "SparseArray", function (x, i, j, ..., value) {
         
         index <- as.matrix(expand.grid(args))
         storage.mode(index) <- "integer"
-        index <- matrixToVectorLocs(index)
+        index <- matrixToVectorLocs(index, dims)
     }
     
     if (length(index) %% length(value) != 0)
@@ -173,7 +159,7 @@ setMethod("[<-", "SparseArray", function (x, i, j, ..., value) {
     if (length(index) != length(value))
         value <- rep(value, length(index) %/% length(value))
     
-    dataLocs <- match(index, matrixToVectorLocs(coords), 0L)
+    dataLocs <- match(index, matrixToVectorLocs(coords,dims), 0L)
     present <- (dataLocs > 0)
     zero <- (value == 0)
     
