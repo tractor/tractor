@@ -130,7 +130,7 @@ copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE
     }
 }
 
-readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE)
+readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL)
 {
     fileNames <- identifyImageFileNames(fileName, fileType)
     
@@ -144,14 +144,69 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE)
     nVoxels <- prod(dims)
     nDims <- length(dims)
     
+    if (!is.null(volumes))
+    {
+        if (metadataOnly)
+        {
+            flag(OL$Warning, "Volumes specified when reading only metadata from an image file will be ignored")
+            volumes <- NULL
+        }
+        else if (nDims < 4)
+        {
+            flag(OL$Warning, "Volumes specified for images with less than 4 dimensions will be ignored")
+            volumes <- NULL
+        }
+        else
+        {
+            if (any(volumes < 1 || volumes > prod(dims[4:nDims])))
+                report(OL$Error, "Some of the specified volume numbers (", implode(volumes,","), ") are out of bounds")
+            
+            volumeSize <- prod(dims[1:3])
+            jumps <- (diff(c(0, sort(volumes))) - 1) * volumeSize
+            
+            if (length(volumes) == 1)
+            {
+                dims <- dims[1:3]
+                nDims <- 3
+                voxelDims <- voxelDims[1:3]
+            }
+            else
+            {
+                matrixLocs <- vectorToMatrixLocs(volumes, dims[4:nDims])
+                remainingVolumeDims <- apply(matrixLocs, 2, function (x) length(unique(x)))
+                dims <- c(dims[1:3], remainingVolumeDims)
+                
+                dimsToKeep <- 1:max(which(dims > 1))
+                dims <- dims[dimsToKeep]
+                nDims <- length(dimsToKeep)
+                voxelDims <- voxelDims[dimsToKeep]
+            }
+        }
+    }
+    
     if (!metadataOnly)
     {
         connection <- gzfile(fileNames$imageFile, "rb")
         if (fileNames$imageFile == fileNames$headerFile)
             readBin(connection, "raw", n=info$storageMetadata$dataOffset)
-
-        voxels <- readBin(connection, what=datatype$type, n=nVoxels, size=datatype$size, signed=datatype$isSigned, endian=endian)
-        data <- array(voxels, dim=dims)
+        
+        if (!is.null(volumes))
+        {
+            data <- array(as(0,datatype$type), dim=c(dims[1:3],length(volumes)))
+            for (i in seq_along(volumes))
+            {
+                if (jumps[i] > 0)
+                    readBin(connection, "raw", n=jumps[i]*datatype$size)
+                data[,,,i] <- readBin(connection, what=datatype$type, n=volumeSize, size=datatype$size, signed=datatype$isSigned, endian=endian)
+            }
+            dim(data) <- dims
+        }
+        else
+        {
+            voxels <- readBin(connection, what=datatype$type, n=nVoxels, size=datatype$size, signed=datatype$isSigned, endian=endian)
+            data <- array(voxels, dim=dims)
+        }
+        
         close(connection)
 
         slope <- info$storageMetadata$dataScalingSlope
@@ -234,9 +289,9 @@ newMriImageMetadataFromFile <- function (fileName, fileType = NULL)
     invisible (readImageFile(fileName, fileType, metadataOnly=TRUE))
 }
 
-newMriImageFromFile <- function (fileName, fileType = NULL)
+newMriImageFromFile <- function (fileName, fileType = NULL, volumes = NULL)
 {
-    invisible (readImageFile(fileName, fileType, metadataOnly=FALSE))
+    invisible (readImageFile(fileName, fileType, metadataOnly=FALSE, volumes=volumes))
 }
 
 writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
