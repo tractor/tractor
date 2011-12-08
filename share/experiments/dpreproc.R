@@ -140,8 +140,7 @@ runExperiment <- function ()
             writeLines(as.character(choice), file.path(session$getDirectory("diffusion"),"refb0-index.txt"))
             
             report(OL$Info, "Extracting reference volume")
-            data <- session$getImageByType("rawdata", "diffusion")
-            refVolume <- newMriImageByExtraction(data, 4, choice)
+            refVolume <- newMriImageFromFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=choice)
             writeMriImageToFile(refVolume, session$getImageFileNameByType("refb0"))
         }
         
