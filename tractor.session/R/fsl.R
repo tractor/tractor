@@ -157,15 +157,5 @@ runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","scre
 
 getBedpostNumberOfFibresForSession <- function (session)
 {
-    if (!is(session, "MriSession"))
-        report(OL$Error, "Specified session is not an MriSession object")
-    
-    i <- 1
-    while (imageFileExists(session$getImageFileNameByType("avf",index=i)))
-        i <- i + 1
-    
-    if (i == 1)
-        return (NA)
-    else
-        return (i-1)
+    return (getImageCountForSession(session, "avf", "bedpost"))
 }
