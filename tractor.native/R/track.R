@@ -64,7 +64,7 @@ trackWithSession <- function (session, x, y = NULL, z = NULL, ...)
         report(OL$Error, "Specified session is not an MriSession object")
     
     nCompartments <- getBedpostNumberOfFibresForSession(session)
-    if (is.na(nCompartments))
+    if (nCompartments == 0)
         report(OL$Error, "The \"bedpost\" program has not yet been run for this session")
     
     maskName <- session$getImageFileNameByType("mask", "diffusion")

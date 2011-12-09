@@ -44,7 +44,7 @@ runExperiment <- function ()
     createSliceGraphic(faImage, point[1], point[2], point[3], device="internal", windowLimits=windowLimits)
     
     nDirections <- ifelse(source=="tensor", 1, getBedpostNumberOfFibresForSession(session))
-    if (is.na(nDirections))
+    if (nDirections == 0)
         report(OL$Error, "The \"bedpost\" program has not yet been run for this session")
     
     for (i in seq_len(nDirections))

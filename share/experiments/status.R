@@ -25,7 +25,9 @@ runExperiment <- function ()
         }
         else
             dims <- voxelDims <- NA
-        if (is.na(nFibres <- getBedpostNumberOfFibresForSession(session)))
+        
+        nFibres <- getBedpostNumberOfFibresForSession(session)
+        if (nFibres == 0)
             bedpostValue <- FALSE
         else
             bedpostValue <- paste("TRUE (", nFibres, " fibre(s) per voxel)", sep="")
