@@ -7,7 +7,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(nVertic
             return (edges[i,])
     },
     
-    getEdges = function () { return (vertexLocations) },
+    getEdges = function () { return (edges) },
     
     getEdgeNames = function () { return (edgeNames) },
     
