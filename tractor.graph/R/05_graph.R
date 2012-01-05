@@ -30,3 +30,42 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(nVertic
     
     nVertices = function () { return (nVertices) }
 ))
+
+newGraphFromTable <- function (table, method = c("correlation","covariance"), threshold = NULL, ignoreSign = FALSE, allVertexNames = NULL)
+{
+    method <- match.arg(method)
+    
+    if (method == "correlation")
+        connectionMatrix <- cor(table)
+    else if (method == "covariance")
+        connectionMatrix <- cov(table)
+    
+    return (newGraphFromConnectionMatrix(connectionMatrix, threshold=threshold, ignoreSign=ignoreSign, directed=FALSE, allVertexNames=allVertexNames))
+}
+
+newGraphFromConnectionMatrix <- function (connectionMatrix, threshold = NULL, ignoreSign = FALSE, directed = FALSE, allVertexNames = NULL)
+{
+    if (!is.null(threshold))
+    {
+        if (ignoreSign)
+            connectionMatrix[abs(connectionMatrix) < threshold] <- NA
+        else
+            connectionMatrix[connectionMatrix < threshold] <- NA
+    }
+    
+    if (!directed)
+        connectionMatrix[lower.tri(connectionMatrix,diag=TRUE)] <- NA
+    
+    if (is.null(allVertexNames))
+        allVertexNames <- union(rownames(connectionMatrix), colnames(connectionMatrix))
+    rowVertexLocs <- match(rownames(connectionMatrix), allVertexNames)
+    colVertexLocs <- match(colnames(connectionMatrix), allVertexNames)
+    
+    edges <- which(!is.na(connectionMatrix), arr.ind=TRUE)
+    edgeWeights <- connectionMatrix[edges]
+    edges[,1] <- rowVertexLocs[edges[,1]]
+    edges[,2] <- colVertexLocs[edges[,2]]
+    dimnames(edges) <- NULL
+    
+    return (Graph$new(nVertices=length(allVertexNames), vertexNames=allVertexNames, edges=edges, edgeWeights=edgeWeights, directed=FALSE))   
+}
