@@ -31,6 +31,55 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     nVertices = function () { return (vertexCount) }
 ))
 
+setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, useAbsoluteWeights = FALSE, weightLimits = NULL, useAlpha = FALSE, hideDisconnected = FALSE) {
+    edges <- x$getEdges()
+    weights <- x$getEdgeWeights()
+    absWeights <- abs(weights)
+    
+    if (useAbsoluteWeights)
+        weights <- absWeights
+    if (is.null(weightLimits))
+        weightLimits <- range(weights)
+    
+    if (length(col) > 1)
+    {
+        colourIndices <- round(((weights - weightLimits[1]) / (weightLimits[2] - weightLimits[1])) * length(col)) + 1
+        colours <- col[colourIndices]
+    }
+    else
+        colours <- col
+    
+    if (useAlpha)
+    {
+        absWeightLimits <- c(max(0,min(weightLimits,absWeights)), max(weightLimits,absWeights))
+        alphaValues <- round(((absWeights - absWeightLimits[1]) / (absWeightLimits[2] - absWeightLimits[1])) * 255)
+        rgbColours <- col2rgb(colours)
+        colours <- sapply(1:ncol(rgbColours), function (i) sprintf("#%02X%02X%02X%02X",rgbColours[1,i],rgbColours[2,i],rgbColours[3,i],alphaValues[i]))
+    }
+    
+    if (hideDisconnected)
+        activeVertices <- sort(union(edges[,1], edges[,2]))
+    else
+        activeVertices <- 1:x$nVertices()
+    nActiveVertices <- length(activeVertices)
+    
+    from <- match(edges[,1], activeVertices)
+    to <- match(edges[,2], activeVertices)
+    
+    angles <- (0:(nActiveVertices-1)) * 2 * pi / nActiveVertices
+    xLocs <- sin(angles)
+    yLocs <- cos(angles)
+    arcSeparation <- 2 * pi / nActiveVertices
+    radius <- arcSeparation / 4
+    
+    oldPars <- par(mai=c(0,0,0,0))
+    plot(NA, type="n", xlim=c(-1.2,1.2), ylim=c(-1.2,1.2))
+    segments(xLocs[from], yLocs[from], xLocs[to], yLocs[to], lwd=2, col=colours)
+    symbols(xLocs, yLocs, circles=rep(radius,nActiveVertices), inches=FALSE, col="grey50", lwd=2, bg="white", add=TRUE)
+    text(xLocs, yLocs, as.character(activeVertices), col="grey40", cex=cex)
+    par(oldPars)
+})
+
 newGraphFromTable <- function (table, method = c("correlation","covariance"), threshold = NULL, ignoreSign = FALSE, allVertexNames = NULL)
 {
     method <- match.arg(method)
