@@ -31,6 +31,11 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     nVertices = function () { return (vertexCount) }
 ))
 
+setAs("Graph", "igraph", function (from) {
+    require(igraph)
+    return (graph.edgelist(from$getEdges(), directed=from$isDirected()))
+})
+    
 setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, useAbsoluteWeights = FALSE, weightLimits = NULL, useAlpha = FALSE, hideDisconnected = FALSE) {
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
