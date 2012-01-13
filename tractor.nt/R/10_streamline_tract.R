@@ -92,6 +92,45 @@ StreamlineSetTract <- setRefClass("StreamlineSetTract", contains="StreamlineTrac
     nStreamlines = function () { return (dim(leftPoints)[3]) }
 ))
 
+StreamlineCollectionTract <- setRefClass("StreamlineCollectionTract", contains="StreamlineTractMetadata", fields=list(seedIndices="integer",startIndices="integer",points="matrix"), methods=list(
+    initialize = function (..., metadata = NULL)
+    {
+        if (!is.null(metadata))
+            import(metadata, "StreamlineTractMetadata")
+        return (initFields(...))
+    },
+    
+    getMetadata = function () { return (export("StreamlineTractMetadata")) },
+    
+    getPoints = function (i = NA)
+    {
+        if (is.na(i)
+            return (points)
+        else if (i == .self$nStreamlines())
+            return (points[startIndices[i]:nrow(points),])
+        else
+            return (points[startIndices[i]:(startIndices[i+1]-1),])
+    },
+    
+    getSeedPointIndices = function () { return (seedIndices) },
+    
+    getSeedPointIndex = function (i) { return (seedIndices[i]) },
+    
+    getSeedPoint = function (i) { return (points[seedIndices[i],]) },                                                         
+    
+    getSpatialRange = function ()
+    {
+        fullRange <- apply(points, 2, range, na.rm=TRUE)
+        return (list(mins=fullRange[1,], maxes=fullRange[2,]))
+    },
+    
+    getStartIndices  = function () { return (startIndices) },
+    
+    getStartIndex  = function (i) { return (startIndices[i]) },
+    
+    nStreamlines = function () { return (length(startIndices)) }
+))
+
 newStreamlineTractMetadataFromImageMetadata <- function (imageMetadata, originAtSeed, coordUnit)
 {
     tractMetadata <- StreamlineTractMetadata$new(originAtSeed=originAtSeed, coordUnit=coordUnit, imageMetadata=imageMetadata)
