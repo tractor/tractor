@@ -36,15 +36,21 @@ setAs("Graph", "igraph", function (from) {
     return (graph.edgelist(from$getEdges(), directed=from$isDirected()))
 })
     
-setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, useAbsoluteWeights = FALSE, weightLimits = NULL, useAlpha = FALSE, hideDisconnected = FALSE) {
+setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, useAlpha = FALSE, hideDisconnected = FALSE) {
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
-    absWeights <- abs(weights)
     
+    if (all(is.na(weights)))
+        weights <- rep(1, length(weights))
+    
+    absWeights <- abs(weights)
     if (useAbsoluteWeights)
         weights <- absWeights
+    
     if (is.null(weightLimits))
         weightLimits <- range(weights)
+    else
+        weights[weights < weightLimits[1] | weights > weightLimits[2]] <- NA
     
     if (length(col) > 1)
     {
@@ -52,7 +58,7 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, useAbsoluteWe
         colours <- col[colourIndices]
     }
     else
-        colours <- col
+        colours <- rep(col, length(weights))
     
     if (useAlpha)
     {
@@ -68,14 +74,18 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, useAbsoluteWe
         activeVertices <- 1:x$nVertices()
     nActiveVertices <- length(activeVertices)
     
-    from <- match(edges[,1], activeVertices)
-    to <- match(edges[,2], activeVertices)
+    if (!is.null(order))
+        activeVertices <- order[is.element(order,activeVertices)]
+    
+    from <- match(edges[!is.na(weights),1], activeVertices)
+    to <- match(edges[!is.na(weights),2], activeVertices)
+    colours <- colours[!is.na(weights)]
     
     angles <- (0:(nActiveVertices-1)) * 2 * pi / nActiveVertices
     xLocs <- sin(angles)
     yLocs <- cos(angles)
     arcSeparation <- 2 * pi / nActiveVertices
-    radius <- arcSeparation / 4
+    radius <- min(arcSeparation/4, 0.1)
     
     oldPars <- par(mai=c(0,0,0,0))
     plot(NA, type="n", xlim=c(-1.2,1.2), ylim=c(-1.2,1.2))
