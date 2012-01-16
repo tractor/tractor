@@ -1,7 +1,7 @@
 Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexCount="integer",vertexNames="character",vertexLocations="matrix",locationUnit="character",edges="matrix",edgeNames="character",edgeWeights="numeric",directed="logical"), methods=list(
     initialize = function (vertexCount = 0, vertexNames = NULL, vertexLocations = matrix(NA,0,0), locationUnit = "", edges = matrix(NA,0,0), edgeNames = character(0), edgeWeights = rep(NA,nrow(edges)), directed = FALSE)
     {
-        return (initFields(vertexCount=as.integer(vertexCount), vertexNames=as.character(vertexNames), vertexLocations=vertexLocations, locationUnit=locationUnit, edges=edges, edgeNames=edgeNames, edgeWeights=edgeWeights, directed=directed))
+        return (initFields(vertexCount=as.integer(vertexCount), vertexNames=as.character(vertexNames), vertexLocations=vertexLocations, locationUnit=locationUnit, edges=edges, edgeNames=edgeNames, edgeWeights=as.numeric(edgeWeights), directed=directed))
     },
         
     getEdge = function (i)
