@@ -46,7 +46,7 @@ unsigned char * read_mask_image (const char *mask_image_name, const int expected
             buffer = R_alloc(image->nvox, sizeof(unsigned char));
             for (size_t i=0; i<image->nvox; i++)
             {
-                if (*((int16_t *) image->data[i]) == 0)
+                if (((int16_t *) image->data)[i] == 0)
                     buffer[i] = 0;
                 else
                     buffer[i] = 1;
@@ -57,7 +57,7 @@ unsigned char * read_mask_image (const char *mask_image_name, const int expected
             buffer = R_alloc(image->nvox, sizeof(unsigned char));
             for (size_t i=0; i<image->nvox; i++)
             {
-                if (*((int32_t *) image->data[i]) == 0)
+                if (((int32_t *) image->data)[i] == 0)
                     buffer[i] = 0;
                 else
                     buffer[i] = 1;
