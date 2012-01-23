@@ -3,6 +3,8 @@
 
 #include "nifti1_io.h"
 
+#define TRACK_MODE_FDT  1
+
 void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_names, char **phi_names, int *n_compartments, int *n_samples, int *max_steps, double *step_length, double *avf_threshold, double *curvature_threshold, int *use_loopcheck, int *use_rightwards_vector, double *rightwards_vector, int *visitation_counts, int *left_lengths, int *right_lengths, double *left_particles, double *right_particles, int *require_visitation_map, int *require_particles);
 
 void cleanup_fdt_images (nifti_image *mask_image, nifti_image **avf_images, nifti_image **theta_images, nifti_image **phi_images, int n_compartments);

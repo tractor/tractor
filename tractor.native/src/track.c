@@ -21,90 +21,106 @@ SEXP get_list_element (SEXP list, const char *name)
 
 SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter_image_names, SEXP n_compartments, SEXP n_samples, SEXP max_steps, SEXP step_length, SEXP volfrac_threshold, SEXP curvature_threshold, SEXP use_loopcheck, SEXP rightwards_vector, SEXP require_visitation_map, SEXP require_streamlines)
 {
+    unsigned char *mask = NULL;
+    int image_dims[4];
+    double voxel_dims[4];
+    char *image_name;
+    int nc = *INTEGER(n_compartments);
     
+    read_mask_image(CHAR(STRING_ELT(mask_image_name,0)), mask, image_dims, voxel_dims);
+    
+    switch (*INTEGER(mode))
+    {
+        case TRACK_MODE_FDT:
+            double **avf = R_alloc(nc, sizeof(double*));
+            double **theta = R_alloc(nc, sizeof(double*));
+            double **phi = R_alloc(nc, sizeof(double*));
+            
+            for (i=0; i<nc; i++)
+            {
+                avf[i] = theta[i] = phi[i] = NULL;
+                image_name = CHAR(STRING_ELT(get_list_element(parameter_image_names,"avf"),0));
+                read_parameter_image(image_name, avf[i]);
+                image_name = CHAR(STRING_ELT(get_list_element(parameter_image_names,"theta"),0));
+                read_parameter_image(image_name, theta[i]);
+                image_name = CHAR(STRING_ELT(get_list_element(parameter_image_names,"phi"),0));
+                read_parameter_image(image_name, phi[i]);
+            }
+            
+            track_fdt();
+            
+            break;
+    }
 }
 
-unsigned char * read_mask_image (const char *mask_image_name, const int expected_dimensionality, const int *expected_dims)
+void read_mask_image (const char *mask_image_name, unsigned char *buffer, int *image_dims, double *voxel_dims)
 {
-    unsigned char *buffer = NULL;
-    
     nifti_image *image = nifti_image_read(mask_image_name, 1);
     if (image == NULL)
         error("Cannot read mask image at %s", mask_image_name);
-    if (image->ndim != expected_dimensionality)
-        error("Mask image does not have the expected dimensionality (%d)", expected_dimensionality);
-    for (int i=0; i<expected_dimensionality; i++)
-    {
-        if (image->dim[i+1] != expected_dims[i])
-            error("Mask image does not have the expected dimensions");
-    }
+    if (image->ndim != 3)
+        error("Mask image should be three-dimensional");
+    
+    if (buffer == NULL)
+        buffer = (unsigned char *) R_alloc(image->nvox, sizeof(unsigned char));
+    if (image_dims == NULL)
+        image_dims = (int *) R_alloc(3, sizeof(int));
+    if (voxel_dims == NULL)
+        voxel_dims = (double *) R_alloc(3, sizeof(double));
     
     switch (image->datatype)
     {
         case DT_UINT8:
-            buffer = (unsigned char *) image->data;
+            memcpy(buffer, image->data, nifti_get_volsize(image));
+            break;
         
         case DT_INT16:
-            buffer = R_alloc(image->nvox, sizeof(unsigned char));
             for (size_t i=0; i<image->nvox; i++)
-            {
-                if (((int16_t *) image->data)[i] == 0)
-                    buffer[i] = 0;
-                else
-                    buffer[i] = 1;
-            }
+                buffer[i] = (((int16_t *) image->data)[i] == 0) ? 0 : 1;
+            break;
         
         case DT_INT32:
-            buffer = R_alloc(image->nvox, sizeof(unsigned char));
             for (size_t i=0; i<image->nvox; i++)
-            {
-                if (((int32_t *) image->data)[i] == 0)
-                    buffer[i] = 0;
-                else
-                    buffer[i] = 1;
-            }
+                buffer[i] = (((int32_t *) image->data)[i] == 0) ? 0 : 1;
+            break;
         
         default:
             error("Mask image does not have a supported data type (%s)", nifti_datatype_string(image->datatype));
     }
     
-    return buffer;
+    for (i=0; i<3; i++)
+    {
+        image_dims[i] = image->dim[i+1];
+        voxel_dims[i] = image->pixdim[i+1];
+    }
 }
 
-double * read_parameter_image (const char *parameter_image_name, const int expected_dimensionality, const int *expected_dims)
+void read_parameter_image (const char *parameter_image_name, double *buffer)
 {
-    double *buffer = NULL;
-    
     nifti_image *image = nifti_image_read(parameter_image_name, 1);
     if (image == NULL)
         error("Cannot read parameter image at %s", parameter_image_name);
-    if (image->ndim != expected_dimensionality)
-        error("Mask image does not have the expected dimensionality (%d)", expected_dimensionality);
-    for (int i=0; i<expected_dimensionality; i++)
-    {
-        if (image->dim[i+1] != expected_dims[i])
-            error("Mask image does not have the expected dimensions");
-    }
+    
+    if (buffer == NULL)
+        buffer = (double *) R_alloc(image->nvox, sizeof(double));
     
     switch (image->datatype)
     {
         case DT_FLOAT32:
-            buffer = R_alloc(image->nvox, sizeof(double));
             for (size_t i=0; i<image->nvox; i++)
                 buffer[i] = ((float *) image->data)[i];
-            return buffer;
+            break;
         
         case DT_FLOAT64:
-            buffer = (double *) image->data;
+            memcpy(buffer, image->data, nifti_get_volsize(image));
+            break;
         
         default:
-            error("Mask image does not have a supported data type (%s)", nifti_datatype_string(image->datatype));
+            error("Parameter image %s does not have a supported data type (%s)", parameter_image_name, nifti_datatype_string(image->datatype));
     }
-    
-    return buffer;
 }
 
-void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_names, char **phi_names, int *n_compartments, int *n_samples, int *max_steps, double *step_length, double *avf_threshold, double *curvature_threshold, int *use_loopcheck, int *use_rightwards_vector, double *rightwards_vector, int *visitation_counts, int *left_lengths, int *right_lengths, double *left_particles, double *right_particles, int *require_visitation_map, int *require_particles)
+void track_fdt (const double *seed, const int *image_dims, const double *voxel_dims, const unsigned char *mask, const double **avf, const double **theta, const double **phi, const int n_compartments, const int n_samples, const int max_steps, const double step_length, const double avf_threshold, const double curvature_threshold, const bool use_loopcheck, const double *rightwards_vector, const bool require_visitation_map, const bool require_streamlines, int *visitation_counts, double *points, int *start_indices, int *seed_indices)
 {
     int i, j, dir, sample, step, starting, max_steps_per_dir;
     int dim[4], loopcheck_dims[4], particles_dims[3], rounded_loc[3], loopcheck_loc[4], particles_loc[3], dim3[3];
@@ -113,45 +129,6 @@ void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_name
     double loopcheck_ratio, uniform_sample, inner_prod, theta, phi, sign;
     double voxdim[3], loc[3], old_step[3], prev_step[3], first_step[3], current_step[3];
     double *loopcheck;
-    
-    // Read mask image and check datatype
-    nifti_image *mask_image = nifti_image_read(*mask_name, 1);
-    if (mask_image == NULL)
-    {
-        error("Cannot read mask image at %s", *mask_name);
-        return;
-    }
-    if (mask_image->datatype != DT_INT16)
-    {
-        // NB: error() may not return, so free image first
-        nifti_image_free(mask_image);
-        error("Mask image does not use the expected data type (code %d)", mask_image->datatype);
-        return;
-    }
-    
-    // Read AVF, theta and phi images and check datatypes
-    nifti_image **avf_images = (nifti_image**) R_alloc(*n_compartments, sizeof(nifti_image*));
-    nifti_image **theta_images = (nifti_image**) R_alloc(*n_compartments, sizeof(nifti_image*));
-    nifti_image **phi_images = (nifti_image**) R_alloc(*n_compartments, sizeof(nifti_image*));
-    for (i=0; i<(*n_compartments); i++)
-    {
-        avf_images[i] = nifti_image_read(avf_names[i], 1);
-        theta_images[i] = nifti_image_read(theta_names[i], 1);
-        phi_images[i] = nifti_image_read(phi_names[i], 1);
-        
-        if (avf_images[i] == NULL || theta_images[i] == NULL || phi_images[i] == NULL)
-        {
-            cleanup_fdt_images(mask_image, avf_images, theta_images, phi_images, *n_compartments);
-            error("Cannot read samples files");
-            return;
-        }
-        if (avf_images[i]->datatype != DT_FLOAT32 || theta_images[i]->datatype != DT_FLOAT32 || phi_images[i]->datatype != DT_FLOAT32)
-        {
-            cleanup_fdt_images(mask_image, avf_images, theta_images, phi_images, *n_compartments);
-            error("One or more samples image does not use the expected data type");
-            return;
-        }
-    }
     
     // Read image and voxel dimensions from mask image header
     for (i=0; i<3; i++)
@@ -448,16 +425,16 @@ double index_double_array (double *array, int *loc, int *dim, int ndims)
     return (array[vector_loc]);
 }
 
-char loc_in_bounds (int *loc, int *dim, int ndims)
+bool loc_in_bounds (int *loc, int *dim, int ndims)
 {
     int i;
-    char in_bounds = 1;
+    bool in_bounds = true;
     
     for (i=0; i<ndims; i++)
     {
         if (loc[i] < 0 || loc[i] > (dim[i]-1))
         {
-            in_bounds = 0;
+            in_bounds = false;
             break;
         }
     }
