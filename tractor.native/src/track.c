@@ -2,6 +2,102 @@
 
 #include <R.h>
 
+SEXP get_list_element (SEXP list, const char *name)
+{
+    SEXP element = R_NilValue;
+    SEXP names = getAttrib(list, R_NamesSymbol);
+     
+    for (R_len_t i = 0; i < length(list); i++)
+    {
+        if (strcmp(CHAR(STRING_ELT(names,i)), name) == 0)
+        {
+            element = VECTOR_ELT(list, i);
+            break;
+        }
+    }
+    
+    return element;
+}
+
+SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter_image_names, SEXP n_compartments, SEXP n_samples, SEXP max_steps, SEXP step_length, SEXP volfrac_threshold, SEXP curvature_threshold, SEXP use_loopcheck, SEXP rightwards_vector, SEXP require_visitation_map, SEXP require_streamlines)
+{
+    
+}
+
+unsigned char * read_mask_image (const char *mask_image_name, const int expected_dimensionality, const int *expected_dims)
+{
+    unsigned char *buffer;
+    
+    nifti_image *image = nifti_image_read(mask_image_name, 1);
+    if (image->ndim != expected_dimensionality)
+        error("Mask image does not have the expected dimensionality (%d)", expected_dimensionality);
+    for (int i=0; i<expected_dimensionality; i++)
+    {
+        if (image->dim[i+1] != expected_dims[i])
+            error("Mask image does not have the expected dimensions");
+    }
+    
+    switch (image->datatype)
+    {
+        case DT_UINT8:
+            return ((unsigned char *) image->data);
+        
+        case DT_INT16:
+            buffer = R_alloc(image->nvox, sizeof(unsigned char));
+            for (size_t i=0; i<image->nvox; i++)
+            {
+                if (*((int16_t *) image->data[i]) == 0)
+                    buffer[i] = 0;
+                else
+                    buffer[i] = 1;
+            }
+            return buffer;
+        
+        case DT_INT32:
+            buffer = R_alloc(image->nvox, sizeof(unsigned char));
+            for (size_t i=0; i<image->nvox; i++)
+            {
+                if (*((int32_t *) image->data[i]) == 0)
+                    buffer[i] = 0;
+                else
+                    buffer[i] = 1;
+            }
+            return buffer;
+        
+        default:
+            error("Mask image does not have a supported data type (%s)", nifti_datatype_string(image->datatype));
+    }
+}
+
+double * read_parameter_image (const char *parameter_image_name, const int expected_dimensionality, const int *expected_dims)
+{
+    double *buffer;
+    
+    nifti_image *image = nifti_image_read(parameter_image_name, 1);
+    if (image->ndim != expected_dimensionality)
+        error("Mask image does not have the expected dimensionality (%d)", expected_dimensionality);
+    for (int i=0; i<expected_dimensionality; i++)
+    {
+        if (image->dim[i+1] != expected_dims[i])
+            error("Mask image does not have the expected dimensions");
+    }
+    
+    switch (image->datatype)
+    {
+        case DT_FLOAT32:
+            buffer = R_alloc(image->nvox, sizeof(double));
+            for (size_t i=0; i<image->nvox; i++)
+                buffer[i] = ((float *) image->data)[i];
+            return buffer;
+        
+        case DT_FLOAT64:
+            return ((double *) image->data);
+        
+        default:
+            error("Mask image does not have a supported data type (%s)", nifti_datatype_string(image->datatype));
+    }
+}
+
 void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_names, char **phi_names, int *n_compartments, int *n_samples, int *max_steps, double *step_length, double *avf_threshold, double *curvature_threshold, int *use_loopcheck, int *use_rightwards_vector, double *rightwards_vector, int *visitation_counts, int *left_lengths, int *right_lengths, double *left_particles, double *right_particles, int *require_visitation_map, int *require_particles)
 {
     int i, j, dir, sample, step, starting, max_steps_per_dir;
@@ -320,6 +416,12 @@ void spherical_to_cartesian (double theta, double phi, double *out_vector)
     out_vector[0] = sin(theta) * cos(phi);
     out_vector[1] = sin(theta) * sin(phi);
     out_vector[2] = cos(theta);
+}
+
+unsigned char index_uchar_array (unsigned char *array, int *loc, int *dim, int ndims)
+{
+    long vector_loc = get_vector_loc(loc, dim, ndims);
+    return (array[vector_loc]);
 }
 
 int index_int_array (int *array, int *loc, int *dim, int ndims)
