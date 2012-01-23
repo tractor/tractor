@@ -26,9 +26,11 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
 
 unsigned char * read_mask_image (const char *mask_image_name, const int expected_dimensionality, const int *expected_dims)
 {
-    unsigned char *buffer;
+    unsigned char *buffer = NULL;
     
     nifti_image *image = nifti_image_read(mask_image_name, 1);
+    if (image == NULL)
+        error("Cannot read mask image at %s", mask_image_name);
     if (image->ndim != expected_dimensionality)
         error("Mask image does not have the expected dimensionality (%d)", expected_dimensionality);
     for (int i=0; i<expected_dimensionality; i++)
@@ -40,7 +42,7 @@ unsigned char * read_mask_image (const char *mask_image_name, const int expected
     switch (image->datatype)
     {
         case DT_UINT8:
-            return ((unsigned char *) image->data);
+            buffer = (unsigned char *) image->data;
         
         case DT_INT16:
             buffer = R_alloc(image->nvox, sizeof(unsigned char));
@@ -51,7 +53,6 @@ unsigned char * read_mask_image (const char *mask_image_name, const int expected
                 else
                     buffer[i] = 1;
             }
-            return buffer;
         
         case DT_INT32:
             buffer = R_alloc(image->nvox, sizeof(unsigned char));
@@ -62,18 +63,21 @@ unsigned char * read_mask_image (const char *mask_image_name, const int expected
                 else
                     buffer[i] = 1;
             }
-            return buffer;
         
         default:
             error("Mask image does not have a supported data type (%s)", nifti_datatype_string(image->datatype));
     }
+    
+    return buffer;
 }
 
 double * read_parameter_image (const char *parameter_image_name, const int expected_dimensionality, const int *expected_dims)
 {
-    double *buffer;
+    double *buffer = NULL;
     
     nifti_image *image = nifti_image_read(parameter_image_name, 1);
+    if (image == NULL)
+        error("Cannot read parameter image at %s", parameter_image_name);
     if (image->ndim != expected_dimensionality)
         error("Mask image does not have the expected dimensionality (%d)", expected_dimensionality);
     for (int i=0; i<expected_dimensionality; i++)
@@ -91,11 +95,13 @@ double * read_parameter_image (const char *parameter_image_name, const int expec
             return buffer;
         
         case DT_FLOAT64:
-            return ((double *) image->data);
+            buffer = (double *) image->data;
         
         default:
             error("Mask image does not have a supported data type (%s)", nifti_datatype_string(image->datatype));
     }
+    
+    return buffer;
 }
 
 void track_fdt (int *seed, char **mask_name, char **avf_names, char **theta_names, char **phi_names, int *n_compartments, int *n_samples, int *max_steps, double *step_length, double *avf_threshold, double *curvature_threshold, int *use_loopcheck, int *use_rightwards_vector, double *rightwards_vector, int *visitation_counts, int *left_lengths, int *right_lengths, double *left_particles, double *right_particles, int *require_visitation_map, int *require_particles)
