@@ -1,5 +1,9 @@
-trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNames, phiNames, nSamples = 5000, maxSteps = 2000, stepLength = 0.5, avfThreshold = 0.05, curvatureThreshold = 0.2, useLoopcheck = TRUE, rightwardsVector = NULL, requireImage = TRUE, requireStreamlineSet = FALSE)
+trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNames, phiNames, nSamples = 5000, maxSteps = 2000, stepLength = 0.5, avfThreshold = 0.05, curvatureThreshold = 0.2, useLoopcheck = TRUE, rightwardsVector = NULL, requireImage = TRUE, requireStreamlines = FALSE)
 {
+    on.exit(.C("clean_up_streamlines", PACKAGE="tractor.native"))
+    
+    if (!requireImage && !requireStreamlines)
+        report(OL$Error, "Neither a visitation map nor a streamline collection was requested")
     if (!is.null(rightwardsVector) && (!is.numeric(rightwardsVector) || length(rightwardsVector) != 3))
     {
         flag(OL$Warning, "Rightwards vector specified is not a numeric 3-vector - ignoring it")
@@ -17,42 +21,19 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
     if (!all(lengths == nCompartments))
         report(OL$Error, "AVF, theta and phi image names must be given for every anisotropic compartment")
     
-    result <- .C("track_fdt", as.integer(seed),
-                              as.character(maskName),
-                              as.character(avfNames),
-                              as.character(thetaNames),
-                              as.character(phiNames),
-                              as.integer(nCompartments),
-                              as.integer(nSamples),
-                              as.integer(maxSteps),
-                              as.double(stepLength),
-                              as.double(avfThreshold),
-                              as.double(curvatureThreshold),
-                              as.integer(useLoopcheck),
-                              as.integer(!is.null(rightwardsVector)),
-                              (if (is.null(rightwardsVector)) NA_real_ else as.double(rightwardsVector)),
-                              visitation_counts=integer(prod(dims)),
-                              left_lengths=(if (requireStreamlineSet) integer(nSamples) else NA_integer_),
-                              right_lengths=(if (requireStreamlineSet) integer(nSamples) else NA_integer_),
-                              left_particles=(if (requireStreamlineSet) as.double(rep(NA,maxStepsPerSide*3*nSamples)) else NA_real_),
-                              right_particles=(if (requireStreamlineSet) as.double(rep(NA,maxStepsPerSide*3*nSamples)) else NA_real_),
-                              as.integer(requireImage),
-                              as.integer(requireStreamlineSet),
-                              NAOK=TRUE, PACKAGE="tractor.native")
+    result <- .Call("track_with_seed", as.double(seed), 1L, maskName, list(avf=avfNames,theta=thetaNames,phi=phiNames), as.integer(nCompartments), as.integer(nSamples), as.integer(maxSteps), as.double(stepLength), as.double(curvatureThreshold), as.logical(useLoopcheck), rightwardsVector, as.logical(requireImage), as.logical(requireStreamlines), PACKAGE="tractor.native")
     
     returnValue <- list(seed=seed, nSamples=nSamples)
     if (requireImage)
     {
-        dim(result$visitation_counts) <- dims
+        dim(result[[1]]) <- dims
         newMetadata <- newMriImageMetadataFromTemplate(metadata, datatype=getDataTypeByNiftiCode(8))
         returnValue$image <- newMriImageWithData(result$visitation_counts, newMetadata)
     }
-    if (requireStreamlineSet)
+    if (requireStreamlines)
     {
-        dim(result$left_particles) <- c(maxStepsPerSide, 3, nSamples)
-        dim(result$right_particles) <- c(maxStepsPerSide, 3, nSamples)
         streamlineMetadata <- newStreamlineTractMetadataFromImageMetadata(metadata, FALSE, "vox")
-        returnValue$streamlineSet <- StreamlineSetTract$new(seedPoint=seed, leftLengths=as.integer(result$left_lengths), rightLengths=as.integer(result$right_lengths), leftPoints=result$left_particles[1:max(result$left_lengths),,,drop=FALSE], rightPoints=result$right_particles[1:max(result$right_lengths),,,drop=FALSE], metadata=streamlineMetadata)
+        returnValue$streamlines <- StreamlineCollectionTract$new(points=result[[2]], startIndices=result[[3]], seedIndices=result[[4]], metadata=streamlineMetadata)
     }
     
     invisible (returnValue)
