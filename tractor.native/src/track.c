@@ -66,9 +66,9 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
     switch (*INTEGER(mode))
     {
         case TRACK_MODE_FDT:
-            double **avf = R_alloc(nc, sizeof(double*));
-            double **theta = R_alloc(nc, sizeof(double*));
-            double **phi = R_alloc(nc, sizeof(double*));
+            float **avf = R_alloc(nc, sizeof(double*));
+            float **theta = R_alloc(nc, sizeof(double*));
+            float **phi = R_alloc(nc, sizeof(double*));
             
             int *visitation_counts = NULL;
             int elements_to_return = 1 + (*LOGICAL(require_streamlines) ? 3 : 0);
@@ -167,14 +167,14 @@ void read_mask_image (const char *mask_image_name, unsigned char *buffer, int *i
     }
 }
 
-void read_parameter_image (const char *parameter_image_name, double *buffer, size_t *len)
+void read_parameter_image (const char *parameter_image_name, float *buffer, size_t *len)
 {
     nifti_image *image = nifti_image_read(parameter_image_name, 1);
     if (image == NULL)
         error("Cannot read parameter image at %s", parameter_image_name);
     
     if (buffer == NULL)
-        buffer = (double *) R_alloc(image->nvox, sizeof(double));
+        buffer = (float *) R_alloc(image->nvox, sizeof(float));
     if (len == NULL)
         len = (size_t *) R_alloc(1, sizeof(size_t));
     
@@ -183,12 +183,12 @@ void read_parameter_image (const char *parameter_image_name, double *buffer, siz
     switch (image->datatype)
     {
         case DT_FLOAT32:
-            for (size_t i=0; i<image->nvox; i++)
-                buffer[i] = ((float *) image->data)[i];
+            memcpy(buffer, image->data, nifti_get_volsize(image));
             break;
         
         case DT_FLOAT64:
-            memcpy(buffer, image->data, nifti_get_volsize(image));
+            for (size_t i=0; i<image->nvox; i++)
+                buffer[i] = (float) ((double *) image->data)[i];            
             break;
         
         default:
@@ -196,14 +196,15 @@ void read_parameter_image (const char *parameter_image_name, double *buffer, siz
     }
 }
 
-void track_fdt (const double *seed, const int *image_dims, const double *voxel_dims, const unsigned char *mask, const double **avf, const double **theta, const double **phi, const int n_compartments, const int n_samples, const int max_steps, const double step_length, const double avf_threshold, const double curvature_threshold, const bool use_loopcheck, const double *rightwards_vector, const bool require_visitation_map, const bool require_streamlines, int *visitation_counts, double *points, int *n_points, int *start_indices, int *seed_indices)
+void track_fdt (const double *seed, const int *image_dims, const double *voxel_dims, const unsigned char *mask, const float **avf, const float **theta, const float **phi, const int n_compartments, const int n_samples, const int max_steps, const double step_length, const double avf_threshold, const double curvature_threshold, const bool use_loopcheck, const double *rightwards_vector, const bool require_visitation_map, const bool require_streamlines, int *visitation_counts, double *points, int *n_points, int *start_indices, int *seed_indices)
 {
     bool starting;
-    int i, j, dir, sample, step, left_steps, right_steps, max_steps_per_dir;
-    int dim[4], loopcheck_dims[4], points_dims[2], particles_dims[3], rounded_loc[3], loopcheck_loc[4], particles_loc[3], dim3[3];
+    int i, j, dir, sample, step, left_steps, right_steps, max_steps_per_dir, this_point;
+    int dim[4], loopcheck_dims[4], points_dims[2], rounded_loc[3], loopcheck_loc[4], points_loc[2], dim3[3];
     bool *visited;
     long k, dim_prod, loopcheck_dim_prod, vector_loc;
-    double loopcheck_ratio, uniform_sample, inner_prod, theta_sample, phi_sample, sign;
+    float theta_sample, phi_sample;
+    double loopcheck_ratio, uniform_sample, inner_prod, sign;
     double voxdim[3], loc[3], old_step[3], prev_step[3], first_step[3], current_step[3];
     double *loopcheck, *left_points, *right_points;
     
@@ -334,25 +335,24 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                 // Store current (unrounded) location if required
                 if (require_streamlines)
                 {
-                    particles_loc[0] = step;
-                    particles_loc[2] = sample;
+                    points_loc[0] = step;
                     
                     for (i=0; i<3; i++)
                     {
                         particles_loc[1] = i;
                         if (dir == 1)
-                            left_particles[get_vector_loc(particles_loc,particles_dims,3)] = loc[i] + 1;
+                            left_points[get_vector_loc(points_loc,points_dims,2)] = loc[i] + 1;
                         else
-                            right_particles[get_vector_loc(particles_loc,particles_dims,3)] = loc[i] + 1;
+                            right_points[get_vector_loc(points_loc,points_dims,2)] = loc[i] + 1;
                     }
                 }
                 
                 // Sample a direction (represented by theta and phi) and convert it to a Cartesian vector
                 if (starting)
-                    sample_direction(loc, NULL, avf_images, theta_images, phi_images, image_dims, n_compartments, avf_threshold, &theta_sample, &phi_sample);
+                    sample_direction(loc, NULL, avf, theta, phi, image_dims, n_compartments, avf_threshold, &theta_sample, &phi_sample);
                 else
-                    sample_direction(loc, prev_step, avf_images, theta_images, phi_images, image_dims, n_compartments, avf_threshold, &theta_sample, &phi_sample);
-                spherical_to_cartesian(theta, phi, current_step);
+                    sample_direction(loc, prev_step, avf, theta, phi, image_dims, n_compartments, avf_threshold, &theta_sample, &phi_sample);
+                spherical_to_cartesian((double) theta_sample, (double) phi_sample, current_step);
                 
                 // Perform loopcheck if requested: within the current 5x5x5 voxel block, has the streamline been going in the opposite direction?
                 if (use_loopcheck)
@@ -408,13 +408,46 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
             }
             
             // Store the number of steps taken in each direction, if required
-            if (*require_particles)
+            if (require_streamlines)
             {
                 if (dir == 1)
-                    left_lengths[sample] = step;
+                    left_steps = step;
                 else
-                    right_lengths[sample] = step;
+                    right_steps = step;
             }
+        }
+        
+        if (require_streamlines)
+        {
+            if (current_point + (left_steps - 1) + right_steps > points_allocated)
+            {
+                while (current_point + (left_steps - 1) + right_steps > points_allocated)
+                    points_allocated += point_block_size;
+                points = (double *) Realloc(points, (size_t) 3*points_allocated, double);
+            }
+            
+            // NB: Ending criterion of i>0 is intentional: we don't want to duplicate the seed
+            for (i=left_steps-1; i>0; i--)
+            {
+                for (j=0; j<3; j++)
+                {
+                    this_point = current_point + (left_steps - 1) - i;
+                    points[this_point + j*points_allocated] = left_points[i + j*max_steps_per_dir];
+                }
+            }
+            
+            for (i=0; i<right_steps; i++)
+            {
+                for (j=0; j<3; j++)
+                {
+                    this_point = current_point + (left_steps - 1) + i;
+                    points[this_point + j*points_allocated] = right_points[i + j*max_steps_per_dir];
+                }
+            }
+            
+            start_indices[current_index+sample] = current_point;
+            seed_indices[current_index+sample] = current_point + (left_steps - 1);
+            current_point += (left_steps - 1) + right_steps;
         }
     }
     
@@ -422,12 +455,12 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
     PutRNGstate();
 }
 
-void sample_direction (double *point, double *reference_direction, double **avf, double **theta, double **phi, int *image_dims, int n_compartments, double avf_threshold, double *out_theta, double *out_phi)
+void sample_direction (double *point, double *reference_direction, float **avf, float **theta, float **phi, int *image_dims, int n_compartments, double avf_threshold, float *out_theta, float *out_phi)
 {
     int i, point_ceil, point_floor;
     int closest_index = 0;
     int new_point[4];
-    double avf_sample, theta_sample, phi_sample;
+    float avf_sample, theta_sample, phi_sample;
     double distance, uniform_sample, inner_prod;
     double step_vector[3];
     double highest_inner_prod = -1;
@@ -454,11 +487,11 @@ void sample_direction (double *point, double *reference_direction, double **avf,
     for (int i=0; i<n_compartments; i++)
     {
         // Check AVF is above threshold
-        avf_sample = index_double_array(avf[i], new_point, image_dims, 4);
+        avf_sample = index_float_array(avf[i], new_point, image_dims, 4);
         if (i == 0 || avf_sample >= avf_threshold)
         {
-            theta_sample = index_double_array(theta[i], new_point, image_dims, 4);
-            phi_sample = index_double_array(phi[i], new_point, image_dims, 4);
+            theta_sample = index_float_array(theta[i], new_point, image_dims, 4);
+            phi_sample = index_float_array(phi[i], new_point, image_dims, 4);
             spherical_to_cartesian(theta, phi, step_vector);
             
             // Use AVF to choose population on first step
@@ -477,8 +510,8 @@ void sample_direction (double *point, double *reference_direction, double **avf,
     }
     
     // Set final theta and phi values
-    *out_theta = index_double_array(theta[closest_index], new_point, image_dims, 4);
-    *out_phi = index_double_array(phi[closest_index], new_point, image_dims, 4);
+    *out_theta = index_float_array(theta[closest_index], new_point, image_dims, 4);
+    *out_phi = index_float_array(phi[closest_index], new_point, image_dims, 4);
 }
 
 void spherical_to_cartesian (double theta, double phi, double *out_vector)
@@ -534,6 +567,9 @@ long get_vector_loc (int *loc, int *dim, int ndims)
     long vector_loc;
     switch (ndims)
     {
+        case 2:
+            vector_loc = loc[0] + (loc[1] * dim[0]);
+            break;
         case 3:
             vector_loc = loc[0] + (loc[1] * dim[0]) + (loc[2] * dim[0] * dim[1]);
             break;
