@@ -21,7 +21,7 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
     if (!all(lengths == nCompartments))
         report(OL$Error, "AVF, theta and phi image names must be given for every anisotropic compartment")
     
-    result <- .Call("track_with_seed", as.double(seed), 1L, maskName, list(avf=avfNames,theta=thetaNames,phi=phiNames), as.integer(nCompartments), as.integer(nSamples), as.integer(maxSteps), as.double(stepLength), as.double(curvatureThreshold), as.logical(useLoopcheck), rightwardsVector, as.logical(requireImage), as.logical(requireStreamlines), PACKAGE="tractor.native")
+    result <- .Call("track_with_seed", as.double(seed), 1L, maskName, list(avf=avfNames,theta=thetaNames,phi=phiNames), as.integer(nCompartments), as.integer(nSamples), as.integer(maxSteps), as.double(stepLength), as.double(avfThreshold), as.double(curvatureThreshold), as.logical(useLoopcheck), rightwardsVector, as.logical(requireImage), as.logical(requireStreamlines), PACKAGE="tractor.native")
     
     returnValue <- list(seed=seed, nSamples=nSamples)
     if (requireImage)
