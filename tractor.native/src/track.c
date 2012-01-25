@@ -1,6 +1,9 @@
+#include "nifti1_io.h"
+
 #include "track.h"
 
 #include <R.h>
+#include <Rdefines.h>
 
 static double *points = NULL;
 static int points_allocated = 0, current_point = 0;
@@ -18,11 +21,6 @@ void clean_up_streamlines ()
         Free(start_indices);
     if (seed_indices != NULL)
         Free(seed_indices);
-}
-
-bool interrupts_pending ()
-{
-    return (R_interrupts_pending && !R_interrupts_suspended);
 }
 
 SEXP get_list_element (SEXP list, const char *name)
@@ -49,6 +47,7 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
     double voxel_dims[3];
     char *image_name;
     long dim_prod = 1;
+    int i;
     
     int nc = *INTEGER(n_compartments);
     int ns = *INTEGER(n_samples);
@@ -66,9 +65,10 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
     switch (*INTEGER(mode))
     {
         case TRACK_MODE_FDT:
-            float **avf = R_alloc(nc, sizeof(double*));
-            float **theta = R_alloc(nc, sizeof(double*));
-            float **phi = R_alloc(nc, sizeof(double*));
+        {
+            float **avf = (float **) R_alloc(nc, sizeof(float*));
+            float **theta = (float **) R_alloc(nc, sizeof(float*));
+            float **phi = (float **) R_alloc(nc, sizeof(float*));
             
             int *visitation_counts = NULL;
             int elements_to_return = 1 + (*LOGICAL(require_streamlines) ? 3 : 0);
@@ -79,24 +79,24 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
             for (i=0; i<nc; i++)
             {
                 avf[i] = theta[i] = phi[i] = NULL;
-                image_name = CHAR(STRING_ELT(get_list_element(parameter_image_names,"avf"),0));
+                image_name = (char *) CHAR(STRING_ELT(get_list_element(parameter_image_names,"avf"),0));
                 read_parameter_image(image_name, avf[i], &len);
-                image_name = CHAR(STRING_ELT(get_list_element(parameter_image_names,"theta"),0));
+                image_name = (char *) CHAR(STRING_ELT(get_list_element(parameter_image_names,"theta"),0));
                 read_parameter_image(image_name, theta[i], &len);
-                image_name = CHAR(STRING_ELT(get_list_element(parameter_image_names,"phi"),0));
+                image_name = (char *) CHAR(STRING_ELT(get_list_element(parameter_image_names,"phi"),0));
                 read_parameter_image(image_name, phi[i], &len);
             }
             
             image_dims[3] = (int) (len / dim_prod);
             
-            track_fdt(REAL(seed), image_dims, voxel_dims, mask, avf, theta, phi, nc, ns, *INTEGER(max_steps), *REAL(step_length), *REAL(volfrac_threshold), *REAL(curvature_threshold), (bool) *LOGICAL(use_loopcheck), rv, (bool) *LOGICAL(require_visitation_map), (bool) *LOGICAL(require_streamlines), visitation_counts);
+            track_fdt(REAL(seed), image_dims, voxel_dims, mask, (const float **) avf, (const float **) theta, (const float **) phi, nc, ns, *INTEGER(max_steps), *REAL(step_length), *REAL(volfrac_threshold), *REAL(curvature_threshold), (int) *LOGICAL(use_loopcheck), rv, (int) *LOGICAL(require_visitation_map), (int) *LOGICAL(require_streamlines), visitation_counts);
             
             PROTECT(return_value = NEW_LIST((R_len_t) elements_to_return));
             
             if (*LOGICAL(require_visitation_map))
             {
                 PROTECT(visitation_map = NEW_NUMERIC((R_len_t) dim_prod));
-                REAL(visitation_map) = visitation_counts;
+                memcpy(REAL(visitation_map), visitation_counts, dim_prod*sizeof(int));
                 SET_ELEMENT(return_value, 0, visitation_map);
                 UNPROTECT(1);
             }
@@ -105,14 +105,15 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
             
             if (*LOGICAL(require_streamlines))
             {
-                PROTECT(streamline_points = allocMatrix(REALSXP,3,n_points));
-                REAL(streamline_points) = points;
+                PROTECT(streamline_points = allocMatrix(REALSXP,current_point,3));
+                for (i=0; i<3; i++)
+                    memcpy(REAL(streamline_points) + i*current_point, points + i*points_allocated, current_point*sizeof(double));
                 SET_ELEMENT(return_value, 1, streamline_points);
                 PROTECT(streamline_starts = NEW_INTEGER((R_len_t) ns));
-                INTEGER(streamline_starts) = start_indices;
+                memcpy(INTEGER(streamline_starts), start_indices, ns*sizeof(int));
                 SET_ELEMENT(return_value, 2, streamline_starts);
                 PROTECT(streamline_seeds = NEW_INTEGER((R_len_t) ns));
-                INTEGER(streamline_seeds) = seed_indices;
+                memcpy(INTEGER(streamline_seeds), seed_indices, ns*sizeof(int));
                 SET_ELEMENT(return_value, 3, streamline_seeds);
                 UNPROTECT(3);
             }
@@ -120,6 +121,7 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
             UNPROTECT(1);
             
             break;
+        }
     }
     
     return return_value;
@@ -143,24 +145,24 @@ void read_mask_image (const char *mask_image_name, unsigned char *buffer, int *i
     switch (image->datatype)
     {
         case DT_UINT8:
-            memcpy(buffer, image->data, nifti_get_volsize(image));
-            break;
+        memcpy(buffer, image->data, nifti_get_volsize(image));
+        break;
         
         case DT_INT16:
-            for (size_t i=0; i<image->nvox; i++)
-                buffer[i] = (((int16_t *) image->data)[i] == 0) ? 0 : 1;
-            break;
+        for (size_t i=0; i<image->nvox; i++)
+            buffer[i] = (((int16_t *) image->data)[i] == 0) ? 0 : 1;
+        break;
         
         case DT_INT32:
-            for (size_t i=0; i<image->nvox; i++)
-                buffer[i] = (((int32_t *) image->data)[i] == 0) ? 0 : 1;
-            break;
+        for (size_t i=0; i<image->nvox; i++)
+            buffer[i] = (((int32_t *) image->data)[i] == 0) ? 0 : 1;
+        break;
         
         default:
-            error("Mask image does not have a supported data type (%s)", nifti_datatype_string(image->datatype));
+        error("Mask image does not have a supported data type (%s)", nifti_datatype_string(image->datatype));
     }
     
-    for (i=0; i<3; i++)
+    for (int i=0; i<3; i++)
     {
         image_dims[i] = image->dim[i+1];
         voxel_dims[i] = image->pixdim[i+1];
@@ -183,29 +185,28 @@ void read_parameter_image (const char *parameter_image_name, float *buffer, size
     switch (image->datatype)
     {
         case DT_FLOAT32:
-            memcpy(buffer, image->data, nifti_get_volsize(image));
-            break;
+        memcpy(buffer, image->data, nifti_get_volsize(image));
+        break;
         
         case DT_FLOAT64:
-            for (size_t i=0; i<image->nvox; i++)
-                buffer[i] = (float) ((double *) image->data)[i];            
-            break;
+        for (size_t i=0; i<image->nvox; i++)
+            buffer[i] = (float) ((double *) image->data)[i];            
+        break;
         
         default:
-            error("Parameter image %s does not have a supported data type (%s)", parameter_image_name, nifti_datatype_string(image->datatype));
+        error("Parameter image %s does not have a supported data type (%s)", parameter_image_name, nifti_datatype_string(image->datatype));
     }
 }
 
-void track_fdt (const double *seed, const int *image_dims, const double *voxel_dims, const unsigned char *mask, const float **avf, const float **theta, const float **phi, const int n_compartments, const int n_samples, const int max_steps, const double step_length, const double avf_threshold, const double curvature_threshold, const bool use_loopcheck, const double *rightwards_vector, const bool require_visitation_map, const bool require_streamlines, int *visitation_counts, double *points, int *n_points, int *start_indices, int *seed_indices)
+void track_fdt (const double *seed, const int *image_dims, const double *voxel_dims, const unsigned char *mask, const float **avf, const float **theta, const float **phi, const int n_compartments, const int n_samples, const int max_steps, const double step_length, const double avf_threshold, const double curvature_threshold, const int use_loopcheck, const double *rightwards_vector, const int require_visitation_map, const int require_streamlines, int *visitation_counts)
 {
-    bool starting;
-    int i, j, dir, sample, step, left_steps, right_steps, max_steps_per_dir, this_point;
-    int dim[4], loopcheck_dims[4], points_dims[2], rounded_loc[3], loopcheck_loc[4], points_loc[2], dim3[3];
-    bool *visited;
+    int i, j, starting, dir, sample, step, left_steps, right_steps, max_steps_per_dir, this_point;
+    int loopcheck_dims[4], points_dims[2], rounded_loc[3], loopcheck_loc[4], points_loc[2];
+    int *visited;
     long k, dim_prod, loopcheck_dim_prod, vector_loc;
     float theta_sample, phi_sample;
     double loopcheck_ratio, uniform_sample, inner_prod, sign;
-    double voxdim[3], loc[3], old_step[3], prev_step[3], first_step[3], current_step[3];
+    double loc[3], old_step[3], prev_step[3], first_step[3], current_step[3];
     double *loopcheck, *left_points, *right_points;
     
     dim_prod = image_dims[0] * image_dims[1] * image_dims[2];
@@ -216,7 +217,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
     // Allocate boolean and integer visitation count vectors
     if (require_visitation_map)
     {
-        visited = (bool *) R_alloc(dim_prod, sizeof(bool));
+        visited = (int *) R_alloc(dim_prod, sizeof(int));
         if (visitation_counts == NULL)
             visitation_counts = (int *) R_alloc(dim_prod, sizeof(int));
     }
@@ -278,11 +279,11 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
         R_CheckUserInterrupt();
         
         // Indicates first step for this sample
-        starting = true;
+        starting = 1;
         
         // Zero out boolean visitation tracker
         for (k=0; k<dim_prod; k++)
-            visited[k] = false;
+            visited[k] = 0;
         
         // We go right first (dir=0), then left (dir=1)
         for (dir=0; dir<2; dir++)
@@ -317,7 +318,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                 // Check that the current step location is in bounds
                 for (i=0; i<3; i++)
                     rounded_loc[i] = (int) round(loc[i]);
-                if (loc_in_bounds(rounded_loc, dim3, 3) == 0)
+                if (loc_in_bounds(rounded_loc, image_dims, 3) == 0)
                     break;
                 
                 // Index for current location
@@ -328,7 +329,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                     break;
                 else if (require_visitation_map && !visited[vector_loc])
                 {
-                    visited[vector_loc] = true;
+                    visited[vector_loc] = 1;
                     visitation_counts[vector_loc]++;
                 }
                 
@@ -339,7 +340,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                     
                     for (i=0; i<3; i++)
                     {
-                        particles_loc[1] = i;
+                        points_loc[1] = i;
                         if (dir == 1)
                             left_points[get_vector_loc(points_loc,points_dims,2)] = loc[i] + 1;
                         else
@@ -378,7 +379,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                 
                 // Reverse the sampled direction if its inner product with the previous step is negative
                 // If there is no previous step (or rightwards vector), the sign is random
-                if (starting && sample==0 && use_rightwards_vector==NULL)
+                if (starting && sample==0 && rightwards_vector==NULL)
                 {
                     uniform_sample = unif_rand();
                     sign = (uniform_sample > 0.5) ? 1.0 : -1.0;
@@ -403,7 +404,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                 {
                     for (i=0; i<3; i++)
                         first_step[i] = prev_step[i];
-                    starting = false;
+                    starting = 0;
                 }
             }
             
@@ -455,7 +456,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
     PutRNGstate();
 }
 
-void sample_direction (double *point, double *reference_direction, float **avf, float **theta, float **phi, int *image_dims, int n_compartments, double avf_threshold, float *out_theta, float *out_phi)
+void sample_direction (const double *point, const double *reference_direction, const float **avf, const float **theta, const float **phi, const int *image_dims, const int n_compartments, const double avf_threshold, float *out_theta, float *out_phi)
 {
     int i, point_ceil, point_floor;
     int closest_index = 0;
@@ -492,11 +493,11 @@ void sample_direction (double *point, double *reference_direction, float **avf, 
         {
             theta_sample = index_float_array(theta[i], new_point, image_dims, 4);
             phi_sample = index_float_array(phi[i], new_point, image_dims, 4);
-            spherical_to_cartesian(theta, phi, step_vector);
+            spherical_to_cartesian((double) theta_sample, (double) phi_sample, step_vector);
             
             // Use AVF to choose population on first step
             if (reference_direction == NULL)
-                inner_prod = (double) avf;
+                inner_prod = (double) avf_sample;
             else
                 inner_prod = fabs(inner_product(step_vector, reference_direction, 3));
             
@@ -514,47 +515,47 @@ void sample_direction (double *point, double *reference_direction, float **avf, 
     *out_phi = index_float_array(phi[closest_index], new_point, image_dims, 4);
 }
 
-void spherical_to_cartesian (double theta, double phi, double *out_vector)
+void spherical_to_cartesian (const double theta, const double phi, double *vector)
 {
-    out_vector[0] = sin(theta) * cos(phi);
-    out_vector[1] = sin(theta) * sin(phi);
-    out_vector[2] = cos(theta);
+    vector[0] = sin(theta) * cos(phi);
+    vector[1] = sin(theta) * sin(phi);
+    vector[2] = cos(theta);
 }
 
-unsigned char index_uchar_array (unsigned char *array, int *loc, int *dim, int ndims)
-{
-    long vector_loc = get_vector_loc(loc, dim, ndims);
-    return (array[vector_loc]);
-}
-
-int index_int_array (int *array, int *loc, int *dim, int ndims)
+unsigned char index_uchar_array (const unsigned char *array, const int *loc, const int *dim, const int ndims)
 {
     long vector_loc = get_vector_loc(loc, dim, ndims);
     return (array[vector_loc]);
 }
 
-float index_float_array (float *array, int *loc, int *dim, int ndims)
+int index_int_array (const int *array, const int *loc, const int *dim, const int ndims)
 {
     long vector_loc = get_vector_loc(loc, dim, ndims);
     return (array[vector_loc]);
 }
 
-double index_double_array (double *array, int *loc, int *dim, int ndims)
+float index_float_array (const float *array, const int *loc, const int *dim, const int ndims)
 {
     long vector_loc = get_vector_loc(loc, dim, ndims);
     return (array[vector_loc]);
 }
 
-bool loc_in_bounds (int *loc, int *dim, int ndims)
+double index_double_array (const double *array, const int *loc, const int *dim, const int ndims)
+{
+    long vector_loc = get_vector_loc(loc, dim, ndims);
+    return (array[vector_loc]);
+}
+
+int loc_in_bounds (const int *loc, const int *dim, const int ndims)
 {
     int i;
-    bool in_bounds = true;
+    int in_bounds = 1;
     
     for (i=0; i<ndims; i++)
     {
         if (loc[i] < 0 || loc[i] > (dim[i]-1))
         {
-            in_bounds = false;
+            in_bounds = 0;
             break;
         }
     }
@@ -562,26 +563,28 @@ bool loc_in_bounds (int *loc, int *dim, int ndims)
     return in_bounds;
 }
 
-long get_vector_loc (int *loc, int *dim, int ndims)
+long get_vector_loc (const int *loc, const int *dim, const int ndims)
 {
     long vector_loc;
     switch (ndims)
     {
         case 2:
-            vector_loc = loc[0] + (loc[1] * dim[0]);
-            break;
+        vector_loc = loc[0] + (loc[1] * dim[0]);
+        break;
+        
         case 3:
-            vector_loc = loc[0] + (loc[1] * dim[0]) + (loc[2] * dim[0] * dim[1]);
-            break;
+        vector_loc = loc[0] + (loc[1] * dim[0]) + (loc[2] * dim[0] * dim[1]);
+        break;
+        
         case 4:
-            vector_loc = loc[0] + (loc[1] * dim[0]) + (loc[2] * dim[0] * dim[1]) + (loc[3] * dim[0] * dim[1] * dim[2]);
-            break;
+        vector_loc = loc[0] + (loc[1] * dim[0]) + (loc[2] * dim[0] * dim[1]) + (loc[3] * dim[0] * dim[1] * dim[2]);
+        break;
     }
     
     return (vector_loc);
 }
 
-double inner_product (double *a, double *b, int len)
+double inner_product (const double *a, const double *b, const int len)
 {
     int i;
     double result = 0.0;
