@@ -104,7 +104,7 @@ StreamlineCollectionTract <- setRefClass("StreamlineCollectionTract", contains="
     
     getPoints = function (i = NA)
     {
-        if (is.na(i)
+        if (is.na(i))
             return (points)
         else if (i == .self$nStreamlines())
             return (points[startIndices[i]:nrow(points),])
