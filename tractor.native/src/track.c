@@ -62,7 +62,7 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
     for (int i=0; i<3; i++)
     {
         dim_prod *= image_dims[i];
-        zero_based_seed[i] = REAL(seed)[i];
+        zero_based_seed[i] = REAL(seed)[i] - 1.0;
     }
     
     switch (*INTEGER(mode))
@@ -121,7 +121,7 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
                 for (i=0; i<3; i++)
                 {
                     for (j=0; j<current_point; j++)
-                        double_ptr[i*current_point+j] = points[i*points_allocated+j] + 1.0;
+                        double_ptr[i*current_point+j] = points[i+j*3] + 1.0;
                 }
                 SET_ELEMENT(return_value, 1, streamline_points);
                 
@@ -354,9 +354,9 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                     {
                         points_loc[1] = i;
                         if (dir == 1)
-                            left_points[get_vector_loc(points_loc,points_dims,2)] = loc[i] + 1;
+                            left_points[get_vector_loc(points_loc,points_dims,2)] = loc[i];
                         else
-                            right_points[get_vector_loc(points_loc,points_dims,2)] = loc[i] + 1;
+                            right_points[get_vector_loc(points_loc,points_dims,2)] = loc[i];
                     }
                 }
                 
@@ -442,20 +442,16 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
             // NB: Ending criterion of i>0 is intentional: we don't want to duplicate the seed
             for (i=left_steps-1; i>0; i--)
             {
+                this_point = current_point + (left_steps - 1) - i;
                 for (j=0; j<3; j++)
-                {
-                    this_point = current_point + (left_steps - 1) - i;
-                    points[this_point + j*points_allocated] = left_points[i + j*max_steps_per_dir];
-                }
+                    points[3*this_point + j] = left_points[i + j*max_steps_per_dir];
             }
             
             for (i=0; i<right_steps; i++)
             {
+                this_point = current_point + (left_steps - 1) + i;
                 for (j=0; j<3; j++)
-                {
-                    this_point = current_point + (left_steps - 1) + i;
-                    points[this_point + j*points_allocated] = right_points[i + j*max_steps_per_dir];
-                }
+                    points[3*this_point + j] = right_points[i + j*max_steps_per_dir];
             }
             
             start_indices[current_index+sample] = current_point;
