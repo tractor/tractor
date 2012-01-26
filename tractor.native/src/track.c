@@ -58,7 +58,7 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
     if (!isNull(rightwards_vector))
         rv = REAL(rightwards_vector);
     
-    read_mask_image(CHAR(STRING_ELT(mask_image_name,0)), mask, image_dims, voxel_dims);
+    mask = read_mask_image(CHAR(STRING_ELT(mask_image_name,0)), image_dims, voxel_dims);
     for (int i=0; i<3; i++)
         dim_prod *= image_dims[i];
     
@@ -78,14 +78,16 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
             
             for (i=0; i<nc; i++)
             {
-                avf[i] = theta[i] = phi[i] = NULL;
                 image_name = (char *) CHAR(STRING_ELT(get_list_element(parameter_image_names,"avf"),0));
-                read_parameter_image(image_name, avf[i], &len);
+                avf[i] = read_parameter_image(image_name, &len);
                 image_name = (char *) CHAR(STRING_ELT(get_list_element(parameter_image_names,"theta"),0));
-                read_parameter_image(image_name, theta[i], &len);
+                theta[i] = read_parameter_image(image_name, &len);
                 image_name = (char *) CHAR(STRING_ELT(get_list_element(parameter_image_names,"phi"),0));
-                read_parameter_image(image_name, phi[i], &len);
+                phi[i] = read_parameter_image(image_name, &len);
             }
+            
+            if (*LOGICAL(require_visitation_map))
+                visitation_counts = (int *) R_alloc(dim_prod, sizeof(int));
             
             image_dims[3] = (int) (len / dim_prod);
             
@@ -127,7 +129,7 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
     return return_value;
 }
 
-void read_mask_image (const char *mask_image_name, unsigned char *buffer, int *image_dims, double *voxel_dims)
+unsigned char * read_mask_image (const char *mask_image_name, int *image_dims, double *voxel_dims)
 {
     nifti_image *image = nifti_image_read(mask_image_name, 1);
     if (image == NULL)
@@ -135,12 +137,7 @@ void read_mask_image (const char *mask_image_name, unsigned char *buffer, int *i
     if (image->ndim != 3)
         error("Mask image should be three-dimensional");
     
-    if (buffer == NULL)
-        buffer = (unsigned char *) R_alloc(image->nvox, sizeof(unsigned char));
-    if (image_dims == NULL)
-        image_dims = (int *) R_alloc(3, sizeof(int));
-    if (voxel_dims == NULL)
-        voxel_dims = (double *) R_alloc(3, sizeof(double));
+    unsigned char *buffer = (unsigned char *) R_alloc(image->nvox, sizeof(unsigned char));
     
     switch (image->datatype)
     {
@@ -167,20 +164,17 @@ void read_mask_image (const char *mask_image_name, unsigned char *buffer, int *i
         image_dims[i] = image->dim[i+1];
         voxel_dims[i] = image->pixdim[i+1];
     }
+    
+    return buffer;
 }
 
-void read_parameter_image (const char *parameter_image_name, float *buffer, size_t *len)
+float * read_parameter_image (const char *parameter_image_name, size_t *len)
 {
     nifti_image *image = nifti_image_read(parameter_image_name, 1);
     if (image == NULL)
         error("Cannot read parameter image at %s", parameter_image_name);
     
-    if (buffer == NULL)
-        buffer = (float *) R_alloc(image->nvox, sizeof(float));
-    if (len == NULL)
-        len = (size_t *) R_alloc(1, sizeof(size_t));
-    
-    *len = image->nvox;
+    float *buffer = (float *) R_alloc(image->nvox, sizeof(float));
     
     switch (image->datatype)
     {
@@ -196,6 +190,9 @@ void read_parameter_image (const char *parameter_image_name, float *buffer, size
         default:
         error("Parameter image %s does not have a supported data type (%s)", parameter_image_name, nifti_datatype_string(image->datatype));
     }
+    
+    *len = image->nvox;
+    return buffer;
 }
 
 void track_fdt (const double *seed, const int *image_dims, const double *voxel_dims, const unsigned char *mask, const float **avf, const float **theta, const float **phi, const int n_compartments, const int n_samples, const int max_steps, const double step_length, const double avf_threshold, const double curvature_threshold, const int use_loopcheck, const double *rightwards_vector, const int require_visitation_map, const int require_streamlines, int *visitation_counts)
@@ -216,11 +213,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
     
     // Allocate boolean and integer visitation count vectors
     if (require_visitation_map)
-    {
         visited = (int *) R_alloc(dim_prod, sizeof(int));
-        if (visitation_counts == NULL)
-            visitation_counts = (int *) R_alloc(dim_prod, sizeof(int));
-    }
     
     if (require_streamlines)
     {
