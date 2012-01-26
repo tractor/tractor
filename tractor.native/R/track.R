@@ -28,7 +28,7 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
     {
         dim(result[[1]]) <- dims
         newMetadata <- newMriImageMetadataFromTemplate(metadata, datatype=getDataTypeByNiftiCode(8))
-        returnValue$image <- newMriImageWithData(result$visitation_counts, newMetadata)
+        returnValue$image <- newMriImageWithData(result[[1]], newMetadata)
     }
     if (requireStreamlines)
     {
