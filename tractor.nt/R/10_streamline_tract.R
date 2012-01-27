@@ -112,11 +112,13 @@ StreamlineCollectionTract <- setRefClass("StreamlineCollectionTract", contains="
             return (points[startIndices[i]:(startIndices[i+1]-1),])
     },
     
-    getSeedPointIndices = function () { return (seedIndices) },
+    getSeedIndices = function () { return (seedIndices) },
     
-    getSeedPointIndex = function (i) { return (seedIndices[i]) },
+    getSeedIndex = function (i) { return (seedIndices[i]) },
     
     getSeedPoint = function (i) { return (points[seedIndices[i],]) },                                                         
+    
+    getSeedPoints = function () { return (points[seedIndices,]) },
     
     getSpatialRange = function ()
     {
@@ -135,6 +137,34 @@ newStreamlineTractMetadataFromImageMetadata <- function (imageMetadata, originAt
 {
     tractMetadata <- StreamlineTractMetadata$new(originAtSeed=originAtSeed, coordUnit=coordUnit, imageMetadata=imageMetadata)
     invisible (tractMetadata)
+}
+
+newStreamlineSetTractFromCollection <- function (tract)
+{
+    if (!is(tract, "StreamlineCollectionTract"))
+        report(OL$Error, "The specified tract is not a StreamlineCollectionTract object")
+    
+    points <- tract$getPoints()
+    seedPoints <- tract$getSeedPoints()
+    if (!all(apply(seedPoints, 1, equivalent, seedPoints[1,])))
+        report(OL$Error, "All seed points must be the same")
+    
+    seedIndices <- tract$getSeedIndices()
+    startIndices <- tract$getStartIndices()
+    endIndices <- c(startIndices[-1]-1, nrow(points))
+    leftLengths <- seedIndices - startIndices + 1
+    rightLengths <- endIndices - seedIndices + 1
+    
+    leftPoints <- array(NA, dim=c(max(leftLengths),3,tract$nStreamlines()))
+    rightPoints <- array(NA, dim=c(max(rightLengths),3,tract$nStreamlines()))
+    for (i in seq_len(tract$nStreamlines()))
+    {
+        leftPoints[1:leftLengths[i],,i] <- points[seedIndices[i]:startIndices[i],]
+        rightPoints[1:rightLengths[i],,i] <- points[seedIndices[i]:endIndices[i],]
+    }
+    
+    newTract <- StreamlineSetTract$new(seedPoint=seedPoints[1,], leftLengths=as.integer(leftLengths), rightLengths=as.integer(rightLengths), leftPoints=leftPoints, rightPoints=rightPoints, metadata=tract$getMetadata())
+    invisible(newTract)
 }
 
 newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, nSamples = 5000, maxPathLength = NULL, rightwardsVector = NULL)
