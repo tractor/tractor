@@ -87,11 +87,11 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
                 // This can be expensive, so allow the user to interrupt
                 R_CheckUserInterrupt();
                 
-                image_name = (char *) CHAR(STRING_ELT(get_list_element(parameter_image_names,"avf"),0));
+                image_name = (char *) CHAR(STRING_ELT(get_list_element(parameter_image_names,"avf"),i));
                 avf[i] = read_parameter_image(image_name, &len);
-                image_name = (char *) CHAR(STRING_ELT(get_list_element(parameter_image_names,"theta"),0));
+                image_name = (char *) CHAR(STRING_ELT(get_list_element(parameter_image_names,"theta"),i));
                 theta[i] = read_parameter_image(image_name, &len);
-                image_name = (char *) CHAR(STRING_ELT(get_list_element(parameter_image_names,"phi"),0));
+                image_name = (char *) CHAR(STRING_ELT(get_list_element(parameter_image_names,"phi"),i));
                 phi[i] = read_parameter_image(image_name, &len);
             }
             
@@ -484,16 +484,16 @@ void sample_direction (const double *point, const double *reference_direction, c
         
         uniform_sample = unif_rand();
         if ((uniform_sample > distance && point_floor >= 0) || point_ceil >= image_dims[i])
-            new_point[i] = (int) point_floor;
+            new_point[i] = point_floor;
         else
-            new_point[i] = (int) point_ceil;
+            new_point[i] = point_ceil;
     }
     
     // Randomly choose a sample number
     new_point[3] = (int) round(unif_rand() * (image_dims[3]-1));
     
     // NB: Currently assuming always at least one anisotropic compartment
-    for (int i=0; i<n_compartments; i++)
+    for (i=0; i<n_compartments; i++)
     {
         // Check AVF is above threshold
         avf_sample = index_float_array(avf[i], new_point, image_dims, 4);
