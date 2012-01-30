@@ -96,7 +96,10 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
             }
             
             if (*LOGICAL(require_visitation_map))
+            {
                 visitation_counts = (int *) R_alloc(dim_prod, sizeof(int));
+                memset(visitation_counts, 0, (size_t) dim_prod * sizeof(int));
+            }
             
             image_dims[3] = (int) (len / dim_prod);
             
@@ -231,7 +234,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
     // Maximum steps for each direction ("left" and "right")
     max_steps_per_dir = max_steps / 2;
     
-    // Allocate boolean and integer visitation count vectors
+    // Allocate boolean visitation count vector
     if (require_visitation_map)
         visited = (int *) R_alloc(dim_prod, sizeof(int));
     
