@@ -658,3 +658,26 @@ plot.StreamlineSetTract <- function (x, y = NULL, unit = NULL, axes = NULL, add 
     
     invisible (axes)
 }
+
+plot.StreamlineCollectionTract <- function (x, y = NULL, unit = NULL, axes = NULL, add = FALSE, ...)
+{
+    if (!add)
+        axes <- getAxesForStreamlinePlot(x, unit, axes, drawAxes=TRUE)
+    else if (is.null(axes))
+        report(OL$Error, "Axes must be specified if adding to an existing plot")
+    
+    points <- x$getPoints()
+    seedIndices <- x$getSeedIndices()
+    startIndices <- x$getStartIndices()
+    endIndices <- c(startIndices[-1]-1, nrow(points))
+    
+    report(OL$Info, "Plotting streamlines")
+    for (i in 1:x$nStreamlines())
+    {
+        line <- points[startIndices[i]:endIndices[i],]
+        rescaledLine <- rescalePoints(line, unit, x$getMetadata(), points[seedIndices[i],])
+        lines(rescaledLine$points[,axes[1]], rescaledLine$points[,axes[2]], ...)
+    }
+    
+    invisible (axes)
+}
