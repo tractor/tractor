@@ -1,5 +1,7 @@
 #include "nifti1_io.h"
 
+#include "vector.h"
+#include "r_utils.h"
 #include "track.h"
 
 #include <R.h>
@@ -21,23 +23,6 @@ void clean_up_streamlines ()
         Free(start_indices);
     if (seed_indices != NULL)
         Free(seed_indices);
-}
-
-SEXP get_list_element (SEXP list, const char *name)
-{
-    SEXP element = R_NilValue;
-    SEXP names = getAttrib(list, R_NamesSymbol);
-     
-    for (R_len_t i = 0; i < length(list); i++)
-    {
-        if (strcmp(CHAR(STRING_ELT(names,i)), name) == 0)
-        {
-            element = VECTOR_ELT(list, i);
-            break;
-        }
-    }
-    
-    return element;
 }
 
 SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter_image_names, SEXP n_compartments, SEXP n_samples, SEXP max_steps, SEXP step_length, SEXP volfrac_threshold, SEXP curvature_threshold, SEXP use_loopcheck, SEXP rightwards_vector, SEXP require_visitation_map, SEXP require_streamlines)
@@ -524,84 +509,4 @@ void sample_direction (const double *point, const double *reference_direction, c
     // Set final theta and phi values
     *out_theta = index_float_array(theta[closest_index], new_point, image_dims, 4);
     *out_phi = index_float_array(phi[closest_index], new_point, image_dims, 4);
-}
-
-void spherical_to_cartesian (const double theta, const double phi, double *vector)
-{
-    vector[0] = sin(theta) * cos(phi);
-    vector[1] = sin(theta) * sin(phi);
-    vector[2] = cos(theta);
-}
-
-unsigned char index_uchar_array (const unsigned char *array, const int *loc, const int *dim, const int ndims)
-{
-    size_t vector_loc = get_vector_loc(loc, dim, ndims);
-    return (array[vector_loc]);
-}
-
-int index_int_array (const int *array, const int *loc, const int *dim, const int ndims)
-{
-    size_t vector_loc = get_vector_loc(loc, dim, ndims);
-    return (array[vector_loc]);
-}
-
-float index_float_array (const float *array, const int *loc, const int *dim, const int ndims)
-{
-    size_t vector_loc = get_vector_loc(loc, dim, ndims);
-    return (array[vector_loc]);
-}
-
-double index_double_array (const double *array, const int *loc, const int *dim, const int ndims)
-{
-    size_t vector_loc = get_vector_loc(loc, dim, ndims);
-    return (array[vector_loc]);
-}
-
-int loc_in_bounds (const int *loc, const int *dim, const int ndims)
-{
-    int i;
-    int in_bounds = 1;
-    
-    for (i=0; i<ndims; i++)
-    {
-        if (loc[i] < 0 || loc[i] > (dim[i]-1))
-        {
-            in_bounds = 0;
-            break;
-        }
-    }
-    
-    return in_bounds;
-}
-
-size_t get_vector_loc (const int *loc, const int *dim, const int ndims)
-{
-    size_t vector_loc;
-    switch (ndims)
-    {
-        case 2:
-        vector_loc = loc[0] + (loc[1] * dim[0]);
-        break;
-        
-        case 3:
-        vector_loc = loc[0] + (loc[1] * dim[0]) + (loc[2] * dim[0] * dim[1]);
-        break;
-        
-        case 4:
-        vector_loc = loc[0] + (loc[1] * dim[0]) + (loc[2] * dim[0] * dim[1]) + (loc[3] * dim[0] * dim[1] * dim[2]);
-        break;
-    }
-    
-    return (vector_loc);
-}
-
-double inner_product (const double *a, const double *b, const int len)
-{
-    int i;
-    double result = 0.0;
-    
-    for (i=0; i<len; i++)
-        result = result + (a[i] * b[i]);
-    
-    return (result);
 }
