@@ -33,7 +33,7 @@ double index_double_array (const double *array, const int *loc, const int *dim, 
 
 int loc_in_bounds (const int *loc, const int *dim, const int ndims);
 
-long get_vector_loc (const int *loc, const int *dim, const int ndims);
+size_t get_vector_loc (const int *loc, const int *dim, const int ndims);
 
 double inner_product (const double *a, const double *b, const int len);
 

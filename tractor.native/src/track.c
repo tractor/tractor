@@ -46,7 +46,7 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
     int image_dims[4];
     double voxel_dims[3], zero_based_seed[3];
     char *image_name;
-    long dim_prod = 1;
+    size_t dim_prod = 1;
     int i;
     
     int nc = *INTEGER(n_compartments);
@@ -61,7 +61,7 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
     mask = read_mask_image(CHAR(STRING_ELT(mask_image_name,0)), image_dims, voxel_dims);
     for (int i=0; i<3; i++)
     {
-        dim_prod *= image_dims[i];
+        dim_prod *= abs(image_dims[i]);
         zero_based_seed[i] = REAL(seed)[i] - 1.0;
     }
     
@@ -98,7 +98,7 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
             if (*LOGICAL(require_visitation_map))
             {
                 visitation_counts = (int *) R_alloc(dim_prod, sizeof(int));
-                memset(visitation_counts, 0, (size_t) dim_prod * sizeof(int));
+                memset(visitation_counts, 0, dim_prod * sizeof(int));
             }
             
             image_dims[3] = (int) (len / dim_prod);
@@ -223,7 +223,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
     int i, j, starting, dir, sample, step, left_steps, right_steps, max_steps_per_dir, this_point;
     int loopcheck_dims[4], points_dims[2], rounded_loc[3], loopcheck_loc[4], points_loc[2];
     int *visited;
-    long k, dim_prod, loopcheck_dim_prod, vector_loc;
+    size_t k, dim_prod, loopcheck_dim_prod, vector_loc;
     float theta_sample, phi_sample;
     double loopcheck_ratio, uniform_sample, inner_prod, sign;
     double loc[3], old_step[3], prev_step[3], first_step[3], current_step[3];
@@ -535,25 +535,25 @@ void spherical_to_cartesian (const double theta, const double phi, double *vecto
 
 unsigned char index_uchar_array (const unsigned char *array, const int *loc, const int *dim, const int ndims)
 {
-    long vector_loc = get_vector_loc(loc, dim, ndims);
+    size_t vector_loc = get_vector_loc(loc, dim, ndims);
     return (array[vector_loc]);
 }
 
 int index_int_array (const int *array, const int *loc, const int *dim, const int ndims)
 {
-    long vector_loc = get_vector_loc(loc, dim, ndims);
+    size_t vector_loc = get_vector_loc(loc, dim, ndims);
     return (array[vector_loc]);
 }
 
 float index_float_array (const float *array, const int *loc, const int *dim, const int ndims)
 {
-    long vector_loc = get_vector_loc(loc, dim, ndims);
+    size_t vector_loc = get_vector_loc(loc, dim, ndims);
     return (array[vector_loc]);
 }
 
 double index_double_array (const double *array, const int *loc, const int *dim, const int ndims)
 {
-    long vector_loc = get_vector_loc(loc, dim, ndims);
+    size_t vector_loc = get_vector_loc(loc, dim, ndims);
     return (array[vector_loc]);
 }
 
@@ -574,9 +574,9 @@ int loc_in_bounds (const int *loc, const int *dim, const int ndims)
     return in_bounds;
 }
 
-long get_vector_loc (const int *loc, const int *dim, const int ndims)
+size_t get_vector_loc (const int *loc, const int *dim, const int ndims)
 {
-    long vector_loc;
+    size_t vector_loc;
     switch (ndims)
     {
         case 2:
