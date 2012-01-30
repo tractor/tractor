@@ -10,8 +10,21 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
         rightwardsVector <- NULL
     }
     
-    seed <- resolveVector(len=3, x, y, z)
-    maxStepsPerSide <- maxSteps / 2
+    if (is(x, "MriImage"))
+    {
+        if (x$getDimensionality() != 3)
+            report(OL$Error, "Seed image should be three-dimensional")
+        seeds <- which(x$getData() > 0, arr.ind=TRUE)
+    }
+    else if (is.matrix(x))
+    {
+        if (ncol(x) != 3)
+            report(OL$Error, "Seed matrix should have three columns")
+        seeds <- x
+    }
+    else
+        seeds <- matrix(resolveVector(len=3,x,y,z), nrow=1)
+    storage.mode(seeds) <- "double"
     
     metadata <- newMriImageMetadataFromFile(maskName)
     dims <- metadata$getDimensions()
@@ -21,9 +34,9 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
     if (!all(lengths == nCompartments))
         report(OL$Error, "AVF, theta and phi image names must be given for every anisotropic compartment")
     
-    result <- .Call("track_with_seed", as.double(seed), 1L, maskName, list(avf=avfNames,theta=thetaNames,phi=phiNames), as.integer(nCompartments), as.integer(nSamples), as.integer(maxSteps), as.double(stepLength), as.double(avfThreshold), as.double(curvatureThreshold), as.logical(useLoopcheck), rightwardsVector, as.logical(requireImage), as.logical(requireStreamlines), PACKAGE="tractor.native")
+    result <- .Call("track_with_seeds", seeds, as.integer(nrow(seeds)), 1L, maskName, list(avf=avfNames,theta=thetaNames,phi=phiNames), as.integer(nCompartments), as.integer(nSamples), as.integer(maxSteps), as.double(stepLength), as.double(avfThreshold), as.double(curvatureThreshold), as.logical(useLoopcheck), rightwardsVector, as.logical(requireImage), as.logical(requireStreamlines), PACKAGE="tractor.native")
     
-    returnValue <- list(seed=seed, nSamples=nSamples)
+    returnValue <- list(seeds=seeds, nSamples=nSamples)
     if (requireImage)
     {
         dim(result[[1]]) <- dims

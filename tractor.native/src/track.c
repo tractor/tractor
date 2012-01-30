@@ -25,7 +25,7 @@ void clean_up_streamlines ()
         Free(seed_indices);
 }
 
-SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter_image_names, SEXP n_compartments, SEXP n_samples, SEXP max_steps, SEXP step_length, SEXP volfrac_threshold, SEXP curvature_threshold, SEXP use_loopcheck, SEXP rightwards_vector, SEXP require_visitation_map, SEXP require_streamlines)
+SEXP track_with_seeds (SEXP seeds, SEXP n_seeds, SEXP mode, SEXP mask_image_name, SEXP parameter_image_names, SEXP n_compartments, SEXP n_samples, SEXP max_steps, SEXP step_length, SEXP volfrac_threshold, SEXP curvature_threshold, SEXP use_loopcheck, SEXP rightwards_vector, SEXP require_visitation_map, SEXP require_streamlines)
 {
     unsigned char *mask = NULL;
     int image_dims[4];
@@ -34,6 +34,7 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
     size_t dim_prod = 1;
     int i;
     
+    int nd = *INTEGER(n_seeds);
     int nc = *INTEGER(n_compartments);
     int ns = *INTEGER(n_samples);
     double *rv = NULL;
@@ -45,10 +46,7 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
     
     mask = read_mask_image(CHAR(STRING_ELT(mask_image_name,0)), image_dims, voxel_dims);
     for (int i=0; i<3; i++)
-    {
         dim_prod *= abs(image_dims[i]);
-        zero_based_seed[i] = REAL(seed)[i] - 1.0;
-    }
     
     switch (*INTEGER(mode))
     {
@@ -80,15 +78,26 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
                 phi[i] = read_parameter_image(image_name, &len);
             }
             
+            image_dims[3] = (int) (len / dim_prod);
+            
             if (*LOGICAL(require_visitation_map))
             {
                 visitation_counts = (int *) R_alloc(dim_prod, sizeof(int));
                 memset(visitation_counts, 0, dim_prod * sizeof(int));
             }
             
-            image_dims[3] = (int) (len / dim_prod);
+            if (point_block_size <= 0)
+                point_block_size = (size_t) nd * ns * (*INTEGER(max_steps)) / 20;
+            if (index_block_size <= 0)
+                index_block_size = (size_t) nd * ns;
             
-            track_fdt(zero_based_seed, image_dims, voxel_dims, mask, (const float **) avf, (const float **) theta, (const float **) phi, nc, ns, *INTEGER(max_steps), *REAL(step_length), *REAL(volfrac_threshold), *REAL(curvature_threshold), (int) *LOGICAL(use_loopcheck), rv, (int) *LOGICAL(require_visitation_map), (int) *LOGICAL(require_streamlines), visitation_counts);
+            for (j=0; j<nd; j++)
+            {
+                for (i=0; i<3; i++)
+                    zero_based_seed[i] = REAL(seeds)[j+nd*i] - 1.0;
+                
+                track_fdt(zero_based_seed, image_dims, voxel_dims, mask, (const float **) avf, (const float **) theta, (const float **) phi, nc, ns, *INTEGER(max_steps), *REAL(step_length), *REAL(volfrac_threshold), *REAL(curvature_threshold), (int) *LOGICAL(use_loopcheck), rv, (int) *LOGICAL(require_visitation_map), (int) *LOGICAL(require_streamlines), visitation_counts);
+            }
             
             PROTECT(return_value = NEW_LIST((R_len_t) elements_to_return));
             
@@ -113,15 +122,15 @@ SEXP track_with_seed (SEXP seed, SEXP mode, SEXP mask_image_name, SEXP parameter
                 }
                 SET_ELEMENT(return_value, 1, streamline_points);
                 
-                PROTECT(streamline_starts = NEW_INTEGER((R_len_t) ns));
+                PROTECT(streamline_starts = NEW_INTEGER((R_len_t) nd*ns));
                 int_ptr = INTEGER(streamline_starts);
-                for (j=0; j<ns; j++)
+                for (j=0; j<(nd*ns); j++)
                     int_ptr[j] = start_indices[j] + 1;
                 SET_ELEMENT(return_value, 2, streamline_starts);
                 
-                PROTECT(streamline_seeds = NEW_INTEGER((R_len_t) ns));
+                PROTECT(streamline_seeds = NEW_INTEGER((R_len_t) nd*ns));
                 int_ptr = INTEGER(streamline_seeds);
-                for (j=0; j<ns; j++)
+                for (j=0; j<(nd*ns); j++)
                     int_ptr[j] = seed_indices[j] + 1;
                 SET_ELEMENT(return_value, 3, streamline_seeds);
                 
@@ -226,9 +235,9 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
     if (require_streamlines)
     {
         if (point_block_size <= 0)
-            point_block_size = n_samples * max_steps / 20;
+            point_block_size = (size_t) n_samples * max_steps / 20;
         if (index_block_size <= 0)
-            index_block_size = n_samples;
+            index_block_size = (size_t) n_samples;
         
         if (points == NULL)
         {
@@ -442,9 +451,10 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                     points[3*this_point + j] = right_points[i + j*max_steps_per_dir];
             }
             
-            start_indices[current_index+sample] = current_point;
-            seed_indices[current_index+sample] = current_point + (left_steps - 1);
+            start_indices[current_index] = current_point;
+            seed_indices[current_index] = current_point + (left_steps - 1);
             current_point += (left_steps - 1) + right_steps;
+            current_index++;
         }
     }
     
