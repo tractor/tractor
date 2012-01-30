@@ -15,6 +15,9 @@ static int *start_indices = NULL, *seed_indices = NULL;
 static int indices_allocated = 0, current_index = 0;
 static size_t index_block_size = 0;
 
+static int *visited = NULL;
+static double *loopcheck = NULL, *left_points = NULL, *right_points = NULL;
+
 void clean_up_streamlines ()
 {
     if (points != NULL)
@@ -23,6 +26,14 @@ void clean_up_streamlines ()
         Free(start_indices);
     if (seed_indices != NULL)
         Free(seed_indices);
+    if (visited != NULL)
+        Free(visited);
+    if (loopcheck != NULL)
+        Free(loopcheck);
+    if (left_points != NULL)
+        Free(left_points);
+    if (right_points != NULL)
+        Free(right_points);
 }
 
 SEXP track_with_seeds (SEXP seeds, SEXP n_seeds, SEXP mode, SEXP mask_image_name, SEXP parameter_image_names, SEXP n_compartments, SEXP n_samples, SEXP max_steps, SEXP step_length, SEXP volfrac_threshold, SEXP curvature_threshold, SEXP use_loopcheck, SEXP rightwards_vector, SEXP require_visitation_map, SEXP require_streamlines)
@@ -216,12 +227,10 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
 {
     int i, j, starting, dir, sample, step, left_steps, right_steps, max_steps_per_dir, this_point;
     int loopcheck_dims[4], points_dims[2], rounded_loc[3], loopcheck_loc[4], points_loc[2];
-    int *visited;
     size_t k, dim_prod, loopcheck_dim_prod, vector_loc;
     float theta_sample, phi_sample;
     double loopcheck_ratio, uniform_sample, inner_prod, sign;
     double loc[3], old_step[3], prev_step[3], first_step[3], current_step[3];
-    double *loopcheck, *left_points, *right_points;
     
     dim_prod = image_dims[0] * image_dims[1] * image_dims[2];
     
@@ -229,8 +238,8 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
     max_steps_per_dir = max_steps / 2;
     
     // Allocate boolean visitation count vector
-    if (require_visitation_map)
-        visited = (int *) R_alloc(dim_prod, sizeof(int));
+    if (require_visitation_map && visited == NULL)
+        visited = (int *) Calloc(dim_prod, int);
     
     if (require_streamlines)
     {
@@ -261,8 +270,11 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
             seed_indices = (int *) Realloc(start_indices, indices_allocated, int);
         }
         
-        left_points = (double *) R_alloc((size_t) max_steps_per_dir*3, sizeof(double));
-        right_points = (double *) R_alloc((size_t) max_steps_per_dir*3, sizeof(double));
+        if (left_points == NULL)
+        {
+            left_points = (double *) Calloc((size_t) max_steps_per_dir*3, double);
+            right_points = (double *) Calloc((size_t) max_steps_per_dir*3, double);
+        }
         
         points_dims[0] = max_steps_per_dir;
         points_dims[1] = 3;
@@ -277,7 +289,8 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
         loopcheck_dims[3] = 3;
         loopcheck_dim_prod = loopcheck_dims[0] * loopcheck_dims[1] * loopcheck_dims[2] * loopcheck_dims[3];
         
-        loopcheck = (double *) R_alloc(loopcheck_dim_prod, sizeof(double));
+        if (loopcheck == NULL)
+            loopcheck = (double *) Calloc(loopcheck_dim_prod, double);
     }
     
     // Initialise R's random number generator
