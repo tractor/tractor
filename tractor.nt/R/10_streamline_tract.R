@@ -114,9 +114,9 @@ StreamlineCollectionTract <- setRefClass("StreamlineCollectionTract", contains="
     
     getSeedIndices = function () { return (seedIndices) },
     
-    getSeedIndex = function (i) { return (seedIndices[i]) },
+    getSeedIndex = function (i = 1) { return (seedIndices[i]) },
     
-    getSeedPoint = function (i) { return (points[seedIndices[i],]) },                                                         
+    getSeedPoint = function (i = 1) { return (points[seedIndices[i],]) },                                                         
     
     getSeedPoints = function () { return (points[seedIndices,]) },
     
@@ -128,7 +128,9 @@ StreamlineCollectionTract <- setRefClass("StreamlineCollectionTract", contains="
     
     getStartIndices  = function () { return (startIndices) },
     
-    getStartIndex  = function (i) { return (startIndices[i]) },
+    getStartIndex  = function (i = 1) { return (startIndices[i]) },
+    
+    nPoints = function () { return (nrow(points)) },
     
     nStreamlines = function () { return (length(startIndices)) }
 ))
@@ -362,6 +364,43 @@ newStreamlineSetTractByTruncationToReference <- function (tract, reference, test
     rightPoints <- tract$getRightPoints()[1:max(rightLengths),,,drop=FALSE]
     
     newTract <- StreamlineSetTract$new(seedPoint=tract$getSeedPoint(), leftLengths=as.integer(leftLengths), rightLengths=as.integer(rightLengths), leftPoints=leftPoints, rightPoints=rightPoints, metadata=tract$getMetadata())
+    invisible (newTract)
+}
+
+newStreamlineCollectionTractBySubsetting <- function (tract, indices)
+{
+    if (!is(tract, "StreamlineCollectionTract"))
+        report(OL$Error, "The specified tract is not a StreamlineCollectionTract object")
+    if (length(indices) < 1)
+        report(OL$Error, "At least one streamline must be included in the subset")
+    
+    seedIndices <- tract$getSeedIndices()[indices]
+    startIndices <- tract$getStartIndices()[indices]
+    endIndices <- c(tract$getStartIndices()[-1]-1, nrow(points))[indices]
+    pointIndices <- unlist(mapply(seq, startIndices, endIndices))
+    
+    newTract <- StreamlineCollectionTract$new(points=tract$getPoints()[pointIndices,,drop=FALSE], seedIndices=match(seedIndices,pointIndices), startIndices=match(startIndices,pointIndices), metadata=tract$getMetadata())
+    invisible (newTract)
+}
+
+newStreamlineCollectionTractWithLengthThreshold <- function (tract, threshold = 0, unit = c("step","mm"))
+{
+    if (!is(tract, "StreamlineCollectionTract"))
+        report(OL$Error, "The specified tract is not a StreamlineCollectionTract object")
+    
+    unit <- match.arg(unit)
+    if (unit == "step")
+        steps <- threshold
+    else
+    {
+        rescaled <- rescalePoints(tract$getPoints(1), unit, tract$getMetadata(), tract$getSeedPoint(1))
+        stepLength <- vectorLength(diff(rescaled$points)[1,])
+        steps <- ceiling(threshold / stepLength)
+    }
+    
+    streamlineLengths <- diff(c(tract$getStartIndices(), tract$nPoints()+1))
+    toKeep <- which(streamlineLengths >= steps)
+    newTract <- newStreamlineCollectionTractBySubsetting(tract, toKeep)
     invisible (newTract)
 }
 
