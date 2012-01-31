@@ -102,6 +102,10 @@ StreamlineCollectionTract <- setRefClass("StreamlineCollectionTract", contains="
     
     getMetadata = function () { return (export("StreamlineTractMetadata")) },
     
+    getEndIndex = function (i = 1) { return (.self$getEndIndices()[i]) },
+    
+    getEndIndices = function () { return (c(startIndices[-1]-1, nrow(points))) },
+    
     getPoints = function (i = NA)
     {
         if (is.na(i))
@@ -112,9 +116,9 @@ StreamlineCollectionTract <- setRefClass("StreamlineCollectionTract", contains="
             return (points[startIndices[i]:(startIndices[i+1]-1),])
     },
     
-    getSeedIndices = function () { return (seedIndices) },
-    
     getSeedIndex = function (i = 1) { return (seedIndices[i]) },
+    
+    getSeedIndices = function () { return (seedIndices) },
     
     getSeedPoint = function (i = 1) { return (points[seedIndices[i],]) },                                                         
     
@@ -126,9 +130,9 @@ StreamlineCollectionTract <- setRefClass("StreamlineCollectionTract", contains="
         return (list(mins=fullRange[1,], maxes=fullRange[2,]))
     },
     
-    getStartIndices  = function () { return (startIndices) },
-    
     getStartIndex  = function (i = 1) { return (startIndices[i]) },
+    
+    getStartIndices  = function () { return (startIndices) },
     
     nPoints = function () { return (nrow(points)) },
     
@@ -153,7 +157,7 @@ newStreamlineSetTractFromCollection <- function (tract)
     
     seedIndices <- tract$getSeedIndices()
     startIndices <- tract$getStartIndices()
-    endIndices <- c(startIndices[-1]-1, nrow(points))
+    endIndices <- tract$getEndIndices()
     leftLengths <- seedIndices - startIndices + 1
     rightLengths <- endIndices - seedIndices + 1
     
@@ -376,7 +380,7 @@ newStreamlineCollectionTractBySubsetting <- function (tract, indices)
     
     seedIndices <- tract$getSeedIndices()[indices]
     startIndices <- tract$getStartIndices()[indices]
-    endIndices <- c(tract$getStartIndices()[-1]-1, nrow(points))[indices]
+    endIndices <- tract$getEndIndices()[indices]
     pointIndices <- unlist(mapply(seq, startIndices, endIndices))
     
     newTract <- StreamlineCollectionTract$new(points=tract$getPoints()[pointIndices,,drop=FALSE], seedIndices=match(seedIndices,pointIndices), startIndices=match(startIndices,pointIndices), metadata=tract$getMetadata())
