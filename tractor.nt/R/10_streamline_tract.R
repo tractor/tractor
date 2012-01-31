@@ -674,9 +674,12 @@ plot.StreamlineCollectionTract <- function (x, y = NULL, unit = NULL, axes = NUL
     report(OL$Info, "Plotting streamlines")
     for (i in 1:x$nStreamlines())
     {
-        line <- points[startIndices[i]:endIndices[i],]
-        rescaledLine <- rescalePoints(line, unit, x$getMetadata(), points[seedIndices[i],])
-        lines(rescaledLine$points[,axes[1]], rescaledLine$points[,axes[2]], ...)
+        if (endIndices[i] > startIndices[i])
+        {
+            line <- points[startIndices[i]:endIndices[i],]
+            rescaledLine <- rescalePoints(line, unit, x$getMetadata(), points[seedIndices[i],])
+            lines(rescaledLine$points[,axes[1]], rescaledLine$points[,axes[2]], ...)
+        }
     }
     
     invisible (axes)
