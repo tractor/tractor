@@ -442,31 +442,34 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
         
         if (require_streamlines)
         {
-            if (current_point + (left_steps - 1) + right_steps > points_allocated)
+            if (left_steps > 0)
+                left_steps--;
+            
+            if (current_point + left_steps + right_steps > points_allocated)
             {
-                while (current_point + (left_steps - 1) + right_steps > points_allocated)
+                while (current_point + left_steps + right_steps > points_allocated)
                     points_allocated += point_block_size;
                 points = (double *) Realloc(points, (size_t) 3*points_allocated, double);
             }
             
             // NB: Ending criterion of i>0 is intentional: we don't want to duplicate the seed
-            for (i=left_steps-1; i>0; i--)
+            for (i=left_steps; i>0; i--)
             {
-                this_point = current_point + (left_steps - 1) - i;
+                this_point = current_point + left_steps - i;
                 for (j=0; j<3; j++)
                     points[3*this_point + j] = left_points[i + j*max_steps_per_dir];
             }
             
             for (i=0; i<right_steps; i++)
             {
-                this_point = current_point + (left_steps - 1) + i;
+                this_point = current_point + left_steps + i;
                 for (j=0; j<3; j++)
                     points[3*this_point + j] = right_points[i + j*max_steps_per_dir];
             }
             
             start_indices[current_index] = current_point;
-            seed_indices[current_index] = current_point + (left_steps - 1);
-            current_point += (left_steps - 1) + right_steps;
+            seed_indices[current_index] = current_point + left_steps;
+            current_point += left_steps + right_steps;
             current_index++;
         }
     }
