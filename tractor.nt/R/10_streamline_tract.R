@@ -408,6 +408,42 @@ newStreamlineCollectionTractWithLengthThreshold <- function (tract, threshold = 
     invisible (newTract)
 }
 
+newStreamlineCollectionTractWithWaypointConstraints <- function (tract, waypoints)
+{
+    if (!is(tract, "StreamlineCollectionTract"))
+        report(OL$Error, "The specified tract is not a StreamlineCollectionTract object")
+    if (!is.list(waypoints))
+        report(OL$Error, "Waypoints should be specified in a list")
+    
+    metadata <- tract$getImageMetadata()
+    dims <- metadata$getDimensions()
+    
+    for (i in seq_along(waypoints))
+    {
+        if (!is(waypoints[[i]], "MriImage"))
+            report(OL$Error, "Waypoint ", i, " is not an MriImage object")
+        
+        tractPoints <- tract$getPoints()
+        if (tract$getCoordinateUnit() == "mm")
+            tractPoints <- transformWorldToRVoxel(tractPoints, metadata)
+        tractPoints <- apply(round(tractPoints), 1, implode, sep=",")
+        
+        maskPoints <- apply(which(waypoints[[i]]$getData() > 0, arr.ind=TRUE), 1, implode, sep=",")
+        matches <- tractPoints %in% maskPoints
+        
+        tractStartIndices <- tract$getStartIndices()
+        tractEndIndices <- tract$getEndIndices()
+        streamlinesToKeep <- which(sapply(1:tract$nStreamlines(), function (i) any(matches>=tractStartIndices[i] & matches<=tractEndIndices[i])))
+        
+        if (length(streamlinesToKeep) == 0)
+            return (invisible(NULL))
+        else
+            tract <- newStreamlineCollectionTractBySubsetting(tract, streamlinesToKeep)
+    }
+    
+    invisible(tract)
+}
+
 newStreamlineTractWithMetadata <- function (tract, metadata)
 {
     if (!is(tract, "StreamlineTract"))
