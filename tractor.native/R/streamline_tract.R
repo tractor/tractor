@@ -15,7 +15,7 @@ newStreamlineCollectionTractWithWaypointConstraints <- function (tract, waypoint
     nMaskPoints <- sapply(maskPoints, nrow)
     
     lengths <- tract$getEndIndices() - tract$getStartIndices() + 1
-    matchingIndices <- .Call("find_waypoint_hits", as.integer(tract$getPoints()), as.integer(tract$nPoints()), as.integer(tract$getStartIndices()), as.integer(lengths), as.integer(tract$nStreamlines()), maskPoints, as.integer(length(maskPoints)), as.integer(nMaskPoints), PACKAGE="tractor.native")
+    matchingIndices <- .Call("find_waypoint_hits", as.integer(round(tract$getPoints())), as.integer(tract$nPoints()), as.integer(tract$getStartIndices()), as.integer(lengths), as.integer(tract$nStreamlines()), maskPoints, as.integer(length(maskPoints)), as.integer(nMaskPoints), PACKAGE="tractor.native")
     
     newTract <- newStreamlineCollectionTractBySubsetting(tract, matchingIndices)
     invisible(newTract)
