@@ -1,29 +1,35 @@
-newMriImageAsVisitationMap <- function (streamSet, metadata = NULL)
+newMriImageAsVisitationMap <- function (tract, metadata = NULL)
 {
-    if (!is(streamSet, "StreamlineSetTract"))
-        report(OL$Error, "The specified tract is not a StreamlineSetTract object")
+    if (!is(tract, "StreamlineSetTract") && !is(tract, "StreamlineCollectionTract"))
+        report(OL$Error, "The specified tract is not a StreamlineSetTract or StreamlineCollectionTract object")
     if (is.null(metadata))
-        metadata <- streamSet$getImageMetadata()
+        metadata <- tract$getImageMetadata()
     else if (!is(metadata, "MriImageMetadata"))
         report(OL$Error, "The specified metadata is not valid")
     
-    if (streamSet$isOriginAtSeed())
+    if (tract$isOriginAtSeed())
         report(OL$Error, "Cannot create visitation maps for transformed streamline sets at the moment")
     
     dims <- metadata$getDimensions()
     
-    nSamples <- streamSet$nStreamlines()
-    leftPoints <- streamSet$getLeftPoints()
-    rightPoints <- streamSet$getRightPoints()
-    leftLengths <- streamSet$getLeftLengths()
-    rightLengths <- streamSet$getRightLengths()
+    nSamples <- tract$nStreamlines()
+    if (is(tract, "StreamlineSetTract"))
+    {
+        leftPoints <- tract$getLeftPoints()
+        rightPoints <- tract$getRightPoints()
+        leftLengths <- tract$getLeftLengths()
+        rightLengths <- tract$getRightLengths()
+    }
     
     data <- array(0, dim=dims)
     for (i in 1:nSamples)
     {
-        currentPoints <- rbind(leftPoints[1:leftLengths[i],,i], rightPoints[1:rightLengths[i],,i])
+        if (is(tract, "StreamlineSetTract"))
+            currentPoints <- rbind(leftPoints[1:leftLengths[i],,i], rightPoints[1:rightLengths[i],,i])
+        else
+            currentPoints <- tract$getPoints(i)
         
-        if (streamSet$getCoordinateUnit() == "mm")
+        if (tract$getCoordinateUnit() == "mm")
             currentPoints <- transformWorldToRVoxel(currentPoints, metadata)
         currentPoints <- round(currentPoints)
         
