@@ -14,8 +14,10 @@ SEXP find_waypoint_hits (SEXP points, SEXP n_points, SEXP start_indices, SEXP le
 
     SEXP current_mask_points, matching_indices;
     
+    // Allocate memory for a version of start_indices using the C indexing convention
     int *zero_based_start_indices = (int *) R_alloc(ns, sizeof(int));
     
+    // All lines are initially marked as matching
     for (j=0; j<ns; j++)
     {
         match[j] = 1;
@@ -26,9 +28,11 @@ SEXP find_waypoint_hits (SEXP points, SEXP n_points, SEXP start_indices, SEXP le
     {
         n_matches = 0;
         
+        // Find streamlines that pass through the current mask
         current_mask_points = VECTOR_ELT(mask_points, i);
         match_points(INTEGER(points), *INTEGER(n_points), zero_based_start_indices, INTEGER(lengths), *INTEGER(n_starts), INTEGER(current_mask_points), INTEGER(n_mask_points)[i], 3, temp_match);
         
+        // Find and count streamlines matching all masks so far
         for (j=0; j<ns; j++)
         {
             match[j] = match[j] && temp_match[j];
@@ -36,8 +40,10 @@ SEXP find_waypoint_hits (SEXP points, SEXP n_points, SEXP start_indices, SEXP le
         }
     }
     
+    // Allocate a vector for matching indices
     PROTECT(matching_indices = NEW_INTEGER((R_len_t) n_matches));
     
+    // Copy matching indices into place
     int_ptr = INTEGER(matching_indices);
     current_match = 0;
     for (j=0; j<ns; j++)
@@ -56,6 +62,7 @@ SEXP find_waypoint_hits (SEXP points, SEXP n_points, SEXP start_indices, SEXP le
 
 void match_points (const int *points, const int n_points, const int *start_indices, const int *lengths, const int n_starts, const int *target_points, const int n_target_points, const int n_dims, int *match)
 {
+    // Iterate over streamlines, setting the match vector to 1 for each containing a match
     for (int i=0; i<n_starts; i++)
         match[i] = points_intersect(points, n_points, start_indices[i], lengths[i], target_points, n_target_points, n_dims);
 }
@@ -64,6 +71,7 @@ int points_intersect (const int *points, const int n_points, const int start_ind
 {
     int i, j, k, match;
     
+    // Look for matching points in each group
     for (i=start_index; i<(start_index+length); i++)
     {
         for (j=0; j<n_target_points; j++)
@@ -71,6 +79,7 @@ int points_intersect (const int *points, const int n_points, const int start_ind
             match = 1;
             for (k=0; k<n_dims; k++)
             {
+                // If any element of the vector does not match, the whole does not match
                 if (points[i + k*n_points] != target_points[j + k*n_target_points])
                 {
                     match = 0;
@@ -78,6 +87,7 @@ int points_intersect (const int *points, const int n_points, const int start_ind
                 }
             }
             
+            // If there is any match, the point sets intersect
             if (match)
                 return 1;
         }
