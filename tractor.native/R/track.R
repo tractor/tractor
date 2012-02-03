@@ -36,7 +36,7 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
     
     result <- .Call("track_with_seeds", seeds, as.integer(nrow(seeds)), 1L, maskName, list(avf=avfNames,theta=thetaNames,phi=phiNames), as.integer(nCompartments), as.integer(nSamples), as.integer(maxSteps), as.double(stepLength), as.double(avfThreshold), as.double(curvatureThreshold), as.logical(useLoopcheck), rightwardsVector, as.logical(requireImage), as.logical(requireStreamlines), PACKAGE="tractor.native")
     
-    returnValue <- list(seeds=seeds, nSamples=nSamples)
+    returnValue <- list(seeds=seeds, nSamples=nSamples*nrow(seeds))
     if (requireImage)
     {
         dim(result[[1]]) <- dims
