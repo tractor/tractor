@@ -238,7 +238,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
     max_steps_per_dir = max_steps / 2;
     
     // Allocate boolean visitation count vector
-    if (require_visitation_map && visited == NULL)
+    if (visited == NULL)
         visited = (int *) Calloc(dim_prod, int);
     
     if (require_streamlines)
@@ -349,10 +349,11 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                 // Stop if outside the mask, otherwise mark visit
                 if (mask[vector_loc] != 1)
                     break;
-                else if (require_visitation_map && !visited[vector_loc])
+                else if (!visited[vector_loc])
                 {
                     visited[vector_loc] = 1;
-                    visitation_counts[vector_loc]++;
+                    if (require_visitation_map)
+                        visitation_counts[vector_loc]++;
                 }
                 
                 // Store current (unrounded) location if required
