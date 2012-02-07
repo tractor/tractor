@@ -2,6 +2,7 @@
 #@desc Run tractography using one or more masks. Every nonzero voxel in the specified SeedMaskFile will be used as a seed point for NumberOfSamples streamlines, and the results combined. If any WaypointMaskFiles are specified, streamlines which do not pass through ALL of the masks given will be ignored.
 
 suppressPackageStartupMessages(require(tractor.session))
+suppressPackageStartupMessages(require(tractor.nt))
 
 runExperiment <- function ()
 {
