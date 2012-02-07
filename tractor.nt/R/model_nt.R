@@ -10,8 +10,8 @@ streamlineTractWithOptions <- function (options, session, seed, refSession = NUL
     if (tracker == "tractor")
     {
         require("tractor.native")
-        result <- trackWithSession(session, seed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlineSet=TRUE)
-        streamSet <- result$streamlineSet
+        result <- trackWithSession(session, seed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlines=TRUE)
+        streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
     }
     else
         streamSet <- newStreamlineSetTractFromProbtrack(session, seed, nSamples=nSamples, maxPathLength=options$maxPathLength, rightwardsVector=rightwardsVector)
