@@ -25,7 +25,7 @@ newFieldTractFromProbtrack <- function (..., threshold=NA)
         image <- newMriImageWithSimpleFunction(probtrackResult$image, thresholdFunction)
     }
     
-    tract <- FieldTract$new(probtrackResult$seed, image)
+    tract <- FieldTract$new(drop(probtrackResult$seeds), image)
     invisible (tract)
 }
 

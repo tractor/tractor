@@ -177,7 +177,7 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
 {
     probtrackResult <- runProbtrackWithSession(session, x, y, z, requireParticlesDir=TRUE, nSamples=nSamples, verbose=TRUE, force=TRUE)
     
-    seed <- probtrackResult$seed
+    seed <- drop(probtrackResult$seeds)
     axisNames <- c("left-right", "anterior-posterior", "inferior-superior")
     
     if (is.null(maxPathLength))

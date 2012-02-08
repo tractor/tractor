@@ -86,7 +86,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
             unlink(seedFile)
         }
             
-        result <- list(session=session, seed=originalSeed, nSamples=nSamples)
+        result <- list(session=session, seeds=promote(originalSeed,byrow=TRUE), nSamples=nSamples)
         if (requireImage)
             result <- c(result, list(image=newMriImageFromFile(outputFile)))
         if (requireParticlesDir)
@@ -103,7 +103,6 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         seedFile <- threadSafeTempFile()
         writeMriImageToFile(seedMask, seedFile)
         seedPoints <- which(seedMask$getData() > 0, arr.ind=TRUE)
-        seedCentre <- round(apply(seedPoints, 2, median))
         
         report(OL$Info, "There are ", nrow(seedPoints), " seed points within the mask")
         
@@ -128,7 +127,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         nRetainedSamples <- as.numeric(readLines(file.path(outputDir, "waytotal")))
         report(OL$Info, nRetainedSamples, " streamlines were retained, of ", nSamples*nrow(seedPoints), " generated")
         
-        result <- list(session=session, seed=as.vector(seedCentre), nSamples=nRetainedSamples)
+        result <- list(session=session, seeds=seedPoints, nSamples=nRetainedSamples)
         if (requireImage)
             result <- c(result, list(image=newMriImageFromFile(outputFile)))
         
