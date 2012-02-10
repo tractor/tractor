@@ -1,11 +1,14 @@
 #@args session directory, image files or DICOM directories
 #@desc Read structural images from DICOM, Analyze, NIfTI or MGH files and copy into the specified session directory. If any of the specified paths point to a directory they will be assumed to contain DICOM files. Images may be T1, T2 or proton density weighted.
 
+library(tractor.session)
+
 runExperiment <- function ()
 {
     requireArguments("session directory", "image file or DICOM directory")
     
     session <- newSessionFromDirectory(Arguments[1])
+    session$getDirectory("structural", createIfMissing=TRUE)
     nImages <- nArguments() - 1
     
     weighting <- getConfigVariable("ImageWeighting", "t1", validValues=c("t1","t2","pd"))
@@ -15,7 +18,7 @@ runExperiment <- function ()
     {
         report(OL$Info, "Copying image ", i, " of ", nImages)
         
-        if (file.info(Arguments[i+1]$isdir))
+        if (file.info(Arguments[i+1])$isdir)
             image <- newMriImageFromDicomDirectory(Arguments[i+1])
         else if (!imageFileExists(Arguments[i+1]))
         {
