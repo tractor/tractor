@@ -11,6 +11,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         {
             object <- initFields(directory=expandFileName(directory), subdirectoryCache.=list(), mapCache.=list())
             object$updateCaches()
+            object$getDirectory("root", createIfMissing=TRUE)
             updateSessionHierarchy(object)
             return (object)
         }
