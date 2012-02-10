@@ -16,8 +16,8 @@ createCorticalThicknessTableForSessions <- function (sessionList, atlasName = "a
     
     for (i in seq_along(sessionList))
     {
-        session <- newSessionFromDirectory(sessionList[i])
-        statsDirectory <- file.path(session$getDirectory("root"), "freesurfer", "stats")
+        session <- sessionList[[i]]
+        statsDirectory <- file.path(session$getDirectory("freesurfer"), "stats")
         
         if (!file.exists(statsDirectory))
         {
