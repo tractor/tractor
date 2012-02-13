@@ -1,5 +1,5 @@
 #@args session directory
-#@desc Run tractography using one or more masks. Every nonzero voxel in the specified SeedMaskFile will be used as a seed point for NumberOfSamples streamlines, and the results combined. If any WaypointMaskFiles are specified, streamlines which do not pass through ALL of the masks given will be ignored.
+#@desc Run tractography using one or more masks. Every nonzero voxel in the specified SeedMaskFile will be used as a seed point for NumberOfSamples streamlines, and the results combined. If the SeedMaskFile option is not specified, then seeding will be performed throughout the brain mask, subject to any anisotropy threshold specified. If any WaypointMaskFiles are specified, streamlines which do not pass through ALL of the masks given will be ignored.
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
@@ -9,12 +9,13 @@ runExperiment <- function ()
     requireArguments("session directory")
     session <- newSessionFromDirectory(Arguments[1])
     
-    seedMaskFile <- getConfigVariable("SeedMaskFile", NULL, "character", errorIfInvalid=TRUE, errorIfMissing=TRUE)
+    seedMaskFile <- getConfigVariable("SeedMaskFile", NULL, "character", errorIfInvalid=TRUE)
     seedMaskInStandardSpace <- getConfigVariable("SeedMaskInStandardSpace", FALSE)
     waypointMaskFiles <- getConfigVariable("WaypointMaskFiles", NULL, "character", errorIfInvalid=TRUE)
     waypointMasksInStandardSpace <- getConfigVariable("WaypointMasksInStandardSpace", FALSE)
     tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"))
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
+    anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL)
     
     tractName <- getConfigVariable("TractName", "tract")
     createVolumes <- getConfigVariable("CreateVolumes", TRUE)
@@ -25,9 +26,20 @@ runExperiment <- function ()
     if (!createVolumes && !createImages)
         report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
-    seedMask <- newMriImageFromFile(seedMaskFile)
-    if (seedMaskInStandardSpace)
-        seedMask <- transformStandardSpaceImage(session, seedMask)
+    if (is.null(seedMask))
+        seedMask <- session$getImageByType("mask", "diffusion")
+    else
+    {
+        seedMask <- newMriImageFromFile(seedMaskFile)
+        if (seedMaskInStandardSpace)
+            seedMask <- transformStandardSpaceImage(session, seedMask)
+    }
+    
+    if (!is.null(anisotropyThreshold))
+    {
+        faImage <- session$getImageByType("FA", "diffusion")
+        seedMask <- newMriImageWithBinaryFunction(seedMask, faImage, function (x,y) replace(x, y < anisotropyThreshold, 0))
+    }
     
     if (is.null(waypointMaskFiles))
         waypointMasks <- NULL
