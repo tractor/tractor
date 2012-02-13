@@ -97,6 +97,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     identifierTag <- switch(currentSort, series=c(0x0020,0x0011), subject=c(0x0010,0x0010))
     descriptionTag <- switch(currentSort, series=c(0x0008,0x103e), subject=c(0x0010,0x0010))
     
+    directory <- expandFileName(directory)
     files <- expandFileName(list.files(directory, full.names=TRUE, recursive=TRUE))
     files <- files[!file.info(files)$isdir]
     nFiles <- length(files)
@@ -149,13 +150,19 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
                 report(OL$Info, "Subject ", id, " includes ", length(matchingFiles), " files")
                 subdirectory <- gsub("\\W", "", description, perl=TRUE)
             }
-            dir.create(file.path(directory, subdirectory))
+            
+            if (!file.exists(file.path(directory, subdirectory)))
+                dir.create(file.path(directory, subdirectory))
             
             currentIdFiles <- basename(files[matchingFiles])
             duplicates <- duplicated(currentIdFiles)
             if (any(duplicates))
                 currentIdFiles[duplicates] <- paste(currentIdFiles[duplicates], seq_len(sum(duplicates)), sep="_")
-            success <- file.copy(files[matchingFiles], file.path(directory,subdirectory,currentIdFiles))
+            
+            from <- files[matchingFiles]
+            to <- file.path(directory,subdirectory,currentIdFiles)
+            inPlace <- from == to
+            success <- file.copy(from[!inPlace], to[!inPlace])
             
             if (!all(success))
                 report(OL$Warning, "Not all files copied successfully for ", currentSort, " ", id, " - nothing will be deleted")
