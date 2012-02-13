@@ -15,11 +15,11 @@ runExperiment <- function ()
     seedMaskInStandardSpace <- getConfigVariable("SeedMaskInStandardSpace", FALSE)
     thresholdType <- getConfigVariable("SeedThresholdType", "FA", validValues=c("FA","MD","axialdiff","radialdiff"), deprecated=TRUE)
     thresholdLevel <- getConfigVariable("SeedThresholdLevel", NULL, "numeric", errorIfInvalid=TRUE, deprecated=TRUE)
-    newThresholdLevel <- getConfigVariable("AnisotropyThreshold", 0.2)
+    newThresholdLevel <- getConfigVariable("AnisotropyThreshold", NULL)
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     
     # The new threshold level takes priority if it differs from the old one
-    if (thresholdLevel != newThresholdLevel)
+    if (is.null(thresholdLevel) || (!is.null(newThresholdLevel) && thresholdLevel != newThresholdLevel))
         thresholdLevel <- newThresholdLevel
     
     createVolumes <- getConfigVariable("CreateVolumes", FALSE)
