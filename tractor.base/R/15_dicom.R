@@ -91,6 +91,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE)
     if (!file.exists(directory) || !file.info(directory)$isdir)
         report(OL$Error, "Specified path (", directory, ") does not exist or does not point to a directory")
     
+    directory <- expandFileName(directory)
     files <- expandFileName(list.files(directory, full.names=TRUE, recursive=TRUE))
     files <- files[!file.info(files)$isdir]
     nFiles <- length(files)
@@ -135,14 +136,19 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE)
             report(OL$Info, "Series ", series, " includes ", length(matchingFiles), " files; description is \"", description, "\"")
             
             subdirectory <- paste(sprintf(paste("%0",numberWidth,"d",sep=""),series), gsub("\\W","",description,perl=TRUE), sep="_")
-            dir.create(file.path(directory, subdirectory))
+            if (!file.exists(file.path(directory, subdirectory)))
+                dir.create(file.path(directory, subdirectory))
             
             seriesFiles <- basename(files[matchingFiles])
             duplicates <- duplicated(seriesFiles)
             if (any(duplicates))
                 seriesFiles[duplicates] <- paste(seriesFiles[duplicates], seq_len(sum(duplicates)), sep="_")
-            success <- file.copy(files[matchingFiles], file.path(directory,subdirectory,seriesFiles))
-
+            
+            from <- files[matchingFiles]
+            to <- file.path(directory,subdirectory,seriesFiles)
+            inPlace <- from == to
+            success <- file.copy(from[!inPlace], to[!inPlace])
+            
             if (!all(success))
                 report(OL$Warning, "Not all files copied successfully for series ", series, " - nothing will be deleted")
             else if (deleteOriginals)
