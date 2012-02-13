@@ -23,7 +23,7 @@ isValidAs <- function (value, mode)
     return (!any(is.na(coercedValue)))
 }
 
-getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL)
+getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL, deprecated = FALSE)
 {
     reportInvalid <- function ()
     {
@@ -62,6 +62,9 @@ getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMi
     }
     else
     {
+        if (deprecated)
+            report(OL$Warning, "The configuration variable \"", name, "\" is deprecated")
+        
         value <- ConfigVariables[[name]]
         if (is.null(mode) || mode == "NULL")
             return (matchAgainstValidValues(value))

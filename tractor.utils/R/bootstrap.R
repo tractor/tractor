@@ -57,16 +57,20 @@ describeExperiment <- function (scriptFile, fill = FALSE)
     inputLines <- readLines(scriptFile)
     outputLines <- paste("OPTIONS for script", scriptFile, "(* required)", sep=" ")
     
-    getConfigVariable <- function (name, defaultValue, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL)
+    getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL, deprecated = FALSE)
     {
-        leadString <- ifelse(errorIfMissing, " * ", "   ")
-        defaultValueString <- ifelse(is.null(defaultValue), "NULL", as.character(defaultValue))
-        if (!is.null(validValues))
+        # Don't show deprecated config variables
+        if (!deprecated)
         {
-            otherValues <- (if (is.null(defaultValue)) validValues else validValues[-match(defaultValue,validValues)])
-            defaultValueString <- paste(defaultValueString, " [", paste(otherValues,collapse=","), "]", sep="")
+            leadString <- ifelse(errorIfMissing, " * ", "   ")
+            defaultValueString <- ifelse(is.null(defaultValue), "NULL", as.character(defaultValue))
+            if (!is.null(validValues))
+            {
+                otherValues <- (if (is.null(defaultValue)) validValues else validValues[-match(defaultValue,validValues)])
+                defaultValueString <- paste(defaultValueString, " [", paste(otherValues,collapse=","), "]", sep="")
+            }
+            outputLines <<- c(outputLines, paste(leadString, name, ": ", defaultValueString, sep=""))
         }
-        outputLines <<- c(outputLines, paste(leadString, name, ": ", defaultValueString, sep=""))
     }
     
     relevantInputLines <- grep("getConfigVariable", inputLines, value=TRUE, fixed=TRUE)
