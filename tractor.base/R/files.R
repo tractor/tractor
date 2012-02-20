@@ -217,60 +217,63 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     
     rotationMatrix <- info$storageMetadata$xformMatrix[1:3,1:3]
     absRotationMatrix <- abs(rotationMatrix)
-    tolerance <- 1e-3 * max(abs(voxelDims))
+    tolerance <- 1e-3 * max(abs(voxelDims[1:min(3,nDims)]))
     
-    # The rotation matrix should have exactly one nonzero element per row and column
+    # The rotation matrix should have exactly one nonzero element per row and column - if not, warn but try to figure out the closest primary orientation
     if (!equivalent(rowSums(absRotationMatrix > tolerance), c(1,1,1)) || !equivalent(colSums(absRotationMatrix > tolerance), c(1,1,1)))
-        report(OL$Error, "The image is stored in a rotated frame of reference")
+    {
+        flag(OL$Warning, "The image is stored in a rotated frame of reference")
+        tolerance <- 0.5 * max(abs(voxelDims[1:min(3,nDims)]))
+        if (!equivalent(rowSums(absRotationMatrix > tolerance), c(1,1,1)) || !equivalent(colSums(absRotationMatrix > tolerance), c(1,1,1)))
+            report(OL$Error, "Cannot work out the primary orientation of the image")
+    }
+    
+    dimPermutation <- apply(absRotationMatrix > tolerance, 1, which)
+    if (nDims > 3)
+        dimPermutation <- c(dimPermutation, 4:nDims)
+    else if (nDims < 3)
+        dimPermutation <- dimPermutation[1:nDims]
+    if (!identical(dimPermutation, seq_len(nDims)))
+    {
+        if (!metadataOnly)
+            data <- aperm(data, dimPermutation)
+        dims <- dims[dimPermutation]
+        voxelDims <- voxelDims[dimPermutation]
+    }
+        
+    # Fix signs of voxel dimensions to correspond to LAS
+    voxelDims <- abs(voxelDims) * c(-1, rep(1,nDims-1))
+        
+    # Figure out which dimensions need to be flipped - we sum by row because the data dimensions have already been permuted
+    ordering <- round(rowSums(rotationMatrix) / c(abs(voxelDims[1:min(3,nDims)]),rep(1,max(0,3-nDims))))
+    ordering <- ordering * c(-1, 1, 1)
+        
+    if (nDims == 2)
+    {
+        origin <- 1 - ordering[1:2] * round(info$storageMetadata$xformMatrix[1:2,4]/voxelDims[1:2],2)
+        origin <- ifelse(ordering[1:2] == c(1,1), origin, dims-origin+1)
+    }
     else
     {
-        dimPermutation <- apply(absRotationMatrix > tolerance, 1, which)
-        if (nDims > 3)
-            dimPermutation <- c(dimPermutation, 4:nDims)
-        else if (nDims < 3)
-            dimPermutation <- dimPermutation[1:nDims]
-        if (!identical(dimPermutation, seq_len(nDims)))
-        {
-            if (!metadataOnly)
-                data <- aperm(data, dimPermutation)
-            dims <- dims[dimPermutation]
-            voxelDims <- voxelDims[dimPermutation]
-        }
+        report(OL$Debug, "Image orientation is ", implode(c("I","P","R","","L","A","S")[(1:3)*ordering+4][dimPermutation[1:3]],sep=""))
+        origin <- c(1 - ordering[1:3] * round(info$storageMetadata$xformMatrix[1:3,4]/voxelDims[1:3],2), rep(0,nDims-3))
+        origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], dims[1:3]-origin[1:3]+1)
+    }
         
-        # Fix signs of voxel dimensions to correspond to LAS
-        voxelDims <- abs(voxelDims) * c(-1, rep(1,nDims-1))
-        
-        # Figure out which dimensions need to be flipped - we sum by row because the data dimensions have already been permuted
-        ordering <- round(rowSums(rotationMatrix) / c(abs(voxelDims[1:min(3,nDims)]),rep(1,max(0,3-nDims))))
-        ordering <- ordering * c(-1, 1, 1)
-        
-        if (nDims == 2)
-        {
-            origin <- 1 - ordering[1:2] * round(info$storageMetadata$xformMatrix[1:2,4]/voxelDims[1:2],2)
-            origin <- ifelse(ordering[1:2] == c(1,1), origin, dims-origin+1)
-        }
-        else
-        {
-            report(OL$Debug, "Image orientation is ", implode(c("I","P","R","","L","A","S")[(1:3)*ordering+4][dimPermutation[1:3]],sep=""))
-            origin <- c(1 - ordering[1:3] * round(info$storageMetadata$xformMatrix[1:3,4]/voxelDims[1:3],2), rep(0,nDims-3))
-            origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], dims[1:3]-origin[1:3]+1)
-        }
-        
-        if (!metadataOnly)
-        {
-            orderX <- (if (ordering[1] == 1) seq_len(dims[1]) else rev(seq_len(dims[1])))
-            orderY <- (if (ordering[2] == 1) seq_len(dims[2]) else rev(seq_len(dims[2])))
-            if (nDims > 2)
-                orderZ <- (if (ordering[3] == 1) seq_len(dims[3]) else rev(seq_len(dims[3])))
-            dimsToKeep <- setdiff(1:nDims, 1:3)
+    if (!metadataOnly)
+    {
+        orderX <- (if (ordering[1] == 1) seq_len(dims[1]) else rev(seq_len(dims[1])))
+        orderY <- (if (ordering[2] == 1) seq_len(dims[2]) else rev(seq_len(dims[2])))
+        if (nDims > 2)
+            orderZ <- (if (ordering[3] == 1) seq_len(dims[3]) else rev(seq_len(dims[3])))
+        dimsToKeep <- setdiff(1:nDims, 1:3)
 
-            if (nDims == 2)
-                data <- data[orderX, orderY]
-            else if (nDims == 3)
-                data <- data[orderX, orderY, orderZ]
-            else
-                data <- array(apply(data, dimsToKeep, "[", orderX, orderY, orderZ), dim=dim(data))
-        }
+        if (nDims == 2)
+            data <- data[orderX, orderY]
+        else if (nDims == 3)
+            data <- data[orderX, orderY, orderZ]
+        else
+            data <- array(apply(data, dimsToKeep, "[", orderX, orderY, orderZ), dim=dim(data))
     }
     
     imageMetadata <- MriImageMetadata$new(imagedims=dims, voxdims=voxelDims, voxunit=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, datatype=datatype, origin=origin, storedXform=info$storageMetadata$xformMatrix, tags=info$imageMetadata$tags)
