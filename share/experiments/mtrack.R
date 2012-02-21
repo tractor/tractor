@@ -13,6 +13,8 @@ runExperiment <- function ()
     seedMaskInStandardSpace <- getConfigVariable("SeedMaskInStandardSpace", FALSE)
     waypointMaskFiles <- getConfigVariable("WaypointMaskFiles", NULL, "character", errorIfInvalid=TRUE)
     waypointMasksInStandardSpace <- getConfigVariable("WaypointMasksInStandardSpace", FALSE)
+    waypointType <- getConfigVariable("WaypointType", "binary", validValues=c("binary","coded"))
+    waypointMode <- getConfigVariable("WaypointMode", "all", validValues=c("all","pairs"))
     tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"))
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL)
@@ -26,7 +28,7 @@ runExperiment <- function ()
     if (!createVolumes && !createImages)
         report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
-    if (is.null(seedMask))
+    if (is.null(seedMaskFile))
         seedMask <- session$getImageByType("mask", "diffusion")
     else
     {
@@ -43,7 +45,7 @@ runExperiment <- function ()
     
     if (is.null(waypointMaskFiles))
         waypointMasks <- NULL
-    else
+    else if (waypointType == "binary")
     {
         waypointMasks <- list()
         for (waypointFile in waypointMaskFiles)
@@ -53,27 +55,52 @@ runExperiment <- function ()
                 waypointMask <- transformStandardSpaceImage(session, waypointMask)
             waypointMasks <- c(waypointMasks, list(waypointMask))
         }
+        waypointNumbers <- seq_along(waypointMasks)
+    }
+    else
+    {
+        if (length(waypointMaskFiles) > 1)
+            report(OL$Error, "Only one waypoint mask may be specified if it is region-coded")
+        
+        waypointMasks <- list()
+        waypointMask <- newMriImageFromFile(waypointMaskFiles)
+        waypointNumbers <- unique(as.vector(waypointMask$getData()))
+        for (waypointNumber in waypointNumbers)
+            waypointMasks <- c(waypointMasks, list(newMriImageWithSimpleFunction(waypointMask, function (i) ifelse(i==waypointNumber,1,0))))
     }
     
-    if (tracker == "fsl")
-        result <- runProbtrackWithSession(session, mode="seedmask", seedMask=seedMask, waypointMasks=waypointMasks, requireImage=TRUE, nSamples=nSamples)
-    else
+    if (is.null(waypointMasks))
+        combinations <- matrix(0, nrow=1, ncol=1)
+    else if (waypointMode == "all")
+        combinations <- matrix(seq_along(waypointNumbers), ncol=1)
+    else if (waypointMode == "pairs")
+        combinations <- combn(length(waypointNumbers), 2)
+    
+    if (tracker == "tractor")
     {
         require(tractor.native)
         result <- trackWithSession(session, seedMask, requireImage=is.null(waypointMasks), requireStreamlines=!is.null(waypointMasks), nSamples=nSamples)
-        if (!is.null(waypointMasks))
+    }
+    
+    for (i in 1:ncol(combinations))
+    {
+        if (tracker == "fsl")
+            result <- runProbtrackWithSession(session, mode="seedmask", seedMask=seedMask, waypointMasks=(if (is.null(waypointMasks)) NULL else waypointMasks[combinations[,i]]), requireImage=TRUE, nSamples=nSamples)
+        else if (!is.null(waypointMasks))
         {
-            streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks)
+            # This is slightly fragile - don't replace streamlines in the result
+            streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks[combinations[,i]])
             result$image <- newMriImageAsVisitationMap(streamlines)
             result$nSamples <- streamlines$nStreamlines()
         }
-    }
     
-    report(OL$Info, "Creating tract images")
-    if (createVolumes)
-        writeMriImageToFile(result$image, tractName)
-    if (createImages)
-        writePngsForResult(result, prefix=tractName, threshold=vizThreshold, showSeed=showSeed)
+        report(OL$Info, "Creating tract images")
+        currentTractName <- ifelse(ncol(combinations)==1, tractName, paste(tractName,implode(waypointNumbers[combinations[,i]],sep="_"),sep="_"))
+        if (createVolumes)
+            writeMriImageToFile(result$image, currentTractName)
+        if (createImages)
+            writePngsForResult(result, prefix=currentTractName, threshold=vizThreshold, showSeed=showSeed)
+    }
     
     invisible (NULL)
 }
