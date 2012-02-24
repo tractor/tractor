@@ -17,12 +17,12 @@ QUICK INSTALLATION FOR KNOWLEDGEABLE USERS
      make install-all
 
 3. Create or update the TRACTOR_HOME environment variable to point to the
-"tractor" directory, include ${TRACTOR_HOME}/bin on the PATH and
-${TRACTOR_HOME}/man on the MANPATH.
+   "tractor" directory, include ${TRACTOR_HOME}/bin on the PATH and
+   ${TRACTOR_HOME}/man on the MANPATH.
 
 4. Consider installing ImageMagick <http://www.imagemagick.org/> and/or FSL
-<http://www.fmrib.ox.ac.uk/fsl/> if they are not already installed. They are
-used by some elements of TractoR's functionality.
+   <http://www.fmrib.ox.ac.uk/fsl/> if they are not already installed. They are
+   used by some elements of TractoR's functionality.
 
 DETAILS AND STEP-BY-STEP EXPLANATION
 ====================================
