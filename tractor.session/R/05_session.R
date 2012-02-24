@@ -221,6 +221,7 @@ standardiseSessionHierarchy <- function (session, includeDirectories = FALSE)
         }
     }
     
+    # We don't change the directory map by default, since it can point to another session, and so the move could break things
     mapFileName <- file.path(session$getDirectory("root"), "map.yaml")
     if (includeDirectories && file.exists(mapFileName))
     {
