@@ -1,4 +1,4 @@
-MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",subdirectoryCache="list",mapCache="list"), methods=list(
+MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",subdirectoryCache.="list",mapCache.="list"), methods=list(
     initialize = function (directory = NULL, ...)
     {
         if (is.null(directory))
@@ -9,7 +9,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             report(OL$Error, "Session directory does not exist")
         else
         {
-            object <- initFields(directory=expandFileName(directory), subdirectoryCache=list(), mapCache=list())
+            object <- initFields(directory=expandFileName(directory), subdirectoryCache.=list(), mapCache.=list())
             object$updateCaches()
             updateSessionHierarchy(object)
             return (object)
@@ -27,10 +27,10 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             
             if (type == "root")
                 requiredDir <- root
-            else if (!(type %in% names(subdirectoryCache)))
+            else if (!(type %in% names(subdirectoryCache.)))
                 report(OL$Error, "Directory type \"", type, "\" is not valid")
             else
-                requiredDir <- expandFileName(subdirectoryCache[[type]], base=root)
+                requiredDir <- expandFileName(subdirectoryCache.[[type]], base=root)
 
             if (createIfMissing && !file.exists(requiredDir))
                 dir.create(requiredDir, recursive=TRUE)
@@ -48,7 +48,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getImageFileNameByType = function (type, place = NULL, index = 1) { return (getImageFileNameForSession(.self, type, place, index)) },
     
-    getMap = function (place) { return (mapCache[[place]]) },
+    getMap = function (place) { return (mapCache.[[place]]) },
     
     getObjectDirectory = function (createIfMissing = TRUE)
     {
@@ -71,7 +71,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         else
             subdirectories <- .DefaultSessionDirectories
             
-        .self$subdirectoryCache <- subdirectories
+        .self$subdirectoryCache. <- subdirectories
             
         maps <- list()
         for (place in names(.DefaultSessionMap))
@@ -86,7 +86,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
                 maps[[place]] <- .DefaultSessionMap[[place]]
         }
             
-        .self$mapCache <- maps
+        .self$mapCache. <- maps
     }
 ))
 
