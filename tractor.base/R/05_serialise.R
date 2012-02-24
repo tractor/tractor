@@ -29,10 +29,10 @@ SerialisableObject <- setRefClass("SerialisableObject", methods=list(
         names(serialisedObject) <- fields
         attr(serialisedObject, "originalClass") <- originalClass
 
-        if (is.null(file))
-            invisible (serialisedObject)
-        else
+        if (!is.null(file))
             save(serialisedObject, file=file)
+        
+        invisible (serialisedObject)
     }
 ))
 
