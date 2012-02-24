@@ -50,12 +50,12 @@ relativePath <- function (path, referencePath)
     return (implode(newPieces, sep=.Platform$file.sep))
 }
 
-expandFileName <- function (fileName)
+expandFileName <- function (fileName, base = getwd())
 {
     fileName <- path.expand(fileName)
     
     # A leading slash, with (Windows) or without (Unix) a letter and colon, indicates an absolute path
-    fileName <- ifelse(fileName %~% "^([A-Za-z]:)?/", fileName, file.path(getwd(),fileName))
+    fileName <- ifelse(fileName %~% "^([A-Za-z]:)?/", fileName, file.path(base,fileName))
     
     # Remove all instances of '/.' (which are redundant), recursively collapse
     # instances of '/..', and remove trailing slashes

@@ -1,4 +1,13 @@
 SerialisableObject <- setRefClass("SerialisableObject", methods=list(
+    fields = function ()
+    {
+        allFieldNames <- names(.self$getRefClass()$fields())
+        if (is.null(allFieldNames))
+            return (NULL)
+        else
+            return (allFieldNames[allFieldNames %!~% "\\.$"])
+    },
+    
     methods = function () { return (.self$getRefClass()$methods()) },
     
     serialise = function (file = NULL)
@@ -6,7 +15,8 @@ SerialisableObject <- setRefClass("SerialisableObject", methods=list(
         originalClass <- class(.self)
         attributes(originalClass) <- NULL
         
-        fields <- names(.self$getRefClass()$fields())
+        # Fields with names ending in "." will not be returned, and therefore not be serialised
+        fields <- .self$fields()
         serialisedObject <- list()
 
         for (field in fields)
@@ -22,10 +32,10 @@ SerialisableObject <- setRefClass("SerialisableObject", methods=list(
         names(serialisedObject) <- fields
         attr(serialisedObject, "originalClass") <- originalClass
 
-        if (is.null(file))
-            invisible (serialisedObject)
-        else
+        if (!is.null(file))
             save(serialisedObject, file=file)
+        
+        invisible (serialisedObject)
     }
 ))
 

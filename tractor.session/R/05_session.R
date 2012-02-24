@@ -1,5 +1,5 @@
-MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character"), methods=list(
-    initialize = function (directory = NULL)
+MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",subdirectoryCache.="list",mapCache.="list"), methods=list(
+    initialize = function (directory = NULL, ...)
     {
         if (is.null(directory))
             return (initFields(directory=""))
@@ -9,7 +9,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             report(OL$Error, "Session directory does not exist")
         else
         {
-            object <- initFields(directory=expandFileName(directory))
+            object <- initFields(directory=expandFileName(directory), subdirectoryCache.=list(), mapCache.=list())
+            object$updateCaches()
             updateSessionHierarchy(object)
             return (object)
         }
@@ -21,22 +22,19 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             return (directory)
         else
         {
-            requiredDir <- switch(type, root="tractor",
-                                        diffusion=file.path("tractor","diffusion"),
-                                        camino=file.path("tractor","camino"),
-                                        fdt=file.path("tractor","fdt"),
-                                        bedpost=file.path("tractor","fdt.bedpostX"),
-                                        probtrack=file.path("tractor","fdt.track"),
-                                        "")
-            if (requiredDir == "")
+            type <- tolower(type)
+            root <- file.path(directory, "tractor")
+            
+            if (type == "root")
+                requiredDir <- root
+            else if (!(type %in% names(subdirectoryCache.)))
                 report(OL$Error, "Directory type \"", type, "\" is not valid")
             else
-            {
-                requiredDir <- file.path(directory, requiredDir)
-                if (createIfMissing && !file.exists(requiredDir))
-                    dir.create(requiredDir, recursive=TRUE)
-                return (requiredDir)
-            }
+                requiredDir <- expandFileName(subdirectoryCache.[[type]], base=root)
+
+            if (createIfMissing && !file.exists(requiredDir))
+                dir.create(requiredDir, recursive=TRUE)
+            return (requiredDir)
         }
     },
     
@@ -50,6 +48,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getImageFileNameByType = function (type, place = NULL, index = 1) { return (getImageFileNameForSession(.self, type, place, index)) },
     
+    getMap = function (place) { return (mapCache.[[place]]) },
+    
     getObjectDirectory = function (createIfMissing = TRUE)
     {
         objectDir <- file.path(getDirectory("root"), "objects")
@@ -58,7 +58,36 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         return (objectDir)
     },
     
-    getObjectFileName = function (object) { return (file.path(getObjectDirectory(), ensureFileSuffix(object,"Rdata"))) }
+    getObjectFileName = function (object) { return (file.path(getObjectDirectory(), ensureFileSuffix(object,"Rdata"))) },
+    
+    updateCaches = function ()
+    {
+        mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")
+        if (file.exists(mapFileName))
+        {
+            subdirectories <- c(readYaml(mapFileName), .DefaultSessionDirectories)
+            subdirectories <- subdirectories[!duplicated(names(subdirectories))]
+        }
+        else
+            subdirectories <- .DefaultSessionDirectories
+            
+        .self$subdirectoryCache. <- subdirectories
+            
+        maps <- list()
+        for (place in names(.DefaultSessionMap))
+        {
+            mapFileName <- file.path(.self$getDirectory(place), "map.yaml")
+            if (file.exists(mapFileName))
+            {
+                currentMap <- c(readYaml(mapFileName), .DefaultSessionMap[[place]])
+                maps[[place]] <- currentMap[!duplicated(names(currentMap))]
+            }
+            else
+                maps[[place]] <- .DefaultSessionMap[[place]]
+        }
+            
+        .self$mapCache. <- maps
+    }
 ))
 
 newSessionFromDirectory <- function (directory)
@@ -76,24 +105,16 @@ getImageFileNameForSession <- function (session, type, place = NULL, index = 1)
     
     if (is.null(place))
     {
-        locs <- sapply(.DefaultSessionMap, function(x) type %in% names(x))
-        if (sum(locs) > 1)
-            report(OL$Error, "The specified file type (\"", type, "\") can be present in multiple places")
-        else if (sum(locs) < 1)
+        locs <- which(sapply(.DefaultSessionMap, function(x) type %in% names(x)))
+        if (length(locs) < 1)
             report(OL$Error, "The specified file type (\"", type, "\") does not have a standard location")
         else
-            place <- names(.DefaultSessionMap)[locs]
+            place <- names(.DefaultSessionMap)[locs[1]]
     }
     
-    map <- .DefaultSessionMap[[place]]
-    directory <- session$getDirectory(place)
-    if (file.exists(file.path(directory, "map.yaml")))
-    {
-        map <- c(readYaml(file.path(directory, "map.yaml")), map)
-        map <- map[!duplicated(names(map))]
-    }
-    
+    map <- session$getMap(place)
     names(map) <- tolower(names(map))
+    directory <- session$getDirectory(place)
     
     fileName <- map[[type]]
     if (is.null(fileName))
@@ -144,10 +165,12 @@ updateSessionHierarchy <- function (session)
         objectDirectory <- session$getObjectDirectory(createIfMissing=FALSE)
         if (file.exists(objectDirectory))
             unlink(objectDirectory, recursive=TRUE)
+        
+        session$updateCaches()
     }
 }
 
-standardiseSessionHierarchy <- function (session)
+standardiseSessionHierarchy <- function (session, includeDirectories = FALSE)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "The specified session is not an MriSession object")
@@ -155,9 +178,10 @@ standardiseSessionHierarchy <- function (session)
     for (dirName in names(.DefaultSessionMap))
     {
         directory <- session$getDirectory(dirName)
-        if (file.exists(file.path(directory, "map.yaml")))
+        mapFileName <- file.path(directory, "map.yaml")
+        if (file.exists(mapFileName))
         {
-            map <- readYaml(file.path(directory, "map.yaml"))
+            map <- readYaml(mapFileName)
             names <- intersect(names(map), names(.DefaultSessionMap[[dirName]]))
             files <- file.path(directory, unlist(map[names]))
             
@@ -193,9 +217,27 @@ standardiseSessionHierarchy <- function (session)
                 copyImageFiles(currentFiles, file.path(directory,unlist(.DefaultSessionMap[[dirName]][currentNames])), deleteOriginals=TRUE)
             }
             
-            unlink(file.path(directory, "map.yaml"))
+            unlink(mapFileName)
         }
     }
+    
+    # We don't change the directory map by default, since it can point to another session, and so the move could break things
+    mapFileName <- file.path(session$getDirectory("root"), "map.yaml")
+    if (includeDirectories && file.exists(mapFileName))
+    {
+        map <- readYaml(mapFileName)
+        names <- intersect(names(map), names(.DefaultSessionDirectories))
+        for (name in names)
+        {
+            oldLoc <- session$getDirectory(name)
+            newLoc <- expandFileName(.DefaultSessionDirectories[[name]], base=session$getDirectory("root"))
+            file.rename(oldLoc, newLoc)
+        }
+        
+        unlink(mapFileName)
+    }
+    
+    session$updateCaches()
 }
 
 createCaminoFilesForSession <- function (session)
