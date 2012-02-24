@@ -105,13 +105,11 @@ getImageFileNameForSession <- function (session, type, place = NULL, index = 1)
     
     if (is.null(place))
     {
-        locs <- sapply(.DefaultSessionMap, function(x) type %in% names(x))
-        if (sum(locs) > 1)
-            report(OL$Error, "The specified file type (\"", type, "\") can be present in multiple places")
-        else if (sum(locs) < 1)
+        locs <- which(sapply(.DefaultSessionMap, function(x) type %in% names(x)))
+        if (length(locs) < 1)
             report(OL$Error, "The specified file type (\"", type, "\") does not have a standard location")
         else
-            place <- names(.DefaultSessionMap)[locs]
+            place <- names(.DefaultSessionMap)[locs[1]]
     }
     
     map <- session$getMap(place)
