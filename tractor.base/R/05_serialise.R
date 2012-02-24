@@ -1,4 +1,10 @@
 SerialisableObject <- setRefClass("SerialisableObject", methods=list(
+    fields = function ()
+    {
+        allFieldNames <- names(.self$getRefClass()$fields())
+        return (allFieldNames[allFieldNames %!~% "\\.$"])
+    },
+    
     methods = function () { return (.self$getRefClass()$methods()) },
     
     serialise = function (file = NULL)
@@ -6,7 +12,8 @@ SerialisableObject <- setRefClass("SerialisableObject", methods=list(
         originalClass <- class(.self)
         attributes(originalClass) <- NULL
         
-        fields <- names(.self$getRefClass()$fields())
+        # Fields with names ending in "." will not be returned, and therefore not be serialised
+        fields <- .self$fields()
         serialisedObject <- list()
 
         for (field in fields)
