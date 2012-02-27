@@ -124,17 +124,22 @@ runExperiment <- function ()
             }
             else
             {
-                report(OL$Info, "Volumes ", implode(zeroes,sep=", ",finalSep=" and "), " are T2-weighted (b=", minBValue, ")")
+                report(OL$Info, "There are ", length(zeroes), " T2-weighted (b=", minBValue, ") volumes")
                 choice <- -1
 
-                while (!(choice %in% zeroes))
+                while (!(choice %in% seq_along(zeroes)))
                 {
-                    choice <- ask("Use which one as the reference [s to show in fslview]?")
+                    choice <- ask("Use which one as the reference [1-", length(zeroes), "; s to show in fslview]?")
                     if (tolower(choice) == "s")
-                        showImagesInFslview(session$getImageByType("rawdata","diffusion"), writeToAnalyzeFirst=TRUE)
+                    {
+                        zeroVolumes <- newMriImageFromFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=zeroes)
+                        showImagesInFslview(zeroVolumes, writeToAnalyzeFirst=TRUE)
+                    }
                     else
                         choice <- as.integer(choice)
                 }
+                
+                choice <- zeroes[choice]
             }
             
             writeLines(as.character(choice), file.path(session$getDirectory("diffusion"),"refb0-index.txt"))
