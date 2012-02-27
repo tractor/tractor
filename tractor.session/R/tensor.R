@@ -13,7 +13,13 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
     method <- match.arg(method)
     
     data <- promote(data, byrow=TRUE)
+    if (any(data < 0))
+    {
+        report(OL$Warning, "Data contains ", sum(data<0), " negative values - these will be ignored")
+        data[data<0] <- NA
+    }
     logData <- ifelse(data==0, 0, log(data))
+    rm(data)
     
     if (is.matrix(scheme))
         bMatrix <- (-scheme)
@@ -36,17 +42,19 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
         {
             voxelLogData <- logData[i,]
             voxelResiduals <- solution$residuals[,i]
-            previousSumOfSquares <- sum(voxelResiduals^2)
+            previousSumOfSquares <- sum(voxelResiduals^2, na.rm=TRUE)
             sumOfSquaresChange <- Inf
             tempSolution <- NULL
             
             while (sumOfSquaresChange > convergenceLevel)
             {
-                # Weights are simply the predicted signals
-                tempSolution <- lsfit(bMatrix, voxelLogData, wt=exp(voxelLogData-voxelResiduals))
+                # Weights are simply the predicted signals; negative data values get zero weight
+                weights <- exp(voxelLogData - voxelResiduals)
+                weights[is.na(weights)] <- 0
+                tempSolution <- lsfit(bMatrix, voxelLogData, wt=weights)
                 voxelResiduals <- tempSolution$residuals
                 
-                sumOfSquares <- sum(tempSolution$residuals^2)
+                sumOfSquares <- sum(tempSolution$residuals^2, na.rm=TRUE)
                 sumOfSquaresChange <- abs((previousSumOfSquares - sumOfSquares) / previousSumOfSquares)
                 previousSumOfSquares <- sumOfSquares
             }
@@ -55,7 +63,7 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
         }
         
         report(OL$Info, "Applying iterative weighted least-squares")
-        values <- sapply(1:nrow(data), weightedLeastSquaresFit)
+        values <- sapply(1:nrow(logData), weightedLeastSquaresFit)
         
         solution$coefficients <- values[1:7,]
         solution$residuals <- values[-(1:7),]
@@ -83,7 +91,7 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
         eigensystems <- apply(returnValue$tensors, 2, calculateEigensystem)
         metrics <- apply(eigensystems[1:3,,drop=FALSE], 2, calculateMetrics)
         
-        returnValue <- c(returnValue, list(eigenvalues=eigensystems[1:3,], eigenvectors=array(eigensystems[4:12,],dim=c(3,3,nrow(data))), md=metrics[1,], fa=metrics[2,]))
+        returnValue <- c(returnValue, list(eigenvalues=eigensystems[1:3,], eigenvectors=array(eigensystems[4:12,],dim=c(3,3,nrow(logData))), md=metrics[1,], fa=metrics[2,]))
     }
     
     return (returnValue)
