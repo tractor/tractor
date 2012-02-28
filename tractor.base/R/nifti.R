@@ -209,8 +209,8 @@ newMriImageFromNifti <- function (fileNames, metadataOnly = FALSE, warnIfNotLas 
         voxelDims <- abs(voxelDims) * c(-1, rep(1,nDims-1))
         
         # Figure out which dimensions need to be flipped
-        ordering <- round(colSums(rotationMatrix) / c(abs(voxelDims),rep(1,max(0,3-nDims))))
-        ordering <- ordering * c(-1, rep(1,nDims-1))
+        ordering <- round(colSums(rotationMatrix) / c(abs(voxelDims[1:min(3,nDims)]),rep(1,max(0,3-nDims))))
+        ordering <- ordering * c(-1, 1, 1)
         
         if (warnIfNotLas && any(ordering < 0))
             flag(OL$Warning, "NIfTI image is not stored in the LAS convention - problems may occur")
