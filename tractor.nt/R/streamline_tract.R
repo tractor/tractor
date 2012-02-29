@@ -22,12 +22,16 @@
 
 .StreamlineTract <- function (.line, .seedIndex, .originalSeedPoint, .metadata)
 {
-    if (!is.matrix(.line) || (dim(.line)[2] != 3))
-        output(OL$Error, "Streamline must be specified as a matrix with 3 columns")
     if (!isStreamlineTractMetadata(.metadata))
         output(OL$Error, "Specified metadata is not valid")
     
-    .pointSpacings <- apply(diff(.line), 1, vectorLength)
+    .line <- promote(.line, byrow=TRUE)
+    if (dim(.line)[2] != 3)
+        output(OL$Error, "Streamline must be specified as a matrix with 3 columns")
+    if (dim(.line)[1] == 1)
+        .pointSpacings <- numeric(0)
+    else
+        .pointSpacings <- apply(diff(.line), 1, vectorLength)
     
     self <- list(
         getLine = function () { return (.line) },
