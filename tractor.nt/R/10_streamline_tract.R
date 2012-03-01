@@ -111,9 +111,9 @@ StreamlineCollectionTract <- setRefClass("StreamlineCollectionTract", contains="
         if (is.na(i))
             return (points)
         else if (i == .self$nStreamlines())
-            return (points[startIndices[i]:nrow(points),])
+            return (points[startIndices[i]:nrow(points),,drop=FALSE])
         else
-            return (points[startIndices[i]:(startIndices[i+1]-1),])
+            return (points[startIndices[i]:(startIndices[i+1]-1),,drop=FALSE])
     },
     
     getSeedIndex = function (i = 1) { return (seedIndices[i]) },
