@@ -13,7 +13,7 @@ runExperiment <- function ()
     seedMaskInStandardSpace <- getConfigVariable("SeedMaskInStandardSpace", FALSE)
     waypointMaskFiles <- getConfigVariable("WaypointMaskFiles", NULL, "character", errorIfInvalid=TRUE)
     waypointMasksInStandardSpace <- getConfigVariable("WaypointMasksInStandardSpace", FALSE)
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"))
+    tracker <- getConfigVariable("Tracker", "fsl", validValues=c("fsl","tractor"))
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL)
     
