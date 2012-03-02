@@ -20,8 +20,9 @@ runExperiment <- function ()
         if (imageFileExists(session$getImageFileNameByType("data","diffusion")))
         {
             metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("data","diffusion"))
-            dims <- paste(implode(metadata$getDimensions(), " x "), "voxels", sep=" ")
-            voxelDims <- paste(implode(abs(round(metadata$getVoxelDimensions(),3))," x "), ifelse(metadata$getVoxelUnit()=="","",paste(" ",metadata$getVoxelUnit(),sep="")), sep="")
+            metadataSummary <- metadata$summarise()
+            dims <- metadataSummary$values[2]
+            voxelDims <- metadataSummary$values[4]
         }
         else
             dims <- voxelDims <- NA

@@ -4,7 +4,7 @@ GENERAL:
 DIFFUSION:
   Preprocessing complete        : TRUE
   Data dimensions               : 96 x 96 x 25 x 13 voxels
-  Voxel dimensions              : 2.5 x 2.5 x 5 x 1 mm
+  Voxel dimensions              : 2.5 x 2.5 x 5 mm x 1 s
   Diffusion b-values            : 0, 1000 s/mm^2
   Number of gradient directions : 1, 12
   Diffusion tensors fitted      : TRUE
