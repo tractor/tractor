@@ -26,7 +26,7 @@ runExperiment <- function ()
     if (!createVolumes && !createImages)
         report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
-    if (is.null(seedMask))
+    if (is.null(seedMaskFile))
         seedMask <- session$getImageByType("mask", "diffusion")
     else
     {
