@@ -521,7 +521,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         voxelDims[throughSliceDirection] <- sliceDim
     }
 
-    report(OL$Info, "Data set contains ", nVolumes, " volumes; ", nSlices, " slices per volume")
+    report(OL$Info, "Data set contains ", nVolumes, " volume(s); ", nSlices, " slice(s) per volume")
     data <- array(NA, dim=imageDims)
 
     if (readDiffusionParams)
