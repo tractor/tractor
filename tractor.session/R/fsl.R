@@ -22,8 +22,7 @@ showImagesInFslview <- function (..., writeToAnalyzeFirst = FALSE, wait = FALSE)
             report(OL$Error, "Images must be specified as MriImage objects or file names")
         if (writeToAnalyzeFirst)
         {
-            # fslview is fussy about data types, so write the image into
-            # Analyze format to avoid a crash
+            # fslview is fussy about data types, so write the image into Analyze format to avoid a crash
             imageLoc <- threadSafeTempFile()
             if (is.character(i))
                 i <- newMriImageFromFile(i)
@@ -39,7 +38,7 @@ showImagesInFslview <- function (..., writeToAnalyzeFirst = FALSE, wait = FALSE)
         }
     })
     
-    execute("fslview", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait)
+    execute("fslview", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait, silent=TRUE)
     
     # If we're not waiting for fslview we can't delete the image yet
     if (writeToAnalyzeFirst && wait)
