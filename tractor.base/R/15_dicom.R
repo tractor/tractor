@@ -258,7 +258,7 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
     isSigned <- isTRUE(dicom$getTagValue(0x0028, 0x0103) == 1)
     datatype <- list(type="integer", size=bitsAllocated/8, isSigned=isSigned)
     
-    metadata <- MriImageMetadata$new(imagedims=c(columns,rows,slices), voxdims=voxdims, voxunit="mm", source=dicom$getSource(), datatype=datatype, origin=rep(1,nDims)) 
+    metadata <- MriImageMetadata$new(imagedims=c(columns,rows,slices), voxdims=voxdims, voxunit=c("mm","s"), source=dicom$getSource(), datatype=datatype, origin=rep(1,nDims)) 
     invisible (metadata)
 }
 

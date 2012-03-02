@@ -133,16 +133,17 @@ readNifti <- function (fileNames)
         report(OL$Error, "Data type of file ", fileNames$imageFile, " (", typeCode, ") is not supported")
     datatype <- getDataTypeByNiftiCode(typeCode)
     
-    # We're only interested in the bottom 3 bits (the spatial unit)
-    unitCode <- packBits(c(intToBits(unitCode)[1:3], intToBits(0L)[4:32]), "integer")
-    unit <- names(.Nifti$units)[which(.Nifti$units == unitCode)]
-    if (length(unit) == 0)
-        unit <- NULL
+    # We're only interested in the bottom 5 bits (spatial and temporal units)
+    spatialUnitCode <- packBits(intToBits(unitCode) & intToBits(7), "integer")
+    temporalUnitCode <- packBits(intToBits(unitCode) & intToBits(24), "integer")
+    voxelUnit <- names(.Nifti$units)[.Nifti$units %in% c(spatialUnitCode,temporalUnitCode)]
+    if (length(voxelUnit) == 0)
+        voxelUnit <- NULL
     
     dimsToKeep <- 1:max(which(dims > 1))
     voxelDims[2:4] <- voxelDims[2:4] * sign(diag(xformMatrix)[1:3])
     
-    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=unit, source=fileNames$fileStem, datatype=datatype, tags=list())
+    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=voxelUnit, source=fileNames$fileStem, datatype=datatype, tags=list())
     
     storageMetadata <- list(dataOffset=dataOffset, dataScalingSlope=slopeAndIntercept[1], dataScalingIntercept=slopeAndIntercept[2], xformMatrix=xformMatrix, endian=endian)
     
@@ -154,7 +155,7 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
     
-    description <- "TractoR NIfTI writer v1.0.1"
+    description <- "TractoR NIfTI writer v2.1.0"
     fileFun <- (if (gzipped) gzfile else file)
     
     if (is.null(datatype))
@@ -179,13 +180,13 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     fullDims <- c(ndims, image$getDimensions(), rep(1,7-ndims))
     fullVoxelDims <- c(-1, abs(image$getVoxelDimensions()), rep(0,7-ndims))
     
-    # The 8 below is for seconds; we default to 10 (mm/sec)
+    # We default to 10 (mm and s)
     unitName <- image$getVoxelUnit()
-    unitCode <- as.numeric(.Nifti$units[which(names(.Nifti$units) == unitName)])
+    unitCode <- as.numeric(.Nifti$units[names(.Nifti$units) %in% unitName])
     if (length(unitCode) == 0)
         unitCode <- 10
     else
-        unitCode <- unitCode + 8
+        unitCode <- sum(unitCode)
     
     origin <- (image$getOrigin() - 1) * abs(image$getVoxelDimensions())
     if (length(origin) > 3)

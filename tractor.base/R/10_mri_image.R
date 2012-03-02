@@ -66,8 +66,18 @@ MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject
             datatypeString <- paste(datatypeString, " ", datatype$type, ", ", datatype$size*8, " bits/voxel", sep="")
         }
         
+        spatialUnit <- voxunit[voxunit %~% "m$"]
+        temporalUnit <- voxunit[voxunit %~% "s$"]
+        voxelDimString <- paste(implode(round(abs(voxdims[1:min(3,length(voxdims))]),5), sep=" x "), ifelse(length(spatialUnit)==1,paste(" ",spatialUnit,sep=""),""), sep="")
+        if (length(voxdims) > 3)
+            voxelDimString <- paste(voxelDimString, " x ", round(abs(voxdims[4]),5), ifelse(length(spatialUnit)==1 && length(temporalUnit)==1,paste(" ", temporalUnit,sep=""),""), sep="")
+        if (length(voxdims) > 4)
+            voxelDimString <- paste(voxelDimString, " x ", implode(round(abs(voxdims[5:length(voxdims)]),5), sep=" x "), sep="")
+        if (identical(voxunit,"unknown"))
+            voxelDimString <- paste(voxelDimString, "(units unknown)", sep=" ")
+        
         labels <- c("Image source", "Image dimensions", "Coordinate origin", "Voxel dimensions", "Data type", "Additional tags")
-        values <- c(source, paste(implode(imagedims, sep=" x "),"voxels",sep=" "), paste("(",implode(round(origin,2), sep=","),")",sep=""), paste(implode(round(abs(voxdims),5), sep=" x "),ifelse(voxunit=="unknown","(units unknown)",voxunit),sep=" "), datatypeString, length(tags$keys))
+        values <- c(source, paste(implode(imagedims, sep=" x "),"voxels",sep=" "), paste("(",implode(round(origin,2), sep=","),")",sep=""), voxelDimString, datatypeString, length(tags$keys))
         return (list(labels=labels, values=values))
     }
 ))
@@ -151,13 +161,13 @@ setAs("MriImage", "nifti", function (from) {
     data <- as(from$getData(), "array")
     storage.mode(data) <- .Nifti$datatypes$rTypes[typeIndex]
     
-    # The 8 below is for seconds; we default to 10 (mm/sec)
+    # We default to 10 (mm and s)
     unitName <- from$getVoxelUnit()
-    unitCode <- as.numeric(.Nifti$units[which(names(.Nifti$units) == unitName)])
+    unitCode <- as.numeric(.Nifti$units[names(.Nifti$units) %in% unitName])
     if (length(unitCode) == 0)
         unitCode <- 10
     else
-        unitCode <- unitCode + 8
+        unitCode <- sum(unitCode)
     
     nDims <- from$getDimensionality()
     fullDims <- c(nDims, abs(from$getDimensions()), rep(1,7-nDims))
@@ -189,7 +199,8 @@ setAs("nifti", "MriImage", function (from) {
     voxelDims3D <- c(voxelDims, rep(0,max(0,3-nDims))) * c(-1,1,1)
     
     spatialUnitCode <- packBits(intToBits(from@xyzt_units) & intToBits(7), "integer")
-    voxelUnit <- names(.Nifti$units)[which(.Nifti$units == spatialUnitCode)]
+    temporalUnitCode <- packBits(intToBits(from@xyzt_units) & intToBits(24), "integer")
+    voxelUnit <- names(.Nifti$units)[.Nifti$units %in% c(spatialUnitCode,temporalUnitCode)]
     if (length(voxelUnit) == 0)
         voxelUnit <- NULL
     
