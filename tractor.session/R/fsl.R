@@ -104,11 +104,11 @@ runDtifitWithSession <- function (session)
     createFdtFilesForSession(session)
     
     report(OL$Info, "Running dtifit to do tensor fitting...")
-    paramString <- paste("-k", session$getImageFileNameByType("data","fdt"), "-m", session$getImageFileNameByType("mask","fdt"), "-r", file.path(targetDir,"bvecs"), "-b", file.path(targetDir,"bvals"), "-o", file.path(targetDir,"dti"), sep=" ")
+    paramString <- paste("-k", session$getImageFileNameByType("data","fdt"), "-m", session$getImageFileNameByType("mask","fdt"), "-r", file.path(targetDir,"bvecs"), "-b", file.path(targetDir,"bvals"), "-o", file.path(targetDir,"dti"), "--sse", sep=" ")
     execute("dtifit", paramString, errorOnFail=TRUE)
     
-    names <- c("s0", "fa", "md", "eigenvalue", "eigenvalue", "eigenvalue", "eigenvector", "eigenvector", "eigenvector")
-    indices <- c(1, 1, 1, 1:3, 1:3)
+    names <- c("s0", "fa", "md", "eigenvalue", "eigenvalue", "eigenvalue", "eigenvector", "eigenvector", "eigenvector", "sse")
+    indices <- c(1, 1, 1, 1:3, 1:3, 1)
     for (i in seq_along(names))
         symlinkImageFiles(session$getImageFileNameByType(names[i],"fdt",indices[i]), session$getImageFileNameByType(names[i],"diffusion",indices[i]), overwrite=TRUE)
 }
