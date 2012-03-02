@@ -84,8 +84,8 @@ runExperiment <- function ()
         if (tracker == "tractor")
         {
             require("tractor.native")
-            result <- trackWithSession(currentSession, bestSeed, nSamples=nSamples, requireImage=FALSE, requireStreamlineSet=TRUE)
-            streamSet <- result$streamlineSet
+            result <- trackWithSession(currentSession, bestSeed, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE)
+            streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
         }
         else
             streamSet <- newStreamlineSetTractFromProbtrack(currentSession, bestSeed, nSamples=nSamples)
@@ -147,7 +147,7 @@ runExperiment <- function ()
         report(OL$Info, "Creating visitation map")
         metadata <- newMriImageMetadataFromFile(currentSession$getImageFileNameByType("fa","diffusion"))
         visitationMap <- newMriImageAsVisitationMap(streamSet, metadata)
-        fakeResult <- list(image=visitationMap, nSamples=streamSet$nStreamlines(), session=currentSession, seed=bestSeed)
+        fakeResult <- list(image=visitationMap, nSamples=streamSet$nStreamlines(), session=currentSession, seeds=promote(bestSeed,byrow=TRUE))
         
         currentTractName <- paste(tractName, "_session", i, sep="")
         if (createVolumes)

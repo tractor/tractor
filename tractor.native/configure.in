@@ -1,5 +1,5 @@
 AC_PREREQ(2.61)
-AC_INIT(tractor.native, 1.7.1)
+AC_INIT(tractor.native, 2.1.0)
 
 # ===========================================================================
 #           http://www.nongnu.org/autoconf-archive/check_zlib.html
@@ -116,7 +116,7 @@ fi
 
 # ===========================================================================
 
-AC_CONFIG_SRCDIR([src/nifti1.h])
+AC_CONFIG_SRCDIR([src/config.h.in])
 AC_CONFIG_HEADER([src/config.h])
 
 # Checks for programs.
@@ -127,11 +127,12 @@ CHECK_ZLIB()
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdlib.h string.h])
+AC_CHECK_HEADERS([stddef.h stdlib.h string.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_INT16_T
+AC_TYPE_INT32_T
 AC_TYPE_SIZE_T
 
 # Checks for library functions.

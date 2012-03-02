@@ -1,3 +1,10 @@
+getSeedCentrePointForResult <- function (probtrackResult)
+{
+    seedPoints <- promote(probtrackResult$seeds, byrow=TRUE)
+    seedCentre <- round(apply(seedPoints, 2, median))
+    return (seedCentre)
+}
+
 displayProbtrackResult <- function (probtrackResult, axes = 1:3, colourScale = 2, baseImage = "fa", ...)
 {
     if (!is.numeric(axes) || any(axes < 1 | axes > 3))
@@ -8,9 +15,11 @@ displayProbtrackResult <- function (probtrackResult, axes = 1:3, colourScale = 2
     images <- createWeightingAndMetricImagesForResult(probtrackResult, ...)
     finalImage <- newMriImageWithBinaryFunction(images$metric, images$weight, "*")
     
+    seedCentre <- getSeedCentrePointForResult(probtrackResult)
+    
     for (axis in axes)
     {
-        seed <- probtrackResult$seed
+        seed <- seedCentre
         seed[setdiff(1:3,axis)] <- NA
         
         createSliceGraphic(baseImage, seed[1], seed[2], seed[3], device="internal")
@@ -31,12 +40,14 @@ writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zo
     else
         logFinalImage <- newMriImageWithSimpleFunction(finalImage, function (x) { ifelse(x == 0, 0, log(x/images$threshold)) }, newDataType=getDataTypeByNiftiCode(16))
     
+    seedCentre <- getSeedCentrePointForResult(probtrackResult)
+    
     if (!showSeed)
-        createCombinedGraphics(list(baseImage,finalImage), c("s","p"), list(1,colourScale), axes=axes, sliceLoc=probtrackResult$seed, device="png", alphaImages=list(NULL,logFinalImage), prefix=prefix, zoomFactor=zoomFactor, filter="Sinc")
+        createCombinedGraphics(list(baseImage,finalImage), c("s","p"), list(1,colourScale), axes=axes, sliceLoc=seedCentre, device="png", alphaImages=list(NULL,logFinalImage), prefix=prefix, zoomFactor=zoomFactor, filter="Sinc")
     else
     {
-        seedImage <- newMriImageWithData(generateImageDataForShape("cross",imageDims,centre=probtrackResult$seed,width=7), baseImage$getMetadata())
-        createCombinedGraphics(list(baseImage,finalImage,seedImage), c("s","p","p"), list(1,colourScale,"green"), axes=axes, sliceLoc=probtrackResult$seed, device="png", alphaImages=list(NULL,logFinalImage,seedImage), prefix=prefix, zoomFactor=zoomFactor, filter="Sinc")
+        seedImage <- newMriImageWithData(generateImageDataForShape("cross",imageDims,centre=seedCentre,width=7), baseImage$getMetadata())
+        createCombinedGraphics(list(baseImage,finalImage,seedImage), c("s","p","p"), list(1,colourScale,"green"), axes=axes, sliceLoc=seedCentre, device="png", alphaImages=list(NULL,logFinalImage,seedImage), prefix=prefix, zoomFactor=zoomFactor, filter="Sinc")
     }
 }
 

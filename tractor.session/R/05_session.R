@@ -128,6 +128,18 @@ getImageFileNameForSession <- function (session, type, place = NULL, index = 1)
     return (filePath)
 }
 
+getImageCountForSession <- function (session, type, place = NULL)
+{
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
+    
+    i <- 1
+    while (imageFileExists(getImageFileNameForSession(session, type, place, index=i)))
+        i <- i + 1
+    
+    return (i-1)
+}
+
 updateSessionHierarchy <- function (session)
 {
     if (!is(session, "MriSession"))
