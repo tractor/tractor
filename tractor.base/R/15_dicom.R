@@ -415,6 +415,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     bVectors <- matrix(NA, nrow=3, ncol=0)
     images <- list()
     sliceDim <- sliceOrientation <- NULL
+    repetitionTime <- 1
     count <- 0
     for (file in files)
     {
@@ -428,6 +429,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         {
             sliceDim <- metadata$getTagValue(0x0018,0x0050)
             sliceOrientation <- metadata$getTagValue(0x0020,0x0037)
+            repetitionTime <- metadata$getTagValue(0x0018,0x0080) / 1000
         }
 
         seriesNumbers <- c(seriesNumbers, metadata$getTagValue(0x0020,0x0011))
@@ -500,7 +502,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         nSlices <- images[[1]]$getDimensions()[3]
         nVolumes <- nDicomFiles
         imageDims <- c(images[[1]]$getDimensions(), nVolumes)
-        voxelDims <- c(images[[1]]$getVoxelDimensions(), 1)
+        voxelDims <- c(images[[1]]$getVoxelDimensions(), repetitionTime)
     }
     else
     {
