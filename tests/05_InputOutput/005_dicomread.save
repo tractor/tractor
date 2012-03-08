@@ -6,7 +6,7 @@
 INFO: [x2] Data matrix is transposed relative to acquisition matrix
 * * INFO: Slice select direction is X
 * * INFO: DICOM files do not use a "simple" slice arrangement
-* * INFO: Data set contains 1 volumes; 2 slices per volume
+* * INFO: Data set contains 1 volume(s); 2 slice(s) per volume
  Image dimensions : 2 x 224 x 256 voxels
 Coordinate origin : (1,1,1)
  Voxel dimensions : 1 x 1 x 1 mm
