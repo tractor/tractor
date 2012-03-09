@@ -1,6 +1,6 @@
 Package: tractor.native
-Version: 2.0.7
-Date: 2011-11-04
+Version: 2.1.0
+Date: 2012-02-08
 Title: Compiled code for the TractoR package
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>

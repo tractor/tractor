@@ -1,6 +1,6 @@
 Package: tractor.utils
-Version: 2.0.6
-Date: 2011-10-24
+Version: 2.1.0
+Date: 2012-02-13
 Title: Miscellaneous functions used by TractoR scripts and packages
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
