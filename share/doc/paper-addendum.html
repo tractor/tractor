@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <title>TractoR ~ paper-addendum</title>
+
+  <meta charset="utf-8" />
+  <meta name="author" content="Jon Clayden" />
+  <link rel="stylesheet" href="style.css" />
+  
+  <script type="text/javascript" src="hyphenator.js"></script>
+  
+  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
+  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+</head>
+
+<body>
+
+<div id="main" class="hyphenate">
+
+<table id="tabs">
+  <tr>
+  <td class="tab"><a href="home.html">Home</a></td>
+  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
+  <td class="tab"><a href="home.html#news">News</a></td>
+  <td class="tab"><a href="downloads.html">Downloads</a></td>
+  <td class="tab"><a href="changelog.html">Changelog</a></td>
+  <td class="tab"><a href="references.html">References</a></td>
+  </tr>
+</table>
+
+
+<h1>Paper addendum</h1>
+
+<p>The <a href="http://www.jstatsoft.org/v44/i08/">main TractoR paper</a>, published in the Journal of Statistical Software in 2011, was written prior to the release of TractoR 2.0. This page lists changes to the example code given in the paper, which need to be made for it to work under TractoR 2.x.</p>
+
+<h2 id="section-3-the-mriimage-class">Section 3: The MriImage class</h2>
+
+<pre><code>## TractoR 1.x
+# Print a list of accessor functions for image object "i"
+names(i)
+# Get the description associated with a specific DICOM tag
+getDescriptionForDicomTag(0x0018, 0x0087)
+## TractoR 2.x
+# Print a list of accessor functions for image object "i"
+i$methods()
+# Get the description associated with a specific DICOM tag
+tractor.base:::getDescriptionForDicomTag(0x0018, 0x0087)
+</code></pre>
+
+<h2 id="section-4-modelling-the-diffusion-weighted-signal">Section 4: Modelling the diffusion-weighted signal</h2>
+
+<pre><code>## TractoR 1.x
+# Get the location of a session's FA map
+s$getImageFileNameByType("FA")
+## TractoR 2.x
+# Get the location of a session's FA map
+s$getImageFileNameByType("FA", "diffusion")
+</code></pre>
+
+<h2 id="section-5-fibre-tracking">Section 5: Fibre tracking</h2>
+
+<pre><code>## TractoR 1.x
+# Get a session's FA map
+f <- s$getImageByType("FA")
+## TractoR 2.x
+# Get a session's FA map
+f <- s$getImageByType("FA", "diffusion")
+</code></pre>
+
+
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <title>TractoR ~ TractoR-for-R-users</title>
+
+  <meta charset="utf-8" />
+  <meta name="author" content="Jon Clayden" />
+  <link rel="stylesheet" href="style.css" />
+  
+  <script type="text/javascript" src="hyphenator.js"></script>
+  
+  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
+  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+</head>
+
+<body>
+
+<div id="main" class="hyphenate">
+
+<table id="tabs">
+  <tr>
+  <td class="tab"><a href="home.html">Home</a></td>
+  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
+  <td class="tab"><a href="home.html#news">News</a></td>
+  <td class="tab"><a href="downloads.html">Downloads</a></td>
+  <td class="tab"><a href="changelog.html">Changelog</a></td>
+  <td class="tab"><a href="references.html">References</a></td>
+  </tr>
+</table>
+
+
+<h1>TractoR for R users</h1>
+
+<p>TractoR consists of a set of R packages, along with a scripting system which provides access to the underlying code for non-useRs and those who wish to perform only &ldquo;standard&rdquo; tasks. This page describes the general set-up of TractoR, and how it can be used as a general purpose library for working with magnetic resonance images. It also describes how the interface between the shell and R works, and how you can write your own experiment scripts for use with the <code>tractor</code> shell program.</p>
+
+<h2 id="general-set-up">General set-up</h2>
+
+<p>The <code>tractor.base</code> package is the most general-purpose of the TractoR packages, and the only one to be currently <a href="http://cran.r-project.org/web/packages/tractor.base/index.html">on CRAN</a>. It provides functions for reading, writing and manipulating MR images, along with various general-purpose functions which are used by the other packages.</p>
+
+<p>The key class in the base package is <code>MriImage</code>, which is a reference class representing an MR image, including metadata such as the source file, image dimensions and so on. Functions are provided for reading such images from Analyze/NIfTI files (<code>newMriImageFromFile</code>), from DICOM files (<code>newMriImageFromDicom</code>); and for creating them from other <code>MriImage</code> objects via operations such as thresholding or masking (see <code>?newMriImageWithData</code>). The class inherits from <code>SerialisableObject</code>, a simple extension of the base reference class which adds a method for serialising the fields of the object to a list. If only the underlying array of image data values is required, it can be extracted from an <code>MriImage</code> object, say <code>image</code>, with</p>
+
+<pre><code>image$getData()
+</code></pre>
+
+<p>The result is a standard numeric array with appropriate dimensions. The group generic functions <code>Math</code>, <code>Ops</code> and <code>Summary</code> are defined for the <code>MriImage</code> class (although the <code>Summary</code> group generic currently works only for a single image argument, so <code>max(image1,image2)</code> won&#39;t work). Standard array element extraction and replacement also work, with extraction returning an array and replacement a new <code>MriImage</code> object (<code>?MriImage</code> for details). More details on the metadata stored with <code>MriImage</code> objects can be found through <code>?MriImageMetadata</code>.</p>
+
+<p>TractoR uses the <code>reportr</code> package for message reporting, in preference to the standard R functions <code>message</code>, <code>warning</code> and <code>stop</code>. This system provides some useful features and debugging benefits, which are detailed on the help page for <code>report</code>. When TractoR is used directly from the command line (see next section), R-level warnings and errors are converted into <code>report()</code> calls.</p>
+
+<p>Please see the <a href="http://cran.r-project.org/web/packages/tractor.base/tractor.base.pdf">full documentation</a> (pdf) for more information on these topics.</p>
+
+<p>The <code>tractor.session</code> package creates and maintains <a href="conventions.html">session directories</a>, and includes functions which interface with the <a href="http://www.fmrib.ox.ac.uk/fsl">FSL</a> and <a href="http://www.camino.org.uk">Camino</a> software packages. It also facilitates moving points and image between native and standard (MNI) spaces. The <code>tractor.nt</code> package provides implementations of <a href="HNT-tutorial.html">heuristic</a> and <a href="PNT-tutorial.html">probabilistic</a> neighbourhood tractography. The <code>tractor.native</code> package provides C implementations of functions such as fibre tracking which would be too slow using pure R. The <code>tractor.utils</code> package exists mainly to support the command-line interface (see below). At present none of these four more specialist packages are documented at the R level, i.e. function by function.</p>
+
+<h2 id="from-command-line-to-r">From command line to R</h2>
+
+<p>The <code>tractor</code> shell script is a convenience interface for performing common tasks using the TractoR packages. It is based around a set of R script files, one per task, each of which contains a <code>runExperiment()</code> function. The shell script may run R in a number of different ways, depending on whether interactivity is required by the script, and on the programs available on the system it is run on. Once R is started, it loads the <code>tractor.utils</code> package and calls the <code>bootstrapExperiment()</code> function to set up the required environment and execute the <code>runExperiment()</code> function for the requested script. The shell script also facilitates passing information between the command line and R, reporting errors and warnings, and maintaining a command history. </p>
+
+<p>Further information on the usage and function of the <code>tractor</code> shell script can be found in its man page (type <code>man tractor</code> from the shell, assuming that <a href="getting-started.html">your MANPATH is set correctly</a>).</p>
+
+<h2 id="writing-your-own-tractor-scripts">Writing your own TractoR scripts</h2>
+
+<p>A reasonably simple TractoR script is shown below, by way of illustration. This is in fact the script called <code>mean</code>, which averages the value of some metric within the nonzero region of an image. It exhibits many of the common characteristics of these scripts. The lines are numbered here for ease of reference, but in a real script these should not be included.</p>
+
+<pre><code>01 #@args image file, [session directory]
+02 #@desc Calculate the mean or weighted mean value of a metric within the nonzero region of a brain volume (usually tractography output). The specified image can be used as a binary mask (the default) or as a set of weights (with AveragingMode:weighted). In the latter case any weight threshold given is ignored.
+03 
+04 suppressPackageStartupMessages(require(tractor.session))
+05 
+06 runExperiment <- function ()
+07 {
+08     requireArguments("image file")
+09     image <- newMriImageFromFile(Arguments[1])
+10     
+11     if (nArguments() > 1)
+12         session <- newSessionFromDirectory(Arguments[2])
+13     else
+14         session <- NULL
+15     
+16     metric <- getConfigVariable("Metric", NULL, "character", validValues=c("weight","FA","MD","axialdiff","radialdiff"))
+17     mode <- getConfigVariable("AveragingMode", "binary", validValues=c("binary","weighted"))
+18     threshold <- getConfigVariable("WeightThreshold", 0.01)
+19     thresholdMode <- getConfigVariable("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
+20     
+21     if (thresholdMode == "maximum")
+22         threshold <- threshold * max(image, na.rm=TRUE)
+23     else if (thresholdMode == "minimum")
+24         threshold <- threshold * min(image, na.rm=TRUE)
+25     
+26     images <- createWeightingAndMetricImages(image, session, type=tolower(metric), mode=mode, threshold=threshold)
+27     finalImage <- newMriImageWithBinaryFunction(images$metric, images$weight, "*")
+28     metric <- sum(finalImage$getData()) / sum(images$weight$getData())
+29     
+30     cat(paste(metric, "\n", sep=""))
+31 }
+</code></pre>
+
+<p>The only mandatory part of a script file is the definition of a <code>runExperiment()</code> function, with no arguments, as on line 6. The R code which forms the functional body of the script must be put exclusively within this function. No other functions will be run. Moreover, with the exception of statements to load required packages (as on line 4 above), no R code should be positioned outside of the <code>runExperiment()</code> function. Calls to <code>library()</code> or <code>require()</code> for all required packages except <code>tractor.utils</code>, <code>utils</code>, <code>graphics</code>, <code>grDevices</code> and <code>stats</code> should be included in this way.</p>
+
+<p>Scripts may take any number of unnamed arguments and/or named configuration parameters. Unnamed arguments are put into the character vector <code>Arguments</code> (see lines 9 and 12 above), and must be coerced to numeric or another mode if required. The <code>nArguments()</code> function returns the number of arguments that the user passed (see line 11), where a new argument is counted as having started after any whitespace. The <code>requireArguments()</code> function can be used to list the names of mandatory arguments, and will produce an error if too few arguments were passed by the user (line 8). Named parameters are recovered using the <code>getConfigVariable()</code> function, which gives the name of the parameter as its first argument (by convention, these always start with an upper case letter), a default value as the second, and optionally, the expected storage mode of the variable (i.e. &ldquo;character&rdquo;, &ldquo;integer&rdquo;, etc.). The returned value will be of this mode, and an error will be produced if the value given cannot be coerced to the specified mode. Likewise, the <code>validValues</code> argument can be provided if the parameter can only take certain specific values (as in lines 16, 17 and 19). Script authors should call <code>getConfigVariable()</code> with <code>errorIfMissing=TRUE</code> if the parameter is mandatory.</p>
+
+<p>TractoR scripts are self-documenting, and a number of special comments are used to provide this documentation. The <code>#@args</code> comment specifies unnamed arguments which the script accepts, with optional arguments in square brackets (line 1), and lines starting <code>#@desc</code> describe the function of the script (line 2). Note that there should be only one line of arguments, but there can be many lines of description. If user input is required, or if you wish to display graphics to the user, you should include a line containing just</p>
+
+<pre><code>#@interactive TRUE
+</code></pre>
+
+<p>so that the <code>tractor</code> shell script will run R interactively. The shell script will also look for calls to <code>getConfigVariable()</code>, so that it can report the named parameters supported by the script.</p>
+
+
+</div>
+
+</body>
+
+</html>

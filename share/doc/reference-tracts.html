@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <title>TractoR ~ reference-tracts</title>
+
+  <meta charset="utf-8" />
+  <meta name="author" content="Jon Clayden" />
+  <link rel="stylesheet" href="style.css" />
+  
+  <script type="text/javascript" src="hyphenator.js"></script>
+  
+  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
+  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+</head>
+
+<body>
+
+<div id="main" class="hyphenate">
+
+<table id="tabs">
+  <tr>
+  <td class="tab"><a href="home.html">Home</a></td>
+  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
+  <td class="tab"><a href="home.html#news">News</a></td>
+  <td class="tab"><a href="downloads.html">Downloads</a></td>
+  <td class="tab"><a href="changelog.html">Changelog</a></td>
+  <td class="tab"><a href="references.html">References</a></td>
+  </tr>
+</table>
+
+
+<h1>Reference tracts</h1>
+
+<p>Reference tracts represent prior information about tract trajectories, which are used by neighbourhood tractography methods to select corresponding pathways in diffusion data sets. It should be noted that <a href="HNT-tutorial.html">heuristic</a> and <a href="PNT-tutorial.html">probabilistic</a> neighbourhood tractography use different forms of reference tract, although if you plan to <a href="#creating-custom-reference-tracts">create a custom reference</a>, the process is nearly identical for the two cases.</p>
+
+<h2 id="using-standard-reference-tracts">Using standard reference tracts</h2>
+
+<p>Since version 1.0.0, TractoR has been supplied with a set of standard reference tracts for both heuristic and probabilistic neighbourhood tractography (NT). These reference tracts are based on a white matter tract atlas kindly made available by Dr Susumu Mori&#39;s lab at Johns Hopkins University. Further information about the atlas can be found at <a href="http://cmrm.med.jhmi.edu/">http://cmrm.med.jhmi.edu/</a> and in Ref. (1) below. If you use these reference tracts in your work, please cite Ref. (2) below.</p>
+
+<p>Using these standard references is by far the easiest way to start using NT. TractoR &ldquo;knows&rdquo; where to find them, so you need only to specify the tract name when running the <code>hnt-eval</code> or <code>pnt-data</code> experiment scripts. Available tract names since TractoR version 1.0.0 are &ldquo;genu&rdquo; (the corpus callosum genu, or more specifically the forceps anterior), &ldquo;cst_left&rdquo; and &ldquo;cst_right&rdquo; (left and right corticospinal or pyramidal tracts), &ldquo;cing_left&rdquo; and &ldquo;cing_right&rdquo; (left and right cingula). TractoR version 1.2.0 added the &ldquo;splenium&rdquo; (corpus callosum splenium, forceps posterior), &ldquo;atr_left&rdquo; and &ldquo;atr_right&rdquo; (left and right anterior thalamic radiations), &ldquo;arcuate_left&rdquo; and &ldquo;arcuate_right&rdquo; (left and right arcuate fasciculi), &ldquo;uncinate_left&rdquo; and &ldquo;uncinate_right&rdquo; (left and right uncinate fasciculi). Additional standard references are planned to be added in future releases.</p>
+
+<h2 id="creating-custom-reference-tracts">Creating custom reference tracts</h2>
+
+<p>If you wish to segment a tract for which there is not yet a standard reference tract, or if your data set is somehow unusual so that the standard reference tracts are inappropriate, you need to create a custom reference tract from one of your scans. Once created, the reference tract may be reused for later studies.</p>
+
+<p>TractoR scripts which are likely to be useful for creating a custom reference tract include <code>mkroi</code> (to create a region of interest), <code>rtrack</code> (to generate a series of tract images, from which to choose a reference tract), and <code>hnt-ref</code> or <code>pnt-ref</code> (to create reference tracts for use with HNT or PNT, respectively).</p>
+
+<p>Let&#39;s assume that we wish to create a reference tract representing the corpus callosum genu. We begin by creating a directory for this experiment, and changing to this directory. For example,</p>
+
+<pre><code>mkdir /expts/hnt-genu
+cd /expts/hnt-genu
+</code></pre>
+
+<p>Next we observe that the point (6,22,14) - in millimetre coordinates - appears to be within the genu in an MNI standard space brain volume. A suitable location such as this can be chosen using <a href="http://www.fmrib.ox.ac.uk/fsl/fslview/index.html">FSL&#39;s data viewer</a>. We see the location shown on a slice of the MNI white matter map below:</p>
+
+<p><img src="genu-point.png" alt="genu seed point location"></p>
+
+<p>We next need to choose a subject in which to generate our reference tract. In this tutorial we will assume that the session directory for this subject is based at the location /data/refsubject. Note that this session <em>must already</em> be <a href="diffusion-preprocessing.html">fully preprocessed</a>. We will seed throughout a region around the location corresponding to the point we found in MNI standard space, on the basis that at least one point in this region stands a good chance of generating a tract suitable for use as the reference. The command</p>
+
+<pre><code>tractor mkroi /data/refsubject 6,22,14 CentreInMNISpace:true PointType:mm ROIName:genu_region
+</code></pre>
+
+<p>generates a region of interest (called &ldquo;genu_region.nii.gz&rdquo; or similar), and then</p>
+
+<pre><code>tractor rtrack /data/refsubject SeedMaskFile:genu_region CreateImages:true
+</code></pre>
+
+<p>will generate a (large) number of images representing tracts generated by seeding at each voxel in the ROI. (If this fails to create images, please ensure you have <a href="getting-started.html">ImageMagick installed</a>.) By default, the width of the ROI is 7 voxels in each dimension, although this can be changed with the Width option to <code>mkroi</code>. (Note that, in general, you can always see what options are supported by a particular experiment script by giving the command <code>tractor -o</code> followed by the script name.) Voxels with very low anisotropy (say, FA less than 0.2) may be excluded, on the basis that they are unlikely to generate useful tracts, using the <code>SeedThresholdLevel</code> option to <code>rtrack</code>:</p>
+
+<pre><code>tractor rtrack /data/refsubject SeedMaskFile:genu_region CreateImages:true SeedThresholdType:fa SeedThresholdLevel:0.2
+</code></pre>
+
+<p>The resulting tract image file names contain the seed point that generated them, <em>using <a href="conventions.html">the R convention</a></em>. This process, or any other, can be used and repeated until a seed point has been found that produces an acceptable segmentation of the genu for use as a reference tract. The important characteristics are shape and length, so particular care should be taken to ensure that these are appropriate in the reference tract.</p>
+
+<p>Given a chosen seed point, the reference tract can be generated in the appropriate form using the <code>hnt-ref</code> or <code>pnt-ref</code> scripts, depending on whether you are planning to use heuristic or probabilistic NT. For example,</p>
+
+<pre><code>tractor hnt-ref /data/refsubject 40,38,22 PointType:R TractName:genu
+</code></pre>
+
+<p>(The seed point in this example is arbitrary.) This will create a file called genu_ref.Rdata, which contains information about the reference tract for use in the testing phase. The syntax for <code>pnt-ref</code> is identical; only the script name needs to be changed.</p>
+
+<h2 id="references">References</h2>
+
+<ol>
+<li><p>K. Hua et al., <em>Neuroimage</em> <strong>39</strong>(1):336-347, 2008.</p></li>
+<li><p>S. Muñoz Maniega et al., <em>Proceedings of the ISMRM</em> <strong>16</strong>:3318, 2008.</p></li>
+</ol>
+
+
+</div>
+
+</body>
+
+</html>

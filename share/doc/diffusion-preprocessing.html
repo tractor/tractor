@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <title>TractoR ~ diffusion-preprocessing</title>
+
+  <meta charset="utf-8" />
+  <meta name="author" content="Jon Clayden" />
+  <link rel="stylesheet" href="style.css" />
+  
+  <script type="text/javascript" src="hyphenator.js"></script>
+  
+  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
+  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+</head>
+
+<body>
+
+<div id="main" class="hyphenate">
+
+<table id="tabs">
+  <tr>
+  <td class="tab"><a href="home.html">Home</a></td>
+  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
+  <td class="tab"><a href="home.html#news">News</a></td>
+  <td class="tab"><a href="downloads.html">Downloads</a></td>
+  <td class="tab"><a href="changelog.html">Changelog</a></td>
+  <td class="tab"><a href="references.html">References</a></td>
+  </tr>
+</table>
+
+
+<h1>Diffusion preprocessing</h1>
+
+<p>This page discusses the preprocessing steps required to prepare a diffusion-weighted dataset for analysis using TractoR, as well as subsequent operations that can be performed to <a href="#checking-and-rotating-gradient-directions">manipulate diffusion gradient directions</a> and <a href="#model-fitting">fit models</a> to the data.</p>
+
+<h2 id="the-pipeline">The pipeline</h2>
+
+<p>The preprocessing steps required to run neighbourhood tractography or other analysis on a diffusion-weighted data set using TractoR are the same as those required by the <a href="http://www.fmrib.ox.ac.uk/fsl/fdt/index.html">FSL diffusion toolbox</a>, FDT, for tractography. It is therefore quite possible to perform all of these steps independently of TractoR, and the user may decide to use the relevant FSL tools, or their equivalents from another package. However, reasons to use TractoR might include the following:</p>
+
+<ul>
+<li><p>The <a href="conventions.html">session hierarchy</a> will be arranged as TractoR expects it, automatically. This saves the user from having to arrange the hierarchy herself. It also means that TractoR can give correct parameters to any external programs without further input from the user.</p></li>
+<li><p>The pipeline is run interactively but tries to minimise user input.</p></li>
+<li><p>TractoR can establish which stage of the pipeline has been reached, and continue partly completed preprocessing pipelines where necessary.</p></li>
+</ul>
+
+<p>Whichever method is used to perform them, the requisite steps are as follows.</p>
+
+<ol>
+<li><p>Convert DICOM files from an MR scanner into a 4D data set file in Analyze or NIfTI format. TractoR can perform this conversion for a number of types of DICOM files, but users may prefer to use their own site tools for this step. The result is an image called <code>rawdata</code> (with appropriate suffix depending on the file type) in the <code>diffusion</code> subdirectory of the TractoR session hierarchy. The file <code>directions.txt</code>, which describes the diffusion weighting applied to the images, will also be created if possible. <strong>If the relevant information is not available, this latter file must be created manually</strong>&ndash;if this is the case then TractoR will produce a warning.</p></li>
+<li><p>Identify an image volume with little or no diffusion weighting, to be used as an anatomical reference. By default this file will be called <code>refb0</code> and stored in the <code>diffusion</code> subdirectory.</p></li>
+<li><p>Create a mask which covers only that part of the <code>refb0</code> volume which is within the brain. Skull and other nonbrain tissue is left outside this mask. The image file <code>mask</code> is created in the <code>diffusion</code> subdirectory, as well as a masked version of the anatomical reference image, called <code>maskedb0</code>.</p></li>
+<li><p>Correct for eddy current-induced distortion effects in the data, using the anatomical reference volume as a registration target. This step currently uses the FSL tool <code>eddy_correct</code>, and produces a file called <code>data</code> in the <code>diffusion</code> subdirectory.</p></li>
+</ol>
+
+<p>In addition to these steps, some kind of diffusion model fitting is a prerequisite for most subsequent analysis. Steps for performing such fits, and other common data manipulations, are laid out below.</p>
+
+<h2 id="using-the-dpreproc-script">Using the dpreproc script</h2>
+
+<p>Assuming for present purposes that data sets are stored as subdirectories of <code>/data</code>, running the preprocessing pipeline for a single session directory is a matter of typing something like</p>
+
+<pre><code>cd /data/subject1
+tractor dpreproc
+</code></pre>
+
+<p>By default, TractoR will assume that all DICOM files it finds under the main session directory, <code>/data/subject1</code>, relate to your DTI acquisition. If in fact your diffusion DICOM files are stored in some subdirectory, perhaps <code>/data/subject1/dicom/dti</code>, you should tell TractoR this by instead using</p>
+
+<pre><code>tractor dpreproc DicomDirectory:dicom/dti
+</code></pre>
+
+<p>(The <code>dicomsort</code> script can be used to sort a directory of DICOM files into series if required, thereby separating diffusion data from other scans.)</p>
+
+<p>The preprocessing can be completed noninteractively by setting the <code>Interactive</code> option to <code>false</code>:</p>
+
+<pre><code>tractor dpreproc Interactive:false
+</code></pre>
+
+<p>(Note, however, that in this case default parameters will be used, without the chance to check that the results are appropriate. Some parameters can, however, be adjusted using other options to the <code>dpreproc</code> script: run <code>tractor -o dpreproc</code> for details.) By default, TractoR will run all four stages, but will miss out any stage that has already been successfully completed. To run every stage except the final one, type</p>
+
+<pre><code>tractor dpreproc RunStages:1-3
+</code></pre>
+
+<p>or to start from the beginning again even if some stages have already been done, use</p>
+
+<pre><code>tractor dpreproc SkipCompletedStages:false
+</code></pre>
+
+<p>If you want to find out which stages have already been run, simply give</p>
+
+<pre><code>tractor dpreproc StatusOnly:true
+</code></pre>
+
+<h2 id="checking-and-rotating-gradient-directions">Checking and rotating gradient directions</h2>
+
+<p>The directions of applied diffusion-weighting gradients are determined from the DICOM files if possible, during stage 1 of the <code>dpreproc</code> script. However, if <code>dpreproc</code> is not used, or the gradient directions cannot be found, it may be necessary to specify them manually. To do so, the directions should be put into a plain text file, arranged either one-per-column or one-per-row, normalised or unnormalised, and with or without zeroes for <em>b</em>=0 measurements. The <code>gradread</code> script can then be called, passing the session directory, gradients file and the big and little <em>b</em>-values:</p>
+
+<pre><code>tractor gradread /data/subject1 /data/directions.txt 1000 0
+</code></pre>
+
+<p>This should normally only be necessary once for a given sequence, since a cache is automatically used to store gradient directions for use with other data sets acquired the same way.</p>
+
+<p>Whichever way the gradients are initially obtained, it is a good idea to check that the signs of the directions are correct. The <code>gradcheck</code> script assists with this by showing the principal directions of diffusion in three representative slices of the brain, for checking against the user&#39;s expectations. It can be run from the session directory with</p>
+
+<pre><code>tractor gradcheck
+</code></pre>
+
+<p>Another step which is commonly performed is gradient rotation, to compensate for the registration performed to correct for eddy current effects in <code>dpreproc</code> stage 4. If required, this <strong>should be the last step</strong> performed on the directions. It is run with simply</p>
+
+<pre><code>tractor gradrotate
+</code></pre>
+
+<p>The <code>plotcorrections</code> script can be used to see how big the effect of this step will be: run <code>tractor -o plotcorrections</code> for more information.</p>
+
+<h2 id="model-fitting">Model fitting</h2>
+
+<p>Fitting diffusion tensors is a standard processing step for diffusion-weighted data, and results in the creation of a range of derivative images, including maps of fractional anisotropy and mean diffusivity. This fitting can be performed using</p>
+
+<pre><code>tractor tensorfit
+</code></pre>
+
+<p>There are three alternative approaches to fitting the tensors available, but standard least-squares fitting is the default: see <code>tractor -o tensorfit</code> for details. The <a href="http://www.camino.org.uk">Camino toolkit</a> offers many more methods.</p>
+
+<p>The tractography that TractoR and FSL use is probabilistic, however, and does not use the diffusion tensor. Instead, the FSL BEDPOSTX algorithm (Ref. 1) is used to fit a &ldquo;ball-and-sticks&rdquo; model and generate samples for probabilistic tractography. This typically takes several hours. The command for running this is</p>
+
+<pre><code>tractor bedpost
+</code></pre>
+
+<p>The underlying FSL <code>bedpostx</code> program takes a parameter which determines the maximum number of fibre populations which may be represented for each voxel. The larger this value, the longer <code>bedpostx</code> will take to run, but if set to 1 then no crossing fibre information will be available. The default value is 2, and this can be changed (to 1 or 3) using the <code>NumberOfFibres</code> option:</p>
+
+<pre><code>tractor bedpost NumberOfFibres:1
+</code></pre>
+
+<p>It is important to note that the number of fibres fitted is <em>a property of the session</em>, and so once set it cannot be changed without processing the data again. If you wish to try different values of this option on a single data set, you will need to duplicate the session hierarchy, since these would be considered two distinct preprocessing pipelines, producing two different data sets.</p>
+
+<h2 id="creating-files-for-use-with-camino">Creating files for use with Camino</h2>
+
+<p>Once the standard preprocessing pipeline has been completed, you can create files for use with the <a href="http://www.camino.org.uk">Camino diffusion MRI toolkit</a>, including a representation of the data in Camino format and a scheme file, using a command like the following. These files are created in the &ldquo;camino&rdquo; subdirectory of the session hierarchy.</p>
+
+<pre><code>cd /data/subject1
+tractor caminofiles
+</code></pre>
+
+<h2 id="the-status-script">The status script</h2>
+
+<p>To find out information about a particular session directory and the data stored within it, you can use the <code>status</code> script, which produces output like the following:</p>
+
+<pre><code>GENERAL:
+  Session directory        : /usr/local/tractor/tests/data/session-12dir
+  Working directory exists : TRUE
+DIFFUSION:
+  Preprocessing complete        : TRUE
+  Data dimensions               : 96 x 96 x 25 x 13 voxels
+  Voxel dimensions              : 2.5 x 2.5 x 5 x 1 mm
+  Diffusion b-values            : 0, 1000 s/mm^2
+  Number of gradient directions : 1, 12
+  Diffusion tensors fitted      : TRUE
+  FSL BEDPOST run               : TRUE (1 fibre(s) per voxel)
+  Camino files created          : FALSE
+</code></pre>
+
+<h2 id="references">References</h2>
+
+<ol>
+<li>T.E.J. Behrens et al., <em>Neuroimage</em> <strong>34</strong>(1):144-155, 2007.</li>
+</ol>
+
+
+</div>
+
+</body>
+
+</html>
