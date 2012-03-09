@@ -12,7 +12,7 @@
 Functions for reading, writing, locating, copying and removing MRI images stored in NIfTI, Analyze and MGH formats.
 }
 \usage{
-newMriImageFromFile(fileName, fileType = NULL)
+newMriImageFromFile(fileName, fileType = NULL, volumes = NULL)
 newMriImageMetadataFromFile(fileName, fileType = NULL)
 writeMriImageToFile(image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
 
@@ -26,6 +26,7 @@ symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE)
   \item{fileName, from, to}{File names, with or without appropriate extension.}
   \item{image}{An MriImage object.}
   \item{fileType}{A character vector of length one, giving the file type required or expected. If this option is missing, the file type used for writing images will be taken from the \code{tractorFileType} option. See Details.}
+  \item{volumes}{An optional integer vector specifying a subset of volumes to read (generally to save memory). If given, only the requested volumes in the 4D file will be read.}
   \item{datatype}{A storage data type. See \code{\link{getDataTypeByNiftiCode}}.}
   \item{overwrite}{Logical value: overwrite an existing image file? For \code{writeMriImageToFile}, an error will be raised if there is an existing file and this is set to FALSE.}
   \item{errorIfMissing}{Logical value: raise an error if no suitable files were found?}

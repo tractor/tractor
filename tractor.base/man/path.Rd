@@ -10,13 +10,14 @@ Functions for expanding file paths, finding relative paths and ensuring that a f
 }
 \usage{
 ensureFileSuffix(fileName, suffix, strip = NULL)
-expandFileName(fileName)
+expandFileName(fileName, base = getwd())
 relativePath(path, referencePath)
 }
 \arguments{
   \item{fileName}{A character vector of file names.}
   \item{suffix}{A character vector of file suffixes, which will be recycled if shorter than \code{fileName}.}
   \item{strip}{A character vector of suffixes to remove before appending \code{suffix}. The intended suffix does not need to be given here, as the function will not append it if the specified file name already has the correct suffix.}
+  \item{base}{If \code{fileName} is a relative path, this option gives the base directory which the path is relative to. If \code{fileName} is an absolute path, this argument is ignored.}
   \item{path, referencePath}{Character strings representing file paths.}
 }
 \value{
