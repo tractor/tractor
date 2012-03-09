@@ -1,5 +1,5 @@
 #@args [session directory]
-#@desc Run a standard preprocessing pipeline on the diffusion data in the specified session directory (or "." if none is specified). This pipeline consists of four stages: (1) convert DICOM files into a 4D Analyze/NIfTI/MGH volume; (2) identify a volume with little or no diffusion weighting to use as an anatomical reference; (3) create a mask to identify voxels which are within the brain; (4) correct the data set for eddy current induced distortions. Stage 4 is currently performed using FSL "eddy_correct", so FSL must be installed for this stage. Stage 3 can use FSL's brain extraction tool for accuracy, but the default is to use a k-means approach, which is quicker, and may be more successful for nonbrain data. (The NumberOfClusters option can be increased if the mask does not cover the whole region of interest.) If the pipeline was previously partly completed, the script will resume it where appropriate. (Starting from the beginning can be forced by specifying SkipCompletedStages:false.) Giving StatusOnly:true will report which stages have been run. The script asks the user about each stage unless Interactive:false is given.
+#@desc Run a standard preprocessing pipeline on the diffusion data in the specified session directory (or "." if none is specified). This pipeline consists of four stages: (1) convert DICOM files into a 4D Analyze/NIfTI/MGH volume; (2) identify a volume with little or no diffusion weighting to use as an anatomical reference; (3) create a mask to identify voxels which are within the brain; (4) correct the data set for eddy current induced distortions. Stage 4 is currently performed using FSL "eddy_correct", so FSL must be installed for this stage. Stage 3 can use FSL's brain extraction tool for accuracy, but the default is to use a k-means approach, which is quicker, and may be more successful for nonbrain data. (The KMeansClusters option can be increased if the mask does not cover the whole region of interest.) If the pipeline was previously partly completed, the script will resume it where appropriate. (Starting from the beginning can be forced by specifying SkipCompletedStages:false.) Giving StatusOnly:true will report which stages have been run. The script asks the user about each stage unless Interactive:false is given.
 #@interactive TRUE
 
 suppressPackageStartupMessages(require(tractor.session))
@@ -151,37 +151,50 @@ runExperiment <- function ()
         
         if (runStages[3] && (!skipCompleted || !stagesComplete[3]))
         {
-            if (maskingMethod == "bet")
+            done <- "n"
+            repeat
             {
-                runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
-
-                if (interactive)
+                if (tolower(done) != "s")
                 {
-                    runBetAgain <- ask("Is the brain extraction satisfactory? [yn; s to show the mask in fslview]")
-                    while (tolower(runBetAgain) %in% c("n","s"))
+                    if (maskingMethod == "bet")
+                        runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
+                    else
+                        createMaskImageForSession(session, maskingMethod, nClusters=nClusters)
+                }
+                
+                if (interactive && maskingMethod != "fill")
+                {
+                    done <- ask("Is the brain extraction satisfactory? [yn; s to show the mask in fslview]")
+                    
+                    if (tolower(done) == "s")
+                        showImagesInFslview(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("mask","diffusion"), writeToAnalyzeFirst=TRUE, lookupTable=c("Grayscale","Yellow"), opacity=c(1,0.5))
+                    else if (tolower(done) == "y")
+                        break
+                    else if (maskingMethod == "bet")
                     {
-                        if (tolower(runBetAgain) == "s")
-                            showImagesInFslview(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("mask","diffusion"), writeToAnalyzeFirst=TRUE, lookupTable=c("Grayscale","Yellow"), opacity=c(1,0.5))
+                        report(OL$Info, "Previous intensity threshold was ", betIntensityThreshold, "; smaller values give larger brain outlines")
+                        tempValue <- ask("Intensity threshold? [0 to 1; Enter for same as before]")
+                        if (tempValue != "")
+                            betIntensityThreshold <- as.numeric(tempValue)
+
+                        report(OL$Info, "Previous vertical gradient was ", betVerticalGradient, "; positive values shift the outline downwards")
+                        tempValue <- ask("Vertical gradient? [-1 to 1; Enter for same as before]")
+                        if (tempValue != "")
+                            betVerticalGradient <- as.numeric(tempValue)
+                    }
+                    else if (maskingMethod == "kmeans")
+                    {
+                        report(OL$Info, "Previous number of clusters was ", nClusters, "; larger values will usually give larger brain outlines")
+                        tempValue <- ask("Number of clusters? [2 to 10; b to switch to using FSL-BET]")
+                        if (tempValue == "b")
+                            maskingMethod <- "bet"
                         else
-                        {
-                            report(OL$Info, "Previous intensity threshold was ", betIntensityThreshold, "; smaller values give larger brain outlines")
-                            tempValue <- ask("Intensity threshold? [0 to 1; Enter for same as before]")
-                            if (tempValue != "")
-                                betIntensityThreshold <- as.numeric(tempValue)
-
-                            report(OL$Info, "Previous vertical gradient was ", betVerticalGradient, "; positive values shift the outline downwards")
-                            tempValue <- ask("Vertical gradient? [-1 to 1; Enter for same as before]")
-                            if (tempValue != "")
-                                betVerticalGradient <- as.numeric(tempValue)
-
-                            runBetWithSession(session, betIntensityThreshold, betVerticalGradient)
-                        }
-                        runBetAgain <- ask("Is the brain extraction satisfactory? [yn; s to show the mask in fslview]")
+                            nClusters <- as.integer(tempValue)
                     }
                 }
+                else
+                    break
             }
-            else
-                createMaskImageForSession(session, maskingMethod, nClusters=nClusters)
         }
         
         if (runStages[4] && (!skipCompleted || !stagesComplete[4]))
