@@ -19,6 +19,7 @@ runExperiment <- function ()
     binarise <- getConfigVariable("Binarise", TRUE)
     createImages <- getConfigVariable("CreateImages", FALSE)
     showReference <- getConfigVariable("ShowReferenceTract", FALSE)
+    createColourBar <- getConfigVariable("CreateColourBar", FALSE)
     
     if (createImages && is.null(tractName))
         report(OL$Error, "Tract name must be specified if the CreateImages option is set")
@@ -100,5 +101,11 @@ runExperiment <- function ()
         }
         else
             createCombinedGraphics(list(brainImage,finalImage), c("s","p"), list(1,3), sliceLoc=seedLoc, device="png", alphaImage=list(NULL,alphaImage), prefix=outputName, windowLimits=list(NULL,windowLimits))
+    }
+    
+    if (createColourBar)
+    {
+        data <- matrix(1:100, nrow=100, ncol=20)
+        tractor.base:::writePng(data, colourScale=3, fileName="colourbar.png")
     }
 }
