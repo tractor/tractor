@@ -15,7 +15,7 @@ getFslVersion <- function ()
         return (sum(version * c(10000, 100, 1)))
 }
 
-showImagesInFslview <- function (..., writeToAnalyzeFirst = FALSE, wait = FALSE)
+showImagesInFslview <- function (..., writeToAnalyzeFirst = FALSE, wait = FALSE, lookupTable = NULL, opacity = NULL)
 {
     imageFileNames <- lapply(list(...), function (i) {
         if (!is.character(i) && !is(i,"MriImage"))
@@ -37,6 +37,17 @@ showImagesInFslview <- function (..., writeToAnalyzeFirst = FALSE, wait = FALSE)
                 return (i$getSource())
         }
     })
+    
+    if (!is.null(lookupTable))
+    {
+        lookupTable <- rep(lookupTable, length.out=length(imageFileNames))
+        imageFileNames <- paste(imageFileNames, "-l", lookupTable, sep=" ")
+    }
+    if (!is.null(opacity))
+    {
+        opacity <- rep(opacity, length.out=length(imageFileNames))
+        imageFileNames <- paste(imageFileNames, "-t", opacity, sep=" ")
+    }
     
     execute("fslview", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait, silent=TRUE)
     
