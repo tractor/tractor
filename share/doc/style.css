@@ -42,6 +42,7 @@ body {
     margin-bottom: 20px;
     margin-left: -2px;
     margin-right: 0px;
+    border: 0px;
 }
 
 .tab {
@@ -158,4 +159,25 @@ pre {
 code {
     font-family: "inconsolata", "courier new", courier;
     background-color: #ddd;
+}
+
+table {
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+    font-size: 12px;
+    margin-left: 20px;
+}
+
+th {
+    font-weight: bold;
+    padding: 0px;
+}
+
+tr {
+    padding: 0px;
+}
+
+td {
+    padding: 0px;
+    padding-right: 10px;
 }

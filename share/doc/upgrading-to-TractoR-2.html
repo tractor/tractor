@@ -77,6 +77,7 @@ tractor bedpost
 <pre><code>GENERAL:
   Session directory        : /usr/local/tractor/tests/data/session-12dir
   Working directory exists : TRUE
+
 DIFFUSION:
   Preprocessing complete        : TRUE
   Data dimensions               : 96 x 96 x 25 x 13 voxels
@@ -96,9 +97,9 @@ DIFFUSION:
 <h2 id="miscellaneous-changes">Miscellaneous changes</h2>
 
 <ul>
-<li><p>The <code>mkbvecs</code> script is now called <code>gradread</code>.</p></li>
-<li><p>Scripts that use a <code>Tracker</code> option now default to <code>tractor</code> (the internal tracker, which is usually faster but requires the tractor.native package). PNT scripts that have an <code>AsymmetricModel</code> option default to <code>TRUE</code>, while those with a <code>NumberOfSamples</code> option default to 1000, again for speed.</p></li>
-<li><p>The default verbosity level is now 1, rather than 0. Users may therefore see much more output than before. The default can be switched back by setting up <code>~/.tractor/config</code> appropriately: see the man page for details.</p></li>
+<li>The <code>mkbvecs</code> script is now called <code>gradread</code>.</li>
+<li>Scripts that use a <code>Tracker</code> option now default to <code>tractor</code> (the internal tracker, which is usually faster but requires the tractor.native package). PNT scripts that have an <code>AsymmetricModel</code> option default to <code>TRUE</code>, while those with a <code>NumberOfSamples</code> option default to 1000, again for speed.</li>
+<li>The default verbosity level is now 1, rather than 0. Users may therefore see much more output than before. The default can be switched back by setting up <code>~/.tractor/config</code> appropriately: see the man page for details.</li>
 </ul>
 
 <h2 id="parallel-installation">Parallel installation</h2>
@@ -120,7 +121,7 @@ R_LIBS_USER=~/tractor2libs make install-native  # if native packages are require
 
 <p>Now, the standard <code>TRACTOR_HOME</code> variable cannot be set up as usual, because it is in use by TractoR 1.x. So instead, we set up an alias to allow us to be able to pick up the new version. In your <code>~/.bashrc</code> file, add the line</p>
 
-<pre><code>alias tractor2='TRACTOR_HOME=/usr/local/tractor2 R_LIBS_USER=~/tractor2libs /usr/local/tractor2/bin/tractor'
+<pre><code>alias tractor2=&#39;TRACTOR_HOME=/usr/local/tractor2 R_LIBS_USER=~/tractor2libs /usr/local/tractor2/bin/tractor&#39;
 </code></pre>
 
 <p>where <code>/usr/local/tractor2</code> is the directory containing the TractoR 2.x installation. You can then run <code>tractor2</code> instead of <code>tractor</code> from the command line when you want to use the new version:</p>

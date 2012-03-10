@@ -67,31 +67,31 @@
 03 
 04 suppressPackageStartupMessages(require(tractor.session))
 05 
-06 runExperiment <- function ()
+06 runExperiment &lt;- function ()
 07 {
-08     requireArguments("image file")
-09     image <- newMriImageFromFile(Arguments[1])
+08     requireArguments(&quot;image file&quot;)
+09     image &lt;- newMriImageFromFile(Arguments[1])
 10     
-11     if (nArguments() > 1)
-12         session <- newSessionFromDirectory(Arguments[2])
+11     if (nArguments() &gt; 1)
+12         session &lt;- newSessionFromDirectory(Arguments[2])
 13     else
-14         session <- NULL
+14         session &lt;- NULL
 15     
-16     metric <- getConfigVariable("Metric", NULL, "character", validValues=c("weight","FA","MD","axialdiff","radialdiff"))
-17     mode <- getConfigVariable("AveragingMode", "binary", validValues=c("binary","weighted"))
-18     threshold <- getConfigVariable("WeightThreshold", 0.01)
-19     thresholdMode <- getConfigVariable("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
+16     metric &lt;- getConfigVariable(&quot;Metric&quot;, NULL, &quot;character&quot;, validValues=c(&quot;weight&quot;,&quot;FA&quot;,&quot;MD&quot;,&quot;axialdiff&quot;,&quot;radialdiff&quot;))
+17     mode &lt;- getConfigVariable(&quot;AveragingMode&quot;, &quot;binary&quot;, validValues=c(&quot;binary&quot;,&quot;weighted&quot;))
+18     threshold &lt;- getConfigVariable(&quot;WeightThreshold&quot;, 0.01)
+19     thresholdMode &lt;- getConfigVariable(&quot;ThresholdRelativeTo&quot;, &quot;nothing&quot;, validValues=c(&quot;nothing&quot;,&quot;maximum&quot;,&quot;minimum&quot;))
 20     
-21     if (thresholdMode == "maximum")
-22         threshold <- threshold * max(image, na.rm=TRUE)
-23     else if (thresholdMode == "minimum")
-24         threshold <- threshold * min(image, na.rm=TRUE)
+21     if (thresholdMode == &quot;maximum&quot;)
+22         threshold &lt;- threshold * max(image, na.rm=TRUE)
+23     else if (thresholdMode == &quot;minimum&quot;)
+24         threshold &lt;- threshold * min(image, na.rm=TRUE)
 25     
-26     images <- createWeightingAndMetricImages(image, session, type=tolower(metric), mode=mode, threshold=threshold)
-27     finalImage <- newMriImageWithBinaryFunction(images$metric, images$weight, "*")
-28     metric <- sum(finalImage$getData()) / sum(images$weight$getData())
+26     images &lt;- createWeightingAndMetricImages(image, session, type=tolower(metric), mode=mode, threshold=threshold)
+27     finalImage &lt;- newMriImageWithBinaryFunction(images$metric, images$weight, &quot;*&quot;)
+28     metric &lt;- sum(finalImage$getData()) / sum(images$weight$getData())
 29     
-30     cat(paste(metric, "\n", sep=""))
+30     cat(paste(metric, &quot;\n&quot;, sep=&quot;&quot;))
 31 }
 </code></pre>
 

@@ -43,7 +43,7 @@
   /tractor...................main managed directory
     /objects.................serialised R objects relating to this session directory
     /diffusion...............diffusion-weighted images and their derivatives (e.g. diffusion tensor components)
-    /fdt.....................images and other files used by FSL's diffusion toolbox
+    /fdt.....................images and other files used by FSL&#39;s diffusion toolbox
     /fdt.bedpostX............images and other files produced by FSL BEDPOSTX
     /fdt.track...............FSL tractography output
     /camino..................images and other files used by the Camino toolkit
@@ -71,11 +71,27 @@ sse: dti_SSE
 
 <p>Any or all of these default names can be overridden by placing a file called <code>map.yaml</code> in the <code>diffusion</code> subdirectory, using the format above. Note that the <code>%</code> symbol is used to indicate an index, so the first eigenvalue image will be called <code>dti_eigval1</code>, the second <code>dti_eigval2</code>, and so on. No image format suffix (e.g. <code>.nii</code>) should be given.</p>
 
+<p>Similarly, the names of the subdirectories within the main <code>tractor</code> directory can be specified in a top-level session map. This mechanism can be used to point to data outside the session directory as well, and this can be useful, for example, when processing a single data set in several different ways. For example, say we want to process the data from a single subject using <code>bedpost</code>, with both 2 and 3 fibre options. We could process the 2 fibres case, and then create a new session, say <code>/data/subject1_3fibres</code>, which points to the same diffusion data. The <code>/data/subject1_3fibres/tractor/map.yaml</code> file would then contain</p>
+
+<pre><code>diffusion: /data/subject1_2fibres/tractor/diffusion
+</code></pre>
+
+<p>It should, however, be bourne in mind that this will make the session less portable. The full default map, as of TractoR v2.1.0, is</p>
+
+<pre><code>diffusion: diffusion
+fdt: fdt
+bedpost: fdt.bedpostX
+probtrack: fdt.track
+camino: camino
+</code></pre>
+
+<p>Note that the <code>objects</code> subdirectory cannot be relocated.</p>
+
 <h2 id="point-types">Point types</h2>
 
 <p>Whenever a location within a brain volume needs to be specified, for example as a seed point for tractography, it is necessary to specify the meaning of the numerical value given. Locations may be specified in world coordinates, in mm, or as a voxel location. The latter case needs to be further disambiguated, since FSL uses the C convention of indexing voxels from zero, whereas TractoR uses the R (and Matlab) convention of indexing from one. The first voxel in the corner of a brain volume is therefore (1,1,1) in the R convention. Therefore experiment scripts, such as <code>track</code>, which take a point as an argument require the <code>PointType</code> parameter to be set to one of &ldquo;fsl&rdquo;, &ldquo;r&rdquo; or &ldquo;mm&rdquo; to indicate the meaning of the point. So in the command</p>
 
-<pre><code>tractor -v1 track /data/subject1 34,23,17 PointType:fsl
+<pre><code>tractor track /data/subject1 34,23,17 PointType:fsl
 </code></pre>
 
 <p>the <code>track</code> script is run using &ldquo;/data/subject1&rdquo; as the relevant session directory and &ldquo;34,23,17&rdquo; as a seed point using the FSL convention. This would be appropriate if the seed point had been selected using the FSLview data viewer.</p>

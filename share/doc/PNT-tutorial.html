@@ -41,7 +41,7 @@
 
 <h2 id="reference-tracts-and-matching-models">Reference tracts and matching models</h2>
 
-<p>As with the heuristic approach to NT, the probabilistic approach requires some <a href="diffusion-preprocessing.html">fully preprocessed</a> diffusion MR data and a <a href="reference-tracts.html">reference tract</a> representing the pathway we wish to segment in those data.</p>
+<p>As with the heuristic approach to NT, the probabilistic approach requires some <a href="diffusion-processing.html">fully preprocessed</a> diffusion MR data and a <a href="reference-tracts.html">reference tract</a> representing the pathway we wish to segment in those data.</p>
 
 <p>In addition, however, PNT makes use of a <em>matching model</em>, which must be &ldquo;trained&rdquo; from the data. The model captures information about the typical deviations that acceptable tract segmentations make from the reference tract. The easiest way to create the model is to use the <code>pnt-em</code> script, which uses a single data set and fits the model while simultaneously finding suitable tracts. This approach, which is described in Ref. (2) and was introduced in TractoR version 1.0.0, is now the recommended one for most purposes. It also requires less work from the user than the alternative, which is to split your data set into a training set and a testing set, and use <code>pnt-train</code> and <code>pnt-eval</code>, respectively, to first train the model and then use it for tract matching.</p>
 
@@ -154,9 +154,9 @@ tractor -c design.yaml pnt-eval ModelName:training_model
 <h2 id="references">References</h2>
 
 <ol>
-<li><p>J.D. Clayden et al., <em>IEEE Transactions on Medical Imaging</em> <strong>26</strong>(11):1555-1561, 2007.</p></li>
-<li><p>J.D. Clayden et al., <em>Neuroimage</em> <strong>45</strong>(2):377-385, 2009.</p></li>
-<li><p>J.D. Clayden et al., <em>Lecture Notes in Computer Science</em>, <strong>5762</strong>:150-157, 2009.</p></li>
+<li>J.D. Clayden et al., <em>IEEE Transactions on Medical Imaging</em> <strong>26</strong>(11):1555-1561, 2007.</li>
+<li>J.D. Clayden et al., <em>Neuroimage</em> <strong>45</strong>(2):377-385, 2009.</li>
+<li>J.D. Clayden et al., <em>Lecture Notes in Computer Science</em>, <strong>5762</strong>:150-157, 2009.</li>
 </ol>
 
 

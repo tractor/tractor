@@ -38,12 +38,12 @@
 <p>The TractoR (Tractography with R) project includes R packages for reading, writing and visualising magnetic resonance images stored in Analyze, NIfTI and DICOM file formats (DICOM support is read only). It also contains functions specifically designed for working with diffusion MRI and tractography, including a standard implementation of the neighbourhood tractography approach to white matter tract segmentation. A shell script is also provided to run experiments with TractoR without interacting with R. Using TractoR you can easily</p>
 
 <ul>
-<li><p>Convert DICOM files from your MR scanner to Analyze/NIfTI format.</p></li>
-<li><p>Preprocess diffusion MR data to calculate tensor metrics including fractional anisotropy (FA), mean diffusivity (MD), and principal directions (see <a href="diffusion-preprocessing.html">diffusion preprocessing</a>).</p></li>
-<li><p>Run probabilistic tractography using single seed points or one or more masks.</p></li>
-<li><p>Segment specific tracts in groups automatically using neighbourhood tractography (see <a href="PNT-tutorial.html">PNT tutorial</a> and <a href="HNT-tutorial.html">HNT tutorial</a>).</p></li>
-<li><p>Remove false positive tracts using a model of tract shape variability.</p></li>
-<li><p>Create graphics to visualise image slices or maximum-intensity projections.</p></li>
+<li>Convert DICOM files from your MR scanner to Analyze/NIfTI format.</li>
+<li>Preprocess diffusion MR data and calculate tensor metrics including fractional anisotropy (FA), mean diffusivity (MD), and principal directions (see <a href="diffusion-processing.html">diffusion processing</a>).</li>
+<li>Run probabilistic tractography using single seed points or one or more masks.</li>
+<li>Segment specific tracts in groups automatically using neighbourhood tractography (see <a href="PNT-tutorial.html">PNT tutorial</a> and <a href="HNT-tutorial.html">HNT tutorial</a>).</li>
+<li>Remove false positive tracts using a model of tract shape variability.</li>
+<li>Create graphics to visualise image slices or maximum-intensity projections.</li>
 </ul>
 
 <p>If you use TractoR in your work, please cite <a href="#references">Ref. 1</a> below. For details of research papers underlying the methods implemented in the package, please see the <a href="references.html">references page</a>.</p>
@@ -57,13 +57,13 @@
 <h2 id="site-contents">Site contents</h2>
 
 <ul>
-<li><p>The <a href="getting-started.html">getting started</a> page is the place to find out about downloading and installing TractoR. Details of the major user-visible changes can be found in the <a href="changelog.html">changelog</a>, and news on releases and TractoR-related publications appears below.</p></li>
-<li><p>Users of TractoR 1.x may find the information on <a href="upgrading-to-TractoR-2.html">upgrading to TractoR 2</a> helpful, and an <a href="paper-addendum.html">addendum</a> to the <a href="http://www.jstatsoft.org/v44/i08/">TractoR paper</a> for version 2 is also available.</p></li>
-<li><p>There is specific information on <a href="TractoR-for-R-users.html">TractoR for R users</a>.</p></li>
-<li><p>Useful information about TractoR-specific conventions can be found on the aptly-named <a href="conventions.html">conventions</a> page.</p></li>
-<li><p>The <a href="diffusion-preprocessing.html">diffusion preprocessing</a> page covers the preprocessing of diffusion-weighted MR images using TractoR.</p></li>
-<li><p>TractoR provides reference implementations of various <a href="http://www.homepages.ucl.ac.uk/%7Esejjjd2/research/#neighbourhood-tractography">neighbourhood tractography</a> methods, both &ldquo;heuristic&rdquo; and &ldquo;probabilistic&rdquo;, for segmenting specific white matter structures. An <a href="HNT-tutorial.html">HNT tutorial</a> and a <a href="PNT-tutorial.html">PNT tutorial</a> using TractoR are available, as well as information on the <a href="reference-tracts.html">reference tracts</a> used by both methods.</p></li>
-<li><p>Finally, there is a list of <a href="references.html">references</a> for the methods available through TractoR.</p></li>
+<li>The <a href="getting-started.html">getting started</a> page is the place to find out about downloading and installing TractoR. Details of the major user-visible changes can be found in the <a href="changelog.html">changelog</a>, and news on releases and TractoR-related publications appears below.</li>
+<li>Users of TractoR 1.x may find the information on <a href="upgrading-to-TractoR-2.html">upgrading to TractoR 2</a> helpful, and an <a href="paper-addendum.html">addendum</a> to the <a href="http://www.jstatsoft.org/v44/i08/">TractoR paper</a> for version 2 is also available.</li>
+<li>There is specific information on <a href="TractoR-for-R-users.html">TractoR for R users</a>.</li>
+<li>Useful information about TractoR-specific conventions can be found on the aptly-named <a href="conventions.html">conventions</a> page.</li>
+<li>The <a href="diffusion-processing.html">diffusion processing</a> page covers the processing of diffusion-weighted MR images using TractoR.</li>
+<li>TractoR provides reference implementations of various <a href="http://www.homepages.ucl.ac.uk/%7Esejjjd2/research/#neighbourhood-tractography">neighbourhood tractography</a> methods, both &ldquo;heuristic&rdquo; and &ldquo;probabilistic&rdquo;, for segmenting specific white matter structures. An <a href="HNT-tutorial.html">HNT tutorial</a> and a <a href="PNT-tutorial.html">PNT tutorial</a> using TractoR are available, as well as information on the <a href="reference-tracts.html">reference tracts</a> used by both methods.</li>
+<li>Finally, there is a list of <a href="references.html">references</a> for the methods available through TractoR.</li>
 </ul>
 
 <h2 id="news">News</h2>
@@ -105,8 +105,8 @@
 <h2 id="references">References</h2>
 
 <ol>
-<li><p>J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin &amp; C.A. Clark (2011). TractoR: Magnetic resonance imaging and tractography with R. <em>Journal of Statistical Software</em> <strong>44</strong>(8):1-18.</p></li>
-<li><p>A. Evans, M. Kamber, D.L. Collins &amp; D. MacDonald (1994). <em>An MRI-based probabilistic atlas of neuroanatomy</em>. In S. Shorvon, D. Fish, F. Andermann, G.M. Bydder &amp; H. Stefan (eds), <em>Magnetic resonance scanning and epilepsy</em>, <strong>NATO ASI Series A, Life Sciences</strong>, vol. 264, pp. 263-274. Plenum Press.</p></li>
+<li>J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin &amp; C.A. Clark (2011). TractoR: Magnetic resonance imaging and tractography with R. <em>Journal of Statistical Software</em> <strong>44</strong>(8):1-18.</li>
+<li>A. Evans, M. Kamber, D.L. Collins &amp; D. MacDonald (1994). <em>An MRI-based probabilistic atlas of neuroanatomy</em>. In S. Shorvon, D. Fish, F. Andermann, G.M. Bydder &amp; H. Stefan (eds), <em>Magnetic resonance scanning and epilepsy</em>, <strong>NATO ASI Series A, Life Sciences</strong>, vol. 264, pp. 263-274. Plenum Press.</li>
 </ol>
 
 <p><a href="http://www.nitrc.org/projects/tractor"><img src="nitrc.png" alt="NITRC logo"></a></p>

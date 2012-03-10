@@ -38,12 +38,13 @@
 <h2 id="section-3-the-mriimage-class">Section 3: The MriImage class</h2>
 
 <pre><code>## TractoR 1.x
-# Print a list of accessor functions for image object "i"
+# Print a list of accessor functions for image object &quot;i&quot;
 names(i)
 # Get the description associated with a specific DICOM tag
 getDescriptionForDicomTag(0x0018, 0x0087)
+
 ## TractoR 2.x
-# Print a list of accessor functions for image object "i"
+# Print a list of accessor functions for image object &quot;i&quot;
 i$methods()
 # Get the description associated with a specific DICOM tag
 tractor.base:::getDescriptionForDicomTag(0x0018, 0x0087)
@@ -52,21 +53,23 @@ tractor.base:::getDescriptionForDicomTag(0x0018, 0x0087)
 <h2 id="section-4-modelling-the-diffusion-weighted-signal">Section 4: Modelling the diffusion-weighted signal</h2>
 
 <pre><code>## TractoR 1.x
-# Get the location of a session's FA map
-s$getImageFileNameByType("FA")
+# Get the location of a session&#39;s FA map
+s$getImageFileNameByType(&quot;FA&quot;)
+
 ## TractoR 2.x
-# Get the location of a session's FA map
-s$getImageFileNameByType("FA", "diffusion")
+# Get the location of a session&#39;s FA map
+s$getImageFileNameByType(&quot;FA&quot;, &quot;diffusion&quot;)
 </code></pre>
 
 <h2 id="section-5-fibre-tracking">Section 5: Fibre tracking</h2>
 
 <pre><code>## TractoR 1.x
-# Get a session's FA map
-f <- s$getImageByType("FA")
+# Get a session&#39;s FA map
+f &lt;- s$getImageByType(&quot;FA&quot;)
+
 ## TractoR 2.x
-# Get a session's FA map
-f <- s$getImageByType("FA", "diffusion")
+# Get a session&#39;s FA map
+f &lt;- s$getImageByType(&quot;FA&quot;, &quot;diffusion&quot;)
 </code></pre>
 
 

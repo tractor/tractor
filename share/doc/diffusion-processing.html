@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-  <title>TractoR ~ diffusion-preprocessing</title>
+  <title>TractoR ~ diffusion-processing</title>
 
   <meta charset="utf-8" />
   <meta name="author" content="Jon Clayden" />
@@ -31,7 +31,7 @@
 </table>
 
 
-<h1>Diffusion preprocessing</h1>
+<h1>Diffusion processing</h1>
 
 <p>This page discusses the preprocessing steps required to prepare a diffusion-weighted dataset for analysis using TractoR, as well as subsequent operations that can be performed to <a href="#checking-and-rotating-gradient-directions">manipulate diffusion gradient directions</a> and <a href="#model-fitting">fit models</a> to the data.</p>
 
@@ -40,25 +40,35 @@
 <p>The preprocessing steps required to run neighbourhood tractography or other analysis on a diffusion-weighted data set using TractoR are the same as those required by the <a href="http://www.fmrib.ox.ac.uk/fsl/fdt/index.html">FSL diffusion toolbox</a>, FDT, for tractography. It is therefore quite possible to perform all of these steps independently of TractoR, and the user may decide to use the relevant FSL tools, or their equivalents from another package. However, reasons to use TractoR might include the following:</p>
 
 <ul>
-<li><p>The <a href="conventions.html">session hierarchy</a> will be arranged as TractoR expects it, automatically. This saves the user from having to arrange the hierarchy herself. It also means that TractoR can give correct parameters to any external programs without further input from the user.</p></li>
-<li><p>The pipeline is run interactively but tries to minimise user input.</p></li>
-<li><p>TractoR can establish which stage of the pipeline has been reached, and continue partly completed preprocessing pipelines where necessary.</p></li>
+<li>The <a href="conventions.html">session hierarchy</a> will be arranged as TractoR expects it, automatically. This saves the user from having to arrange the hierarchy herself. It also means that TractoR can give correct parameters to any external programs without further input from the user.</li>
+<li>The pipeline is run interactively but tries to minimise user input.</li>
+<li>TractoR can establish which stage of the pipeline has been reached, and continue partly completed preprocessing pipelines where necessary.</li>
 </ul>
 
 <p>Whichever method is used to perform them, the requisite steps are as follows.</p>
 
 <ol>
-<li><p>Convert DICOM files from an MR scanner into a 4D data set file in Analyze or NIfTI format. TractoR can perform this conversion for a number of types of DICOM files, but users may prefer to use their own site tools for this step. The result is an image called <code>rawdata</code> (with appropriate suffix depending on the file type) in the <code>diffusion</code> subdirectory of the TractoR session hierarchy. The file <code>directions.txt</code>, which describes the diffusion weighting applied to the images, will also be created if possible. <strong>If the relevant information is not available, this latter file must be created manually</strong>&ndash;if this is the case then TractoR will produce a warning.</p></li>
-<li><p>Identify an image volume with little or no diffusion weighting, to be used as an anatomical reference. By default this file will be called <code>refb0</code> and stored in the <code>diffusion</code> subdirectory.</p></li>
-<li><p>Create a mask which covers only that part of the <code>refb0</code> volume which is within the brain. Skull and other nonbrain tissue is left outside this mask. The image file <code>mask</code> is created in the <code>diffusion</code> subdirectory, as well as a masked version of the anatomical reference image, called <code>maskedb0</code>.</p></li>
-<li><p>Correct for eddy current-induced distortion effects in the data, using the anatomical reference volume as a registration target. This step currently uses the FSL tool <code>eddy_correct</code>, and produces a file called <code>data</code> in the <code>diffusion</code> subdirectory.</p></li>
+<li>Convert DICOM files from an MR scanner into a 4D data set file in Analyze or NIfTI format. TractoR can perform this conversion for a number of types of DICOM files, but users may prefer to use their own site tools for this step. The result is an image called <code>rawdata</code> (with appropriate suffix depending on the file type) in the <code>diffusion</code> subdirectory of the TractoR session hierarchy. The file <code>directions.txt</code>, which describes the diffusion weighting applied to the images, will also be created if possible. <strong>If the relevant information is not available, this latter file must be created manually</strong>&ndash;if this is the case then TractoR will produce a warning.</li>
+<li>Identify an image volume with little or no diffusion weighting, to be used as an anatomical reference. By default this file will be called <code>refb0</code> and stored in the <code>diffusion</code> subdirectory.</li>
+<li>Create a mask which covers only that part of the <code>refb0</code> volume which is within the brain. Skull and other nonbrain tissue is left outside this mask. The image file <code>mask</code> is created in the <code>diffusion</code> subdirectory, as well as a masked version of the anatomical reference image, called <code>maskedb0</code>.</li>
+<li>Correct for eddy current-induced distortion effects in the data, using the anatomical reference volume as a registration target. This step currently uses the FSL tool <code>eddy_correct</code>, and produces a file called <code>data</code> in the <code>diffusion</code> subdirectory.</li>
 </ol>
 
 <p>In addition to these steps, some kind of diffusion model fitting is a prerequisite for most subsequent analysis. Steps for performing such fits, and other common data manipulations, are laid out below.</p>
 
+<h2 id="sorting-dicom-files">Sorting DICOM files</h2>
+
+<p>A single scan session often comprises a range of image acquisitions of different types, for example including structural and functional imaging as well as a diffusion-weighted sequence. It is therefore a common first step to sort the DICOM files corresponding to the diffusion scan out from everything else. Assuming for present purposes that data sets are stored as subdirectories of <code>/data</code>, and that each data set has its own <code>dicom</code> subdirectory containing all associated DICOM files, this sorting process can be achieved by typing something like</p>
+
+<pre><code>cd /data/subject1/dicom
+tractor dicomsort
+</code></pre>
+
+<p>This will result in various new subdirectories being created, labelled with their appropriate series number and description. It is up to the user to identify which series corresponds to the diffusion data.</p>
+
 <h2 id="using-the-dpreproc-script">Using the dpreproc script</h2>
 
-<p>Assuming for present purposes that data sets are stored as subdirectories of <code>/data</code>, running the preprocessing pipeline for a single session directory is a matter of typing something like</p>
+<p>With DICOM sorting already performed if necessary, running the preprocessing pipeline for a single session directory is a matter of typing something like</p>
 
 <pre><code>cd /data/subject1
 tractor dpreproc
@@ -69,7 +79,7 @@ tractor dpreproc
 <pre><code>tractor dpreproc DicomDirectory:dicom/dti
 </code></pre>
 
-<p>(The <code>dicomsort</code> script can be used to sort a directory of DICOM files into series if required, thereby separating diffusion data from other scans.)</p>
+<p>Notice that the DICOM subdirectory given is relative to the session directory.</p>
 
 <p>The preprocessing can be completed noninteractively by setting the <code>Interactive</code> option to <code>false</code>:</p>
 
@@ -148,10 +158,11 @@ tractor caminofiles
 <pre><code>GENERAL:
   Session directory        : /usr/local/tractor/tests/data/session-12dir
   Working directory exists : TRUE
+
 DIFFUSION:
   Preprocessing complete        : TRUE
   Data dimensions               : 96 x 96 x 25 x 13 voxels
-  Voxel dimensions              : 2.5 x 2.5 x 5 x 1 mm
+  Voxel dimensions              : 2.5 x 2.5 x 5 mm x 1 s
   Diffusion b-values            : 0, 1000 s/mm^2
   Number of gradient directions : 1, 12
   Diffusion tensors fitted      : TRUE
