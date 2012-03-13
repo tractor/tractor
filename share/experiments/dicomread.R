@@ -7,12 +7,14 @@ runExperiment <- function ()
 {
     requireArguments("directory")
     
+    untileMosaics <- getConfigVariable("UntileMosaics", TRUE)
+    
     if (nArguments() > 1)
         fileName <- Arguments[2]
     else
         fileName <- Arguments[1]
     
-    info <- newMriImageFromDicomDirectory(Arguments[1])
+    info <- newMriImageFromDicomDirectory(Arguments[1], untileMosaics=untileMosaics)
     reportFlags()
     writeMriImageToFile(info$image, fileName)
     print(info$image)

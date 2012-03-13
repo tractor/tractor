@@ -175,13 +175,13 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     }
 }
 
-newMriImageMetadataFromDicom <- function (fileName)
+newMriImageMetadataFromDicom <- function (fileName, untileMosaics = TRUE)
 {
     fileMetadata <- newDicomMetadataFromFile(fileName)
-    invisible (newMriImageMetadataFromDicomMetadata(fileMetadata))
+    invisible (newMriImageMetadataFromDicomMetadata(fileMetadata, untileMosaics=untileMosaics))
 }
 
-newMriImageMetadataFromDicomMetadata <- function (dicom)
+newMriImageMetadataFromDicomMetadata <- function (dicom, untileMosaics = TRUE)
 {
     if (dicom$getTagValue(0x0008, 0x0060) != "MR")
         flag(OL$Warning, "DICOM file does not contain MR image data")
@@ -209,7 +209,7 @@ newMriImageMetadataFromDicomMetadata <- function (dicom)
     if (rows != dataRows || columns != dataColumns)
     {
         # Siemens mosaic format
-        if (identical(dicom$getTagValue(0x0008,0x0070), "SIEMENS"))
+        if (identical(dicom$getTagValue(0x0008,0x0070), "SIEMENS") && untileMosaics)
         {
             slicesPerRow <- dataRows / rows
             slicesPerColumn <- dataColumns / columns
@@ -289,10 +289,10 @@ maskPixels <- function (pixels, metadata)
     return (newPixels)
 }
 
-newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE)
+newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE, untileMosaics = TRUE)
 {
     fileMetadata <- metadata
-    imageMetadata <- newMriImageMetadataFromDicomMetadata(fileMetadata)
+    imageMetadata <- newMriImageMetadataFromDicomMetadata(fileMetadata, untileMosaics=untileMosaics)
     
     datatype <- imageMetadata$getDataType()
     nPixels <- fileMetadata$getDataLength() / datatype$size
@@ -314,7 +314,7 @@ newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE)
     }
     else if (nDims == 3)
     {
-        if (identical(fileMetadata$getTagValue(0x0008,0x0070), "SIEMENS"))
+        if (identical(fileMetadata$getTagValue(0x0008,0x0070), "SIEMENS") && untileMosaics)
         {
             # Handle Siemens mosaic images, which encapsulate a whole 3D image in
             # a single-frame DICOM file
@@ -340,10 +340,10 @@ newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE)
     invisible (image)
 }
 
-newMriImageFromDicom <- function (fileName)
+newMriImageFromDicom <- function (fileName, untileMosaics = TRUE)
 {
     fileMetadata <- newDicomMetadataFromFile(fileName)
-    invisible (newMriImageFromDicomMetadata(fileMetadata))
+    invisible (newMriImageFromDicomMetadata(fileMetadata, untileMosaics=untileMosaics))
 }
 
 readDiffusionParametersFromMetadata <- function (metadata)
@@ -392,7 +392,7 @@ readDiffusionParametersFromMetadata <- function (metadata)
         return (list(bval=NA, bvec=rep(NA,3), defType="none"))
 }
 
-newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE)
+newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
 {
     if (!file.exists(dicomDir) || !file.info(dicomDir)$isdir)
         report(OL$Error, "The specified path (", dicomDir, ") does not point to a directory")
@@ -437,7 +437,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         acquisitionNumbers <- c(acquisitionNumbers, metadata$getTagValue(0x0020,0x0012))
         imageNumbers <- c(imageNumbers, metadata$getTagValue(0x0020,0x0013))
         sliceLocations <- c(sliceLocations, metadata$getTagValue(0x0020,0x1041))
-        images <- c(images, list(newMriImageFromDicomMetadata(metadata, flipY=FALSE)))
+        images <- c(images, list(newMriImageFromDicomMetadata(metadata, flipY=FALSE, untileMosaics=untileMosaics)))
 
         if (readDiffusionParams)
         {
