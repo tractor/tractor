@@ -516,7 +516,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         imageDims[absoluteSliceDirections] <- images[[1]]$getDimensions()
         imageDims[throughSliceDirection] <- nSlices
         
-        voxelDims <- c(NA, NA, NA, 1)
+        voxelDims <- c(NA, NA, NA, repetitionTime)
         voxelDims[absoluteSliceDirections] <- images[[1]]$getVoxelDimensions()
         voxelDims[throughSliceDirection] <- sliceDim
     }
