@@ -1,0 +1,332 @@
+% Part of the oro.nifti package for R
+% Distributed under the BSD license: see oro.nifti/COPYING
+%
+% $Id: $
+
+% \VignetteIndexEntry{oro.nifti}
+% \VignetteDepends{oro.nifti}
+% \VignettePackage{oro.nifti}
+% \VignetteKeywords{NIfTI, Analyze, medical imaging, DICOM}
+\documentclass[11pt,a4paper]{article}
+\usepackage{a4wide,amsmath,color,fancyvrb,graphicx,natbib,thumbpdf}
+\definecolor{Red}{rgb}{0.7,0,0}
+\definecolor{Blue}{rgb}{0,0,0.8}
+\usepackage[colorlinks=true,linkcolor=Blue,citecolor=Blue,urlcolor=Blue]{hyperref}
+\usepackage{xspace}
+\usepackage{fancyhdr}
+\usepackage{lscape}
+\usepackage{Sweave}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\let\code=\texttt
+\let\proglang=\textsf
+\newcommand{\pkg}[1]{{\normalfont\fontseries{b}\selectfont #1}}
+\newcommand{\email}[1]{\href{mailto:#1}{\normalfont\texttt{#1}}}
+
+\newcommand{\ktrans}{K^\text{trans}}
+\newcommand{\iaugc}[1]{\text{IAUGC}_{#1}}
+\newcommand{\kep}{k_\text{ep}}
+\newcommand{\vp}{v_\text{p}}
+
+\SweaveOpts{engine=R,eps=FALSE}
+
+\setlength{\parskip}{0.7ex plus0.1ex minus0.1ex}
+\setlength{\parindent}{0em}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagestyle{fancy}
+\lhead{Whitcher, Schmid and Thornton}
+\chead{}
+\rhead{Using the {\tt oro.nifti} Package}
+\lfoot{}
+\cfoot{\thepage}
+\rfoot{}
+\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\footrulewidth}{1pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<preliminaries,echo=FALSE,results=hide>>=
+library("oro.nifti")
+## options(niftiAuditTrail=FALSE)
+options(width=85)
+@
+
+\title{{\tt oro.nifti}: Rigorous - NIfTI Input / Output}
+\author{Brandon Whitcher \\ \email{bjw34032@users.sourceforge.net} \\ %
+  Volker J. Schmid \\ \email{volkerschmid@users.sourceforge.net} \\ %
+  Andrew Thornton \\ \email{zeripath@users.sourceforge.net}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\maketitle
+
+\thispagestyle{empty}
+
+\section{Introduction}
+
+The \pkg{oro.nifti} package requires incoming data to be in the
+ANALYZE~7.5 or NIfTI formats.  Data acquisition and input (e.g., from
+DICOM using \pkg{oro.dicom}) must be performed by the user before
+\pkg{oro.nifti} may be used to summarize the data.  Several software
+packages allow DICOM-to-NIfTI (or ANALYZE) conversion; e.g.,
+\begin{itemize}
+\item oro.dicom (\url{rigorous.r-forge.r-project.org})
+\item FreeSurfer (\url{surfer.nmr.mgh.harvard.edu})
+\item Xmedcon (\url{xmedcon.sourceforge.net})
+\item MRIConvert (\url{lnci.oregon.edu/\~jolinda/MRIConvert})
+\end{itemize}
+This is by no means an exhaustive list of software available for DICOM
+conversion.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{A Note on Axes and Orientation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The NIfTI format contains an implicit generalized spatial
+transformation from the data co-ordinate system $(i,j,k)$ into a
+real-space ``right-handed'' co-ordinate system.  In this real-space
+system, the $(x,y,z)$ axes are \emph{usually} set such that $x$
+increases from left to right, $y$ increases from posterior to anterior
+and $z$ increases from inferior to superior.
+
+At this point in time the \pkg{oro.nifti} package cannot apply an
+arbitrary transform to the imaging data into $(x,y,z)$ space -- such a
+transform may require non-integral indices and interpolation steps.
+The package does accommodate straightforward transformations of imaging
+data; e.g., setting the $x$-axis to increase from right to left
+(neurological).  Future versions of \pkg{oro.nifti} will attempt to
+address more complicated transformations.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{NIfTI and ANALYZE data in S4}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+A major improvement in the \pkg{oro.nifti} package is the fact that
+standard medical imaging formats are stored in unique classes under
+the S4 system.  Essentially, NIfTI and ANALYZE data are stored as
+multi-dimensional arrays with extra slots created that capture the
+format-specific header information.  The NIfTI class also has the
+ability to read and write extensions that conform to the data format
+standard.  Customized printing and validity-checking functions are
+available to the user and every attempt is made to ensure that the
+information from the multi-dimensional array is in agreement with the
+header values.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Audit Trail}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Following on from the S4 implementation of both the NIfTI and Analyze
+data formats, the ability to extend the NIfTI data format header is
+utilized in the \pkg{oro.nifti} package.  First, extensions are
+properly handled when reading and writing NIfTI data.  Second, users
+are allowed to add extensions to newly-created NIfTI objects using
+various functions and the \pkg{XML} package.  Third, by default all
+operations that are performed on a NIfTI object will generate what we
+call an \emph{audit trail} that consists of an XML-based log.  Each
+log entry contains information not only about the function applied to
+the NIfTI object, but also various system-level information; e.g.,
+version of \proglang{R}, user name, date, time, etc.  When writing
+NIfTI-class objects to disk, the XML-based NIfTI extension is
+converted into plain text and saved appropriately (ecode = 6).  The
+user may control the tracking of data manipulation via the audit trail
+using a global option.  For example please use the command
+
+<<niftiAuditTrail,eval=FALSE>>=
+options(niftiAuditTrail=FALSE)
+@
+
+to turn off the ``audit trail'' option in \pkg{oro.nifti}.
+
+Interactive visualization of multidimensional arrays, stored in NIfTI
+or Analyze format, is best performed outside of \proglang{R} at this
+point in time.  Popular viewers, especially for brain imaging, are
+\begin{itemize}
+\item FSLView (\url{http://www.fmrib.ox.ac.uk/fsl/fslview/})
+\item MRIcroN (\url{http://www.sph.sc.edu/comd/rorden/MRicron/})
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Examples}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Labelled LR Standard (MNI152) Images in NIfTI Format}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The first example of reading in, and displaying, medical imaging data
+in NIfTI format (\texttt{avg152T1\_LR\_nifti.nii.gz}) was obtained
+from the NIfTI website (\url{nifti.nimh.nih.gov/nifti-1/}).  
+Successful execution of the command:
+
+<<mniLR_nifti>>=
+(mni.LR <- readNIfTI(system.file("nifti/mniLR.nii.gz", package="oro.nifti")))
+audit.trail(mni.LR)
+descrip(mni.LR)
+@ 
+<<figure1-png,echo=FALSE,results=hide>>=
+png(filename="mniLR.png", width=400, height=400, bg="black")
+@ 
+<<figure1-code>>=
+image(mni.LR)
+@ 
+<<figure1-dev.off,echo=FALSE,results=hide>>=
+dev.off()
+@ 
+
+produces a 4D array of the image data, with the default NIfTI axes,
+and is displayed on a $10{\times}10$ grid of images
+(Figure~\ref{fig:avg152T1_LR_nifti}).  Note, the \code{image} function
+has been modified to accept \code{nifti} and \code{anlz} objects and
+display them with minimal user input.  Two accessor functions are also
+shown here: \code{audit.trail} and \code{descrip}.  The former is used
+to access the XML-based audit trail that is stored as a NIfTI header
+extension and the latter is the name of a valid NIfTI header field
+(allowed to store up to 80 characters).
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics{mniLR.png}
+  \caption{Axial slices of MNI volume \texttt{mniLR\_nifti} stored in
+    radiological convention.}
+  \label{fig:avg152T1_LR_nifti}
+\end{figure}
+
+The second example of reading in, and displaying, medical imaging data
+in NIfTI format (\texttt{avg152T1\_RL\_nifti.nii}) was also obtained
+from the NIfTI website (\url{nifti.nimh.nih.gov/nifti-1/}).
+Successful execution of the command
+
+<<mniRL_nifti>>=
+(mni.RL <- readNIfTI(system.file("nifti/mniRL.nii.gz", package="oro.nifti")))
+@ 
+<<figure2-png,echo=FALSE,results=hide>>=
+png(filename="mniRL.png", width=400, height=400, bg="black")
+@ 
+<<figure2-code>>=
+image(mni.RL)
+<<figure2-dev.off,echo=FALSE,results=hide>>=
+dev.off()
+@ 
+
+produces a 4D array of the image data that may be displayed in a
+$10{\times}10$ grid of images (Figure~\ref{fig:avg152T1_RL_nifti}).
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics{mniRL.png}
+  \caption{Axial slices of MNI volume \texttt{avg152T1\_RL\_nifti}
+  stored in neurological convention.}
+  \label{fig:avg152T1_RL_nifti}
+\end{figure}
+
+The first image (LR) is stored in radiological convention.  The second
+image (RL) is stored in neurological convention.  Any NIfTI-1 compliant
+viewing software should display these images identically.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Simple Time-series or Multi-volume Image}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This is an example of reading in, and displaying, a four-dimensional
+medical imaging data set in NIfTI format
+(\texttt{filtered\_func\_data.nii}) obtained from the NIfTI website
+(\url{nifti.nimh.nih.gov/nifti-1/}).  Successful execution of the
+command
+
+<<filtered_func_data>>=
+(ffd <- readNIfTI(system.file("nifti/ffd.nii.gz", package="oro.nifti")))
+@ 
+<<figure3-png,echo=FALSE,results=hide>>=
+png(filename="ffd.png", width=400, height=400, bg="black")
+@ 
+<<figure3-code>>=
+image(ffd)
+@ 
+<<figure3-dev.off,echo=FALSE,results=hide>>=
+dev.off()
+@ 
+
+produces a four-dimensional (4D) array of imaging data that may be
+displayed in a $5{\times}5$ grid of images (Figure~\ref{fig:ffd}).
+The first three dimensions are spatial locations of the voxel (volume
+element) and the fourth dimension is time.
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics{ffd.png}
+  \caption{Axial slices of the functional MRI ``volume''
+  \texttt{filtered\_func\_data} from the first acquisition.}
+  \label{fig:ffd}
+\end{figure}
+
+An additional graphical display function has been added for
+\code{nifti} and \code{anlz} objects that allows orthographic displays.
+
+<<figure3b-png,echo=FALSE,results=hide>>=
+png(filename="ffd_orthographic.png", width=400, height=400, bg="black")
+@ 
+<<figure3b-code>>=
+orthographic(ffd)
+@ 
+<<figure3b-dev.off,echo=FALSE,results=hide>>=
+dev.off()
+@ 
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics{ffd_orthographic.png}
+  \caption{Orthographic display of the first volume from the
+  functional MRI dataset \texttt{filtered\_func\_data}.  By default
+  the mid-axial, mid-saggittal and mid-coronal planes are chosen.}
+  \label{fig:ffd-orthographic}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Statistic Image}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This is an example of reading in and displaying a statistical image so
+that it may be overlayed on the EPI (echo planar imaging) data taken
+from the functional MRI experiment.  The original NIfTI files
+(\texttt{filtered\_func\_data.nii} and \texttt{zstat1.nii}) were
+obtained from the NIfTI website (\url{nifti.nimh.nih.gov/nifti-1/}).
+Successful execution of the command
+
+<<zstat1>>=
+(zstat1 <- readNIfTI(system.file("nifti/zstat1.nii.gz", package="oro.nifti")))
+@ 
+<<figure4-png,echo=FALSE,results=hide>>=
+png("ffd_zstat1.png", width=400, height=400, bg="black")
+@ 
+<<figure4-code>>=
+overlay(ffd, ifelse(abs(zstat1) > 5, zstat1, NA), zlim.y=range(zstat1))
+<<figure4-dev.off,echo=FALSE,results=hide>>=
+dev.off()
+@ 
+produces a 4D array of parameter estimates (essentially coefficients
+from a linear regression performed at each voxel) that may be
+overlayed on the original data for anatomical reference
+(Figure~\ref{fig:zstat1}).  The function \code{overlay} extends the
+capabilities of displaying ``images'' by allowing one to add a
+statistical image to an underlying structural image.
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics{ffd_zstat1.png}
+  \caption{Axial slices of the functional MRI data with 
+  with the statistical image overlayed.  The test statistics were
+  thresholded at $|Z|\geq{5}$.}
+  \label{fig:zstat1}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
