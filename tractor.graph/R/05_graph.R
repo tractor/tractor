@@ -50,25 +50,31 @@ setAs("Graph", "igraph", function (from) {
     return (graph.edgelist(from$getEdges(), directed=from$isDirected()))
 })
     
-setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, useAlpha = FALSE, hideDisconnected = FALSE) {
+setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE) {
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
     
     if (all(is.na(weights)))
         weights <- rep(1, length(weights))
     
-    absWeights <- abs(weights)
     if (useAbsoluteWeights)
-        weights <- absWeights
+        weights <- abs(Weights)
     
     if (is.null(weightLimits))
         weightLimits <- range(weights)
-    else
+    else if (ignoreBeyondLimits)
         weights[weights < weightLimits[1] | weights > weightLimits[2]] <- NA
+    else
+    {
+        weights[weights < weightLimits[1]] <- weightLimits[1]
+        weights[weights > weightLimits[2]] <- weightLimits[2]
+    }
+    
+    absWeights <- abs(weights)
     
     if (length(col) > 1)
     {
-        colourIndices <- round(((weights - weightLimits[1]) / (weightLimits[2] - weightLimits[1])) * length(col)) + 1
+        colourIndices <- round(((weights - weightLimits[1]) / (weightLimits[2] - weightLimits[1])) * (length(col)-1)) + 1
         colours <- col[colourIndices]
     }
     else
@@ -76,10 +82,10 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, order = NULL,
     
     if (useAlpha)
     {
-        absWeightLimits <- c(max(0,min(weightLimits,absWeights)), max(weightLimits,absWeights))
+        absWeightLimits <- c(max(0,min(weightLimits,absWeights,na.rm=TRUE)), max(weightLimits,absWeights,na.rm=TRUE))
         alphaValues <- round(((absWeights - absWeightLimits[1]) / (absWeightLimits[2] - absWeightLimits[1])) * 255)
         rgbColours <- col2rgb(colours)
-        colours <- sapply(1:ncol(rgbColours), function (i) sprintf("#%02X%02X%02X%02X",rgbColours[1,i],rgbColours[2,i],rgbColours[3,i],alphaValues[i]))
+        colours[!is.na(colours)] <- sapply(which(!is.na(colours)), function (i) sprintf("#%02X%02X%02X%02X",rgbColours[1,i],rgbColours[2,i],rgbColours[3,i],alphaValues[i]))
     }
     
     if (hideDisconnected)
