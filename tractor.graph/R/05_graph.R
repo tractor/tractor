@@ -3,6 +3,20 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     {
         return (initFields(vertexCount=as.integer(vertexCount), vertexNames=as.character(vertexNames), vertexLocations=vertexLocations, locationUnit=locationUnit, edges=edges, edgeNames=edgeNames, edgeWeights=as.numeric(edgeWeights), directed=directed))
     },
+    
+    getConnectionMatrix = function ()
+    {
+        connectionMatrix <- matrix(NA, nrow=vertexCount, ncol=vertexCount)
+        if (!is.null(vertexNames))
+        {
+            rownames(connectionMatrix) <- vertexNames
+            colnames(connectionMatrix) <- vertexNames
+        }
+        connectionMatrix[edges] <- edgeWeights
+        if (!directed)
+            connectionMatrix[edges[,2:1]] <- edgeWeights
+        return (connectionMatrix)
+    },
         
     getEdge = function (i)
     {
