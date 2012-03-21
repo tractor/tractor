@@ -58,7 +58,7 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, order = NULL,
         weights <- rep(1, length(weights))
     
     if (useAbsoluteWeights)
-        weights <- abs(Weights)
+        weights <- abs(weights)
     
     if (is.null(weightLimits))
         weightLimits <- range(weights)
@@ -71,6 +71,9 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, order = NULL,
     }
     
     absWeights <- abs(weights)
+    
+    if (is.numeric(col))
+        col <- tractor.base:::getColourScale(col)$colours
     
     if (length(col) > 1)
     {
@@ -114,6 +117,44 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, order = NULL,
     text(xLocs, yLocs, as.character(activeVertices), col="grey40", cex=cex)
     par(oldPars)
 })
+
+levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE)
+{
+    connectionMatrix <- x$getConnectionMatrix()
+    edges <- x$getEdges()
+    
+    if (all(is.na(connectionMatrix)))
+        report(OL$Error, "There are no connection weights in the specified graph")
+    
+    if (useAbsoluteWeights)
+        connectionMatrix <- abs(connectionMatrix)
+    
+    if (is.null(weightLimits))
+        weightLimits <- range(connectionMatrix, na.rm=TRUE)
+    else if (ignoreBeyondLimits)
+        connectionMatrix[connectionMatrix < weightLimits[1] | connectionMatrix > weightLimits[2]] <- NA
+    else
+    {
+        connectionMatrix[connectionMatrix < weightLimits[1]] <- weightLimits[1]
+        connectionMatrix[connectionMatrix > weightLimits[2]] <- weightLimits[2]
+    }
+    
+    if (is.numeric(col))
+        col <- tractor.base:::getColourScale(col)$colours
+    
+    if (hideDisconnected)
+        activeVertices <- sort(union(edges[,1], edges[,2]))
+    else
+        activeVertices <- 1:x$nVertices()
+    nActiveVertices <- length(activeVertices)
+    
+    if (!is.null(order))
+        activeVertices <- order[is.element(order,activeVertices)]
+    
+    labels <- as.character(activeVertices)
+    
+    levelplot(connectionMatrix[activeVertices,activeVertices], col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="")
+}
 
 newGraphFromTable <- function (table, method = c("correlation","covariance"), threshold = NULL, ignoreSign = FALSE, allVertexNames = NULL)
 {
