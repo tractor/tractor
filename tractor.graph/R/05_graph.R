@@ -168,7 +168,7 @@ newGraphFromTable <- function (table, method = c("correlation","covariance"), th
     return (newGraphFromConnectionMatrix(connectionMatrix, threshold=threshold, ignoreSign=ignoreSign, directed=FALSE, allVertexNames=allVertexNames))
 }
 
-newGraphFromConnectionMatrix <- function (connectionMatrix, threshold = NULL, ignoreSign = FALSE, directed = FALSE, allVertexNames = NULL)
+newGraphFromConnectionMatrix <- function (connectionMatrix, threshold = NULL, ignoreSign = FALSE, directed = FALSE, allVertexNames = NULL, ignoreSelfConnections = FALSE)
 {
     if (!is.null(threshold))
     {
@@ -179,7 +179,9 @@ newGraphFromConnectionMatrix <- function (connectionMatrix, threshold = NULL, ig
     }
     
     if (!directed)
-        connectionMatrix[lower.tri(connectionMatrix,diag=TRUE)] <- NA
+        connectionMatrix[lower.tri(connectionMatrix,diag=FALSE)] <- NA
+    if (ignoreSelfConnections)
+        diag(connectionMatrix) <- NA
     
     if (is.null(allVertexNames))
         allVertexNames <- union(rownames(connectionMatrix), colnames(connectionMatrix))
