@@ -64,8 +64,17 @@ runExperiment <- function ()
         if (!is.null(waypointMasks))
         {
             streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks)
-            result$image <- newMriImageAsVisitationMap(streamlines)
-            result$nSamples <- streamlines$nStreamlines()
+            if (is.null(streamlines))
+            {
+                metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("mask","diffusion"))
+                result$image <- newMriImageWithData(array(0,dim=metadata$getDimensions()), metadata)
+                result$nSamples <- 0
+            }
+            else
+            {
+                result$image <- newMriImageAsVisitationMap(streamlines)
+                result$nSamples <- streamlines$nStreamlines()
+            }
         }
     }
     

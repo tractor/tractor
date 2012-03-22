@@ -19,6 +19,11 @@ newStreamlineCollectionTractWithWaypointConstraints <- function (tract, waypoint
     
     report(OL$Info, length(matchingIndices), " of ", tract$nStreamlines(), " streamlines pass through the specified waypoints")
     
-    newTract <- newStreamlineCollectionTractBySubsetting(tract, matchingIndices)
-    invisible(newTract)
+    if (length(matchingIndices) > 0)
+    {
+        newTract <- newStreamlineCollectionTractBySubsetting(tract, matchingIndices)
+        invisible(newTract)
+    }
+    else
+        invisible(NULL)
 }
