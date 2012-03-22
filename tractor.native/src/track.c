@@ -362,6 +362,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                 }
                 
                 // Store current (unrounded) location if required
+                // NB: This part of the code must always be reached at the seed point
                 if (require_streamlines)
                 {
                     points_loc[0] = step;
@@ -448,8 +449,11 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
         
         if (require_streamlines)
         {
+            // The seed will be trimmed from the left points, and must always be present in the right points
             if (left_steps > 0)
                 left_steps--;
+            if (right_steps == 0)
+                right_steps++;
             
             if (current_point + left_steps + right_steps > points_allocated)
             {
