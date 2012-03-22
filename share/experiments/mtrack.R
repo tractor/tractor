@@ -45,6 +45,7 @@ runExperiment <- function ()
         waypointMasks <- NULL
     else
     {
+        waypointMaskFiles <- splitAndConvertString(waypointMaskFiles, ",", fixed=TRUE)
         waypointMasks <- list()
         for (waypointFile in waypointMaskFiles)
         {
