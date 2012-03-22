@@ -193,6 +193,8 @@ unsigned char * read_mask_image (const char *mask_image_name, int *image_dims, d
         voxel_dims[i] = image->pixdim[i+1];
     }
     
+    nifti_image_free(image);
+    
     return buffer;
 }
 
@@ -220,6 +222,9 @@ float * read_parameter_image (const char *parameter_image_name, size_t *len)
     }
     
     *len = image->nvox;
+    
+    nifti_image_free(image);
+    
     return buffer;
 }
 
