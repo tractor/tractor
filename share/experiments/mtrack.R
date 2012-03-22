@@ -27,7 +27,10 @@ runExperiment <- function ()
         report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
     if (is.null(seedMaskFile))
+    {
         seedMask <- session$getImageByType("mask", "diffusion")
+        showSeed <- FALSE
+    }
     else
     {
         seedMask <- newMriImageFromFile(seedMaskFile)
