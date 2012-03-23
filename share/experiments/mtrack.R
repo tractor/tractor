@@ -27,7 +27,10 @@ runExperiment <- function ()
         report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
     if (is.null(seedMaskFile))
+    {
         seedMask <- session$getImageByType("mask", "diffusion")
+        showSeed <- FALSE
+    }
     else
     {
         seedMask <- newMriImageFromFile(seedMaskFile)
@@ -45,6 +48,7 @@ runExperiment <- function ()
         waypointMasks <- NULL
     else
     {
+        waypointMaskFiles <- splitAndConvertString(waypointMaskFiles, ",", fixed=TRUE)
         waypointMasks <- list()
         for (waypointFile in waypointMaskFiles)
         {
@@ -64,8 +68,17 @@ runExperiment <- function ()
         if (!is.null(waypointMasks))
         {
             streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks)
-            result$image <- newMriImageAsVisitationMap(streamlines)
-            result$nSamples <- streamlines$nStreamlines()
+            if (is.null(streamlines))
+            {
+                metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("mask","diffusion"))
+                result$image <- newMriImageWithData(array(0,dim=metadata$getDimensions()), metadata)
+                result$nSamples <- 0
+            }
+            else
+            {
+                result$image <- newMriImageAsVisitationMap(streamlines)
+                result$nSamples <- streamlines$nStreamlines()
+            }
         }
     }
     

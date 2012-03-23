@@ -193,6 +193,8 @@ unsigned char * read_mask_image (const char *mask_image_name, int *image_dims, d
         voxel_dims[i] = image->pixdim[i+1];
     }
     
+    nifti_image_free(image);
+    
     return buffer;
 }
 
@@ -220,6 +222,9 @@ float * read_parameter_image (const char *parameter_image_name, size_t *len)
     }
     
     *len = image->nvox;
+    
+    nifti_image_free(image);
+    
     return buffer;
 }
 
@@ -357,6 +362,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                 }
                 
                 // Store current (unrounded) location if required
+                // NB: This part of the code must always be reached at the seed point
                 if (require_streamlines)
                 {
                     points_loc[0] = step;
@@ -443,8 +449,11 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
         
         if (require_streamlines)
         {
+            // The seed will be trimmed from the left points, and must always be present in the right points
             if (left_steps > 0)
                 left_steps--;
+            if (right_steps == 0)
+                right_steps++;
             
             if (current_point + left_steps + right_steps > points_allocated)
             {
