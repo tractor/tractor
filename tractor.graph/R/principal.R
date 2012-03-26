@@ -28,3 +28,44 @@ calculatePrincipalGraphsForTable <- function (table, nComponents = NULL, loading
     
     return (list(eigenvalues=pcaResult$sdev^2, eigenvectors=pcaResult$rotation, fullCorrelations=fullCorrelations, correlations=correlations, graphs=graphs))
 }
+
+calculatePrincipalGraphsForGraph <- function (graph, nComponents = NULL, loadingThreshold = 0.1, weightThreshold = 0.2, ignoreWeightSign = FALSE)
+{
+    if (!is(graph, "Graph"))
+        report(OL$Error, "The specified graph is not a valid Graph object")
+    
+    connectionMatrix <- graph$getConnectionMatrix()
+    connectionMatrix[is.na(connectionMatrix)] <- 0
+    
+    eigensystem <- eigen(connectionMatrix, symmetric=!graph$isDirected())
+    
+    if (any(eigensystem$values < 0))
+        flag(OL$Warning, "Connection matrix is not positive semidefinite")
+    
+    contributions <- eigensystem$values / sum(eigensystem$values)
+    
+    if (is.null(nComponents))
+        nComponents <- sum(contributions >= 1/length(contributions))
+    else
+        nComponents <- min(nComponents, length(contributions))
+    
+    report(OL$Info, nComponents, " of ", length(contributions), " components will be kept")
+    
+    fullMatrices <- lapply(1:nComponents, function (i) {
+        m <- eigensystem$values[i] * eigensystem$vectors[,i] %o% eigensystem$vectors[,i]
+        m[is.na(connectionMatrix)] <- NA
+        rownames(m) <- rownames(connectionMatrix)
+        colnames(m) <- colnames(connectionMatrix)
+        return (m)
+    })
+    
+    # Calculate cumulative association matrices after subtracting out higher components
+    cumulativeMatrices <- Reduce("-", fullMatrices, init=connectionMatrix, accumulate=TRUE)
+    cumulativeMatrices <- cumulativeMatrices[-length(fullMatrices)]
+    
+    verticesToKeep <- abs(eigensystem$vectors) >= loadingThreshold
+    matrices <- lapply(1:nComponents, function (i) fullMatrices[[i]][verticesToKeep[,i],verticesToKeep[,i]])
+    graphs <- lapply(matrices, newGraphFromConnectionMatrix, threshold=weightThreshold, ignoreSign=ignoreWeightSign, allVertexNames=graph$getVertexNames())
+    
+    return (list(eigenvalues=eigensystem$values, eigenvectors=eigensystem$vectors, graphs=graphs, matrices=fullMatrices, cumulativeMatrices=cumulativeMatrices))
+}
