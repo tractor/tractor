@@ -42,7 +42,13 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     nEdges = function () { return (nrow(edges)) },
     
-    nVertices = function () { return (vertexCount) }
+    nVertices = function () { return (vertexCount) },
+    
+    setVertexLocations = function (locs, unit)
+    {
+        .self$vertexLocations <- locs
+        .self$locationUnit <- unit
+    }
 ))
 
 setAs("Graph", "igraph", function (from) {
