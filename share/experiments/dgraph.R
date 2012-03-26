@@ -33,10 +33,8 @@ runExperiment <- function ()
         lookupTable <- read.table(file.path(Sys.getenv("TRACTOR_HOME"), "etc", "FreeSurferColorLUT.txt"))
     
     diffusionDir <- session$getDirectory("diffusion")
-    structuralDir <- session$getDirectory("structural")
     freesurferDir <- session$getDirectory("freesurfer")
     diffusionRoiDir <- session$getDirectory("diffusion-rois", createIfMissing=TRUE)
-    structuralRoiDir <- session$getDirectory("structural-rois", createIfMissing=TRUE)
     freesurferRoiDir <- session$getDirectory("freesurfer-rois", createIfMissing=TRUE)
     
     if (!imageFileExists(file.path(freesurferDir, "mri", "rawavg")))
@@ -52,8 +50,12 @@ runExperiment <- function ()
     report(OL$Info, "Reading parcellation")
     parcellation <- session$getImageByType("desikan_killiany")
     
-    report(OL$Info, "Transforming regions to diffusion space")
     regions <- tractor.graph:::.FreesurferRegionNameMapping$aparc
+    allRegionNames <- paste(rep(names(regions),2), rep(c("left","right"),each=length(regions)), sep="_")
+    regionLocations <- matrix(NA, nrow=length(allRegionNames), ncol=3)
+    i <- 1
+    
+    report(OL$Info, "Transforming regions to diffusion space")
     for (regionName in names(regions))
     {
         report(OL$Verbose, "Transforming region \"", regionName, "\"")
@@ -67,6 +69,10 @@ runExperiment <- function ()
             writeMriImageToFile(freesurferRoi, file.path(freesurferRoiDir,paste(regionName,side,sep="_")))
             result <- registerImages(freesurferRoi, refb0, scope="nonlinear", initControl=controlPoints, nLevels=0, finalInterpolation=0)
             writeMriImageToFile(result$image, file.path(diffusionRoiDir,paste(regionName,side,sep="_")))
+            
+            regionLocations[i,] <- apply(which(result$image$getData() > 0, arr.ind=TRUE), 2, median)
+            regionLocations[i,] <- transformRVoxelToWorld(regionLocations[i,], result$image$getMetadata(), useOrigin=TRUE)
+            i <- i + 1
         }
     }
     
@@ -78,7 +84,6 @@ runExperiment <- function ()
     result <- trackWithSession(session, seeds, nSamples=1, requireImage=FALSE, requireStreamlines=TRUE)
     
     report(OL$Info, "Creating connectivity matrix")
-    allRegionNames <- paste(rep(names(regions),2), rep(c("left","right"),each=length(regions)), sep="_")
     connectivityMatrix <- matrix(NA, nrow=length(allRegionNames), ncol=length(allRegionNames))
     rownames(connectivityMatrix) <- allRegionNames
     colnames(connectivityMatrix) <- allRegionNames
@@ -96,7 +101,8 @@ runExperiment <- function ()
     }
     
     report(OL$Info, "Creating and writing graph")
-    graph <- newGraphFromConnectionMatrix(connectivityMatrix)
+    graph <- newGraphFromConnectionMatrix(connectivityMatrix, directed=FALSE)
+    graph$setVertexLocations(regionLocations, "mm")
     graph$serialise("dgraph.Rdata")
     
     invisible(NULL)
