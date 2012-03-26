@@ -200,5 +200,5 @@ newGraphFromConnectionMatrix <- function (connectionMatrix, threshold = NULL, ig
     edges[,2] <- colVertexLocs[edges[,2]]
     dimnames(edges) <- NULL
     
-    return (Graph$new(vertexCount=length(allVertexNames), vertexNames=allVertexNames, edges=edges, edgeWeights=edgeWeights, directed=FALSE))   
+    return (Graph$new(vertexCount=length(allVertexNames), vertexNames=allVertexNames, edges=edges, edgeWeights=edgeWeights, directed=directed))   
 }
