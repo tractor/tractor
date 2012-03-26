@@ -65,7 +65,7 @@ runExperiment <- function ()
         {
             freesurferRoi <- newMriImageWithSimpleFunction(parcellation, selectionFunction, values=lookupTable[indices[[side]],1])
             writeMriImageToFile(freesurferRoi, file.path(freesurferRoiDir,paste(regionName,side,sep="_")))
-            result <- registerImages(freesurferRoi, refb0, scope="nonlinear", initControl=controlPoints, nLevels=0)
+            result <- registerImages(freesurferRoi, refb0, scope="nonlinear", initControl=controlPoints, nLevels=0, finalInterpolation=0)
             writeMriImageToFile(result$image, file.path(diffusionRoiDir,paste(regionName,side,sep="_")))
         }
     }
