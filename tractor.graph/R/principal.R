@@ -66,7 +66,8 @@ calculatePrincipalGraphsForGraph <- function (graph, nComponents = NULL, loading
     
     eigensystem <- eigen(connectionMatrix, symmetric=!graph$isDirected())
     
-    if (any(eigensystem$values < 0))
+    # Check for substantially negative eigenvalues
+    if (any(eigensystem$values < -sqrt(.Machine$double.eps)))
         flag(OL$Warning, "Connection matrix is not positive semidefinite")
     
     contributions <- eigensystem$values / sum(eigensystem$values)
@@ -79,7 +80,7 @@ calculatePrincipalGraphsForGraph <- function (graph, nComponents = NULL, loading
     report(OL$Info, nComponents, " of ", length(contributions), " components will be kept")
     
     fullMatrices <- lapply(1:nComponents, function (i) {
-        m <- eigensystem$values[i] * eigensystem$vectors[,i] %o% eigensystem$vectors[,i]
+        m <- eigensystem$values[i] * (eigensystem$vectors[,i] %o% eigensystem$vectors[,i])
         m[is.na(connectionMatrix)] <- NA
         rownames(m) <- rownames(connectionMatrix)
         colnames(m) <- colnames(connectionMatrix)
@@ -88,7 +89,7 @@ calculatePrincipalGraphsForGraph <- function (graph, nComponents = NULL, loading
     
     # Calculate cumulative association matrices after subtracting out higher components
     cumulativeMatrices <- Reduce("-", fullMatrices, init=connectionMatrix, accumulate=TRUE)
-    cumulativeMatrices <- cumulativeMatrices[-length(fullMatrices)]
+    cumulativeMatrices <- cumulativeMatrices[-length(cumulativeMatrices)]
     
     verticesToKeep <- abs(eigensystem$vectors) >= loadingThreshold
     matrices <- lapply(1:nComponents, function (i) fullMatrices[[i]][verticesToKeep[,i],verticesToKeep[,i]])
