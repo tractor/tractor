@@ -53,7 +53,7 @@ createCorticalThicknessTableForSessions <- function (sessionList, atlasName = "a
     }
     
     reformattedData <- t(matrix(fullData$CorticalThickness, ncol=length(sessionList)))
-    dimnames(reformattedData) <- list(Structure=fullData$Structure[fullData$Subject==1], Subject=as.character(seq_along(sessionList)))
+    dimnames(reformattedData) <- list(Subject=as.character(seq_along(sessionList)), Structure=fullData$Structure[fullData$Subject==1])
     
     return (reformattedData)
 }
