@@ -1,3 +1,5 @@
+#@args [session directory]
+
 library(splines)
 library(tractor.session)
 library(tractor.nt)
