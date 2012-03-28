@@ -29,7 +29,7 @@ calculatePrincipalGraphsForTable <- function (table, nComponents = NULL, loading
     return (list(eigenvalues=pcaResult$sdev^2, eigenvectors=pcaResult$rotation, fullCorrelations=fullCorrelations, correlations=correlations, graphs=graphs))
 }
 
-calculatePrincipalGraphsForGraph <- function (graph, nComponents = NULL, loadingThreshold = 0.1, weightThreshold = 0.2, ignoreWeightSign = FALSE)
+calculatePrincipalGraphsForGraph <- function (graph, nComponents = NULL, loadingThreshold = 0.1)
 {
     if (!is(graph, "Graph"))
         report(OL$Error, "The specified graph is not a valid Graph object")
@@ -60,13 +60,14 @@ calculatePrincipalGraphsForGraph <- function (graph, nComponents = NULL, loading
         return (m)
     })
     
-    # Calculate cumulative association matrices after subtracting out higher components
-    cumulativeMatrices <- Reduce("-", fullMatrices, init=connectionMatrix, accumulate=TRUE)
-    cumulativeMatrices <- cumulativeMatrices[-length(cumulativeMatrices)]
+    # Calculate residual association matrices after subtracting out higher components
+    residualMatrices <- Reduce("-", fullMatrices, init=connectionMatrix, accumulate=TRUE)
+    residualMatrices <- residualMatrices[-1]
+    residualGraphs <- lapply(residualMatrices, newGraphFromConnectionMatrix, allVertexNames=graph$getVertexNames())
     
     verticesToKeep <- abs(eigensystem$vectors) >= loadingThreshold
     matrices <- lapply(1:nComponents, function (i) fullMatrices[[i]][verticesToKeep[,i],verticesToKeep[,i]])
-    graphs <- lapply(matrices, newGraphFromConnectionMatrix, threshold=weightThreshold, ignoreSign=ignoreWeightSign, allVertexNames=graph$getVertexNames())
+    componentGraphs <- lapply(matrices, newGraphFromConnectionMatrix, allVertexNames=graph$getVertexNames())
     
-    return (list(eigenvalues=eigensystem$values, eigenvectors=eigensystem$vectors, graphs=graphs, matrices=fullMatrices, cumulativeMatrices=cumulativeMatrices))
+    return (list(eigenvalues=eigensystem$values, eigenvectors=eigensystem$vectors, componentGraphs=componentGraphs, residualGraphs=residualGraphs))
 }

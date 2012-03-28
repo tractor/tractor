@@ -162,7 +162,7 @@ levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, use
     levelplot(connectionMatrix[activeVertices,activeVertices], col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="")
 }
 
-newGraphFromTable <- function (table, method = c("correlation","covariance"), threshold = NULL, ignoreSign = FALSE, allVertexNames = NULL)
+newGraphFromTable <- function (table, method = c("correlation","covariance"), allVertexNames = NULL)
 {
     method <- match.arg(method)
     
@@ -171,18 +171,13 @@ newGraphFromTable <- function (table, method = c("correlation","covariance"), th
     else if (method == "covariance")
         connectionMatrix <- cov(table)
     
-    return (newGraphFromConnectionMatrix(connectionMatrix, threshold=threshold, ignoreSign=ignoreSign, directed=FALSE, allVertexNames=allVertexNames))
+    return (newGraphFromConnectionMatrix(connectionMatrix, directed=FALSE, allVertexNames=allVertexNames))
 }
 
-newGraphFromConnectionMatrix <- function (connectionMatrix, threshold = NULL, ignoreSign = FALSE, directed = FALSE, allVertexNames = NULL, ignoreSelfConnections = FALSE)
+newGraphFromConnectionMatrix <- function (connectionMatrix, directed = FALSE, allVertexNames = NULL, ignoreSelfConnections = FALSE)
 {
-    if (!is.null(threshold))
-    {
-        if (ignoreSign)
-            connectionMatrix[abs(connectionMatrix) < threshold] <- NA
-        else
-            connectionMatrix[connectionMatrix < threshold] <- NA
-    }
+    if (!is.matrix(connectionMatrix))
+        report(OL$Error, "Specified connection matrix is not a matrix object")
     
     if (!directed)
         connectionMatrix[lower.tri(connectionMatrix,diag=FALSE)] <- NA
@@ -201,4 +196,28 @@ newGraphFromConnectionMatrix <- function (connectionMatrix, threshold = NULL, ig
     dimnames(edges) <- NULL
     
     return (Graph$new(vertexCount=length(allVertexNames), vertexNames=allVertexNames, edges=edges, edgeWeights=edgeWeights, directed=directed))   
+}
+
+newGraphWithEdgeWeightThreshold <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted = TRUE)
+{
+    if (!is(graph, "Graph"))
+        report(OL$Error, "Specified graph is not a valid Graph object")
+    
+    edgeWeights <- graph$getEdgeWeights()
+    
+    if (ignoreSign)
+        toKeep <- which(abs(edgeWeights) >= threshold)
+    else
+        toKeep <- which(edgeWeights >= threshold)
+    
+    if (keepUnweighted)
+        toKeep <- c(toKeep, which(is.na(edgeWeights)))
+    
+    toKeep <- sort(toKeep)
+    
+    edgeNames <- graph$getEdgeNames()
+    if (length(edgeNames) == length(edgeWeights))
+        edgeNames <- edgeNames[toKeep]
+    
+    newGraph <- Graph$new(vertexCount=graph$nVertices(), vertexNames=graph$getVertexNames(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), edges=graph$getEdges()[toKeep,], edgeNames=edgeNames, edgeWeights=edgeWeights[toKeep], directed=graph$isDirected())
 }
