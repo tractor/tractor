@@ -484,7 +484,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     
     # The sum() function recovers the sign in the sapply() call here
     sliceOrientation <- list(sliceOrientation[1:3], sliceOrientation[4:6], throughSliceOrientation)
-    sliceDirections <- sapply(sliceOrientation, function (x) which(abs(x) == 1) * sum(x))
+    sliceDirections <- round(sapply(sliceOrientation, function (x) which(abs(x) == 1) * sum(x)))
     
     # Oblique slices case
     if (!is.numeric(sliceDirections) || length(sliceDirections) != 3)
