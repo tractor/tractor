@@ -219,5 +219,5 @@ newGraphWithEdgeWeightThreshold <- function (graph, threshold, ignoreSign = FALS
     if (length(edgeNames) == length(edgeWeights))
         edgeNames <- edgeNames[toKeep]
     
-    newGraph <- Graph$new(vertexCount=graph$nVertices(), vertexNames=graph$getVertexNames(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), edges=graph$getEdges()[toKeep,], edgeNames=edgeNames, edgeWeights=edgeWeights[toKeep], directed=graph$isDirected())
+    newGraph <- Graph$new(vertexCount=graph$nVertices(), vertexNames=graph$getVertexNames(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), edges=graph$getEdges()[toKeep,,drop=FALSE], edgeNames=edgeNames, edgeWeights=edgeWeights[toKeep], directed=graph$isDirected())
 }
