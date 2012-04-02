@@ -46,7 +46,7 @@ runExperiment <- function ()
     {
         if (runStages[1] && (!skipCompleted || !stagesComplete[1]))
         {
-            workingDir <- session$getDirectory("root")
+            workingDir <- session$getDirectory("diffusion")
             if (file.exists(workingDir))
             {
                 if (interactive)
