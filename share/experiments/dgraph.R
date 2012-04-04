@@ -55,9 +55,9 @@ runExperiment <- function ()
     regions <- tractor.graph:::.FreesurferRegionNameMapping$aparc
     allRegionNames <- paste(rep(names(regions),2), rep(c("left","right"),each=length(regions)), sep="_")
     regionLocations <- matrix(NA, nrow=length(allRegionNames), ncol=3)
-    i <- 1
     
     report(OL$Info, "Transforming regions to diffusion space")
+    i <- 1
     for (regionName in names(regions))
     {
         report(OL$Verbose, "Transforming region \"", regionName, "\"")
@@ -69,7 +69,8 @@ runExperiment <- function ()
         {
             freesurferRoi <- newMriImageWithSimpleFunction(parcellation, selectionFunction, values=lookupTable[indices[[side]],1])
             writeMriImageToFile(freesurferRoi, file.path(freesurferRoiDir,paste(regionName,side,sep="_")))
-            result <- registerImages(freesurferRoi, refb0, scope="nonlinear", initControl=controlPoints, nLevels=0, finalInterpolation=0)
+            result <- registerImages(freesurferRoi, refb0, scope="nonlinear", initControl=controlPoints, nLevels=0, finalInterpolation=1)
+            result$image <- newMriImageWithSimpleFunction(result$image, function (x) ifelse(x>0.2,1,0))
             writeMriImageToFile(result$image, file.path(diffusionRoiDir,paste(regionName,side,sep="_")))
             
             regionLocations[i,] <- apply(which(result$image$getData() > 0, arr.ind=TRUE), 2, median)
