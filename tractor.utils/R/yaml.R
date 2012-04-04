@@ -64,7 +64,7 @@ readYaml <- function (fileName = NULL, text = NULL, init = list())
         # is the associated value
         key <- sub("\\s*:\\s*.*$", "", lines[1], perl=TRUE)
         key <- sub("^\\s+", "", key, perl=TRUE)
-        textValue <- sub("^\\s*\\w+\\s*:\\s*", "", lines[1], perl=TRUE)
+        textValue <- sub("^\\s*[\\w\\-]+\\s*:\\s*", "", lines[1], perl=TRUE)
         
         if (key == sub("^\\s+","",lines[1],perl=TRUE))
         {
