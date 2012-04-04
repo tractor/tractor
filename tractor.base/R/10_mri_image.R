@@ -368,6 +368,8 @@ newMriImageWithSimpleFunction <- function (image, fun, ..., newDataType = NULL)
     
     fun <- match.fun(fun)
     newData <- fun(image$getData(), ...)
+    if (is.null(dim(newData)))
+        dim(newData) <- image$getDimensions()
     newDataType <- (if (is.null(newDataType)) image$getDataType() else newDataType)
     metadata <- newMriImageMetadataFromTemplate(image$getMetadata(), datatype=newDataType)
     
