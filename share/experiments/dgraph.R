@@ -74,10 +74,13 @@ runExperiment <- function ()
             writeMriImageToFile(result$image, file.path(diffusionRoiDir,paste(regionName,side,sep="_")))
             
             regionLocations[i,] <- apply(which(result$image$getData() > 0, arr.ind=TRUE), 2, median)
-            regionLocations[i,] <- transformRVoxelToWorld(regionLocations[i,], result$image$getMetadata(), useOrigin=TRUE)
+            regionLocations[i,] <- transformRVoxelToWorld(regionLocations[i,], result$image$getMetadata(), useOrigin=FALSE)
             i <- i + 1
         }
     }
+    
+    order <- c(seq(1,length(allRegionNames),2), seq(2,length(allRegionNames),2))
+    regionLocations <- regionLocations[order,]
     
     report(OL$Info, "Performing tractography")
     fa <- session$getImageByType("FA")
