@@ -7,7 +7,7 @@
         fusiform_gyrus="fusiform",
         inferior_parietal_gyrus="inferiorparietal",
         inferior_temporal_gyrus="inferiortemporal",
-        ventral_posterior_cingulate_gyrus="isthmuscingulate",
+        cingulate_gyrus_isthmus="isthmuscingulate",
         lateral_occipital_cortex="lateraloccipital",
         lateral_orbitofrontal_cortex="lateralorbitofrontal",
         lingual_gyrus="lingual",
