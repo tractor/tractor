@@ -43,14 +43,19 @@ calculatePrincipalGraphsForGraph <- function (graph, nComponents = NULL, loading
     if (any(eigensystem$values < -sqrt(.Machine$double.eps)))
         flag(OL$Warning, "Connection matrix is not positive semidefinite")
     
-    contributions <- eigensystem$values / sum(eigensystem$values)
+    # Arrange for the eigenvector components to always sum to a positive value
+    # The sign function is used twice to ensure that the value is either +1 or -1, and not zero
+    eigensystem$vectors <- apply(eigensystem$vectors, 2, function (x) x * sign(sign(sum(x))+0.5))
     
     if (is.null(nComponents))
+    {
+        contributions <- eigensystem$values / sum(eigensystem$values)
         nComponents <- sum(contributions >= 1/length(contributions))
+    }
     else
-        nComponents <- min(nComponents, length(contributions))
+        nComponents <- min(nComponents, length(eigensystem$values))
     
-    report(OL$Info, nComponents, " of ", length(contributions), " components will be kept")
+    report(OL$Info, nComponents, " of ", length(eigensystem$values), " components will be kept")
     
     fullMatrices <- lapply(1:nComponents, function (i) {
         m <- eigensystem$values[i] * (eigensystem$vectors[,i] %o% eigensystem$vectors[,i])
@@ -64,10 +69,12 @@ calculatePrincipalGraphsForGraph <- function (graph, nComponents = NULL, loading
     residualMatrices <- Reduce("-", fullMatrices, init=connectionMatrix, accumulate=TRUE)
     residualMatrices <- residualMatrices[-1]
     residualGraphs <- lapply(residualMatrices, newGraphFromConnectionMatrix, allVertexNames=graph$getVertexNames())
+    residualGraphs <- lapply(residualGraphs, function (x) { x$setVertexLocations(graph$getVertexLocations(),graph$getVertexLocationUnit()); x })
     
     verticesToKeep <- abs(eigensystem$vectors) >= loadingThreshold
     matrices <- lapply(1:nComponents, function (i) fullMatrices[[i]][verticesToKeep[,i],verticesToKeep[,i]])
     componentGraphs <- lapply(matrices, newGraphFromConnectionMatrix, allVertexNames=graph$getVertexNames())
+    componentGraphs <- lapply(componentGraphs, function (x) { x$setVertexLocations(graph$getVertexLocations(),graph$getVertexLocationUnit()); x })
     
     return (list(eigenvalues=eigensystem$values, eigenvectors=eigensystem$vectors, componentGraphs=componentGraphs, residualGraphs=residualGraphs))
 }
