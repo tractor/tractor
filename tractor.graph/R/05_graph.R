@@ -4,6 +4,8 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         return (initFields(vertexCount=as.integer(vertexCount), vertexNames=as.character(vertexNames), vertexLocations=vertexLocations, locationUnit=locationUnit, edges=edges, edgeNames=edgeNames, edgeWeights=as.numeric(edgeWeights), directed=directed))
     },
     
+    getConnectedVertices = function () { return (sort(unique(as.vector(edges)))) },
+    
     getConnectionMatrix = function ()
     {
         connectionMatrix <- matrix(NA, nrow=vertexCount, ncol=vertexCount)
