@@ -58,7 +58,7 @@ setAs("Graph", "igraph", function (from) {
     return (graph.edgelist(from$getEdges(), directed=from$isDirected()))
 })
     
-setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE) {
+setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
     
@@ -100,7 +100,7 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, order = NULL,
     }
     
     if (hideDisconnected)
-        activeVertices <- sort(union(edges[,1], edges[,2]))
+        activeVertices <- x$getConnectedVertices()
     else
         activeVertices <- 1:x$nVertices()
     nActiveVertices <- length(activeVertices)
@@ -112,18 +112,47 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, order = NULL,
     to <- match(edges[!is.na(weights),2], activeVertices)
     colours <- colours[!is.na(weights)]
     
-    angles <- (0:(nActiveVertices-1)) * 2 * pi / nActiveVertices
-    xLocs <- sin(angles)
-    yLocs <- cos(angles)
-    arcSeparation <- 2 * pi / nActiveVertices
-    radius <- min(arcSeparation/4, 0.1)
+    if (useLocations)
+    {
+        if (is.null(locationAxes) || length(locationAxes) != 2)
+            report(OL$Error, "Location axes must be specified, as a vector of two integers")
+        
+        locations <- x$getVertexLocations()
+        xLocs <- locations[activeVertices,locationAxes[1]]
+        yLocs <- locations[activeVertices,locationAxes[2]]
+        if (any(is.na(xLocs)) || any(is.na(yLocs)))
+            report(OL$Error, "Some locations are missing")
+        
+        xlim <- range(xLocs) + c(-0.1,0.1) * diff(range(xLocs))
+        ylim <- range(yLocs) + c(-0.1,0.1) * diff(range(yLocs))
+        
+        if (is.null(radius))
+            radius <- 0.03 * max(diff(range(xLocs)), diff(range(yLocs)))
+    }
+    else
+    {
+        angles <- (0:(nActiveVertices-1)) * 2 * pi / nActiveVertices
+        xLocs <- sin(angles)
+        yLocs <- cos(angles)
+        xlim <- ylim <- c(-1.2, 1.2)
+        
+        if (is.null(radius))
+        {
+            arcSeparation <- 2 * pi / nActiveVertices
+            radius <- min(arcSeparation/4, 0.1)
+        }
+    }
     
-    oldPars <- par(mai=c(0,0,0,0))
-    plot(NA, type="n", xlim=c(-1.2,1.2), ylim=c(-1.2,1.2))
+    if (!add)
+    {
+        oldPars <- par(mai=c(0,0,0,0))
+        plot(NA, type="n", xlim=xlim, ylim=ylim)    
+    }
     segments(xLocs[from], yLocs[from], xLocs[to], yLocs[to], lwd=2, col=colours)
     symbols(xLocs, yLocs, circles=rep(radius,nActiveVertices), inches=FALSE, col="grey50", lwd=2, bg="white", add=TRUE)
     text(xLocs, yLocs, as.character(activeVertices), col="grey40", cex=cex)
-    par(oldPars)
+    if (!add)
+        par(oldPars)
 })
 
 levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE)
@@ -151,7 +180,7 @@ levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, use
         col <- tractor.base:::getColourScale(col)$colours
     
     if (hideDisconnected)
-        activeVertices <- sort(union(edges[,1], edges[,2]))
+        activeVertices <- x$getConnectedVertices()
     else
         activeVertices <- 1:x$nVertices()
     nActiveVertices <- length(activeVertices)
