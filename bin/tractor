@@ -135,10 +135,6 @@ elif [ -f "$working_dir/$script_file" ]; then
 elif [ -f "$HOME/.tractor/$script_file" ]; then
     script_file="$HOME/.tractor/$script_file"
     file_found=1
-elif [ -f "/etc/tractor/$script_file" ]; then
-    echo "NB: Support for scripts in /etc/tractor may be removed in future" 1>&2
-    script_file="/etc/tractor/$script_file"
-    file_found=1
 fi
 
 if [ $file_found -ne 1 ]; then
