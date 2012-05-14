@@ -74,7 +74,10 @@ set -- `getopt "hldozqbriv:p:a:w:c:" "$@"` || {
     exit
 }
 
-[ -z "${TRACTOR_HOME}" ] && echo "Warning: The TRACTOR_HOME environment variable is not set"
+[ -z "${TRACTOR_HOME}" ] && {
+    echo "Note: The TRACTOR_HOME environment variable is not set - it will be guessed"
+    export TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
+}
 
 supress_config=`echo "$@" | grep -c '\-i' -`
 [ $supress_config -eq 0 -a -f "$HOME/.tractor/config" ] && source "$HOME/.tractor/config"
