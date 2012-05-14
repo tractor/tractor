@@ -75,7 +75,7 @@ set -- `getopt "hldozqbriv:p:a:w:c:" "$@"` || {
 }
 
 [ -z "${TRACTOR_HOME}" ] && {
-    echo "Note: The TRACTOR_HOME environment variable is not set - it will be guessed"
+    echo "Note: The TRACTOR_HOME environment variable is not set; it will be guessed"
     export TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
 }
 
