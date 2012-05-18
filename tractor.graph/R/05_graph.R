@@ -93,7 +93,7 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, radius = NULL
     
     if (useAlpha)
     {
-        absWeightLimits <- c(max(0,min(weightLimits,absWeights,na.rm=TRUE)), max(weightLimits,absWeights,na.rm=TRUE))
+        absWeightLimits <- c(max(0,min(weightLimits,absWeights,na.rm=TRUE)), max(abs(weightLimits),absWeights,na.rm=TRUE))
         alphaValues <- round(((absWeights - absWeightLimits[1]) / (absWeightLimits[2] - absWeightLimits[1])) * 255)
         rgbColours <- col2rgb(colours)
         colours[!is.na(colours)] <- sapply(which(!is.na(colours)), function (i) sprintf("#%02X%02X%02X%02X",rgbColours[1,i],rgbColours[2,i],rgbColours[3,i],alphaValues[i]))
