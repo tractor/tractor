@@ -17,14 +17,17 @@ getColourScale <- function (n)
         colours <- list(gray(0:99/99),
                         heat.colors(100),
                         rainbow(100, start=0.7, end=0.1),
-                        interpolatePalette(c("#2166AC","#67A9CF","#D1E5F0","#F7F7F7","#FDDBC7","#EF8A62","#B2182B"), 100))  # ColorBrewer "RdBu" diverging palette
+                        interpolatePalette(c("#053061","#2166AC","#4393C3","#92C5DE","#D1E5F0","#F7F7F7","#FDDBC7","#F4A582","#D6604D","#B2182B","#67001F"), 100),  # ColorBrewer "RdBu" diverging palette
+                        interpolatePalette(c("#F7F7F7","#FDDBC7","#F4A582","#D6604D","#B2182B","#67001F"), 100),                                                    # Just the red part of "RdBu"
+                        interpolatePalette(c("#F7F7F7","#D1E5F0","#92C5DE","#4393C3","#2166AC","#053061"), 100))                                                    # Just the blue part of "RdBu"
     
-        background <- list("black",
-                           "red",
-                           "blue",
-                           "#F7F7F7")
-    
-        return (list(colours=colours[[n]], background=background[[n]]))
+        if (n < 0)
+            scale <- list(colours=rev(colours[[-n]]))
+        else
+            scale <- list(colours=colours[[n]])
+        
+        scale$background <- scale$colours[1]
+        return (scale)
     }
 }
 
