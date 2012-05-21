@@ -118,7 +118,7 @@ checkFlirtCacheForTransform <- function (sourceFile, destFile)
     sourceFile <- expandFileName(sourceFile)
     destFile <- expandFileName(destFile)
     cacheIndex <- read.table(cacheIndexFile, col.names=c("source","dest","file"))
-    cacheEntry <- subset(cacheIndex, (source==sourceFile & dest==destFile))
+    cacheEntry <- subset(cacheIndex, (cacheIndex$source==sourceFile & cacheIndex$dest==destFile))
     
     if (nrow(cacheEntry) != 1)
         return (invisible(NULL))

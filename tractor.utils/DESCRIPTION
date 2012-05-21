@@ -6,6 +6,7 @@ Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
 Depends: R (>= 2.12.1), utils
 Imports: reportr, tractor.base
+Suggests: parallel, multicore
 Description: The tractor.utils package primarily provides functions that facilitate the interaction between the TractoR shell script and R, but some other utility functions are also included.
 LazyLoad: yes
 License: GPL-2

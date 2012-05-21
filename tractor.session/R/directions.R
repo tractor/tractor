@@ -28,7 +28,7 @@ checkGradientCacheForSession <- function (session)
         return (NULL)
     
     cacheIndex <- read.table(cacheIndexFile, col.names=c("descriptions","number"))
-    cacheEntry <- subset(cacheIndex, descriptions==seriesDescriptions)
+    cacheEntry <- subset(cacheIndex, cacheIndex$descriptions==seriesDescriptions)
     
     if (nrow(cacheEntry) != 1)
         return (NULL)
@@ -60,14 +60,14 @@ updateGradientCacheFromSession <- function (session, force = FALSE)
     else
     {
         cacheIndex <- read.table(cacheIndexFile, col.names=c("descriptions","number"))
-        cacheEntry <- subset(cacheIndex, descriptions==seriesDescriptions)
+        cacheEntry <- subset(cacheIndex, cacheIndex$descriptions==seriesDescriptions)
         if (nrow(cacheEntry) == 0)
             number <- max(cacheIndex$number) + 1
         else if (!force)
             return (FALSE)
         else
         {
-            cacheIndex <- subset(cacheIndex, descriptions!=seriesDescriptions)
+            cacheIndex <- subset(cacheIndex, cacheIndex$descriptions!=seriesDescriptions)
             number <- cacheEntry$number
         }
     }
