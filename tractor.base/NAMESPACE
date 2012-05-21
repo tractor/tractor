@@ -42,6 +42,7 @@ export(createNeighbourhoodInfo)
 export(newSparseArrayWithData)
 
 export(getDataTypeByNiftiCode)
+export(getNiftiCodeForDataType)
 export(newMriImageFromDicom)
 export(newMriImageFromDicomDirectory)
 export(newMriImageFromDicomMetadata)
