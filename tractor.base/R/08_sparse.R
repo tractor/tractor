@@ -22,8 +22,7 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
 ))
 
 setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
-    # This implementation owes a lot to the equivalent in the "slam" package
-    # (credit: Kurt Hornik, David Meyer and Christian Buchta)
+    # This implementation owes a lot to the equivalent in the "slam" package (credit: Kurt Hornik, David Meyer and Christian Buchta)
     nArgs <- nargs() - as.integer(!missing(drop))
     
     nDims <- x$getDimensionality()
@@ -106,7 +105,7 @@ setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
     return (returnValue)
 })
 
-setMethod("[<-", "SparseArray", function (x, i, j, ..., value) {
+setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
     nArgs <- nargs() - 1
     
     nDims <- x$getDimensionality()
