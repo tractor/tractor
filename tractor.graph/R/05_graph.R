@@ -34,6 +34,8 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     getEdgeWeights = function () { return (edgeWeights) },
     
+    getVertexDegree = function () { return (table(factor(edges, levels=1:vertexCount))) },
+    
     getVertexLocations = function () { return (vertexLocations) },
     
     getVertexLocationUnit = function () { return (locationUnit) },
