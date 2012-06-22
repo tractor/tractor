@@ -231,6 +231,34 @@ newGraphFromConnectionMatrix <- function (connectionMatrix, directed = FALSE, al
     return (Graph$new(vertexCount=length(allVertexNames), vertexNames=allVertexNames, edges=edges, edgeWeights=edgeWeights, directed=directed))   
 }
 
+newGraphWithVertices <- function (graph, vertices)
+{
+    if (!is(graph, "Graph"))
+        report(OL$Error, "Specified graph is not a valid Graph object")
+    if (length(vertices) == 0)
+        report(OL$Error, "At least one vertex must be retained")
+    
+    vertices <- sort(vertices)
+    
+    nVertices <- graph$nVertices()
+    vertexNames <- graph$getVertexNames()
+    if (length(vertexNames) == nVertices)
+        vertexNames <- vertexNames[vertices]
+    vertexLocations <- graph$getVertexLocations()
+    if (nrow(vertexLocations) == nVertices)
+        vertexLocations <- vertexLocations[vertices,]
+    
+    nEdges <- graph$nEdges()
+    edges <- graph$getEdges()
+    edgesToKeep <- which((edges[,1] %in% vertices) & (edges[,2] %in% vertices))
+    edges <- matrix(match(edges[edgesToKeep,],vertices), ncol=2)
+    edgeNames <- graph$getEdgeNames()
+    if (length(edgeNames) == nEdges)
+        edgeNames <- edgeNames[edgesToKeep]
+    
+    return (Graph$new(vertexCount=length(vertices), vertexNames=vertexNames, vertexLocations=vertexLocations, locationUnit=graph$getVertexLocationUnit(), edges=edges, edgeNames=edgeNames, edgeWeights=graph$getEdgeWeights()[edgesToKeep], directed=graph$isDirected()))
+}
+
 newGraphWithEdgeWeightThreshold <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted = TRUE)
 {
     if (!is(graph, "Graph"))
