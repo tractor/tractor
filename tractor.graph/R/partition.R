@@ -31,6 +31,6 @@ partitionGraph <- function (graph, method = "modularity")
                 return (list(indices))
         }
         
-        return (findPartition(1:graph$nVertices()))
+        return (findPartition(graph$getConnectedVertices()))
     }
 }
