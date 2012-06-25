@@ -13,7 +13,6 @@ calculatePrincipalGraphsForGraph <- function (graph, nComponents = NULL, loading
         report(OL$Error, "The specified graph is not a valid Graph object")
     
     connectionMatrix <- graph$getConnectionMatrix()
-    connectionMatrix[is.na(connectionMatrix)] <- 0
     
     eigensystem <- eigen(connectionMatrix, symmetric=!graph$isDirected())
     
