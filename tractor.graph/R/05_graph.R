@@ -157,7 +157,7 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, radius = NULL
         par(oldPars)
 })
 
-levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE)
+levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE, ...)
 {
     connectionMatrix <- x$getConnectionMatrix()
     edges <- x$getEdges()
@@ -192,7 +192,7 @@ levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, use
     
     labels <- as.character(activeVertices)
     
-    levelplot(connectionMatrix[activeVertices,activeVertices], col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="")
+    levelplot(connectionMatrix[activeVertices,activeVertices], col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
 }
 
 newGraphFromTable <- function (table, method = c("correlation","covariance"), allVertexNames = NULL)
