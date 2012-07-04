@@ -37,6 +37,8 @@ install: install-interpreted postinstall-info
 install-native:
 	@$(INSTALL) tractor.native
 	@$(INSTALL) lib/multicore
+	@$(INSTALL) lib/oro.nifti
+	@$(INSTALL) lib/RNiftyReg
 
 install-all: install-interpreted install-native postinstall-info
 
@@ -44,7 +46,7 @@ uninstall:
 	$(R) CMD REMOVE tractor.nt tractor.session tractor.utils tractor.base reportr
 
 uninstall-native:
-	$(R) CMD REMOVE tractor.native multicore
+	$(R) CMD REMOVE tractor.native multicore oro.nifti RNiftyReg
 
 uninstall-all: uninstall uninstall-native
 
