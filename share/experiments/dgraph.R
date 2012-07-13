@@ -60,13 +60,13 @@ runExperiment <- function ()
     i <- 1
     for (regionName in names(regions))
     {
-        report(OL$Verbose, "Transforming region \"", regionName, "\"")
         leftIndices <- lookupTable[,2] %in% paste("ctx-lh-",regions[[regionName]],sep="")
         rightIndices <- lookupTable[,2] %in% paste("ctx-rh-",regions[[regionName]],sep="")
         indices <- list(left=leftIndices, right=rightIndices)
         
         for (side in names(indices))
         {
+            report(OL$Verbose, "Transforming region \"", regionName, "_", side, "\"")
             freesurferRoi <- newMriImageWithSimpleFunction(parcellation, selectionFunction, values=lookupTable[indices[[side]],1])
             writeMriImageToFile(freesurferRoi, file.path(freesurferRoiDir,paste(regionName,side,sep="_")))
             result <- registerImages(freesurferRoi, refb0, scope="nonlinear", initControl=controlPoints, nLevels=0, finalInterpolation=1)
@@ -89,22 +89,24 @@ runExperiment <- function ()
     seeds <- seeds + runif(length(seeds), -0.5, 0.5)
     result <- trackWithSession(session, seeds, nSamples=1, requireImage=FALSE, requireStreamlines=TRUE)
     
+    report(OL$Info, "Finding streamlines passing through each region")
+    matchingIndices <- parallelApply(seq_along(allRegionNames), function (i) {
+        report(OL$Verbose, "Matching region \"", allRegionNames[i], "\"")
+        region <- newMriImageFromFile(file.path(diffusionRoiDir,allRegionNames[i]))
+        return (findWaypointHits(result$streamlines, list(region)))
+    })
+    
     report(OL$Info, "Creating connectivity matrix")
     connectivityMatrix <- matrix(NA, nrow=length(allRegionNames), ncol=length(allRegionNames))
+    for (i in seq_along(allRegionNames))
+    {
+        for (j in seq_along(allRegionNames))
+            connectivityMatrix[i,j] <- length(intersect(matchingIndices[[i]], matchingIndices[[j]]))
+    }
+    connectivityMatrix <- connectivityMatrix / outer(diag(connectivityMatrix), diag(connectivityMatrix), pmin)
+    connectivityMatrix[is.nan(connectivityMatrix)] <- 0
     rownames(connectivityMatrix) <- allRegionNames
     colnames(connectivityMatrix) <- allRegionNames
-    
-    for (i in 1:length(allRegionNames))
-    {
-        region1 <- newMriImageFromFile(file.path(diffusionRoiDir,allRegionNames[i]))
-        for (j in i:length(allRegionNames))
-        {
-            region2 <- newMriImageFromFile(file.path(diffusionRoiDir,allRegionNames[j]))
-            streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, list(region1,region2))
-            if (!is.null(streamlines))
-                connectivityMatrix[i,j] <- connectivityMatrix[j,i] <- streamlines$nStreamlines() / ((sum(region1$getData()>0)+sum(region2$getData()>0)) / 2)
-        }
-    }
     
     report(OL$Info, "Creating and writing graph")
     graph <- newGraphFromConnectionMatrix(connectivityMatrix, directed=FALSE)
