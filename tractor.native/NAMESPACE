@@ -9,4 +9,4 @@ importClassesFrom(tractor.session, MriSession)
 importClassesFrom(tractor.nt, StreamlineTractMetadata, StreamlineSetTract, StreamlineCollectionTract)
 
 export(trackWithSession, trackWithImages)
-export(newStreamlineCollectionTractWithWaypointConstraints)
+export(findWaypointHits, newStreamlineCollectionTractWithWaypointConstraints)
