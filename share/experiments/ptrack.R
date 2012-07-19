@@ -39,7 +39,7 @@ runExperiment <- function ()
     }
     
     if (is.null(targetNames))
-        targetNames <- ensureFileSuffix(basename(targetMaskFiles), NULL)
+        targetNames <- sapply(targetMasks, function (x) basename(x$getSource()))
     
     seeds <- which(seedMask$getData() > 0, arr.ind=TRUE)
     if (nrow(seeds) == 0)
