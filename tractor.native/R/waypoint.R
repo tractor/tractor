@@ -3,7 +3,7 @@ newStreamlineCollectionTractWithWaypointConstraints <- function (tract, waypoint
     if (!is(tract, "StreamlineCollectionTract"))
         report(OL$Error, "The specified tract is not a StreamlineCollectionTract object")
     
-    matchingIndices <- findWaypointHits(tract, waypoints)
+    matchingIndices <- findWaypointHits(tract, waypoints, exclusion)
     report(OL$Info, length(matchingIndices), " of ", tract$nStreamlines(), " streamlines pass through the specified waypoint(s)")
     
     if (length(matchingIndices) > 0)
@@ -15,7 +15,7 @@ newStreamlineCollectionTractWithWaypointConstraints <- function (tract, waypoint
         invisible(NULL)
 }
 
-findWaypointHits <- function (tract, waypoints)
+findWaypointHits <- function (tract, waypoints, exclusion = FALSE)
 {
     if (!is(tract, "StreamlineCollectionTract"))
         report(OL$Error, "The specified tract is not a StreamlineCollectionTract object")
