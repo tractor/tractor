@@ -6,18 +6,69 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
         return (object)
     },
     
-    getCoordinates = function () { return (coords) },
-    
-    getData = function () { return (data) },
-    
-    getDimensionality = function () { return (length(dims)) },
-    
-    getDimensions = function () { return (dims) },
-    
-    setCoordinatesAndData = function (coords, data)
+    aperm = function (perm)
     {
-        .self$coords <- coords
-        .self$data <- data
+        .self$coords <- .self$coords[,perm]
+        .self$dims <- .self$dims[perm]
+    },
+    
+    apply = function (margin, fun, ...)
+    {
+        fun <- match.fun(fun)
+        dimsToKeep <- .self$dims[margin]
+        dimsToLose <- .self$dims[-margin]
+        iterations <- prod(dimsToKeep)
+        
+        reshapedArray <- .self$copy()
+        reshapedArray$aperm(c(setdiff(seq_len(.self$getDimensionality()),margin), margin))
+        reshapedArray$setDimensions(c(prod(dimsToLose), iterations))
+        
+        # Assume for now that each application of the function will result in a vector of the same length
+        tempData <- as.array(reshapedArray[,1])
+        dim(tempData) <- dimsToLose
+        tempResult <- fun(tempData, ...)
+        finalArray <- array(NA, dim=c(length(tempResult),iterations))
+        for (i in 1:iterations)
+        {
+            tempData <- as.array(reshapedArray[,i])
+            dim(tempData) <- dimsToLose
+            finalArray[,i] <- fun(tempData, ...)
+        }
+        
+        dim(finalArray) <- c(dim(finalArray)[1], dimsToKeep)
+        finalArray <- drop(finalArray)
+        if (length(dim(finalArray)) == 1)
+            dim(finalArray) <- NULL
+        
+        return (finalArray)
+    },
+    
+    flip = function (dimsToFlip)
+    {
+        for (i in dimsToFlip)
+            .self$coords[,i] <- .self$dims[i] - .self$coords[,i] + 1
+    },
+    
+    getCoordinates = function () { return (.self$coords) },
+    
+    getData = function () { return (.self$data) },
+    
+    getDimensionality = function () { return (length(.self$dims)) },
+    
+    getDimensions = function () { return (.self$dims) },
+    
+    setCoordinatesAndData = function (newCoords, newData)
+    {
+        .self$coords <- newCoords
+        .self$data <- newData
+    },
+    
+    setDimensions = function (newDims)
+    {
+        if (prod(.self$dims) != prod(newDims))
+            report(OL$Error, "New dimensions are incompatible with this SparseArray object")
+        .self$coords <- vectorToMatrixLocs(matrixToVectorLocs(.self$coords,.self$dims), newDims)
+        .self$dims <- as.integer(newDims)
     }
 ))
 
@@ -178,6 +229,14 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
     return (x)
 })
 
+setMethod("Arith", signature(e1="SparseArray",e2="numeric"), function (e1, e2) {
+    if (callGeneric(0, e2) != 0)
+        report(OL$Error, "Attempting to perform arithmetic on a sparse array which would not leave it sparse")
+    newData <- callGeneric(e1$getData(), e2)
+    zero <- (newData == 0)
+    return (newSparseArrayWithData(newData[!zero], e1$getCoordinates()[!zero,], e1$getDimensions()))
+})
+
 setAs("array", "SparseArray", function (from) {
     coordinates <- which(!is.na(from) & from != 0, arr.ind=TRUE)
     object <- SparseArray$new(data=from[coordinates], coords=coordinates, dims=dim(from))
@@ -198,6 +257,18 @@ as.array.SparseArray <- function (x, ...)
 dim.SparseArray <- function (x)
 {
     x$getDimensions()
+}
+
+"dim<-.SparseArray" <- function (x, value)
+{
+    x$setDimensions(value)
+    return (x)
+}
+
+aperm.SparseArray <- function (a, perm, ...)
+{
+    newObject <- a$copy()$aperm(perm)
+    return (newObject)
 }
 
 newSparseArrayWithData <- function (data, coordinates, dims)
