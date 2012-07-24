@@ -94,6 +94,14 @@ MriImage <- setRefClass("MriImage", contains="MriImageMetadata", fields=list(dat
         return (initFields(data=data))
     },
     
+    apply = function (...)
+    {
+        if (.self$isSparse())
+            return (.self$data$apply(...))
+        else
+            return (base::apply(.self$data, ...))
+    },
+    
     getData = function () { return (data) },
     
     getDataAtPoint = function (...)
@@ -110,6 +118,27 @@ MriImage <- setRefClass("MriImage", contains="MriImageMetadata", fields=list(dat
     },
     
     getMetadata = function () { return (export("MriImageMetadata")) },
+    
+    getNonzeroIndices = function (array = TRUE, positiveOnly = FALSE)
+    {
+        if (.self$isSparse())
+        {
+            locs <- data$getCoordinates()
+            if (positiveOnly)
+                locs <- locs[data$getData() > 0,]
+            if (array)
+                return (locs)
+            else
+                return (matrixToVectorLocs(locs, data$getDimensions()))
+        }
+        else
+        {
+            if (positiveOnly)
+                return (which(data > 0, arr.ind=array))
+            else
+                return (which(data != 0, arr.ind=array))
+        }
+    },
     
     getSparseness = function ()
     {
