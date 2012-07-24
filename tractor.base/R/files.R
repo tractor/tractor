@@ -130,7 +130,7 @@ copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE
     }
 }
 
-readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL)
+readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL)
 {
     fileNames <- identifyImageFileNames(fileName, fileType)
     
@@ -144,6 +144,16 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     nVoxels <- prod(dims)
     nDims <- length(dims)
     
+    if (sparse && !is.null(mask))
+    {
+        if (mask$getDimensionality() > nDims || mask$getDimensionality() < (nDims-1))
+            report(OL$Error, "Mask must have the same number of dimensions as the image, or one fewer")
+        else if (mask$getDimensionality() == nDims && !equivalent(mask$getDimensions(),dims))
+            report(OL$Error, "Mask and image dimensions do not match")
+        else if (mask$getDimensionality() == (nDims-1) && !equivalent(mask$getDimensions(),dims[-nDims]))
+            report(OL$Error, "Mask and image dimensions do not match")
+    }
+    
     if (!is.null(volumes))
     {
         if (metadataOnly)
@@ -151,9 +161,9 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
             flag(OL$Warning, "Volumes specified when reading only metadata from an image file will be ignored")
             volumes <- NULL
         }
-        else if (nDims < 4)
+        else if (nDims != 4)
         {
-            flag(OL$Warning, "Volumes specified for images with less than 4 dimensions will be ignored")
+            flag(OL$Warning, "Volumes specified for images with dimensionality other than 4 will be ignored")
             volumes <- NULL
         }
         else
@@ -190,7 +200,45 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         if (fileNames$imageFile == fileNames$headerFile)
             readBin(connection, "raw", n=info$storageMetadata$dataOffset)
         
-        if (!is.null(volumes))
+        if (sparse)
+        {
+            if (!is.null(volumes))
+            {
+                blocks <- volumes
+                blockSize <- volumeSize
+            }
+            else
+            {
+                blocks <- 1:dims[nDims]
+                jumps <- rep(0, length(blocks))
+                blockSize <- prod(dims[-nDims])
+            }
+            
+            coords <- NULL
+            values <- NULL
+            for (i in blocks)
+            {
+                if (jumps[i] > 0)
+                    readBin(connection, "raw", n=jumps[i]*datatype$size)
+                currentData <- readBin(connection, what=datatype$type, n=blockSize, size=datatype$size, signed=datatype$isSigned, endian=endian)
+                
+                toKeep <- which(currentData != 0)
+                if (!is.null(mask) && mask$getDimensionality() == (nDims-1))
+                    toKeep <- intersect(toKeep, which(mask$getData() > 0))
+                coords <- rbind(coords, cbind(vectorToMatrixLocs(toKeep,dims[-nDims]),i))
+                values <- c(values, currentData[toKeep])
+            }
+            
+            if (!is.null(mask) && mask$getDimensionality() == nDims)
+            {
+                toKeep <- which(matrixToVectorLocs(coords,dims) %in% which(mask$getData() > 0))
+                coords <- coords[toKeep,]
+                values <- values[toKeep]
+            }
+            
+            data <- newSparseArrayWithData(values, coords, dims)
+        }
+        else if (!is.null(volumes))
         {
             data <- array(as(0,datatype$type), dim=c(dims[1:3],length(volumes)))
             for (i in seq_along(volumes))
@@ -236,7 +284,12 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     if (!identical(dimPermutation, seq_len(nDims)))
     {
         if (!metadataOnly)
-            data <- aperm(data, dimPermutation)
+        {
+            if (sparse)
+                data$aperm(dimPermutation)
+            else
+                data <- aperm(data, dimPermutation)
+        }
         dims <- dims[dimPermutation]
         voxelDims <- voxelDims[dimPermutation]
     }
@@ -260,20 +313,25 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], dims[1:3]-origin[1:3]+1)
     }
         
-    if (!metadataOnly)
+    if (!metadataOnly && any(ordering[1:min(3,nDims)] < 0))
     {
-        orderX <- (if (ordering[1] == 1) seq_len(dims[1]) else rev(seq_len(dims[1])))
-        orderY <- (if (ordering[2] == 1) seq_len(dims[2]) else rev(seq_len(dims[2])))
-        if (nDims > 2)
-            orderZ <- (if (ordering[3] == 1) seq_len(dims[3]) else rev(seq_len(dims[3])))
-        dimsToKeep <- setdiff(1:nDims, 1:3)
-
-        if (nDims == 2)
-            data <- data[orderX, orderY]
-        else if (nDims == 3)
-            data <- data[orderX, orderY, orderZ]
+        if (sparse)
+            data$flip(which(ordering[1:min(3,nDims)] < 0))
         else
-            data <- array(apply(data, dimsToKeep, "[", orderX, orderY, orderZ), dim=dim(data))
+        {
+            orderX <- (if (ordering[1] == 1) seq_len(dims[1]) else rev(seq_len(dims[1])))
+            orderY <- (if (ordering[2] == 1) seq_len(dims[2]) else rev(seq_len(dims[2])))
+            if (nDims > 2)
+                orderZ <- (if (ordering[3] == 1) seq_len(dims[3]) else rev(seq_len(dims[3])))
+            dimsToKeep <- setdiff(1:nDims, 1:3)
+
+            if (nDims == 2)
+                data <- data[orderX, orderY]
+            else if (nDims == 3)
+                data <- data[orderX, orderY, orderZ]
+            else
+                data <- array(apply(data, dimsToKeep, "[", orderX, orderY, orderZ), dim=dim(data))
+        }
     }
     
     imageMetadata <- MriImageMetadata$new(imagedims=dims, voxdims=voxelDims, voxunit=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, datatype=datatype, origin=origin, storedXform=info$storageMetadata$xformMatrix, tags=info$imageMetadata$tags)
@@ -292,9 +350,9 @@ newMriImageMetadataFromFile <- function (fileName, fileType = NULL)
     invisible (readImageFile(fileName, fileType, metadataOnly=TRUE))
 }
 
-newMriImageFromFile <- function (fileName, fileType = NULL, volumes = NULL)
+newMriImageFromFile <- function (fileName, fileType = NULL, volumes = NULL, sparse = FALSE, mask = NULL)
 {
-    invisible (readImageFile(fileName, fileType, metadataOnly=FALSE, volumes=volumes))
+    invisible (readImageFile(fileName, fileType, metadataOnly=FALSE, volumes=volumes, sparse=sparse, mask=mask))
 }
 
 writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
