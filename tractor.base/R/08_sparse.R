@@ -61,7 +61,7 @@ setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
         args <- substitute(list(i, j, ...))
         argsEmpty <- sapply(args, function(a) identical(as.character(a), ""))
         args[argsEmpty] <- list(NULL)
-        args <- eval(args)
+        args <- eval(args, envir=parent.frame())
         
         dataToKeep <- rep.int(TRUE, length(data))
         finalDims <- dims
@@ -139,7 +139,7 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
         args <- substitute(list(i, j, ...))
         argsEmpty <- sapply(args, function(a) identical(as.character(a), ""))
         args[argsEmpty] <- list(NULL)
-        args <- eval(args)
+        args <- eval(args, envir=parent.frame())
         
         args <- lapply(seq_len(nDims), function(i) {
             if (is.null(args[i]))
