@@ -38,7 +38,8 @@ showImagesInFslview <- function (..., wait = FALSE, lookupTable = NULL, opacity 
             # fslview is fussy about data types, so write the image into Analyze format to avoid a crash if necessary
             if (imageInfo$format == "Mgh" || is.null(typeCode) || typeCode > 64)
             {
-                imageLoc <- file.path(tempDir, paste(i,basename(imageList[[i]]),sep="_"))
+                dir.create(file.path(tempDir, i))
+                imageLoc <- file.path(tempDir, i, basename(metadata$getSource()))
                 writeMriImageToFile(newMriImageFromFile(imageList[[i]]), imageLoc, fileType="ANALYZE_GZ")
             }
             else
@@ -46,7 +47,8 @@ showImagesInFslview <- function (..., wait = FALSE, lookupTable = NULL, opacity 
         }
         else if (is(imageList[[i]], "MriImage"))
         {
-            imageLoc <- file.path(tempDir, paste(i,basename(imageList[[i]]$getSource()),sep="_"))
+            dir.create(file.path(tempDir, i))
+            imageLoc <- file.path(tempDir, i, basename(imageList[[i]]$getSource()))
             writeMriImageToFile(imageList[[i]], imageLoc, fileType="ANALYZE_GZ")
         }
         else
