@@ -45,10 +45,13 @@ readNifti <- function (fileNames)
             matrix <- diag(4)
             matrix[1:3,4] <- quaternionParams[4:6]
             
-            if (sum(quaternionParams[1:3]^2) == 1)
+            quaternionSumOfSquares <- sum(quaternionParams[1:3]^2)
+            if (equivalent(quaternionSumOfSquares, 1, tolerance=1e-6))
                 q <- c(0, quaternionParams[1:3])
+            else if (quaternionSumOfSquares > 1)
+                report(OL$Error, "Quaternion parameters are invalid")
             else
-                q <- c(sqrt(1 - sum(quaternionParams[1:3]^2)), quaternionParams[1:3])
+                q <- c(sqrt(1 - quaternionSumOfSquares), quaternionParams[1:3])
 
             matrix[1:3,1:3] <- c(  q[1]*q[1] +   q[2]*q[2] - q[3]*q[3] - q[4]*q[4],
                                  2*q[2]*q[3] + 2*q[1]*q[4],
