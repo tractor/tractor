@@ -13,6 +13,8 @@ runExperiment <- function ()
     seedMaskInStandardSpace <- getConfigVariable("SeedMaskInStandardSpace", FALSE)
     waypointMaskFiles <- getConfigVariable("WaypointMaskFiles", NULL, "character", errorIfInvalid=TRUE)
     waypointMasksInStandardSpace <- getConfigVariable("WaypointMasksInStandardSpace", FALSE)
+    exclusionMaskFiles <- getConfigVariable("ExclusionMaskFiles", NULL, "character", errorIfInvalid=TRUE)
+    exclusionMasksInStandardSpace <- getConfigVariable("ExclusionMasksInStandardSpace", FALSE)
     tracker <- getConfigVariable("Tracker", "fsl", validValues=c("fsl","tractor"))
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL)
@@ -44,30 +46,45 @@ runExperiment <- function ()
         seedMask <- newMriImageWithBinaryFunction(seedMask, faImage, function (x,y) replace(x, y < anisotropyThreshold, 0))
     }
     
-    if (is.null(waypointMaskFiles))
+    if (is.null(waypointMaskFiles) && is.null(exclusionMaskFiles))
         waypointMasks <- NULL
     else
     {
-        waypointMaskFiles <- splitAndConvertString(waypointMaskFiles, ",", fixed=TRUE)
+        waypointMaskFiles <- splitAndConvertString(as.character(waypointMaskFiles), ",", fixed=TRUE)
+        exclusionMaskFiles <- splitAndConvertString(as.character(exclusionMaskFiles), ",", fixed=TRUE)
         waypointMasks <- list()
+        exclusion <- logical(0)
         for (waypointFile in waypointMaskFiles)
         {
             waypointMask <- newMriImageFromFile(waypointFile)
             if (waypointMasksInStandardSpace)
                 waypointMask <- transformStandardSpaceImage(session, waypointMask)
             waypointMasks <- c(waypointMasks, list(waypointMask))
+            exclusion <- c(exclusion, FALSE)
+        }
+        for (exclusionFile in exclusionMaskFiles)
+        {
+            exclusionMask <- newMriImageFromFile(exclusionFile)
+            if (exclusionMasksInStandardSpace)
+                exclusionMask <- transformStandardSpaceImage(session, exclusionMask)
+            waypointMasks <- c(waypointMasks, list(exclusionMask))
+            exclusion <- c(exclusion, TRUE)
         }
     }
     
     if (tracker == "fsl")
+    {
+        if (!is.null(exclusionMaskFiles))
+            report(OL$Error, "Exclusion masks are not currently supported with the FSL tracker")
         result <- runProbtrackWithSession(session, mode="seedmask", seedMask=seedMask, waypointMasks=waypointMasks, requireImage=TRUE, nSamples=nSamples)
+    }
     else
     {
         require(tractor.native)
         result <- trackWithSession(session, seedMask, requireImage=is.null(waypointMasks), requireStreamlines=!is.null(waypointMasks), nSamples=nSamples)
         if (!is.null(waypointMasks))
         {
-            streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks)
+            streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks, exclusion)
             if (is.null(streamlines))
             {
                 metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("mask","diffusion"))

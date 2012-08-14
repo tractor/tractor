@@ -4,12 +4,11 @@
 #include <R.h>
 #include <Rdefines.h>
 
-SEXP find_waypoint_hits (SEXP points, SEXP n_points, SEXP start_indices, SEXP lengths, SEXP n_starts, SEXP mask_points, SEXP n_masks, SEXP n_mask_points)
+SEXP find_waypoint_hits (SEXP points, SEXP n_points, SEXP start_indices, SEXP lengths, SEXP n_starts, SEXP mask_points, SEXP n_masks, SEXP n_mask_points, SEXP exclusion)
 {
     int i, j, n_matches, current_match;
     int ns = *INTEGER(n_starts);
     int *int_ptr;
-    int *temp_match = (int *) R_alloc(ns, sizeof(int));
     int *match = (int *) R_alloc(ns, sizeof(int));
 
     SEXP current_mask_points, matching_indices;
@@ -26,19 +25,15 @@ SEXP find_waypoint_hits (SEXP points, SEXP n_points, SEXP start_indices, SEXP le
     
     for (i=0; i<(*INTEGER(n_masks)); i++)
     {
-        n_matches = 0;
-        
         // Find streamlines that pass through the current mask
         current_mask_points = VECTOR_ELT(mask_points, i);
-        match_points(INTEGER(points), *INTEGER(n_points), zero_based_start_indices, INTEGER(lengths), *INTEGER(n_starts), INTEGER(current_mask_points), INTEGER(n_mask_points)[i], 3, temp_match);
-        
-        // Find and count streamlines matching all masks so far
-        for (j=0; j<ns; j++)
-        {
-            match[j] = match[j] && temp_match[j];
-            n_matches += match[j];
-        }
+        match_points(INTEGER(points), *INTEGER(n_points), zero_based_start_indices, INTEGER(lengths), *INTEGER(n_starts), INTEGER(current_mask_points), INTEGER(n_mask_points)[i], INTEGER(exclusion)[i], 3, match);
     }
+    
+    // Count matching streamlines
+    n_matches = 0;
+    for (j=0; j<ns; j++)
+        n_matches += match[j];
     
     // Allocate a vector for matching indices
     PROTECT(matching_indices = NEW_INTEGER((R_len_t) n_matches));
@@ -60,11 +55,15 @@ SEXP find_waypoint_hits (SEXP points, SEXP n_points, SEXP start_indices, SEXP le
     return matching_indices;
 }
 
-void match_points (const int *points, const int n_points, const int *start_indices, const int *lengths, const int n_starts, const int *target_points, const int n_target_points, const int n_dims, int *match)
+void match_points (const int *points, const int n_points, const int *start_indices, const int *lengths, const int n_starts, const int *target_points, const int n_target_points, const int exclusion, const int n_dims, int *match)
 {
-    // Iterate over streamlines, setting the match vector to 1 for each containing a match
+    // Iterate over streamlines, updating match status
     for (int i=0; i<n_starts; i++)
-        match[i] = points_intersect(points, n_points, start_indices[i], lengths[i], target_points, n_target_points, n_dims);
+    {
+        // Don't bother running points_intersect() for streamlines which have already failed to match
+        if (match[i])
+            match[i] = (!exclusion == points_intersect(points, n_points, start_indices[i], lengths[i], target_points, n_target_points, n_dims));
+    }
 }
 
 int points_intersect (const int *points, const int n_points, const int start_index, const int length, const int *target_points, const int n_target_points, const int n_dims)

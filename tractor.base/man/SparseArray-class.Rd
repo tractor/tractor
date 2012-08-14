@@ -3,8 +3,8 @@
 \docType{class}
 \alias{SparseArray}
 \alias{SparseArray-class}
-\alias{[,SparseArray-method}
-\alias{[<-,SparseArray-method}
+\alias{[,SparseArray,ANY,ANY-method}
+\alias{[<-,SparseArray,ANY,ANY-method}
 \alias{dim.SparseArray}
 \alias{as.array.SparseArray}
 
@@ -19,8 +19,8 @@ All reference classes extend and inherit methods from \code{"\linkS4class{envRef
 }
 \section{Methods}{
   \describe{
-    \item{[}{\code{signature(x = "SparseArray")}: ... }
-    \item{[<-}{\code{signature(x = "SparseArray")}: ... }
+    \item{[}{\code{signature(x = "SparseArray", i = "ANY", j = "ANY")}: Index method for the \code{SparseArray} class.}
+    \item{[<-}{\code{signature(x = "SparseArray", i = "ANY", j = "ANY")}: Replacement method for the \code{SparseArray} class.}
 	 }
 }
 \author{Jon Clayden}

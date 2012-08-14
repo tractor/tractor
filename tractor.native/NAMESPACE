@@ -1,10 +1,12 @@
 useDynLib(tractor.native)
 
+import(reportr)
 import(tractor.base)
-importFrom(tractor.nt, newStreamlineTractMetadataFromImageMetadata)
+importFrom(tractor.session, getBedpostNumberOfFibresForSession)
+importFrom(tractor.nt, newStreamlineTractMetadataFromImageMetadata, newStreamlineCollectionTractBySubsetting, StreamlineCollectionTract)
 
 importClassesFrom(tractor.session, MriSession)
-importClassesFrom(tractor.nt, StreamlineTractMetadata, StreamlineSetTract)
+importClassesFrom(tractor.nt, StreamlineTractMetadata, StreamlineSetTract, StreamlineCollectionTract)
 
 export(trackWithSession, trackWithImages)
-export(newStreamlineCollectionTractWithWaypointConstraints)
+export(findWaypointHits, newStreamlineCollectionTractWithWaypointConstraints)

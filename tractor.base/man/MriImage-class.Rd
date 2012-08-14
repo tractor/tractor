@@ -3,13 +3,17 @@
 \docType{class}
 \alias{MriImage}
 \alias{MriImage-class}
-\alias{[,MriImage-method}
-\alias{[<-,MriImage-method}
+\alias{[,MriImage,ANY,ANY-method}
+\alias{[,MriImage,ANY,missing-method}
+\alias{[,MriImage,missing,ANY-method}
+\alias{[,MriImage,missing,missing-method}
+\alias{[<-,MriImage,ANY,ANY-method}
+\alias{[<-,MriImage,ANY,missing-method}
+\alias{[<-,MriImage,missing,ANY-method}
+\alias{[<-,MriImage,missing,missing-method}
 \alias{Math.MriImage}
 \alias{Ops.MriImage}
 \alias{Summary.MriImage}
-\alias{[.MriImage}
-\alias{[<-.MriImage}
 \alias{dim.MriImage}
 \alias{as.array.MriImage}
 
@@ -25,8 +29,14 @@ All reference classes extend and inherit methods from \code{"\linkS4class{envRef
 }
 \section{Methods}{
   \describe{
-    \item{[}{\code{signature(x = "MriImage")}: ... }
-    \item{[<-}{\code{signature(x = "MriImage")}: ... }
+    \item{[}{\code{signature(x = "MriImage", i = "ANY", j = "ANY")}: Index methods for the \code{MriImage} class. These are wrappers around the corresponding method for the \code{array} or \code{SparseArray} classes, depending on the underlying data type.}
+    \item{[}{\code{signature(x = "MriImage", i = "ANY", j = "missing")}}
+    \item{[}{\code{signature(x = "MriImage", i = "missing", j = "ANY")}}
+    \item{[}{\code{signature(x = "MriImage", i = "missing", j = "missing")}}
+    \item{[<-}{\code{signature(x = "MriImage", i = "ANY", j = "ANY")}: Replacement methods for the \code{MriImage} class. These are wrappers around the corresponding method for the \code{array} or \code{SparseArray} classes, depending on the underlying data type.}
+    \item{[<-}{\code{signature(x = "MriImage", i = "ANY", j = "missing")}}
+    \item{[<-}{\code{signature(x = "MriImage", i = "missing", j = "ANY")}}
+    \item{[<-}{\code{signature(x = "MriImage", i = "missing", j = "missing")}}
 	 }
 }
 \author{Jon Clayden}

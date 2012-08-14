@@ -46,7 +46,7 @@ runExperiment <- function ()
     {
         if (runStages[1] && (!skipCompleted || !stagesComplete[1]))
         {
-            workingDir <- session$getDirectory("root")
+            workingDir <- session$getDirectory("diffusion")
             if (file.exists(workingDir))
             {
                 if (interactive)
@@ -133,7 +133,7 @@ runExperiment <- function ()
                     if (tolower(choice) == "s")
                     {
                         zeroVolumes <- newMriImageFromFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=zeroes)
-                        showImagesInFslview(zeroVolumes, writeToAnalyzeFirst=TRUE)
+                        showImagesInFslview(zeroVolumes)
                     }
                     else
                         choice <- as.integer(choice)
@@ -167,7 +167,7 @@ runExperiment <- function ()
                     done <- ask("Is the brain extraction satisfactory? [yn; s to show the mask in fslview]")
                     
                     if (tolower(done) == "s")
-                        showImagesInFslview(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("mask","diffusion"), writeToAnalyzeFirst=TRUE, lookupTable=c("Grayscale","Yellow"), opacity=c(1,0.5))
+                        showImagesInFslview(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("mask","diffusion"), lookupTable=c("Grayscale","Yellow"), opacity=c(1,0.5))
                     else if (tolower(done) == "y")
                         break
                     else if (maskingMethod == "bet")

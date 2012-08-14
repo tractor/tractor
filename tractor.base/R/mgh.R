@@ -63,7 +63,7 @@ writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE, datatype = NU
     if (is.null(datatype))
     {
         datatype <- image$getDataType()
-        if (is.null(datatype))
+        if (length(datatype) == 0)
             report(OL$Error, "The data type is not stored with the image; it must be specified")
     }
     
