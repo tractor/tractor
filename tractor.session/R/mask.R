@@ -14,13 +14,23 @@ createMaskImageForSession <- function (session, method = c("kmeans","fill"), nCl
         kmeansResult <- kmeans(as.vector(t2Image$getData()), nClusters)
         lowSignalCluster <- which.min(kmeansResult$centers)
         otherClusters <- setdiff(1:nClusters, lowSignalCluster)
-        clusterSizes <- kmeansResult$size
-        
-        report(OL$Info, round(sum(clusterSizes[otherClusters])/sum(clusterSizes)*100,2), "% of voxels are classified as foreground")
         
         maskData <- array(0L, dim=t2Image$getDimensions())
         maskData[kmeansResult$cluster != lowSignalCluster] <- 1L
-        t2Image[kmeansResult$cluster == lowSignalCluster] <- 0L
+        
+        if (require("mmand"))
+        {
+            report(OL$Info, "Applying morphological operations to remove gaps in the mask")
+            kernel <- shapeKernel(width=5, dim=2, type="diamond", brush=TRUE)
+            maskData <- closing(maskData, kernel)
+            kernel <- shapeKernel(width=3, dim=2, type="diamond", brush=TRUE)
+            maskData <- dilate(maskData, kernel)
+        }
+        
+        outsideMask <- maskData == 0
+        report(OL$Info, round((1-sum(outsideMask)/length(outsideMask))*100,2), "% of voxels are classified as foreground")
+        
+        t2Image[outsideMask] <- 0L
     }
     else if (method == "fill")
     {
