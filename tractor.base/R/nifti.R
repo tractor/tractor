@@ -154,7 +154,6 @@ readNifti <- function (fileNames)
         voxelUnit <- NULL
     
     dimsToKeep <- 1:max(which(dims > 1))
-    voxelDims[2:4] <- voxelDims[2:4] * sign(diag(xformMatrix)[1:3])
     
     imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=voxelUnit, source=fileNames$fileStem, datatype=datatype, tags=list())
     
