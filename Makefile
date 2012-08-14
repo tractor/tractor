@@ -36,6 +36,7 @@ install: install-interpreted postinstall-info
 
 install-native:
 	@$(INSTALL) tractor.native
+	@$(INSTALL) lib/mmand
 	@$(INSTALL) lib/multicore
 
 install-all: install-interpreted install-native postinstall-info
