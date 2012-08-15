@@ -84,12 +84,6 @@ writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE, datatype = NU
         report(OL$Error, "No supported MGH/MGZ datatype is appropriate for this file")
     typeIndex <- which(datatypeMatches)
     
-    data <- image$getData()
-    if (.Mgh$datatypes$rTypes[typeIndex] == "integer")
-        data <- as.integer(data)
-    else
-        data <- as.double(data)
-    
     dims <- image$getDimensions()
     ndims <- image$getDimensionality()
     if (ndims > 4)
@@ -123,7 +117,7 @@ writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE, datatype = NU
     writeBin(as.double(xformlikeMatrix), connection, size=4, endian="big")
     writeBin(raw(194), connection)
     
-    writeBin(data, connection, size=.Mgh$datatypes$sizes[typeIndex], endian="big")
+    writeImageData(image, connection, type=.Mgh$datatypes$rTypes[typeIndex], size=.Mgh$datatypes$sizes[typeIndex], endian="big")
     close(connection)
     
     if (image$isInternal())
