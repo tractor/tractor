@@ -7,7 +7,6 @@ runExperiment <- function ()
     
     digits <- getConfigVariable("SignificantDigits", 6L)
     
-    image <- newMriImageFromFile(Arguments[1])
     if (nArguments() > 1)
     {
         mask <- newMriImageFromFile(Arguments[2])
@@ -15,6 +14,11 @@ runExperiment <- function ()
     }
     else
         locs <- which(!is.na(image$getData()), arr.ind=TRUE)
+    
+    if (mask$getSparseness() > 0.8)
+        image <- newMriImageFromFile(Arguments[1], sparse=TRUE, mask=mask)
+    else
+        image <- newMriImageFromFile(Arguments[1])
     
     values <- signif(image[locs], digits)
     cat(implode(values, sep="\n"))
