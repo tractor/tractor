@@ -53,7 +53,7 @@ runExperiment <- function ()
     else
     {
         labels <- c("Number of voxels", "Volume", "Intensity range", "5% trimmed range", "Mean", "5% trimmed mean", "Median", "Standard deviation")
-        values <- c(length(data), paste(round(abs(length(data)*prod(image$getVoxelDimensions())),2),volumeUnit), implode(signif(range(data),4),sep=" - "), implode(signif(quantile(data,c(0.05,0.95)),4),sep=" - "), signif(mean(data),4), signif(mean(data,trim=0.05),4), signif(median(data),4), signif(sd(data),4))
+        values <- c(length(data), paste(round(abs(length(data)*prod(image$getVoxelDimensions())),2),volumeUnit), implode(signif(range(data),4),sep=" to "), implode(signif(quantile(data,c(0.05,0.95)),4),sep=" to "), signif(mean(data),4), signif(mean(data,trim=0.05),4), signif(median(data),4), signif(sd(data),4))
     }
     
     if (getOutputLevel() > OL$Info)
