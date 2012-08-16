@@ -2,6 +2,7 @@
 #@desc Run tractography for connectivity "profiling", generating a table of streamline counts connecting each voxel in the seed region to each target region. Only the internal tracker can currently be used for this purpose. For generating tract images, use "rtrack" instead; for regionwise tracking use "mtrack".
 
 library(tractor.session)
+library(splines)
 library(tractor.nt)
 library(tractor.native)
 
