@@ -355,6 +355,51 @@ newMriImageFromFile <- function (fileName, fileType = NULL, volumes = NULL, spar
     invisible (readImageFile(fileName, fileType, metadataOnly=FALSE, volumes=volumes, sparse=sparse, mask=mask))
 }
 
+writeImageData <- function (image, connection, type = NULL, size = NULL, endian = .Platform$endian)
+{
+    if (!is(image, "MriImage"))
+        report(OL$Error, "The specified image is not an MriImage object")
+    
+    if (!is.na(image$getStoredXformMatrix()[1,1]))
+    {
+        xform <- image$getStoredXformMatrix()
+        diagonal <- diag(xform)[1:3]
+        tolerance <- 1e-3 * max(abs(diagonal))
+        if (any(diagonal*c(-1,1,1) < 0) || !equivalent(xform[1:3,1:3],diag(diagonal),tolerance=tolerance))
+            flag(OL$Warning, "The image to be written out is not stored in the LAS convention - the result will be inconsistent with the source file")
+    }
+    
+    datatype <- image$getDataType()
+    data <- image$getData()
+    
+    if (is.null(type))
+        type <- datatype$type
+    if (is.null(size))
+        size <- datatype$size
+    
+    if (image$isSparse())
+    {
+        dims <- image$getDimensions()
+        nDims <- image$getDimensionality()
+        for (i in seq_len(dims[nDims]))
+        {
+            indices <- alist(x=,y=,z=,t=,u=,v=,w=)[1:nDims]
+            indices[[nDims]] <- i
+            currentData <- as.array(do.call("[", c(list(data),indices)))
+            
+            storage.mode(currentData) <- type
+            attributes(currentData) <- NULL
+            writeBin(currentData, connection, size=size, endian=endian)
+        }
+    }
+    else
+    {
+        storage.mode(data) <- type
+        attributes(data) <- NULL
+        writeBin(data, connection, size=size, endian=endian)
+    }
+}
+
 writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
 {
     if (!is(image, "MriImage"))

@@ -154,7 +154,6 @@ readNifti <- function (fileNames)
         voxelUnit <- NULL
     
     dimsToKeep <- 1:max(which(dims > 1))
-    voxelDims[2:4] <- voxelDims[2:4] * sign(diag(xformMatrix)[1:3])
     
     imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=voxelUnit, source=fileNames$fileStem, datatype=datatype, tags=list())
     
@@ -181,10 +180,6 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     typeCode <- getNiftiCodeForDataType(datatype)
     if (is.null(typeCode))
         report(OL$Error, "No supported NIfTI datatype is appropriate for this file")
-    
-    data <- image$getData()
-    storage.mode(data) <- datatype$type
-    attributes(data) <- NULL
     
     ndims <- image$getDimensionality()
     fullDims <- c(ndims, image$getDimensions(), rep(1,7-ndims))
@@ -250,7 +245,7 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
         connection <- fileFun(fileNames$imageFile, "w+b")
     }
     
-    writeBin(data, connection, size=datatype$size)
+    writeImageData(image, connection)
     close(connection)
     
     if (image$isInternal())

@@ -75,14 +75,6 @@ writeMriImageToAnalyze <- function (image, fileNames, gzipped = FALSE, datatype 
         report(OL$Error, "No supported Analyze datatype is appropriate for this file")
     typeIndex <- which(datatypeMatches)
     
-    data <- image$getData()
-    if (.Analyze$rTypes[typeIndex] == "integer")
-        data <- as.integer(data)
-    else
-        data <- as.double(data)
-    maxValue <- max(data)
-    minValue <- min(data)
-    
     ndims <- image$getDimensionality()
     fullDims <- c(ndims, image$getDimensions(), rep(1,7-ndims))
     fullVoxelDims <- c(0, image$getVoxelDimensions(), rep(0,7-ndims))
@@ -118,7 +110,7 @@ writeMriImageToAnalyze <- function (image, fileNames, gzipped = FALSE, datatype 
     
     # Image data
     connection <- fileFun(fileNames$imageFile, "w+b")
-    writeBin(data, connection, size=.Analyze$sizes[typeIndex])
+    writeImageData(image, connection, type=.Analyze$rTypes[typeIndex], size=.Analyze$sizes[typeIndex])
     close(connection)
     
     if (image$isInternal())

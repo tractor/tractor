@@ -7,7 +7,7 @@ all:
 postinstall-info:
 	@echo
 	@echo "Installation complete. You may wish to add the following lines"
-	@echo "to your ~/.bashrc file:"
+	@echo "to your ~/.bashrc file (or equivalent for other shells):"
 	@echo
 	@echo "  export TRACTOR_HOME=`pwd`"
 	@echo '  export PATH=$${TRACTOR_HOME}/bin:$${PATH}'
