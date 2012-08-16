@@ -75,7 +75,7 @@ MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject
             voxelDimString <- paste(voxelDimString, " x ", round(abs(voxdims[4]),5), ifelse(!is.na(spatialUnit) && !is.na(temporalUnit),paste(" ", temporalUnit,sep=""),""), sep="")
         if (length(voxdims) > 4)
             voxelDimString <- paste(voxelDimString, " x ", implode(round(abs(voxdims[5:length(voxdims)]),5), sep=" x "), sep="")
-        if (identical(voxunit,"unknown"))
+        if (all(voxunit == "unknown"))
             voxelDimString <- paste(voxelDimString, "(units unknown)", sep=" ")
         
         labels <- c("Image source", "Image dimensions", "Coordinate origin", "Voxel dimensions", "Data type", "Additional tags")
