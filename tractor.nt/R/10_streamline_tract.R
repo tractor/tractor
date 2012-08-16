@@ -612,6 +612,72 @@ newStreamlineTractByTrimming <- function (tract, trimLeft, trimRight)
     invisible (newTract)
 }
 
+writeStreamlineCollectionTractToTrackvis <- function (tract, fileName)
+{
+    if (!is(tract, "StreamlineCollectionTract"))
+        report(OL$Error, "The specified tract is not a StreamlineCollectionTract object")
+    
+    imageMetadata <- tract$getImageMetadata()
+    fullVoxelDims <- c(-1, abs(imageMetadata$getVoxelDimensions()), rep(0,7-imageMetadata$getDimensionality()))
+    origin <- (imageMetadata$getOrigin() - 1) * abs(imageMetadata$getVoxelDimensions())
+    if (length(origin) > 3)
+        origin <- origin[1:3]
+    else if (length(origin) < 3)
+        origin <- c(origin, rep(0,3-length(origin)))
+    origin <- ifelse(origin < 0, rep(0,3), origin)
+    origin[2:3] <- -origin[2:3]
+    xformMatrix <- matrix(c(-fullVoxelDims[2], 0, 0, origin[1],
+                             0, fullVoxelDims[3], 0, origin[2],
+                             0, 0, fullVoxelDims[4], origin[3],
+                             0, 0, 0,                1        ), nrow=4, ncol=4, byrow=TRUE)
+    
+    fileName <- ensureFileSuffix(fileName, "trk")
+    connection <- file(fileName, "w+b")
+    
+    # File header
+    writeBin(c(charToRaw("TRACK"),as.raw(0)), connection, size=1)
+    writeBin(as.integer(imageMetadata$getDimensions()[1:3]), connection, size=2)
+    writeBin(abs(imageMetadata$getVoxelDimensions()[1:3]), connection, size=4)
+    
+    # The origin is not currently used by TrackVis, according to the docs (http://www.trackvis.org/docs/?subsect=fileformat)
+    writeBin(origin, connection, size=4)
+    
+    # Number of scalars saved at each track point (besides x, y and z coordinates), and their names
+    writeBin(as.integer(0), connection, size=2)
+    writeBin(raw(200), connection)
+
+    # Number of properties saved at each track, and their names
+    writeBin(as.integer(0), connection, size=2)
+    writeBin(raw(200), connection)
+    
+    writeBin(as.vector(xformMatrix), connection, size=4)
+    writeBin(raw(444), connection)
+    writeBin(c(charToRaw("LAS"),as.raw(0)), connection, size=1)
+    writeBin(c(charToRaw("LAS"),as.raw(0)), connection, size=1)
+    writeBin(as.double(c(1,0,0,0,-1,0)), connection, size=4)
+    writeBin(raw(2), connection)
+    
+    # Invert and swap bits - all zero
+    writeBin(raw(6), connection)
+    
+    # Number of streamlines
+    writeBin(as.integer(tract$nStreamlines()), connection, size=4)
+    
+    # Version and header size
+    writeBin(as.integer(c(2, 1000)), connection, size=4)
+    
+    # Write out streamline points
+    lengths <- tract$getEndIndices() - tract$getStartIndices() + 1
+    for (i in seq_len(tract$nStreamlines()))
+    {
+        rescaled <- rescalePoints(tract$getPoints(i), "mm", tract$getMetadata(), tract$getSeedPoint(i))
+        writeBin(as.integer(lengths[i]), connection, size=4)
+        writeBin(as.vector(t(rescaled$points),"double"), connection, size=4)
+    }
+    
+    close(connection)
+}
+
 rescalePoints <- function (points, newUnit, metadata, seed)
 {
     oldUnit <- metadata$getCoordinateUnit()
