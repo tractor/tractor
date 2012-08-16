@@ -23,7 +23,7 @@ runExperiment <- function ()
             multiplier <- 1
         else
             multiplier <- switch(image$getVoxelUnit()["spatial"], m=1000, mm=1, um=0.001)
-        width <- width / abs(image$getVoxelDimensions() * multiplier)
+        width <- width / abs(image$getVoxelDimensions()[1:length(width)] * multiplier)
     }
     
     report(OL$Info, "Smoothing with kernel of sigma (", implode(round(width,2),","), ") voxels")
