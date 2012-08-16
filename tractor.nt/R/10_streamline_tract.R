@@ -136,7 +136,23 @@ StreamlineCollectionTract <- setRefClass("StreamlineCollectionTract", contains="
     
     nPoints = function () { return (nrow(points)) },
     
-    nStreamlines = function () { return (length(startIndices)) }
+    nStreamlines = function () { return (length(startIndices)) },
+    
+    summarise = function ()
+    {
+        # Note, length is number of steps, not number of points
+        lengths <- .self$getEndIndices() - .self$getStartIndices()
+        index <- which(lengths > 1)[1]
+        step <- diff(.self$getPoints(index))[1,]
+        if (.self$getCoordinateUnit() == "mm")
+            stepLength <- vectorLength(step)
+        else
+            stepLength <- vectorLength(step * .self$getImageMetadata()$getVoxelDimensions())
+        
+        labels <- c("Number of streamlines", "Step length", "Streamline length range")
+        values <- c(.self$nStreamlines(), paste(round(stepLength,3),"mm"), paste(implode(range(lengths)," to "),"steps"))
+        return (list(labels=labels, values=values))
+    }
 ))
 
 newStreamlineTractMetadataFromImageMetadata <- function (imageMetadata, originAtSeed, coordUnit)
