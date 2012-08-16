@@ -28,11 +28,17 @@ runExperiment <- function ()
     if (image$getDimensionality() != 3)
         report(OL$Error, "Only 3D images can be used at present")
     
-    spatialUnit <- image$getVoxelUnit()[image$getVoxelUnit() %~% "m$"]
-    if (length(spatialUnit) == 0)
+    spatialUnit <- image$getVoxelUnit()["spatial"]
+    if (is.na(spatialUnit))
+    {
         volumeUnit <- ""
+        millilitreMultiplier <- NA
+    }
     else
+    {
         volumeUnit <- paste(spatialUnit, "^3", sep="")
+        millilitreMultiplier <- switch(spatialUnit, m=1e6, mm=1e-3, um=1e-12)
+    }
     
     data <- as.vector(image$getData())
     if (!is.null(mask))
@@ -52,8 +58,13 @@ runExperiment <- function ()
     }
     else
     {
+        volume <- abs(length(data) * prod(image$getVoxelDimensions()))
+        volumeString <- paste(format(round(volume,2), big.mark=","), volumeUnit)
+        if (!is.na(millilitreMultiplier))
+            volumeString <- paste(volumeString, " (", format(round(volume*millilitreMultiplier,2), big.mark=","), " ml)", sep="")
+        
         labels <- c("Number of voxels", "Volume", "Intensity range", "5% trimmed range", "Mean", "5% trimmed mean", "Median", "Standard deviation")
-        values <- c(format(length(data),big.mark=","), paste(format(round(abs(length(data)*prod(image$getVoxelDimensions())),2),big.mark=","),volumeUnit), implode(signif(range(data),4),sep=" to "), implode(signif(quantile(data,c(0.05,0.95)),4),sep=" to "), signif(mean(data),4), signif(mean(data,trim=0.05),4), signif(median(data),4), signif(sd(data),4))
+        values <- c(format(length(data),big.mark=","), volumeString, implode(signif(range(data),4),sep=" to "), implode(signif(quantile(data,c(0.05,0.95)),4),sep=" to "), signif(mean(data),4), signif(mean(data,trim=0.05),4), signif(median(data),4), signif(sd(data),4))
     }
     
     if (getOutputLevel() > OL$Info)
