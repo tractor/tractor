@@ -22,11 +22,14 @@ runExperiment <- function ()
     tractName <- getConfigVariable("TractName", "tract")
     createVolumes <- getConfigVariable("CreateVolumes", TRUE)
     createImages <- getConfigVariable("CreateImages", FALSE)
+    storeStreamlines <- getConfigVariable("StoreStreamlines", FALSE)
     vizThreshold <- getConfigVariable("VisualisationThreshold", 0.01)
     showSeed <- getConfigVariable("ShowSeedPoint", TRUE)
     
     if (!createVolumes && !createImages)
         report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
+    if (storeStreamlines && tracker == "fsl")
+        report(OL$Error, "Streamlines may only be stored when using the internal tracker")
     
     if (is.null(seedMaskFile))
     {
@@ -81,11 +84,11 @@ runExperiment <- function ()
     else
     {
         require(tractor.native)
-        result <- trackWithSession(session, seedMask, requireImage=is.null(waypointMasks), requireStreamlines=!is.null(waypointMasks), nSamples=nSamples)
+        result <- trackWithSession(session, seedMask, requireImage=is.null(waypointMasks), requireStreamlines=(storeStreamlines || !is.null(waypointMasks)), nSamples=nSamples)
         if (!is.null(waypointMasks))
         {
-            streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks, exclusion)
-            if (is.null(streamlines))
+            result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks, exclusion)
+            if (is.null(result$streamlines))
             {
                 metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("mask","diffusion"))
                 result$image <- newMriImageWithData(array(0,dim=metadata$getDimensions()), metadata)
@@ -93,10 +96,12 @@ runExperiment <- function ()
             }
             else
             {
-                result$image <- newMriImageAsVisitationMap(streamlines)
-                result$nSamples <- streamlines$nStreamlines()
+                result$image <- newMriImageAsVisitationMap(result$streamlines)
+                result$nSamples <- result$streamlines$nStreamlines()
             }
         }
+        if (storeStreamlines)
+            result$streamlines$serialise(paste(tractName,"streamlines",sep="_"))
     }
     
     report(OL$Info, "Creating tract images")

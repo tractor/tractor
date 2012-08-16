@@ -32,12 +32,15 @@ runExperiment <- function ()
     
     createVolumes <- getConfigVariable("CreateVolumes", TRUE)
     createImages <- getConfigVariable("CreateImages", FALSE)
+    storeStreamlines <- getConfigVariable("StoreStreamlines", FALSE)
     tractName <- getConfigVariable("TractName", "tract")
     vizThreshold <- getConfigVariable("VisualisationThreshold", 0.01)
     showSeed <- getConfigVariable("ShowSeedPoint", TRUE)
     
     if (!createVolumes && !createImages)
         report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
+    if (storeStreamlines && tracker == "fsl")
+        report(OL$Error, "Streamlines may only be stored when using the internal tracker")
     
     seed <- getNativeSpacePointForSession(session, seed, pointType, isStandardSeed)
     
@@ -75,7 +78,9 @@ runExperiment <- function ()
     else
     {
         require("tractor.native")
-        result <- trackWithSession(session, seed, requireImage=TRUE, nSamples=nSamples)
+        result <- trackWithSession(session, seed, requireImage=TRUE, nSamples=nSamples, requireStreamlines=storeStreamlines)
+        if (storeStreamlines)
+            result$streamlines$serialise(paste(tractName,"streamlines",sep="_"))
     }
         
     report(OL$Info, "Creating tract images")
