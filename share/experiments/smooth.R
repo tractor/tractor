@@ -29,7 +29,7 @@ runExperiment <- function ()
     report(OL$Info, "Smoothing with kernel of sigma (", implode(round(width,2),","), ") voxels")
     
     newImage <- newMriImageWithSimpleFunction(image, gaussianSmooth, sigma=width)
-    fileName <- paste(basename(image$getSource()), "smoothed", sep="_")
+    fileName <- paste(Arguments[1], "smoothed", sep="_")
     writeMriImageToFile(newImage, fileName)
     
     invisible(NULL)

@@ -29,7 +29,7 @@ runExperiment <- function ()
     
     kernel <- shapeKernel(width, type=kernelShape, brush=TRUE)
     newImage <- newMriImageWithSimpleFunction(image, get(operation), kernel=kernel)
-    fileName <- paste(basename(image$getSource()), "morphed", sep="_")
+    fileName <- paste(Arguments[1], "morphed", sep="_")
     writeMriImageToFile(newImage, fileName)
     
     invisible(NULL)
