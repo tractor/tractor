@@ -1,6 +1,7 @@
-bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outputLevel = OL$Warning, configFiles = "/dev/null", configText = "", parallelisationFactor = 1)
+bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outputLevel = OL$Warning, configFiles = "/dev/null", configText = "", parallelisationFactor = 1, debug = FALSE)
 {
-    on.exit(quit(save="no"))
+    if (!debug)
+        on.exit(quit(save="no"))
     
     for (packageName in c("utils","grDevices","graphics","stats","methods","reportr","tractor.base"))
         library(packageName, character.only=TRUE)
@@ -43,6 +44,10 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
         
         if (!exists("runExperiment"))
             report(OL$Error, "The experiment script does not contain a \"runExperiment\" function")
+        
+        if (debug)
+            debug(runExperiment)
+        
         runExperiment()
     })
     
@@ -100,4 +105,24 @@ describeExperiment <- function (scriptFile, fill = FALSE)
         lapply(strsplit(outputLines," ",fixed=TRUE), cat, fill=fill)
     
     invisible(NULL)
+}
+
+debugExperiment <- function (exptName, args = "", configFiles = "/dev/null")
+{
+    exptFile <- ensureFileSuffix(exptName, "R")    
+    pathDirs <- c(".",
+                  file.path(Sys.getenv("HOME"), ".tractor"),
+                  splitAndConvertString(Sys.getenv("TRACTOR_PATH"), ":", fixed=TRUE),
+                  file.path(Sys.getenv("TRACTOR_HOME"), "share", "experiments"))
+    possibleLocations <- file.path(pathDirs, exptFile)
+    filesExist <- file.exists(possibleLocations)
+    
+    if (sum(filesExist) == 0)
+        report(OL$Error, "Experiment script \"", exptFile, "\" not found")
+    else
+    {
+        realLocations <- possibleLocations[filesExist]
+        report(OL$Info, "Debugging experiment script ", realLocations[1])
+        bootstrapExperiment(realLocations[1], ".", "/dev/null", OL$Debug, configFiles, args, debug=TRUE)
+    }
 }
