@@ -12,7 +12,7 @@
 Functions for reading, writing, locating, copying and removing MRI images stored in NIfTI, Analyze and MGH formats.
 }
 \usage{
-newMriImageFromFile(fileName, fileType = NULL, volumes = NULL)
+newMriImageFromFile(fileName, fileType = NULL, volumes = NULL, sparse = FALSE, mask = NULL)
 newMriImageMetadataFromFile(fileName, fileType = NULL)
 writeMriImageToFile(image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
 
@@ -24,9 +24,11 @@ symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE)
 }
 \arguments{
   \item{fileName, from, to}{File names, with or without appropriate extension.}
-  \item{image}{An MriImage object.}
+  \item{image}{An \code{\linkS4class{MriImage}} object.}
   \item{fileType}{A character vector of length one, giving the file type required or expected. If this option is missing, the file type used for writing images will be taken from the \code{tractorFileType} option. See Details.}
   \item{volumes}{An optional integer vector specifying a subset of volumes to read (generally to save memory). If given, only the requested volumes in the 4D file will be read.}
+  \item{sparse}{Logical value: should the image data be stored in a \code{\linkS4class{SparseArray}} object?}
+  \item{mask}{An optional \code{\linkS4class{MriImage}} object representing a mask, outside of which the image to be read should be considered to be zero. This can be used to save memory when only a small part of a large image is of interest. Ignored if \code{sparse} is not \code{TRUE}.}
   \item{datatype}{A storage data type. See \code{\link{getDataTypeByNiftiCode}}.}
   \item{overwrite}{Logical value: overwrite an existing image file? For \code{writeMriImageToFile}, an error will be raised if there is an existing file and this is set to FALSE.}
   \item{errorIfMissing}{Logical value: raise an error if no suitable files were found?}

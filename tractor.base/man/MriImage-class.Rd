@@ -72,9 +72,11 @@ showClass("MriImage")
   \describe{
     \item{\code{initialize(data, metadata, ...)}:}{Create a new object of this class.}
     \item{\code{summarise()}:}{Retrieve information about this object. This method is usually only called implicitly by the \code{"show"} method.}
+    \item{\code{apply(...)}:}{Apply a function to margins of the image, as with the \code{\link{apply}} function in the base package.}
     \item{\code{getData()}:}{Retrieve the array of voxel values.}
     \item{\code{getDataAtPoint(...)}:}{Retrieve the value of the voxel at the location specified by \code{c(...)}. Returns \code{NA} if the location is out of bounds.}
     \item{\code{getMetadata()}:}{Retrieve the embedded \code{\link{MriImageMetadata}} object.}
+    \item{\code{getNonzeroIndices(array=TRUE, positiveOnly=FALSE)}:}{Get the locations of nonzero voxels in the image.}
     \item{\code{getSparseness()}:}{Retrieve the proportion of image pixels or voxels which are nonzero.}
     \item{\code{isSparse()}:}{\code{TRUE} if the image data is stored as a \code{SparseArray} object; \code{FALSE} otherwise.}
   }

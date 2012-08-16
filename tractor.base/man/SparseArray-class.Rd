@@ -51,11 +51,15 @@ showClass("SparseArray")
 \section{Class-Based Methods}{
   \describe{
     \item{\code{initialize(...)}:}{Create a new object of this class.}
+    \item{\code{aperm(perm)}:}{Permute dimensions of the array.}
+    \item{\code{apply(margin, fun, ...)}:}{Apply a function to the margins of the array. This function should be used in preference to \code{\link{apply}} from the base package, since the latter will convert the \code{SparseArray} to a dense array first, with a potentially major memory cost.}
+    \item{\code{flip(dimsToFlip)}:}{Flip the image along the specified dimension(s).}
     \item{\code{getDimensions()}:}{Retrieve an integer vector giving the dimensions of the array.}
     \item{\code{getDimensionality()}:}{Retrieve an integer vector of length 1 giving the number of dimensions in the array.}
     \item{\code{getCoordinates()}:}{Retrieve the matrix of coordinates of nonzero entries, with each row corresponding to a nonzero entry.}
     \item{\code{getData()}:}{Retrieve the vector of nonzero data values.}
-    \item{\code{setCoordinatesAndData(coords, data)}:}{Update the coordinate matrix and data vector explicitly.}
+    \item{\code{setCoordinatesAndData(newCoords, newData)}:}{Update the coordinate matrix and data vector explicitly.}
+    \item{\code{setDimensions(newDims)}:}{Change the dimensions of the array.}
   }
 
 The following methods are inherited (from the corresponding class):
