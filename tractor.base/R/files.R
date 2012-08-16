@@ -360,15 +360,6 @@ writeImageData <- function (image, connection, type = NULL, size = NULL, endian 
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
     
-    if (!is.na(image$getStoredXformMatrix()[1,1]))
-    {
-        xform <- image$getStoredXformMatrix()
-        diagonal <- diag(xform)[1:3]
-        tolerance <- 1e-3 * max(abs(diagonal))
-        if (any(diagonal*c(-1,1,1) < 0) || !equivalent(xform[1:3,1:3],diag(diagonal),tolerance=tolerance))
-            flag(OL$Warning, "The image to be written out is not stored in the LAS convention - the result will be inconsistent with the source file")
-    }
-    
     datatype <- image$getDataType()
     data <- image$getData()
     
