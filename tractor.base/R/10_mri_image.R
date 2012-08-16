@@ -5,6 +5,8 @@ MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject
             report(OL$Error, "Tag list must be empty, or else contain \"keys\" and \"values\" components")
         if (is.null(voxunit))
             voxunit <- "unknown"
+        names(voxunit)[voxunit %~% "m$"] <- "spatial"
+        names(voxunit)[voxunit %~% "s$"] <- "temporal"
         
         object <- initFields(imagedims=as.integer(imagedims), voxdims=as.numeric(voxdims), voxunit=voxunit, source=source, datatype=as.list(datatype), origin=as.numeric(origin), storedXform=as.matrix(storedXform), tags=tags)
         
@@ -66,11 +68,11 @@ MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject
             datatypeString <- paste(datatypeString, " ", datatype$type, ", ", datatype$size*8, " bits/voxel", sep="")
         }
         
-        spatialUnit <- voxunit[voxunit %~% "m$"]
-        temporalUnit <- voxunit[voxunit %~% "s$"]
-        voxelDimString <- paste(implode(round(abs(voxdims[1:min(3,length(voxdims))]),5), sep=" x "), ifelse(length(spatialUnit)==1,paste(" ",spatialUnit,sep=""),""), sep="")
+        spatialUnit <- voxunit["spatial"]
+        temporalUnit <- voxunit["temporal"]
+        voxelDimString <- paste(implode(round(abs(voxdims[1:min(3,length(voxdims))]),5), sep=" x "), ifelse(!is.na(spatialUnit),paste(" ",spatialUnit,sep=""),""), sep="")
         if (length(voxdims) > 3)
-            voxelDimString <- paste(voxelDimString, " x ", round(abs(voxdims[4]),5), ifelse(length(spatialUnit)==1 && length(temporalUnit)==1,paste(" ", temporalUnit,sep=""),""), sep="")
+            voxelDimString <- paste(voxelDimString, " x ", round(abs(voxdims[4]),5), ifelse(!is.na(spatialUnit) && !is.na(temporalUnit),paste(" ", temporalUnit,sep=""),""), sep="")
         if (length(voxdims) > 4)
             voxelDimString <- paste(voxelDimString, " x ", implode(round(abs(voxdims[5:length(voxdims)]),5), sep=" x "), sep="")
         if (identical(voxunit,"unknown"))
