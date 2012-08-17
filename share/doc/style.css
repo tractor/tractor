@@ -135,6 +135,10 @@ img.graphic {
     margin-bottom: 15px;
 }
 
+img.inline {
+    vertical-align: middle;
+}
+
 .right {
     text-align: right;
 }
@@ -180,4 +184,32 @@ tr {
 td {
     padding: 0px;
     padding-right: 10px;
+}
+
+#download-box {
+    padding: 12px 16px 4px 16px;
+    background: url(box_bottom.gif) bottom left no-repeat;
+    font-size: 16px;
+/*    line-height: 16px;*/
+/*    margin-left: 20px;*/
+    margin-bottom: 20px;
+    margin-top: 2px;
+    width: 340px;
+}
+
+#download-box .first {
+    padding: 12px 16px 0px 16px;
+    background: url(box_top.gif) top left no-repeat;
+    margin-top: -12px;
+    margin-left: -16px;
+    margin-right: -16px;
+}
+
+#download-box img {
+    margin: 0px;
+    margin-left: 60px;
+}
+
+#version {
+    font-weight: bold;
 }
