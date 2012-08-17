@@ -1,6 +1,6 @@
 Package: tractor.utils
-Version: 2.1.0
-Date: 2012-02-13
+Version: 2.2.0
+Date: 2012-08-16
 Title: Miscellaneous functions used by TractoR scripts and packages
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
@@ -10,4 +10,4 @@ Suggests: parallel, multicore
 Description: The tractor.utils package primarily provides functions that facilitate the interaction between the TractoR shell script and R, but some other utility functions are also included.
 LazyLoad: yes
 License: GPL-2
-URL: https://github.com/jonclayden/tractor/
+URL: http://www.tractor-mri.org.uk

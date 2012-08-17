@@ -1,6 +1,6 @@
 Package: tractor.native
-Version: 2.1.2
-Date: 2012-05-03
+Version: 2.2.0
+Date: 2012-07-19
 Title: Compiled code for the TractoR package
 Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
@@ -9,4 +9,4 @@ Imports: reportr, tractor.base, tractor.session, tractor.nt
 Description: The tractor.native package provides interfaces to native functions.
 LazyLoad: yes
 License: GPL-2
-URL: https://github.com/jonclayden/tractor/
+URL: http://www.tractor-mri.org.uk
