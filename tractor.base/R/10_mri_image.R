@@ -5,6 +5,8 @@ MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject
             report(OL$Error, "Tag list must be empty, or else contain \"keys\" and \"values\" components")
         if (is.null(voxunit))
             voxunit <- "unknown"
+        names(voxunit)[voxunit %~% "m$"] <- "spatial"
+        names(voxunit)[voxunit %~% "s$"] <- "temporal"
         
         object <- initFields(imagedims=as.integer(imagedims), voxdims=as.numeric(voxdims), voxunit=voxunit, source=source, datatype=as.list(datatype), origin=as.numeric(origin), storedXform=as.matrix(storedXform), tags=tags)
         
@@ -66,14 +68,14 @@ MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject
             datatypeString <- paste(datatypeString, " ", datatype$type, ", ", datatype$size*8, " bits/voxel", sep="")
         }
         
-        spatialUnit <- voxunit[voxunit %~% "m$"]
-        temporalUnit <- voxunit[voxunit %~% "s$"]
-        voxelDimString <- paste(implode(round(abs(voxdims[1:min(3,length(voxdims))]),5), sep=" x "), ifelse(length(spatialUnit)==1,paste(" ",spatialUnit,sep=""),""), sep="")
+        spatialUnit <- voxunit["spatial"]
+        temporalUnit <- voxunit["temporal"]
+        voxelDimString <- paste(implode(round(abs(voxdims[1:min(3,length(voxdims))]),5), sep=" x "), ifelse(!is.na(spatialUnit),paste(" ",spatialUnit,sep=""),""), sep="")
         if (length(voxdims) > 3)
-            voxelDimString <- paste(voxelDimString, " x ", round(abs(voxdims[4]),5), ifelse(length(spatialUnit)==1 && length(temporalUnit)==1,paste(" ", temporalUnit,sep=""),""), sep="")
+            voxelDimString <- paste(voxelDimString, " x ", round(abs(voxdims[4]),5), ifelse(!is.na(spatialUnit) && !is.na(temporalUnit),paste(" ", temporalUnit,sep=""),""), sep="")
         if (length(voxdims) > 4)
             voxelDimString <- paste(voxelDimString, " x ", implode(round(abs(voxdims[5:length(voxdims)]),5), sep=" x "), sep="")
-        if (identical(voxunit,"unknown"))
+        if (all(voxunit == "unknown"))
             voxelDimString <- paste(voxelDimString, "(units unknown)", sep=" ")
         
         labels <- c("Image source", "Image dimensions", "Coordinate origin", "Voxel dimensions", "Data type", "Additional tags")
@@ -94,6 +96,14 @@ MriImage <- setRefClass("MriImage", contains="MriImageMetadata", fields=list(dat
         return (initFields(data=data))
     },
     
+    apply = function (...)
+    {
+        if (.self$isSparse())
+            return (.self$data$apply(...))
+        else
+            return (base::apply(.self$data, ...))
+    },
+    
     getData = function () { return (data) },
     
     getDataAtPoint = function (...)
@@ -110,6 +120,27 @@ MriImage <- setRefClass("MriImage", contains="MriImageMetadata", fields=list(dat
     },
     
     getMetadata = function () { return (export("MriImageMetadata")) },
+    
+    getNonzeroIndices = function (array = TRUE, positiveOnly = FALSE)
+    {
+        if (.self$isSparse())
+        {
+            locs <- data$getCoordinates()
+            if (positiveOnly)
+                locs <- locs[data$getData() > 0,]
+            if (array)
+                return (locs)
+            else
+                return (matrixToVectorLocs(locs, data$getDimensions()))
+        }
+        else
+        {
+            if (positiveOnly)
+                return (which(data > 0, arr.ind=array))
+            else
+                return (which(data != 0, arr.ind=array))
+        }
+    },
     
     getSparseness = function ()
     {
@@ -225,18 +256,6 @@ setAs("nifti", "MriImage", function (from) {
     return (image)
 })
 
-"[.MriImage" <- function (x, ..., drop = TRUE)
-{
-    return (x$getData()[...,drop=drop])
-}
-
-"[<-.MriImage" <- function (x, ..., value)
-{
-    x$data[...] <- value
-    x$setSource("internal")
-    return (x)
-}
-
 as.array.MriImage <- function (x, ...)
 {
     as(x, "array")
@@ -271,18 +290,58 @@ Summary.MriImage <- function (x, ..., na.rm = FALSE)
     return (result)
 }
 
-setMethod("[", "MriImage", function (x, i, j, ..., drop = TRUE) {
-    if (missing(j))
-        return (x$getData()[i,...,drop=drop])
+setMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, j, ..., drop = TRUE) {
+    nArgs <- nargs() - as.integer(!missing(drop))
+    if (nArgs < 2)
+        return (x$getData())
     else
-        return (x$getData()[i,j,...,drop=drop])
+        return (x$getData()[,,...,drop=drop])
 })
 
-setMethod("[<-", "MriImage", function (x, i, j, ..., value) {
-    if (missing(j))
-        x$data[i,...] <- value
+setMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) {
+    nArgs <- nargs() - as.integer(!missing(drop))
+    if (nArgs < 3)
+        return (x$getData()[i,drop=drop])
     else
-        x$data[i,j,...] <- value
+        return (x$getData()[i,,...,drop=drop])
+})
+
+setMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) {
+    return (x$getData()[,j,...,drop=drop])
+})
+
+setMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) {
+    return (x$getData()[i,j,...,drop=drop])
+})
+
+setReplaceMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, j, ..., value) {
+    nArgs <- nargs() - 1
+    if (nArgs < 2)
+        x$data[] <- value
+    else
+        x$data[,,...] <- value
+    x$setSource("internal")
+    return (x)
+})
+
+setReplaceMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, i, j, ..., value) {
+    nArgs <- nargs() - 1
+    if (nArgs < 3)
+        x$data[i] <- value
+    else
+        x$data[i,,...] <- value
+    x$setSource("internal")
+    return (x)
+})
+
+setReplaceMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, ..., value) {
+    x$data[,j,...] <- value
+    x$setSource("internal")
+    return (x)
+})
+
+setReplaceMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., value) {
+    x$data[i,j,...] <- value
     x$setSource("internal")
     return (x)
 })
@@ -368,6 +427,8 @@ newMriImageWithSimpleFunction <- function (image, fun, ..., newDataType = NULL)
     
     fun <- match.fun(fun)
     newData <- fun(image$getData(), ...)
+    if (is.null(dim(newData)))
+        dim(newData) <- image$getDimensions()
     newDataType <- (if (is.null(newDataType)) image$getDataType() else newDataType)
     metadata <- newMriImageMetadataFromTemplate(image$getMetadata(), datatype=newDataType)
     

@@ -15,27 +15,46 @@ getFslVersion <- function ()
         return (sum(version * c(10000, 100, 1)))
 }
 
-showImagesInFslview <- function (..., writeToAnalyzeFirst = FALSE, wait = FALSE, lookupTable = NULL, opacity = NULL)
+showImagesInFslview <- function (..., wait = FALSE, lookupTable = NULL, opacity = NULL)
 {
-    imageFileNames <- lapply(list(...), function (i) {
-        if (!is.character(i) && !is(i,"MriImage"))
-            report(OL$Error, "Images must be specified as MriImage objects or file names")
-        if (writeToAnalyzeFirst)
+    tempDir <- threadSafeTempFile()
+    if (!file.exists(tempDir))
+        dir.create(tempDir)
+    
+    imageList <- list(...)
+    imageFileNames <- lapply(seq_along(imageList), function (i) {
+        if (is.character(imageList[[i]]))
         {
-            # fslview is fussy about data types, so write the image into Analyze format to avoid a crash
-            imageLoc <- threadSafeTempFile()
-            if (is.character(i))
-                i <- newMriImageFromFile(i)
-            writeMriImageToFile(i, imageLoc, fileType="ANALYZE_GZ")
-            return (imageLoc)
+            imageInfo <- identifyImageFileNames(imageList[[i]], errorIfMissing=FALSE)
+            if (is.null(imageInfo))
+            {
+                report(OL$Warning, "Image file \"", imageList[[i]], "\" does not exist")
+                return(NULL)
+            }
+            
+            metadata <- newMriImageMetadataFromFile(imageList[[i]])
+            typeCode <- getNiftiCodeForDataType(metadata$getDataType())
+            
+            # fslview is fussy about data types, so write the image into Analyze format to avoid a crash if necessary
+            if (imageInfo$format == "Mgh" || is.null(typeCode) || typeCode > 64)
+            {
+                dir.create(file.path(tempDir, i))
+                imageLoc <- file.path(tempDir, i, basename(metadata$getSource()))
+                writeMriImageToFile(newMriImageFromFile(imageList[[i]]), imageLoc, fileType="ANALYZE_GZ")
+            }
+            else
+                imageLoc <- imageList[[i]]
+        }
+        else if (is(imageList[[i]], "MriImage"))
+        {
+            dir.create(file.path(tempDir, i))
+            imageLoc <- file.path(tempDir, i, basename(imageList[[i]]$getSource()))
+            writeMriImageToFile(imageList[[i]], imageLoc, fileType="ANALYZE_GZ")
         }
         else
-        {
-            if (is.character(i))
-                return (i)
-            else
-                return (i$getSource())
-        }
+            report(OL$Error, "Images must be specified as MriImage objects or file names")
+        
+        return (imageLoc)
     })
     
     if (!is.null(lookupTable))
@@ -51,9 +70,9 @@ showImagesInFslview <- function (..., writeToAnalyzeFirst = FALSE, wait = FALSE,
     
     execute("fslview", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait, silent=TRUE)
     
-    # If we're not waiting for fslview we can't delete the image yet
-    if (writeToAnalyzeFirst && wait)
-        lapply(imageFileNames, removeImageFilesWithName)
+    # If we're not waiting for fslview we can't delete the images yet
+    if (wait)
+        unlink(tempDir, recursive=TRUE)
     
     invisible(unlist(imageFileNames))
 }

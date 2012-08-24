@@ -13,6 +13,18 @@
   
   <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
   <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-563735-7']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
 </head>
 
 <body>
@@ -23,17 +35,23 @@
   <tr>
   <td class="tab"><a href="home.html">Home</a></td>
   <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="home.html#news">News</a></td>
   <td class="tab"><a href="downloads.html">Downloads</a></td>
   <td class="tab"><a href="changelog.html">Changelog</a></td>
   <td class="tab"><a href="references.html">References</a></td>
+  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
   </tr>
 </table>
 
 
 <h1>Downloads</h1>
 
-<p>Released versions of TractoR are available from the project&#39;s <a href="https://github.com/jonclayden/tractor/tags">GitHub pages</a>. Full source code is included in the download. TractoR is developed according to good software engineering practice, and release numbering follows a clear and consistent pattern:</p>
+<div id="download-box">
+  <p class="first">The latest version of TractoR is <span id="version">v2.1.2</span>.</p>
+  <img src="download.png" alt="Download icon" />
+  <p>Download <a href="http://www.tractor-mri.org.uk/tractor.tar.gz">tractor.tar.gz</a> or <a href="http://www.tractor-mri.org.uk/tractor.zip">tractor.zip</a>.</p>
+</div>
+
+<p>Full source code is included in the download. TractoR is developed according to good software engineering practice, and release numbering follows a clear and consistent pattern:</p>
 
 <ul>
 <li>Point releases, e.g. from version 1.0.0 to 1.0.1, are for bug fixes and minor tweaks to existing functionality. They should be completely backwards-compatible, and are released as needed.</li>
@@ -41,7 +59,7 @@
 <li>Major releases, e.g. from version 1.1.0 to 2.0.0, may include changes which are incompatible with older versions, including different default behaviour, or substantial modifications to the architecture of the package. These are relatively rare: the time between the release of versions 1.0.0 and 2.0.0 was two-and-a-half years.</li>
 </ul>
 
-<p>The very latest version of the code is also available <a href="https://github.com/jonclayden/tractor">through GitHub</a>.</p>
+<p>Earlier released versions of TractoR are available from the project&#39;s <a href="https://github.com/jonclayden/tractor/tags">GitHub pages</a>. The very latest version of the code is also available <a href="https://github.com/jonclayden/tractor">through GitHub</a>.</p>
 
 
 </div>

@@ -1,3 +1,6 @@
+SHELL=/bin/bash
+export SHELL
+
 BASH=/bin/bash
 ECHO=/bin/echo
 ECHO_N=/bin/echo -n
@@ -32,7 +35,7 @@ create-tests:
 %.out: %.sh
 	@$(ECHO_N) "`grep '#@desc' $< | sed 's/#@desc //'`... "
 	@$(BASH) $< >$@ 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
-	@$(DIFF) $*.save $@ && $(ECHO) "OK" || ( rm -f $@; exit 1 )
+	@$(DIFF) $*.save $@ >tmp/tmp.diff 2>&1 && ( $(ECHO) "OK"; rm -f tmp/tmp.diff ) || ( $(ECHO) "FAIL"; cat tmp/tmp.diff; rm -f tmp/tmp.diff; rm -f $@; exit 1 )
 
 %.save: %.sh
 	@$(ECHO_N) "Updating test output for $@... "

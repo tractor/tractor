@@ -13,6 +13,18 @@
   
   <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
   <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-563735-7']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
 </head>
 
 <body>
@@ -23,10 +35,10 @@
   <tr>
   <td class="tab"><a href="home.html">Home</a></td>
   <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="home.html#news">News</a></td>
   <td class="tab"><a href="downloads.html">Downloads</a></td>
   <td class="tab"><a href="changelog.html">Changelog</a></td>
   <td class="tab"><a href="references.html">References</a></td>
+  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
   </tr>
 </table>
 
@@ -46,68 +58,30 @@
 <li>Create graphics to visualise image slices or maximum-intensity projections.</li>
 </ul>
 
-<p>If you use TractoR in your work, please cite <a href="#references">Ref. 1</a> below. For details of research papers underlying the methods implemented in the package, please see the <a href="references.html">references page</a>.</p>
+<p>If you use TractoR in your work, please cite <a href="#reference">the reference below</a>. For details of research papers underlying the methods implemented in the package, please see the <a href="references.html">references page</a>. If you would like to hear about new releases and other TractoR-related news, we would suggest joining the <a href="http://groups.google.com/group/tractor-users">users&#39; mailing list</a>. General queries or problems may also be raised there, while bugs and other specific issues may be reported using the <a href="https://github.com/jonclayden/tractor/issues">GitHub issue tracker</a>. Please describe any problem as fully as possible.</p>
+
+<p>TractoR is developed primarily by <a href="http://www.homepages.ucl.ac.uk/%7Esejjjd2/">Jonathan Clayden</a> and colleagues at <a href="http://www.ucl.ac.uk">University College London</a>, with contributions and collaborations from other groups.</p>
 
 <p><strong>Please note that TractoR is research software and has not been approved for clinical use. The software is provided in the hope that it will be useful, but comes with no warranty whatsoever.</strong></p>
-
-<p>General queries or problems may be sent to the <a href="http://groups.google.com/group/tractor-users">users&#39; mailing list</a>, while bugs and other specific issues may be reported using the Issues tab above. Please describe any problem as fully as possible.</p>
 
 <p><img src="principal-directions.png" alt="Diffusion principal directions"></p>
 
 <h2 id="site-contents">Site contents</h2>
 
 <ul>
-<li>The <a href="getting-started.html">getting started</a> page is the place to find out about downloading and installing TractoR. Details of the major user-visible changes can be found in the <a href="changelog.html">changelog</a>, and news on releases and TractoR-related publications appears below.</li>
+<li>The <a href="getting-started.html">getting started</a> page is the place to find out about downloading and installing TractoR. Details of the major user-visible changes in each release can be found in the <a href="changelog.html">changelog</a>.</li>
 <li>Users of TractoR 1.x may find the information on <a href="upgrading-to-TractoR-2.html">upgrading to TractoR 2</a> helpful, and an <a href="paper-addendum.html">addendum</a> to the <a href="http://www.jstatsoft.org/v44/i08/">TractoR paper</a> for version 2 is also available.</li>
 <li>There is specific information on <a href="TractoR-for-R-users.html">TractoR for R users</a>.</li>
 <li>Useful information about TractoR-specific conventions can be found on the aptly-named <a href="conventions.html">conventions</a> page.</li>
 <li>The <a href="diffusion-processing.html">diffusion processing</a> page covers the processing of diffusion-weighted MR images using TractoR.</li>
 <li>TractoR provides reference implementations of various <a href="http://www.homepages.ucl.ac.uk/%7Esejjjd2/research/#neighbourhood-tractography">neighbourhood tractography</a> methods, both &ldquo;heuristic&rdquo; and &ldquo;probabilistic&rdquo;, for segmenting specific white matter structures. An <a href="HNT-tutorial.html">HNT tutorial</a> and a <a href="PNT-tutorial.html">PNT tutorial</a> using TractoR are available, as well as information on the <a href="reference-tracts.html">reference tracts</a> used by both methods.</li>
+<li>There is a specific page about the <a href="TractoR-and-DICOM.html">facilities in TractoR for handling DICOM files</a> and, importantly, their limitations.</li>
 <li>Finally, there is a list of <a href="references.html">references</a> for the methods available through TractoR.</li>
 </ul>
 
-<h2 id="news">News</h2>
+<h2 id="reference">Reference</h2>
 
-<p><strong>(2011-11-02)</strong> A paper on the TractoR package, outlining its interfaces and the methods implemented in it, has just been published in the <a href="http://www.jstatsoft.org/v44/i08/">Journal of Statistical Software</a>. This will be key reference for the package in future.</p>
-
-<p><strong>(2011-08-05)</strong> With the release of TractoR 2.0, source code management is switching to <a href="https://github.com">GitHub</a>. Please feel free to check the <a href="https://github.com/jonclayden/tractor">TractoR page on GitHub</a>, and to fork the project if you want to play around with it.</p>
-
-<p><strong>(2011-08-05)</strong> TractoR version 2.0.1 is now available. (Version 2.0.0 was not publicly released due to a minor flaw which was corrected for 2.0.1.) This is a major new release which generalises the package and lays the foundations for future development. It also offers several new features of its own, including the ability to read and write MGH format image files. TractoR 2.0 requires R 2.12.1 or later, and is not perfectly backwards compatible with TractoR 1.x. Full details are in the <a href="changelog.html">changelog</a> as usual.</p>
-
-<p><strong>(2011-05-25)</strong> TractoR version 1.8.0 has been released today. This release adds more flexible read support for NIfTI files, including the proposed <a href="http://www.nitrc.org/forum/forum.php?thread_id=2148&amp;forum_id=1941">NIfTI-2 format</a>. Details are in the <a href="changelog.html">changelog</a>. This is planned to be the last major release in the 1.x series.</p>
-
-<p><strong>(2011-01-31)</strong> A paper outlining the various tools and packages available in R for neuroimaging analysis, including TractoR, is currently in press at <a href="http://dx.doi.org/10.1016/j.neuroimage.2011.01.013">NeuroImage</a>.</p>
-
-<p><strong>(2010-12-20)</strong> TractoR version 1.7.0 has just been released. The main addition in this release is a built-in tractography algorithm, which can improve the performance of tracking-based tasks significantly. Full details are in the <a href="changelog.html">changelog</a>, as usual.</p>
-
-<p><strong>(2010-10-22)</strong> Version 1.6.0 of TractoR is available today. This version provides a number of new scripts, options and capabilities; and reduces TractoR&#39;s direct dependence on FSL to some extent. It includes four MNI space standard brain images, which are used by various parts of the code. These have been kindly provided by the International Consortium for Brain Mapping (ICBM) &ndash; please see Ref. (2) below. The <a href="changelog.html">changelog</a> has more details.</p>
-
-<p><strong>(2010-06-29)</strong> Tractor version 1.5.0 has been released today. New features include support for parallelisation on multicore systems and (to a lesser extent) grids running the Sun Grid Engine; as well as visualisation of diffusion principal directions, as shown above. The <a href="changelog.html">changelog</a> has all the details.</p>
-
-<p><strong>(2010-03-11)</strong> TractoR version 1.4.0. is now available. New features include automatic B-matrix/gradient vector rotation to compensate for subject motion, gradient scheme caching, group mapping and new visualisations. Full details are in the <a href="changelog.html">changelog</a>.</p>
-
-<p><strong>(2009-11-10)</strong> Version 1.3.0 of TractoR is now available. This version adds a new method for rejecting false positive streamlines using a <a href="PNT-tutorial.html">PNT model</a>, which substantially improves tract segmentation; and includes a set of tests to ensure that TractoR is functioning properly on your system. There are also various minor enhancements, as usual, and these are documented in the <a href="changelog.html">changelog</a>.</p>
-
-<p><strong>(2009-08-21)</strong> TractoR version 1.2.0 has just been released. It includes seven new reference tracts for both HNT and PNT, as well as DICOM performance improvements and various other minor enhancements. As ever, details are in the <a href="changelog.html">changelog</a>.</p>
-
-<p><strong>(2009-07-03)</strong> Documentation aimed at existing R users, which describes the R packages provided by TractoR, as well as how to write new TractoR-compatible R scripts for use with the command line <code>tractor</code> shell script, is <a href="TractoR-for-R-users.html">now available</a>.</p>
-
-<p><strong>(2009-06-15)</strong> TractoR version 1.1.0 has been released. This version contains a number of improvements to various aspects of the software, including support for a more general variant of the standard PNT tract model. Full details are in the <a href="changelog.html">changelog</a>.</p>
-
-<p><strong>(2009-05-29)</strong> Updates to the documentation, particularly the HNT and PNT tutorials, have been made to reflect the current state of the software. Additional information about <a href="reference-tracts.html">reference tracts</a> has also been added.</p>
-
-<p><strong>(2009-05-14)</strong> The &ldquo;tractor.base&rdquo; R package is now available on the Comprehensive R Archive Network (CRAN). It can be found <a href="http://cran.r-project.org/web/packages/tractor.base/index.html">here</a>, or through your favourite CRAN mirror (once updated). This allows R developers to use the TractoR functions for reading, writing, manipulating and visualising magnetic resonance images in their own code. A short introduction to TractoR for R users will be made available here soon.</p>
-
-<p><strong>(2009-02-18)</strong> The <a href="http://groups.google.com/group/tractor-users">tractor-users mailing list</a> can now be joined by anyone. This list/group is for any discussion relating to the software. Announcements of new versions of TractoR are also made to the list.</p>
-
-<p><strong>(2009-02-13)</strong> TractoR version 1.0.0 has been released. New features in this version include &ldquo;unsupervised&rdquo; neighbourhood tractography (NT), a set of standard reference tracts for both heuristic and probabilistic NT, and more flexible conversion of DICOM-format files. As usual, the <a href="changelog.html">changelog</a> has full details on the changes since the last beta version. Although this is no longer a beta version, please remember that TractoR is research software and comes with no warranty. Dropping the &ldquo;beta&rdquo; label reflects mainly that the structure of the package has stabilised somewhat.</p>
-
-<h2 id="references">References</h2>
-
-<ol>
-<li>J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin &amp; C.A. Clark (2011). TractoR: Magnetic resonance imaging and tractography with R. <em>Journal of Statistical Software</em> <strong>44</strong>(8):1-18.</li>
-<li>A. Evans, M. Kamber, D.L. Collins &amp; D. MacDonald (1994). <em>An MRI-based probabilistic atlas of neuroanatomy</em>. In S. Shorvon, D. Fish, F. Andermann, G.M. Bydder &amp; H. Stefan (eds), <em>Magnetic resonance scanning and epilepsy</em>, <strong>NATO ASI Series A, Life Sciences</strong>, vol. 264, pp. 263-274. Plenum Press.</li>
-</ol>
+<p>J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin &amp; C.A. Clark (2011). <a href="http://www.jstatsoft.org/v44/i08/">TractoR: Magnetic resonance imaging and tractography with R</a>. <em>Journal of Statistical Software</em> <strong>44</strong>(8):1-18.</p>
 
 <p><a href="http://www.nitrc.org/projects/tractor"><img src="nitrc.png" alt="NITRC logo"></a></p>
 

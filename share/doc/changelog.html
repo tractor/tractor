@@ -13,6 +13,18 @@
   
   <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
   <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-563735-7']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
 </head>
 
 <body>
@@ -23,10 +35,10 @@
   <tr>
   <td class="tab"><a href="home.html">Home</a></td>
   <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="home.html#news">News</a></td>
   <td class="tab"><a href="downloads.html">Downloads</a></td>
   <td class="tab"><a href="changelog.html">Changelog</a></td>
   <td class="tab"><a href="references.html">References</a></td>
+  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
   </tr>
 </table>
 
@@ -34,6 +46,45 @@
 <h1>Changelog</h1>
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
+
+<h2 id="220-2012-08-17">2.2.0 (2012-08-17)</h2>
+
+<ul>
+<li>TractoR now has the ability to perform kernel-based image processing operations. The new <code>smooth</code> and <code>morph</code> scripts can be used to smooth an image, or to apply a mathematical morphology operation such as erosion or dilation.</li>
+<li>The masking stage of the <code>dpreproc</code> script (with <code>MaskingMethod:kmeans</code> only) now uses a morphological closing operation to remove small &ldquo;holes&rdquo; in the segmentation.</li>
+<li>The new <code>ptrack</code> script can be used to perform connectivity &ldquo;profiling&rdquo;, generating a table of streamline counts connecting each voxel in a seed region to each of a set of target regions.</li>
+<li>The <code>mtrack</code> script now supports the use of so-called &ldquo;exclusion masks&rdquo; (using the internal tracker only). Streamlines passing through any such exclusion region will be removed from the result.</li>
+<li>The <code>track</code> and <code>mtrack</code> scripts now allow the set of streamlines that they generate to be stored in a binary file. This may be converted to the format used by <a href="http://www.trackvis.org">TrackVis</a> for visualisation using the new <code>streamlines2trk</code> script.</li>
+<li>The new <code>imagestats</code> script can be used to obtain a series of statistics about part or all of an image, such as volume, intensity range and mean intensity.</li>
+<li>Experimental support for auto-updating a TractoR installation has been added, via the new <code>update</code> script. This attempts to check the project web site for new versions of the package. See <code>tractor -o update</code> for usage.</li>
+<li>The newly-added <code>upgrade</code> script can be used to convert objects stored in &ldquo;.Rdata&rdquo; files from TractoR 1.x formats to their TractoR 2.x equivalents.</li>
+<li>The code underlying the <code>dicomread</code> script has been substantially reworked to improve speed (in some cases substantially) and reliability in determining the orientation of the data. The script also gains an option to inhibit the untiling of DICOM files which appear to use the Siemens &ldquo;mosaic&rdquo; format.</li>
+<li>The <code>view</code> script no longer requires the user to press Enter to quit, and does not spend time converting images to Analyze format when not necessary.</li>
+<li>Substantial additions to the package&#39;s support for sparse images have been made, and the <code>values</code> script now takes advantage of these.</li>
+<li>The <code>TRACTOR_HOME</code> environment variable is now guessed if it is not set, although routine reliance on this mechanism is not advised.</li>
+<li>Support for scripts in <code>/etc/tractor</code> has been removed. These have been deprecated since TractoR 1.0.0.</li>
+<li>Interrelationships between the various TractoR packages have now been more explicitly declared. This may avoid occasional problems when using them within R.</li>
+<li>Marginally invalid quaternion parameters in NIfTI headers are now handled more gracefully.</li>
+</ul>
+
+<h2 id="212-2012-05-03">2.1.2 (2012-05-03)</h2>
+
+<ul>
+<li>The <code>dpreproc</code> script now warns if the <em>diffusion subdirectory</em> already exists within the session, rather than just if the session&#39;s root directory exists.</li>
+<li>Spurious errors, about images not having been created yet, should no longer occur when TractoR updates the structure of a session directory created with version 1.x.</li>
+<li>An issue with installing the &ldquo;tractor.native&rdquo; package on some Linux systems has been addressed. The package&#39;s &ldquo;configure&rdquo; process has been somewhat simplified at the same time. (Reported by Mark Bastin.)</li>
+</ul>
+
+<h2 id="211-2012-03-23">2.1.1 (2012-03-23)</h2>
+
+<ul>
+<li>A significant memory leak has been corrected in the new tracking code, which resulted in scripts which run lots of tractography (such as <code>pnt-data</code>) using very large amounts of memory.</li>
+<li>The <code>mtrack</code> script allows multiple waypoint masks to be specified from the command line, comma separated, in line with the syntax used in various other scripts. The <code>ShowSeedPoint</code> option is ignored when no seed mask is specified (i.e. when the seed region is the whole brain).</li>
+<li>The <code>mtrack</code> script with <code>Tracker:tractor</code> no longer produces an error if no streamlines pass through all of the waypoints.</li>
+<li>Occasional spurious errors, saying that &ldquo;all seed points must be the same&rdquo;, should no longer be generated by the <code>pnt-data</code> script. (Reported by Clare Gibbard.)</li>
+<li>The <code>dicomread</code> script now correctly uses the TR as the fourth voxel dimension when individual files represent slices, rather than volumes.</li>
+<li>The HTML documentation has been updated to match the latest version of the TractoR web site. (This will be standard practice in future releases.)</li>
+</ul>
 
 <h2 id="210-2012-03-09">2.1.0 (2012-03-09)</h2>
 

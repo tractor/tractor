@@ -56,7 +56,7 @@ Specify a subarchitecture (e.g. 'x86_64'), which is passed to R. This option can
 Specify the working directory for the experiment, which will be created if necessary (default is the current directory).
 .TP
 .B \-c \fIconfig_file\fB
-Specify a configuration file in YAML format.
+Specify a configuration file in YAML format. Note the path to the file is relative to the current directory, rather than the working directory specified with '\-w' (if any). This flag may be specified multiple times.
 
 .SH SETTING DEFAULT OPTIONS
 It is possible to set up user-specific defaults for each of the options that the program supports. To do this, a user can create a file at ~/\.tractor/config which sets any or all of the following variables, using \fBbash\fR(1) syntax. (This file is ignored if \fBtractor\fR is run with the '\-i' flag.) Note that 'off' and 'on' are represented by the numbers 0 and 1, respectively.

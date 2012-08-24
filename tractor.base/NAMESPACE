@@ -2,8 +2,6 @@ import(reportr)
 
 exportClasses(SerialisableObject, MriImageMetadata, MriImage, DicomMetadata, SparseArray, SparseOrDenseArray)
 
-S3method("[", MriImage)
-S3method("[<-", MriImage)
 S3method(Math, MriImage)
 S3method(Ops, MriImage)
 S3method(Summary, MriImage)
@@ -42,6 +40,7 @@ export(createNeighbourhoodInfo)
 export(newSparseArrayWithData)
 
 export(getDataTypeByNiftiCode)
+export(getNiftiCodeForDataType)
 export(newMriImageFromDicom)
 export(newMriImageFromDicomDirectory)
 export(newMriImageFromDicomMetadata)

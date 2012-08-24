@@ -42,7 +42,7 @@ writeMriImageToCamino <- function (image, fileName, gzipped = FALSE, datatype = 
     if (is.null(datatype))
     {
         datatype <- image$getDataType()
-        if (is.null(datatype))
+        if (length(datatype) == 0)
             report(OL$Error, "The data type is not stored with the image; it must be specified")
     }
     

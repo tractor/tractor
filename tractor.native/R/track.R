@@ -36,7 +36,7 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
     if (!all(lengths == nCompartments))
         report(OL$Error, "AVF, theta and phi image names must be given for every anisotropic compartment")
     
-    report(OL$Info, "Running ", nCompartments, "-compartment tractography with ", nSeeds, " seeds (", nSamples, " streamlines per seed)")
+    report(OL$Info, "Running ", nCompartments, "-compartment tractography with ", nSeeds, " seed(s) and ", nSamples, " streamline(s) per seed")
     
     result <- .Call("track_with_seeds", seeds, as.integer(nSeeds), 1L, maskName, list(avf=avfNames,theta=thetaNames,phi=phiNames), as.integer(nCompartments), as.integer(nSamples), as.integer(maxSteps), as.double(stepLength), as.double(avfThreshold), as.double(curvatureThreshold), as.logical(useLoopcheck), rightwardsVector, as.logical(requireImage), as.logical(requireStreamlines), PACKAGE="tractor.native")
     

@@ -4,8 +4,7 @@
 * * INFO: Series 9 includes 2 files; description is "fl3D_t1_sag"
 * * INFO: Reading image information from 2 files
 INFO: [x2] Data matrix is transposed relative to acquisition matrix
-* * INFO: Slice select direction is X
-* * INFO: DICOM files do not use a "simple" slice arrangement
+* * INFO: Image orientation is PIR
 * * INFO: Data set contains 1 volume(s); 2 slice(s) per volume
  Image dimensions : 2 x 224 x 256 voxels
 Coordinate origin : (1,1,1)

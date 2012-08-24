@@ -172,13 +172,14 @@ updateSessionHierarchy <- function (session)
             writeSimpleDiffusionSchemeForSession(session, scheme)
         }
         
+        # Update caches before creating FDT files, so that everything can be found
+        session$updateCaches()
+        
         createFdtFilesForSession(session)
         
         objectDirectory <- session$getObjectDirectory(createIfMissing=FALSE)
         if (file.exists(objectDirectory))
             unlink(objectDirectory, recursive=TRUE)
-        
-        session$updateCaches()
     }
 }
 

@@ -9,14 +9,15 @@
   Functions for reading images from DICOM files.
 }
 \usage{
-newMriImageFromDicom(fileName)
-newMriImageFromDicomDirectory(dicomDir, readDiffusionParams = FALSE)
-newMriImageFromDicomMetadata(metadata, flipY = TRUE)
-newMriImageMetadataFromDicom(fileName)
-newMriImageMetadataFromDicomMetadata(dicom)
+newMriImageFromDicom(fileName, untileMosaics = TRUE)
+newMriImageFromDicomDirectory(dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
+newMriImageFromDicomMetadata(metadata, flipY = TRUE, untileMosaics = TRUE)
+newMriImageMetadataFromDicom(fileName, untileMosaics = TRUE)
+newMriImageMetadataFromDicomMetadata(dicom, untileMosaics = TRUE)
 }
 \arguments{
   \item{fileName}{Character vector of length one giving the name of a DICOM file.}
+  \item{untileMosaics}{Logical value: should Siemens mosaic images be converted into 3D volumes? This may occasionally be performed in error, which can be prevented by setting this value to \code{FALSE}.}
   \item{dicomDir}{Character vector of length one giving the name of a directory containing DICOM files.}
   \item{readDiffusionParams}{Logical value: should diffusion MRI parameters (b-values and gradient directions) be retrieved from the files if possible?}
   \item{metadata, dicom}{DicomMetadata objects.}

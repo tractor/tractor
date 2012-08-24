@@ -33,7 +33,7 @@ SerialisableObject <- setRefClass("SerialisableObject", methods=list(
         attr(serialisedObject, "originalClass") <- originalClass
 
         if (!is.null(file))
-            save(serialisedObject, file=file)
+            save(serialisedObject, file=ensureFileSuffix(file,"Rdata"))
         
         invisible (serialisedObject)
     }
@@ -84,7 +84,7 @@ deserialiseReferenceObject <- function (file = NULL, object = NULL, raw = FALSE)
     {
         if (is.null(file))
             report(OL$Error, "Either a file or raw deserialised object must be specified")
-        object <- get(load(file))
+        object <- get(load(ensureFileSuffix(file,"Rdata")))
     }
     
     if (!isDeserialisable(object))
