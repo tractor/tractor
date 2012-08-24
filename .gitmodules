@@ -1,0 +1,9 @@
+[submodule "lib/reportr"]
+	path = lib/reportr
+	url = git://github.com/jonclayden/reportr.git
+[submodule "lib/mmand"]
+	path = lib/mmand
+	url = git://github.com/jonclayden/mmand.git
+[submodule "lib/multicore"]
+	path = lib/multicore
+	url = git://github.com/jonclayden/multicore.git
