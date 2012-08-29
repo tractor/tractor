@@ -8,4 +8,4 @@ Depends: R (>= 2.5.0), utils
 Suggests: tractor.base
 Description: The tractor.utils package primarily provides functions that facilitate the interaction between the TractoR shell script and R, but some other utility functions are also included.
 License: GPL-2
-URL: http://code.google.com/p/tractor/
+URL: http://www.tractor-mri.org.uk/
