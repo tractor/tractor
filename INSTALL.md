@@ -55,13 +55,14 @@ For the "tractor" interface to function correctly, the TRACTOR_HOME and PATH
 environment variables should be set appropriately. To do this, add the
 following lines to your `~/.bashrc` (or equivalent for other shells):
 
-    export TRACTOR_HOME=/Users/jon/svn/tractor
+    export TRACTOR_HOME=/usr/local/tractor
     export PATH=${TRACTOR_HOME}/bin:${PATH}
     export MANPATH=${TRACTOR_HOME}/man:${MANPATH}
 
-To make sure that "login" shells also pick up these variables, you may also
-wish to point your `~/.bash_profile` at `~/.bashrc`. This can be achieved with
-the line
+(Note that the first line may need to be modified to reflect the actual
+location of the uncompressed "tractor" directory on your system.) To make sure
+that "login" shells also pick up these variables, you may also wish to point
+your `~/.bash_profile` at `~/.bashrc`. This can be achieved with the line
 
     [ -f ~/.bashrc ] && source ~/.bashrc
 
