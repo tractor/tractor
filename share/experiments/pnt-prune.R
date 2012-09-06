@@ -88,7 +88,7 @@ runExperiment <- function ()
         if (length(bestSeedIndex) == 0)
         {
             output(OL$Warning, "No match data available for session number ", i)
-            next
+            return (NULL)
         }
         
         neighbourhood <- createNeighbourhoodInfo(searchWidth, centre=currentSeed)

@@ -300,7 +300,9 @@ newStreamlineSetTractByTruncationToReference <- function (tract, reference, test
     refRightLength <- sum(apply(refSteps$right,1,vectorLength), na.rm=TRUE)
     
     # Estimate the step length from the mean of the first ten gaps in the first streamline
-    testPoints <- tract$getLeftPoints()[1:10,,1]
+    nTestPoints <- min(10, max(tract$getLeftLengths()))
+    testStreamline <- which(tract$getLeftLengths() >= nTestPoints)[1]
+    testPoints <- tract$getLeftPoints()[1:nTestPoints,,testStreamline]
     if (tract$getCoordinateUnit() == "vox")
         testPoints <- transformRVoxelToWorld(testPoints, tract$getImageMetadata())
     realStepLength <- mean(apply(diff(testPoints), 1, vectorLength), na.rm=TRUE)
