@@ -7,3 +7,6 @@
 [submodule "lib/multicore"]
 	path = lib/multicore
 	url = git://github.com/jonclayden/multicore.git
+[submodule "lib/RNiftyReg"]
+	path = lib/RNiftyReg
+	url = git://github.com/jonclayden/RNiftyReg.git
