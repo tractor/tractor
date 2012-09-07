@@ -45,6 +45,14 @@ runExperiment <- function ()
     if (searchWidth^3 != nPoints)
         report(OL$Error, "Results file does not describe a cubic search space")
     
+    referenceSteps <- calculateSplineStepVectors(reference$getTract(), reference$getTractOptions()$pointType)
+    if (nrow(referenceSteps$right) >= 2)
+        rightwardsVector <- referenceSteps$right[2,]
+    else if (nrow(referenceSteps$left) >= 2)
+        rightwardsVector <- (-referenceSteps$left[2,])
+    else
+        report(OL$Error, "The reference tract has no length on either side")
+    
     if (is.null(sessionNumbers))
         sessionNumbers <- 1:nSessions
     else
@@ -80,15 +88,16 @@ runExperiment <- function ()
         
         neighbourhood <- createNeighbourhoodInfo(searchWidth, centre=currentSeed)
         bestSeed <- neighbourhood$vectors[,bestSeedIndex]
+        report(OL$Info, "Seed point is (", implode(bestSeed,","), ")")
         
         if (tracker == "tractor")
         {
             require("tractor.native")
-            result <- trackWithSession(currentSession, bestSeed, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE)
+            result <- trackWithSession(currentSession, bestSeed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlines=TRUE)
             streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
         }
         else
-            streamSet <- newStreamlineSetTractFromProbtrack(currentSession, bestSeed, nSamples=nSamples)
+            streamSet <- newStreamlineSetTractFromProbtrack(currentSession, bestSeed, nSamples=nSamples, rightwardsVector=rightwardsVector)
         
         medianLine <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
         if (options$registerToReference)
