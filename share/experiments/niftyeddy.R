@@ -20,6 +20,12 @@ runExperiment <- function ()
     nVolumes <- metadata$getDimensions()[4]
     reference <- as(session$getImageByType("refb0","diffusion"), "nifti")
     
+    scheme <- newSimpleDiffusionSchemeFromSession(session)
+    if (is.null(scheme))
+        report(OL$Error, "No b-value or gradient direction information is available")
+    bValues <- scheme$expandComponents()$bValues
+    nLevels <- ifelse(bValues>1500, nLevels+1, nLevels)
+    
     if (useMask)
         targetMask <- as(session$getImageByType("mask"), "nifti")
     else
@@ -34,7 +40,7 @@ runExperiment <- function ()
     {
         report(OL$Verbose, "Reading and registering volume ", i)
         volume <- as(newMriImageFromFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=i), "nifti")
-        result <- niftyreg(volume, reference, targetMask=targetMask, scope="affine", nLevels=nLevels, maxIterations=maxIterations, useBlockPercentage=useBlockPercentage, finalInterpolation=interpolationType)
+        result <- niftyreg(volume, reference, targetMask=targetMask, scope="affine", nLevels=nLevels[i], maxIterations=maxIterations, useBlockPercentage=useBlockPercentage, finalInterpolation=interpolationType)
         finalArray[,,,i] <- as.array(result$image)
         allAffines <- rbind(allAffines, convertAffine(result$affine[[1]],volume,reference,newType="fsl"))
     }
