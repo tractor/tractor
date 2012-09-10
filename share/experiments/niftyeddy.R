@@ -1,14 +1,13 @@
 #@args [session directory]
-#@desc Perform eddy current distortion correction using NiftyReg rather than FLIRT for the specified session directory (default "."). Note that although this largely replaces the results of "preproc" stage 2, that stage must have been run first, so that the T2-weighted reference image has already been chosen.
+#@desc Perform eddy current distortion correction using NiftyReg rather than FLIRT for the specified session directory (default "."). This replaces the results of "dpreproc" stage 4.
 
 library(RNiftyReg)
-library(oro.nifti)
+suppressPackageStartupMessages(library(oro.nifti))
 library(tractor.session)
 
 runExperiment <- function ()
 {
     session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
-    targetDir <- session$getPreBedpostDirectory()
     
     nLevels <- getConfigVariable("NumberOfLevels", 2, "integer")
     maxIterations <- getConfigVariable("MaximumIterations", 5, "integer")
@@ -16,29 +15,36 @@ runExperiment <- function ()
     useMask <- getConfigVariable("UseTargetMask", FALSE)
     interpolationType <- getConfigVariable("InterpolationType", "cubicspline", validValues=c("nearestneighbour","trilinear","cubicspline"))
     
-    report(OL$Info, "Reading source data")
-    data <- readNIfTI(file.path(targetDir, "basic"))
-    reference <- readNIfTI(file.path(targetDir, "nodif"))
+    report(OL$Info, "Reading reference volume")
+    metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("rawdata", "diffusion"))
+    nVolumes <- metadata$getDimensions()[4]
+    reference <- as(session$getImageByType("refb0","diffusion"), "nifti")
     
     if (useMask)
-        targetMask <- readNIfTI(session$getImageFileNameByType("mask"))
+        targetMask <- as(session$getImageByType("mask"), "nifti")
     else
         targetMask <- NULL
     interpolationType <- switch(interpolationType, nearestneighbour=0, trilinear=1, cubicspline=3)
     
-    finalArray <- array(0, dim=dim(data))
+    finalArray <- array(0, dim=metadata$getDimensions())
+    allAffines <- NULL
     
     report(OL$Info, "Coregistering data to reference volume")
-    for (i in seq_len(dim(data)[4]))
+    for (i in seq_len(nVolumes))
     {
-        report(OL$Verbose, "Extracting and registering volume ", i)
-        volume <- data[,,,i]
-        volume <- as.nifti(volume, data)
-        result <- niftyreg(volume, reference, targetMask=targetMask, nLevels=nLevels, maxIterations=maxIterations, useBlockPercentage=useBlockPercentage, finalInterpolation=interpolationType)
+        report(OL$Verbose, "Reading and registering volume ", i)
+        volume <- as(newMriImageFromFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=i), "nifti")
+        result <- niftyreg(volume, reference, targetMask=targetMask, scope="affine", nLevels=nLevels, maxIterations=maxIterations, useBlockPercentage=useBlockPercentage, finalInterpolation=interpolationType)
         finalArray[,,,i] <- as.array(result$image)
+        allAffines <- rbind(allAffines, convertAffine(result$affine[[1]],volume,reference,newType="fsl"))
     }
     
     report(OL$Info, "Writing corrected data")
-    finalImage <- as.nifti(finalArray, data)
-    writeNIfTI(finalImage, file.path(targetDir, "data"))
+    finalMetadata <- newMriImageMetadataFromTemplate(metadata, datatype=getDataTypeByNiftiCode(16))
+    finalImage <- newMriImageWithData(finalArray, finalMetadata)
+    writeMriImageToFile(finalImage, session$getImageFileNameByType("data","diffusion"))
+    
+    write.table(allAffines, file.path(session$getDirectory("fdt"),"data.ecclog"), row.names=FALSE, col.names=FALSE)
+    
+    invisible(NULL)
 }
