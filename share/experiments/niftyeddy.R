@@ -35,7 +35,7 @@ runExperiment <- function ()
     finalArray <- array(0, dim=metadata$getDimensions())
     allAffines <- NULL
     
-    report(OL$Info, "Coregistering data to reference volume")
+    report(OL$Info, "Coregistering data to reference volume...")
     for (i in seq_len(nVolumes))
     {
         report(OL$Verbose, "Reading and registering volume ", i)
@@ -50,7 +50,9 @@ runExperiment <- function ()
     finalImage <- newMriImageWithData(finalArray, finalMetadata)
     writeMriImageToFile(finalImage, session$getImageFileNameByType("data","diffusion"))
     
-    write.table(allAffines, file.path(session$getDirectory("fdt"),"data.ecclog"), row.names=FALSE, col.names=FALSE)
+    report(OL$Info, "Writing transform matrices")
+    affineLines <- apply(format(allAffines,scientific=FALSE), 1, implode, sep="  ")
+    writeLines(affineLines, file.path(session$getDirectory("fdt"),"data.ecclog"))
     
     invisible(NULL)
 }
