@@ -60,7 +60,7 @@ setAs("Graph", "igraph", function (from) {
     return (graph.edgelist(from$getEdges(), directed=from$isDirected()))
 })
     
-setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useLocations = FALSE, locationAxes = NULL) {
+setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
     
@@ -150,8 +150,8 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, radius = NULL
         oldPars <- par(mai=c(0,0,0,0))
         plot(NA, type="n", xlim=xlim, ylim=ylim)    
     }
-    segments(xLocs[from], yLocs[from], xLocs[to], yLocs[to], lwd=2, col=colours)
-    symbols(xLocs, yLocs, circles=rep(radius,nActiveVertices), inches=FALSE, col="grey50", lwd=2, bg="white", add=TRUE)
+    segments(xLocs[from], yLocs[from], xLocs[to], yLocs[to], lwd=lwd, col=colours)
+    symbols(xLocs, yLocs, circles=rep(radius,nActiveVertices), inches=FALSE, col="grey50", lwd=lwd, bg="white", add=TRUE)
     text(xLocs, yLocs, as.character(activeVertices), col="grey40", cex=cex)
     if (!add)
         par(oldPars)
