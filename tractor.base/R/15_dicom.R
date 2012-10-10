@@ -150,6 +150,11 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
                 report(OL$Info, "Subject ", id, " includes ", length(matchingFiles), " files")
                 subdirectory <- gsub("\\W", "", description, perl=TRUE)
             }
+            else if (currentSort == "date")
+            {
+                report(OL$Info, "Date ", id, " includes ", length(matchingFiles), " files")
+                subdirectory <- as.character(description)
+            }
             
             if (!file.exists(file.path(directory, subdirectory)))
                 dir.create(file.path(directory, subdirectory))
