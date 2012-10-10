@@ -172,7 +172,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
             if (!all(success))
                 report(OL$Warning, "Not all files copied successfully for ", currentSort, " ", id, " - nothing will be deleted")
             else if (deleteOriginals)
-                unlink(files[matchingFiles])
+                unlink(from[!inPlace])
             
             if (length(remainingSorts) > 0)
                 sortDicomDirectory(file.path(directory,subdirectory), TRUE, sortOn=remainingSorts)
