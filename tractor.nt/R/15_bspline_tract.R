@@ -85,47 +85,66 @@ plot.BSplineTract <- function (x, y = NULL, axes = NULL, add = FALSE, ...)
 
 newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, maxResidError = 0.1)
 {
-    fitBSplineModels <- function (streamlineTract, nKnots)
+    fitBSplineModels <- function (streamlineTract, nKnots = NULL, gap = NULL)
     {
-        if (nKnots == 0)
+        # All of the following numbers are parametric, in mm along the line
+        lineLength <- streamlineTract$getLineLength()
+        pointLocs <- c(0, cumsum(streamlineTract$getPointSpacings()))
+        seedLoc <- pointLocs[streamlineTract$getSeedIndex()]
+        
+        if (is.null(gap))
         {
-            report(OL$Info, "Streamline is too short to fit a B-spline")
+            beforeSeedFraction <- seedLoc / lineLength
+            nBeforeSeedKnots <- floor(nKnots * beforeSeedFraction)
+            nAfterSeedKnots <- floor(nKnots * (1-beforeSeedFraction))
+            gap <- min(seedLoc / nBeforeSeedKnots, (lineLength-seedLoc) / nAfterSeedKnots, lineLength)
+            knots <- seedLoc + (-nBeforeSeedKnots:nAfterSeedKnots * gap)
+            if (length(knots) != nKnots)
+            {
+                # May happen if knot gaps fit exactly into both sides of the path
+                flag(OL$Warning, "Didn't get the expected number of knots")
+                return (NULL)
+            }
+        }
+        else
+        {
+            maxKnots <- (lineLength / gap) + 1
+            knots <- seedLoc + (-maxKnots:maxKnots * gap)
+            knots <- knots[which(knots>=0 & knots<=lineLength)]
+        }
+        
+        if (length(knots) < 2)
+        {
+            report(OL$Info, "Streamline is too short to fit a B-spline with at least 2 knots")
             return (NULL)
         }
         
-        # All of the following numbers are parametric, in mm along the line
-        lineLength <- streamlineTract$getLineLength()
-        pointLocs <- cumsum(streamlineTract$getPointSpacings())
-        pointLocs <- c(1, pointLocs+1)
-        seedLoc <- pointLocs[streamlineTract$getSeedIndex()]
-
-        gap <- (lineLength-1) / nKnots
-        knots <- seedLoc + (-nKnots:nKnots * gap)
-        knots <- knots[which(knots>1 & knots<lineLength)]
-        if (length(knots) != nKnots)
-        {
-            flag(OL$Warning, "Didn't get the expected number of knots")
-            return (NULL)
-        }
         seedKnot <- which(knots==seedLoc)
         if (length(seedKnot) != 1)
         {
+            # Should no longer happen, but warning left just in case
             flag(OL$Warning, "Seed knot is outside the line")
             return (NULL)
         }
 
         line <- tractor.reg::translatePoints(streamlineTract$getLine(), -streamlineTract$getSeedPoint())
         data <- data.frame(t=pointLocs, x=line[,1], y=line[,2], z=line[,3])
+        knotRange <- range(knots)
+        data <- subset(data, t>=knotRange[1] & t<=knotRange[2])
+        ends <- c(1, length(knots))
         
         # Copy the relevant info into a clean environment to avoid baggage in "lm" objects
         workingEnvironment <- new.env(parent=globalenv())
         assign("data", data, envir=workingEnvironment)
         assign("knots", knots, envir=workingEnvironment)
+        assign("ends", ends, envir=workingEnvironment)
         
-        basis <- bs(data$t, knots=knots, degree=3)
-        modelX <- local(lm(x ~ bs(t,knots=knots,degree=3), data=data), workingEnvironment)
-        modelY <- local(lm(y ~ bs(t,knots=knots,degree=3), data=data), workingEnvironment)
-        modelZ <- local(lm(z ~ bs(t,knots=knots,degree=3), data=data), workingEnvironment)
+        basis <- bs(data$t, degree=3, knots=knots[-ends], Boundary.knots=knots[ends])
+        basisString <- "bs(t, degree=3, knots=knots[-ends], Boundary.knots=knots[ends])"
+        
+        modelX <- local(lm(as.formula(paste("x ~ ",basisString,sep="")), data=data), workingEnvironment)
+        modelY <- local(lm(as.formula(paste("y ~ ",basisString,sep="")), data=data), workingEnvironment)
+        modelZ <- local(lm(as.formula(paste("z ~ ",basisString,sep="")), data=data), workingEnvironment)
         models <- list(modelX, modelY, modelZ)
 
         knotLocsX <- as.vector(predict(modelX, data.frame(t=knots)))
@@ -133,7 +152,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         knotLocsZ <- as.vector(predict(modelZ, data.frame(t=knots)))
         knotLocs <- matrix(c(knotLocsX, knotLocsY, knotLocsZ), ncol=3)
 
-        return (list(basis=basis, models=models, knotLocs=knotLocs, seedKnot=seedKnot))
+        return (list(basis=basis, models=models, knotPositions=knots, knotLocs=knotLocs, seedKnot=seedKnot))
     }
     
     streamlineTract$setCoordinateUnit("mm")
@@ -141,11 +160,11 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
     if (is.null(knotSpacing))
     {
         report(OL$Info, "Fitting B-spline model for accuracy")
-        for (nKnots in 1:100)
+        for (nKnots in 2:100)
         {
-            knotSpacing <- streamlineTract$getLineLength() / nKnots
-            currentStreamline <- streamlineTract$copy()$setMaximumSpacing(knotSpacing)
-            bSpline <- fitBSplineModels(currentStreamline, nKnots)
+            approximateKnotSpacing <- streamlineTract$getLineLength() / nKnots
+            currentStreamline <- streamlineTract$copy()$setMaximumSpacing(approximateKnotSpacing)
+            bSpline <- fitBSplineModels(currentStreamline, nKnots=nKnots)
             if (is.null(bSpline))
                 next
             
@@ -171,15 +190,14 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
     {
         flag(OL$Info, "Fitting B-spline model with fixed knot spacing of ", signif(knotSpacing,3))
         streamlineTract <- streamlineTract$copy()$setMaximumSpacing(knotSpacing)
-        nKnots <- floor(streamlineTract$getLineLength() / knotSpacing)
-        bSpline <- fitBSplineModels(streamlineTract, nKnots)
+        bSpline <- fitBSplineModels(streamlineTract, gap=knotSpacing)
     }
     
     if (is.null(bSpline))
         invisible (NA)
     else
     {
-        bSplineTract <- BSplineTract$new(splineDegree=as.integer(attr(bSpline$basis,"degree")), splineModels=bSpline$models, knotPositions=attr(bSpline$basis,"knots"), knotLocations=bSpline$knotLocs, seedKnot=as.integer(bSpline$seedKnot))
+        bSplineTract <- BSplineTract$new(splineDegree=as.integer(attr(bSpline$basis,"degree")), splineModels=bSpline$models, knotPositions=bSpline$knotPositions, knotLocations=bSpline$knotLocs, seedKnot=as.integer(bSpline$seedKnot))
         invisible (bSplineTract)
     }
 }
