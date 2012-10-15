@@ -79,6 +79,7 @@ runExperiment <- function ()
     qsubArgs <- paste("-terse -V -wd", path.expand(getwd()), queueOption, "-N pnt-data -o", file.path(tempDir,"log"), "-e /dev/null", paste("-t 1-",length(sessionList),sep=""), mainJobOptions, scriptFile)
     result <- execute("qsub", qsubArgs, intern=TRUE)
     jobNumber <- as.numeric(sub("^(\\d+)\\.?.*$", "\\1", result, perl=TRUE))
+    jobNumber <- jobNumber[!is.na(jobNumber)]
     report(OL$Info, "Main job number is ", jobNumber)
     
     carryOverOptions <- paste("TractName:", tractName, " DatasetName:", datasetName, " SearchWidth:", searchWidth, sep="")
@@ -86,6 +87,7 @@ runExperiment <- function ()
     qsubArgs <- paste("-terse -V -wd", path.expand(getwd()), queueOption, "-N pnt-collate -o", file.path(tempDir,"log"), "-e /dev/null -hold_jid", jobNumber, collateJobOptions, tractorLoc, "-q -z", verbosityFlag, "pnt-collate", fileStem, carryOverOptions)
     result <- execute("qsub", qsubArgs, intern=TRUE)
     jobNumber <- as.numeric(sub("^(\\d+)\\.?.*$", "\\1", result, perl=TRUE))
+    jobNumber <- jobNumber[!is.na(jobNumber)]
     report(OL$Info, "Collation job number is ", jobNumber)
     
     if (!keepOutput)
