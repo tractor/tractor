@@ -44,6 +44,45 @@ BSplineTract <- setRefClass("BSplineTract", contains="SerialisableObject", field
     nKnots = function () { return (length(knotPositions)) }
 ))
 
+plot.BSplineTract <- function (x, y = NULL, axes = NULL, add = FALSE, ...)
+{
+    tRange <- range(x$getKnotPositions())
+    line <- x$getLineAtPoints(seq(tRange[1], tRange[2], length.out=100))
+    knotLocs <- x$getKnotLocations()
+    seedKnot <- x$getSeedKnot()
+    
+    fullRange <- apply(line, 2, range, na.rm=TRUE)
+    fullRange <- list(mins=fullRange[1,], maxes=fullRange[2,])
+    
+    if (is.null(axes))
+    {
+        if (add)
+            report(OL$Error, "Axes must be specified if adding to an existing plot")
+        
+        rangeWidths <- fullRange$maxes - fullRange$mins
+        axes <- setdiff(1:3, which.min(rangeWidths))
+    }
+    else if (length(axes) != 2)
+        report(OL$Error, "Exactly two axes must be specified")
+    
+    axisNames <- c("left-right", "anterior-posterior", "inferior-superior")
+    xlim <- c(fullRange$mins[axes[1]], fullRange$maxes[axes[1]])
+    ylim <- c(fullRange$mins[axes[2]], fullRange$maxes[axes[2]])
+    
+    if (!add)
+    {
+        xlab <- paste(axisNames[axes[1]], " (mm)", sep="")
+        ylab <- paste(axisNames[axes[2]], " (mm)", sep="")
+        plot(NA, xlim=xlim, ylim=ylim, xlab=xlab, ylab=ylab, asp=1)
+    }
+    
+    lines(line[,axes[1]], line[,axes[2]], lwd=1, col="grey60")
+    points(knotLocs[,axes[1]], knotLocs[,axes[2]], lwd=2, pch=19, type="b", ...)
+    points(knotLocs[seedKnot,axes[1]], knotLocs[seedKnot,axes[2]], cex=2)
+    
+    invisible (axes)
+}
+
 newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, maxResidError = 0.1)
 {
     fitBSplineModels <- function (streamlineTract, nKnots)
