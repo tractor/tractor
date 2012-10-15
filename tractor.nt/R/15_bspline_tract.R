@@ -108,7 +108,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         }
         else
         {
-            maxKnots <- (lineLength / gap) + 1
+            maxKnots <- floor(lineLength / gap) + 1
             knots <- seedLoc + (-maxKnots:maxKnots * gap)
             knots <- knots[which(knots>=0 & knots<=lineLength)]
         }
