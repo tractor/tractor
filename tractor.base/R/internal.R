@@ -12,10 +12,13 @@ displayGraphic <- function (data, colourScale = 1, add = FALSE, windowLimits = N
     if (add)
     {
         data <- replace(data, which(data==0), NA)
-        if (is.null(windowLimits))
-            image(data, col=scale$colours, add=TRUE)
-        else
-            image(data, col=scale$colours, add=TRUE, zlim=sort(windowLimits))
+        if (!all(is.na(data)))
+        {
+            if (is.null(windowLimits))
+                image(data, col=scale$colours, add=TRUE)
+            else
+                image(data, col=scale$colours, add=TRUE, zlim=sort(windowLimits))
+        }
     }
     else
     {
