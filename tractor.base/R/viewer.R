@@ -3,7 +3,7 @@ defaultInfoPanel <- function (point, data, imageNames)
     plot(NA, xlim=c(0,1), ylim=c(0,1), xlab="", ylab="", xaxt="n", yaxt="n", bty="n", main=paste("Location: (",implode(point,","),")",sep=""))
     nImages <- length(imageNames)
     yLocs <- c(0.9 - 0:(nImages-1) * 0.1, 0)
-    labels <- c("Press Esc to exit", paste(imageNames, ": ", sapply(data,function(x) signif(mean(x),5)), sep=""))
+    labels <- c("Press Esc to exit", paste(imageNames, ": ", sapply(data,function(x) signif(mean(x),6)), sep=""))
     text(rep(0.5,nImages), yLocs, rev(labels))
 }
 
