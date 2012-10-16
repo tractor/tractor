@@ -42,6 +42,8 @@ viewImages <- function (images, colourScales = NULL, infoPanel = defaultInfoPane
     point <- round(dims / 2)
     imageNames <- sapply(images, function(x) basename(x$getSource()))
     
+    labels <- list(c("P","A","I","S"), c("R","L","I","S"), c("R","L","P","A"))
+    
     oldPars <- par(bg="black", col="white", fg="white", col.axis="white", col.lab="white", col.main="white")
     
     repeat
@@ -88,9 +90,12 @@ viewImages <- function (images, colourScales = NULL, infoPanel = defaultInfoPane
             region <- par("usr")
             starts <- c(starts, region[c(1,3)])
             ends <- c(ends, region[c(2,4)])
+            width <- c(region[2]-region[1], region[4]-region[3])
             
             lines(rep(voxelCentre[inPlaneAxes[1]],2),c(0,1),col="red")
             lines(c(0,1),rep(voxelCentre[inPlaneAxes[2]],2),col="red")
+            
+            text(c(0.1*width[1]+region[1],0.9*width[1]+region[1],0.5*width[2]+region[3],0.5*width[2]+region[3]), c(0.5*width[1]+region[1],0.5*width[1]+region[1],0.1*width[2]+region[3],0.9*width[2]+region[3]), labels=labels[[i]])
         }
         
         nextPoint <- locator(1)
