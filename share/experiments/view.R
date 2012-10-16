@@ -1,5 +1,6 @@
 #@args image file(s)
 #@desc Display one or more image files. The viewer used will be taken from the TRACTOR_VIEWER environment variable if it is not specified explicitly, and will default to "fslview" if this is not set. This wrapper script will automatically work around a problem with "fslview" and certain file datatypes.
+#@interactive TRUE
 
 library(tractor.session)
 
@@ -8,14 +9,14 @@ runExperiment <- function ()
     requireArguments("image file(s)")
     
     viewer <- tolower(Sys.getenv("TRACTOR_VIEWER"))
-    if (!(viewer %in% c("fslview","freeview")))
+    if (!(viewer %in% c("fslview","freeview","internal")))
     {
         if (viewer != "")
             report(OL$Warning, "The \"TRACTOR_VIEWER\" environment variable has an invalid value")
         viewer <- "fslview"
     }
     
-    requestedViewer <- getConfigVariable("Viewer", NULL, "character", validValues=c("fslview","freeview"))
+    requestedViewer <- getConfigVariable("Viewer", NULL, "character", validValues=c("fslview","freeview","internal"))
     
     if (!is.null(requestedViewer))
         viewer <- requestedViewer
@@ -24,6 +25,8 @@ runExperiment <- function ()
         do.call(showImagesInFslview, c(as.list(Arguments),list(wait=TRUE)))
     else if (viewer == "freeview")
         do.call(showImagesInFreeview, c(as.list(Arguments),list(wait=TRUE)))
+    else if (viewer == "internal")
+        viewImages(lapply(Arguments,newMriImageFromFile), colourScales=as.list(seq_along(Arguments)))
     
     invisible(NULL)
 }
