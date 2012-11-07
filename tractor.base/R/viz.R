@@ -199,8 +199,8 @@ createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sli
     if (device == "png")
     {
         projectionNames <- c("sagittal", "coronal", "axial")
-        imageFiles <- threadSafeTempFile(rep(prefix, 2*nImages))
-        combinedFiles <- threadSafeTempFile(rep(prefix, 2))
+        imageFiles <- threadSafeTempFile(rep(basename(prefix), 2*nImages))
+        combinedFiles <- threadSafeTempFile(rep(basename(prefix), 2))
         
         for (axis in axes)
         {
