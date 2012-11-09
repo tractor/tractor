@@ -18,6 +18,7 @@ runExperiment <- function ()
     thresholdMode <- getConfigVariable("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
     binarise <- getConfigVariable("Binarise", TRUE)
     createImages <- getConfigVariable("CreateImages", FALSE)
+    useReferencePlanes <- getConfigVariable("UseReferencePlanes", TRUE)
     showReference <- getConfigVariable("ShowReferenceTract", FALSE)
     createColourBar <- getConfigVariable("CreateColourBar", FALSE)
     
@@ -74,8 +75,11 @@ runExperiment <- function ()
     
     if (createImages)
     {
-        refTractFileName <- getFileNameForNTResource("reference", "hnt", list(tractName=tractName), expectExists=TRUE)
-        reference <- deserialiseReferenceObject(refTractFileName)
+        if (showReference || useReferencePlanes)
+        {
+            refTractFileName <- getFileNameForNTResource("reference", "hnt", list(tractName=tractName), expectExists=TRUE)
+            reference <- deserialiseReferenceObject(refTractFileName)
+        }
         if (showReference && !is(reference,"FieldTract"))
         {
             report(OL$Warning, "No HNT reference tract of the specified name is available - the reference tract will not be shown")
@@ -89,10 +93,18 @@ runExperiment <- function ()
         else
             alphaImage <- newMriImageWithSimpleFunction(finalImage, function(x) ifelse(x>0,log(x),0))
         
-        if (reference$getSeedUnit() == "vox")
-            seedLoc <- reference$getStandardSpaceSeedPoint()
+        if (useReferencePlanes)
+        {
+            if (reference$getSeedUnit() == "vox")
+                seedLoc <- reference$getStandardSpaceSeedPoint()
+            else
+                seedLoc <- transformWorldToRVoxel(reference$getStandardSpaceSeedPoint(), brainImage$getMetadata(), useOrigin=TRUE)
+        }
         else
-            seedLoc <- transformWorldToRVoxel(reference$getStandardSpaceSeedPoint(), brainImage$getMetadata(), useOrigin=TRUE)
+        {
+            seedLoc <- which(finalImage$getData()==max(finalImage), arr.ind=TRUE)
+            seedLoc <- apply(seedLoc, 2, median)
+        }
         
         if (showReference)
         {
