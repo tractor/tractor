@@ -97,10 +97,10 @@ runExperiment <- function ()
         if (showReference)
         {
             referenceImage <- newMriImageWithSimpleFunction(reference$getImage(), function(x) ifelse(x>0,1,0))
-            createCombinedGraphics(list(brainImage,finalImage,referenceImage), c("s","p","p"), list(1,3,"green"), sliceLoc=seedLoc, device="png", alphaImage=list(NULL,alphaImage,referenceImage), prefix=outputName, windowLimits=list(NULL,windowLimits,NULL))
+            createCombinedGraphics(list(brainImage,finalImage,referenceImage), c("s","p","p"), list(1,3,"green"), sliceLoc=round(seedLoc), device="png", alphaImage=list(NULL,alphaImage,referenceImage), prefix=outputName, windowLimits=list(NULL,windowLimits,NULL))
         }
         else
-            createCombinedGraphics(list(brainImage,finalImage), c("s","p"), list(1,3), sliceLoc=seedLoc, device="png", alphaImage=list(NULL,alphaImage), prefix=outputName, windowLimits=list(NULL,windowLimits))
+            createCombinedGraphics(list(brainImage,finalImage), c("s","p"), list(1,3), sliceLoc=round(seedLoc), device="png", alphaImage=list(NULL,alphaImage), prefix=outputName, windowLimits=list(NULL,windowLimits))
     }
     
     if (createColourBar)
