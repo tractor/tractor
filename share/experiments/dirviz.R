@@ -17,6 +17,7 @@ runExperiment <- function ()
     thresholdLevel <- getConfigVariable("ThresholdLevel", 0.2)
     windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
     scaleComponents <- getConfigVariable("ScaleComponents", TRUE)
+    scaleFactor <- getConfigVariable("ScaleFactor", 16)
     
     faImage <- session$getImageByType("fa", "diffusion")
     maskImage <- session$getImageByType("mask", "diffusion")
@@ -81,14 +82,14 @@ runExperiment <- function ()
         maskedFullData <- cbind(fullData[insertColumnAt(3,locs,1)], fullData[insertColumnAt(3,locs,2)], fullData[insertColumnAt(3,locs,3)])
         col <- rgb(abs(maskedFullData[,1]), abs(maskedFullData[,2]), abs(maskedFullData[,3]))
         
-        segments((d1-1)/(dims[1]-1)-maskedData[,1]/(2*dims[1]), (d2-1)/(dims[2]-1)-maskedData[,2]/(2*dims[2]), (d1-1)/(dims[1]-1)+maskedData[,1]/(2*dims[1]), (d2-1)/(dims[2]-1)+maskedData[,2]/(2*dims[2]), lwd=3, col=col)
+        segments((d1-1)/(dims[1]-1)-maskedData[,1]/(2*dims[1]), (d2-1)/(dims[2]-1)-maskedData[,2]/(2*dims[2]), (d1-1)/(dims[1]-1)+maskedData[,1]/(2*dims[1]), (d2-1)/(dims[2]-1)+maskedData[,2]/(2*dims[2]), lwd=round(3*scaleFactor/16), col=col)
     }
     
     ans <- ask("Copy figure to a high-resolution \"png\" file? [yn]")
     if (tolower(ans) == "y")
     {
         outputFileName <- paste(basename(session$getDirectory()), "_", c("x","y","z")[throughPlaneAxis], point[throughPlaneAxis], "_", source, sep="")
-        dev.print(png, filename=ensureFileSuffix(outputFileName,"png"), width=16*dims[1], height=16*dims[2], bg="black")
+        dev.print(png, filename=ensureFileSuffix(outputFileName,"png"), width=round(scaleFactor*dims[1]), height=round(scaleFactor*dims[2]), bg="black")
     }
     
     invisible(NULL)
