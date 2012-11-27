@@ -647,12 +647,12 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
     }
     
     group <- readBin(connection, "integer", n=1, size=2, signed=FALSE)
-    if (group == 0x0008)
+    if (isTRUE(group == 0x0008))
         isDicomFile <- TRUE
-    else if (group == 0x0800)
+    else if (isTRUE(group == 0x0800))
         isDicomFile <- TRUE
         
-    if (group > 0x00ff)
+    if (isTRUE(group > 0x00ff))
         endian <- setdiff(c("big","little"), .Platform$endian)
     
     seek(connection, where=2, origin="current")
