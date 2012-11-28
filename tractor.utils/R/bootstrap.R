@@ -1,6 +1,6 @@
-bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outputLevel = OL$Warning, configFiles = "/dev/null", configText = "", parallelisationFactor = 1, debug = FALSE)
+bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), reportFile = NULL, outputLevel = OL$Warning, configFiles = NULL, configText = NULL, parallelisationFactor = 1, standalone = TRUE, debug = FALSE)
 {
-    if (!debug)
+    if (standalone)
         on.exit(quit(save="no"))
     
     for (packageName in c("utils","grDevices","graphics","stats","methods","reportr","tractor.base"))
@@ -53,7 +53,7 @@ bootstrapExperiment <- function (scriptFile, workingDirectory, reportFile, outpu
     
     reportFlags()
     
-    if (is.list(results))
+    if (!is.null(reportFile) && is.list(results))
         writeYaml(results, fileName=reportFile)
 }
 
@@ -72,7 +72,7 @@ describeExperiment <- function (scriptFile, fill = FALSE)
             if (!is.null(validValues))
             {
                 otherValues <- (if (is.null(defaultValue)) validValues else validValues[-match(defaultValue,validValues)])
-                defaultValueString <- paste(defaultValueString, " [", paste(otherValues,collapse=","), "]", sep="")
+                defaultValueString <- paste(defaultValueString, " [", implode(otherValues,sep=","), "]", sep="")
             }
             outputLines <<- c(outputLines, paste(leadString, name, ": ", defaultValueString, sep=""))
         }
@@ -88,26 +88,26 @@ describeExperiment <- function (scriptFile, fill = FALSE)
     relevantInputLines <- grep("#@args", inputLines, value=TRUE, fixed=TRUE)
     if (length(relevantInputLines) != 0)
     {
-        argsString <- paste(sub("^\\s*\\#\\@args\\s*", "", relevantInputLines, perl=TRUE), collapse=", ")
+        argsString <- implode(sub("^\\s*\\#\\@args\\s*", "", relevantInputLines, perl=TRUE), sep=", ")
         outputLines <- c(outputLines, paste("ARGUMENTS:", argsString, sep=" "))
     }
     
     relevantInputLines <- grep("#@desc", inputLines, value=TRUE, fixed=TRUE)
     if (length(relevantInputLines) != 0)
     {
-        descriptionString <- paste(sub("^\\s*\\#\\@desc\\s*", "", relevantInputLines, perl=TRUE), collapse=" ")
+        descriptionString <- implode(sub("^\\s*\\#\\@desc\\s*", "", relevantInputLines, perl=TRUE), sep=" ")
         outputLines <- c(outputLines, "", descriptionString)
     }
     
     if (fill == FALSE)
-        cat(paste(outputLines, "\n"), collapse="\n")
+        cat(outputLines, sep="\n")
     else
         lapply(strsplit(outputLines," ",fixed=TRUE), cat, fill=fill)
     
     invisible(NULL)
 }
 
-debugExperiment <- function (exptName, args = "", configFiles = "/dev/null")
+findExperiment <- function (exptName)
 {
     exptFile <- ensureFileSuffix(exptName, "R")    
     pathDirs <- c(".",
@@ -122,7 +122,20 @@ debugExperiment <- function (exptName, args = "", configFiles = "/dev/null")
     else
     {
         realLocations <- possibleLocations[filesExist]
-        report(OL$Info, "Debugging experiment script ", realLocations[1])
-        bootstrapExperiment(realLocations[1], ".", "/dev/null", OL$Debug, configFiles, args, debug=TRUE)
+        return (realLocations[1])
     }
+}
+
+callExperiment <- function (exptName, args = NULL, configFiles = NULL, outputLevel = getOutputLevel(), ...)
+{
+    scriptFile <- findExperiment(exptName)
+    report(OL$Info, "Running experiment script ", scriptFile)
+    bootstrapExperiment(scriptFile, outputLevel=outputLevel, configFiles=configFiles, configText=implode(args,sep=" "), standalone=FALSE, ...)
+}
+
+debugExperiment <- function (exptName, args = NULL, configFiles = NULL, ...)
+{
+    scriptFile <- findExperiment(exptName)
+    report(OL$Info, "Debugging experiment script ", scriptFile)
+    bootstrapExperiment(scriptFile, outputLevel=OL$Debug, configFiles=configFiles, configText=implode(args,sep=" "), standalone=FALSE, debug=TRUE, ...)
 }
