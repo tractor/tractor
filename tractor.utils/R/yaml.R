@@ -15,6 +15,7 @@ readYaml <- function (fileName = NULL, text = NULL, init = list())
     
     mapping <- init
     
+    # Recursive cases: file and text, and/or multiple files
     if (!is.null(fileName))
     {
         fileNames <- unlist(strsplit(fileName, ":", fixed=TRUE))
@@ -27,6 +28,16 @@ readYaml <- function (fileName = NULL, text = NULL, init = list())
             for (file in fileNames)
                 mapping <- readYaml(file, init=mapping)
             
+            if (!is.null(text))
+                mapping <- readYaml(text=text, init=mapping)
+            
+            return (mapping)
+        }
+        else if (!is.null(text))
+        {
+            # Text takes priority
+            mapping <- readYaml(fileName, init=mapping)
+            mapping <- readYaml(text=text, init=mapping)
             return (mapping)
         }
     }
@@ -45,7 +56,7 @@ readYaml <- function (fileName = NULL, text = NULL, init = list())
         usingFile <- FALSE
     }
     else
-        report(OL$Error, "File name or YAML text must be specified")
+        return (mapping)
     
     unlabelled <- character(0)
     repeat
@@ -60,8 +71,7 @@ readYaml <- function (fileName = NULL, text = NULL, init = list())
             next
         }
         
-        # Everything before the first colon in the line is the key; the rest
-        # is the associated value
+        # Everything before the first colon in the line is the key; the rest is the associated value
         key <- sub("\\s*:\\s*.*$", "", lines[1], perl=TRUE)
         key <- sub("^\\s+", "", key, perl=TRUE)
         textValue <- sub("^\\s*[\\w\\-]+\\s*:\\s*", "", lines[1], perl=TRUE)
