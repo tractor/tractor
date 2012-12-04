@@ -54,7 +54,9 @@ runExperiment <- function ()
     
     regions <- tractor.graph:::.FreesurferRegionNameMapping$aparc
     allRegionNames <- paste(rep(names(regions),2), rep(c("left","right"),each=length(regions)), sep="_")
-    regionLocations <- matrix(NA, nrow=length(allRegionNames), ncol=3)
+    nRegions <- length(allRegionNames)
+    regionLocations <- matrix(NA, nrow=nRegions, ncol=3)
+    regionSizes <- numeric(nRegions)
     
     report(OL$Info, "Transforming regions to diffusion space")
     i <- 1
@@ -75,12 +77,14 @@ runExperiment <- function ()
             
             regionLocations[i,] <- apply(which(result$image$getData() > 0, arr.ind=TRUE), 2, median)
             regionLocations[i,] <- transformRVoxelToWorld(regionLocations[i,], result$image$getMetadata(), useOrigin=FALSE)
+            regionSizes[i] <- sum(result$image$getData() > 0)
             i <- i + 1
         }
     }
     
-    order <- c(seq(1,length(allRegionNames),2), seq(2,length(allRegionNames),2))
+    order <- c(seq(1,nRegions,2), seq(2,nRegions,2))
     regionLocations <- regionLocations[order,]
+    regionSizes <- regionSizes[order]
     
     report(OL$Info, "Performing tractography")
     fa <- session$getImageByType("FA")
@@ -97,13 +101,12 @@ runExperiment <- function ()
     })
     
     report(OL$Info, "Creating connectivity matrix")
-    connectivityMatrix <- matrix(NA, nrow=length(allRegionNames), ncol=length(allRegionNames))
+    connectivityMatrix <- matrix(NA, nrow=nRegions, ncol=nRegions)
     for (i in seq_along(allRegionNames))
     {
         for (j in seq_along(allRegionNames))
-            connectivityMatrix[i,j] <- length(intersect(matchingIndices[[i]], matchingIndices[[j]]))
+            connectivityMatrix[i,j] <- length(intersect(matchingIndices[[i]], matchingIndices[[j]])) / mean(regionSizes[c(i,j)])
     }
-    connectivityMatrix <- connectivityMatrix / outer(diag(connectivityMatrix), diag(connectivityMatrix), pmin)
     connectivityMatrix[is.nan(connectivityMatrix)] <- 0
     rownames(connectivityMatrix) <- allRegionNames
     colnames(connectivityMatrix) <- allRegionNames
