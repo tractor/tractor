@@ -34,6 +34,16 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     getEdgeWeights = function () { return (edgeWeights) },
     
+    getLaplacianMatrix = function ()
+    {
+        if (directed)
+            report(OL$Error, "Laplacian matrix calculation for directed graphs is not yet implemented")
+        
+        connectionMatrix <- .self$getConnectionMatrix()
+        degreeMatrix <- diag(colSums(connectionMatrix))
+        return (degreeMatrix - connectionMatrix)
+    },
+    
     getVertexDegree = function () { return (table(factor(edges, levels=1:vertexCount))) },
     
     getVertexLocations = function () { return (vertexLocations) },
