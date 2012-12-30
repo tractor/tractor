@@ -70,5 +70,5 @@ convert.units(8)
 ## 0 = Unknown
 convert.slice(0)
 }
-\author{ Brandon Whitcher \email{bjw34032@users.sourceforge.net} }
+\author{ Brandon Whitcher \email{bwhitcher@gmail.com} }
 %\keyword{}

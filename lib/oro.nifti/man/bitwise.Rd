@@ -58,5 +58,5 @@ dim2slice(di)
   \code{\link{convert.units}}, \code{\link{convert.slice}}
 }
 %\examples{}
-\author{ B. Whitcher \email{bjw34032@users.sourceforge.net} }
+\author{ B. Whitcher \email{bwhitcher@gmail.com} }
 \keyword{misc}

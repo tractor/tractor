@@ -138,6 +138,15 @@ setClass("niftiExtension",
          contains="nifti")
 
 #############################################################################
+## setClass("niftiAuditTrail")
+#############################################################################
+
+setClass("niftiAuditTrail",
+         representation(trail="ANY"),
+         prototype(trail=newAuditTrail()),
+         contains="niftiExtension")
+
+#############################################################################
 ## setClass("niftiExtensionSection")
 #############################################################################
 
@@ -187,7 +196,7 @@ setMethod("show", "nifti", function(object) {
 
 setValidity("nifti", function(object) {
   retval <- NULL
-  indices <- 2:(1+object@"dim_"[1])
+  indices <- 1 + 1:object@"dim_"[1]
   ## sizeof_hdr must be 348
   if (object@"sizeof_hdr" != 348) {
     retval <- c(retval, "sizeof_hdr != 348\n")
@@ -203,6 +212,10 @@ setValidity("nifti", function(object) {
   ## dim should be non-zero for dim[1] dimensions
   if (! all(object@"dim_"[indices] > 0)) {
     retval <- c(retval, "dim[1]/dim mismatch\n")
+  }
+  ## dim should be one for all >dim[1] dimensions
+  if (! all(object@"dim_"[(max(indices) + 1):8] == 1)) {
+    retval <- c(retval, "all dim elements >dim[1] must be 1\n")
   }
   ## number of data dimensions should match dim[1]
   if (length(indices) != length(dim(object@.Data))) {

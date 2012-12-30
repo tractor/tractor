@@ -41,7 +41,7 @@
     "cal_max" value.}
   }
 }
-\author{Brandon Whitcher \email{bjw34032@users.sourceforge.net}}
+\author{Brandon Whitcher \email{bwhitcher@gmail.com}}
 \examples{
 \dontrun{
 url <- "http://nifti.nimh.nih.gov/nifti-1/data/avg152T1_LR_nifti.nii.gz"

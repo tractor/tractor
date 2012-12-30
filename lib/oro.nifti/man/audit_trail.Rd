@@ -61,13 +61,12 @@ getLastCallWithName(functionName)
   The function \code{oro.nifti.info} is used to find the \code{ecode} or
   the XML \code{namespace} relevant to the audit trail.
 
-  The function \code{enableAuditTrail} is called as the package loads to
-  switch on the audit trail functionality and declare the class
-  \code{niftiAuditTrail}.  Should you wish to prevent the audit trail 
-  functionality loading, you should set the option
-  \code{NIfTI.audit.trail} to \code{FALSE}.  Manually calling the
-  function \code{enableAuditTrail} will override this setting and switch
-  on the functionality.
+  The function \code{enableAuditTrail} is turned \dQuote{off} by default
+  to minimize package dependencies.  Should one wish to turn \dQuote{on}
+  the audit trail functionality, then one should set the option
+  \code{NIfTI.audit.trail} to \code{TRUE} and call the function
+  \code{enableAuditTrail}.  Setting the option \code{NIfTI.audit.trail}
+  to \code{FALSE} will disable the audit trail.
 
   The function \code{newAuditTrail} returns an \code{XMLAbstractNode} 
   representing the root node of an audit trail.  This is mostly intended
@@ -118,12 +117,12 @@ getLastCallWithName(functionName)
   the call of itself).
 }
 \note{
-  These functions are mostly intended to be used internally in order to 
+  These functions are mostly intended to be used internally in order to
   document the changes that occur to NIfTI objects due to functions that
   are audit-trail aware.  However, as the precise manner in which these
-  functions are used is not documented anywhere else, I shall proceed to
-  describe which functions are audit-trail aware and how they interact
-  with the audit trail. 
+  functions are used is not documented anywhere else, we shall proceed
+  to describe which functions are audit-trail aware and how they
+  interact with the audit trail.
 
   \code{as.nifti} and its S4 alias \code{as(nim, "nifti")} will always
   produce \code{niftiAuditTrail} objects if the functionality is turned
@@ -141,13 +140,17 @@ getLastCallWithName(functionName)
 %\value{}
 %\references{}
 \author{
-  Andrew Thornton \email{zeripath@users.sourceforge.net}
+  Andrew Thornton \email{zeripath@users.sourceforge.net} and Brandon
+  Whitcher \email{bwhitcher@gmail.com}
 }
 %\seealso{}
 \examples{
 ## A good example of the use of these functions is shown by this
 ## wrapper function which takes a function fun(nim, ...) returning
 ## lists of arrays which are nifti-ized using as(...)
+options("niftiAuditTrail"=TRUE)
+enableAuditTrail()
+
 wrapper <- function(functionToWrap, nameOfCallingFunction, nim, ...) {
   if (!is(nim, "nifti")) 
     nim <- as(nim, "nifti")
@@ -177,7 +180,7 @@ niftiizedForm <- function(nim,...) {
 
 \dontrun{
 ## compare the trails
-if (getOption("niftiAuditTrail")) {
+if (isTRUE(getOption("niftiAuditTrail"))) {
   print((as.nifti(functionToWrap(nifti(), 4, 4), nifti()))@trail)
   print(niftiizedForm(nifti(), 4, 4)@trail)
 }

@@ -31,5 +31,5 @@ as.nifti(from, value = NULL, verbose = FALSE)
 %\examples{}
 \author{
   Andrew Thornton \email{zeripath@users.sourceforge.net} and
-  Brandon Whitcher \email{bjw34032@users.sourceforge.net}}
+  Brandon Whitcher \email{bwhitcher@gmail.com}}
 %\keyword{}

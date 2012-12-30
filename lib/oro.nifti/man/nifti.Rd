@@ -41,13 +41,15 @@ is.nifti(x)
   \url{http://nifti.nimh.nih.gov/}
 }
 \author{
-  Brandon Whitcher \email{bjw34032@users.sourceforge.net}
+  Brandon Whitcher \email{bwhitcher@gmail.com}
 }
 \seealso{
   \code{\linkS4class{nifti}}, \code{\link{anlz}},
   \code{\link{convert.datatype}}
 }
 \examples{
+options("niftiAuditTrail"=FALSE)
+
 nim <- nifti() # default
 nim
 nim <- nifti(datatype=4) # 2-byte integers

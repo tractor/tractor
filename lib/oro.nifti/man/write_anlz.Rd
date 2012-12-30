@@ -81,7 +81,7 @@ unlist(equal)
 }
 }
 \author{
-  Brandon Whitcher \email{bjw34032@users.sourceforge.net}
+  Brandon Whitcher \email{bwhitcher@gmail.com}
 }
 \keyword{file}
 \keyword{methods}

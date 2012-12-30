@@ -1,0 +1,46 @@
+2005-01-28  Steve Dutky  <sdutky@terpalum.umd.edu>
+	* DESCRIPTION (Version): 1.0-4
+
+	* src/cksum.c: replaced all 'u_int' with 'unsigned character' to
+		hopefully allow successful check & install for Windows
+
+2005-01-26  Steve Dutky  <sdutky@terpalum.umd.edu>
+	* DESCRIPTION (Version): 1.0-3
+
+	* src/bit-ops.c: converted from long long to unsigned long to
+		ensure ANSI C compliance, redid limit checks to 32 bits
+
+	* tests/consistency.R: adjusted limit checks
+
+	* man/{ bitAnd.Rd       bitFlip.Rd      bitShiftL.Rd    cksum.Rd}:
+		adjusted to reflect use of unsigned long in place of
+                long long
+	* man/cksum.Rd: corrected reference to ACM article.
+
+2005-01-10  Steve Dutky  <sdutky@terpalum.umd.edu>
+
+        * DESCRIPTION (Version): 1.0-2
+
+	* src/bit-ops.c: (double *) i++ wherever NA_REAL set for binary ops
+		tests & warnings compliant to recycling rules
+
+	* src/init.c: not referenced, removed
+
+	* tests/consistency.R: fixed, extended tests for NA, NaN, etc.
+
+2004-11-22  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 1.0-1
+
+	* src/cksum.c: use 'int', not 'long' (to work on 64-bit!)
+
+	* man/cksum.Rd: fix \references{}, \email
+
+
+2004-11-04  Steve Dutky  <sdutky@terpalum.umd.edu>
+
+	* DESCRIPTION (Version): 1.0-0
+
+	* R/bitops.R: use .Call() everywhere
+
+	* .....

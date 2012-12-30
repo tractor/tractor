@@ -1,5 +1,5 @@
 ##
-## Copyright (c) 2009, 2010, 2011 Brandon Whitcher and Volker Schmid
+## Copyright (c) 2009, 2010, 2011, 2012 Brandon Whitcher and Volker Schmid
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -31,22 +31,17 @@
 ## $Id: $
 ##
 
+.onLoad <- function(lib, pkg) {
+  options("niftiAuditTrail" = FALSE)
+}
+
 .onAttach <- function(lib, pkg) {
   txt <- paste("\n",
                pkg,
                ": Rigorous - NIfTI+ANALYZE+AFNI Input / Output (version = ",
-               as.character(sessionInfo()$otherPkgs$oro.nifti["Version"]),
+               packageDescription(pkg, lib)[["Version"]],
                ")\n",
-               sep="")
+               sep = "")
   packageStartupMessage(txt)
-}
-
-.onLoad <- function(lib, pkg) {
-  if ((is.null(getOption("niftiAuditTrail")) ||
-       getOption("niftiAuditTrail")) && require("XML")) {
-    enableAuditTrail()
-  } else {
-    options("niftiAuditTrail"=FALSE)
-  }
 }
 

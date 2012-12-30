@@ -103,7 +103,7 @@
   NIfTI-1\cr
   \url{http://nifti.nimh.nih.gov/}
 }
-\author{Brandon Whitcher \email{bjw34032@users.sourceforge.net}}
+\author{Brandon Whitcher \email{bwhitcher@gmail.com}}
 \seealso{
   \code{\linkS4class{anlz}}, \code{\linkS4class{niftiExtension}},
   \code{\linkS4class{niftiAuditTrail}}

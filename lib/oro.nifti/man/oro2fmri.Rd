@@ -44,5 +44,5 @@ fmri2oro(from, value = NULL, verbose = FALSE, reorient = FALSE,
   \code{\link{readNIfTI}}, \code{\link[fmri]{read.NIFTI}}
 }
 %\examples{}
-\author{ Brandon Whitcher \email{bjw34032@users.sourceforge.net} }
+\author{ Brandon Whitcher \email{bwhitcher@gmail.com} }
 \keyword{misc}

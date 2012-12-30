@@ -63,7 +63,7 @@
   }
 }
 %\references{}
-\author{Brandon Whitcher \email{bjw34032@users.sourceforge.net}}
+\author{Brandon Whitcher \email{bwhitcher@gmail.com}}
 \seealso{
   \code{\link{orthographic-methods}}, \code{\link{overlay-methods}}
 }

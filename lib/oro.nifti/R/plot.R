@@ -89,10 +89,10 @@ image.nifti <- function(x, z=1, w=1, col=gray(0:64/64),
       zlim <- range(x, na.rm=TRUE)
     }
   }
-  breaks <- c(min(x, zlim, na.rm=TRUE),
+  breaks <- c(zlim[1], # min(x, zlim, na.rm=TRUE),
               seq(min(zlim, na.rm=TRUE), max(zlim, na.rm=TRUE),
                   length=length(col)-1),
-              max(x, zlim, na.rm=TRUE))
+              zlim[2]) # max(x, zlim, na.rm=TRUE))
   ## single or multiple images?
   if (plot.type[1] == "multiple") {
     index <- 1:Z

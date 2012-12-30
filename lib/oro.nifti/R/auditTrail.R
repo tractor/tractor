@@ -1,6 +1,6 @@
 ##
 ##
-## Copyright (c) 2009, Brandon Whitcher and Volker Schmid
+## Copyright (c) 2009, 2010, 2011, 2012, Brandon Whitcher and Volker Schmid
 ## All rights reserved.
 ## 
 ## Redistribution and use in source and binary forms, with or without
@@ -40,11 +40,7 @@ oro.nifti.info <- function(type) {
 
 enableAuditTrail <- function() {
   if (require("XML")) {
-    if (!isClass("niftiAuditTrail")) {
-      options("niftiAuditTrail"=TRUE)
-      setClass("niftiAuditTrail", representation(trail="XMLAbstractNode"),
-               prototype(trail=newAuditTrail()), contains="niftiExtension")
-    }
+    options("niftiAuditTrail" = TRUE)
   }
 }
 
@@ -55,14 +51,13 @@ getLastCallWithName <- function(functionName) {
   theCalls <- sys.calls()
   correctCalls <- which(sapply(theCalls, function(x) x[[1]] == functionName))
   if (length(correctCalls) == 0) {
-    return(theCalls[max(1, length(theCalls)-2)])
+    return(theCalls[max(1, length(theCalls) - 2)])
   }
   return(theCalls[[max(correctCalls)]])
 }
 
 newAuditTrail <- function() {
-  if (getOption("niftiAuditTrail")) {
-    require("XML")
+  if (isTRUE(getOption("niftiAuditTrail")) && require("XML")) {
     trail <- newXMLNode("audit-trail",
                      namespaceDefinitions=oro.nifti.info("namespace"))
     return(trail)
@@ -75,8 +70,7 @@ newAuditTrail <- function() {
 
 niftiExtensionToAuditTrail <- function(nim, workingDirectory=NULL,
                                        filename=NULL, call=NULL) {
-  if (getOption("niftiAuditTrail")) {
-    require("XML")
+  if (isTRUE(getOption("niftiAuditTrail")) && require("XML")) {
     if (!is(nim, "niftiAuditTrail")) {
       nim <- as(nim, "niftiAuditTrail")
     }
@@ -110,8 +104,8 @@ niftiExtensionToAuditTrail <- function(nim, workingDirectory=NULL,
 
 niftiAuditTrailToExtension <- function(nim, workingDirectory=NULL,
                                        filename=NULL, call=NULL) {
-  if (getOption("niftiAuditTrail") && is(nim, "niftiAuditTrail")) {
-    require("XML")
+  if (isTRUE(getOption("niftiAuditTrail")) && is(nim, "niftiAuditTrail") &&
+      require("XML")) {
     sec <- new("niftiExtensionSection")
     sec@ecode <- oro.nifti.info("ecode")
     audit.trail(nim) <-
@@ -130,8 +124,7 @@ niftiAuditTrailToExtension <- function(nim, workingDirectory=NULL,
 niftiAuditTrailSystemNode <- function(type="system-info",
                                       workingDirectory=NULL, filename=NULL,
                                       call=NULL) {
-  if (getOption("niftiAuditTrail")) {
-    require("XML")
+  if (isTRUE(getOption("niftiAuditTrail")) && require("XML")) {
     if (is(call, "character") && is(try(get(call, mode="function"),
                                         silent=TRUE), "function")) {
       call <- as.character(as.expression(getLastCallWithName(call)))
@@ -143,10 +136,10 @@ niftiAuditTrailSystemNode <- function(type="system-info",
     children <- .listToNodes(c("workingDirectory"=workingDirectory,
                                  "filename"=filename, "call"=call))
     sysinfo <-
-      .listToNodes(c("r-version"=R.version["version.string"],
+      .listToNodes(c("r-version"=R.version$version.string,
                      "date"=currentDateTime,
                      "user"=Sys.getenv("LOGNAME"),
-                     "package-version"=packageDescription("oro.nifti")["Version"]))
+                     "package-version"=packageDescription("oro.nifti")$Version))
     if (is.null(children)) {
       children <- sysinfo
     } else {
@@ -160,13 +153,12 @@ niftiAuditTrailSystemNode <- function(type="system-info",
 niftiAuditTrailSystemNodeEvent <- function(trail, type=NULL, call=NULL,
                                            workingDirectory=NULL,
                                            filename=NULL, comment=NULL) {
-  if (getOption("niftiAuditTrail")) {
-    if (is(trail,"niftiAuditTrail")) {
+  if (isTRUE(getOption("niftiAuditTrail")) && require("XML")) {
+    if (is(trail, "niftiAuditTrail")) {
       return(niftiAuditTrailSystemNodeEvent(audit.trail(trail), type, call,
                                             workingDirectory, filename,
                                             comment))
     }
-    require("XML")
     eventNode <- niftiAuditTrailSystemNode(type=type, call=call,
                                            workingDirectory=workingDirectory,
                                            filename=filename)
@@ -179,12 +171,11 @@ niftiAuditTrailSystemNodeEvent <- function(trail, type=NULL, call=NULL,
 
 niftiAuditTrailCreated <- function(history=NULL, call=NULL,
                                    workingDirectory=NULL, filename=NULL) {
-  if (getOption("niftiAuditTrail")) {
+  if (isTRUE(getOption("niftiAuditTrail")) && require("XML")) {
     if (is(history, "niftiAuditTrail")) {
       return(niftiAuditTrailCreated(audit.trail(history), call,
                                     workingDirectory, filename))
     } else {
-      require("XML")
       trail <- newAuditTrail()
       if (is.null(history) || length(xmlChildren(history)) == 0) {
 	created <-
@@ -225,11 +216,10 @@ niftiAuditTrailCreated <- function(history=NULL, call=NULL,
 }
 
 niftiAuditTrailEvent <- function(trail, type=NULL, call=NULL, comment=NULL) {
-  if (getOption("niftiAuditTrail")) {
+  if (isTRUE(getOption("niftiAuditTrail")) && require("XML")) {
     if (is(trail,"niftiAuditTrail")) {
       return(niftiAuditTrailEvent(audit.trail(trail), type, call, comment))
     }
-    require("XML")
     if (is(call, "character") &&
         is(try(get(call, mode="function"), silent=TRUE), "function")) {
       call <- as.character(as.expression(getLastCallWithName(call)))
@@ -247,4 +237,3 @@ niftiAuditTrailEvent <- function(trail, type=NULL, call=NULL, comment=NULL) {
     return(trail)
   }
 }
-

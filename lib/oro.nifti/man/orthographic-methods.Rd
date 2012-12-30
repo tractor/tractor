@@ -61,7 +61,7 @@
     \item{x = "nifti"}{Produce orthographic display for \code{x}.}
   }
 }
-\author{Brandon Whitcher \email{bjw34032@users.sourceforge.net}}
+\author{Brandon Whitcher \email{bwhitcher@gmail.com}}
 \seealso{
   \code{\link{image-methods}}, \code{\link{overlay-methods}}
 }

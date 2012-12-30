@@ -38,7 +38,7 @@
   \url{http://nifti.nimh.nih.gov/}
 }
 \author{
-  Brandon Whitcher \email{bjw34032@users.sourceforge.net},\cr
+  Brandon Whitcher \email{bwhitcher@gmail.com},\cr
   Andrew Thornton \email{zeripath@users.sourcefore.net}
 }
 \seealso{

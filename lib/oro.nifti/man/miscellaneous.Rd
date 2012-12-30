@@ -35,5 +35,5 @@ NTIM(x)
   \code{\link{readNIfTI}}, \code{\link{readANALYZE}}
 }
 % \examples{}
-\author{Brandon Whitcher \email{bjw34032@users.sourceforge.net} }
+\author{Brandon Whitcher \email{bwhitcher@gmail.com} }
 \keyword{misc}

@@ -1,6 +1,6 @@
 
-R version 2.13.0 (2011-04-13)
-Copyright (C) 2011 The R Foundation for Statistical Computing
+R version 2.15.2 RC (2012-10-18 r60960) -- "Trick or Treat"
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -22,9 +22,9 @@ Type 'q()' to quit R.
 > source(file.path(R.home("share"), "R", "examples-header.R"))
 > options(warn = 1)
 > library('oro.nifti')
-Loading required package: XML
+Loading required package: bitops
 
-oro.nifti: Rigorous - NIfTI+ANALYZE+AFNI Input / Output (version = 0.2.7)
+oro.nifti: Rigorous - NIfTI+ANALYZE+AFNI Input / Output (version = 0.3.8)
 
 > 
 > assign(".oldSearch", search(), pos = 'CheckExEnv')
@@ -258,6 +258,10 @@ ANALYZE 7.5 format
 > ## A good example of the use of these functions is shown by this
 > ## wrapper function which takes a function fun(nim, ...) returning
 > ## lists of arrays which are nifti-ized using as(...)
+> options("niftiAuditTrail"=TRUE)
+> enableAuditTrail()
+Loading required package: XML
+> 
 > wrapper <- function(functionToWrap, nameOfCallingFunction, nim, ...) {
 +   if (!is(nim, "nifti")) 
 +     nim <- as(nim, "nifti")
@@ -287,7 +291,7 @@ ANALYZE 7.5 format
 > 
 > ## Not run: 
 > ##D ## compare the trails
-> ##D if (getOption("niftiAuditTrail")) {
+> ##D if (isTRUE(getOption("niftiAuditTrail"))) {
 > ##D   print((as.nifti(functionToWrap(nifti(), 4, 4), nifti()))@trail)
 > ##D   print(niftiizedForm(nifti(), 4, 4)@trail)
 > ##D }
@@ -296,6 +300,9 @@ ANALYZE 7.5 format
 > 
 > 
 > cleanEx()
+
+detaching ‘package:XML’
+
 > nameEx("aux_file-methods")
 > ### * aux_file-methods
 > 
@@ -315,6 +322,8 @@ ANALYZE 7.5 format
 > ##D                      "mniRL.nii.gz")
 > ##D download.file(url, urlfile, quiet=TRUE)
 > ## End(Not run)
+> options("niftiAuditTrail"=FALSE)
+> 
 > urlfile <- file.path(system.file("nifti", package="oro.nifti"),
 +                      "mniRL.nii.gz")
 > mniRL <- readNIfTI(urlfile)
@@ -323,6 +332,38 @@ ANALYZE 7.5 format
 > aux.file(mniRL) <- "avg152T1_RL_nifti"
 > aux.file(mniRL)
 [1] "avg152T1_RL_nifti"
+> 
+> 
+> 
+> cleanEx()
+> nameEx("calmin-methods")
+> ### * calmin-methods
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: cal.min-methods
+> ### Title: Extract or Replace NIfTI/Analyze Min or Max Values
+> ### Aliases: cal.min-methods cal.min,anlz-method cal.min,nifti-method
+> ###   cal.min<-,anlz-method cal.min<-,nifti-method cal.min cal.min<-
+> ###   cal.max-methods cal.max,anlz-method cal.max,nifti-method
+> ###   cal.max<-,anlz-method cal.max<-,nifti-method cal.max cal.max<-
+> ### Keywords: methods
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D url <- "http://nifti.nimh.nih.gov/nifti-1/data/avg152T1_LR_nifti.nii.gz"
+> ##D urlfile <- file.path(system.file("nifti", package="oro.nifti"),
+> ##D                      "mniLR.nii.gz")
+> ##D download.file(url, urlfile, quiet=TRUE)
+> ## End(Not run)
+> urlfile <- file.path(system.file("nifti", package="oro.nifti"),
++                      "mniLR.nii.gz")
+> mniLR <- readNIfTI(urlfile)
+> cal.min(mniLR)
+[1] 0
+> cal.max(mniLR)
+[1] 255
 > 
 > 
 > 
@@ -445,7 +486,7 @@ ANALYZE 7.5 format
 [1] "FSL3.2beta"
 > descrip(mniLR) <- paste(descrip(mniLR), version$version.string, sep="; ")
 > descrip(mniLR)
-[1] "FSL3.2beta; R version 2.13.0 (2011-04-13)"
+[1] "FSL3.2beta; R version 2.15.2 RC (2012-10-18 r60960)"
 > 
 > 
 > 
@@ -548,10 +589,12 @@ Class "niftiAuditTrail", by class "niftiExtension", distance 2
 > 
 > ### ** Examples
 > 
+> options("niftiAuditTrail"=FALSE)
+> 
 > nim <- nifti() # default
 > nim
 NIfTI-1 format
-  Type            : niftiAuditTrail
+  Type            : nifti
   Data Type       : 2 (UINT8)
   Bits per Pixel  : 8
   Slice Code      : 0 (Unknown)
@@ -560,13 +603,12 @@ NIfTI-1 format
   Sform Code      : 0 (Unknown)
   Dimension       : 1 x 1 x 1 x 1
   Pixel Dimension : 1 x 1 x 1 x 1
-Loading required package: bitops
   Voxel Units     : Unknown
   Time Units      : Unknown
 > nim <- nifti(datatype=4) # 2-byte integers
 > nim
 NIfTI-1 format
-  Type            : niftiAuditTrail
+  Type            : nifti
   Data Type       : 4 (INT16)
   Bits per Pixel  : 16
   Slice Code      : 0 (Unknown)
@@ -581,9 +623,6 @@ NIfTI-1 format
 > 
 > 
 > cleanEx()
-
-detaching ‘package:bitops’
-
 > nameEx("niftiAuditTrail-class")
 > ### * niftiAuditTrail-class
 > 
@@ -600,42 +639,42 @@ detaching ‘package:bitops’
 Class "niftiAuditTrail" [package "oro.nifti"]
 
 Slots:
-                                                                      
-Name:            .Data           trail      extensions      sizeof_hdr
-Class:           array XMLAbstractNode            list         numeric
-                                                                      
-Name:        data_type         db_name         extents   session_error
-Class:       character       character         numeric         numeric
-                                                                      
-Name:          regular        dim_info            dim_       intent_p1
-Class:       character       character          vector         numeric
-                                                                      
-Name:        intent_p2       intent_p3     intent_code        datatype
-Class:         numeric         numeric         numeric         numeric
-                                                                      
-Name:           bitpix     slice_start          pixdim      vox_offset
-Class:         numeric         numeric          vector         numeric
-                                                                      
-Name:        scl_slope       scl_inter       slice_end      slice_code
-Class:         numeric         numeric         numeric         numeric
-                                                                      
-Name:       xyzt_units         cal_max         cal_min  slice_duration
-Class:         numeric         numeric         numeric         numeric
-                                                                      
-Name:          toffset           glmax           glmin         descrip
-Class:         numeric         numeric         numeric       character
-                                                                      
-Name:         aux_file      qform_code      sform_code       quatern_b
-Class:       character         numeric         numeric         numeric
-                                                                      
-Name:        quatern_c       quatern_d       qoffset_x       qoffset_y
-Class:         numeric         numeric         numeric         numeric
-                                                                      
-Name:        qoffset_z          srow_x          srow_y          srow_z
-Class:         numeric          vector          vector          vector
-                                                                      
-Name:      intent_name           magic        extender      reoriented
-Class:       character       character          vector         logical
+                                                                  
+Name:           .Data          trail     extensions     sizeof_hdr
+Class:          array            ANY           list        numeric
+                                                                  
+Name:       data_type        db_name        extents  session_error
+Class:      character      character        numeric        numeric
+                                                                  
+Name:         regular       dim_info           dim_      intent_p1
+Class:      character      character         vector        numeric
+                                                                  
+Name:       intent_p2      intent_p3    intent_code       datatype
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:          bitpix    slice_start         pixdim     vox_offset
+Class:        numeric        numeric         vector        numeric
+                                                                  
+Name:       scl_slope      scl_inter      slice_end     slice_code
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:      xyzt_units        cal_max        cal_min slice_duration
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:         toffset          glmax          glmin        descrip
+Class:        numeric        numeric        numeric      character
+                                                                  
+Name:        aux_file     qform_code     sform_code      quatern_b
+Class:      character        numeric        numeric        numeric
+                                                                  
+Name:       quatern_c      quatern_d      qoffset_x      qoffset_y
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:       qoffset_z         srow_x         srow_y         srow_z
+Class:        numeric         vector         vector         vector
+                                                                  
+Name:     intent_name          magic       extender     reoriented
+Class:      character      character         vector        logical
 
 Extends: 
 Class "niftiExtension", directly
@@ -859,17 +898,6 @@ Class:   numeric   numeric character
 > image(mni152, oma=rep(2,4))
 > orthographic(mni152, oma=rep(2,4))
 > 
-> ## Not run: 
-> ##D ## 27 scans of Colin Holmes (MNI) brain co-registered and averaged
-> ##D URL <- "http://imaging.mrc-cbu.cam.ac.uk/downloads/Colin/colin_1mm.tgz"
-> ##D urlfile <- file.path(tempdir(), "colin_1mm.tgz")
-> ##D download.file(URL, dest=urlfile, quiet=TRUE)
-> ##D untar(urlfile, exdir=tempdir())
-> ##D colin <- readANALYZE(file.path(tempdir(), "colin_1mm"))
-> ##D image(colin, oma=rep(2,4))
-> ##D orthographic(colin, oma=rep(2,4))
-> ## End(Not run)
-> 
 > 
 > 
 > cleanEx()
@@ -888,36 +916,43 @@ Class:   numeric   numeric character
 > ## Not run: 
 > ##D url <- "http://nifti.nimh.nih.gov/nifti-1/data/filtered_func_data.nii.gz"
 > ##D urlfile <- file.path(system.file("nifti", package="oro.nifti"),
-> ##D                      "ffd.nii.gz")
+> ##D                      "filtered_func_data")
 > ##D download.file(url, urlfile, quiet=TRUE)
 > ## End(Not run)
 > ## The NIfTI file provided here contains the first 18 volumes (10%)
 > ## of the original data set
 > urlfile <- file.path(system.file("nifti", package="oro.nifti"),
-+                      "ffd.nii.gz")
++                      "filtered_func_data")
 > (ffd <- readNIfTI(urlfile))
 NIfTI-1 format
-  Type            : niftiAuditTrail
+  Type            : niftiExtension
   Data Type       : 4 (INT16)
   Bits per Pixel  : 16
   Slice Code      : 0 (Unknown)
   Intent Code     : 0 (None)
-  Qform Code      : 1 (Scanner_Anat)
-  Sform Code      : 1 (Scanner_Anat)
-  Dimension       : 64 x 64 x 21 x 18
-  Pixel Dimension : 4 x 4 x 6 x 3
-Loading required package: bitops
-  Voxel Units     : mm
-  Time Units      : sec
+  Qform Code      : 0 (Unknown)
+  Sform Code      : 0 (Unknown)
+  Dimension       : 64 x 64 x 21 x 64
+  Pixel Dimension : 1 x 1 x 1 x 1
+  Voxel Units     : Unknown
+  Time Units      : Unknown
 > image(ffd, oma=rep(2,4))
 > orthographic(ffd, oma=rep(2,4))
+> ## Not run: 
+> ##D ## 27 scans of Colin Holmes (MNI) brain co-registered and averaged
+> ##D ## NIfTI two-file format
+> ##D URL <- "http://imaging.mrc-cbu.cam.ac.uk/downloads/Colin/colin_1mm.tgz"
+> ##D urlfile <- file.path(tempdir(), "colin_1mm.tgz")
+> ##D download.file(URL, dest=urlfile, quiet=TRUE)
+> ##D untar(urlfile, exdir=tempdir())
+> ##D colin <- readNIfTI(file.path(tempdir(), "colin_1mm"))
+> ##D image(colin, oma=rep(2,4))
+> ##D orthographic(colin, oma=rep(2,4))
+> ## End(Not run)
 > 
 > 
 > 
 > cleanEx()
-
-detaching ‘package:bitops’
-
 > nameEx("tim_colors")
 > ### * tim_colors
 > 
@@ -949,7 +984,8 @@ detaching ‘package:bitops’
 > 
 > ### ** Examples
 > 
-> ffd <- readNIfTI(system.file("nifti/ffd.nii.gz", package="oro.nifti"))
+> ffd <- readNIfTI(file.path(system.file("nifti", package="oro.nifti"),
++                            "filtered_func_data"))
 > xyz <- c(1,1,1)
 > translateCoordinate(xyz, ffd, verbose=TRUE)
 Input voxel coordinate:
@@ -957,7 +993,7 @@ Input voxel coordinate:
 [1,]    1
 [2,]    1
 [3,]    1
-QForm_code = 1 : Orientation by Method 2.
+QForm_code and SForm_code unset: Orientation by Method 1.
      [,1]
 [1,]    0
 [2,]    0
@@ -969,11 +1005,11 @@ Input voxel coordinate:
 [1,]   32
 [2,]   32
 [3,]   10
-QForm_code = 1 : Orientation by Method 2.
+QForm_code and SForm_code unset: Orientation by Method 1.
      [,1]
-[1,] -124
-[2,]  124
-[3,]   54
+[1,]   31
+[2,]   31
+[3,]    9
 > 
 > 
 > 
@@ -1083,21 +1119,15 @@ QForm_code = 1 : Orientation by Method 2.
 > img.nifti <- nifti(img) # create NIfTI object
 > 
 > writeNIfTI(img.nifti, "test-nifti-image-uint8", verbose=TRUE)
-  niftiExtension detected!
-  niftiAuditTrail detected!
-  vox_offset = 1296
-  writing niftiExtension(s) at byte = 352
-  writing data at byte = 1296
+  writing data at byte = 352
 > ## These files should be viewable in, for example, FSLview
 > ## Make sure you adjust the min/max values for proper visualization
 > data <- readNIfTI("test-nifti-image-uint8", verbose=TRUE)
   fname = test-nifti-image-uint8
   files = test-nifti-image-uint8.nii.gz
   nii   = test-nifti-image-uint8.nii.gz
-  vox_offset = 1296
-  niftiExtension detected!
+  vox_offset = 352
   seek(fid) = 352
-  seek(fid) = 1296
  # reorient = Method 1
  ## performPermutation
   trans =
@@ -1138,7 +1168,7 @@ QForm_code = 1 : Orientation by Method 2.
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  9.15 0.18 9.369 0 0 
+Time elapsed:  10.72 0.292 11.025 0 0 
 > grDevices::dev.off()
 null device 
           1 

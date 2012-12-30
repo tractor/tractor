@@ -1,6 +1,6 @@
 ##
 ##
-## Copyright (c) 2009-2011 Brandon Whitcher and Volker Schmid
+## Copyright (c) 2009-2012 Brandon Whitcher and Volker Schmid
 ## All rights reserved.
 ## 
 ## Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@
 }
 
 ##
-##
+## readNIfTI() is a convient interface for the user
 ##
 
 readNIfTI <- function(fname, verbose=FALSE, warn=-1, reorient=TRUE,
@@ -72,16 +72,18 @@ readNIfTI <- function(fname, verbose=FALSE, warn=-1, reorient=TRUE,
     if (verbose) {
       cat(paste("  files =", niigz), fill=TRUE)
     }
-    nim <- .read.nifti.content(fname, gzipped=TRUE, verbose=verbose,
-                               warn=warn, reorient=reorient, call=call)
+    nim <- .read.nifti.content(fname, onefile=TRUE, gzipped=TRUE,
+                               verbose=verbose, warn=warn, reorient=reorient,
+                               call=call)
   } else {
     if (file.exists(nii)) {
       ## If uncompressed file exists, then upload!
       if (verbose) {
         cat(paste("  files =", nii), fill=TRUE)
       }
-      nim <- .read.nifti.content(fname, gzipped=FALSE, verbose=verbose,
-                                 warn=warn, reorient=reorient, call=call)
+      nim <- .read.nifti.content(fname, onefile=TRUE, gzipped=FALSE,
+                                 verbose=verbose, warn=warn, reorient=reorient,
+                                 call=call)
     } else {
       if (file.exists(hdrgz) && file.exists(imggz)) {
         ## If compressed files exist, then upload!
@@ -175,7 +177,17 @@ readNIfTI <- function(fname, verbose=FALSE, warn=-1, reorient=TRUE,
     cat("  vox_offset =", nim@"vox_offset", fill=TRUE)
   }
   nim@"scl_slope" <- readBin(fid, numeric(), size=4, endian=endian)
+  ## WARNING to the user
+  if (nim@"scl_slope" != 1) {
+    warning(paste("scl_slope =", nim@"scl_slope", "and data must be rescaled."))
+  }
+  ##
   nim@"scl_inter" <- readBin(fid, numeric(), size=4, endian=endian)
+  ## WARNING to the user
+  if (nim@"scl_inter" != 0) {
+    warning(paste("scl_inter =", nim@"scl_inter", "and data must be translated."))
+  }
+  ##
   nim@"slice_end" <- readBin(fid, integer(), size=2, endian=endian)
   nim@"slice_code" <- readBin(fid, integer(), size=1, signed=FALSE,
                               endian=endian)
@@ -210,7 +222,7 @@ readNIfTI <- function(fname, verbose=FALSE, warn=-1, reorient=TRUE,
   ## start of the file, but trying to avoid clobbering widely-used
   ## ANALYZE 7.5 fields led to putting this marker last.  However,
   ## recall that "the last shall be first" (Matthew 20:16).
-  if (onefile) {  
+  if (onefile && nim@"magic" == "n+1") {  
     nim@"extender" <- readBin(fid, integer(), 4, size=1, signed=FALSE,
                               endian=endian)
     ## If extension[0] is nonzero, it indicates that extended header
@@ -241,13 +253,19 @@ readNIfTI <- function(fname, verbose=FALSE, warn=-1, reorient=TRUE,
         stop("-- extension size (esize) has overshot voxel offset --")
       }
     }
+  } else {
+    stop("This is not a one-file NIfTI format")
   }
 
   if (verbose) {
     cat("  seek(fid) =", seek(fid), fill=TRUE)
   }
-  n <- prod(nim@"dim_"[2:5])
+  dims <- 2:(1+nim@"dim_"[1])
+  n <- prod(nim@"dim_"[dims])
   if (! onefile) {
+    if (nim@"magic" != "ni1") {
+      stop("This is not a two-file NIfTI format")
+    }
     close(fid)
     fname <- sub("\\.hdr$", "\\.img", fname)
     if (gzipped) {
@@ -255,7 +273,7 @@ readNIfTI <- function(fname, verbose=FALSE, warn=-1, reorient=TRUE,
     } else {
       fid <- file(fname, "rb")
     }
-    seek(fid, nim@"vox_offset") ## is this correct?
+    ## seek(fid, nim@"vox_offset") # not necessary for two-file format
   }
   data <-
     switch(as.character(nim@"datatype"),
@@ -265,9 +283,11 @@ readNIfTI <- function(fname, verbose=FALSE, warn=-1, reorient=TRUE,
            "8" = readBin(fid, integer(), n, nim@"bitpix"/8, endian=endian),
            "16" = readBin(fid, double(), n, nim@"bitpix"/8, endian=endian),
            "64" = readBin(fid, double(), n, nim@"bitpix"/8, endian=endian),
-           "512" = readBin(fid, integer(), n, nim@"bitpix"/8, endian=endian),
-           stop(paste("Data type ", nim@"datatype", " unsupported in ",
-                      fname, ".img", sep=""))
+           "512" = readBin(fid, integer(), n, nim@"bitpix"/8, signed=FALSE,
+             endian=endian),
+           "768" = readBin(fid, integer(), n, nim@"bitpix"/8, signed=FALSE,
+             endian=endian),
+           stop(paste("Data type", nim@"datatype", "unsupported in", fname))
            )
   close(fid)
   ##
@@ -289,7 +309,6 @@ readNIfTI <- function(fname, verbose=FALSE, warn=-1, reorient=TRUE,
   ## This is a right-handed coordinate system.  However, the exact
   ## direction these axes point with respect to the subject depends on
   ## qform_code (Method 2) and sform_code (Method 3).
-  dims <- 2:(1+nim@"dim_"[1])
   if (reorient) {
     nim@.Data <- reorient(nim, data, verbose=verbose)
     nim@"reoriented" <- TRUE
@@ -312,10 +331,10 @@ readNIfTI <- function(fname, verbose=FALSE, warn=-1, reorient=TRUE,
 }
 
 ############################################################################
-############################################################################
+## readANALYZE() is a convenient interface for the user
 ############################################################################
 
-readANALYZE <- function(fname, verbose=FALSE, warn=-1) {
+readANALYZE <- function(fname, SPM=FALSE, verbose=FALSE, warn=-1) {
   ## Warnings?
   oldwarn <- getOption("warn")
   options(warn=warn)
@@ -338,8 +357,8 @@ readANALYZE <- function(fname, verbose=FALSE, warn=-1) {
     if (verbose) {
       cat(paste("  files = ", fname, ".{hdr,img}", sep=""), fill=TRUE)
     }
-    aim <- .read.analyze.content(fname, gzipped=FALSE, verbose=verbose,
-                                 warn=warn)
+    aim <- .read.analyze.content(fname, gzipped=FALSE, SPM=SPM,
+                                 verbose=verbose, warn=warn)
     options(warn=oldwarn)
     return(aim)
   }
@@ -349,8 +368,8 @@ readANALYZE <- function(fname, verbose=FALSE, warn=-1) {
     if (verbose) {
       cat(paste("  files = ", fname, ".{hdr.gz,img.gz}", sep=""), fill=TRUE)
     }
-    aim <- .read.analyze.content(fname, gzipped=TRUE, verbose=verbose,
-                                 warn=warn)
+    aim <- .read.analyze.content(fname, gzipped=TRUE, SPM=SPM,
+                                 verbose=verbose, warn=warn)
     options(warn=oldwarn)
     return(aim)
   }
@@ -361,8 +380,8 @@ readANALYZE <- function(fname, verbose=FALSE, warn=-1) {
 ############################################################################
 ############################################################################
 
-.read.analyze.content <- function(fname, gzipped=TRUE, verbose=FALSE,
-                                  warn=-1) {
+.read.analyze.content <- function(fname, gzipped=TRUE, SPM=FALSE,
+                                  verbose=FALSE, warn=-1) {
   ## Open header file
   if (gzipped) {
     fname <- paste(fname, "hdr.gz", sep=".")
@@ -393,7 +412,7 @@ readANALYZE <- function(fname, verbose=FALSE, warn=-1) {
   ## Construct S4 object
   aim <- new("anlz")
   aim@"sizeof_hdr" <- sizeof.hdr
-  aim@"data_type" <- .readCharWithEmbeddedNuls(fid, 10)
+  aim@"data_type" <- .readCharWithEmbeddedNuls(fid, n=10)
   aim@"db_name" <- .readCharWithEmbeddedNuls(fid, n=18)
   aim@"extents" <- readBin(fid, integer(), size=4, endian=endian)
   aim@"session_error" <- readBin(fid, integer(), size=2, endian=endian)
@@ -409,7 +428,17 @@ readANALYZE <- function(fname, verbose=FALSE, warn=-1) {
   aim@"pixdim" <- readBin(fid, numeric(), 8, size=4, endian=endian)
   aim@"vox_offset" <- readBin(fid, numeric(), size=4, endian=endian)
   aim@"funused1" <- readBin(fid, numeric(), size=4, endian=endian)
+  ## SPM has used the ANALYZE 7.5 funused1 field as a scaling factor
+  if (aim@"funused1" != 0) {
+    warning(paste("funused1 =", aim@"funused1", "and data must be rescaled."))
+  }
+  ##
   aim@"funused2" <- readBin(fid, numeric(), size=4, endian=endian)
+  ## Maybe I'm paranoid, but let's check funused2 in case it is an intercept
+  if (aim@"funused2" != 0) {
+    warning(paste("funused2 =", aim@"funused2", "and data must be translated."))
+  }
+  ##
   aim@"funused3" <- readBin(fid, numeric(), size=4, endian=endian)
   aim@"cal_max" <- readBin(fid, numeric(), size=4, endian=endian)
   aim@"cal_min" <- readBin(fid, numeric(), size=4, endian=endian)
@@ -420,12 +449,12 @@ readANALYZE <- function(fname, verbose=FALSE, warn=-1) {
   aim@"descrip" <- .readCharWithEmbeddedNuls(fid, n=80)
   aim@"aux_file" <- .readCharWithEmbeddedNuls(fid, n=24)
   aim@"orient" <- .readCharWithEmbeddedNuls(fid, n=1)
-  aim@"origin" <- readBin(fid, integer(), 5, size=2, endian=endian) # .readCharWithEmbeddedNuls(fid, 10)
-  aim@"generated" <- .readCharWithEmbeddedNuls(fid, 10)
-  aim@"scannum" <- .readCharWithEmbeddedNuls(fid, 10)
-  aim@"patient_id" <- .readCharWithEmbeddedNuls(fid, 10)
-  aim@"exp_date" <- .readCharWithEmbeddedNuls(fid, 10)
-  aim@"exp_time" <- .readCharWithEmbeddedNuls(fid, 10)
+  aim@"origin" <- readBin(fid, integer(), 5, size=2, endian=endian) # .readCharWithEmbeddedNuls(fid, n=10)
+  aim@"generated" <- .readCharWithEmbeddedNuls(fid, n=10)
+  aim@"scannum" <- .readCharWithEmbeddedNuls(fid, n=10)
+  aim@"patient_id" <- .readCharWithEmbeddedNuls(fid, n=10)
+  aim@"exp_date" <- .readCharWithEmbeddedNuls(fid, n=10)
+  aim@"exp_time" <- .readCharWithEmbeddedNuls(fid, n=10)
   aim@"hist_un0" <- .readCharWithEmbeddedNuls(fid, n=3)
   aim@"views" <- readBin(fid, integer(), size=4, endian=endian)
   aim@"vols_added" <- readBin(fid, integer(), size=4, endian=endian)
@@ -434,7 +463,12 @@ readANALYZE <- function(fname, verbose=FALSE, warn=-1) {
   aim@"omax" <- readBin(fid, integer(), size=4, endian=endian)
   aim@"omin" <- readBin(fid, integer(), size=4, endian=endian)
   aim@"smax" <- readBin(fid, integer(), size=4, endian=endian)
-  aim@"smin" <- readBin(fid, integer(), size=4, endian=endian)
+  magic <- readBin(fid, raw(), n=4, endian=endian)
+  aim@"smin" <- as.integer(magic) # readBin(fid, integer(), size=4, endian=endian)
+  ## Test for "magic" field (should not exist)
+  if (rawToChar(magic) == "ni1") { # now its actually NIfTI two-file format
+    stop("This is in two-file NIfTI format, please use readNIfTI")
+  }
   close(fid)
   ## Open image file
   if (gzipped) {
@@ -466,7 +500,14 @@ readANALYZE <- function(fname, verbose=FALSE, warn=-1) {
                             ") unsupported in", fname, sep="")))
   close(fid)
   dims <- 2:(1+aim@"dim_"[1])
-  aim@.Data <- array(data, aim@"dim_"[dims])
+  if (SPM) {
+    if (verbose) {
+      cat("  SPM format has been specified and data re-scaled.", fill=TRUE)
+    }
+    aim@.Data <- array(aim@"funused1" * data, aim@"dim_"[dims])
+  } else {
+    aim@.Data <- array(data, aim@"dim_"[dims])
+  }
   ## Warnings?
   options(warn=oldwarn)
   ## Check validity

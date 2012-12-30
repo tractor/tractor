@@ -47,5 +47,5 @@ quaternion2rotation(b, c, d)
 ## (which encodes a 180 degree rotation about the x-axis).
 (R <- quaternion2rotation(1, 0, 0))
 }
-\author{Brandon Whitcher \email{bjw34032@users.sourceforge.net}}
+\author{Brandon Whitcher \email{bwhitcher@gmail.com}}
 %\keyword{}

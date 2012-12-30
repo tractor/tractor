@@ -47,5 +47,5 @@ convert.orient.anlz(2)
 ##  4 = "coronal flipped"
 convert.orient.anlz(4)
 }
-\author{ Brandon Whitcher \email{bjw34032@users.sourceforge.net} }
+\author{ Brandon Whitcher \email{bwhitcher@gmail.com} }
 %\keyword{}

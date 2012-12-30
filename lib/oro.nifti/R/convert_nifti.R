@@ -184,58 +184,35 @@ convert.slice <- function(slice.code) {
 
 xyzt2space <- function(xyzt) {
   ## define XYZT_TO_SPACE(xyzt) ( (xyzt) & 0x07 )
-  if (require("bitops")) {
-    bitAnd(xyzt, 7)
-  } else {
-    NA
-  }
+  bitAnd(xyzt, 7)
 }
 
 xyzt2time <- function(xyzt) {
   ## define XYZT_TO_TIME(xyzt) ( (xyzt) & 0x38 )
-  if (require("bitops")) {
-    bitAnd(xyzt, 56)
-  } else {
-    NA
-  }
+  bitAnd(xyzt, 56)
 }
 
 space.time2xyzt <- function(ss, tt) {
   ## define SPACE_TIME_TO_XYZT(ss,tt) (  (((char)(ss)) & 0x07)   \
   ##                                   | (((char)(tt)) & 0x38) )
-  if (require("bitops")) {
-    bitAnd(convert.units(ss, inverse=TRUE), 7) +
-      bitAnd(convert.units(tt, inverse=TRUE), 56)
-  } else {
-    NA
-  }
+  ss <- bitAnd(convert.units(ss, inverse=TRUE), 7)
+  tt <- bitAnd(convert.units(tt, inverse=TRUE), 56)
+  ss + tt
 }
 
 dim2freq <- function(di) {
   ## define DIM_INFO_TO_FREQ_DIM(di) ( ((di)     ) & 0x03 )
-  if (require("bitops")) {
-    bitAnd(di, 3)
-  } else {
-    NA
-  }
+  bitAnd(di, 3)
 }
 
 dim2phase <- function(di) {
   ## define DIM_INFO_TO_PHASE_DIM(di) ( ((di) >> 2) & 0x03 )
-  if (require("bitops")) {
-    bitAnd(bitShiftR(di, 2), 3)
-  } else {
-    NA
-  }
+  bitAnd(bitShiftR(di, 2), 3)
 }
 
 dim2slice <- function(di) {
   ## define DIM_INFO_TO_SLICE_DIM(di) ( ((di) >> 4) & 0x03 )
-  if (require("bitops")) {
-    bitAnd(bitShiftR(di, 4), 3)
-  } else {
-    NA
-  }
+  bitAnd(bitShiftR(di, 4), 3)
 }
 
 ############################################################################

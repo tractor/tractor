@@ -12,7 +12,7 @@
   array from a binary file in Analyze 7.5 format.
 }
 \usage{
-readANALYZE(fname, verbose = FALSE, warn = -1)
+readANALYZE(fname, SPM = FALSE, verbose = FALSE, warn = -1)
 %read.analyze.content(fname, gzipped = TRUE, verbose = FALSE, warn = -1)
 }
 \arguments{
@@ -20,6 +20,11 @@ readANALYZE(fname, verbose = FALSE, warn = -1)
     without the suffix.}
 %  \item{gzipped}{Allows the import/export of compressed (.gz) files
 %    (default = \code{TRUE}).}
+  \item{SPM}{is a logical variable (default = \code{FALSE}) that
+    forces the voxel data values to be rescaled using the funused1
+    ANALYZE header field.  This is an undocumented convention of ANALYZE
+    files processed using the Statistical Parametric Mapping (SPM)
+    software.}
   \item{verbose}{is a logical variable (default = \code{FALSE}) that
     allows text-based feedback during execution of the function.}
   \item{warn}{is a number to regulate the display of warnings (default =
@@ -47,20 +52,9 @@ anlz.path <- system.file("anlz", package="oro.nifti")
 mni152 <- readANALYZE(file.path(anlz.path, "avg152T1"))
 image(mni152, oma=rep(2,4))
 orthographic(mni152, oma=rep(2,4))
-
-\dontrun{
-## 27 scans of Colin Holmes (MNI) brain co-registered and averaged
-URL <- "http://imaging.mrc-cbu.cam.ac.uk/downloads/Colin/colin_1mm.tgz"
-urlfile <- file.path(tempdir(), "colin_1mm.tgz")
-download.file(URL, dest=urlfile, quiet=TRUE)
-untar(urlfile, exdir=tempdir())
-colin <- readANALYZE(file.path(tempdir(), "colin_1mm"))
-image(colin, oma=rep(2,4))
-orthographic(colin, oma=rep(2,4))
-}
 }
 \author{
-  Brandon Whitcher \email{bjw34032@users.sourceforge.net},\cr
+  Brandon Whitcher \email{bwhitcher@gmail.com},\cr
   Volker Schmid \email{volkerschmid@users.sourceforge.net}
 }
 \keyword{file}

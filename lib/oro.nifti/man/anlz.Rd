@@ -33,7 +33,7 @@ is.anlz(x)
   ANALYZE 7.5\cr
   \url{http://www.mayo.edu/bir/PDF/ANALYZE75.pdf}
 }
-\author{ Brandon Whitcher \email{bjw34032@users.sourceforge.net} }
+\author{ Brandon Whitcher \email{bwhitcher@gmail.com} }
 \seealso{
   \code{\linkS4class{anlz}}, \code{\linkS4class{nifti}},
   \code{\link{nifti}}, \code{\link{convert.datatype.anlz}}

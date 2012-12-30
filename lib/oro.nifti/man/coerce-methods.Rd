@@ -62,7 +62,7 @@
 %\references{}
 \author{
   Andrew Thornton \email{zeripath@users.sourceforge.net} and
-  Brandon Whitcher \email{bjw34032@users.sourceforge.net}}
+  Brandon Whitcher \email{bwhitcher@gmail.com}}
 \seealso{
   \code{\link{as}}
 }

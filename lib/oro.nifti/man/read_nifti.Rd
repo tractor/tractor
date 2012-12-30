@@ -44,12 +44,13 @@ readNIfTI(fname, verbose=FALSE, warn=-1, reorient=TRUE, call=NULL)
 
   Current acceptable data types include
   \describe{
-    \item{\dQuote{UINT8}}{DT BINARY (1 bit per voxel)}
-    \item{\dQuote{INT16}}{DT SIGNED SHORT (16 bits per voxel)}
-    \item{\dQuote{INT32}}{DT SINGED INT (32 bits per voxel)}
-    \item{\dQuote{FLOAT32}}{DT FLOAT (32 bits per voxel)}
-    \item{\dQuote{DOUBLE64}}{DT DOUBLE (64 bits per voxel)}
-    \item{\dQuote{UINT16}}{DT UNSIGNED SHORT (16 bits per voxel)}
+    \item{\dQuote{UINT8}}{BINARY (1 bit per voxel)}
+    \item{\dQuote{INT16}}{SIGNED SHORT (16 bits per voxel)}
+    \item{\dQuote{INT32}}{SINGED INT (32 bits per voxel)}
+    \item{\dQuote{FLOAT32}}{FLOAT (32 bits per voxel)}
+    \item{\dQuote{DOUBLE64}}{DOUBLE (64 bits per voxel)}
+    \item{\dQuote{UINT16}}{UNSIGNED SHORT (16 bits per voxel)}
+    \item{\dQuote{UINT32}}{UNSIGNED INT (32 bits per voxel)}
     }
 }
 \value{
@@ -66,19 +67,30 @@ readNIfTI(fname, verbose=FALSE, warn=-1, reorient=TRUE, call=NULL)
 \dontrun{
 url <- "http://nifti.nimh.nih.gov/nifti-1/data/filtered_func_data.nii.gz"
 urlfile <- file.path(system.file("nifti", package="oro.nifti"),
-                     "ffd.nii.gz")
+                     "filtered_func_data")
 download.file(url, urlfile, quiet=TRUE)
 }
 ## The NIfTI file provided here contains the first 18 volumes (10\%)
 ## of the original data set
 urlfile <- file.path(system.file("nifti", package="oro.nifti"),
-                     "ffd.nii.gz")
+                     "filtered_func_data")
 (ffd <- readNIfTI(urlfile))
 image(ffd, oma=rep(2,4))
 orthographic(ffd, oma=rep(2,4))
+\dontrun{
+## 27 scans of Colin Holmes (MNI) brain co-registered and averaged
+## NIfTI two-file format
+URL <- "http://imaging.mrc-cbu.cam.ac.uk/downloads/Colin/colin_1mm.tgz"
+urlfile <- file.path(tempdir(), "colin_1mm.tgz")
+download.file(URL, dest=urlfile, quiet=TRUE)
+untar(urlfile, exdir=tempdir())
+colin <- readNIfTI(file.path(tempdir(), "colin_1mm"))
+image(colin, oma=rep(2,4))
+orthographic(colin, oma=rep(2,4))
+}
 }
 \author{
-  Brandon Whitcher \email{bjw34032@users.sourceforge.net},\cr
+  Brandon Whitcher \email{bwhitcher@gmail.com},\cr
   Volker Schmid \email{volkerschmid@users.sourceforge.net},\cr
   Andrew Thornton \email{zeripath@users.sourceforge.net}
 }

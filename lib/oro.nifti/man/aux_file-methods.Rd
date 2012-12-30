@@ -30,7 +30,7 @@
     \item{object = "nifti"}{Extract or replace NIfTI auxiliary file.}
   }
 }
-\author{ Brandon Whitcher \email{bjw34032@users.sourceforge.net} }
+\author{ Brandon Whitcher \email{bwhitcher@gmail.com} }
 \examples{
 \dontrun{
 url <- "http://nifti.nimh.nih.gov/nifti-1/data/avg152T1_RL_nifti.nii.gz"
@@ -38,6 +38,8 @@ urlfile <- file.path(system.file("nifti", package="oro.nifti"),
                      "mniRL.nii.gz")
 download.file(url, urlfile, quiet=TRUE)
 }
+options("niftiAuditTrail"=FALSE)
+
 urlfile <- file.path(system.file("nifti", package="oro.nifti"),
                      "mniRL.nii.gz")
 mniRL <- readNIfTI(urlfile)
