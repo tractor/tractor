@@ -1,6 +1,6 @@
 import(reportr)
 
-exportClasses(SerialisableObject, MriImageMetadata, MriImage, DicomMetadata, SparseArray, SparseOrDenseArray)
+exportClasses(SerialisableObject, SparseArray, MriImageData, MriImage, DicomMetadata)
 
 S3method(Math, MriImage)
 S3method(Ops, MriImage)
