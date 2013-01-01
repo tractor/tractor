@@ -1,99 +1,28 @@
-MriImageMetadata <- setRefClass("MriImageMetadata", contains="SerialisableObject", fields=list(imagedims="integer",voxdims="numeric",voxunit="character",source="character",datatype="list",origin="numeric",storedXform="matrix",tags="list"), methods=list(
-    initialize = function (imagedims = NULL, voxdims = NULL, voxunit = NULL, source = "internal", datatype = NULL, origin = NULL, storedXform = NA, tags = list(), ...)
+setClassUnion("MriImageData", c("SparseArray","array","NULL"))
+
+MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",storedXform="matrix",tags="list",data="MriImageData"), methods=list(
+    initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "internal", origin = NULL, storedXform = matrix(NA,0,0), tags = list(), data = NULL, ...)
     {
         if (length(tags) != 0 && !all(c("keys","values") %in% names(tags)))
             report(OL$Error, "Tag list must be empty, or else contain \"keys\" and \"values\" components")
-        if (is.null(voxunit))
-            voxunit <- "unknown"
-        names(voxunit)[voxunit %~% "m$"] <- "spatial"
-        names(voxunit)[voxunit %~% "s$"] <- "temporal"
+        if (is.null(voxelDimUnits))
+            voxelDimUnits <- "unknown"
         
-        object <- initFields(imagedims=as.integer(imagedims), voxdims=as.numeric(voxdims), voxunit=voxunit, source=source, datatype=as.list(datatype), origin=as.numeric(origin), storedXform=as.matrix(storedXform), tags=tags)
-        
-        if (!is.null(datatype) && !all(c("type","size","isSigned") %in% names(object$datatype)))
+        # For backwards compatibility
+        if (is.null(imageDims) && "imagedims" %in% names(list(...)))
         {
-            flag(OL$Warning, "Specified image data type is not valid - ignoring it")
-            object$datatype <- list()
+            oldFields <- list(...)
+            if (is.null(oldFields$voxunit))
+                oldFields$voxunit <- "unknown"
+            object <- initFields(imageDims=oldFields$imagedims, voxelDims=oldFields$voxdims, voxelDimUnits=oldFields$voxunit, source=source, origin=origin, storedXform=storedXform, tags=tags, data=data)
         }
+        else
+            object <- initFields(imageDims=as.integer(imageDims), voxelDims=as.numeric(voxelDims), voxelDimUnits=voxelDimUnits, source=source, origin=as.numeric(origin), storedXform=as.matrix(storedXform), tags=tags, data=data)
+        
+        names(object$voxelDimUnits)[object$voxelDimUnits %~% "m$"] <- "spatial"
+        names(object$voxelDimUnits)[object$voxelDimUnits %~% "s$"] <- "temporal"
         
         return (object)
-    },
-    
-    getDataType = function () { return (datatype) },
-    
-    getDimensionality = function () { return (length(voxdims)) },
-    
-    getDimensions = function () { return (imagedims) },
-    
-    getFieldOfView = function () { return (abs(voxdims) * imagedims) },
-    
-    getOrigin = function () { return (origin) },
-    
-    getSource = function () { return (source) },
-    
-    getStoredXformMatrix = function () { return (storedXform) },
-    
-    getTag = function (key)
-    {
-        if (!is.null(tags$keys) && !is.null(tags$values) && any(key == tags$keys))
-        {
-            rawValues <- tags$values[which(ket == tags$keys)]
-            return (strsplit(implode(rawValues,sep=""), "\\s*\\\\\\s*", perl=TRUE))
-        }
-        else
-            return (NA_character_)
-    },
-    
-    getTags = function () { return (tags) },
-    
-    getVoxelDimensions = function () { return (voxdims) },
-    
-    getVoxelUnit = function () { return (voxunit) },
-    
-    isInternal = function () { return (source == "internal") },
-    
-    setSource = function (newSource)
-    {
-        if (is.character(newSource) && (length(newSource) == 1))
-            .self$source <- newSource
-    },
-    
-    summarise = function ()
-    {
-        if (length(datatype) == 0)
-            datatypeString <- "undefined"
-        else
-        {
-            datatypeString <- ifelse(datatype$isSigned, "signed", "unsigned")
-            datatypeString <- paste(datatypeString, " ", datatype$type, ", ", datatype$size*8, " bits/voxel", sep="")
-        }
-        
-        spatialUnit <- voxunit["spatial"]
-        temporalUnit <- voxunit["temporal"]
-        voxelDimString <- paste(implode(round(abs(voxdims[1:min(3,length(voxdims))]),5), sep=" x "), ifelse(!is.na(spatialUnit),paste(" ",spatialUnit,sep=""),""), sep="")
-        if (length(voxdims) > 3)
-            voxelDimString <- paste(voxelDimString, " x ", round(abs(voxdims[4]),5), ifelse(!is.na(spatialUnit) && !is.na(temporalUnit),paste(" ", temporalUnit,sep=""),""), sep="")
-        if (length(voxdims) > 4)
-            voxelDimString <- paste(voxelDimString, " x ", implode(round(abs(voxdims[5:length(voxdims)]),5), sep=" x "), sep="")
-        if (all(voxunit == "unknown"))
-            voxelDimString <- paste(voxelDimString, "(units unknown)", sep=" ")
-        
-        labels <- c("Image source", "Image dimensions", "Coordinate origin", "Voxel dimensions", "Data type", "Additional tags")
-        values <- c(source, paste(implode(imagedims, sep=" x "),"voxels",sep=" "), paste("(",implode(round(origin,2), sep=","),")",sep=""), voxelDimString, datatypeString, length(tags$keys))
-        return (list(labels=labels, values=values))
-    }
-))
-
-setClassUnion("SparseOrDenseArray", c("SparseArray","array"))
-
-MriImage <- setRefClass("MriImage", contains="MriImageMetadata", fields=list(data="SparseOrDenseArray"), methods=list(
-    initialize = function (data = array(), metadata = NULL, ...)
-    {
-        if (!is.null(metadata))
-            import(metadata, "MriImageMetadata")
-        else
-            callSuper(...)
-        return (initFields(data=data))
     },
     
     apply = function (...)
@@ -119,7 +48,11 @@ MriImage <- setRefClass("MriImage", contains="MriImageMetadata", fields=list(dat
             return (NA)
     },
     
-    getMetadata = function () { return (export("MriImageMetadata")) },
+    getDimensionality = function () { return (length(voxelDims)) },
+    
+    getDimensions = function () { return (imageDims) },
+    
+    getFieldOfView = function () { return (abs(voxelDims) * imageDims) },
     
     getNonzeroIndices = function (array = TRUE, positiveOnly = FALSE)
     {
@@ -142,23 +75,80 @@ MriImage <- setRefClass("MriImage", contains="MriImageMetadata", fields=list(dat
         }
     },
     
+    getOrigin = function () { return (origin) },
+    
+    getSource = function () { return (source) },
+    
     getSparseness = function ()
     {
-        if (.self$isSparse())
+        if (is.null(data))
+            return (NA)
+        else if (.self$isSparse())
             return (1 - (nrow(data$getCoordinates()) / prod(.self$getDimensions())))
         else
             return (sum(data==0 | is.na(data)) / prod(.self$getDimensions()))
     },
     
+    getStoredXformMatrix = function () { return (storedXform) },
+    
+    getTag = function (key)
+    {
+        if (!is.null(tags$keys) && !is.null(tags$values) && any(key == tags$keys))
+        {
+            rawValues <- tags$values[which(key == tags$keys)]
+            return (strsplit(implode(rawValues,sep=""), "\\s*\\\\\\s*", perl=TRUE))
+        }
+        else
+            return (NA_character_)
+    },
+    
+    getTags = function () { return (tags) },
+    
+    getVoxelDimensions = function () { return (voxelDims) },
+    
+    getVoxelUnits = function () { return (voxelDimUnits) },
+    
+    isInternal = function () { return (source == "internal") },
+    
     isSparse = function () { return (is(data,"SparseArray")) },
+    
+    setSource = function (newSource)
+    {
+        if (is.character(newSource) && (length(newSource) == 1))
+            .self$source <- newSource
+    },
     
     summarise = function ()
     {
-        parentValue <- callSuper()
-        sparseness <- paste(round(.self$getSparseness()*100,2), "% (", ifelse(.self$isSparse(),"sparse","dense"), " storage)", sep="")
-        return (list(labels=c(parentValue$labels,"Sparseness"), values=c(parentValue$values,sparseness)))
+        spatialUnit <- voxelDimUnits["spatial"]
+        temporalUnit <- voxelDimUnits["temporal"]
+        voxelDimString <- paste(implode(round(abs(voxelDims[1:min(3,length(voxelDims))]),5), sep=" x "), ifelse(!is.na(spatialUnit),paste(" ",spatialUnit,sep=""),""), sep="")
+        if (length(voxelDims) > 3)
+            voxelDimString <- paste(voxelDimString, " x ", round(abs(voxelDims[4]),5), ifelse(!is.na(spatialUnit) && !is.na(temporalUnit),paste(" ", temporalUnit,sep=""),""), sep="")
+        if (length(voxelDims) > 4)
+            voxelDimString <- paste(voxelDimString, " x ", implode(round(abs(voxelDims[5:length(voxelDims)]),5), sep=" x "), sep="")
+        if (all(voxelDimUnits == "unknown"))
+            voxelDimString <- paste(voxelDimString, "(units unknown)", sep=" ")
+        
+        labels <- c("Image source", "Image dimensions", "Voxel dimensions", "Coordinate origin", "Additional tags")
+        values <- c(source, paste(implode(imageDims, sep=" x "),"voxels",sep=" "), voxelDimString, paste("(",implode(round(origin,2), sep=","),")",sep=""), length(tags$keys))
+        
+        if (!is.null(data))
+        {
+            sparseness <- paste(round(.self$getSparseness()*100,2), "% (", ifelse(.self$isSparse(),"sparse","dense"), " storage)", sep="")
+            labels <- c(labels, "Sparseness")
+            values <- c(values, sparseness)
+        }
+        
+        return (list(labels=labels, values=values))
     }
 ))
+
+# Register deserialiser for MriImageMetadata legacy class
+registerDeserialiser("MriImageMetadata", function (fields) {
+    object <- MriImage$new(imageDims=fields$imagedims, voxelDims=fields$voxdims, voxelDimUnits=fields$voxunit, source=fields$source, origin=fields$origin, storedXform=fields$storedXform, tags=fields$tags, data=NULL)
+    return (object)
+})
 
 setAs("MriImage", "array", function (from) as(from$getData(),"array"))
 
