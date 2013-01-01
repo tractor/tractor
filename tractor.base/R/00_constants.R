@@ -1,3 +1,5 @@
+.Deserialisers <- list()
+
 .Analyze <- list(
     typeCodes=c(2,          4,          8,          16,         64),
     rTypes=c(  "integer",  "integer",  "integer",  "double",   "double"),
