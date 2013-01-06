@@ -183,7 +183,7 @@ setAs("MriImage", "nifti", function (from) {
     storage.mode(data) <- .Nifti$datatypes$rTypes[typeIndex]
     
     # We default to 10 (mm and s)
-    unitName <- from$getVoxelUnit()
+    unitName <- from$getVoxelUnits()
     unitCode <- as.numeric(.Nifti$units[names(.Nifti$units) %in% unitName])
     if (length(unitCode) == 0)
         unitCode <- 10

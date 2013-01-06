@@ -42,13 +42,13 @@ readMgh <- function (fileNames)
     
     typeIndex <- which(.Mgh$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
-        report(OL$Error, "Specified MGH data type code is not valid")
-    datatype <- list(type=.Mgh$datatypes$rTypes[typeIndex], size=.Mgh$datatypes$sizes[typeIndex], isSigned=.Mgh$datatypes$isSigned[typeIndex])
+        report(OL$Error, "The MGH data type code is not valid")
+    datatype <- list(code=typeCode, type=.Mgh$datatypes$rTypes[typeIndex], size=.Mgh$datatypes$sizes[typeIndex], isSigned=.Mgh$datatypes$isSigned[typeIndex])
     
     dimsToKeep <- 1:max(which(dims > 1))
-    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep], voxelUnit=NULL, source=fileNames$fileStem, datatype=datatype, tags=list())
+    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep], voxelUnit=NULL, source=fileNames$fileStem, tags=list())
     
-    storageMetadata <- list(dataOffset=284, dataScalingSlope=1, dataScalingIntercept=0, xformMatrix=xformMatrix, endian="big")
+    storageMetadata <- list(dataOffset=284, dataScalingSlope=1, dataScalingIntercept=0, xformMatrix=xformMatrix, datatype=datatype, endian="big")
     
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
@@ -60,29 +60,7 @@ writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE, datatype = NU
     
     fileFun <- (if (gzipped) gzfile else file)
     
-    if (is.null(datatype))
-    {
-        datatype <- image$getDataType()
-        if (length(datatype) == 0)
-            report(OL$Error, "The data type is not stored with the image; it must be specified")
-    }
-    
-    # Try to match the datatype exactly; failing that, and if the data will
-    # fit, invert isSigned and try again; if that fails too, we have to give up
-    datatypeMatches <- (.Mgh$datatypes$rTypes == datatype$type) & (.Mgh$datatypes$sizes == datatype$size) & (.Mgh$datatypes$isSigned == datatype$isSigned)
-    if (sum(datatypeMatches) != 1)
-    {
-        signedMax <- 2^(datatype$size*8-1) - 1
-        flipOkay <- (!datatype$isSigned && max(image) <= signedMax) || (datatype$isSigned && min(image) >= 0)
-        if (flipOkay)
-        {
-            report(OL$Info, "Trying to change datatype for compatibility with MGH/MGZ format")
-            datatypeMatches <- (.Mgh$datatypes$rTypes == datatype$type) & (.Mgh$datatypes$sizes == datatype$size) & (.Mgh$datatypes$isSigned == !datatype$isSigned)
-        }
-    }
-    if (sum(datatypeMatches) != 1)
-        report(OL$Error, "No supported MGH/MGZ datatype is appropriate for this file")
-    typeIndex <- which(datatypeMatches)
+    datatype <- chooseDataTypeForImage(image, "Mgh")
     
     dims <- image$getDimensions()
     ndims <- image$getDimensionality()
@@ -110,14 +88,14 @@ writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE, datatype = NU
     
     writeBin(as.integer(1), connection, size=4, endian="big")
     writeBin(as.integer(fullDims), connection, size=4, endian="big")
-    writeBin(as.integer(.Mgh$datatypes$codes[typeIndex]), connection, size=4, endian="big")
+    writeBin(as.integer(datatype$code), connection, size=4, endian="big")
     writeBin(raw(4), connection)
     writeBin(as.integer(1), connection, size=2, endian="big")
     writeBin(as.double(abs(fullVoxelDims)), connection, size=4, endian="big")
     writeBin(as.double(xformlikeMatrix), connection, size=4, endian="big")
     writeBin(raw(194), connection)
     
-    writeImageData(image, connection, type=.Mgh$datatypes$rTypes[typeIndex], size=.Mgh$datatypes$sizes[typeIndex], endian="big")
+    writeImageData(image, connection, datatype$type, datatype$size, endian="big")
     close(connection)
     
     if (image$isInternal())

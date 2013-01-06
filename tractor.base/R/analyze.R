@@ -29,17 +29,17 @@ readAnalyze <- function (fileNames)
     ndims <- dims[1]
     dims <- dims[1:ndims + 1]
     
-    typeIndex <- which(.Analyze$typeCodes == typeCode)
+    typeIndex <- which(.Analyze$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
         report(OL$Error, "Data type of file ", fileNames$imageFile, " (", typeCode, ") is not supported")
-    datatype <- list(type=.Analyze$rTypes[typeIndex], size=.Analyze$sizes[typeIndex], isSigned=.Analyze$isSigned[typeIndex])
+    datatype <- list(code=typeCode, type=.Analyze$datatypes$rTypes[typeIndex], size=.Analyze$datatypes$sizes[typeIndex], isSigned=.Analyze$datatypes$isSigned[typeIndex])
     
     dimsToKeep <- 1:max(which(dims > 1))
-    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=NULL, source=fileNames$fileStem, datatype=datatype, tags=list())
+    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=NULL, source=fileNames$fileStem, tags=list())
     
     xformMatrix <- diag(c(-1,1,1,1) * abs(c(voxelDims[2:4],1)))
     xformMatrix[1:3,4] <- pmax(0,origin[1:3]-1) * abs(voxelDims[2:4]) * c(1,-1,-1)
-    storageMetadata <- list(dataOffset=0, dataScalingSlope=1, dataScalingIntercept=0, xformMatrix=xformMatrix, endian=endian)
+    storageMetadata <- list(dataOffset=0, dataScalingSlope=1, dataScalingIntercept=0, xformMatrix=xformMatrix, datatype=datatype, endian=endian)
     
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
@@ -51,29 +51,7 @@ writeMriImageToAnalyze <- function (image, fileNames, gzipped = FALSE, datatype 
     
     fileFun <- (if (gzipped) gzfile else file)
     
-    if (is.null(datatype))
-    {
-        datatype <- image$getDataType()
-        if (length(datatype) == 0)
-            report(OL$Error, "The data type is not stored with the image; it must be specified")
-    }
-    
-    # Try to match the datatype exactly; failing that, and if the data will
-    # fit, invert isSigned and try again; if that fails too, we have to give up
-    datatypeMatches <- (.Analyze$rTypes == datatype$type) & (.Analyze$sizes == datatype$size) & (.Analyze$isSigned == datatype$isSigned)
-    if (sum(datatypeMatches) != 1)
-    {
-        signedMax <- 2^(datatype$size*8-1) - 1
-        flipOkay <- (!datatype$isSigned && max(image) <= signedMax) || (datatype$isSigned && min(image) >= 0)
-        if (flipOkay)
-        {
-            report(OL$Info, "Trying to change datatype to comply with Analyze standard")
-            datatypeMatches <- (.Analyze$rTypes == datatype$type) & (.Analyze$sizes == datatype$size) & (.Analyze$isSigned == !datatype$isSigned)
-        }
-    }
-    if (sum(datatypeMatches) != 1)
-        report(OL$Error, "No supported Analyze datatype is appropriate for this file")
-    typeIndex <- which(datatypeMatches)
+    datatype <- chooseDataTypeForImage(image, "Analyze")
     
     ndims <- image$getDimensionality()
     fullDims <- c(ndims, image$getDimensions(), rep(1,7-ndims))
@@ -95,8 +73,8 @@ writeMriImageToAnalyze <- function (image, fileNames, gzipped = FALSE, datatype 
     # Second substructure: data dimensions, type
     writeBin(as.integer(fullDims), connection, size=2)
     writeBin(raw(14), connection)
-    writeBin(as.integer(.Analyze$typeCodes[typeIndex]), connection, size=2)
-    writeBin(as.integer(8*.Analyze$sizes[typeIndex]), connection, size=2)
+    writeBin(as.integer(datatype$code), connection, size=2)
+    writeBin(as.integer(8*datatype$size), connection, size=2)
     writeBin(raw(2), connection)
     writeBin(fullVoxelDims, connection, size=4)
     writeBin(raw(40), connection)
@@ -110,7 +88,7 @@ writeMriImageToAnalyze <- function (image, fileNames, gzipped = FALSE, datatype 
     
     # Image data
     connection <- fileFun(fileNames$imageFile, "w+b")
-    writeImageData(image, connection, type=.Analyze$rTypes[typeIndex], size=.Analyze$sizes[typeIndex])
+    writeImageData(image, connection, datatype$type, datatype$size)
     close(connection)
     
     if (image$isInternal())

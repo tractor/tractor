@@ -66,6 +66,8 @@ export(removeImageFilesWithName)
 export(copyImageFiles)
 export(symlinkImageFiles)
 
+export(chooseDataTypeForImage)
+
 export(sortDicomDirectory)
 export(newDicomMetadataFromFile)
 
