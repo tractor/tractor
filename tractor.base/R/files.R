@@ -334,25 +334,17 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         }
     }
     
-    imageMetadata <- MriImageMetadata$new(imagedims=dims, voxdims=voxelDims, voxunit=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, datatype=datatype, origin=origin, storedXform=info$storageMetadata$xformMatrix, tags=info$imageMetadata$tags)
-    
     if (metadataOnly)
-        invisible (imageMetadata)
+        image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, origin=origin, storedXform=info$storageMetadata$xformMatrix, tags=info$imageMetadata$tags)
     else
-    {
-        image <- MriImage$new(data, imageMetadata)
-        invisible (image)
-    }
+        image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, origin=origin, storedXform=info$storageMetadata$xformMatrix, tags=info$imageMetadata$tags, data=data)
+    
+    invisible (image)
 }
 
-newMriImageMetadataFromFile <- function (fileName, fileType = NULL)
+newMriImageFromFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL)
 {
-    invisible (readImageFile(fileName, fileType, metadataOnly=TRUE))
-}
-
-newMriImageFromFile <- function (fileName, fileType = NULL, volumes = NULL, sparse = FALSE, mask = NULL)
-{
-    invisible (readImageFile(fileName, fileType, metadataOnly=FALSE, volumes=volumes, sparse=sparse, mask=mask))
+    readImageFile(fileName, fileType, metadataOnly, volumes, sparse, mask)
 }
 
 writeImageData <- function (image, connection, type = NULL, size = NULL, endian = .Platform$endian)
@@ -391,7 +383,7 @@ writeImageData <- function (image, connection, type = NULL, size = NULL, endian 
     }
 }
 
-writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
+writeImageFile <- function (image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
@@ -430,4 +422,9 @@ writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, datatype
         writeMriImageToMgh(image, fileNames, gzipped=params$gzipped, datatype=datatype)
     
     invisible (fileNames)
+}
+
+writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
+{
+    writeImageFile(image, fileName, fileType, datatype, overwrite)
 }
