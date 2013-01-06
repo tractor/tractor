@@ -142,9 +142,10 @@ readNifti <- function (fileNames)
     
     xformMatrix <- getXformMatrix()
     
-    datatype <- getDataTypeByNiftiCode(typeCode)
-    if (is.null(datatype))
+    typeIndex <- which(.Nifti$datatypes$codes == typeCode)
+    if (length(typeIndex) != 1)
         report(OL$Error, "Data type of file ", fileNames$imageFile, " (", typeCode, ") is not supported")
+    datatype <- list(code=typeCode, type=.Nifti$datatypes$rTypes[typeIndex], size=.Nifti$datatypes$sizes[typeIndex], isSigned=.Nifti$datatypes$isSigned[typeIndex])
     
     # We're only interested in the bottom 5 bits (spatial and temporal units)
     spatialUnitCode <- packBits(intToBits(unitCode) & intToBits(7), "integer")
@@ -155,9 +156,9 @@ readNifti <- function (fileNames)
     
     dimsToKeep <- 1:max(which(dims > 1))
     
-    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=voxelUnit, source=fileNames$fileStem, datatype=datatype, tags=list())
+    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=voxelUnit, source=fileNames$fileStem, tags=list())
     
-    storageMetadata <- list(dataOffset=dataOffset, dataScalingSlope=slopeAndIntercept[1], dataScalingIntercept=slopeAndIntercept[2], xformMatrix=xformMatrix, endian=endian)
+    storageMetadata <- list(dataOffset=dataOffset, dataScalingSlope=slopeAndIntercept[1], dataScalingIntercept=slopeAndIntercept[2], xformMatrix=xformMatrix, datatype=datatype, endian=endian)
     
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
@@ -170,23 +171,14 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     description <- "TractoR NIfTI writer v2.2.0"
     fileFun <- (if (gzipped) gzfile else file)
     
-    if (is.null(datatype))
-    {
-        datatype <- image$getDataType()
-        if (length(datatype) == 0)
-            report(OL$Error, "The data type is not stored with the image; it must be specified")
-    }
-    
-    typeCode <- getNiftiCodeForDataType(datatype)
-    if (is.null(typeCode))
-        report(OL$Error, "No supported NIfTI datatype is appropriate for this file")
+    datatype <- chooseDataTypeForImage(image, "Nifti")
     
     ndims <- image$getDimensionality()
     fullDims <- c(ndims, image$getDimensions(), rep(1,7-ndims))
     fullVoxelDims <- c(-1, abs(image$getVoxelDimensions()), rep(0,7-ndims))
     
     # We default to 10 (mm and s)
-    unitName <- image$getVoxelUnit()
+    unitName <- image$getVoxelUnits()
     unitCode <- as.numeric(.Nifti$units[names(.Nifti$units) %in% unitName])
     if (length(unitCode) == 0)
         unitCode <- 10
@@ -210,7 +202,7 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     writeBin(raw(36), connection)
     writeBin(as.integer(fullDims), connection, size=2)
     writeBin(raw(14), connection)
-    writeBin(as.integer(typeCode), connection, size=2)
+    writeBin(as.integer(datatype$code), connection, size=2)
     writeBin(as.integer(8*datatype$size), connection, size=2)
     writeBin(raw(2), connection)
     writeBin(fullVoxelDims, connection, size=4)
@@ -245,7 +237,7 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
         connection <- fileFun(fileNames$imageFile, "w+b")
     }
     
-    writeImageData(image, connection)
+    writeImageData(image, connection, datatype$type, datatype$size)
     close(connection)
     
     if (image$isInternal())

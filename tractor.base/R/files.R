@@ -188,7 +188,7 @@ chooseDataTypeForImage <- function (image, format)
         isSigned <- datatypes$isSigned[datatypes$codes == code]
     }
     
-    return (list(code=code, rType=rType, size=size, isSigned=isSigned))
+    return (list(code=code, type=rType, size=size, isSigned=isSigned))
 }
 
 readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL)
@@ -198,7 +198,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     readFun <- switch(fileNames$format, Analyze=readAnalyze, Nifti=readNifti, Mgh=readMgh)
     info <- readFun(fileNames)
     
-    datatype <- info$imageMetadata$datatype
+    datatype <- info$storageMetadata$datatype
     endian <- info$storageMetadata$endian
     dims <- info$imageMetadata$imageDims
     voxelDims <- info$imageMetadata$voxelDims
@@ -408,18 +408,12 @@ newMriImageFromFile <- function (fileName, fileType = NULL, metadataOnly = FALSE
     readImageFile(fileName, fileType, metadataOnly, volumes, sparse, mask)
 }
 
-writeImageData <- function (image, connection, type = NULL, size = NULL, endian = .Platform$endian)
+writeImageData <- function (image, connection, type, size, endian = .Platform$endian)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
     
-    datatype <- image$getDataType()
     data <- image$getData()
-    
-    if (is.null(type))
-        type <- datatype$type
-    if (is.null(size))
-        size <- datatype$size
     
     if (image$isSparse())
     {
@@ -444,7 +438,7 @@ writeImageData <- function (image, connection, type = NULL, size = NULL, endian 
     }
 }
 
-writeImageFile <- function (image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
+writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
@@ -476,16 +470,16 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, datatype = NU
     fileNames <- list(fileStem=fileStem, headerFile=headerFile, imageFile=imageFile)
     
     if (params$format == "Analyze")
-        writeMriImageToAnalyze(image, fileNames, gzipped=params$gzipped, datatype=datatype)
+        writeMriImageToAnalyze(image, fileNames, gzipped=params$gzipped)
     else if (params$format == "Nifti")
-        writeMriImageToNifti(image, fileNames, gzipped=params$gzipped, datatype=datatype)
+        writeMriImageToNifti(image, fileNames, gzipped=params$gzipped)
     else if (params$format == "Mgh")
-        writeMriImageToMgh(image, fileNames, gzipped=params$gzipped, datatype=datatype)
+        writeMriImageToMgh(image, fileNames, gzipped=params$gzipped)
     
     invisible (fileNames)
 }
 
-writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
+writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE)
 {
-    writeImageFile(image, fileName, fileType, datatype, overwrite)
+    writeImageFile(image, fileName, fileType, overwrite)
 }
