@@ -166,21 +166,7 @@ registerDeserialiser("MriImageMetadata", function (fields) {
 
 setAs("MriImage", "array", function (from) as(from$getData(),"array"))
 
-setAs("array", "MriImage", function (from) {
-    if (storage.mode(from) == "integer")
-        datatype <- getDataTypeByNiftiCode(8)
-    else if (storage.mode(from) == "double")
-        datatype <- getDataTypeByNiftiCode(64)
-    else
-        report(OL$Error, "There is no MriImage data type to handle arrays of mode \"", storage.mode(from), "\"")
-    
-    nDims <- length(dim(from))
-    origin <- c(1, 1, 1, 0, 0, 0)[1:nDims]
-    metadata <- MriImageMetadata$new(imagedims=dim(from), voxdims=rep(1,nDims), datatype=datatype, origin=origin)
-    image <- newMriImageWithData(from, metadata)
-    
-    return (image)
-})
+setAs("array", "MriImage", function (from) newMriImageWithData(from))
 
 setAs("MriImage", "nifti", function (from) {
     if (is.null(getOption("niftiAuditTrail")))
@@ -254,9 +240,7 @@ setAs("nifti", "MriImage", function (from) {
     else
         origin <- rep(0, 3)
     
-    metadata <- MriImageMetadata$new(imagedims=from@dim_[seq_len(nDims)+1], voxdims=voxelDims, voxunit=voxelUnit, datatype=getDataTypeByNiftiCode(from@datatype), origin=c(1-origin/voxelDims3D,rep(0,max(0,3-nDims))))
-    image <- newMriImageWithData(from@.Data, metadata)
-    
+    image <- newMriImageWithData(from@.Data, imageDims=from@dim_[seq_len(nDims)+1], voxelDims=voxelDims, voxelDimUnits=voxelUnit, origin=c(1-origin/voxelDims3D,rep(0,max(0,3-nDims))))
     return (image)
 })
 
@@ -356,10 +340,53 @@ setMethod("Ops", "MriImage", Ops.MriImage)
 
 setMethod("Summary", "MriImage", Summary.MriImage)
 
+newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = NA, voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA)
+{
+    if (is.null(data))
+        report(OL$Error, "Data may not be NULL")
+    if (!is.numeric(data) && !is(data,"SparseArray"))
+        report(OL$Error, "The specified data is not numeric")
+    
+    if (!identical(imageDims, NA))
+        nDims <- length(imageDims)
+    else if (!is.null(dim(data)))
+    {
+        nDims <- length(dim(data))
+        imageDims <- dim(data)
+    }
+    else if (is(templateImage, "MriImage"))
+    {
+        subspaceDims <- cumprod(templateImage$getDimensions())
+        nDims <- which(subspaceDims == length(data))
+        if (length(nDims) == 0)
+            report(OL$Error, "Dimensionality of the data cannot be guessed from the template")
+        else
+        {
+            nDims <- nDims[1]
+            imageDims <- templateImage$getDimensions()[1:nDims]
+        }
+    }
+    else
+        report(OL$Error, "No information on image dimensions is available")
+    
+    defaults <- list(voxelDims=rep(1,nDims), voxelDimUnits="unknown", origin=c(1,1,1,0,0,0,0), tags=list())
+    template <- templateImage$serialise()
+    params <- list(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, origin=origin, tags=tags)
+    params <- params[!is.na(params)]
+    
+    composite <- c(params, template, defaults)
+    composite <- composite[!duplicated(names(composite))]
+    
+    image <- MriImage$new(imageDims=composite$imageDims[1:nDims], voxelDims=composite$voxelDims[1:nDims], voxelDimUnits=composite$voxelDimUnits, origin=composite$origin[1:nDims], tags=composite$tags, data=data)
+    invisible (image)
+}
+
 newMriImageWithDataRepresentation <- function (image, representation = c("dense","coordlist"))
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "Specified image is not an MriImage object")
+    if (image$isEmpty())
+        return (image)
     
     representation <- match.arg(representation)
     
@@ -370,88 +397,27 @@ newMriImageWithDataRepresentation <- function (image, representation = c("dense"
     else
         newImage <- image
     
-    invisible(newImage)
+    return (newImage)
 }
 
-newMriImageMetadataFromTemplate <- function (metadata, imageDims = NA, voxelDims = NA, voxelUnit = NA, datatype = NA, origin = NA, tags = NA)
-{
-    if (!is(metadata, "MriImageMetadata"))
-        report(OL$Error, "The specified metadata template is not valid")
-    
-    template <- metadata$serialise()
-    params <- list(imagedims=imageDims,
-                   voxdims=voxelDims,
-                   voxunit=voxelUnit,
-                   datatype=datatype,
-                   origin=origin,
-                   tags=tags)
-    params <- params[!is.na(params)]
-    
-    composite <- c(params, template)
-    composite <- composite[!duplicated(names(composite))]
-    
-    newMetadata <- MriImageMetadata$new(imagedims=composite$imagedims, voxdims=composite$voxdims, voxunit=composite$voxunit, datatype=composite$datatype, origin=composite$origin, tags=composite$tags)
-    invisible (newMetadata)
-}
-
-newMriImageWithData <- function (data, metadata)
-{
-    # Do not use the metadata object supplied because it is mutable and we
-    # don't want changes (to e.g. source) to affect multiple images
-    metadataDuplicate <- newMriImageMetadataFromTemplate(metadata)
-    image <- MriImage$new(data, metadataDuplicate)
-    invisible (image)
-}
-
-newMriImageFromTemplate <- function (image, ...)
-{
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
-    
-    oldMetadata <- image$getMetadata()
-    newMetadata <- newMriImageMetadataFromTemplate(oldMetadata, ...)
-    
-    if (equivalent(oldMetadata$getDimensions(), newMetadata$getDimensions()))
-        newImage <- MriImage$new(image$getData(), newMetadata)
-    else
-    {
-        if (prod(oldMetadata$getDimensions()) != prod(newMetadata$getDimensions()))
-            flag(OL$Warning, "The requested image dimensions will not result in a perfect reshaping")
-        newData <- array(as.vector(image$getData()), dim=newMetadata$getDimensions())
-        newImage <- MriImage$new(newData, newMetadata)
-    }
-    
-    invisible (newImage)
-}
-
-newMriImageWithSimpleFunction <- function (image, fun, ..., newDataType = NULL)
+newMriImageWithSimpleFunction <- function (image, fun, ...)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
     
     fun <- match.fun(fun)
     newData <- fun(image$getData(), ...)
-    if (is.null(dim(newData)))
-        dim(newData) <- image$getDimensions()
-    newDataType <- (if (is.null(newDataType)) image$getDataType() else newDataType)
-    metadata <- newMriImageMetadataFromTemplate(image$getMetadata(), datatype=newDataType)
-    
-    image <- MriImage$new(newData, metadata)
-    invisible (image)
+    return (newMriImageWithData(newData, image))
 }
 
-newMriImageWithBinaryFunction <- function (image1, image2, fun, ..., newDataType = NULL)
+newMriImageWithBinaryFunction <- function (image1, image2, fun, ...)
 {
     if (!is(image1,"MriImage") || !is(image2,"MriImage"))
         report(OL$Error, "The specified images are not MriImage objects")
     
     fun <- match.fun(fun)
     newData <- fun(image1$getData(), image2$getData(), ...)
-    newDataType <- (if (is.null(newDataType)) image1$getDataType() else newDataType)
-    metadata <- newMriImageMetadataFromTemplate(image1$getMetadata(), datatype=newDataType)
-    
-    image <- MriImage$new(newData, metadata)
-    invisible (image)
+    return (newMriImageWithData(newData, image1))
 }
 
 extractDataFromMriImage <- function (image, dim, loc)
@@ -463,11 +429,9 @@ extractDataFromMriImage <- function (image, dim, loc)
     if (!(loc %in% 1:(image$getDimensions()[dim])))
         report(OL$Error, "The specified location is out of bounds")
     
-    data <- image$getData()
-    dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
-    
     # This "apply" call is a cheeky bit of R wizardry (credit: Peter Dalgaard)
-    newData <- apply(data, dimsToKeep, "[", loc)
+    dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
+    newData <- image$apply(dimsToKeep, "[", loc)
     if (is.vector(newData))
         newData <- promote(newData)
     
@@ -477,13 +441,10 @@ extractDataFromMriImage <- function (image, dim, loc)
 newMriImageByExtraction <- function (image, dim, loc)
 {
     newData <- extractDataFromMriImage(image, dim, loc)
-    
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
-    metadata <- image$getMetadata()$serialise()
-    newMetadata <- MriImageMetadata$new(imagedims=metadata$imagedims[dimsToKeep], voxdims=metadata$voxdims[dimsToKeep], voxunit=metadata$voxunit, datatype=metadata$datatype, origin=metadata$origin[dimsToKeep], tags=metadata$tags)
-        
-    image <- MriImage$new(newData, newMetadata)
-    invisible (image)
+    
+    image <- newMriImageWithData(newData, image, imageDims=image$getDimensions()[dimsToKeep], voxelDims=image$getVoxelDimensions()[dimsToKeep], origin=image$getOrigin()[dimsToKeep])
+    return (image)
 }
 
 newMriImageByMasking <- function (image, mask)
@@ -491,13 +452,11 @@ newMriImageByMasking <- function (image, mask)
     if (!identical(image$getDimensions(), dim(mask)))
         report(OL$Error, "The specified image and mask do not have the same dimensions")
     if (!is.logical(mask))
-        report(OL$Error, "Mask must be specified as an array of logical values")
+        mask <- mask != 0
     
     newData <- image$getData() * mask
-    metadata <- newMriImageMetadataFromTemplate(image$getMetadata())
-    
-    image <- MriImage$new(newData, metadata)
-    invisible (image)
+    newImage <- newMriImageWithData(newData, image)
+    invisible (newImage)
 }
 
 newMriImageByThresholding <- function (image, level, defaultValue = 0)
@@ -530,8 +489,6 @@ newMriImageByTrimming <- function (image, clearance = 4)
     newDims <- sapply(indices, length)
     
     # NB: Origin is not corrected here
-    metadata <- newMriImageMetadataFromTemplate(image$getMetadata(), imageDims=newDims)
-    newImage <- newMriImageWithData(data, metadata)
-    
+    newImage <- newMriImageWithData(data, image, imageDims=newDims)
     invisible (newImage)
 }
