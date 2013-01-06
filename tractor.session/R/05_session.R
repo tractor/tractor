@@ -38,12 +38,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         }
     },
     
-    getImageByType = function (type, place = NULL, index = 1)
+    getImageByType = function (type, place = NULL, index = 1, ...)
     {
         fileName <- getImageFileNameByType(type, place, index)
         if (tolower(type) == "radialdiff" && !imageFileExists(fileName))
             createRadialDiffusivityMapForSession(.self)
-        return (newMriImageFromFile(fileName))
+        return (readImageFile(fileName, ...))
     },
     
     getImageFileNameByType = function (type, place = NULL, index = 1) { return (getImageFileNameForSession(.self, type, place, index)) },
