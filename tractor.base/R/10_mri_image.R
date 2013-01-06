@@ -8,6 +8,11 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         if (is.null(voxelDimUnits))
             voxelDimUnits <- "unknown"
         
+        if (!is.null(imageDims) && !is.null(data) && !equivalent(imageDims,dim(data)))
+            dim(data) <- imageDims
+        else if (is.null(imageDims))
+            imageDims <- dim(data)
+        
         # For backwards compatibility
         if (is.null(imageDims) && "imagedims" %in% names(list(...)))
         {
@@ -27,16 +32,21 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     apply = function (...)
     {
-        if (.self$isSparse())
-            return (.self$data$apply(...))
+        if (.self$isEmpty())
+            report(OL$Error, "The image contains no data")
+        else if (.self$isSparse())
+            return (data$apply(...))
         else
-            return (base::apply(.self$data, ...))
+            return (base::apply(data, ...))
     },
     
     getData = function () { return (data) },
     
     getDataAtPoint = function (...)
     {
+        if (is.null(data))
+            return (NA)
+        
         dim <- getDimensionality()
         loc <- resolveVector(len=dim, ...)
         if (is.null(loc) || (length(...) != dim))
@@ -56,7 +66,9 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getNonzeroIndices = function (array = TRUE, positiveOnly = FALSE)
     {
-        if (.self$isSparse())
+        if (.self$isEmpty())
+            report(OL$Error, "The image contains no data")
+        else if (.self$isSparse())
         {
             locs <- data$getCoordinates()
             if (positiveOnly)
@@ -81,7 +93,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getSparseness = function ()
     {
-        if (is.null(data))
+        if (.self$isEmpty())
             return (NA)
         else if (.self$isSparse())
             return (1 - (nrow(data$getCoordinates()) / prod(.self$getDimensions())))
@@ -108,6 +120,8 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getVoxelUnits = function () { return (voxelDimUnits) },
     
+    isEmpty = function () { return (is.null(data)) },
+    
     isInternal = function () { return (source == "internal") },
     
     isSparse = function () { return (is(data,"SparseArray")) },
@@ -133,7 +147,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         labels <- c("Image source", "Image dimensions", "Voxel dimensions", "Coordinate origin", "Additional tags")
         values <- c(source, paste(implode(imageDims, sep=" x "),"voxels",sep=" "), voxelDimString, paste("(",implode(round(origin,2), sep=","),")",sep=""), length(tags$keys))
         
-        if (!is.null(data))
+        if (!.self$isEmpty())
         {
             sparseness <- paste(round(.self$getSparseness()*100,2), "% (", ifelse(.self$isSparse(),"sparse","dense"), " storage)", sep="")
             labels <- c(labels, "Sparseness")
