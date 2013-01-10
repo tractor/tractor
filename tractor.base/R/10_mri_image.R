@@ -1,12 +1,16 @@
 setClassUnion("MriImageData", c("SparseArray","array","NULL"))
 
 MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",storedXform="matrix",tags="list",data="MriImageData"), methods=list(
-    initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "internal", origin = NULL, storedXform = matrix(NA,0,0), tags = list(), data = NULL, ...)
+    initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, storedXform = matrix(NA,0,0), tags = list(), data = NULL, ...)
     {
         if (length(tags) != 0 && !all(c("keys","values") %in% names(tags)))
             report(OL$Error, "Tag list must be empty, or else contain \"keys\" and \"values\" components")
         if (is.null(voxelDimUnits))
             voxelDimUnits <- "unknown"
+        
+        # For backwards compatibility
+        if (source == "internal")
+            source <- ""
         
         if (!is.null(imageDims) && !is.null(data) && !equivalent(imageDims,dim(data)))
             dim(data) <- imageDims
@@ -14,12 +18,12 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             imageDims <- dim(data)
         
         # For backwards compatibility
-        if (is.null(imageDims) && "imagedims" %in% names(list(...)))
+        if (is.null(voxelDims) && "voxdims" %in% names(list(...)))
         {
             oldFields <- list(...)
             if (is.null(oldFields$voxunit))
                 oldFields$voxunit <- "unknown"
-            object <- initFields(imageDims=oldFields$imagedims, voxelDims=oldFields$voxdims, voxelDimUnits=oldFields$voxunit, source=source, origin=origin, storedXform=storedXform, tags=tags, data=data)
+            object <- initFields(imageDims=as.integer(oldFields$imagedims), voxelDims=as.numeric(oldFields$voxdims), voxelDimUnits=oldFields$voxunit, source=source, origin=as.numeric(origin), storedXform=storedXform, tags=tags, data=data)
         }
         else
             object <- initFields(imageDims=as.integer(imageDims), voxelDims=as.numeric(voxelDims), voxelDimUnits=voxelDimUnits, source=source, origin=as.numeric(origin), storedXform=as.matrix(storedXform), tags=tags, data=data)
@@ -122,15 +126,28 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     isEmpty = function () { return (is.null(data)) },
     
-    isInternal = function () { return (source == "internal") },
+    isInternal = function () { return (source == "") },
     
     isSparse = function () { return (is(data,"SparseArray")) },
     
+    setOrigin = function (newOrigin)
+    {
+        if (is.numeric(newOrigin) && length(newOrigin) == .self$getDimensionality())
+        {
+            .self$origin <- newOrigin
+            .self$setSource(NULL)
+        }
+    },
+    
     setSource = function (newSource)
     {
-        if (is.character(newSource) && (length(newSource) == 1))
+        if (is.null(newSource))
+            .self$source <- ""
+        else if (is.character(newSource) && (length(newSource) == 1))
             .self$source <- newSource
     },
+    
+    stripData = function () { .self$data <- NULL },
     
     summarise = function ()
     {
@@ -145,7 +162,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             voxelDimString <- paste(voxelDimString, "(units unknown)", sep=" ")
         
         labels <- c("Image source", "Image dimensions", "Voxel dimensions", "Coordinate origin", "Additional tags")
-        values <- c(source, paste(implode(imageDims, sep=" x "),"voxels",sep=" "), voxelDimString, paste("(",implode(round(origin,2), sep=","),")",sep=""), length(tags$keys))
+        values <- c(ifelse(source=="","internal",source), paste(implode(imageDims, sep=" x "),"voxels",sep=" "), voxelDimString, paste("(",implode(round(origin,2), sep=","),")",sep=""), length(tags$keys))
         
         if (!.self$isEmpty())
         {
