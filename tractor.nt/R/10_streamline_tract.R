@@ -1,4 +1,4 @@
-StreamlineTractMetadata <- setRefClass("StreamlineTractMetadata", contains="SerialisableObject", fields=list(originAtSeed="logical",coordUnit="character",imageMetadata="MriImageMetadata"), methods=list(
+StreamlineTractMetadata <- setRefClass("StreamlineTractMetadata", contains="SerialisableObject", fields=list(originAtSeed="logical",coordUnit="character",imageMetadata="MriImage"), methods=list(
     initialize = function (...)
     {
         object <- initFields(...)
@@ -157,6 +157,12 @@ StreamlineCollectionTract <- setRefClass("StreamlineCollectionTract", contains="
 
 newStreamlineTractMetadataFromImageMetadata <- function (imageMetadata, originAtSeed, coordUnit)
 {
+    if (!is(imageMetadata, "MriImage"))
+        report(OL$Error, "The specified image metadata is not an MriImage object")
+    
+    imageMetadata <- imageMetadata$copy()
+    imageMetadata$stripData()
+    
     tractMetadata <- StreamlineTractMetadata$new(originAtSeed=originAtSeed, coordUnit=coordUnit, imageMetadata=imageMetadata)
     invisible (tractMetadata)
 }
@@ -301,7 +307,7 @@ newStreamlineSetTractFromProbtrack <- function (session, x, y = NULL, z = NULL, 
             report(OL$Verbose, "Done ", i)
     }
     
-    t2Metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("maskedb0"))
+    t2Metadata <- session$getImageByType("maskedb0", metadataOnly=TRUE)
     metadata <- newStreamlineTractMetadataFromImageMetadata(t2Metadata, FALSE, "vox")
     
     tract <- StreamlineSetTract$new(seedPoint=seed, leftLengths=as.integer(leftLengths), rightLengths=as.integer(rightLengths), leftPoints=leftData, rightPoints=rightData, metadata=metadata)
