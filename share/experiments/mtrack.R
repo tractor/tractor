@@ -40,7 +40,7 @@ runExperiment <- function ()
     }
     else
     {
-        seedMask <- newMriImageFromFile(seedMaskFile)
+        seedMask <- readImageFile(seedMaskFile)
         if (seedMaskInStandardSpace)
             seedMask <- transformStandardSpaceImage(session, seedMask)
     }
@@ -61,7 +61,7 @@ runExperiment <- function ()
         exclusion <- logical(0)
         for (waypointFile in waypointMaskFiles)
         {
-            waypointMask <- newMriImageFromFile(waypointFile)
+            waypointMask <- readImageFile(waypointFile)
             if (waypointMasksInStandardSpace)
                 waypointMask <- transformStandardSpaceImage(session, waypointMask)
             waypointMasks <- c(waypointMasks, list(waypointMask))
@@ -69,7 +69,7 @@ runExperiment <- function ()
         }
         for (exclusionFile in exclusionMaskFiles)
         {
-            exclusionMask <- newMriImageFromFile(exclusionFile)
+            exclusionMask <- readImageFile(exclusionFile)
             if (exclusionMasksInStandardSpace)
                 exclusionMask <- transformStandardSpaceImage(session, exclusionMask)
             waypointMasks <- c(waypointMasks, list(exclusionMask))
@@ -116,7 +116,7 @@ runExperiment <- function ()
             result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks, exclusion)
             if (is.null(result$streamlines))
             {
-                metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("mask","diffusion"))
+                metadata <- session$getImageByType("mask", "diffusion", metadataOnly=TRUE)
                 result$image <- newMriImageWithData(array(0,dim=metadata$getDimensions()), metadata)
                 result$nSamples <- 0
             }
@@ -132,7 +132,7 @@ runExperiment <- function ()
     
     report(OL$Info, "Creating tract images")
     if (createVolumes)
-        writeMriImageToFile(result$image, tractName)
+        writeImageFile(result$image, tractName)
     if (createImages)
         writePngsForResult(result, prefix=tractName, threshold=vizThreshold, showSeed=showSeed)
     

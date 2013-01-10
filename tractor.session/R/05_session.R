@@ -298,5 +298,5 @@ createRadialDiffusivityMapForSession <- function (session)
     thirdEigenvalue <- session$getImageByType("eigenvalue", "diffusion", index=3)
     radialDiffusivity <- newMriImageWithBinaryFunction(secondEigenvalue, thirdEigenvalue, function(x,y) (x+y)/2)
     
-    writeMriImageToFile(radialDiffusivity, session$getImageFileNameByType("radialdiff"))
+    writeImageFile(radialDiffusivity, session$getImageFileNameByType("radialdiff"))
 }

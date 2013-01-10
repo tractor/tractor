@@ -10,7 +10,7 @@ runExperiment <- function ()
     widthType <- getConfigVariable("WidthType", "sd", validValues=c("sd","fwhm"))
     widthUnit <- getConfigVariable("WidthUnit", "mm", validValues=c("mm","vox"))
     
-    image <- newMriImageFromFile(Arguments[1])
+    image <- readImageFile(Arguments[1])
     width <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
     
     if (length(width) == 1)
@@ -19,10 +19,10 @@ runExperiment <- function ()
         width <- width / 2*sqrt(2*log(2))
     if (widthUnit == "mm")
     {
-        if (is.na(image$getVoxelUnit()["spatial"]))
+        if (is.na(image$getVoxelUnits()["spatial"]))
             multiplier <- 1
         else
-            multiplier <- switch(image$getVoxelUnit()["spatial"], m=1000, mm=1, um=0.001)
+            multiplier <- switch(image$getVoxelUnits()["spatial"], m=1000, mm=1, um=0.001)
         width <- width / abs(image$getVoxelDimensions()[1:length(width)] * multiplier)
     }
     
@@ -30,7 +30,7 @@ runExperiment <- function ()
     
     newImage <- newMriImageWithSimpleFunction(image, gaussianSmooth, sigma=width)
     fileName <- paste(Arguments[1], "smoothed", sep="_")
-    writeMriImageToFile(newImage, fileName)
+    writeImageFile(newImage, fileName)
     
     invisible(NULL)
 }

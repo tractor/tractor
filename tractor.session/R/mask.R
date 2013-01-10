@@ -39,9 +39,8 @@ createMaskImageForSession <- function (session, method = c("kmeans","fill"), nCl
         maskData <- array(1L, dim=t2Image$getDimensions())
     }
     
-    writeMriImageToFile(t2Image, session$getImageFileNameByType("maskedb0"))
+    writeImageFile(t2Image, session$getImageFileNameByType("maskedb0"))
     
-    maskMetadata <- newMriImageMetadataFromTemplate(t2Image$getMetadata(), datatype=getDataTypeByNiftiCode(4))
-    mask <- newMriImageWithData(maskData, maskMetadata)
-    writeMriImageToFile(mask, session$getImageFileNameByType("mask","diffusion"))
+    mask <- newMriImageWithData(maskData, t2Image)
+    writeImageFile(mask, session$getImageFileNameByType("mask","diffusion"))
 }

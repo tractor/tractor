@@ -319,7 +319,7 @@ setReplaceMethod("[", signature(x="MriImage",i="missing",j="missing"), function 
         x$data[] <- value
     else
         x$data[,,...] <- value
-    x$setSource("internal")
+    x$setSource(NULL)
     return (x)
 })
 
@@ -329,19 +329,19 @@ setReplaceMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, 
         x$data[i] <- value
     else
         x$data[i,,...] <- value
-    x$setSource("internal")
+    x$setSource(NULL)
     return (x)
 })
 
 setReplaceMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, ..., value) {
     x$data[,j,...] <- value
-    x$setSource("internal")
+    x$setSource(NULL)
     return (x)
 })
 
 setReplaceMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., value) {
     x$data[i,j,...] <- value
-    x$setSource("internal")
+    x$setSource(NULL)
     return (x)
 })
 

@@ -6,7 +6,7 @@ suppressPackageStartupMessages(require(tractor.session))
 runExperiment <- function ()
 {
     requireArguments("image file", "data value(s) to extract")
-    image <- newMriImageFromFile(Arguments[1])
+    image <- readImageFile(Arguments[1])
     values <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
     
     createImages <- getConfigVariable("CreateImages", FALSE)
@@ -23,7 +23,7 @@ runExperiment <- function ()
     }
     
     newImage <- newMriImageWithSimpleFunction(image, selectionFunction)
-    writeMriImageToFile(newImage, regionName)
+    writeImageFile(newImage, regionName)
     
     if (createImages)
     {

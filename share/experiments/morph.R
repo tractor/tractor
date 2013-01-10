@@ -11,17 +11,17 @@ runExperiment <- function ()
     kernelShape <- getConfigVariable("KernelShape", "box", validValues=c("box","disc","diamond"))
     widthUnit <- getConfigVariable("WidthUnit", "vox", validValues=c("mm","vox"))
     
-    image <- newMriImageFromFile(Arguments[1])
+    image <- readImageFile(Arguments[1])
     width <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
     
     if (length(width) == 1)
         width <- rep(width, min(3,image$getDimensionality()))
     if (widthUnit == "mm")
     {
-        if (is.na(image$getVoxelUnit()["spatial"]))
+        if (is.na(image$getVoxelUnits()["spatial"]))
             multiplier <- 1
         else
-            multiplier <- switch(image$getVoxelUnit()["spatial"], m=1000, mm=1, um=0.001)
+            multiplier <- switch(image$getVoxelUnits()["spatial"], m=1000, mm=1, um=0.001)
         width <- width / abs(image$getVoxelDimensions()[1:length(width)] * multiplier)
     }
     
@@ -30,7 +30,7 @@ runExperiment <- function ()
     kernel <- shapeKernel(width, type=kernelShape, brush=TRUE)
     newImage <- newMriImageWithSimpleFunction(image, get(operation), kernel=kernel)
     fileName <- paste(Arguments[1], "morphed", sep="_")
-    writeMriImageToFile(newImage, fileName)
+    writeImageFile(newImage, fileName)
     
     invisible(NULL)
 }

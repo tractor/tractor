@@ -16,6 +16,6 @@ runExperiment <- function ()
     
     info <- newMriImageFromDicomDirectory(Arguments[1], untileMosaics=untileMosaics)
     reportFlags()
-    writeMriImageToFile(info$image, fileName)
+    writeImageFile(info$image, fileName)
     print(info$image)
 }

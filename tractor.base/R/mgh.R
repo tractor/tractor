@@ -53,7 +53,7 @@ readMgh <- function (fileNames)
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
 
-writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE, datatype = NULL)
+writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")

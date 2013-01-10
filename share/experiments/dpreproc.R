@@ -68,7 +68,7 @@ runExperiment <- function ()
             info <- newMriImageFromDicomDirectory(dicomDir, readDiffusionParams=TRUE)
 
             session$getDirectory("diffusion", createIfMissing=TRUE)
-            writeMriImageToFile(info$image, session$getImageFileNameByType("rawdata","diffusion"))
+            writeImageFile(info$image, session$getImageFileNameByType("rawdata","diffusion"))
             print(info$image)
 
             seriesDescriptions <- implode(gsub("\\W","",info$seriesDescriptions,perl=TRUE), ",")
@@ -132,7 +132,7 @@ runExperiment <- function ()
                     choice <- ask("Use which one as the reference [1-", length(zeroes), "; s to show in fslview]?")
                     if (tolower(choice) == "s")
                     {
-                        zeroVolumes <- newMriImageFromFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=zeroes)
+                        zeroVolumes <- readImageFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=zeroes)
                         showImagesInViewer(zeroVolumes, viewer="fslview")
                     }
                     else
@@ -145,8 +145,8 @@ runExperiment <- function ()
             writeLines(as.character(choice), file.path(session$getDirectory("diffusion"),"refb0-index.txt"))
             
             report(OL$Info, "Extracting reference volume")
-            refVolume <- newMriImageFromFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=choice)
-            writeMriImageToFile(refVolume, session$getImageFileNameByType("refb0"))
+            refVolume <- readImageFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=choice)
+            writeImageFile(refVolume, session$getImageFileNameByType("refb0"))
         }
         
         if (runStages[3] && (!skipCompleted || !stagesComplete[3]))

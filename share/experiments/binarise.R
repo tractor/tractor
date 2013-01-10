@@ -8,7 +8,7 @@ runExperiment <- function ()
     baseThreshold <- getConfigVariable("ThresholdLevel", NULL, "numeric")
     thresholdMode <- getConfigVariable("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
     
-    image <- newMriImageFromFile(Arguments[1])
+    image <- readImageFile(Arguments[1])
     
     if (!is.null(baseThreshold))
     {
@@ -16,8 +16,8 @@ runExperiment <- function ()
         image <- newMriImageByThresholding(image, threshold)
     }
     
-    image <- newMriImageWithSimpleFunction(image, function(x) ifelse(x>0, 1, 0), newDataType=getDataTypeByNiftiCode(2))
+    image <- newMriImageWithSimpleFunction(image, function(x) ifelse(x>0, 1, 0))
     
-    writeMriImageToFile(image, Arguments[nArguments()])
+    writeImageFile(image, Arguments[nArguments()])
     invisible(NULL)
 }
