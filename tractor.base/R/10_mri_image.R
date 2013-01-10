@@ -188,16 +188,10 @@ setAs("array", "MriImage", function (from) newMriImageWithData(from))
 setAs("MriImage", "nifti", function (from) {
     if (is.null(getOption("niftiAuditTrail")))
         options(niftiAuditTrail=FALSE)
-    suppressPackageStartupMessages(require(oro.nifti))
+    loadNamespace("oro.nifti")
     
-    datatype <- from$getDataType()
-    datatypeMatches <- (.Nifti$datatypes$rTypes == datatype$type) & (.Nifti$datatypes$sizes == datatype$size) & (.Nifti$datatypes$isSigned == datatype$isSigned)
-    if (length(which(datatypeMatches)) != 1)
-        report(OL$Error, "No supported NIfTI datatype is appropriate for this file")
-    typeIndex <- which(datatypeMatches)
-    
+    datatype <- chooseDataTypeForImage(from, "Nifti")
     data <- as(from$getData(), "array")
-    storage.mode(data) <- .Nifti$datatypes$rTypes[typeIndex]
     
     # We default to 10 (mm and s)
     unitName <- from$getVoxelUnits()
@@ -224,7 +218,7 @@ setAs("MriImage", "nifti", function (from) {
     
     xformCode <- ifelse(from$getDimensionality() == 2, 0, 2)
     
-    return (new("nifti", .Data=data, dim_=fullDims, datatype=.Nifti$datatypes$codes[typeIndex], bitpix=8*.Nifti$datatypes$sizes[typeIndex], pixdim=fullVoxelDims, xyzt_units=unitCode, qform_code=xformCode, sform_code=xformCode, quatern_b=0, quatern_c=1, quatern_d=0, qoffset_x=origin[1], qoffset_y=origin[2], qoffset_z=origin[3], srow_x=sformRows[1:4], srow_y=sformRows[5:8], srow_z=sformRows[9:12], cal_min=min(data), cal_max=max(data)))
+    return (new(structure("nifti",package="oro.nifti"), .Data=data, dim_=fullDims, datatype=datatype$code, bitpix=8*datatype$size, pixdim=fullVoxelDims, xyzt_units=unitCode, qform_code=xformCode, sform_code=xformCode, quatern_b=0, quatern_c=1, quatern_d=0, qoffset_x=origin[1], qoffset_y=origin[2], qoffset_z=origin[3], srow_x=sformRows[1:4], srow_y=sformRows[5:8], srow_z=sformRows[9:12], cal_min=min(data), cal_max=max(data)))
 })
 
 setAs("nifti", "MriImage", function (from) {
