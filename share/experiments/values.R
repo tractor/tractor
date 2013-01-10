@@ -9,16 +9,16 @@ runExperiment <- function ()
     
     if (nArguments() > 1)
     {
-        mask <- newMriImageFromFile(Arguments[2])
+        mask <- readImageFile(Arguments[2])
         locs <- which(mask$getData() != 0, arr.ind=TRUE)
     }
     else
         locs <- which(!is.na(image$getData()), arr.ind=TRUE)
     
     if (mask$getSparseness() > 0.8)
-        image <- newMriImageFromFile(Arguments[1], sparse=TRUE, mask=mask)
+        image <- readImageFile(Arguments[1], sparse=TRUE, mask=mask)
     else
-        image <- newMriImageFromFile(Arguments[1])
+        image <- readImageFile(Arguments[1])
     
     values <- signif(image[locs], digits)
     cat(implode(values, sep="\n"))

@@ -26,7 +26,7 @@ runExperiment <- function ()
     else if (viewer == "freeview")
         do.call(showImagesInFreeview, c(as.list(Arguments),list(wait=TRUE)))
     else if (viewer == "internal")
-        viewImages(lapply(Arguments,newMriImageFromFile), colourScales=as.list(seq_along(Arguments)))
+        viewImages(lapply(Arguments,readImageFile), colourScales=as.list(seq_along(Arguments)))
     
     invisible(NULL)
 }

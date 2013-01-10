@@ -85,7 +85,7 @@ runExperiment <- function ()
         
     report(OL$Info, "Creating tract images")
     if (createVolumes)
-        writeMriImageToFile(result$image, tractName)
+        writeImageFile(result$image, tractName)
     if (createImages)
         writePngsForResult(result, prefix=tractName, threshold=vizThreshold, showSeed=showSeed)
     

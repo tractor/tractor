@@ -20,5 +20,5 @@ getFileNameForStandardImage <- function (name = c("brain","white","grey","gray",
 
 getStandardImage <- function (name, errorIfMissing = TRUE)
 {
-    invisible (newMriImageFromFile(getFileNameForStandardImage(name)))
+    invisible (readImageFile(getFileNameForStandardImage(name)))
 }

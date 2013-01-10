@@ -24,7 +24,7 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     {
         report(OL$Info, "Resampling reference tract to the resolution of the session's native space")
         newRefImage <- resampleImageToDimensions(refTract$getImage(), faImage$getVoxelDimensions())
-        newRefSeed <- round(transformWorldToRVoxel(transformRVoxelToWorld(refTract$getSeedPoint(), refTract$getImage()$getMetadata()), newRefImage$getMetadata()))
+        newRefSeed <- round(transformWorldToRVoxel(transformRVoxelToWorld(refTract$getSeedPoint(), refTract$getImage()), newRefImage))
         refTract <- newFieldTractFromMriImage(newRefImage, newRefSeed)
     }
     

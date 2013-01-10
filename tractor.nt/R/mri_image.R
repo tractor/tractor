@@ -4,7 +4,7 @@ newMriImageAsVisitationMap <- function (tract, metadata = NULL)
         report(OL$Error, "The specified tract is not a StreamlineSetTract or StreamlineCollectionTract object")
     if (is.null(metadata))
         metadata <- tract$getImageMetadata()
-    else if (!is(metadata, "MriImageMetadata"))
+    else if (!is(metadata, "MriImage"))
         report(OL$Error, "The specified metadata is not valid")
     
     if (tract$isOriginAtSeed())

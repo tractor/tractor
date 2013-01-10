@@ -6,7 +6,7 @@ suppressPackageStartupMessages(require(tractor.session))
 runExperiment <- function ()
 {
     requireArguments("image file", "projection axis")
-    image <- newMriImageFromFile(Arguments[1])
+    image <- readImageFile(Arguments[1])
     
     axis <- suppressWarnings(as.numeric(Arguments[2]))
     if (is.na(axis))

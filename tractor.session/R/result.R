@@ -36,9 +36,9 @@ writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zo
     images <- createWeightingAndMetricImagesForResult(probtrackResult, ...)
     finalImage <- newMriImageWithBinaryFunction(images$metric, images$weight, "*")
     if (is.null(images$threshold))
-        logFinalImage <- newMriImageWithSimpleFunction(finalImage, function (x) { ifelse(x == 0, 0, log(x)) }, newDataType=getDataTypeByNiftiCode(16))
+        logFinalImage <- newMriImageWithSimpleFunction(finalImage, function (x) { ifelse(x == 0, 0, log(x)) })
     else
-        logFinalImage <- newMriImageWithSimpleFunction(finalImage, function (x) { ifelse(x == 0, 0, log(x/images$threshold)) }, newDataType=getDataTypeByNiftiCode(16))
+        logFinalImage <- newMriImageWithSimpleFunction(finalImage, function (x) { ifelse(x == 0, 0, log(x/images$threshold)) })
     
     seedCentre <- getSeedCentrePointForResult(probtrackResult)
     
@@ -76,12 +76,12 @@ createWeightingAndMetricImages <- function (image, session = NULL, type = c("wei
     else if (mode == "log")
     {
         threshold <- NULL
-        weightImage <- newMriImageWithSimpleFunction(image, function (x) { ifelse(x == 0, 0, log(x)) }, newDataType=getDataTypeByNiftiCode(16))
+        weightImage <- newMriImageWithSimpleFunction(image, function (x) { ifelse(x == 0, 0, log(x)) })
     }
     else if (mode == "binary")
     {
         threshold <- ifelse(is.null(threshold), 1, threshold)
-        weightImage <- newMriImageWithSimpleFunction(image, function (x) { ifelse(x > threshold, 1, 0) }, newDataType=getDataTypeByNiftiCode(2))
+        weightImage <- newMriImageWithSimpleFunction(image, function (x) { ifelse(x > threshold, 1, 0) })
     }
 
     invisible (list(metric=metricImage, weight=weightImage, threshold=threshold))
@@ -92,7 +92,7 @@ createWeightingAndMetricImagesForResult <- function (probtrackResult, threshold 
     if (!is.null(probtrackResult$image))
         tractImage <- probtrackResult$image
     else if (!is.null(probtrackResult$fileName))
-        tractImage <- newMriImageFromFile(probtrackResult$fileName)
+        tractImage <- readImageFile(probtrackResult$fileName)
     else
         report(OL$Error, "Cannot use a result containing no tract image or file name")
     

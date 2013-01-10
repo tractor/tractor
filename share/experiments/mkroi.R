@@ -23,7 +23,7 @@ runExperiment <- function ()
     centre <- getNativeSpacePointForSession(session, centre, pointType, isStandardPoint)
     
     roiImage <- newMriImageAsShapeOverlay("block", t2Image, centre=round(centre), width=width)
-    writeMriImageToFile(roiImage, roiName)
+    writeImageFile(roiImage, roiName)
     
     invisible (NULL)
 }

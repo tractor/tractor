@@ -21,7 +21,7 @@ showImagesInFreeview <- function (..., wait = FALSE, lookupTable = NULL, opacity
         {
             dir.create(file.path(tempDir, i))
             imageLoc <- file.path(tempDir, i, basename(imageList[[i]]$getSource()))
-            writeMriImageToFile(imageList[[i]], imageLoc, fileType="NIFTI_GZ")
+            writeImageFile(imageList[[i]], imageLoc, fileType="NIFTI_GZ")
         }
         else
             report(OL$Error, "Images must be specified as MriImage objects or file names")

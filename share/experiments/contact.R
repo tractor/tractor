@@ -6,7 +6,7 @@ library(tractor.base)
 runExperiment <- function ()
 {
     requireArguments("image file", "slice axis")
-    image <- newMriImageFromFile(Arguments[1])
+    image <- readImageFile(Arguments[1])
     
     if (!isValidAs(Arguments[2], "integer"))
         axis <- which(tolower(Arguments[2]) == c("x","y","z"))

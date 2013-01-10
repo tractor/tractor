@@ -2,9 +2,7 @@ newMriImageAsShapeOverlay <- function (type = c("cross","block"), baseImage, ...
 {
     type <- match.arg(type)
     data <- generateImageDataForShape(type, baseImage$getDimensions(), ...)
-    datatype <- list(type="integer", size=1, isSigned=FALSE)
-    metadata <- newMriImageMetadataFromTemplate(baseImage$getMetadata(), datatype=datatype)
-    image <- newMriImageWithData(data, metadata)
+    image <- newMriImageWithData(data, baseImage)
     
     invisible (image)
 }

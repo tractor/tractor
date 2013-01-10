@@ -117,9 +117,7 @@ createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwl
     report(OL$Info, "Fitting diffusion tensors for ", nrow(intraMaskLocs), " voxels")
     fit <- estimateDiffusionTensors(data, scheme, method=method)
     
-    scalarMetadata <- newMriImageMetadataFromTemplate(maskImage$getMetadata(), datatype=getDataTypeByNiftiCode(16))
     scalarData <- array(NA, dim=imageDims)
-    vectorMetadata <- newMriImageMetadataFromTemplate(maskImage$getMetadata(), imageDims=c(imageDims,3), voxelDims=c(maskImage$getVoxelDimensions(),1), origin=c(maskImage$getOrigin(),0), datatype=getDataTypeByNiftiCode(16))
     vectorData <- array(NA, dim=c(imageDims,3))
     
     writeMap <- function (values, name, vector = FALSE)
@@ -128,15 +126,15 @@ createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwl
         {
             for (i in 1:3)
                 vectorData[cbind(intraMaskLocs,i)] <- values[,i]
-            image <- newMriImageWithData(vectorData, vectorMetadata)
+            image <- newMriImageWithData(vectorData, maskImage, imageDims=c(imageDims,3), voxelDims=c(maskImage$getVoxelDimensions(),1), origin=c(maskImage$getOrigin(),0))
         }
         else
         {
             scalarData[intraMaskLocs] <- values
-            image <- newMriImageWithData(scalarData, scalarMetadata)
+            image <- newMriImageWithData(scalarData, maskImage)
         }
         
-        writeMriImageToFile(image, name)
+        writeImageFile(image, name)
     }
     
     report(OL$Info, "Writing tensor metric maps")
