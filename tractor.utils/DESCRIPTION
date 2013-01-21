@@ -8,6 +8,7 @@ Depends: R (>= 2.12.1), utils
 Imports: reportr, tractor.base
 Suggests: parallel, multicore
 Description: The tractor.utils package primarily provides functions that facilitate the interaction between the TractoR shell script and R, but some other utility functions are also included.
+Encoding: UTF-8
 LazyLoad: yes
 License: GPL-2
 URL: http://www.tractor-mri.org.uk

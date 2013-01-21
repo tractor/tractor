@@ -7,6 +7,7 @@ Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
 Depends: R (>= 2.12.1), methods
 Imports: reportr, tractor.base, tractor.session, tractor.nt
 Description: The tractor.native package provides interfaces to native functions.
+Encoding: UTF-8
 LazyLoad: yes
 License: GPL-2
 URL: http://www.tractor-mri.org.uk

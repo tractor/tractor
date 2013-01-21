@@ -1,8 +1,10 @@
+.Deserialisers <- list()
+
 .Analyze <- list(
-    typeCodes=c(2,          4,          8,          16,         64),
-    rTypes=c(  "integer",  "integer",  "integer",  "double",   "double"),
-    sizes=c(    1,          2,          4,          4,          8),
-    isSigned=c( FALSE,      TRUE,       TRUE,       TRUE,       TRUE))
+    datatypes=list(codes=c(     2,          4,          8,          16,         64),
+                   rTypes=c(   "integer",  "integer",  "integer",  "double",   "double"),
+                   sizes=c(     1,          2,          4,          4,          8),
+                   isSigned=c(  FALSE,      TRUE,       TRUE,       TRUE,       TRUE)))
 
 .Dicom <- list(
     nonCharTypes=list(codes=c("OF", "FL", "FD", "SL", "SS", "UL", "US", "AT"),

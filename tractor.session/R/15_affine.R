@@ -1,4 +1,4 @@
-AffineTransform3D <- setRefClass("AffineTransform3D", contains="SerialisableObject", fields=list(matrix="matrix",voxelMatrix="matrix",type="character",sourceMetadata="MriImageMetadata",destMetadata="MriImageMetadata"), methods=list(
+AffineTransform3D <- setRefClass("AffineTransform3D", contains="SerialisableObject", fields=list(matrix="matrix",voxelMatrix="matrix",type="character",sourceMetadata="MriImage",destMetadata="MriImage"), methods=list(
     initialize = function (...)
     {
         object <- initFields(...)
@@ -103,7 +103,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     if (is.null(index))
         index <- seq_len(nrow(matrices) / 4)
     
-    imageMetadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("refb0"))
+    imageMetadata <- session$getImageByType("refb0", metadataOnly=TRUE)
     transforms <- lapply(index, function (i) { AffineTransform3D$new(matrix=matrices[(((i-1)*4)+1):(i*4),], type="flirt", sourceMetadata=imageMetadata, destMetadata=imageMetadata) })
     
     invisible (transforms)
@@ -162,18 +162,18 @@ newAffineTransform3DFromFlirt <- function (source, dest, outfile = NULL, refweig
             if (input$isInternal() || !file.exists(input$getSource()))
             {
                 fileName <- threadSafeTempFile()
-                writeMriImageToFile(input, fileName)
+                writeImageFile(input, fileName)
                 isTemporary <- TRUE
             }
             else
                 fileName <- input$getSource()
             
-            metadata <- input$getMetadata()
+            metadata <- input
         }
         else if (is.character(input) && (length(input) == 1))
         {
             fileName <- input
-            metadata <- newMriImageMetadataFromFile(fileName)
+            metadata <- newMriImageFromFile(fileName, metadataOnly=TRUE)
             if (!is.na(metadata$getStoredXformMatrix()[1,1]))
             {
                 xform <- metadata$getStoredXformMatrix()
@@ -255,22 +255,19 @@ resampleImageToDimensions <- function (image, voxelDims = NULL, imageDims = NULL
     
     tempFiles <- threadSafeTempFile(rep("file",4))
     
-    writeMriImageToFile(image, tempFiles[1])
+    writeImageFile(image, tempFiles[1])
     write.table(diag(4), tempFiles[2], row.names=FALSE, col.names=FALSE)
     
-    metadata <- newMriImageMetadataFromTemplate(image$getMetadata(), imageDims=imageDims, voxelDims=voxelDims, datatype=getDataTypeByNiftiCode(2), origin=ifelse(is.null(origin),NA,origin))
+    targetImage <- newMriImageWithData(array(0,dim=imageDims), image, imageDims=imageDims, voxelDims=voxelDims)
     if (is.null(origin))
-    {
-        origin <- transformWorldToRVoxel(transformRVoxelToWorld(image$getOrigin(), image$getMetadata()), metadata)
-        metadata <- newMriImageMetadataFromTemplate(metadata, origin=origin)
-    }
-    targetImage <- newMriImageWithData(array(0,dim=imageDims), metadata)
-    writeMriImageToFile(targetImage, tempFiles[3])
+        origin <- transformWorldToRVoxel(transformRVoxelToWorld(image$getOrigin(), image), targetImage)
+    targetImage$setSource(origin)
+    writeImageFile(targetImage, tempFiles[3])
     
     paramString <- paste("-in", tempFiles[1], "-applyxfm -init", tempFiles[2], "-ref", tempFiles[3], "-out", tempFiles[4], "-paddingsize 0.0 -interp trilinear 2>&1", sep=" ")
     execute("flirt", paramString, errorOnFail=TRUE)
     
-    resampledImage <- newMriImageFromFile(tempFiles[4])
+    resampledImage <- readImageFile(tempFiles[4])
     
     unlink(tempFiles[1])
     removeImageFilesWithName(tempFiles[2:4])
@@ -332,7 +329,7 @@ getNativeSpacePointForSession <- function (session, point, pointType, isStandard
         point <- transformStandardSpacePoints(session, point, unit=ifelse(pointType=="mm","mm","vox"))
     else if (pointType == "mm")
     {
-        metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("maskedb0"))
+        metadata <- session$getImageByType("maskedb0", metadataOnly=TRUE)
         point <- transformWorldToRVoxel(point, metadata, useOrigin=TRUE)
     }
     
@@ -385,12 +382,12 @@ transformStandardSpaceImage <- function (session, image, toStandard = FALSE)
     report(OL$Info, "Transforming image ", ifelse(toStandard,"to","from"), " standard space")
     
     imageFiles <- threadSafeTempFile(rep("image",2))
-    writeMriImageToFile(image, imageFiles[1])
+    writeImageFile(image, imageFiles[1])
     
     paramString <- paste("-in", imageFiles[1], "-ref", dest, "-applyxfm -init", xfmFile, "-out", imageFiles[2], sep=" ")
     execute("flirt", paramString, silent=TRUE, errorOnFail=TRUE)
     
-    finalImage <- newMriImageFromFile(imageFiles[2])
+    finalImage <- readImageFile(imageFiles[2])
     removeImageFilesWithName(imageFiles[1])
     removeImageFilesWithName(imageFiles[2])
     unlink(xfmFile)

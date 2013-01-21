@@ -13,5 +13,5 @@ runExperiment <- function ()
     if (isTRUE(file.info(fileName)$isdir))
         print(newMriImageFromDicomDirectory(fileName)$image)
     else
-        print(newMriImageMetadataFromFile(fileName))
+        print(readImageFile(fileName, metadataOnly=TRUE))
 }

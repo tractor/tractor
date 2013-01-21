@@ -1,4 +1,4 @@
 import(reportr)
-importFrom(tractor.base, promote, implode)
+importFrom(tractor.base, promote, implode, ensureFileSuffix)
 
 exportPattern("^[^\\.]")

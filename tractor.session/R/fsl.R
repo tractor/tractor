@@ -32,15 +32,24 @@ showImagesInFslview <- function (..., wait = FALSE, lookupTable = NULL, opacity 
                 return(NULL)
             }
             
-            metadata <- newMriImageMetadataFromFile(imageList[[i]])
-            typeCode <- getNiftiCodeForDataType(metadata$getDataType())
+            writeToAnalyze <- FALSE
             
             # fslview is fussy about data types, so write the image into Analyze format to avoid a crash if necessary
-            if (imageInfo$format == "Mgh" || is.null(typeCode) || typeCode > 64)
+            if (imageInfo$format == "Nifti")
+            {
+                nifti <- tractor.base:::readNifti(imageInfo)
+                typeCode <- nifti$storageMetadata$datatype$code
+                if (is.null(typeCode) || typeCode > 64)
+                    writeToAnalyze <- TRUE
+            }
+            else if (imageInfo$format == "Mgh")
+                writeToAnalyze <- TRUE
+            
+            if (writeToAnalyze)
             {
                 dir.create(file.path(tempDir, i))
                 imageLoc <- file.path(tempDir, i, basename(metadata$getSource()))
-                writeMriImageToFile(newMriImageFromFile(imageList[[i]]), imageLoc, fileType="ANALYZE_GZ")
+                writeImageFile(readImageFile(imageList[[i]]), imageLoc, fileType="ANALYZE_GZ")
             }
             else
                 imageLoc <- imageList[[i]]
@@ -49,7 +58,7 @@ showImagesInFslview <- function (..., wait = FALSE, lookupTable = NULL, opacity 
         {
             dir.create(file.path(tempDir, i))
             imageLoc <- file.path(tempDir, i, basename(imageList[[i]]$getSource()))
-            writeMriImageToFile(imageList[[i]], imageLoc, fileType="ANALYZE_GZ")
+            writeImageFile(imageList[[i]], imageLoc, fileType="ANALYZE_GZ")
         }
         else
             report(OL$Error, "Images must be specified as MriImage objects or file names")

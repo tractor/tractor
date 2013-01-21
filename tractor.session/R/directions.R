@@ -101,8 +101,10 @@ rotateGradientVectorsForSession <- function (session)
     transforms <- readEddyCorrectTransformsForSession(session)
     decompositions <- lapply(transforms, decomposeAffineTransform3D)
     
-    schemeComponents <- newSimpleDiffusionSchemeFromSession(session)$expandComponents()
+    unrotatedScheme <- newSimpleDiffusionSchemeFromSession(session, unrotated=TRUE)
+    schemeComponents <- unrotatedScheme$expandComponents()
     schemeComponents$directions <- sapply(1:ncol(schemeComponents$directions), function (i) decompositions[[i]]$rotationMatrix %*% schemeComponents$directions[,i])
-    scheme <- newSimpleDiffusionSchemeWithDirections(schemeComponents$directions, schemeComponents$bValues)
-    writeSimpleDiffusionSchemeForSession(session, scheme)
+    rotatedScheme <- newSimpleDiffusionSchemeWithDirections(schemeComponents$directions, schemeComponents$bValues)
+    writeSimpleDiffusionSchemeForSession(session, unrotatedScheme, unrotated=TRUE)
+    writeSimpleDiffusionSchemeForSession(session, rotatedScheme)
 }

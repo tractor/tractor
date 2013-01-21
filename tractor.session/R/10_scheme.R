@@ -79,12 +79,22 @@ newSimpleDiffusionSchemeWithDirections <- function (directions, bValues)
         report(OL$Error, "Gradient directions must be specified as a matrix or list of matrices")
 }
 
-newSimpleDiffusionSchemeFromSession <- function (session)
+newSimpleDiffusionSchemeFromSession <- function (session, unrotated = FALSE)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    fileName <- file.path(session$getDirectory("diffusion"), "directions.txt")
+    diffusionDir <- session$getDirectory("diffusion")
+    
+    if (unrotated)
+    {
+        fileName <- file.path(diffusionDir, "directions-orig.txt")
+        if (!file.exists(fileName))
+            fileName <- file.path(diffusionDir, "directions.txt")
+    }
+    else
+        fileName <- file.path(diffusionDir, "directions.txt")
+    
     if (file.exists(fileName))
     {
         gradientSet <- as.matrix(read.table(fileName))
@@ -97,7 +107,7 @@ newSimpleDiffusionSchemeFromSession <- function (session)
         invisible(NULL)
 }
 
-writeSimpleDiffusionSchemeForSession <- function (session, scheme, thirdPartyOnly = FALSE)
+writeSimpleDiffusionSchemeForSession <- function (session, scheme, thirdPartyOnly = FALSE, unrotated = FALSE)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
@@ -114,16 +124,19 @@ writeSimpleDiffusionSchemeForSession <- function (session, scheme, thirdPartyOnl
     if (!thirdPartyOnly)
     {
         lines <- sub("\\.0+\\s*$", "", apply(format(gradientSet,scientific=FALSE),1,implode,sep="  "), perl=TRUE)
-        writeLines(lines, file.path(diffusionDir,"directions.txt"))
+        if (unrotated)
+            writeLines(lines, file.path(diffusionDir,"directions-orig.txt"))
+        else
+            writeLines(lines, file.path(diffusionDir,"directions.txt"))
     }
     
-    if (file.exists(fslDir))
+    if (!unrotated && file.exists(fslDir))
     {
         write.table(matrix(components$bValues,nrow=1), file.path(fslDir,"bvals"), row.names=FALSE, col.names=FALSE)
         write.table(components$directions, file.path(fslDir,"bvecs"), row.names=FALSE, col.names=FALSE)
     }
     
-    if (file.exists(caminoDir))
+    if (!unrotated && file.exists(caminoDir))
     {
         lines <- apply(format(gradientSet), 1, implode, sep=" ")
         lines <- c("VERSION: 2", lines)

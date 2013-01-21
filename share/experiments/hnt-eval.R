@@ -45,7 +45,7 @@ runExperiment <- function ()
             currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
 
         if (pointType == "mm")
-            currentSeed <- transformWorldToRVoxel(currentSeed, newMriImageMetadataFromFile(currentSession$getImageFileNameByType("maskedb0")), useOrigin=TRUE)
+            currentSeed <- transformWorldToRVoxel(currentSeed, currentSession$getImageByType("maskedb0",metadataOnly=TRUE), useOrigin=TRUE)
         
         result <- runNeighbourhoodTractography(currentSession, currentSeed, reference$getTract(), faThreshold, searchWidth, nSamples=nSamples)
         return (result)

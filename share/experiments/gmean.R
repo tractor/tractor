@@ -26,7 +26,7 @@ runExperiment <- function ()
         }
         
         session <- newSessionFromDirectory(sessionList[i])
-        image <- newMriImageFromFile(fileName)
+        image <- readImageFile(fileName)
         
         if (thresholdMode == "maximum")
             threshold <- baseThreshold * max(image, na.rm=TRUE)

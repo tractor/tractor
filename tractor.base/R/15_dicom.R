@@ -91,11 +91,11 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     if (!file.exists(directory) || !file.info(directory)$isdir)
         report(OL$Error, "Specified path (", directory, ") does not exist or does not point to a directory")
     
-    sortOn <- match.arg(sortOn, c("series","subject"), several.ok=TRUE)
+    sortOn <- match.arg(sortOn, c("series","subject","date"), several.ok=TRUE)
     currentSort <- sortOn[1]
     remainingSorts <- sortOn[-1]
-    identifierTag <- switch(currentSort, series=c(0x0020,0x0011), subject=c(0x0010,0x0010))
-    descriptionTag <- switch(currentSort, series=c(0x0008,0x103e), subject=c(0x0010,0x0010))
+    identifierTag <- switch(currentSort, series=c(0x0020,0x0011), subject=c(0x0010,0x0010), date=c(0x0008,0x0020))
+    descriptionTag <- switch(currentSort, series=c(0x0008,0x103e), subject=c(0x0010,0x0010), date=c(0x0008,0x0020))
     
     directory <- expandFileName(directory)
     files <- expandFileName(list.files(directory, full.names=TRUE, recursive=TRUE))
@@ -128,7 +128,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
         report(OL$Error, "No readable DICOM files were found")
 
     uniqueIdentifiers <- na.omit(sort(unique(identifiers)))
-    report(OL$Info, "Found ", switch(currentSort,series="series",subject="subjects"), " ", implode(uniqueIdentifiers,", "), "; creating subdirectories")
+    report(OL$Info, "Found ", switch(currentSort,series="series",subject="subjects",date="dates"), " ", implode(uniqueIdentifiers,", "), "; creating subdirectories")
     
     identifierWidth <- max(nchar(uniqueIdentifiers))
     
@@ -150,6 +150,11 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
                 report(OL$Info, "Subject ", id, " includes ", length(matchingFiles), " files")
                 subdirectory <- gsub("\\W", "", description, perl=TRUE)
             }
+            else if (currentSort == "date")
+            {
+                report(OL$Info, "Date ", id, " includes ", length(matchingFiles), " files")
+                subdirectory <- as.character(description)
+            }
             
             if (!file.exists(file.path(directory, subdirectory)))
                 dir.create(file.path(directory, subdirectory))
@@ -167,7 +172,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
             if (!all(success))
                 report(OL$Warning, "Not all files copied successfully for ", currentSort, " ", id, " - nothing will be deleted")
             else if (deleteOriginals)
-                unlink(files[matchingFiles])
+                unlink(from[!inPlace])
             
             if (length(remainingSorts) > 0)
                 sortDicomDirectory(file.path(directory,subdirectory), TRUE, sortOn=remainingSorts)
@@ -175,24 +180,18 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     }
 }
 
-newMriImageMetadataFromDicom <- function (fileName, untileMosaics = TRUE)
+newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE, untileMosaics = TRUE, metadataOnly = FALSE)
 {
-    fileMetadata <- newDicomMetadataFromFile(fileName)
-    invisible (newMriImageMetadataFromDicomMetadata(fileMetadata, untileMosaics=untileMosaics))
-}
-
-newMriImageMetadataFromDicomMetadata <- function (dicom, untileMosaics = TRUE)
-{
-    if (dicom$getTagValue(0x0008, 0x0060) != "MR")
+    if (metadata$getTagValue(0x0008, 0x0060) != "MR")
         flag(OL$Warning, "DICOM file does not contain MR image data")
     
-    acquisitionMatrix <- dicom$getTagValue(0x0018, 0x1310)
+    acquisitionMatrix <- metadata$getTagValue(0x0018, 0x1310)
     rows <- max(acquisitionMatrix[1], acquisitionMatrix[3])
     columns <- max(acquisitionMatrix[2], acquisitionMatrix[4])
-    dataRows <- dicom$getTagValue(0x0028, 0x0010)
-    dataColumns <- dicom$getTagValue(0x0028, 0x0011)
-    voxdims <- dicom$getTagValue(0x0028, 0x0030)
-    endian <- dicom$getEndianness()
+    dataRows <- metadata$getTagValue(0x0028, 0x0010)
+    dataColumns <- metadata$getTagValue(0x0028, 0x0011)
+    voxelDims <- metadata$getTagValue(0x0028, 0x0030)
+    endian <- metadata$getEndianness()
     
     if (is.na(rows))
         rows <- dataRows
@@ -200,7 +199,7 @@ newMriImageMetadataFromDicomMetadata <- function (dicom, untileMosaics = TRUE)
         columns <- dataColumns
     
     # Tags are "Siemens # images in mosaic", "# frames", "Philips # slices"
-    slices <- c(dicom$getTagValue(0x0019,0x100a), dicom$getTagValue(0x0028,0x0008), dicom$getTagValue(0x2001,0x1018))
+    slices <- c(metadata$getTagValue(0x0019,0x100a), metadata$getTagValue(0x0028,0x0008), metadata$getTagValue(0x2001,0x1018))
     if (all(is.na(slices)))
         slices <- NULL
     else
@@ -209,7 +208,7 @@ newMriImageMetadataFromDicomMetadata <- function (dicom, untileMosaics = TRUE)
     if (rows != dataRows || columns != dataColumns)
     {
         # Siemens mosaic format
-        if (identical(dicom$getTagValue(0x0008,0x0070), "SIEMENS") && untileMosaics)
+        if (identical(metadata$getTagValue(0x0008,0x0070), "SIEMENS") && untileMosaics)
         {
             slicesPerRow <- dataRows / rows
             slicesPerColumn <- dataColumns / columns
@@ -249,17 +248,59 @@ newMriImageMetadataFromDicomMetadata <- function (dicom, untileMosaics = TRUE)
     else
     {
         nDims <- 3
-        voxdims <- c(voxdims, dicom$getTagValue(0x0018, 0x0050))
+        voxelDims <- c(voxelDims, metadata$getTagValue(0x0018, 0x0050))
     }
     
-    bitsAllocated <- dicom$getTagValue(0x0028, 0x0100)
-    if ((bitsAllocated %% 8) != 0)
-        report(OL$Error, "Number of bits allocated per pixel doesn't correspond to an integral number of bytes")
-    isSigned <- isTRUE(dicom$getTagValue(0x0028, 0x0103) == 1)
-    datatype <- list(type="integer", size=bitsAllocated/8, isSigned=isSigned)
+    dims <- c(columns, rows, slices)
     
-    metadata <- MriImageMetadata$new(imagedims=c(columns,rows,slices), voxdims=voxdims, voxunit=c("mm","s"), source=dicom$getSource(), datatype=datatype, origin=rep(1,nDims)) 
-    invisible (metadata)
+    if (metadataOnly)
+        data <- NULL
+    else
+    {
+        bitsAllocated <- metadata$getTagValue(0x0028, 0x0100)
+        if ((bitsAllocated %% 8) != 0)
+            report(OL$Error, "Number of bits allocated per pixel doesn't correspond to an integral number of bytes")
+        bytesPerPixel <- bitsAllocated / 8
+        isSigned <- isTRUE(metadata$getTagValue(0x0028, 0x0103) == 1)
+        
+        connection <- file(metadata$getSource(), "rb")
+        seek(connection, where=metadata$getDataOffset())
+        pixels <- readBin(connection, "integer", n=metadata$getDataLength()/bytesPerPixel, size=bytesPerPixel, signed=ifelse(bytesPerPixel > 2, TRUE, isSigned), endian=endian)
+        pixels <- maskPixels(pixels, metadata)
+        close(connection)
+    
+        if (nDims == 2)
+        {
+            data <- array(pixels, dim=dims)
+            if (flipY)
+                data <- data[,(dims[2]:1)]
+        }
+        else if (nDims == 3)
+        {
+            if (identical(metadata$getTagValue(0x0008,0x0070), "SIEMENS") && untileMosaics)
+            {
+                # Handle Siemens mosaic images, which encapsulate a whole 3D image in a single-frame DICOM file
+                mosaicDims <- c(metadata$getTagValue(0x0028, 0x0010), metadata$getTagValue(0x0028, 0x0011))
+                mosaicGrid <- mosaicDims / dims[1:2]
+                mosaicCellDims <- mosaicDims / mosaicGrid
+                gridColumns <- rep(1:mosaicGrid[2], times=mosaicDims[2], each=mosaicCellDims[1])
+                gridRows <- rep(1:mosaicGrid[1], each=mosaicCellDims[2]*mosaicDims[1])
+
+                data <- array(NA, dim=dims)
+                sliceList <- tapply(pixels, list(gridColumns,gridRows), "[")
+                for (i in seq_len(dims[3]))
+                    data[,,i] <- sliceList[[i]]
+            }
+            else
+                data <- array(pixels, dim=dims)
+        
+            if (flipY)
+                data <- data[,(dims[2]:1),]
+        }
+    }
+    
+    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), source=metadata$getSource(), origin=rep(1,nDims), data=data)
+    invisible (image)
 }
 
 maskPixels <- function (pixels, metadata)
@@ -289,60 +330,10 @@ maskPixels <- function (pixels, metadata)
     return (newPixels)
 }
 
-newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE, untileMosaics = TRUE)
+newMriImageFromDicom <- function (fileName, ...)
 {
-    fileMetadata <- metadata
-    imageMetadata <- newMriImageMetadataFromDicomMetadata(fileMetadata, untileMosaics=untileMosaics)
-    
-    datatype <- imageMetadata$getDataType()
-    nPixels <- fileMetadata$getDataLength() / datatype$size
-    dims <- imageMetadata$getDimensions()
-    nDims <- imageMetadata$getDimensionality()
-    endian <- fileMetadata$getEndianness()
-    
-    connection <- file(fileMetadata$getSource(), "rb")
-    seek(connection, where=fileMetadata$getDataOffset())
-    pixels <- readBin(connection, "integer", n=nPixels, size=datatype$size, signed=ifelse(datatype$size > 2, TRUE, datatype$isSigned), endian=endian)
-    pixels <- maskPixels(pixels, fileMetadata)
-    close(connection)
-    
-    if (nDims == 2)
-    {
-        data <- array(pixels, dim=dims)
-        if (flipY)
-            data <- data[,(dims[2]:1)]
-    }
-    else if (nDims == 3)
-    {
-        if (identical(fileMetadata$getTagValue(0x0008,0x0070), "SIEMENS") && untileMosaics)
-        {
-            # Handle Siemens mosaic images, which encapsulate a whole 3D image in a single-frame DICOM file
-            mosaicDims <- c(fileMetadata$getTagValue(0x0028, 0x0010), fileMetadata$getTagValue(0x0028, 0x0011))
-            mosaicGrid <- mosaicDims / dims[1:2]
-            mosaicCellDims <- mosaicDims / mosaicGrid
-            gridColumns <- rep(1:mosaicGrid[2], times=mosaicDims[2], each=mosaicCellDims[1])
-            gridRows <- rep(1:mosaicGrid[1], each=mosaicCellDims[2]*mosaicDims[1])
-
-            data <- array(NA, dim=dims)
-            sliceList <- tapply(pixels, list(gridColumns,gridRows), "[")
-            for (i in seq_len(dims[3]))
-                data[,,i] <- sliceList[[i]]
-        }
-        else
-            data <- array(pixels, dim=dims)
-        
-        if (flipY)
-            data <- data[,(dims[2]:1),]
-    }
-    
-    image <- MriImage$new(drop(data), imageMetadata)
-    invisible (image)
-}
-
-newMriImageFromDicom <- function (fileName, untileMosaics = TRUE)
-{
-    fileMetadata <- newDicomMetadataFromFile(fileName)
-    invisible (newMriImageFromDicomMetadata(fileMetadata, untileMosaics=untileMosaics))
+    metadata <- newDicomMetadataFromFile(fileName)
+    invisible (newMriImageFromDicomMetadata(metadata, ...))
 }
 
 readDiffusionParametersFromMetadata <- function (metadata)
@@ -484,7 +475,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     
     # The sum() function recovers the sign in the sapply() call here
     sliceOrientation <- list(sliceOrientation[1:3], sliceOrientation[4:6], throughSliceOrientation)
-    sliceDirections <- round(sapply(sliceOrientation, function (x) which(abs(x) == 1) * sum(x)))
+    sliceDirections <- sapply(sliceOrientation, function (x) round(which(abs(x) == 1) * sum(x)))
     
     # Oblique slices case
     if (!is.numeric(sliceDirections) || length(sliceDirections) != 3)
@@ -599,8 +590,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     origin[setdiff(seq_along(origin),1:3)] <- 0
 
     dimsToKeep <- which(imageDims > 1)
-    imageMetadata <- newMriImageMetadataFromTemplate(images[[1]]$getMetadata(), imageDims=imageDims[dimsToKeep], voxelDims=voxelDims[dimsToKeep], origin=origin[dimsToKeep])
-    image <- newMriImageWithData(data, imageMetadata)
+    image <- newMriImageWithData(data, templateImage=images[[1]], imageDims=imageDims[dimsToKeep], voxelDims=voxelDims[dimsToKeep], origin=origin[dimsToKeep])
     
     returnValue <- list(image=image, seriesDescriptions=unique(info$seriesDescription))
     if (readDiffusionParams)
@@ -642,12 +632,12 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
     }
     
     group <- readBin(connection, "integer", n=1, size=2, signed=FALSE)
-    if (group == 0x0008)
+    if (isTRUE(group == 0x0008))
         isDicomFile <- TRUE
-    else if (group == 0x0800)
+    else if (isTRUE(group == 0x0800))
         isDicomFile <- TRUE
         
-    if (group > 0x00ff)
+    if (isTRUE(group > 0x00ff))
         endian <- setdiff(c("big","little"), .Platform$endian)
     
     seek(connection, where=2, origin="current")

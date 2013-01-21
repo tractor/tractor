@@ -8,7 +8,7 @@ runExperiment <- function ()
     requireArguments("image file")
     
     fileName <- implode(Arguments, sep=" ")
-    image <- newMriImageFromFile(fileName)
+    image <- readImageFile(fileName)
     
     scope <- getConfigVariable("Scope", "all", validValues=c("nonzero","zero","positive","negative","all"))
     maskFile <- getConfigVariable("MaskFile", NULL, "character")
@@ -16,7 +16,7 @@ runExperiment <- function ()
     
     if (!is.null(maskFile))
     {
-        mask <- newMriImageFromFile(maskFile)
+        mask <- readImageFile(maskFile)
         if (!equivalent(image$getDimensions(), mask$getDimensions()))
             report(OL$Error, "Mask dimensions do not match those of the main image")
         if (!equivalent(image$getVoxelDimensions(), mask$getVoxelDimensions()))
@@ -28,7 +28,7 @@ runExperiment <- function ()
     if (image$getDimensionality() != 3)
         report(OL$Error, "Only 3D images can be used at present")
     
-    spatialUnit <- image$getVoxelUnit()["spatial"]
+    spatialUnit <- image$getVoxelUnits()["spatial"]
     if (is.na(spatialUnit))
     {
         volumeUnit <- ""

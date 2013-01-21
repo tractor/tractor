@@ -91,7 +91,7 @@ runExperiment <- function ()
         
         currentTractName <- paste(tractName, "_session", i, sep="")
         if (createVolumes)
-            writeMriImageToFile(ptResult$image, currentTractName)
+            writeImageFile(ptResult$image, currentTractName)
         if (createImages)
             writePngsForResult(ptResult, prefix=currentTractName, threshold=vizThreshold, showSeed=showSeed)
     })

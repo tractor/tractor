@@ -6,7 +6,7 @@ suppressPackageStartupMessages(require(tractor.session))
 runExperiment <- function ()
 {
     requireArguments("image file")
-    image <- newMriImageFromFile(Arguments[1])
+    image <- readImageFile(Arguments[1])
     
     if (nArguments() > 1)
         session <- newSessionFromDirectory(Arguments[2])

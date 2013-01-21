@@ -1,9 +1,9 @@
-newMriImageFromCamino <- function (fileName, metadata)
+newMriImageFromCamino <- function (fileName, templateImage)
 {
-    if (!is(metadata, "MriImageMetadata"))
-        report(OL$Error, "The specified metadata is not an MriImageMetadata object")
+    if (!is(templateImage, "MriImage"))
+        report(OL$Error, "The specified template image is not an MriImage object")
     
-    dims <- metadata$getDimensions()
+    dims <- templateImage$getDimensions()
     if (length(dims) == 4)
         caminoDims <- dims[c(4,1,2,3)]
     else
@@ -25,8 +25,7 @@ newMriImageFromCamino <- function (fileName, metadata)
     if (length(dims) == 4)
         data <- aperm(data, c(2,3,4,1))
     
-    finalMetadata <- newMriImageMetadataFromTemplate(metadata, datatype=datatype)
-    image <- newMriImageWithData(drop(data), finalMetadata)
+    image <- newMriImageWithData(drop(data), templateImage)
     image$setSource(fileName)
     
     invisible (image)
@@ -39,29 +38,9 @@ writeMriImageToCamino <- function (image, fileName, gzipped = FALSE, datatype = 
     
     fileFun <- (if (gzipped) gzfile else file)
     
-    if (is.null(datatype))
-    {
-        datatype <- image$getDataType()
-        if (length(datatype) == 0)
-            report(OL$Error, "The data type is not stored with the image; it must be specified")
-    }
-    
-    # Try to match the datatype exactly; failing that, and if the data will
-    # fit, invert isSigned and try again; if that fails too, we have to give up
-    datatypeMatches <- (.Camino$rTypes == datatype$type) & (.Camino$sizes == datatype$size) & (.Camino$isSigned == datatype$isSigned)
-    if (sum(datatypeMatches) != 1)
-    {
-        signedMax <- 2^(datatype$size*8-1) - 1
-        flipOkay <- (!datatype$isSigned && max(image) <= signedMax) || (datatype$isSigned && min(image) >= 0)
-        if (flipOkay)
-        {
-            report(OL$Info, "Trying to change datatype to suit Camino")
-            datatypeMatches <- (.Camino$rTypes == datatype$type) & (.Camino$sizes == datatype$size) & (.Camino$isSigned == !datatype$isSigned)
-        }
-    }
-    if (sum(datatypeMatches) != 1)
-        report(OL$Error, "No supported Camino datatype is appropriate for this file")
-    typeIndex <- which(datatypeMatches)
+    # Every Analyze datatype has a valid Camino equivalent
+    datatype <- chooseDataTypeForImage(image, "Analyze")
+    typeIndex <- which(.Camino$rTypes == datatype$type & .Camino$sizes == datatype$size & .Camino$isSigned == datatype$isSigned)
     
     data <- image$getData()
     storage.mode(data) <- .Camino$rTypes[typeIndex]
