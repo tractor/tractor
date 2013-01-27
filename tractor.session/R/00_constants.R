@@ -1,5 +1,7 @@
 .StandardBrainPath <- NULL
 
+.Viewers <- c("internal", "fslview", "freeview")
+
 .Camino <- list(
     typeNames=c("byte",     "char",     "short",    "int",      "long",     "float",    "double"),
     rTypes=c(   "integer",  "integer",  "integer",  "integer",  "integer",  "double",   "double"),

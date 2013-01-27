@@ -7,7 +7,7 @@ defaultInfoPanel <- function (point, data, imageNames)
     text(rep(0.5,nImages), yLocs, rev(labels))
 }
 
-viewImages <- function (images, colourScales = NULL, infoPanel = defaultInfoPanel, ...)
+viewImages <- function (images, interactive = TRUE, colourScales = NULL, infoPanel = defaultInfoPanel, ...)
 {
     if (is(images, "MriImage"))
         images <- list(images)
@@ -97,6 +97,9 @@ viewImages <- function (images, colourScales = NULL, infoPanel = defaultInfoPane
             
             text(c(0.1*width[1]+region[1],0.9*width[1]+region[1],0.5*width[2]+region[3],0.5*width[2]+region[3]), c(0.5*width[1]+region[1],0.5*width[1]+region[1],0.1*width[2]+region[3],0.9*width[2]+region[3]), labels=labels[[i]])
         }
+        
+        if (!interactive)
+            break
         
         nextPoint <- locator(1)
         if (is.null(nextPoint))
