@@ -30,10 +30,6 @@ showImagesInFslview <- function (imageFileNames, wait = FALSE, lookupTable = NUL
     
     execute("fslview", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait, silent=TRUE)
     
-    # If we're not waiting for fslview we can't delete the images yet
-    if (wait)
-        unlink(tempDir, recursive=TRUE)
-    
     invisible(unlist(imageFileNames))
 }
 

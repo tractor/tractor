@@ -17,9 +17,5 @@ showImagesInFreeview <- function (imageFileNames, wait = FALSE, lookupTable = NU
     
     execute("freeview", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait, silent=TRUE)
     
-    # If we're not waiting for freeview we can't delete the images yet
-    if (wait)
-        unlink(tempDir, recursive=TRUE)
-    
     invisible(unlist(imageFileNames))
 }

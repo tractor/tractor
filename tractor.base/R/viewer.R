@@ -118,4 +118,9 @@ viewImages <- function (images, interactive = TRUE, colourScales = NULL, infoPan
     }
     
     par(oldPars)
+    
+    if (interactive)
+        dev.off()
+    
+    invisible(NULL)
 }
