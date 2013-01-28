@@ -54,7 +54,7 @@ viewImages <- function (images, interactive = TRUE, colourScales = NULL, infoPan
     {
         point[point < 1] <- 1
         point[point > dims] <- dims[point > dims]
-        voxelCentre <- (point - 0.5) / dims
+        voxelCentre <- (point - 1) / (dims - 1)
         
         starts <- ends <- numeric(0)
         
@@ -95,9 +95,10 @@ viewImages <- function (images, interactive = TRUE, colourScales = NULL, infoPan
             starts <- c(starts, region[c(1,3)])
             ends <- c(ends, region[c(2,4)])
             width <- c(region[2]-region[1], region[4]-region[3])
+            halfVoxelWidth <- 0.5 / (dims[inPlaneAxes] - 1)
             
-            lines(rep(voxelCentre[inPlaneAxes[1]],2), c(0,1), col="red")
-            lines(c(0,1), rep(voxelCentre[inPlaneAxes[2]],2), col="red")
+            lines(rep(voxelCentre[inPlaneAxes[1]],2), c(-halfVoxelWidth[2],1+halfVoxelWidth[2]), col="red")
+            lines(c(-halfVoxelWidth[1],1+halfVoxelWidth[1]), rep(voxelCentre[inPlaneAxes[2]],2), col="red")
             
             text(c(0.1*width[1]+region[1],0.9*width[1]+region[1],0.5*width[2]+region[3],0.5*width[2]+region[3]), c(0.5*width[1]+region[1],0.5*width[1]+region[1],0.1*width[2]+region[3],0.9*width[2]+region[3]), labels=labels[[i]])
         }
