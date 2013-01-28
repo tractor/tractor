@@ -5,6 +5,8 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
     
     if (is.null(lookupTable))
         lookupTable <- rep(list("greyscale"), length(imageList))
+    else if (is.character(lookupTable))
+        lookupTable <- rep(as.list(lookupTable), length.out=length(imageList))
     else if (!is.list(lookupTable))
         lookupTable <- rep(list(lookupTable), length(imageList))
     else
