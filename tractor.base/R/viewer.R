@@ -1,9 +1,12 @@
 defaultInfoPanel <- function (point, data, imageNames)
 {
+    usingQuartz <- isTRUE(names(dev.cur()) == "quartz")
+    quitInstructions <- paste(ifelse(usingQuartz,"Press Esc","Right click"), "to exit", sep=" ")
+    
     plot(NA, xlim=c(0,1), ylim=c(0,1), xlab="", ylab="", xaxt="n", yaxt="n", bty="n", main=paste("Location: (",implode(point,","),")",sep=""))
     nImages <- length(imageNames)
     yLocs <- c(0.9 - 0:(nImages-1) * 0.1, 0)
-    labels <- c("Press Esc to exit", paste(imageNames, ": ", sapply(data,function(x) signif(mean(x),6)), sep=""))
+    labels <- c(quitInstructions, paste(imageNames, ": ", sapply(data,function(x) signif(mean(x),6)), sep=""))
     text(rep(0.5,nImages), yLocs, rev(labels))
 }
 
@@ -45,6 +48,7 @@ viewImages <- function (images, interactive = TRUE, colourScales = NULL, infoPan
     labels <- list(c("P","A","I","S"), c("R","L","I","S"), c("R","L","P","A"))
     
     oldPars <- par(bg="black", col="white", fg="white", col.axis="white", col.lab="white", col.main="white")
+    oldOptions <- options(locatorBell=FALSE)
     
     repeat
     {
@@ -59,9 +63,9 @@ viewImages <- function (images, interactive = TRUE, colourScales = NULL, infoPan
         
         if (is.null(infoPanel))
         {
-            oldPars <- par(col.main="white")
+            mainPars <- par(bg="black", col="black", fg="black", col.axis="black", col.lab="black", col.main="white")
             plot(1:3, 1:3, main=paste("Location: (",implode(point,","),")",sep=""))
-            par(oldPars)
+            par(mainPars)
         }
         else
         {
@@ -92,8 +96,8 @@ viewImages <- function (images, interactive = TRUE, colourScales = NULL, infoPan
             ends <- c(ends, region[c(2,4)])
             width <- c(region[2]-region[1], region[4]-region[3])
             
-            lines(rep(voxelCentre[inPlaneAxes[1]],2),c(0,1),col="red")
-            lines(c(0,1),rep(voxelCentre[inPlaneAxes[2]],2),col="red")
+            lines(rep(voxelCentre[inPlaneAxes[1]],2), c(0,1), col="red")
+            lines(c(0,1), rep(voxelCentre[inPlaneAxes[2]],2), col="red")
             
             text(c(0.1*width[1]+region[1],0.9*width[1]+region[1],0.5*width[2]+region[3],0.5*width[2]+region[3]), c(0.5*width[1]+region[1],0.5*width[1]+region[1],0.1*width[2]+region[3],0.9*width[2]+region[3]), labels=labels[[i]])
         }
@@ -107,17 +111,24 @@ viewImages <- function (images, interactive = TRUE, colourScales = NULL, infoPan
         
         # Coordinates are relative to the axial plot at this point
         nextPoint <- unlist(nextPoint)
-        if (nextPoint[1] > 1 && nextPoint[2] <= 1)
+        if (nextPoint[1] > ends[5] && nextPoint[2] <= ends[6])
             next
-        else if (nextPoint[1] <= 1 && nextPoint[2] > 1)
-            point[2:3] <- round((starts[1:2] + (nextPoint %% 1)*(ends[1:2]-starts[1:2])) * dims[2:3] + 0.5)
-        else if (nextPoint[1] > 1 && nextPoint[2] > 1)
-            point[c(1,3)] <- round((starts[3:4] + (nextPoint %% 1)*(ends[3:4]-starts[3:4])) * dims[c(1,3)] + 0.5)
+        else if (nextPoint[1] <= ends[5] && nextPoint[2] > ends[6])
+        {
+            adjustedPoint <- (nextPoint-c(starts[5],ends[6])) / (ends[5:6]-starts[5:6]) * (ends[1:2]-starts[1:2]) + starts[1:2]
+            point[2:3] <- round(adjustedPoint * (dims[2:3] - 1)) + 1
+        }
+        else if (nextPoint[1] > ends[5] && nextPoint[2] > ends[6])
+        {
+            adjustedPoint <- (nextPoint-ends[5:6]) / (ends[5:6]-starts[5:6]) * (ends[3:4]-starts[3:4]) + starts[3:4]
+            point[c(1,3)] <- round(adjustedPoint * (dims[c(1,3)] - 1)) + 1
+        }
         else
-            point[1:2] <- round((starts[5:6] + (nextPoint %% 1)*(ends[5:6]-starts[5:6])) * dims[1:2] + 0.5)
+            point[1:2] <- round(nextPoint * (dims[1:2] - 1)) + 1
     }
     
     par(oldPars)
+    options(oldOptions)
     
     if (interactive)
         dev.off()
