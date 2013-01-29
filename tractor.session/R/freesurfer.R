@@ -6,8 +6,10 @@ showImagesInFreeview <- function (imageFileNames, wait = FALSE, lookupTable = NU
     {
         lookupTable <- rep(lookupTable, length.out=length(imageFileNames))
         valid <- lookupTable %in% validColourMaps
-        imageFileNames[valid] <- paste(imageFileNames[valid], ":colormap=", lookupTable[valid], sep="")
-        imageFileNames[!valid] <- paste(imageFileNames[!valid], ":color=", lookupTable[!valid], sep="")
+        if (any(!valid))
+            report(OL$Warning, "Lookup table name(s) ", implode(unique(lookupTable[!valid]),sep=", ",finalSep=" and "), " are not valid for freeview")
+        
+        imageFileNames <- paste(imageFileNames, ":colormap=", lookupTable, sep="")
     }
     if (!is.null(opacity))
     {
