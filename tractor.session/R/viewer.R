@@ -71,7 +71,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
                 
                 if (viewer == "fslview")
                 {
-                    metadata <- newMriImageMetadataFromFile(imageList[[i]])
+                    metadata <- newMriImageMetadataFromFile(imageInfo$imageFile)
                     typeCode <- getNiftiCodeForDataType(metadata$getDataType())
             
                     # fslview is fussy about data types, so write the image into Analyze format to avoid a crash if necessary
@@ -79,24 +79,20 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
                     {
                         dir.create(file.path(tempDir, i))
                         imageLoc <- file.path(tempDir, i, basename(metadata$getSource()))
-                        writeMriImageToFile(newMriImageFromFile(imageList[[i]]), imageLoc, fileType="ANALYZE_GZ")
+                        imageInfo <- writeMriImageToFile(newMriImageFromFile(imageInfo$imageFile), imageLoc, fileType="ANALYZE_GZ")
                     }
-                    else
-                        imageLoc <- imageList[[i]]
                 }
-                else
-                    imageLoc <- imageList[[i]]
             }
             else if (is(imageList[[i]], "MriImage"))
             {
                 dir.create(file.path(tempDir, i))
                 imageLoc <- file.path(tempDir, i, basename(imageList[[i]]$getSource()))
-                writeMriImageToFile(imageList[[i]], imageLoc, fileType="ANALYZE_GZ")
+                imageInfo <- writeMriImageToFile(imageList[[i]], imageLoc, fileType="ANALYZE_GZ")
             }
             else
                 report(OL$Error, "Images must be specified as MriImage objects or file names")
         
-            return (imageLoc)
+            return (imageInfo$imageFile)
         })
         
         if (viewer == "fslview")
