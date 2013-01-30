@@ -10,7 +10,7 @@ defaultInfoPanel <- function (point, data, imageNames)
     text(rep(0.5,nImages), yLocs, rev(labels))
 }
 
-viewImages <- function (images, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, colourScales = NULL, infoPanel = defaultInfoPanel, ...)
+viewImages <- function (images, colourScales = NULL, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, infoPanel = defaultInfoPanel, ...)
 {
     if (is(images, "MriImage"))
         images <- list(images)
