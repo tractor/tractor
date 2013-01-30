@@ -10,7 +10,7 @@ defaultInfoPanel <- function (point, data, imageNames)
     text(rep(0.5,nImages), yLocs, rev(labels))
 }
 
-viewImages <- function (images, interactive = TRUE, colourScales = NULL, infoPanel = defaultInfoPanel, ...)
+viewImages <- function (images, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, colourScales = NULL, infoPanel = defaultInfoPanel, ...)
 {
     if (is(images, "MriImage"))
         images <- list(images)
@@ -42,7 +42,8 @@ viewImages <- function (images, interactive = TRUE, colourScales = NULL, infoPan
             x
     })
     
-    point <- round(dims / 2)
+    if (is.null(point))
+        point <- round(dims / 2)
     imageNames <- sapply(images, function(x) basename(x$getSource()))
     
     labels <- list(c("P","A","I","S"), c("R","L","I","S"), c("R","L","P","A"))
@@ -95,12 +96,16 @@ viewImages <- function (images, interactive = TRUE, colourScales = NULL, infoPan
             starts <- c(starts, region[c(1,3)])
             ends <- c(ends, region[c(2,4)])
             width <- c(region[2]-region[1], region[4]-region[3])
-            halfVoxelWidth <- 0.5 / (dims[inPlaneAxes] - 1)
             
-            lines(rep(voxelCentre[inPlaneAxes[1]],2), c(-halfVoxelWidth[2],1+halfVoxelWidth[2]), col="red")
-            lines(c(-halfVoxelWidth[1],1+halfVoxelWidth[1]), rep(voxelCentre[inPlaneAxes[2]],2), col="red")
+            if (crosshairs)
+            {
+                halfVoxelWidth <- 0.5 / (dims[inPlaneAxes] - 1)
+                lines(rep(voxelCentre[inPlaneAxes[1]],2), c(-halfVoxelWidth[2],1+halfVoxelWidth[2]), col="red")
+                lines(c(-halfVoxelWidth[1],1+halfVoxelWidth[1]), rep(voxelCentre[inPlaneAxes[2]],2), col="red")
+            }
             
-            text(c(0.1*width[1]+region[1],0.9*width[1]+region[1],0.5*width[2]+region[3],0.5*width[2]+region[3]), c(0.5*width[1]+region[1],0.5*width[1]+region[1],0.1*width[2]+region[3],0.9*width[2]+region[3]), labels=labels[[i]])
+            if (orientationLabels)
+                text(c(0.1*width[1]+region[1],0.9*width[1]+region[1],0.5*width[2]+region[3],0.5*width[2]+region[3]), c(0.5*width[1]+region[1],0.5*width[1]+region[1],0.1*width[2]+region[3],0.9*width[2]+region[3]), labels=labels[[i]])
         }
         
         if (!interactive)
