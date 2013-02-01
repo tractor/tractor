@@ -15,6 +15,8 @@ runExperiment <- function ()
     waypointMasksInStandardSpace <- getConfigVariable("WaypointMasksInStandardSpace", FALSE)
     exclusionMaskFiles <- getConfigVariable("ExclusionMaskFiles", NULL, "character", errorIfInvalid=TRUE)
     exclusionMasksInStandardSpace <- getConfigVariable("ExclusionMasksInStandardSpace", FALSE)
+    terminationMaskFiles <- getConfigVariable("TerminationMaskFiles", NULL, "character", errorIfInvalid=TRUE)
+    terminationMasksInStandardSpace <- getConfigVariable("TerminationMasksInStandardSpace", FALSE)
     tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"))
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL)
@@ -75,16 +77,40 @@ runExperiment <- function ()
         }
     }
     
+    if (is.null(terminationMaskFiles))
+    {
+        trackingMaskFileName <- NULL
+        terminateOutsideMask <- FALSE
+    }
+    else
+    {
+        terminationMaskFiles <- splitAndConvertString(as.character(terminationMaskFiles), ",", fixed=TRUE)
+        trackingMask <- session$getImageByType("mask", "diffusion")
+        for (terminationFile in terminationMaskFiles)
+        {
+            terminationMask <- newMriImageFromFile(terminationFile)
+            if (terminationMasksInStandardSpace)
+                terminationMask <- transformStandardSpaceImage(session, terminationMask)
+            trackingMask <- newMriImageWithBinaryFunction(trackingMask, terminationMask, function(x,y) ifelse(x>0 & y==0, 1, 0))
+        }
+        
+        trackingMaskFileName <- threadSafeTempFile()
+        writeMriImageToFile(trackingMask, trackingMaskFileName)
+        terminateOutsideMask <- TRUE
+    }
+    
     if (tracker == "fsl")
     {
         if (!is.null(exclusionMaskFiles))
             report(OL$Error, "Exclusion masks are not currently supported with the FSL tracker")
+        if (!is.null(terminationMaskFiles))
+            report(OL$Error, "Termination masks are not currently supported with the FSL tracker")
         result <- runProbtrackWithSession(session, mode="seedmask", seedMask=seedMask, waypointMasks=waypointMasks, requireImage=TRUE, nSamples=nSamples)
     }
     else
     {
         require(tractor.native)
-        result <- trackWithSession(session, seedMask, requireImage=is.null(waypointMasks), requireStreamlines=(storeStreamlines || !is.null(waypointMasks)), nSamples=nSamples)
+        result <- trackWithSession(session, seedMask, maskName=trackingMaskFileName, requireImage=is.null(waypointMasks), requireStreamlines=(storeStreamlines || !is.null(waypointMasks)), nSamples=nSamples, terminateOutsideMask=terminateOutsideMask)
         if (!is.null(waypointMasks))
         {
             result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks, exclusion)
