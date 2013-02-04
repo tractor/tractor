@@ -9,10 +9,10 @@ getFslVersion <- function ()
         return (NULL)
     
     version <- as.integer(unlist(strsplit(readLines(versionFile)[1], ".", fixed=TRUE)))
-    if (length(version) != 3)
+    if (length(version) < 3)
         return (NULL)
     else
-        return (sum(version * c(10000, 100, 1)))
+        return (sum(version[1:3] * c(10000, 100, 1)))
 }
 
 showImagesInFslview <- function (imageFileNames, wait = FALSE, lookupTable = NULL, opacity = NULL)
