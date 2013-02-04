@@ -157,7 +157,7 @@ pre {
     background-color: #ddd;
     border: 1px solid #aaa;
     padding: 10px;
-    overflow-x: scroll;
+    overflow-x: auto;
 }
 
 code {

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <title>TractoR ~ Guidelines for contributors</title>
+
+  <meta charset="utf-8" />
+  <meta name="author" content="Jon Clayden" />
+  <link rel="stylesheet" href="style.css" />
+  
+  <script type="text/javascript" src="hyphenator.js"></script>
+  
+  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
+  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-563735-7']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</head>
+
+<body>
+
+<div id="main" class="hyphenate">
+
+<table id="tabs">
+  <tr>
+  <td class="tab"><a href="home.html">Home</a></td>
+  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
+  <td class="tab"><a href="downloads.html">Downloads</a></td>
+  <td class="tab"><a href="changelog.html">Changelog</a></td>
+  <td class="tab"><a href="references.html">References</a></td>
+  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
+  </tr>
+</table>
+
+
+<h1>Guidelines for contributors</h1>
+
+<p>This page is intended only for people who are currently contributing code to TractoR, or who may in the future. It covers topics such as the coding conventions used by TractoR and the procedures applied for quality assurance. Those who wish to use TractoR within R, but not necessarily to contribute to the project itself, should see the page on <a href="TractoR-for-R-users.html">TractoR for R users</a>.</p>
+
+<h2 id="coding-conventions">Coding conventions</h2>
+
+<p>TractoR is primarily written in a mixture of <a href="http://www.r-project.org">R</a> and C. The first of these may not be familiar to many developers. R is a high-level, interpreted, multiparadigm language with particular strengths in statistics. It is vectorised, like <a href="http://www.mathworks.com">Matlab</a>, and therefore encourages an array-based programming style which can perform complex transformations on substantial amounts of data very concisely. It has a simple mechanism for interfacing to compiled C code. Further details on R itself can be found in <a href="http://cran.r-project.org/manuals.html">the manuals</a> on its web site (more readable mirror <a href="http://r-manuals.flakery.org">here</a>).</p>
+
+<h3 id="general-philosophy-and-style">General philosophy and style</h3>
+
+<ul>
+<li>Long, descriptive function and variable names are strongly favoured, so as to make code as self-documenting as possible. Hinting at the input and output types of a function is helpful: hence <code>newMriImageByMasking()</code> rather than, say, <code>mask()</code>. (Although see the <a href="#functions-versus-methods">&ldquo;functions versus methods&rdquo;</a> section below.) Variables with meaningful names also make understanding the effect of a line more obvious, as in <code>spatialUnitCode &lt;- packBits(intToBits(from@xyzt_units) &amp; intToBits(7), &quot;integer&quot;)</code>. It may not be clear what the right hand side of the assignment is doing, but the result is a spatial unit code. This would be much less obvious if the variable was just named <code>s</code>, or similar.</li>
+<li>Use of vectorised functions, <code>apply()</code> and similar is always preferable to extensive use of <code>for</code> loops, for reasons of both speed and conciseness. R&#39;s functional programming features are very powerful, and full advantage should be taken of them.</li>
+<li>TractoR aims to follow the <a href="http://en.wikipedia.org/wiki/Don%27t_Repeat_Yourself">&ldquo;don&#39;t repeat yourself&rdquo;</a> principle. Constants and other key pieces of information are stored in one place whenever practical, and there is usually a single point of contact between the code and external software or data. Code duplication is avoided except where a large penalty to clarity or speed would result. Conventions are standardised wherever practical to avoid handling many cases.</li>
+<li>Extensive commenting is not currently required, but counterintuitive or very obscure operations should be explained just before they occur.</li>
+</ul>
+
+<h3 id="data-types-and-naming">Data types and naming</h3>
+
+<ul>
+<li>Since version 2.0, TractoR makes extensive use of the <a href="http://stat.ethz.ch/R-manual/R-devel/library/methods/html/refClass.html">reference classes</a> introduced in R 2.12.0. All such classes defined within TractoR packages should be named using upper <a href="http://en.wikipedia.org/wiki/CamelCase">camel case</a> convention, downcasing standard acronyms (as in <code>MriImage</code>) if necessary. Classes that do not inherit from any other class should use <code>SerialisableObject</code> (defined in the <code>tractor.base</code> package) as their superclass. Files defining such classes in a package should include a number in their name to ensure that the classes are not created before types upon which they depend (files will be loaded by R in name order).</li>
+<li>Reference class fields and methods should be named using lower camel case convention (as in <code>dataOffset</code>). &ldquo;Private&rdquo; fields should have names ending with a period. Methods should be provided for accessing all public fields, and should be named &ldquo;get&rdquo; followed by the field name (as in <code>getDataOffset()</code>). These accessor methods should be used in code outside the class&#39;s methods, rather than accessing the fields directly.</li>
+<li>Very simple data structures which contain only small data elements, and are unlikely to be modified after creation, can be simply constructed using an R <code>list</code> with a simple (<a href="https://github.com/hadley/devtools/wiki/S3">&ldquo;S3&rdquo;</a>) class attribute. The probability distributions defined in <code>tractor.nt/R/distns.R</code> are good examples.</li>
+<li>Constants for internal use should be named using upper camel case, with a leading period, in a file called <code>00_constants.R</code> in the relevant package.</li>
+<li>Standard local variables and functions should be named using lower camel case.</li>
+</ul>
+
+<h2 id="functions-versus-methods">Functions versus methods</h2>
+
+<p>TractoR has historically used top-level functions for creating and manipulating objects. Names of these functions tend to reflect the class being created, and a hint of their effect, as in <code>newMriImageByMasking()</code>, which creates an <code>MriImage</code> object from two other images, a base image and a mask. However, such functions will result in a new object being created, which may be wasteful for large objects such as images. There is therefore a gradual shift towards using reference class methods to manipulate existing objects where appropriate. One class that makes more use of such class methods is <code>SparseArray</code>, defined in <code>tractor.base/R/08_sparse.R</code>. This class allows for calls like</p>
+
+<pre><code>sparseArray$flip(...)
+</code></pre>
+
+<p>to flip a sparse array along certain dimensions, rather than</p>
+
+<pre><code>newSparseArrayByFlipping(sparseArray, ...)
+</code></pre>
+
+<p>which would be the older-style way of doing this. The latter would result in a copy of <code>sparseArray</code> being created, probably unnecessarily, and so the former will be preferred in future. Top-level functions will continue to be used, however, for operations which do not simply modify an existing object.</p>
+
+<h2 id="tests-and-quality-assurance">Tests and quality assurance</h2>
+
+<p>TractoR provides a small test data set and associated set of self-tests to ensure that the package is installed and working properly. These are simple shell scripts with a short self-description, which run one or more TractoR scripts. The output is compared to a stored reference output, and the test fails if they do not match. See <code>tests/Makefile</code> for the exact mechanism, and the contents of <code>tests/00_Basics</code> for example test files. Significant additions to TractoR should be accompanied with one or more new tests, which can be added to the relevant subdirectory of <code>tests</code>, followed by running</p>
+
+<pre><code>cd tests
+make create-tests
+</code></pre>
+
+<p>Before the release of a new version of the package, it should be possible to run all of the tests cleanly, without any failures. Since the <code>tractor.base</code> R package is released on <a href="http://cran.r-project.org">CRAN</a>, it should also be possible to run</p>
+
+<pre><code>R CMD check --as-cran tractor.base
+</code></pre>
+
+<p>without generating any warnings or errors. Any issues raised by any of these quality assurance processes need to be addressed before release. Typical issues are changes in the output of a particular script, which may result in failure of one of the tests; or changes to the arguments of a function exported from the <code>tractor.base</code> package, which will require a corresponding change to the package documentation.</p>
+
+<p>If a test is failing for reasons which are definitely benign, such as an intended change to the output of a script, the reference output may be regenerated using, for example,</p>
+
+<pre><code>cd tests
+make -B 00_Basics/005_hello.save
+</code></pre>
+
+<p>The updated file(s) will then need to be checked in with <code>git</code>.</p>
+
+
+</div>
+
+</body>
+
+</html>
