@@ -1,8 +1,8 @@
 Package: tractor.utils
-Version: 2.2.0
-Date: 2012-08-16
+Version: 2.3.0
+Date: 2013-01-28
 Title: Miscellaneous functions used by TractoR scripts and packages
-Author: Jon Clayden <jon.clayden+tractor@gmail.com>
+Author: Jon Clayden
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
 Depends: R (>= 2.12.1), utils
 Imports: reportr, tractor.base
