@@ -10,6 +10,6 @@
         if (isTRUE(viewer %in% .Viewers))
             options(tractorViewer=as.vector(viewer))
         else
-            options(tractorViewer="internal")
+            options(tractorViewer="tractor")
     }
 }

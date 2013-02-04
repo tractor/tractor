@@ -17,7 +17,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
     
     # Unmatched lookup table strings are passed through the function at the end of each list
     capitalise <- function (str) paste(toupper(substr(str,1,1)), tolower(substr(str,2,max(nchar(str)))), sep="")
-    lookupTableMappings <- list(internal=list(Greyscale=1,grayscale=1,greyscale=1,"Red-Yellow"=2,heat=2,.default=tolower),
+    lookupTableMappings <- list(tractor=list(Greyscale=1,grayscale=1,greyscale=1,"Red-Yellow"=2,heat=2,.default=tolower),
                                 fslview=list(grayscale="Greyscale",greyscale="Greyscale",heat="Red-Yellow",.default=capitalise),
                                 freeview=list(Greyscale="grayscale",greyscale="grayscale","Red-Yellow"="heat",.default=tolower))
     lookupTable <- lapply(lookupTable, function (l) {
@@ -29,7 +29,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
             return (l)
     })
     
-    if (viewer == "internal")
+    if (viewer == "tractor")
     {
         images <- lapply(imageList, function (image) {
             if (is.character(image))
