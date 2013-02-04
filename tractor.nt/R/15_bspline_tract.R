@@ -116,11 +116,16 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
 
         line <- streamlineTract$getLine()
         data <- data.frame(t=pointLocs, x=line[,1], y=line[,2], z=line[,3])
-
+        
+        # Copy the relevant info into a clean environment to avoid baggage in "lm" objects
+        workingEnvironment <- new.env(parent=globalenv())
+        assign("data", data, envir=workingEnvironment)
+        assign("knots", knots, envir=workingEnvironment)
+        
         basis <- bs(data$t, knots=knots, degree=3)
-        modelX <- lm(x ~ bs(t,knots=knots,degree=3), data=data)
-        modelY <- lm(y ~ bs(t,knots=knots,degree=3), data=data)
-        modelZ <- lm(z ~ bs(t,knots=knots,degree=3), data=data)
+        modelX <- local(lm(x ~ bs(t,knots=knots,degree=3), data=data), workingEnvironment)
+        modelY <- local(lm(y ~ bs(t,knots=knots,degree=3), data=data), workingEnvironment)
+        modelZ <- local(lm(z ~ bs(t,knots=knots,degree=3), data=data), workingEnvironment)
         models <- list(modelX, modelY, modelZ)
 
         knotLocsX <- as.vector(predict(modelX, data.frame(t=knots)))
