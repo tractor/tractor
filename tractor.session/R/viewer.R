@@ -40,7 +40,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
                 report(OL$Error, "Images must be specified as MriImage objects or file names")
         })
         
-        colourScales <- lapply(lookupTable, tractor.base:::getColourScale)
+        colourScales <- lapply(lookupTable, tractor.base::getColourScale)
         if (!is.null(opacity))
         {
             opacity <- rep(opacity, length.out=length(images))
