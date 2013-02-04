@@ -5,7 +5,7 @@
 \alias{createContactSheetGraphic}
 \title{Visualise MriImage objects}
 \description{
-  Visualise \code{MriImage} objects.
+  Visualise \code{MriImage} objects noninteractively using an R graphics device. See \code{\link{viewImages}} for an interactive alternative.
 }
 \usage{
 createCombinedGraphics(images, modes, colourScales, axes = 1:3, sliceLoc = NULL,
@@ -29,7 +29,7 @@ createContactSheetGraphic(image, axis, device = c("internal", "png"), colourScal
   \item{images}{A list of \code{\link{MriImage}} objects.}
   \item{image}{A single \code{\link{MriImage}} object.}
   \item{modes}{A character vector of the same length as \code{images}, each element being \code{"slice"} or \code{"projection"} (or abbreviations), indicating which type of visualisation should be applied to each image.}
-  \item{colourScale, colourScales}{A single colour scale definition, or a list in the plural case. See Details.}
+  \item{colourScale, colourScales}{A single colour scale definition, or a list in the plural case. See \code{\link{getColourScale}}.}
   \item{axis, axes}{A vector of axes along which slice/projection images should be created. 1 is left-right, 2 is anterior-posterior, 3 is superior-inferior.}
   \item{x, y, z}{Integer vectors, each of length 1. Exactly one of these must be specified to indicate the plane of interest.}
   \item{sliceLoc}{Like \code{x}, \code{y} and \code{z}, except that a point in 3 dimensions is specified. Must not be \code{NA} for each \code{axis} requested.}
@@ -45,8 +45,6 @@ createContactSheetGraphic(image, axis, device = c("internal", "png"), colourScal
 }
 \details{
   These functions create 2D visualisations of 3D images by slicing or maximum intensity projection.
-  
-  Colour scales can be specified in any of three ways. Firstly, by a single number, representing a predefined colour scale. Currently valid values are 1 (greyscale, black background), 2 (red to yellow heat scale, red background), 3 (blue to red rainbow scale, blue background) and 4 (blue to white to red diverging scale, white background). Secondly, a single colour name can be given (see \code{\link{colours}}); in this case the background will be black. This is useful for binary images. Thirdly and most flexibly, a list with two named elements can be given: \code{colours}, a vector of colours representing the colour scale, perhaps created using \code{\link{rgb}}; and \code{background}, a single colour representing the background.
 
   NB: When the \code{device} option is set to \code{"png"}, ImageMagick is required by these functions.
 }
@@ -59,4 +57,4 @@ Please cite the following reference when using TractoR in your work:
 
 J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A. Clark (2011). TractoR: Magnetic resonance imaging and tractography with R. Journal of Statistical Software 44(8):1-18. \url{http://www.jstatsoft.org/v44/i08/}.
 }
-\seealso{\code{\link{image}}, \code{\link{colours}}, \code{\link{rgb}}}
+\seealso{See \code{\link{viewImages}} for an interactive alternative, and \code{\link{getColourScale}} for details of how colour scales are specified. Also \code{\link{image}}, which is used as the underlying plot function.}
