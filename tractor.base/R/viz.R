@@ -1,6 +1,6 @@
 interpolatePalette <- function (colours, n, ...)
 {
-    rampFunction <- colorRamp(colours)
+    rampFunction <- colorRamp(colours, ...)
     colourMatrix <- round(rampFunction(0:(n-1)/(n-1)))
     rgbStrings <- apply(colourMatrix, 1, function (x) sprintf("#%02X%02X%02X",x[1],x[2],x[3]))
     return (rgbStrings)
