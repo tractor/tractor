@@ -7,7 +7,7 @@ defaultInfoPanel <- function (point, data, imageNames)
     nImages <- length(imageNames)
     yLocs <- c(0.9 - 0:(nImages-1) * 0.1, 0)
     labels <- c(quitInstructions, paste(imageNames, ": ", sapply(data,function(x) signif(mean(x),6)), sep=""))
-    text(rep(0.5,nImages), yLocs, rev(labels))
+    text(rep(0.5,nImages+1), yLocs, rev(labels), col=c(rep("red",nImages),"grey70"))
 }
 
 viewImages <- function (images, colourScales = NULL, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, infoPanel = defaultInfoPanel, ...)
