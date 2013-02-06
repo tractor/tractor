@@ -440,11 +440,21 @@ extractDataFromMriImage <- function (image, dim, loc)
     if (!(loc %in% 1:(image$getDimensions()[dim])))
         report(OL$Error, "The specified location is out of bounds")
     
-    # This "apply" call is a cheeky bit of R wizardry (credit: Peter Dalgaard)
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
-    newData <- image$apply(dimsToKeep, "[", loc)
-    if (is.vector(newData))
-        newData <- promote(newData)
+    if (image$isSparse())
+    {
+        # This code is faster when working with a sparse array
+        newData <- array(0, dim=image$getDimensions()[dimsToKeep])
+        matchingCoords <- which(image$getData()$getCoordinates()[,dim] == loc)
+        newData[image$getData()$getCoordinates()[matchingCoords,dimsToKeep,drop=FALSE]] <- image$getData()$getData()[matchingCoords]
+    }
+    else
+    {
+        # This "apply" call is a cheeky bit of R wizardry (credit: Peter Dalgaard)
+        newData <- image$apply(dimsToKeep, "[", loc)
+        if (is.vector(newData))
+            newData <- promote(newData)
+    }
     
     invisible (newData)
 }
