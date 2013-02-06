@@ -286,8 +286,11 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
                 toKeep <- which(currentData != 0)
                 if (!is.null(mask) && mask$getDimensionality() == (nDims-1))
                     toKeep <- intersect(toKeep, which(mask$getData() > 0))
-                coords <- rbind(coords, cbind(vectorToMatrixLocs(toKeep,dims[-nDims]),i))
-                values <- c(values, currentData[toKeep])
+                if (length(toKeep) > 0)
+                {
+                    coords <- rbind(coords, cbind(vectorToMatrixLocs(toKeep,dims[-nDims]),i))
+                    values <- c(values, currentData[toKeep])
+                }
             }
             
             if (!is.null(mask) && mask$getDimensionality() == nDims)
