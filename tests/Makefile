@@ -23,6 +23,7 @@ fullclean: clean
 	@rm -f `find . -name '*.save' -print`
 
 run-tests:
+	@mkdir -p tmp data/session-12dir/tractor/fdt.track data/session-12dir/tractor/objects
 	@$(MAKE) `find . -name '*.sh' -print | sort | sed 's/\.sh$$/\.out/'` || exit 1
 	@echo "All tests completed"
 
