@@ -1,3 +1,4 @@
+#@desc Create a graph based on diffusion data in the specified session (default "."). This script performs coregistration of T1-weighted structural data to the reference b=0 volume, extraction of segmented ROIs, tractography and graph creation. FreeSurfer and FSL-BEDPOSTX must have been run first (see "freesurf" and "bedpost").
 #@args [session directory]
 
 library(splines)

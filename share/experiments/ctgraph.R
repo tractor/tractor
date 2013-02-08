@@ -1,3 +1,5 @@
+#@desc Create a graph based on cortical thickness data from a group of subjects. FreeSurfer must have been run first (see "freesurf").
+
 library(tractor.session)
 library(tractor.graph)
 
