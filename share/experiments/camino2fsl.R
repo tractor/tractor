@@ -6,7 +6,7 @@ suppressPackageStartupMessages(require(tractor.session))
 runExperiment <- function ()
 {
     requireArguments("source file", "reference image")
-    metadata <- newMriImageMetadataFromFile(Arguments[2])
+    metadata <- readImageFile(Arguments[2], metadataOnly=TRUE)
     image <- newMriImageFromCamino(Arguments[1], metadata)
-    writeMriImageToFile(image)
+    writeImageFile(image)
 }

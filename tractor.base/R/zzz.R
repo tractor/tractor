@@ -8,4 +8,13 @@
         else
             options(tractorFileType="NIFTI_GZ")
     }
+    
+    if (is.null(getOption("tractorOutputPrecision")))
+    {
+        outputPrecision <- tolower(Sys.getenv("TRACTOR_OUTPUT_PRECISION"))
+        if (isTRUE(outputPrecision %in% c("single","double")))
+            options(tractorOutputPrecision=as.vector(outputPrecision))
+        else
+            options(tractorOutputPrecision="double")
+    }
 }

@@ -19,10 +19,10 @@ runExperiment <- function ()
         labels <- c("Preprocessing complete", "Data dimensions", "Voxel dimensions", "Diffusion b-values", "Number of gradient directions", "Diffusion tensors fitted", "FSL BEDPOST run", "Camino files created")
         if (imageFileExists(session$getImageFileNameByType("data","diffusion")))
         {
-            metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("data","diffusion"))
+            metadata <- session$getImageByType("data","diffusion",metadataOnly=TRUE)
             metadataSummary <- metadata$summarise()
             dims <- metadataSummary$values[2]
-            voxelDims <- metadataSummary$values[4]
+            voxelDims <- metadataSummary$values[3]
         }
         else
             dims <- voxelDims <- NA

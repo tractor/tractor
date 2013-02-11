@@ -38,12 +38,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         }
     },
     
-    getImageByType = function (type, place = NULL, index = 1)
+    getImageByType = function (type, place = NULL, index = 1, ...)
     {
         fileName <- getImageFileNameByType(type, place, index)
         if (tolower(type) == "radialdiff" && !imageFileExists(fileName))
             createRadialDiffusivityMapForSession(.self)
-        return (newMriImageFromFile(fileName))
+        return (readImageFile(fileName, ...))
     },
     
     getImageFileNameByType = function (type, place = NULL, index = 1) { return (getImageFileNameForSession(.self, type, place, index)) },
@@ -298,5 +298,5 @@ createRadialDiffusivityMapForSession <- function (session)
     thirdEigenvalue <- session$getImageByType("eigenvalue", "diffusion", index=3)
     radialDiffusivity <- newMriImageWithBinaryFunction(secondEigenvalue, thirdEigenvalue, function(x,y) (x+y)/2)
     
-    writeMriImageToFile(radialDiffusivity, session$getImageFileNameByType("radialdiff"))
+    writeImageFile(radialDiffusivity, session$getImageFileNameByType("radialdiff"))
 }

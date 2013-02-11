@@ -28,7 +28,7 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
     storage.mode(seeds) <- "double"
     nSeeds <- nrow(seeds)
     
-    metadata <- newMriImageMetadataFromFile(maskName)
+    metadata <- newMriImageFromFile(maskName, metadataOnly=TRUE)
     dims <- metadata$getDimensions()
     
     lengths <- sapply(list(avfNames,thetaNames,phiNames), length)
@@ -43,8 +43,7 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
     if (requireImage)
     {
         dim(result[[1]]) <- dims
-        newMetadata <- newMriImageMetadataFromTemplate(metadata, datatype=getDataTypeByNiftiCode(8))
-        returnValue$image <- newMriImageWithData(result[[1]], newMetadata)
+        returnValue$image <- newMriImageWithData(result[[1]], metadata)
     }
     if (requireStreamlines)
     {

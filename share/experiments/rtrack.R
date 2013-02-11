@@ -31,7 +31,7 @@ runExperiment <- function ()
     if (!createVolumes && !createImages)
         report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
     
-    seedMask <- newMriImageFromFile(seedMaskFile)
+    seedMask <- readImageFile(seedMaskFile)
     if (seedMaskInStandardSpace)
         seedMask <- transformStandardSpaceImage(session, seedMask)
     
@@ -58,7 +58,7 @@ runExperiment <- function ()
                 ptResult <- runProbtrackWithSession(session, seeds[d,], requireImage=TRUE, nSamples=nSamples, expectExists=TRUE)
             
                 if (createVolumes)
-                    writeMriImageToFile(ptResult$image, prefix)
+                    writeImageFile(ptResult$image, prefix)
                 if (createImages)
                     writePngsForResult(ptResult, prefix=prefix, threshold=vizThreshold, showSeed=showSeed)
             }
@@ -82,7 +82,7 @@ runExperiment <- function ()
                     
                     prefix <- paste(tractName, implode(currentSeeds[j,],sep="_"), sep="_")
                     if (createVolumes)
-                        writeMriImageToFile(imageForSeed, prefix)
+                        writeImageFile(imageForSeed, prefix)
                     if (createImages)
                     {
                         fakeResult <- list(image=imageForSeed, nSamples=nSamples, session=session, seeds=currentSeeds[j,,drop=FALSE])

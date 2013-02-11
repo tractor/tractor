@@ -50,7 +50,7 @@ runExperiment <- function ()
             next
         }
         
-        image <- newMriImageFromFile(imageFileName)
+        image <- readImageFile(imageFileName)
         session <- newSessionFromDirectory(sessionList[i])
         
         threshold <- baseThreshold * switch(thresholdMode, nothing=1, maximum=max(image,na.rm=TRUE), minimum=min(image,na.rm=TRUE))
@@ -71,7 +71,7 @@ runExperiment <- function ()
         report(OL$Error, "No image information available")
     
     outputName <- paste(tractName, "_group_map", sep="")
-    writeMriImageToFile(finalImage, outputName)
+    writeImageFile(finalImage, outputName)
     
     if (createImages)
     {

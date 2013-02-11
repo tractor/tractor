@@ -100,7 +100,25 @@ deserialiseReferenceObject <- function (file = NULL, object = NULL, raw = FALSE)
     })
     names(fields) <- names(object)
     
-    class <- getRefClass(attr(object, "originalClass"))
-    finalObject <- do.call(class$new, fields)
+    className <- attr(object, "originalClass")
+    if (className %in% names(.Deserialisers))
+        finalObject <- .Deserialisers[[className]](fields)
+    else
+    {
+        class <- getRefClass(className)
+        finalObject <- do.call(class$new, fields)
+    }
+    
     invisible (finalObject)
+}
+
+registerDeserialiser <- function (className, deserialiser)
+{
+    if (!is.character(className) || length(className) != 1)
+        report(OL$Error, "Class name should be specified as a character string")
+    
+    deserialiser <- match.fun(deserialiser)
+    .Deserialisers[[className]] <<- deserialiser
+    
+    invisible (NULL)
 }

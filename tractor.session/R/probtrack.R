@@ -88,7 +88,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
             
         result <- list(session=session, seeds=promote(originalSeed,byrow=TRUE), nSamples=nSamples)
         if (requireImage)
-            result <- c(result, list(image=newMriImageFromFile(outputFile)))
+            result <- c(result, list(image=readImageFile(outputFile)))
         if (requireParticlesDir)
             result <- c(result, list(particlesDir=file.path(workingDir,"particles")))
         if (requireFile)
@@ -101,7 +101,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         report(OL$Info, "Performing seed mask tractography with ", nSamples, " samples per seed")
         
         seedFile <- threadSafeTempFile()
-        writeMriImageToFile(seedMask, seedFile)
+        writeImageFile(seedMask, seedFile)
         seedPoints <- which(seedMask$getData() > 0, arr.ind=TRUE)
         
         report(OL$Info, "There are ", nrow(seedPoints), " seed points within the mask")
@@ -115,7 +115,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         {
             waypointFiles <- threadSafeTempFile(rep("waypoint",length(waypointMasks)))
             for (i in seq_along(waypointMasks))
-                writeMriImageToFile(waypointMasks[[i]], waypointFiles[i])
+                writeImageFile(waypointMasks[[i]], waypointFiles[i])
             waypointListFile <- threadSafeTempFile()
             writeLines(waypointFiles, waypointListFile)
             waypointString <- paste(" --waypoints=", waypointListFile, sep="")
@@ -129,7 +129,7 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         
         result <- list(session=session, seeds=seedPoints, nSamples=nRetainedSamples)
         if (requireImage)
-            result <- c(result, list(image=newMriImageFromFile(outputFile)))
+            result <- c(result, list(image=readImageFile(outputFile)))
         
         for (i in seq_along(waypointMasks))
             removeImageFilesWithName(waypointFiles[i])
@@ -152,7 +152,7 @@ runProbtrackForNeighbourhood <- function (session, x, y = NULL, z = NULL, width 
     
     if (mask)
     {
-        metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("maskedb0"))
+        metadata <- session$getImageByType("maskedb0", metadataOnly=TRUE)
         data <- generateImageDataForShape("block", metadata$getDimensions(), centre=centre, width=width)
         seedMask <- newMriImageWithData(data, metadata)
         result <- runProbtrackWithSession(session, seedMask=seedMask, mode="seedmask", nSamples=nSamples, ...)
@@ -168,7 +168,7 @@ runProbtrackForNeighbourhood <- function (session, x, y = NULL, z = NULL, width 
         
         if (nValidSeeds > 0)
         {
-            metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("maskedb0"))
+            metadata <- session$getImageByType("maskedb0", metadataOnly=TRUE)
             sequence <- match(sort(weights[validSeeds]), weights)
             seeds <- t(neighbourhoodInfo$vectors[,sequence])
             runProbtrackWithSession(session, seeds, mode="simple", requireFile=TRUE, nSamples=nSamples)

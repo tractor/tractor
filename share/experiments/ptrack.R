@@ -20,7 +20,7 @@ runExperiment <- function ()
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL)
     terminateAtTarget <- getConfigVariable("TerminateAtTarget", FALSE)
     
-    seedMask <- newMriImageFromFile(seedMaskFile)
+    seedMask <- readImageFile(seedMaskFile)
     if (seedMaskInStandardSpace)
         seedMask <- transformStandardSpaceImage(session, seedMask)
     
@@ -34,7 +34,7 @@ runExperiment <- function ()
     targetMasks <- list()
     for (targetFile in targetMaskFiles)
     {
-        targetMask <- newMriImageFromFile(targetFile)
+        targetMask <- readImageFile(targetFile)
         if (targetMasksInStandardSpace)
             targetMask <- transformStandardSpaceImage(session, targetMask)
         targetMasks <- c(targetMasks, list(targetMask))

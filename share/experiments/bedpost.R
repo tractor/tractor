@@ -19,8 +19,8 @@ runExperiment <- function ()
         if (is.null(scheme))
             report(OL$Error, "No diffusion gradient directions are stored for this session")
         
-        dataMetadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("data", "diffusion"))
-        maskMetadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("mask", "diffusion"))
+        dataMetadata <- session$getImageByType("data", "diffusion", metadataOnly=TRUE)
+        maskMetadata <- session$getImageByType("mask", "diffusion", metadataOnly=TRUE)
         
         if (!equivalent(dataMetadata$getDimensions()[1:3], maskMetadata$getDimensions()))
             report(OL$Error, "Data and mask dimensions do not match")

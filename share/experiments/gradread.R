@@ -15,7 +15,7 @@ runExperiment <- function ()
     else
         smallBValue <- 0
     
-    metadata <- newMriImageMetadataFromFile(session$getImageFileNameByType("rawdata", "diffusion"))
+    metadata <- session$getImageByType("rawdata", "diffusion", metadataOnly=TRUE)
     
     bvecs <- as.matrix(read.table(fileName))
     if (nrow(bvecs) != 3)

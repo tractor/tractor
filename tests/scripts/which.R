@@ -6,7 +6,7 @@ runExperiment <- function ()
     
     useArrayIndices <- getConfigVariable("ArrayIndices", TRUE)
     
-    image <- newMriImageFromFile(Arguments[1])
+    image <- readImageFile(Arguments[1])
     operator <- get(switch(Arguments[2], eq="==", gt=">", lt="<", ge=">=", le="<="))
     value <- as.numeric(Arguments[3])
     

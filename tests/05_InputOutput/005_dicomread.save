@@ -7,9 +7,8 @@ INFO: [x2] Data matrix is transposed relative to acquisition matrix
 * * INFO: Image orientation is PIR
 * * INFO: Data set contains 1 volume(s); 2 slice(s) per volume
  Image dimensions : 2 x 224 x 256 voxels
-Coordinate origin : (1,1,1)
  Voxel dimensions : 1 x 1 x 1 mm
-        Data type : unsigned integer, 16 bits/voxel
+Coordinate origin : (1,1,1)
   Additional tags : 0
        Sparseness : 0.84% (dense storage)
 Value of image "t1" at location (1,145,139) is 205

@@ -154,13 +154,13 @@ runExperiment <- function ()
         }
         
         report(OL$Info, "Creating visitation map")
-        metadata <- newMriImageMetadataFromFile(currentSession$getImageFileNameByType("fa","diffusion"))
+        metadata <- currentSession$getImageByType("fa", "diffusion", metadataOnly=TRUE)
         visitationMap <- newMriImageAsVisitationMap(streamSet, metadata)
         fakeResult <- list(image=visitationMap, nSamples=streamSet$nStreamlines(), session=currentSession, seeds=promote(bestSeed,byrow=TRUE))
         
         currentTractName <- paste(tractName, "_session", i, sep="")
         if (createVolumes)
-            writeMriImageToFile(visitationMap, currentTractName)
+            writeImageFile(visitationMap, currentTractName)
         if (createImages)
             writePngsForResult(fakeResult, prefix=currentTractName, threshold=1/(streamSet$nStreamlines()+1), showSeed=showSeed)
     })
