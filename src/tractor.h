@@ -30,6 +30,8 @@ char * build_bootstrap_string ();
 
 int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int add_to_history);
 
+int is_error_string (const char *string);
+
 void write_console (const char *buffer, int buffer_len, int output_type);
 
 void tidy_up ();

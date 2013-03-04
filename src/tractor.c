@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <math.h>
 
 #include "tractor.h"
@@ -244,6 +245,32 @@ int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int
     return return_value;
 }
 
+int is_error_string (const char *string)
+{
+    size_t loc, len;
+    int index;
+    char current_char;
+    const char *error_string = "error";
+    
+    len = strlen(string);
+    index = 0;
+    for (loc=0; loc<=len; loc++)
+    {
+        if (index == 5)
+            return 1;
+        
+        current_char = tolower(string[loc]);
+        if (current_char == error_string[index])
+            index++;
+        else if (index > 0)
+            return 0;
+        else if (current_char != ' ' && current_char != '*')
+            return 0;
+    }
+    
+    return 0;
+}
+
 void write_console (const char *buffer, int buffer_len, int output_type)
 {
     size_t len;
@@ -257,13 +284,13 @@ void write_console (const char *buffer, int buffer_len, int output_type)
     {
         len = strlen(buffer);
         
-        if (strncmp(buffer,"Error",5) == 0 || strncmp(buffer,"ERROR",5) == 0)
+        if (is_error_string(buffer))
             fputs("\x1b[31m", stderr);
         else
             fputs("\x1b[33m", stderr);
         
         if (buffer[len-1] == '\n')
-            fprintf(stderr, "%.*s\x1b[0m\n", len-1, buffer);
+            fprintf(stderr, "%.*s\x1b[0m\n", (int) len-1, buffer);
         else
             fprintf(stderr, "%s\x1b[0m", buffer);
         
