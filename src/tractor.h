@@ -26,8 +26,12 @@ void parse_arguments (int argc, const char **argv);
 
 int main (int argc, char **argv);
 
+char * build_bootstrap_string ();
+
 int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int add_to_history);
 
 void write_console (const char *buffer, int buffer_len, int output_type);
 
-void tidy_up (SA_TYPE save_action, int status, int run_last);
+void tidy_up ();
+
+void tidy_up_all (SA_TYPE save_action, int status, int run_last);
