@@ -206,15 +206,19 @@ int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int
     if (remaining_len == -1)
     {
         bootstrap_string = build_bootstrap_string();
-        puts(bootstrap_string);
         remaining_len = strlen(bootstrap_string);
+        
+        // Print bootstrap string to stdout if running in debug mode
+        if (output_level != NULL && strcmp(output_level,"Debug") == 0)
+        {
+            fprintf(stdout, "\x1b[32m%s\x1b[0m", bootstrap_string);
+            fflush(stdout);
+        }
     }
     
     // First and subsequent times until whole string is transferred: copy (part of) string to buffer
     if (remaining_len != 0)
     {
-        printf("Remaining: %d\n", (int) remaining_len);
-        fflush(stdout);
         if (remaining_len < buffer_len)
         {
             strcpy((char *) buffer, bootstrap_string + current_offset);
