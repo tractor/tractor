@@ -92,20 +92,24 @@ void parse_arguments (int argc, const char **argv)
     }
     
     if (script_args_len > 0)
+    {
         script_args = (char *) malloc(script_args_len);
     
-    // Third pass: copy unflagged arguments into "script_args"
-    current_arg = 1;
-    while (current_arg < argc)
-    {
-        if (argv[current_arg] != NULL)
+        // Third pass: copy unflagged arguments into "script_args"
+        current_arg = 1;
+        while (current_arg < argc)
         {
-            strcpy(script_args + script_args_index, argv[current_arg]);
-            script_args_index += strlen(argv[current_arg]);
-            strcpy(script_args + script_args_index, " ");
-            script_args_index++;
+            if (argv[current_arg] != NULL)
+            {
+                strcpy(script_args + script_args_index, argv[current_arg]);
+                script_args_index += strlen(argv[current_arg]);
+                strcpy(script_args + script_args_index, " ");
+                script_args_index++;
+            }
+            current_arg++;
         }
-        current_arg++;
+        
+        script_args[script_args_index-1] = '\0';
     }
 }
 
@@ -242,14 +246,29 @@ int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int
 
 void write_console (const char *buffer, int buffer_len, int output_type)
 {
-    if (output_type == 0)
-        fputs(buffer, stdout);
-    else if (strncmp(buffer,"Error",5) == 0 || strncmp(buffer,"ERROR",5) == 0)
-        fprintf(stderr, "\x1b[31m%s\x1b[0m", buffer);
-    else
-        fprintf(stderr, "\x1b[33m%s\x1b[0m", buffer);
+    size_t len;
     
-    fflush(stdout);
+    if (output_type == 0)
+    {
+        fputs(buffer, stdout);
+        fflush(stdout);
+    }
+    else
+    {
+        len = strlen(buffer);
+        
+        if (strncmp(buffer,"Error",5) == 0 || strncmp(buffer,"ERROR",5) == 0)
+            fputs("\x1b[31m", stderr);
+        else
+            fputs("\x1b[33m", stderr);
+        
+        if (buffer[len-1] == '\n')
+            fprintf(stderr, "%.*s\x1b[0m\n", len-1, buffer);
+        else
+            fprintf(stderr, "%s\x1b[0m", buffer);
+        
+        fflush(stderr);
+    }
 }
 
 void tidy_up ()
