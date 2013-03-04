@@ -2,6 +2,7 @@ R=R
 INSTALL=bin/tractor_Rinstall
 
 all:
+	@cd src && $(MAKE) R=$(R)
 	@echo 'Run "make install" to install packages'
 
 postinstall-info:
@@ -51,6 +52,9 @@ uninstall-all: uninstall uninstall-native
 
 clean:
 	@cd tests && $(MAKE) clean
+
+distclean: clean
+	@rm -f bin/exec/tractor
 
 test:
 	@cd tests && $(MAKE) run-tests
