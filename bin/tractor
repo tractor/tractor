@@ -12,7 +12,7 @@ report_file="$tmpdir/tractor$$_report"
 trap 'rm -f $expect_file; [ $keep_report -eq 0 ] && rm -f $report_file; [ $keep_log -eq 0 ] && rm -f $log_file; exit $status' 0 1 2 15
 
 config_file="/dev/null"
-output_level='OL$Warning'
+output_level='Warning'
 write_history=1
 show_options=0
 rprofile_backed_up=0
@@ -172,11 +172,11 @@ interactive=`grep -ci '#@interactive TRUE' $script_file`
 
 export verbose_level
 if [ $verbose_level -eq 1 ]; then
-    output_level='OL$Info'
+    output_level='Info'
 elif [ $verbose_level -eq 2 ]; then
-    output_level='OL$Verbose'
+    output_level='Verbose'
 elif [ $verbose_level -eq 3 ]; then
-    output_level='OL$Debug'
+    output_level='Debug'
 fi
 
 [ $expect_available -ne 0 -a -f .Rprofile ] && {
@@ -187,17 +187,18 @@ fi
 
 [ $quiet -eq 0 ] && echo "Starting TractoR environment..."
 
-if [ $batch_mode -eq 1 ]; then
+if [ -x "$TRACTOR_HOME/bin/exec/tractor" ]; then
+    R --vanilla CMD "$TRACTOR_HOME/bin/exec/tractor" "$script_file" -w "$working_dir" -r "$report_file" -l "$output_level" -c "$config_file" -p "$parallelisation_factor" $args 2>&1 | tee $log_file
+elif [ $batch_mode -eq 1 ]; then
     cat >"$expect_file" <<EOF
 library(utils)
 library(tractor.utils)
-bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor)
+bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\$$output_level, '$config_file', '$args', $parallelisation_factor)
 EOF
     R CMD BATCH --slave --vanilla $expect_file $log_file
 elif [ $interactive -eq 0 ]; then
-    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor)" | R --slave --vanilla 2>&1 | tee $log_file
+    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\$$output_level, '$config_file', '$args', $parallelisation_factor)" | R --slave --vanilla 2>&1 | tee $log_file
 elif [ $expect_available -eq 0 ]; then
-    output_level=`echo $output_level | sed 's/\\$/\\\\\\$/'`
     cat >"$expect_file" <<EOF
 log_user 0
 spawn R --quiet --vanilla
@@ -206,7 +207,7 @@ send "library(utils)\n"
 expect -re ">.+\r\n"
 send "library(tractor.utils)\n"
 expect -re ">.+\r\n"
-send "bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor)\n"
+send "bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\\\$$output_level, '$config_file', '$args', $parallelisation_factor)\n"
 expect -re ">.+\r\n"
 interact
 EOF
@@ -216,7 +217,7 @@ EOF
     }
     expect -f $expect_file | tee $log_file
 else
-    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', $output_level, '$config_file', '$args', $parallelisation_factor)" >.Rprofile
+    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\$$output_level, '$config_file', '$args', $parallelisation_factor)" >.Rprofile
     R --slave --no-save --no-restore --no-site-file --no-environ 2>&1 | tee $log_file
 fi
 
