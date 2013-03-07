@@ -71,11 +71,8 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
                 
                 if (viewer == "fslview")
                 {
-                    metadata <- newMriImageMetadataFromFile(imageInfo$imageFile)
-                    typeCode <- getNiftiCodeForDataType(metadata$getDataType())
-            
                     # fslview is fussy about data types, so write the image into Analyze format to avoid a crash if necessary
-                    if (imageInfo$format == "Mgh" || is.null(typeCode) || typeCode > 64)
+                    if (imageInfo$format == "Mgh" || (imageInfo$format == "Nifti" && tractor.base:::readNifti(imageInfo)$storageMetadata$datatype$code > 64))
                     {
                         dir.create(file.path(tempDir, i))
                         imageLoc <- file.path(tempDir, i, basename(metadata$getSource()))
