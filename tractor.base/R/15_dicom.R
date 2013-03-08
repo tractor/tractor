@@ -599,7 +599,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     invisible (returnValue)
 }
 
-newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary = NULL, stopTag = NULL)
+newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary = NULL, stopTag = NULL, ignoreTransferSyntax = FALSE)
 {
     fileName <- expandFileName(fileName)
     
@@ -608,7 +608,9 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
     
     # DICOM is sufficiently complicated that this can really only be interpreted to mean "probably" or "probably not"
     isDicomFile <- !checkFormat
-    endian <- .Platform$endian
+    endian <- "little"
+    explicitTypes <- TRUE
+    deferredTransferSyntax <- NULL
     tagOffset <- 0
     dataOffset <- NULL
     
@@ -617,9 +619,11 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
     dictionary$type <- as.vector(dictionary$type)
     typeCol <- which(colnames(dictionary) == "type")
     connection <- file(fileName, "rb")
+    on.exit(close(connection))
     
     if (checkFormat)
     {
+        # A well-formed DICOM file should contain a magic number at offset 128
         seek(connection, where=128)
         str <- rawToChar(stripNul(readBin(connection, "raw", n=4)))
         if (str == "DICM")
@@ -631,18 +635,28 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
             seek(connection, where=0)
     }
     
-    group <- readBin(connection, "integer", n=1, size=2, signed=FALSE)
-    if (isTRUE(group == 0x0008))
-        isDicomFile <- TRUE
-    else if (isTRUE(group == 0x0800))
-        isDicomFile <- TRUE
-        
-    if (isTRUE(group > 0x00ff))
-        endian <- setdiff(c("big","little"), .Platform$endian)
+    # Read the first group number
+    group <- readBin(connection, "integer", n=1, size=2, signed=FALSE, endian=endian)
     
+    # Some GE files have no magic number and no group 2, starting with group 8 instead
+    if (checkFormat && !isDicomFile)
+    {
+        if (isTRUE(group == 0x0008))
+            isDicomFile <- TRUE
+        else if (isTRUE(group == 0x0800))
+            isDicomFile <- TRUE
+    }
+    
+    # Assume that the first group shouldn't be huge, to guess the endianness
+    if (isTRUE(group > 0x00ff))
+        endian <- setdiff(c("big","little"), endian)
+    
+    # Pretty fragile, this, since it assumes we know the type of the first tag
+    # Seems to work in practice, but in theory we can assume implicit little-endian
+    # after group 2 if there is no transfer syntax specified
     seek(connection, where=2, origin="current")
     type <- rawToChar(stripNul(readBin(connection, "raw", n=2)))
-    if (type == "UL")
+    if (isTRUE(type == "UL"))
         explicitTypes <- TRUE
     else
         explicitTypes <- FALSE
@@ -669,6 +683,14 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
                 endian <- setdiff(c("big","little"), endian)
             }
             currentElement <- readBin(connection, "integer", n=1, size=2, signed=FALSE, endian=endian)
+            
+            # Group 2 should always be explicit little-endian; the transfer syntax applies after that
+            if (!ignoreTransferSyntax && !is.null(deferredTransferSyntax) && currentGroup > 2)
+            {
+                endian <- .Dicom$transferSyntaxes[[deferredTransferSyntax]]$endian
+                explicitTypes <- .Dicom$transferSyntaxes[[deferredTransferSyntax]]$explicitTypes
+                deferredTransferSyntax <- NULL
+            }
             
             # Sequence related tags are always untyped
             if (currentGroup == 0xfffe)
@@ -759,6 +781,13 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
             else
                 values <- c(values, rawToChar(stripNul(readBin(connection, "raw", n=length))))
             
+            if (!ignoreTransferSyntax && currentGroup == 0x0002 && currentElement == 0x0010)
+            {
+                deferredTransferSyntax <- values[length(values)]
+                if (!(deferredTransferSyntax %in% names(.Dicom$transferSyntaxes)))
+                    report(OL$Error, "Transfer syntax ", deferredTransferSyntax, " is not supported")
+            }
+            
             if (!is.null(stopTag) && currentGroup == stopTag[1] && currentElement == stopTag[2])
             {
                 dataOffset <- NA
@@ -767,8 +796,6 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
             }
         }
         
-        close(connection)
-
         if (is.null(dataOffset))
             invisible (NULL)
         else
@@ -781,8 +808,5 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
         }
     }
     else
-    {
-        close(connection)
         invisible (NULL)
-    }
 }
