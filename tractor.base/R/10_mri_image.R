@@ -351,6 +351,8 @@ setMethod("Ops", "MriImage", Ops.MriImage)
 
 setMethod("Summary", "MriImage", Summary.MriImage)
 
+# NB: Be careful when changing the behaviour of this function
+# Quite a bit of other code relies on various aspects of its semantics
 newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = NA, voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA)
 {
     if (is.null(data))
