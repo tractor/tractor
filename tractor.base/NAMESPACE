@@ -71,6 +71,8 @@ export(chooseDataTypeForImage)
 export(sortDicomDirectory)
 export(newDicomMetadataFromFile)
 
+export(getColourScale)
+export(interpolatePalette)
 export(createCombinedGraphics)
 export(createProjectionGraphic)
 export(createSliceGraphic)

@@ -64,7 +64,7 @@ runExperiment <- function ()
                 else if (done == "s")
                 {
                     runDtifitWithSession(session)
-                    showImagesInFslview(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1))
+                    showImagesInViewer(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1), viewer="fslview")
                 }
             }
 
@@ -92,7 +92,7 @@ runExperiment <- function ()
                 if (done %in% c("y","n"))
                     break
                 else if (done == "s")
-                    showImagesInFslview(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1))
+                    showImagesInViewer(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1), viewer="fslview")
             }
 
             if (done == "y")

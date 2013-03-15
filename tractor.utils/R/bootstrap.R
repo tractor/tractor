@@ -53,7 +53,9 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), reportF
     
     reportFlags()
     
-    if (!is.null(reportFile) && is.list(results))
+    if (!standalone)
+        return (results)
+    else if (!is.null(reportFile) && is.list(results))
         writeYaml(results, fileName=reportFile)
 }
 

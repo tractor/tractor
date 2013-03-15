@@ -1,8 +1,8 @@
 Package: tractor.native
-Version: 2.2.0
-Date: 2012-07-19
+Version: 2.3.0
+Date: 2013-01-23
 Title: Compiled code for the TractoR package
-Author: Jon Clayden <jon.clayden+tractor@gmail.com>
+Author: Jon Clayden and Fani Deligianni
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
 Depends: R (>= 2.12.1), methods
 Imports: reportr, tractor.base, tractor.session, tractor.nt

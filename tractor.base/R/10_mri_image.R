@@ -68,6 +68,14 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getFieldOfView = function () { return (abs(voxelDims) * imageDims) },
     
+    getMetadata = function ()
+    {
+        if (.self$isEmpty())
+            return (.self$copy())
+        else
+            return (MriImage$new(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, source=source, origin=origin, storedXform=storedXform, tags=tags, data=NULL))
+    },
+    
     getNonzeroIndices = function (array = TRUE, positiveOnly = FALSE)
     {
         if (.self$isEmpty())
@@ -224,7 +232,7 @@ setAs("MriImage", "nifti", function (from) {
 setAs("nifti", "MriImage", function (from) {
     if (is.null(getOption("niftiAuditTrail")))
         options(niftiAuditTrail=FALSE)
-    suppressPackageStartupMessages(require(oro.nifti))
+    loadNamespace("oro.nifti")
     
     nDims <- from@dim_[1]
     voxelDims <- from@pixdim[seq_len(nDims)+1]
@@ -351,6 +359,8 @@ setMethod("Ops", "MriImage", Ops.MriImage)
 
 setMethod("Summary", "MriImage", Summary.MriImage)
 
+# NB: Be careful when changing the behaviour of this function
+# Quite a bit of other code relies on various aspects of its semantics
 newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = NA, voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA)
 {
     if (is.null(data))
@@ -402,9 +412,9 @@ newMriImageWithDataRepresentation <- function (image, representation = c("dense"
     representation <- match.arg(representation)
     
     if (image$isSparse() && representation == "dense")
-        newImage <- newMriImageWithData(as(image$getData(), "array"), image$getMetadata())
+        newImage <- newMriImageWithData(as(image$getData(), "array"), image)
     else if (!image$isSparse() && representation == "coordlist")
-        newImage <- newMriImageWithData(as(image$getData(), "SparseArray"), image$getMetadata())
+        newImage <- newMriImageWithData(as(image$getData(), "SparseArray"), image)
     else
         newImage <- image
     
@@ -440,11 +450,21 @@ extractDataFromMriImage <- function (image, dim, loc)
     if (!(loc %in% 1:(image$getDimensions()[dim])))
         report(OL$Error, "The specified location is out of bounds")
     
-    # This "apply" call is a cheeky bit of R wizardry (credit: Peter Dalgaard)
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
-    newData <- image$apply(dimsToKeep, "[", loc)
-    if (is.vector(newData))
-        newData <- promote(newData)
+    if (image$isSparse())
+    {
+        # This code is faster when working with a sparse array
+        newData <- array(0, dim=image$getDimensions()[dimsToKeep])
+        matchingCoords <- which(image$getData()$getCoordinates()[,dim] == loc)
+        newData[image$getData()$getCoordinates()[matchingCoords,dimsToKeep,drop=FALSE]] <- image$getData()$getData()[matchingCoords]
+    }
+    else
+    {
+        # This "apply" call is a cheeky bit of R wizardry (credit: Peter Dalgaard)
+        newData <- image$apply(dimsToKeep, "[", loc)
+        if (is.vector(newData))
+            newData <- promote(newData)
+    }
     
     invisible (newData)
 }

@@ -47,6 +47,29 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="231-2013-02-12">2.3.1 (2013-02-12)</h2>
+
+<ul>
+<li>The tests should no longer fail after a clean install of the package.</li>
+</ul>
+
+<h2 id="230-2013-02-04">2.3.0 (2013-02-04)</h2>
+
+<ul>
+<li>TractoR now includes a simple interactive image viewer, which is used by default unless the <code>TRACTOR_VIEWER</code> environment variable is set to <code>fslview</code> (for FSLview, as in earlier releases) or <code>freeview</code> (to use FreeSurfer&#39;s FreeView, for which a new interface has also been added). The new TractoR viewer remains work in progress, and FSLview is still favoured by scripts for showing 4D or vector-valued images.</li>
+<li>The <code>dicomsort</code> script&#39;s <code>SortBySubjectFirst</code> option has been replaced by a more general <code>SortOn</code> option, which allows the files to be sorted by series, subject and/or date in any order. The script is also more careful to avoid deleting files which are not moved because they are already in the right place.</li>
+<li>The <code>mtrack</code> script now allows the user to specify &ldquo;termination&rdquo; masks, which cause truncation of streamlines. It is possible to specify a single mask as both a waypoint and a termination mask. Likewise, <code>ptrack</code> gains a <code>TerminateAtTarget</code> option.</li>
+<li>TractoR&#39;s internal tractography algorithm is now the default for <code>rtrack</code> and <code>mtrack</code>.</li>
+<li>If the <code>gradrotate</code> script is applied to a session, the original (unrotated) gradient directions are first copied to the file <code>tractor/diffusion/directions-orig.txt</code>. This makes it much easier to tell whether rotation has been performed, and is used by the code to make sure that the gradients are not rotated twice.</li>
+<li>The <code>gmap</code> script gains a <code>UseReferencePlanes</code> option: if it is &ldquo;false&rdquo; then the plane of the maximum in the image is used for visualisation. In addition, the script should no longer produce an error when the reference seed point is not in the centre of a voxel.</li>
+<li>The <code>dirviz</code> script gains a <code>ScaleFactor</code> option to control the size of the PNG image produced.</li>
+<li>The <code>pnt-data-sge</code> script now captures SGE/OGE job numbers more robustly, thereby avoiding spurious errors.</li>
+<li>PNT reference tracts (including those provided with TractoR) should now have smaller file sizes.</li>
+<li>Code which reads from DICOM files should no longer produce an error while checking if a very small file is a DICOM file or not, or when handling oblique images.</li>
+<li>The PNT reference tract test has been tweaked to avoid spurious failures.</li>
+<li>Using the FSL tracker with FSL versions containing more than three parts (e.g. 5.0.2.1) no longer fails.</li>
+</ul>
+
 <h2 id="221-2012-08-29">2.2.1 (2012-08-29)</h2>
 
 <ul>
@@ -206,6 +229,13 @@
 <li>The &ldquo;-r&rdquo; flag to the main <code>tractor</code> program is deprecated.</li>
 <li>The package installation process is now less verbose.</li>
 <li>Many R-level changes and enhancements have been made, including tweaks to support changes upcoming in R 2.14.0, due in October.</li>
+</ul>
+
+<h2 id="183-2012-08-29">1.8.3 (2012-08-29)</h2>
+
+<ul>
+<li>The <code>pnt-prune</code> script would sometimes misinterpret the median streamline which is used as a baseline, resulting in a far less tightly pruned final tract than expected for some data sets. This has now been corrected. (Back-ported from version 2.2.1.)</li>
+<li>A number of improvements have been made relating to TractoR&#39;s handling of very short tracts. (Partly back-ported from version 2.0.7.)</li>
 </ul>
 
 <h2 id="182-2011-10-20">1.8.2 (2011-10-20)</h2>

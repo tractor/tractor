@@ -1,4 +1,4 @@
-trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNames, phiNames, nSamples = 5000, maxSteps = 2000, stepLength = 0.5, avfThreshold = 0.05, curvatureThreshold = 0.2, useLoopcheck = TRUE, rightwardsVector = NULL, requireImage = TRUE, requireStreamlines = FALSE)
+trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNames, phiNames, nSamples = 5000, maxSteps = 2000, stepLength = 0.5, avfThreshold = 0.05, curvatureThreshold = 0.2, useLoopcheck = TRUE, rightwardsVector = NULL, requireImage = TRUE, requireStreamlines = FALSE, terminateOutsideMask = FALSE)
 {
     on.exit(.C("clean_up_streamlines", PACKAGE="tractor.native"))
     
@@ -37,8 +37,7 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
         report(OL$Error, "AVF, theta and phi image names must be given for every anisotropic compartment")
     
     report(OL$Info, "Running ", nCompartments, "-compartment tractography with ", nSeeds, " seed(s) and ", nSamples, " streamline(s) per seed")
-    
-    result <- .Call("track_with_seeds", seeds, as.integer(nSeeds), 1L, maskName, list(avf=avfNames,theta=thetaNames,phi=phiNames), as.integer(nCompartments), as.integer(nSamples), as.integer(maxSteps), as.double(stepLength), as.double(avfThreshold), as.double(curvatureThreshold), as.logical(useLoopcheck), rightwardsVector, as.logical(requireImage), as.logical(requireStreamlines), PACKAGE="tractor.native")
+    result <- .Call("track_with_seeds", seeds, as.integer(nSeeds), 1L, maskName, list(avf=avfNames,theta=thetaNames,phi=phiNames), as.integer(nCompartments), as.integer(nSamples), as.integer(maxSteps), as.double(stepLength), as.double(avfThreshold), as.double(curvatureThreshold), as.logical(useLoopcheck), rightwardsVector, as.logical(requireImage), as.logical(requireStreamlines), as.logical(terminateOutsideMask), PACKAGE="tractor.native")
     
     returnValue <- list(seeds=seeds, nSamples=nSamples*nSeeds)
     if (requireImage)
@@ -55,7 +54,7 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
     invisible (returnValue)
 }
 
-trackWithSession <- function (session, x, y = NULL, z = NULL, ...)
+trackWithSession <- function (session, x, y = NULL, z = NULL, maskName = NULL, ...)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
@@ -64,7 +63,9 @@ trackWithSession <- function (session, x, y = NULL, z = NULL, ...)
     if (nCompartments == 0)
         report(OL$Error, "The \"bedpost\" program has not yet been run for this session")
     
-    maskName <- session$getImageFileNameByType("mask", "diffusion")
+	if (is.null(maskName))
+		maskName <- session$getImageFileNameByType("mask", "diffusion")
+	
     avfNames <- session$getImageFileNameByType("avfsamples", "bedpost", index=1:nCompartments)
     thetaNames <- session$getImageFileNameByType("thetasamples", "bedpost", index=1:nCompartments)
     phiNames <- session$getImageFileNameByType("phisamples", "bedpost", index=1:nCompartments)
@@ -73,3 +74,4 @@ trackWithSession <- function (session, x, y = NULL, z = NULL, ...)
     returnValue$session <- session
     invisible (returnValue)
 }
+

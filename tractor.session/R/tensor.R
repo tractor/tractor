@@ -70,7 +70,7 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
     }
     
     coeffs <- promote(solution$coefficients)
-    returnValue <- list(logS0=coeffs[1,], tensors=coeffs[2:7,,drop=FALSE], sse=colSums(promote(solution$residuals)^2))
+    returnValue <- list(logS0=coeffs[1,], tensors=coeffs[2:7,,drop=FALSE], sse=colSums(promote(solution$residuals)^2,na.rm=TRUE))
     
     if (requireMetrics)
     {

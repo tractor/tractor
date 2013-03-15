@@ -18,6 +18,7 @@ runExperiment <- function ()
     targetNames <- getConfigVariable("TargetNames", NULL)
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL)
+    terminateAtTarget <- getConfigVariable("TerminateAtTarget", FALSE)
     
     seedMask <- readImageFile(seedMaskFile)
     if (seedMaskInStandardSpace)
@@ -46,10 +47,22 @@ runExperiment <- function ()
     if (nrow(seeds) == 0)
         report(OL$Error, "There are no seed points")
     
+    if (terminateAtTarget)
+    {
+        sumOfTargetMasks <- Reduce("+", targetMasks)
+        brainMask <- session$getImageByType("mask", "diffusion")
+        trackingMask <- newMriImageWithBinaryFunction(brainMask, sumOfTargetMasks, function(x,y) ifelse(x>0 & y==0, 1, 0))
+        trackingMaskFileName <- threadSafeTempFile()
+        writeMriImageToFile(trackingMask, trackingMaskFileName)
+    }
+    
     streamlineCounts <- matrix(NA, nrow=nrow(seeds), ncol=length(targetNames), dimnames=list(NULL,targetNames))
     for (i in 1:nrow(seeds))
     {
-        result <- trackWithSession(session, seeds[i,], nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE)
+        if (terminateAtTarget)
+            result <- trackWithSession(session, seeds[i,], maskName=trackingMaskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE)
+        else
+            result <- trackWithSession(session, seeds[i,], nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE)
         for (j in 1:length(targetNames))
             streamlineCounts[i,j] <- length(findWaypointHits(result$streamlines, targetMasks[j]))
     }

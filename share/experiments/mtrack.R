@@ -1,5 +1,5 @@
 #@args session directory
-#@desc Run tractography using one or more masks. Every nonzero voxel in the specified SeedMaskFile will be used as a seed point for NumberOfSamples streamlines, and the results combined. If the SeedMaskFile option is not specified, then seeding will be performed throughout the brain mask, subject to any anisotropy threshold specified. If any WaypointMaskFiles are specified, streamlines which do not pass through ALL of the masks given will be ignored; and likewise, streamlines that pass through ANY specified exclusion masks will be ignored.
+#@desc Run tractography using one or more masks. Every nonzero voxel in the specified SeedMaskFile will be used as a seed point for NumberOfSamples streamlines, and the results combined. If the SeedMaskFile option is not specified, then seeding will be performed throughout the brain mask, subject to any anisotropy threshold specified. If any WaypointMaskFiles are specified, streamlines which do not pass through ALL of the masks given will be ignored; and likewise, streamlines that pass through ANY specified exclusion masks will be ignored. Streamlines are truncated immediately after entering any termination masks specified.
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
@@ -15,7 +15,9 @@ runExperiment <- function ()
     waypointMasksInStandardSpace <- getConfigVariable("WaypointMasksInStandardSpace", FALSE)
     exclusionMaskFiles <- getConfigVariable("ExclusionMaskFiles", NULL, "character", errorIfInvalid=TRUE)
     exclusionMasksInStandardSpace <- getConfigVariable("ExclusionMasksInStandardSpace", FALSE)
-    tracker <- getConfigVariable("Tracker", "fsl", validValues=c("fsl","tractor"))
+    terminationMaskFiles <- getConfigVariable("TerminationMaskFiles", NULL, "character", errorIfInvalid=TRUE)
+    terminationMasksInStandardSpace <- getConfigVariable("TerminationMasksInStandardSpace", FALSE)
+    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"))
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL)
     
@@ -75,16 +77,40 @@ runExperiment <- function ()
         }
     }
     
+    if (is.null(terminationMaskFiles))
+    {
+        trackingMaskFileName <- NULL
+        terminateOutsideMask <- FALSE
+    }
+    else
+    {
+        terminationMaskFiles <- splitAndConvertString(as.character(terminationMaskFiles), ",", fixed=TRUE)
+        trackingMask <- session$getImageByType("mask", "diffusion")
+        for (terminationFile in terminationMaskFiles)
+        {
+            terminationMask <- newMriImageFromFile(terminationFile)
+            if (terminationMasksInStandardSpace)
+                terminationMask <- transformStandardSpaceImage(session, terminationMask)
+            trackingMask <- newMriImageWithBinaryFunction(trackingMask, terminationMask, function(x,y) ifelse(x>0 & y==0, 1, 0))
+        }
+        
+        trackingMaskFileName <- threadSafeTempFile()
+        writeMriImageToFile(trackingMask, trackingMaskFileName)
+        terminateOutsideMask <- TRUE
+    }
+    
     if (tracker == "fsl")
     {
         if (!is.null(exclusionMaskFiles))
             report(OL$Error, "Exclusion masks are not currently supported with the FSL tracker")
+        if (!is.null(terminationMaskFiles))
+            report(OL$Error, "Termination masks are not currently supported with the FSL tracker")
         result <- runProbtrackWithSession(session, mode="seedmask", seedMask=seedMask, waypointMasks=waypointMasks, requireImage=TRUE, nSamples=nSamples)
     }
     else
     {
         require(tractor.native)
-        result <- trackWithSession(session, seedMask, requireImage=is.null(waypointMasks), requireStreamlines=(storeStreamlines || !is.null(waypointMasks)), nSamples=nSamples)
+        result <- trackWithSession(session, seedMask, maskName=trackingMaskFileName, requireImage=is.null(waypointMasks), requireStreamlines=(storeStreamlines || !is.null(waypointMasks)), nSamples=nSamples, terminateOutsideMask=terminateOutsideMask)
         if (!is.null(waypointMasks))
         {
             result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks, exclusion)
