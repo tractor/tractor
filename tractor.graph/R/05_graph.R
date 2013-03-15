@@ -1,7 +1,13 @@
-Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexCount="integer",vertexNames="character",vertexLocations="matrix",locationUnit="character",edges="matrix",edgeNames="character",edgeWeights="numeric",directed="logical"), methods=list(
-    initialize = function (vertexCount = 0, vertexNames = NULL, vertexLocations = matrix(NA,0,0), locationUnit = "", edges = matrix(NA,0,0), edgeNames = character(0), edgeWeights = rep(1,nrow(edges)), directed = FALSE)
+Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexCount="integer",vertexAttributes="list",vertexLocations="matrix",locationUnit="character",edges="matrix",edgeAttributes="list",edgeWeights="numeric",directed="logical"), methods=list(
+    initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = matrix(NA,0,0), locationUnit = "", edges = matrix(NA,0,0), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
     {
-        return (initFields(vertexCount=as.integer(vertexCount), vertexNames=as.character(vertexNames), vertexLocations=vertexLocations, locationUnit=locationUnit, edges=edges, edgeNames=edgeNames, edgeWeights=as.numeric(edgeWeights), directed=directed))
+        oldFields <- list(...)
+        if ("vertexNames" %in% names(oldFields))
+            vertexAttributes <- list(names=as.character(oldFields$vertexNames))
+        if ("edgeNames" %in% names(oldFields))
+            edgeAttributes <- list(names=as.character(oldFields$edgeNames))
+        
+        return (initFields(vertexCount=as.integer(vertexCount), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=locationUnit, edges=edges, edgeAttributes=edgeAttributes, edgeWeights=as.numeric(edgeWeights), directed=directed))
     },
     
     getConnectedVertices = function () { return (sort(unique(as.vector(edges)))) },
@@ -9,10 +15,10 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     getConnectionMatrix = function ()
     {
         connectionMatrix <- matrix(0, nrow=vertexCount, ncol=vertexCount)
-        if (!is.null(vertexNames))
+        if (!is.null(vertexAttributes$names))
         {
-            rownames(connectionMatrix) <- vertexNames
-            colnames(connectionMatrix) <- vertexNames
+            rownames(connectionMatrix) <- vertexAttributes$names
+            colnames(connectionMatrix) <- vertexAttributes$names
         }
         connectionMatrix[edges] <- edgeWeights
         if (!directed)
@@ -30,7 +36,15 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     getEdges = function () { return (edges) },
     
-    getEdgeNames = function () { return (edgeNames) },
+    getEdgeAttributes = function (attributes = NULL)
+    {
+        if (is.null(attributes))
+            return (edgeAttributes)
+        else if (length(attributes) == 1)
+            return (edgeAttributes[[attributes]])
+        else
+            return (edgeAttributes[attributes])
+    },
     
     getEdgeWeights = function () { return (edgeWeights) },
     
@@ -44,13 +58,21 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         return (degreeMatrix - connectionMatrix)
     },
     
+    getVertexAttributes = function (attributes = NULL)
+    {
+        if (is.null(attributes))
+            return (vertexAttributes)
+        else if (length(attributes) == 1)
+            return (vertexAttributes[[attributes]])
+        else
+            return (vertexAttributes[attributes])
+    },
+    
     getVertexDegree = function () { return (table(factor(edges, levels=1:vertexCount))) },
     
     getVertexLocations = function () { return (vertexLocations) },
     
     getVertexLocationUnit = function () { return (locationUnit) },
-    
-    getVertexNames = function () { return (vertexNames) },
     
     isDirected = function () { return (directed) },
     
@@ -158,7 +180,7 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, lwd = 2, radi
     if (!add)
     {
         oldPars <- par(mai=c(0,0,0,0))
-        plot(NA, type="n", xlim=xlim, ylim=ylim)    
+        plot(NA, type="n", xlim=xlim, ylim=ylim, asp=1)    
     }
     segments(xLocs[from], yLocs[from], xLocs[to], yLocs[to], lwd=lwd, col=colours)
     symbols(xLocs, yLocs, circles=rep(radius,nActiveVertices), inches=FALSE, col="grey50", lwd=lwd, bg="white", add=TRUE)
@@ -238,7 +260,7 @@ newGraphFromConnectionMatrix <- function (connectionMatrix, directed = FALSE, al
     edges[,2] <- colVertexLocs[edges[,2]]
     dimnames(edges) <- NULL
     
-    return (Graph$new(vertexCount=length(allVertexNames), vertexNames=allVertexNames, edges=edges, edgeWeights=edgeWeights, directed=directed))   
+    return (Graph$new(vertexCount=length(allVertexNames), vertexAttributes=list(names=allVertexNames), edges=edges, edgeWeights=edgeWeights, directed=directed))
 }
 
 newGraphWithVertices <- function (graph, vertices)
@@ -251,9 +273,12 @@ newGraphWithVertices <- function (graph, vertices)
     vertices <- sort(vertices)
     
     nVertices <- graph$nVertices()
-    vertexNames <- graph$getVertexNames()
-    if (length(vertexNames) == nVertices)
-        vertexNames <- vertexNames[vertices]
+    vertexAttributes <- lapply(graph$getVertexAttributes(), function (attrib) {
+        if (length(attrib) == nVertices)
+            return (attrib[vertices])
+        else
+            return (attrib)
+    })
     vertexLocations <- graph$getVertexLocations()
     if (nrow(vertexLocations) == nVertices)
         vertexLocations <- vertexLocations[vertices,]
@@ -262,11 +287,14 @@ newGraphWithVertices <- function (graph, vertices)
     edges <- graph$getEdges()
     edgesToKeep <- which((edges[,1] %in% vertices) & (edges[,2] %in% vertices))
     edges <- matrix(match(edges[edgesToKeep,],vertices), ncol=2)
-    edgeNames <- graph$getEdgeNames()
-    if (length(edgeNames) == nEdges)
-        edgeNames <- edgeNames[edgesToKeep]
+    edgeAttributes <- lapply(graph$getEdgeAttributes(), function (attrib) {
+        if (length(attrib) == nEdges)
+            return (attrib[edgesToKeep])
+        else
+            return (attrib)
+    })
     
-    return (Graph$new(vertexCount=length(vertices), vertexNames=vertexNames, vertexLocations=vertexLocations, locationUnit=graph$getVertexLocationUnit(), edges=edges, edgeNames=edgeNames, edgeWeights=graph$getEdgeWeights()[edgesToKeep], directed=graph$isDirected()))
+    return (Graph$new(vertexCount=length(vertices), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=graph$getVertexLocationUnit(), edges=edges, edgeAttributes=edgeAttributes, edgeWeights=graph$getEdgeWeights()[edgesToKeep], directed=graph$isDirected()))
 }
 
 newGraphWithEdgeWeightThreshold <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted = TRUE)
@@ -274,6 +302,7 @@ newGraphWithEdgeWeightThreshold <- function (graph, threshold, ignoreSign = FALS
     if (!is(graph, "Graph"))
         report(OL$Error, "Specified graph is not a valid Graph object")
     
+    nEdges <- graph$nEdges()
     edgeWeights <- graph$getEdgeWeights()
     
     if (ignoreSign)
@@ -286,9 +315,12 @@ newGraphWithEdgeWeightThreshold <- function (graph, threshold, ignoreSign = FALS
     
     toKeep <- sort(toKeep)
     
-    edgeNames <- graph$getEdgeNames()
-    if (length(edgeNames) == length(edgeWeights))
-        edgeNames <- edgeNames[toKeep]
+    edgeAttributes <- lapply(graph$getEdgeAttributes(), function (attrib) {
+        if (length(attrib) == nEdges)
+            return (attrib[toKeep])
+        else
+            return (attrib)
+    })
     
-    return (Graph$new(vertexCount=graph$nVertices(), vertexNames=graph$getVertexNames(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), edges=graph$getEdges()[toKeep,,drop=FALSE], edgeNames=edgeNames, edgeWeights=edgeWeights[toKeep], directed=graph$isDirected()))
+    return (Graph$new(vertexCount=graph$nVertices(), vertexAttributes=graph$getVertexAttributes(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), edges=graph$getEdges()[toKeep,,drop=FALSE], edgeAttributes=edgeAttributes, edgeWeights=edgeWeights[toKeep], directed=graph$isDirected()))
 }
