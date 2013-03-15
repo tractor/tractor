@@ -68,6 +68,14 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getFieldOfView = function () { return (abs(voxelDims) * imageDims) },
     
+    getMetadata = function ()
+    {
+        if (.self$isEmpty())
+            return (.self$copy())
+        else
+            return (MriImage$new(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, source=source, origin=origin, storedXform=storedXform, tags=tags, data=NULL))
+    },
+    
     getNonzeroIndices = function (array = TRUE, positiveOnly = FALSE)
     {
         if (.self$isEmpty())
@@ -224,7 +232,7 @@ setAs("MriImage", "nifti", function (from) {
 setAs("nifti", "MriImage", function (from) {
     if (is.null(getOption("niftiAuditTrail")))
         options(niftiAuditTrail=FALSE)
-    suppressPackageStartupMessages(require(oro.nifti))
+    loadNamespace("oro.nifti")
     
     nDims <- from@dim_[1]
     voxelDims <- from@pixdim[seq_len(nDims)+1]
@@ -404,9 +412,9 @@ newMriImageWithDataRepresentation <- function (image, representation = c("dense"
     representation <- match.arg(representation)
     
     if (image$isSparse() && representation == "dense")
-        newImage <- newMriImageWithData(as(image$getData(), "array"), image$getMetadata())
+        newImage <- newMriImageWithData(as(image$getData(), "array"), image)
     else if (!image$isSparse() && representation == "coordlist")
-        newImage <- newMriImageWithData(as(image$getData(), "SparseArray"), image$getMetadata())
+        newImage <- newMriImageWithData(as(image$getData(), "SparseArray"), image)
     else
         newImage <- image
     
