@@ -1,4 +1,4 @@
-newRegistrationWithNiftyreg <- function (sourceImage, targetImage, targetMask = NULL, initAffine = NULL, transformTypes = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, linearOptions = list(), nonlinearOptions = list())
+newTransformationWithNiftyreg <- function (sourceImage, targetImage, targetMask = NULL, initAffine = NULL, transformTypes = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, linearOptions = list(), nonlinearOptions = list())
 {
     if (!is(sourceImage,"MriImage") || !is(targetImage,"MriImage"))
         report(OL$Error, "Source and target images must be specified as MriImage objects")
@@ -19,6 +19,8 @@ newRegistrationWithNiftyreg <- function (sourceImage, targetImage, targetMask = 
             linearOptions$targetMask <- as(targetMask, "nifti")
         linearOptions$initAffine <- initAffine
         linearOptions$scope <- ifelse(affineDof==6, "rigid", "affine")
+        if (is.null(linearOptions$estimateOnly))
+            linearOptions$estimateOnly <- estimateOnly
         
         startTime <- Sys.time()
         result <- do.call("niftyreg.linear", linearOptions)
@@ -37,6 +39,8 @@ newRegistrationWithNiftyreg <- function (sourceImage, targetImage, targetMask = 
         if (!is.null(targetMask))
             nonlinearOptions$targetMask <- as(targetMask, "nifti")
         nonlinearOptions$initAffine <- initAffine
+        if (is.null(nonlinearOptions$estimateOnly))
+            nonlinearOptions$estimateOnly <- estimateOnly
         
         startTime <- Sys.time()
         result <- do.call("niftyreg.nonlinear", nonlinearOptions)
@@ -51,6 +55,6 @@ newRegistrationWithNiftyreg <- function (sourceImage, targetImage, targetMask = 
     if (!is.null(result$reverseControl))
         result$reverseControl <- lapply(result$reverseControl, function(x) as(x,"MriImage"))
     
-    registration <- Registration$new(sourceImage=sourceImage, targetImage=targetImage, transformedImage=as(result$image,"MriImage"), reverseTransformedImage=result$reverseImage, affineMatrices=as.list(result$affine), controlPointImages=as.list(result$control), reverseControlPointImages=as.list(result$reverseControl), method="niftyreg")
-    return (registration)
+    transform <- Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=as.list(result$affine), controlPointImages=as.list(result$control), reverseControlPointImages=as.list(result$reverseControl), method="niftyreg")
+    return (list(transform=transform, transformedImage=as(result$image,"MriImage"), reverseTransformedImage=result$reverseImage))
 }

@@ -1,6 +1,6 @@
-withRegistrationCacheLock <- function (expr)
+withTransformationCacheLock <- function (expr)
 {
-    cacheDir <- file.path(tempdir(), "reg-cache")
+    cacheDir <- file.path(tempdir(), "xfm-cache")
     lockFileName <- file.path(cacheDir, "lock")
     
     if (!file.exists(cacheDir))
@@ -22,10 +22,10 @@ withRegistrationCacheLock <- function (expr)
     return (result)
 }
 
-checkRegistrationCache <- function (sourceFileName, targetFileName, method = NULL, transformTypes = NULL, entriesOnly = FALSE)
+checkTransformationCache <- function (sourceFileName, targetFileName, method = NULL, transformTypes = NULL, entriesOnly = FALSE)
 {
     # Not using thread-safe directory here, because all threads need to see the cache
-    cacheIndexFile <- file.path(tempdir(), "reg-cache", "index.txt")
+    cacheIndexFile <- file.path(tempdir(), "xfm-cache", "index.txt")
     if (!file.exists(cacheIndexFile))
         return (invisible(NULL))
     
@@ -49,38 +49,38 @@ checkRegistrationCache <- function (sourceFileName, targetFileName, method = NUL
     else
     {
         report(OL$Info, "Registration cache hit - reusing transform")
-        registrationFileName <- as.vector(cacheEntries$file[1])
-        registration <- deserialiseReferenceObject(registrationFileName)
-        return (invisible(registration))
+        transformFileName <- as.vector(cacheEntries$file[1])
+        transform <- deserialiseReferenceObject(transformFileName)
+        return (invisible(transform))
     }
 }
 
-updateRegistrationCache <- function (registration, force = FALSE)
+updateTransformationCache <- function (transform, force = FALSE)
 {
-    if (!is(registration, "Registration"))
-        report(OL$Error, "The specified registration is not a Registration object")
+    if (!is(transform, "Transformation"))
+        report(OL$Error, "The specified transform is not a Transformation object")
     
-    sourceFileName <- registration$getSourceImage()$getSource()
-    targetFileName <- registration$getTargetImage()$getSource()
-    transformTypeString <- implode(registration$getStoredTransformations(), ",")
+    sourceFileName <- transform$getSourceImage()$getSource()
+    targetFileName <- transform$getTargetImage()$getSource()
+    transformTypeString <- implode(transform$getTypes(), ",")
     
     # There is potential for race conditions here, so we use a lock
-    withRegistrationCacheLock({
-        matchingEntries <- checkRegistrationCache(sourceFileName, targetFileName, registration$getMethod(), registration$getStoredTransformations(), entriesOnly=TRUE)
+    withTransformationCacheLock({
+        matchingEntries <- checkTransformationCache(sourceFileName, targetFileName, transform$getMethod(), transform$getTypes(), entriesOnly=TRUE)
         if (!force && !is.null(matchingEntries) && any(matchingEntries$types==transformTypeString))
             return (FALSE)
     
-        cacheDir <- file.path(tempdir(), "reg-cache")
+        cacheDir <- file.path(tempdir(), "xfm-cache")
         cacheIndexFile <- file.path(cacheDir, "index.txt")
-        registrationFileName <- ensureFileSuffix(tempfile("reg-",cacheDir), "Rdata")
+        transformFileName <- ensureFileSuffix(tempfile("reg-",cacheDir), "Rdata")
     
         if (file.exists(cacheIndexFile))
             cacheIndex <- read.table(cacheIndexFile, col.names=c("index","source","target","method","types","file"))
         if (!is.null(matchingEntries))
             cacheIndex <- subset(cacheIndex, !(index %in% matchingEntries$index))
         
-        registration$serialise(file=registrationFileName)
-        cacheEntry <- data.frame(index=max(as.integer(cacheIndex$index))+1L, source=sourceFileName, target=targetFileName, method=registration$getMethod(), types=transformTypeString, file=registrationFileName)
+        transform$serialise(file=transformFileName)
+        cacheEntry <- data.frame(index=max(as.integer(cacheIndex$index))+1L, source=sourceFileName, target=targetFileName, method=transform$getMethod(), types=transformTypeString, file=transformFileName)
         cacheIndex <- rbind(cacheIndex, cacheEntry)
         write.table(cacheIndex, cacheIndexFile, row.names=FALSE, col.names=FALSE)
         
