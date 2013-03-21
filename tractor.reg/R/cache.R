@@ -31,6 +31,10 @@ checkTransformationCache <- function (sourceFileName, targetFileName, method = N
     
     sourceFileName <- expandFileName(sourceFileName)
     targetFileName <- expandFileName(targetFileName)
+    
+    if (isTemporaryFile(sourceFileName) || isTemporaryFile(targetFileName))
+        return (invisible(NULL))
+    
     cacheIndex <- read.table(cacheIndexFile, col.names=c("index","source","target","method","types","file"))
     
     toKeep <- cacheIndex$source==sourceFileName & cacheIndex$target==targetFileName

@@ -2,9 +2,17 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     getAffineMatrix = function (i = NULL)
     {
         if (is.null(i))
-            return (affineMatrices)
+        {
+            mat <- affineMatrices
+            mat <- lapply(mat, function(m) attr(m, "affineType") <- ifelse(method=="flirt", "fsl", "niftyreg"))
+            return (mat)
+        }
         else
-            return (affineMatrices[[i]])
+        {
+            mat <- affineMatrices[[i]]
+            attr(mat, "affineType") <- ifelse(method=="flirt", "fsl", "niftyreg")
+            return (mat)
+        }
     },
     
     getControlPointImage = function (i = NULL)
@@ -79,7 +87,11 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
         if (any(c("nonlinear","reverse-nonlinear") %in% types))
             report(OL$Error, "FSL-FLIRT does not perform nonlinear registration")
         
-        result <- registerImagesWithFlirt(getImageAsFileName(sourceImage), getImageAsFileName(targetImage), targetMask=getImageAsFileName(targetMask), affineDof=affineDof, estimateOnly=estimateOnly, ...)
+        sourceFileName <- getImageAsFileName(sourceImage, warnIfNotLas=TRUE)
+        targetFileName <- getImageAsFileName(targetImage, warnIfNotLas=TRUE)
+        targetMaskFileName <- getImageAsFileName(targetMask, warnIfNotLas=TRUE)
+        
+        result <- registerImagesWithFlirt(sourceFileName, targetFileName, targetMaskFileName=targetMaskFileName, affineDof=affineDof, estimateOnly=estimateOnly, ...)
     }
     
     if (cache == "write" || (cache == "auto" && !cacheHit))
