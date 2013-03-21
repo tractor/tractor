@@ -1,9 +1,14 @@
-registerImagesWithFlirt <- function (sourceFileName, targetFileName, targetMaskFileName = NULL, initAffine = NULL, types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, finalInterpolation = c("trilinear","nearestneighbour","sinc","spline"))
+registerImagesWithFlirt <- function (sourceFileName, targetFileName, targetMaskFileName = NULL, initAffine = NULL, types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, finalInterpolation = 1)
 {
     if (!is.character(sourceFileName) || !is.character(targetFileName))
         report(OL$Error, "Source and target images must be specified by their filenames")
+    if (!any(affineDof == c(6,7,9,12)))
+        report(OL$Error, "The specified affine degrees of freedom")
     
-    finalInterpolation <- match.arg(finalInterpolation)
+    if (is.numeric(finalInterpolation))
+        finalInterpolation <- c("nearestneighbour","trilinear","sinc","spline")[finalInterpolation]
+    else
+        finalInterpolation <- match.arg(finalInterpolation, c("nearestneighbour","trilinear","sinc","spline"))
     
     if (estimateOnly)
         outputFileExpression <- NULL
@@ -37,7 +42,11 @@ registerImagesWithFlirt <- function (sourceFileName, targetFileName, targetMaskF
     logFile <- ensureFileSuffix(threadSafeTempFile(), "log")
     
     paramString <- paste("-in ", sourceFileName, " -ref ", targetFileName, initExpression, outputFileExpression, " -omat ", outputMatrixFile, " -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof ", affineDof, refweightExpression, " -interp ", finalInterpolation, " >", logFile, " 2>&1", sep="")
+    
+    startTime <- Sys.time()
     execute("flirt", paramString, errorOnFail=TRUE)
+    endTime <- Sys.time()
+    report(OL$Verbose, "FSL-FLIRT registration completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
     
     affine <- as.matrix(read.table(outputMatrixFile))
     transform <- Transformation$new(sourceImage=readImageFile(sourceFileName), targetImage=readImageFile(targetFileName), affineMatrices=list(affine), controlPointImages=list(), reverseControlPointImages=list(), method="flirt")
