@@ -10,16 +10,12 @@ withTransformationCacheLock <- function (expr)
     while (file.exists(lockFileName))
         Sys.sleep(0.5)
     
-    # Grab the lock
+    # Grab the lock, and release it on exit
     writeLines(as.character(Sys.getpid()), lockFileName)
+    on.exit(unlink(lockFileName))
     
     # Evaluate the original expression
-    result <- expr
-    
-    # Release the lock
-    unlink(lockFileName)
-    
-    return (result)
+    expr
 }
 
 checkTransformationCache <- function (sourceFileName, targetFileName, method = NULL, types = NULL, entriesOnly = FALSE)
@@ -35,7 +31,7 @@ checkTransformationCache <- function (sourceFileName, targetFileName, method = N
     if (isTemporaryFile(sourceFileName) || isTemporaryFile(targetFileName))
         return (invisible(NULL))
     
-    cacheIndex <- read.table(cacheIndexFile, col.names=c("index","source","target","method","types","file"))
+    cacheIndex <- read.table(cacheIndexFile, col.names=c("index","source","target","method","types","file"), stringsAsFactors=FALSE)
     
     toKeep <- cacheIndex$source==sourceFileName & cacheIndex$target==targetFileName
     if (!is.null(method))
@@ -79,7 +75,16 @@ updateTransformationCache <- function (transform, force = FALSE)
         transformFileName <- ensureFileSuffix(tempfile("reg-",cacheDir), "Rdata")
     
         if (file.exists(cacheIndexFile))
-            cacheIndex <- read.table(cacheIndexFile, col.names=c("index","source","target","method","types","file"))
+        {
+            cacheIndex <- read.table(cacheIndexFile, col.names=c("index","source","target","method","types","file"), stringsAsFactors=FALSE)
+            index <- max(as.integer(cacheIndex$index)) + 1L
+        }
+        else
+        {
+            cacheIndex <- NULL
+            index <- 1L
+        }
+        
         if (!is.null(matchingEntries))
         {
             cacheIndex <- subset(cacheIndex, !(cacheIndex$index %in% matchingEntries$index))
@@ -87,7 +92,7 @@ updateTransformationCache <- function (transform, force = FALSE)
         }
         
         transform$serialise(file=transformFileName)
-        cacheEntry <- data.frame(index=max(as.integer(cacheIndex$index))+1L, source=sourceFileName, target=targetFileName, method=transform$getMethod(), types=transformTypeString, file=transformFileName)
+        cacheEntry <- data.frame(index=index, source=sourceFileName, target=targetFileName, method=transform$getMethod(), types=transformTypeString, file=transformFileName)
         cacheIndex <- rbind(cacheIndex, cacheEntry)
         write.table(cacheIndex, cacheIndexFile, row.names=FALSE, col.names=FALSE)
         
