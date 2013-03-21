@@ -1,4 +1,4 @@
-applyTransformation <- function (x, m)
+.applyTransform <- function (x, m)
 {
     if (is.null(x))
         return (m)
@@ -26,7 +26,7 @@ transformWithTranslation <- function (x, ...)
     m <- diag(len)
     m[,len] <- translation
     
-    return (applyTransformation(x, m))
+    return (.applyTransform(x, m))
 }
 
 transformWithScaling <- function (x, ...)
@@ -34,7 +34,7 @@ transformWithScaling <- function (x, ...)
     scaling <- c(..., 1)
     m <- diag(scaling)
     
-    return (applyTransformation(x, m))
+    return (.applyTransform(x, m))
 }
 
 transformRVoxelToFslVoxel <- function (x)
