@@ -4,7 +4,10 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         if (is.null(i))
         {
             mat <- affineMatrices
-            mat <- lapply(mat, function(m) attr(m, "affineType") <- ifelse(method=="flirt", "fsl", "niftyreg"))
+            mat <- lapply(mat, function(m) {
+                attr(m, "affineType") <- ifelse(method=="flirt", "fsl", "niftyreg"))
+                return (m)
+            }
             return (mat)
         }
         else
@@ -95,7 +98,7 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
     }
     
     if (cache == "write" || (cache == "auto" && !cacheHit))
-        updateTransformationCache(result$registration, force=TRUE)
+        updateTransformationCache(result$transform, force=TRUE)
     
     return (result)
 }
