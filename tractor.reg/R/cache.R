@@ -41,7 +41,7 @@ checkTransformationCache <- function (sourceFileName, targetFileName, method = N
     if (!is.null(method))
         toKeep <- toKeep & cacheIndex$method==method
     if (!is.null(types))
-        toKeep <- toKeep & sapply(lapply(cacheIndex$types,splitAndConvertString,",",fixed=TRUE), function(x) all(types %in% x))
+        toKeep <- toKeep & sapply(cacheIndex$types, function(x) all(types %in% unlist(strsplit(x,",",fixed=TRUE))))
     
     if (all(!toKeep))
         return (invisible(NULL))
@@ -82,7 +82,7 @@ updateTransformationCache <- function (transform, force = FALSE)
             cacheIndex <- read.table(cacheIndexFile, col.names=c("index","source","target","method","types","file"))
         if (!is.null(matchingEntries))
         {
-            cacheIndex <- subset(cacheIndex, !(index %in% matchingEntries$index))
+            cacheIndex <- subset(cacheIndex, !(cacheIndex$index %in% matchingEntries$index))
             unlink(matchingEntries$file)
         }
         
