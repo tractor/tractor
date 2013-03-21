@@ -1,11 +1,15 @@
 R=R
 INSTALL=bin/tractor_Rinstall
 
-all:
-	@cd src && $(MAKE) R=$(R)
+default: build post-build-info
+
+post-build-info:
 	@echo 'Run "make install" to install packages'
 
-postinstall-info:
+build:
+	@cd src && $(MAKE) R=$(R)
+
+post-install-info:
 	@echo
 	@echo "Installation complete. You may wish to add the following lines"
 	@echo "to your ~/.bashrc file (or equivalent for other shells):"
@@ -18,6 +22,8 @@ postinstall-info:
 
 install-libs:
 	@$(INSTALL) lib/reportr
+	@$(INSTALL) lib/mmand
+	@$(INSTALL) lib/multicore
 
 install-base:
 	@$(INSTALL) tractor.base
@@ -31,27 +37,24 @@ install-session:
 install-nt:
 	@$(INSTALL) tractor.nt
 
-install-interpreted: install-libs install-base install-utils install-session install-nt
-
-install: install-interpreted postinstall-info
-
 install-native:
 	@$(INSTALL) tractor.native
-	@$(INSTALL) lib/mmand
-	@$(INSTALL) lib/multicore
+
+install-reg:
 	@$(INSTALL) lib/bitops
 	@$(INSTALL) lib/oro.nifti
 	@$(INSTALL) lib/RNiftyReg
+	@$(INSTALL) tractor.reg
 
-install-all: install-interpreted install-native postinstall-info
+install: build install-libs install-base install-utils install-session install-nt install-native install-reg post-install-info
+
+install-all: install
 
 uninstall:
-	$(R) CMD REMOVE tractor.nt tractor.session tractor.utils tractor.base reportr
+	$(R) CMD REMOVE tractor.reg tractor.native tractor.nt tractor.session tractor.utils tractor.base
 
-uninstall-native:
-	$(R) CMD REMOVE tractor.native mmand multicore bitops oro.nifti RNiftyReg
-
-uninstall-all: uninstall uninstall-native
+uninstall-all: uninstall
+	$(R) CMD REMOVE RNiftyReg oro.nifti bitops multicore mmand reportr
 
 clean:
 	@cd tests && $(MAKE) clean
