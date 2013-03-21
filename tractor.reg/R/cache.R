@@ -22,7 +22,7 @@ withTransformationCacheLock <- function (expr)
     return (result)
 }
 
-checkTransformationCache <- function (sourceFileName, targetFileName, method = NULL, transformTypes = NULL, entriesOnly = FALSE)
+checkTransformationCache <- function (sourceFileName, targetFileName, method = NULL, types = NULL, entriesOnly = FALSE)
 {
     # Not using thread-safe directory here, because all threads need to see the cache
     cacheIndexFile <- file.path(tempdir(), "xfm-cache", "index.txt")
@@ -36,8 +36,8 @@ checkTransformationCache <- function (sourceFileName, targetFileName, method = N
     toKeep <- cacheIndex$source==sourceFileName & cacheIndex$target==targetFileName
     if (!is.null(method))
         toKeep <- toKeep & cacheIndex$method==method
-    if (!is.null(transformTypes))
-        toKeep <- toKeep & sapply(lapply(cacheIndex$types,splitAndConvertString,",",fixed=TRUE), function(x) all(transformTypes %in% x))
+    if (!is.null(types))
+        toKeep <- toKeep & sapply(lapply(cacheIndex$types,splitAndConvertString,",",fixed=TRUE), function(x) all(types %in% x))
     
     if (all(!toKeep))
         return (invisible(NULL))
@@ -77,7 +77,10 @@ updateTransformationCache <- function (transform, force = FALSE)
         if (file.exists(cacheIndexFile))
             cacheIndex <- read.table(cacheIndexFile, col.names=c("index","source","target","method","types","file"))
         if (!is.null(matchingEntries))
+        {
             cacheIndex <- subset(cacheIndex, !(index %in% matchingEntries$index))
+            unlink(matchingEntries$file)
+        }
         
         transform$serialise(file=transformFileName)
         cacheEntry <- data.frame(index=max(as.integer(cacheIndex$index))+1L, source=sourceFileName, target=targetFileName, method=transform$getMethod(), types=transformTypeString, file=transformFileName)

@@ -49,27 +49,93 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     }
 ))
 
-newTransformationWithMethod <- function (method = c("niftyreg","flirt"), sourceImage, targetImage, targetMask = NULL, types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, useCache = TRUE, forceCacheUpdate = FALSE, ...)
+registerImages <- function (sourceImage, targetImage, targetMask = NULL, method = c("niftyreg","flirt"), types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, cache = c("auto","read","write","ignore"), ...)
 {
     method <- match.arg(method)
     types <- match.arg(types, several.ok=TRUE)
+    cache <- match.arg(cache)
     
     transform <- NULL
+    cacheHit <- FALSE
     
-    if (useCache)
+    if (cache %in% c("auto","read"))
     {
         transform <- checkTransformationCache(getImageAsFileName(sourceImage), getImageAsFileName(targetImage), method, types)
-        if (estimateOnly && !is.null(transform))
-            return (list(transform=transform, transformedImage=NULL, reverseTransformedImage=NULL))
+        if (!is.null(transform))
+            cacheHit <- TRUE
     }
     
-    if (method == "niftyreg")
-        result <- newTransformationWithNiftyreg(getImageAsObject(sourceImage), getImageAsObject(targetImage), targetMask=getImageAsObject(targetMask), types=types, affineDof=affineDof, estimateOnly=estimateOnly, ...)
+    if (!is.null(transform))
+    {
+        if (estimateOnly)
+            result <- list(transform=transform, transformedImage=NULL, reverseTransformedImage=NULL)
+        else
+            result <- applyTransformation(transform, ...)
+    }
+    else if (method == "niftyreg")
+        result <- registerImagesWithNiftyreg(getImageAsObject(sourceImage), getImageAsObject(targetImage), targetMask=getImageAsObject(targetMask), types=types, affineDof=affineDof, estimateOnly=estimateOnly, ...)
     else if (method == "flirt")
-        result <- newTransformationWithFlirt(getImageAsFileName(sourceImage), getImageAsFileName(targetImage), targetMask=getImageAsFileName(targetMask), types=types, affineDof=affineDof, estimateOnly=estimateOnly, ...)
+    {
+        if (any(c("nonlinear","reverse-nonlinear") %in% types))
+            report(OL$Error, "FSL-FLIRT does not perform nonlinear registration")
+        
+        result <- registerImagesWithFlirt(getImageAsFileName(sourceImage), getImageAsFileName(targetImage), targetMask=getImageAsFileName(targetMask), affineDof=affineDof, estimateOnly=estimateOnly, ...)
+    }
     
-    if (useCache)
-        updateTransformationCache(result$registration, force=forceCacheUpdate)
+    if (cache == "write" || (cache == "auto" && !cacheHit))
+        updateTransformationCache(result$registration, force=TRUE)
+    
+    return (result)
+}
+
+applyTransformation <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, interpolation = 3)
+{
+    if (!is(transform, "Transformation"))
+        report(OL$Error, "The specified transform is not a Transformation object")
+    
+    options <- list(nLevels=0, finalInterpolation=interpolation, verbose=FALSE)
+    
+    availableTypes <- transform$getTypes()
+    if (preferAffine && ("affine" %in% availableTypes))
+        type <- "affine"
+    else if (reverse && ("reverse-nonlinear" %in% availableTypes))
+    {
+        type <- "nonlinear"
+        options$initControl <- transform$getReverseControlPointImage(index)
+    }
+    else if (!reverse && ("nonlinear" %in% availableTypes))
+    {
+        type <- "nonlinear"
+        options$initControl <- transform$getControlPointImage(index)
+    }
+    else if ("affine" %in% availableTypes)
+        type <- "affine"
+    else
+        report(OL$Error, "The specified Transformation object does not contain the necessary information")
+    
+    if (!is.null(newImage))
+        sourceImage <- newImage
+    else if (reverse)
+        sourceImage <- transform$getTargetImage()
+    else
+        sourceImage <- transform$getSourceImage()
+    
+    if (reverse)
+        targetImage <- transform$getSourceImage()
+    else
+        targetImage <- transform$getTargetImage()
+    
+    if (type == "affine")
+    {
+        initAffine <- transform$getAffineMatrix(index)
+        if (reverse)
+            initAffine <- invertAffine(initAffine)
+        options$scope <- "affine"
+        
+        result <- registerImagesWithNiftyreg(sourceImage, targetImage, initAffine=initAffine, types="affine", estimateOnly=FALSE, linearOptions=options)
+    }
+    else
+        result <- registerImagesWithNiftyreg(sourceImage, targetImage, types="nonlinear", estimateOnly=FALSE, nonlinearOptions=options)
     
     return (result)
 }

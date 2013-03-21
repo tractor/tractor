@@ -1,14 +1,14 @@
-newTransformationWithNiftyreg <- function (sourceImage, targetImage, targetMask = NULL, initAffine = NULL, transformTypes = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, linearOptions = list(), nonlinearOptions = list())
+registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = NULL, initAffine = NULL, types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, linearOptions = list(), nonlinearOptions = list())
 {
     if (!is(sourceImage,"MriImage") || !is(targetImage,"MriImage"))
         report(OL$Error, "Source and target images must be specified as MriImage objects")
     if (sourceImage$isEmpty() || targetImage$isEmpty())
         report(OL$Error, "Source and target images must not be empty")
     
-    transformTypes <- match.arg(transformTypes, several.ok=TRUE)
+    types <- match.arg(types, several.ok=TRUE)
     
     # Run the linear part of the registration, unless nonlinear-only is explicitly requested
-    if ("affine" %in% transformTypes)
+    if ("affine" %in% types)
     {
         if (!any(affineDof == c(6,12)))
             report(OL$Error, "Only 6 and 12 degrees of freedom are supported by NiftyReg")
@@ -32,7 +32,7 @@ newTransformationWithNiftyreg <- function (sourceImage, targetImage, targetMask 
     }
     
     # Run the nonlinear part of the registration, if required
-    if ("nonlinear" %in% transformTypes)
+    if ("nonlinear" %in% types)
     {
         nonlinearOptions$source <- as(sourceImage, "nifti")
         nonlinearOptions$target <- as(targetImage, "nifti")
