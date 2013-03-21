@@ -236,7 +236,7 @@ setAs("nifti", "MriImage", function (from) {
     
     nDims <- from@dim_[1]
     voxelDims <- from@pixdim[seq_len(nDims)+1]
-    voxelDims3D <- c(voxelDims, rep(0,max(0,3-nDims))) * c(-1,1,1)
+    voxelDims3D <- c(voxelDims, rep(0,max(0,3-nDims)))[1:3] * c(-1,1,1)
     
     spatialUnitCode <- packBits(intToBits(from@xyzt_units) & intToBits(7), "integer")
     temporalUnitCode <- packBits(intToBits(from@xyzt_units) & intToBits(24), "integer")
