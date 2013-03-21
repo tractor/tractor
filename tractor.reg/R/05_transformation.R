@@ -5,9 +5,9 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         {
             mat <- affineMatrices
             mat <- lapply(mat, function(m) {
-                attr(m, "affineType") <- ifelse(method=="flirt", "fsl", "niftyreg"))
+                attr(m, "affineType") <- ifelse(method=="flirt", "fsl", "niftyreg")
                 return (m)
-            }
+            })
             return (mat)
         }
         else
@@ -53,8 +53,8 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         targetSummary <- targetImage$summarise()
         
         values <- c(sourceSummary$values[match(c("Image dimensions","Voxel dimensions"), sourceSummary$labels)], targetSummary$values[match(c("Image dimensions","Voxel dimensions"), targetSummary$labels)])
-        values <- c(values, .self$getMethod(), implode(.self$getTypes(),", "))
-        names(values) <- c("Source image dimensions", "Source voxel dimensions", "Target image dimensions", "Target voxel dimensions", "Registration method", "Stored transformations")
+        values <- c(.self$getMethod(), implode(.self$getTypes(),", "), values)
+        names(values) <- c("Registration method", "Stored transformations", "Source image dimensions", "Source voxel dimensions", "Target image dimensions", "Target voxel dimensions")
         
         return (values)
     }
@@ -103,12 +103,12 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
     return (result)
 }
 
-applyTransformation <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, interpolation = 3)
+applyTransformation <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, finalInterpolation = 3)
 {
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified transform is not a Transformation object")
     
-    options <- list(nLevels=0, finalInterpolation=interpolation, verbose=FALSE)
+    options <- list(nLevels=0, finalInterpolation=finalInterpolation, verbose=FALSE)
     
     availableTypes <- transform$getTypes()
     if (preferAffine && ("affine" %in% availableTypes))
