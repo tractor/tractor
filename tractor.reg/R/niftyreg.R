@@ -2,8 +2,6 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = N
 {
     if (!is(sourceImage,"MriImage") || !is(targetImage,"MriImage"))
         report(OL$Error, "Source and target images must be specified as MriImage objects")
-    if (sourceImage$isEmpty() || targetImage$isEmpty())
-        report(OL$Error, "Source and target images must not be empty")
     
     types <- match.arg(types, several.ok=TRUE)
     
