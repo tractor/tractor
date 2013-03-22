@@ -198,8 +198,16 @@ setAs("MriImage", "nifti", function (from) {
         options(niftiAuditTrail=FALSE)
     loadNamespace("oro.nifti")
     
-    datatype <- chooseDataTypeForImage(from, "Nifti")
-    data <- as(from$getData(), "array")
+    if (from$isEmpty())
+    {
+        datatype <- list(code=2, type="integer", size=1, isSigned=FALSE)
+        data <- array(0L, dim=from$getDimensions())
+    }
+    else
+    {
+        datatype <- chooseDataTypeForImage(from, "Nifti")
+        data <- as(from$getData(), "array")
+    }
     
     # We default to 10 (mm and s)
     unitName <- from$getVoxelUnits()
