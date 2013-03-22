@@ -154,3 +154,48 @@ applyTransformation <- function (transform, newImage = NULL, index = 1, preferAf
     
     return (result)
 }
+
+invertTransformation <- function (transform)
+{
+    if (!is(transform, "Transformation"))
+        report(OL$Error, "The specified transform is not a Transformation object")
+    
+    affineMatrices <- controlPointImages <- reverseControlPointImages <- list()
+    
+    availableTypes <- transform$getTypes()
+    if (all(c("nonlinear","reverse-nonlinear") %in% availableTypes))
+    {
+        controlPointImages <- transform$getReverseControlPointImage()
+        reverseControlPointImages <- transform$getControlPointImage()
+    }
+    else if ("nonlinear" %in% availableTypes)
+        flag(OL$Warning, "Nonlinear part of the specified transformation is not invertible")
+    
+    if ("affine" %in% availableTypes)
+        affineMatrices <- lapply(transform$getAffineMatrix(), invertAffine)
+    
+    newTransform <- Transformation$new(sourceImage=transform$getTargetImage(), targetImage=transform$getSourceImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=transform$getMethod())
+    return (newTransform)
+}
+
+decomposeTransformation <- function (transform)
+{
+    if (!is(transform, "Transformation"))
+        report(OL$Error, "The specified transform is not a Transformation object")
+    if (!("affine" %in% transform$getTypes()))
+        report(OL$Error, "Decomposition can only be performed for affine transformations")
+    
+    nSourceDims <- transform$getSourceImage()$getDimensionality()
+    nTargetDims <- transform$getTargetImage()$getDimensionality()
+    if (nSourceDims == nTargetDims)
+        return (list(decomposeAffine(transform$getAffineMatrix(1), as(transform$getSourceImage(),"nifti"), as(transform$getTargetImage(),"nifti"))))
+    else
+    {
+        targetImageNifti <- as(transform$getTargetImage(), "nifti")
+        result <- lapply(seq_len(transform$getSourceImage()$getDimensions()[nSourceDims]), function (i) {
+            currentSourceImage <- as.nifti(extractDataFromMriImage(transform$getSourceImage(),nSourceDims,i), as(transform$getSourceImage(),"nifti"))
+            decomposeAffine(transform$getAffineMatrix(i), currentSourceImage, targetImageNifti)
+        })
+        return (result)
+    }
+}
