@@ -1,5 +1,7 @@
 #@args session directory, volume index
 
+library(RNiftyReg)
+library(tractor.reg)
 library(tractor.session)
 
 runExperiment <- function ()
@@ -10,7 +12,7 @@ runExperiment <- function ()
     index <- as.numeric(Arguments[2])
     
     transform <- readEddyCorrectTransformsForSession(session, index)
-    decomposition <- decomposeAffineTransform3D(transform[[1]])
+    decomposition <- decomposeAffine(transform$getAffineMatrix(1))
     
     report(OL$Info, "Translation (mm): ", implode(round(decomposition$translation,6),", "))
     report(OL$Info, "Scales          : ", implode(round(decomposition$scales,6),", "))

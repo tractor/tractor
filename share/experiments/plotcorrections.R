@@ -23,16 +23,14 @@ runExperiment <- function ()
                                       scale=c("X (left-right)","Y (anterior-posterior)","Z (superior-inferior)"),
                                       skew=c("X-Y", "X-Z", "Y-Z"))
     
-        transforms <- readEddyCorrectTransformsForSession(session)
+        transform <- readEddyCorrectTransformsForSession(session)
+        decomposition <- decomposeTransformation(transform)
         if (currentMode == "rotation")
-        {
-            values <- sapply(transforms, function (x) decomposeAffineTransform3D(x)$angles)
-            values <- values / pi * 180
-        }
+            values <- sapply(decomposition, function(x) x$angles / pi * 180)
         else
         {
             elementName <- switch(currentMode, translation="translation", scale="scales", skew="skews")
-            values <- sapply(transforms, function (x) decomposeAffineTransform3D(x)[[elementName]])
+            values <- sapply(decomposition, function(x) x[[elementName]])
         }
     
         data <- data.frame(index=seq_len(ncol(values)), x=values[1,], y=values[2,], z=values[3,])

@@ -3,6 +3,8 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
+    require("tractor.reg")
+    
     logFile <- file.path(session$getDirectory("fdt"), "data.ecclog")
     if (!file.exists(logFile))
         report(OL$Error, "Eddy current correction log not found")
@@ -16,10 +18,12 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     if (is.null(index))
         index <- seq_len(nrow(matrices) / 4)
     
-    imageMetadata <- session$getImageByType("refb0", metadataOnly=TRUE)
-    transforms <- lapply(index, function (i) { AffineTransform3D$new(matrix=matrices[(((i-1)*4)+1):(i*4),], type="flirt", sourceMetadata=imageMetadata, destMetadata=imageMetadata) })
+    matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
     
-    invisible (transforms)
+    image <- session$getImageByType("refb0", "diffusion")
+    transform <- Transformation$new(sourceImage=image, targetImage=image, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="flirt")
+    
+    invisible (transform)
 }
 
 resampleImageToDimensions <- function (image, voxelDims = NULL, imageDims = NULL, origin = NULL)
