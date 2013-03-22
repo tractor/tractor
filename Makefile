@@ -21,9 +21,7 @@ post-install-info:
 	@echo "The ~/.bashrc file can be created if it does not already exist."
 
 install-libs:
-	@$(INSTALL) lib/reportr
-	@$(INSTALL) lib/mmand
-	@$(INSTALL) lib/multicore
+	@$(INSTALL) lib/reportr lib/multicore
 
 install-base:
 	@$(INSTALL) tractor.base
@@ -31,8 +29,11 @@ install-base:
 install-utils:
 	@$(INSTALL) tractor.utils
 
+install-reg:
+	@$(INSTALL) lib/bitops lib/oro.nifti lib/RNiftyReg tractor.reg
+
 install-session:
-	@$(INSTALL) tractor.session
+	@$(INSTALL) lib/mmand tractor.session
 
 install-nt:
 	@$(INSTALL) tractor.nt
@@ -40,18 +41,14 @@ install-nt:
 install-native:
 	@$(INSTALL) tractor.native
 
-install-reg:
-	@$(INSTALL) lib/bitops
-	@$(INSTALL) lib/oro.nifti
-	@$(INSTALL) lib/RNiftyReg
-	@$(INSTALL) tractor.reg
-
-install: build install-libs install-base install-utils install-session install-nt install-native install-reg post-install-info
+install: build
+	@rm -f install.log
+	@$(MAKE) install-libs install-base install-utils install-reg install-session install-nt install-native post-install-info
 
 install-all: install
 
 uninstall:
-	$(R) CMD REMOVE tractor.reg tractor.native tractor.nt tractor.session tractor.utils tractor.base
+	$(R) CMD REMOVE tractor.native tractor.nt tractor.session tractor.reg tractor.utils tractor.base
 
 uninstall-all: uninstall
 	$(R) CMD REMOVE RNiftyReg oro.nifti bitops multicore mmand reportr
@@ -60,7 +57,8 @@ clean:
 	@cd tests && $(MAKE) clean
 
 distclean: clean
-	@rm -f bin/exec/tractor
+	@rm -f bin/exec/tractor src/build.log install.log
+	@rm -f tractor.native/config.log tractor.native/config.status tractor.native/src/Makevars tractor.native/src/config.h
 
 test:
 	@cd tests && $(MAKE) run-tests
