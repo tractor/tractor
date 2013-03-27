@@ -120,7 +120,7 @@ resampleImageToDimensions <- function (image, voxelDims = NULL, imageDims = NULL
     options <- list(nLevels=0, verbose=FALSE, scope="affine")
     result <- registerImagesWithNiftyreg(image, targetImage, initAffine=NULL, types="affine", estimateOnly=FALSE, finalInterpolation=finalInterpolation, linearOptions=options)
     
-    return ()
+    return (result$transformedImage)
 }
 
 applyTransformation <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, finalInterpolation = 1)
