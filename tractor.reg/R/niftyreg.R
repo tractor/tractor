@@ -1,9 +1,12 @@
-registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = NULL, initAffine = NULL, types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, linearOptions = list(), nonlinearOptions = list())
+registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = NULL, initAffine = NULL, types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, finalInterpolation = 1, linearOptions = list(), nonlinearOptions = list())
 {
     if (!is(sourceImage,"MriImage") || !is(targetImage,"MriImage"))
         report(OL$Error, "Source and target images must be specified as MriImage objects")
     
     types <- match.arg(types, several.ok=TRUE)
+    
+    if (is.character(finalInterpolation))
+        finalInterpolation <- switch(finalInterpolation, nearestneighbour=0, trilinear=1, spline=3, cubicspline=3, NULL)
     
     linearResult <- nonlinearResult <- list()
     
@@ -21,6 +24,8 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = N
         linearOptions$scope <- ifelse(affineDof==6, "rigid", "affine")
         if (is.null(linearOptions$estimateOnly))
             linearOptions$estimateOnly <- estimateOnly
+        if (is.null(linearOptions$finalInterpolation) && !is.null(finalInterpolation))
+            linearOptions$finalInterpolation <- finalInterpolation
         
         startTime <- Sys.time()
         linearResult <- do.call("niftyreg.linear", linearOptions)
@@ -41,6 +46,8 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = N
         nonlinearOptions$initAffine <- initAffine
         if (is.null(nonlinearOptions$estimateOnly))
             nonlinearOptions$estimateOnly <- estimateOnly
+        if (is.null(nonlinearOptions$finalInterpolation) && !is.null(finalInterpolation))
+            nonlinearOptions$finalInterpolation <- finalInterpolation
         
         startTime <- Sys.time()
         nonlinearResult <- do.call("niftyreg.nonlinear", nonlinearOptions)
