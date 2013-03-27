@@ -60,7 +60,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     }
 ))
 
-registerImages <- function (sourceImage, targetImage, targetMask = NULL, method = c("niftyreg","flirt"), types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, cache = c("auto","read","write","ignore"), ...)
+registerImages <- function (sourceImage, targetImage, targetMask = NULL, method = c("niftyreg","flirt"), types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, finalInterpolation = 1, cache = c("auto","read","write","ignore"), ...)
 {
     method <- match.arg(method)
     types <- match.arg(types, several.ok=TRUE)
@@ -81,10 +81,10 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
         if (estimateOnly)
             result <- list(transform=transform, transformedImage=NULL, reverseTransformedImage=NULL)
         else
-            result <- applyTransformation(transform, ...)
+            result <- applyTransformation(transform, finalInterpolation=finalInterpolation, ...)
     }
     else if (method == "niftyreg")
-        result <- registerImagesWithNiftyreg(getImageAsObject(sourceImage), getImageAsObject(targetImage), targetMask=getImageAsObject(targetMask), types=types, affineDof=affineDof, estimateOnly=estimateOnly, ...)
+        result <- registerImagesWithNiftyreg(getImageAsObject(sourceImage), getImageAsObject(targetImage), targetMask=getImageAsObject(targetMask), types=types, affineDof=affineDof, estimateOnly=estimateOnly, finalInterpolation=finalInterpolation, ...)
     else if (method == "flirt")
     {
         if (any(c("nonlinear","reverse-nonlinear") %in% types))
@@ -94,7 +94,7 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
         targetFileName <- getImageAsFileName(targetImage, warnIfNotLas=TRUE)
         targetMaskFileName <- getImageAsFileName(targetMask, warnIfNotLas=TRUE)
         
-        result <- registerImagesWithFlirt(sourceFileName, targetFileName, targetMaskFileName=targetMaskFileName, affineDof=affineDof, estimateOnly=estimateOnly, ...)
+        result <- registerImagesWithFlirt(sourceFileName, targetFileName, targetMaskFileName=targetMaskFileName, affineDof=affineDof, estimateOnly=estimateOnly, finalInterpolation=finalInterpolation, ...)
     }
     
     if (cache == "write" || (cache == "auto" && !cacheHit))
@@ -103,12 +103,32 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
     return (result)
 }
 
-applyTransformation <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, finalInterpolation = 3)
+resampleImageToDimensions <- function (image, voxelDims = NULL, imageDims = NULL, origin = NULL, finalInterpolation = 1)
+{
+    if (!is(image, "MriImage"))
+        report(OL$Error, "Specified image is not a valid MriImage object")
+    if (is.null(voxelDims) && is.null(imageDims))
+        report(OL$Error, "Image or voxel dimensions must be given")
+    
+    if (is.null(voxelDims))
+        voxelDims <- image$getFieldOfView() / imageDims
+    if (is.null(imageDims))
+        imageDims <- round(image$getFieldOfView() / abs(voxelDims))
+    
+    targetImage <- MriImage$new(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=image$getVoxelUnits(), origin=origin)
+    
+    options <- list(nLevels=0, verbose=FALSE, scope="affine")
+    result <- registerImagesWithNiftyreg(image, targetImage, initAffine=NULL, types="affine", estimateOnly=FALSE, finalInterpolation=finalInterpolation, linearOptions=options)
+    
+    return ()
+}
+
+applyTransformation <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, finalInterpolation = 1)
 {
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified transform is not a Transformation object")
     
-    options <- list(nLevels=0, finalInterpolation=finalInterpolation, verbose=FALSE)
+    options <- list(nLevels=0, verbose=FALSE)
     
     availableTypes <- transform$getTypes()
     if (preferAffine && ("affine" %in% availableTypes))
@@ -147,10 +167,10 @@ applyTransformation <- function (transform, newImage = NULL, index = 1, preferAf
             initAffine <- invertAffine(initAffine)
         options$scope <- "affine"
         
-        result <- registerImagesWithNiftyreg(sourceImage, targetImage, initAffine=initAffine, types="affine", estimateOnly=FALSE, linearOptions=options)
+        result <- registerImagesWithNiftyreg(sourceImage, targetImage, initAffine=initAffine, types="affine", estimateOnly=FALSE, finalInterpolation=finalInterpolation, linearOptions=options)
     }
     else
-        result <- registerImagesWithNiftyreg(sourceImage, targetImage, types="nonlinear", estimateOnly=FALSE, nonlinearOptions=options)
+        result <- registerImagesWithNiftyreg(sourceImage, targetImage, types="nonlinear", estimateOnly=FALSE, finalInterpolation=finalInterpolation, nonlinearOptions=options)
     
     return (result)
 }
