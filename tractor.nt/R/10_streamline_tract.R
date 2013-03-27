@@ -160,8 +160,7 @@ newStreamlineTractMetadataFromImageMetadata <- function (imageMetadata, originAt
     if (!is(imageMetadata, "MriImage"))
         report(OL$Error, "The specified image metadata is not an MriImage object")
     
-    imageMetadata <- imageMetadata$copy()
-    imageMetadata$stripData()
+    imageMetadata <- imageMetadata$getMetadata()
     
     tractMetadata <- StreamlineTractMetadata$new(originAtSeed=originAtSeed, coordUnit=coordUnit, imageMetadata=imageMetadata)
     invisible (tractMetadata)

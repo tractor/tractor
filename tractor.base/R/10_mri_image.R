@@ -155,8 +155,6 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             .self$source <- newSource
     },
     
-    stripData = function () { .self$data <- NULL },
-    
     summarise = function ()
     {
         spatialUnit <- voxelDimUnits["spatial"]
