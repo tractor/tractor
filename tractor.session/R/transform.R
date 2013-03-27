@@ -26,40 +26,6 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     invisible (transform)
 }
 
-resampleImageToDimensions <- function (image, voxelDims = NULL, imageDims = NULL, origin = NULL)
-{
-    if (!is(image, "MriImage"))
-        report(OL$Error, "Specified image is not a valid MriImage object")
-    if (is.null(voxelDims) && is.null(imageDims))
-        report(OL$Error, "Image or voxel dimensions must be given")
-    
-    if (is.null(voxelDims))
-        voxelDims <- image$getFieldOfView() / imageDims
-    if (is.null(imageDims))
-        imageDims <- round(image$getFieldOfView() / abs(voxelDims))
-    
-    tempFiles <- threadSafeTempFile(rep("file",4))
-    
-    writeImageFile(image, tempFiles[1])
-    write.table(diag(4), tempFiles[2], row.names=FALSE, col.names=FALSE)
-    
-    targetImage <- newMriImageWithData(array(0,dim=imageDims), image, imageDims=imageDims, voxelDims=voxelDims)
-    if (is.null(origin))
-        origin <- transformWorldToRVoxel(transformRVoxelToWorld(image$getOrigin(), image), targetImage)
-    targetImage$setSource(origin)
-    writeImageFile(targetImage, tempFiles[3])
-    
-    paramString <- paste("-in", tempFiles[1], "-applyxfm -init", tempFiles[2], "-ref", tempFiles[3], "-out", tempFiles[4], "-paddingsize 0.0 -interp trilinear 2>&1", sep=" ")
-    execute("flirt", paramString, errorOnFail=TRUE)
-    
-    resampledImage <- readImageFile(tempFiles[4])
-    
-    unlink(tempFiles[1])
-    removeImageFilesWithName(tempFiles[2:4])
-    
-    invisible (resampledImage)
-}
-
 transformPointsWithAffine <- function (transform, x, y = NULL, z = NULL, useVoxels = FALSE)
 {
     if (!is(transform, "AffineTransform3D"))
