@@ -62,7 +62,7 @@ runExperiment <- function ()
 	
 
 	if ( !is.null(parcellationFile) ){
-	    customRoiDir <- session$getDirectory("customParcellation-rois", createIfMissing=TRUE)
+	    customRoiDir <- session$getDirectory("customparcellation-rois", createIfMissing=TRUE)
 	    report(OL$Info, "Reading custom parcellation")
 	    parcellation2 <- newMriImageFromFile( file.path(parcellationFile) )
 	}
@@ -221,15 +221,20 @@ runExperiment <- function ()
 	}	
     
     report(OL$Info, "Creating connectivity matrix")
-    NumStreamsConMatrix <- matrix(NA, nrow=nRegions, ncol=nRegions)
+    NumStreamsConMatrix <- matrix(0, nrow=nRegions, ncol=nRegions)
 	FAConMatrix <- matrix(0, nrow=nRegions, ncol=nRegions)      #sums fa values in voxels only once
 	FAWConMatrix <- matrix(0, nrow=nRegions, ncol=nRegions)		#sums fa values in voxels each time they are visited
+	MDConMatrix <- matrix(0, nrow=nRegions, ncol=nRegions)      #sums md values in voxels only once
+	MDWConMatrix <- matrix(0, nrow=nRegions, ncol=nRegions)		#sums md values in voxels each time they are visited
 	LenStreamsMatrix <- matrix(0, nrow=nRegions, ncol=nRegions) #average length of streamlines connecting each pair of regions
 	NumUniqueVoxs <- matrix(0, nrow=nRegions, ncol=nRegions)    #number of voxels that have been visited (Voxels only counted once)
 	NumVisVoxs <- matrix(0, nrow=nRegions, ncol=nRegions)		#number of visits across all voxels of the tracks
-	connectivityMatrix <- matrix(NA, nrow=nRegions, ncol=nRegions) #here it is intantiated as number of streamlines divided by average voxel number
+	connectivityMatrix <- matrix(0, nrow=nRegions, ncol=nRegions) #here it is intantiated as number of streamlines divided by average voxel number
 	faVals <- fa$getData()
 	faVals[is.nan(faVals)] <- 0
+	md <- session$getImageByType("MD")
+	mdVals <- md$getData()
+	mdVals[is.nan(mdVals)] <- 0
     for (i in seq_along(allRegionNames))
     {
         for (j in seq_along(1:i)){
@@ -238,7 +243,7 @@ runExperiment <- function ()
 			if( lenC==0 )
 				next
             NumStreamsConMatrix[i,j] <- lenC                     
-			connectivityMatrix[i,j] <-  lenC / mean(regionSizes[c(i,j)])
+			#connectivityMatrix[i,j] <-  lenC / mean(regionSizes[c(i,j)])
 			#print( NumStreamsConMatrix[i,j] )
 			startInd <- result$streamlines$startIndices[ConStreams]
 			endInd <- result$streamlines$getEndIndices()[ConStreams]
@@ -250,6 +255,8 @@ runExperiment <- function ()
 			pntstmp <- round(pntstmp)
 			FAWConMatrix[i,j] <- sum(faVals[pntstmp])
 			FAConMatrix[i,j] <- sum(faVals[unique(pntstmp,by='rows')])
+			MDWConMatrix[i,j] <- sum(mdVals[pntstmp])
+			MDConMatrix[i,j] <- sum(mdVals[unique(pntstmp,by='rows')])
 			NumUniqueVoxs[i,j] <- dim( unique(pntstmp,by='rows') )[1]
 			NumVisVoxs[i,j] <- dim(pntstmp)[1]
 			
@@ -259,25 +266,30 @@ runExperiment <- function ()
 			FAConMatrix[j,i] <- FAConMatrix[i,j]
 			NumUniqueVoxs[j,i] <- NumUniqueVoxs[i,j]
 			NumVisVoxs[j,i] <- NumVisVoxs[i,j]
-			connectivityMatrix[j,i] <- connectivityMatrix[i,j]
+			#connectivityMatrix[j,i] <- connectivityMatrix[i,j]
 			
 		}  #for (j in seq_along(allRegionNames))
 	}  #for (i in seq_along(allRegionNames))
-    NumStreamsConMatrix[is.nan(NumStreamsConMatrix)] <- 0
     rownames(NumStreamsConMatrix) <- allRegionNames
     colnames(NumStreamsConMatrix) <- allRegionNames
     rownames(FAConMatrix) <- allRegionNames
     colnames(FAConMatrix) <- allRegionNames
     rownames(FAWConMatrix) <- allRegionNames
     colnames(FAWConMatrix) <- allRegionNames
-    rownames(LenStreamsMatrix) <- allRegionNames
+    rownames(MDConMatrix) <- allRegionNames
+    colnames(MDConMatrix) <- allRegionNames
+    rownames(MDWConMatrix) <- allRegionNames
+    colnames(MDWConMatrix) <- allRegionNames
+	rownames(LenStreamsMatrix) <- allRegionNames
     colnames(LenStreamsMatrix) <- allRegionNames
     rownames(NumUniqueVoxs) <- allRegionNames
     colnames(NumUniqueVoxs) <- allRegionNames
     rownames(NumVisVoxs) <- allRegionNames
     colnames(NumVisVoxs) <- allRegionNames
 	
-    connectivityMatrix[is.nan(connectivityMatrix)] <- 0
+    NumStreamsConMatrix[lower.tri(connectionMatrix,diag=FALSE)] <- NA
+	indEdges <- which(!is.na(NumStreamsConMatrix) & NumStreamsConMatrix != 0, arr.ind=TRUE)
+    connectivityMatrix[indEdges] <- 1
     rownames(connectivityMatrix) <- allRegionNames
     colnames(connectivityMatrix) <- allRegionNames
 	
@@ -285,10 +297,15 @@ runExperiment <- function ()
 
     VoxelDims <- abs(refb0$voxelDims)  #voxel dimensions for estimating volume
 	
+	stepLength <- result$streamlines$summarise()$values[2]
+	m <- gregexpr('.*\\s',tmp00)
+	stepLength <- as.numeric(regmatches(stepLength,m))
+	LenStreamsMatrix <- LenStreamsMatrix * stepLength 
+	
     report(OL$Info, "Creating and writing graph")
     graph <- newGraphFromConnectionMatrix(connectivityMatrix, directed=FALSE)
-	graph$setVertexAttributes( list(NumVoxelsRegion=regionSizes,VoxelDims=VoxelDims) )
-	graph$setEdgeAttributes( list(FAConMatrix=FAConMatrix,FAWConMatrix=FAWConMatrix,LenStreamsMatrix=LenStreamsMatrix,NumUniqueVoxs=NumUniqueVoxs,NumVisVoxs=NumVisVoxs) )
+	graph$setVertexAttributes( list(NumVoxelsRegion=regionSizes, VoxelDims=VoxelDims) )
+	graph$setEdgeAttributes( list(FAConMatrix=FAConMatrix[indEdges],FAWConMatrix=FAWConMatrix[indEdges],MDConMatrix=MDConMatrix[indEdges],MDWConMatrix=MDWConMatrix[indEdges],LenStreamsMatrix=LenStreamsMatrix[indEdges],NumUniqueVoxs=NumUniqueVoxs[indEdges],NumVisVoxs=NumVisVoxs[indEdges]) )
     graph$setVertexLocations(regionLocations, "mm")
     graph$serialise("dgraph.Rdata")
     
