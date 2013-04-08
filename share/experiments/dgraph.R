@@ -264,6 +264,8 @@ runExperiment <- function ()
 			LenStreamsMatrix[j,i] <- LenStreamsMatrix[i,j]
 			FAWConMatrix[j,i] <- FAWConMatrix[i,j]
 			FAConMatrix[j,i] <- FAConMatrix[i,j]
+			MDWConMatrix[j,i] <- MDWConMatrix[i,j]
+			MDConMatrix[j,i] <- MDConMatrix[i,j]
 			NumUniqueVoxs[j,i] <- NumUniqueVoxs[i,j]
 			NumVisVoxs[j,i] <- NumVisVoxs[i,j]
 			#connectivityMatrix[j,i] <- connectivityMatrix[i,j]
@@ -287,7 +289,8 @@ runExperiment <- function ()
     rownames(NumVisVoxs) <- allRegionNames
     colnames(NumVisVoxs) <- allRegionNames
 	
-    NumStreamsConMatrix[lower.tri(connectionMatrix,diag=FALSE)] <- NA
+    NumStreamsConMatrix[lower.tri(NumStreamsConMatrix,diag=FALSE)] <- NA
+	diag(NumStreamsConMatrix) <- NA
 	indEdges <- which(!is.na(NumStreamsConMatrix) & NumStreamsConMatrix != 0, arr.ind=TRUE)
     connectivityMatrix[indEdges] <- 1
     rownames(connectivityMatrix) <- allRegionNames
@@ -298,14 +301,14 @@ runExperiment <- function ()
     VoxelDims <- abs(refb0$voxelDims)  #voxel dimensions for estimating volume
 	
 	stepLength <- result$streamlines$summarise()$values[2]
-	m <- gregexpr('.*\\s',tmp00)
+	m <- gregexpr('.*\\s',stepLength)
 	stepLength <- as.numeric(regmatches(stepLength,m))
 	LenStreamsMatrix <- LenStreamsMatrix * stepLength 
 	
     report(OL$Info, "Creating and writing graph")
-    graph <- newGraphFromConnectionMatrix(connectivityMatrix, directed=FALSE)
+    graph <- newGraphFromConnectionMatrix(connectivityMatrix, directed=FALSE, ignoreSelfConnections=TRUE)
 	graph$setVertexAttributes( list(NumVoxelsRegion=regionSizes, VoxelDims=VoxelDims) )
-	graph$setEdgeAttributes( list(FAConMatrix=FAConMatrix[indEdges],FAWConMatrix=FAWConMatrix[indEdges],MDConMatrix=MDConMatrix[indEdges],MDWConMatrix=MDWConMatrix[indEdges],LenStreamsMatrix=LenStreamsMatrix[indEdges],NumUniqueVoxs=NumUniqueVoxs[indEdges],NumVisVoxs=NumVisVoxs[indEdges]) )
+	graph$setEdgeAttributes( list(FAConMatrix=FAConMatrix[indEdges],FAWConMatrix=FAWConMatrix[indEdges],MDConMatrix=MDConMatrix[indEdges],MDWConMatrix=MDWConMatrix[indEdges],LenStreamsMatrix=LenStreamsMatrix[indEdges],NumUniqueVoxs=NumUniqueVoxs[indEdges],NumVisVoxs=NumVisVoxs[indEdges], NumStreamsConMatrix=NumStreamsConMatrix[indEdges]) )
     graph$setVertexLocations(regionLocations, "mm")
     graph$serialise("dgraph.Rdata")
     
