@@ -133,11 +133,11 @@ runExperiment <- function ()
             #writeMriImageToFile(freesurferRoi, file.path(freesurferRoiDir,paste(regionName,side,sep="_")))
             currentReg <- registerImages(mask, refb0, scope="nonlinear", initControl=controlPoints, nLevels=0, finalInterpolation=1)
             transformedMaskImages[[i]] <- newMriImageWithDataRepresentation(currentReg$image, "coordlist")
-            #writeMriImageToFile(result$image, file.path(diffusionRoiDir,paste(regionName,side,sep="_")))
+            writeMriImageToFile(transformedMaskImages[[i]], file.path(diffusionRoiDir,paste(regionName,side,sep="_")))
             
             regionLocations[i,] <- apply(which(currentReg$image$getData() > 0, arr.ind=TRUE), 2, median)
             regionLocations[i,] <- transformRVoxelToWorld(regionLocations[i,], currentReg$image$getMetadata(), useOrigin=FALSE)
-            regionSizes[i] <- sum(result$image$getData() > 0)
+            regionSizes[i] <- sum(currentReg$image$getData() > 0)
             i <- i + 1
         }
     }	
@@ -201,13 +201,21 @@ runExperiment <- function ()
 	mergedMaskMriImg <- newMriImageWithData(mergedMask,refb0$getMetadata() ) 
 	mergedMaskName <- file.path(diffusionRoiDir,"mergedMask.nii.gz")
 	writeMriImageToFile(mergedMaskMriImg,fileName=mergedMaskName)  #save merged masked to be used for tractography
+
+	#create the termination mask:
+	maskName <- session$getImageFileNameByType("mask", "diffusion")
+	brainMaskImg <- newMriImageFromFile(maskName)
+	brainMask <- brainMask$getData()
+	
+	terminationMask <- !(mergedMask!=0 | brainMask!=0)
+	
 	       
     report(OL$Info, "Performing tractography")
     fa <- session$getImageByType("FA")
     mask <- newMriImageByThresholding(fa, 0.2)
     seeds <- which(mask$getData() > 0, arr.ind=TRUE)
     seeds <- seeds + runif(length(seeds), -0.5, 0.5)
-    result <- trackWithSession(session, seeds, nSamples=1, requireImage=FALSE, requireStreamlines=TRUE)
+    result <- trackWithSession(session, seeds, nSamples=2, requireImage=FALSE, maskName=mergedMaskMriImg, requireStreamlines=TRUE, terminateOutsideMask=TRUE)
     
     report(OL$Info, "Finding streamlines passing through each region")
 	matchingIndices <- list()
