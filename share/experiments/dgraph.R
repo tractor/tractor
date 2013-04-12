@@ -34,6 +34,7 @@ runExperiment <- function ()
 	lookupTableFile <- getConfigVariable("lookupTableFile", NULL, "character")  #specify extra regions to be incorporated
 	parcellationFile <- getConfigVariable("parcellationFile", NULL, "character")
 	T1File <- getConfigVariable("T1File", NULL, "character")
+	terminationFlag <- getConfigVariable("terminationFlag", TRUE)
 
     if (file.exists(file.path(Sys.getenv("FREESURFER_HOME"), "FreeSurferColorLUT.txt"))){
         lookupTable <- read.table(file.path(Sys.getenv("FREESURFER_HOME"), "FreeSurferColorLUT.txt"))
@@ -109,7 +110,7 @@ runExperiment <- function ()
 	if( !is.null(T1File) ){
 	    report(OL$Info, "Registering structural image to diffusion space: Specified T1 File")
 	    result2 <- registerImages(averageT1wImage2, refb0, scope="affine")
-	    result2 <- registerImages(averageT1wImage2, refb0, scope="nonlinear", initAffine=result$affine)
+	    result2 <- registerImages(averageT1wImage2, refb0, scope="nonlinear", initAffine=result2$affine)
 	    controlPoints2 <- result2$control[[1]]
 	}
 	
@@ -126,14 +127,15 @@ runExperiment <- function ()
         for (side in names(indices))
         {
             report(OL$Verbose, "Transforming region \"", regionName, "_", side, "\"")
-            freesurferRoi <- newMriImageWithSimpleFunction(parcellation, selectionFunction, values=lookupTable[indices[[side]],1])
-			mask <- newMriImageWithDataRepresentation(freesurferRoi, "coordlist")
-			rm(freesurferRoi)
-			
+			freesurferRoi <- newMriImageWithData(parcellation$getData(),parcellation$getMetadata() )
+			index <- which(as.array(freesurferRoi$getData()!=0) & as.array(freesurferRoi$getData())!=lookupTable[indices[[side]],1] )
+			freesurferRoi$data[index] <- 0
+			freesurferRoi <- newMriImageWithDataRepresentation(freesurferRoi,"coordlist")    #use a sparse representation
+						
             #writeMriImageToFile(freesurferRoi, file.path(freesurferRoiDir,paste(regionName,side,sep="_")))
-            currentReg <- registerImages(mask, refb0, scope="nonlinear", initControl=controlPoints, nLevels=0, finalInterpolation=1)
+            currentReg <- registerImages(freesurferRoi, refb0, scope="nonlinear", initControl=controlPoints, nLevels=0, finalInterpolation=1)
             transformedMaskImages[[i]] <- newMriImageWithDataRepresentation(currentReg$image, "coordlist")
-            writeMriImageToFile(transformedMaskImages[[i]], file.path(diffusionRoiDir,paste(regionName,side,sep="_")))
+            #writeMriImageToFile(transformedMaskImages[[i]], file.path(diffusionRoiDir,paste(regionName,side,sep="_")))
             
             regionLocations[i,] <- apply(which(currentReg$image$getData() > 0, arr.ind=TRUE), 2, median)
             regionLocations[i,] <- transformRVoxelToWorld(regionLocations[i,], currentReg$image$getMetadata(), useOrigin=FALSE)
@@ -203,19 +205,27 @@ runExperiment <- function ()
 	writeMriImageToFile(mergedMaskMriImg,fileName=mergedMaskName)  #save merged masked to be used for tractography
 
 	#create the termination mask:
-	maskName <- session$getImageFileNameByType("mask", "diffusion")
-	brainMaskImg <- newMriImageFromFile(maskName)
-	brainMask <- brainMask$getData()
-	
-	terminationMask <- !(mergedMask!=0 | brainMask!=0)
-	
+	if(terminationFlag){
+		terminateOutsideMask <- TRUE 
+		maskName <- session$getImageFileNameByType("mask", "diffusion")
+		brainMaskImg <- newMriImageFromFile(maskName)
+		brainMask <- brainMask$getData()
+		terminationMask <- mergedMask!=0 | brainMask==0
+		terminationMaskMri <- newMriImageWithData( terminationMask,refb0$getMetadata() )
+		terminationMaskMriName <- file.path(diffusionRoiDir,"terminationMask.nii.gz")
+		writeMriImageToFile(terminationMaskMri,fileName=terminationMaskMriName)  #save merged masked to be used for tractography
+	}
+	else{
+		terminationMaskMriName <- NULL
+		terminateOutsideMask <- FALSE 
+	}
 	       
     report(OL$Info, "Performing tractography")
     fa <- session$getImageByType("FA")
     mask <- newMriImageByThresholding(fa, 0.2)
     seeds <- which(mask$getData() > 0, arr.ind=TRUE)
     seeds <- seeds + runif(length(seeds), -0.5, 0.5)
-    result <- trackWithSession(session, seeds, nSamples=2, requireImage=FALSE, maskName=mergedMaskMriImg, requireStreamlines=TRUE, terminateOutsideMask=TRUE)
+    result <- trackWithSession(session, seeds, nSamples=2, requireImage=FALSE, maskName=terminationMaskMriName, requireStreamlines=TRUE, terminateOutsideMask=terminateOutsideMask)
     
     report(OL$Info, "Finding streamlines passing through each region")
 	matchingIndices <- list()
