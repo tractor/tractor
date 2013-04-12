@@ -38,7 +38,7 @@ readMgh <- function (fileNames)
     # Locate the nonzero elements of the rotation matrix
     indices <- cbind(1:3, apply(absRotationMatrix > tolerance, 1, which))
     xformMatrix[indices] <- xformMatrix[indices] * abs(voxelDims)
-    xformMatrix[1:3,4] <- xformMatrix[1:3,4] - c(dims[1]/2, dims[2]/2, dims[3]/2) * xformMatrix[indices]
+    xformMatrix[1:3,4] <- xformMatrix[1:3,4] - c(dims[1]/2,dims[2]/2,dims[3]/2)[indices[,2]] * xformMatrix[indices]
     
     typeIndex <- which(.Mgh$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
