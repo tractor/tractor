@@ -26,48 +26,6 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     invisible (transform)
 }
 
-transformPointsWithAffine <- function (transform, x, y = NULL, z = NULL, useVoxels = FALSE)
-{
-    if (!is(transform, "AffineTransform3D"))
-        report(OL$Error, "The specified transformation is not an AffineTransform3D object")
-    
-    if (is.vector(x))
-        m <- matrix(resolveVector(len=3, x, y, z), nrow=1)
-    else
-        m <- x
-    
-    if (!is.matrix(m) || (length(dim(m)) != 2))
-        report(OL$Error, "Points for transformation must be specified as an n by 3 matrix or 3 component vector")
-
-    dims <- dim(m)
-    if (dims[2] != 3)
-    {
-        if (dims[1] == 3)
-        {
-            flag(OL$Warning, "Matrix does not have 3 columns; transposing it")
-            m <- t(m)
-            dims <- dim(m)
-        }
-        else
-            report(OL$Error, "Matrix does not have 3 columns")
-    }
-    
-    inputMatrix <- cbind(m, rep(1,dims[1]))
-    outputMatrix <- transform$getMatrix(useVoxels=useVoxels) %*% t(inputMatrix)
-    
-    return (drop(t(outputMatrix[1:3,])))
-}
-
-transformVoxelPointsWithAffine <- function (transform, x, y = NULL, z = NULL)
-{
-    return (transformPointsWithAffine(transform, x, y, z, useVoxels=TRUE))
-}
-
-transformWorldPointsWithAffine <- function (transform, x, y = NULL, z = NULL)
-{
-    return (transformPointsWithAffine(transform, x, y, z, useVoxels=FALSE))
-}
-
 getNativeSpacePointForSession <- function (session, point, pointType, isStandard, round = TRUE)
 {
     # NB: point types "r" and "vox" are equivalent

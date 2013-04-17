@@ -94,6 +94,9 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
         targetImage <- transform$getTargetImage()
     }
     
+    if (!voxel)
+        points <- transformVoxelToWorld(points, sourceImage, simple=TRUE)
+        
     if (type == "affine")
     {
         affine <- transform$getAffineMatrix(index)
@@ -108,10 +111,19 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
     else
         newPoints <- transformWithControlPoints(points, as(controlPoints,"nifti"), as(source,"nifti"), as(target,"nifti"), nearest=nearest)
     
+    if (!voxel)
+        newPoints <- transformWorldToVoxel(newPoints, targetImage, simple=TRUE)
+    
     return (newPoints)
 }
 
-
+translatePoints <- function (points, offset)
+{
+    if (is.vector(points))
+        return (points + offset)
+    else if (is.matrix(points))
+        return (t(apply(points, 1, "+", offset)))
+}
 
 .applyTransform <- function (x, m)
 {

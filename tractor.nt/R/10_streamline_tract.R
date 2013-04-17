@@ -366,7 +366,7 @@ newStreamlineSetTractByTruncationToReference <- function (tract, reference, test
         else
             transform <- newAffineTransform3DFromFlirt(refSession$getImageFileNameByType("maskedb0"), testSession$getImageFileNameByType("maskedb0"))
     
-        refPoints$points <- transformWorldPointsWithAffine(transform, refPoints$points)
+        refPoints$points <- transformPoints(transform, refPoints$points, voxel=FALSE)
     }
     
     refSteps <- calculateStepVectors(refPoints$points, refPoints$seedPoint)
@@ -445,7 +445,7 @@ newStreamlineTractWithMetadata <- function (tract, metadata)
     imageMetadata <- tract$getImageMetadata()
     
     if (tract$isOriginAtSeed())
-        line <- transformWithTranslation(line, seed)
+        line <- translatePoints(line, seed)
     
     # Coordinate unit from voxels to millimetres
     if (tract$getCoordinateUnit() == "vox" && metadata$getCoordinateUnit() == "mm")
@@ -460,7 +460,7 @@ newStreamlineTractWithMetadata <- function (tract, metadata)
     }
     
     if (metadata$isOriginAtSeed())
-        line <- transformWithTranslation(line, -seed)
+        line <- translatePoints(line, -seed)
     
     newTract <- newStreamlineTractFromLine(line, tract$getSeedIndex(), seed, metadata)
     invisible (newTract)
@@ -529,14 +529,14 @@ newStreamlineTractByTransformation <- function (tract, transform)
     oldLine <- tract$getLine()
     
     if (tract$isOriginAtSeed())
-        oldLine <- transformWithTranslation(oldLine, oldSeed)
+        oldLine <- translatePoints(oldLine, oldSeed)
     
     useVoxels <- (tract$getCoordinateUnit() == "vox")
-    newSeed <- transformPointsWithAffine(transform, oldSeed, useVoxels=useVoxels)
-    newLine <- transformPointsWithAffine(transform, oldLine, useVoxels=useVoxels)
+    newSeed <- transformPoints(transform, oldSeed, voxel=useVoxels)
+    newLine <- transformPoints(transform, oldLine, voxel=useVoxels)
     
     if (tract$isOriginAtSeed())
-        newLine <- transformWithTranslation(newLine, -newSeed)
+        newLine <- translatePoints(newLine, -newSeed)
 
     newTract <- newStreamlineTractFromLine(newLine, tract$getSeedIndex(), newSeed, tract$getMetadata())
     invisible (newTract)
@@ -693,7 +693,7 @@ rescalePoints <- function (points, newUnit, metadata, seed)
     if (!is.null(newUnit) && (newUnit != oldUnit))
     {
         if (metadata$isOriginAtSeed())
-            points <- transformWithTranslation(points, seed)
+            points <- translatePoints(points, seed)
 
         if (oldUnit == "vox" && newUnit == "mm")
         {
@@ -707,7 +707,7 @@ rescalePoints <- function (points, newUnit, metadata, seed)
         }
 
         if (metadata$isOriginAtSeed())
-            points <- transformWithTranslation(points, -seed)
+            points <- translatePoints(points, -seed)
     }
     
     invisible (list(seed=seed, points=points))

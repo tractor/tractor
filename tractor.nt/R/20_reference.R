@@ -82,9 +82,9 @@ newReferenceTractWithTract <- function (tract, standardSeed = NULL, nativeSeed =
         xfm <- newAffineTransform3DByInversion(getMniTransformForSession(session))
         
         if (seedUnit == "mm")
-            standardSeed <- transformWorldPointsWithAffine(xfm, nativeSeed)
+            standardSeed <- transformPoints(xfm, nativeSeed, voxel=FALSE)
         else
-            standardSeed <- transformVoxelPointsWithAffine(xfm, nativeSeed)
+            standardSeed <- transformPoints(xfm, nativeSeed, voxel=TRUE)
     }
     
     reference <- ReferenceTract$new(tract=tract, standardSeed=standardSeed, seedUnit=seedUnit, session=session, options=options)
