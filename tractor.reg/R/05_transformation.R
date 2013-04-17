@@ -81,7 +81,7 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
         if (estimateOnly)
             result <- list(transform=transform, transformedImage=NULL, reverseTransformedImage=NULL)
         else
-            result <- applyTransformation(transform, finalInterpolation=finalInterpolation, ...)
+            result <- transformImage(transform, finalInterpolation=finalInterpolation, ...)
     }
     else if (method == "niftyreg")
         result <- registerImagesWithNiftyreg(getImageAsObject(sourceImage), getImageAsObject(targetImage), targetMask=getImageAsObject(targetMask), types=types, affineDof=affineDof, estimateOnly=estimateOnly, finalInterpolation=finalInterpolation, ...)
@@ -103,7 +103,7 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
     return (result)
 }
 
-resampleImageToDimensions <- function (image, voxelDims = NULL, imageDims = NULL, origin = NULL, finalInterpolation = 1)
+resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, origin = NULL, finalInterpolation = 1)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "Specified image is not a valid MriImage object")
@@ -121,58 +121,6 @@ resampleImageToDimensions <- function (image, voxelDims = NULL, imageDims = NULL
     result <- registerImagesWithNiftyreg(image, targetImage, initAffine=NULL, types="affine", estimateOnly=FALSE, finalInterpolation=finalInterpolation, linearOptions=options)
     
     return (result$transformedImage)
-}
-
-applyTransformation <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, finalInterpolation = 1)
-{
-    if (!is(transform, "Transformation"))
-        report(OL$Error, "The specified transform is not a Transformation object")
-    
-    options <- list(nLevels=0, verbose=FALSE)
-    
-    availableTypes <- transform$getTypes()
-    if (preferAffine && ("affine" %in% availableTypes))
-        type <- "affine"
-    else if (reverse && ("reverse-nonlinear" %in% availableTypes))
-    {
-        type <- "nonlinear"
-        options$initControl <- transform$getReverseControlPointImage(index)
-    }
-    else if (!reverse && ("nonlinear" %in% availableTypes))
-    {
-        type <- "nonlinear"
-        options$initControl <- transform$getControlPointImage(index)
-    }
-    else if ("affine" %in% availableTypes)
-        type <- "affine"
-    else
-        report(OL$Error, "The specified Transformation object does not contain the necessary information")
-    
-    if (!is.null(newImage))
-        sourceImage <- newImage
-    else if (reverse)
-        sourceImage <- transform$getTargetImage()
-    else
-        sourceImage <- transform$getSourceImage()
-    
-    if (reverse)
-        targetImage <- transform$getSourceImage()
-    else
-        targetImage <- transform$getTargetImage()
-    
-    if (type == "affine")
-    {
-        initAffine <- transform$getAffineMatrix(index)
-        if (reverse)
-            initAffine <- invertAffine(initAffine)
-        options$scope <- "affine"
-        
-        result <- registerImagesWithNiftyreg(sourceImage, targetImage, initAffine=initAffine, types="affine", estimateOnly=FALSE, finalInterpolation=finalInterpolation, linearOptions=options)
-    }
-    else
-        result <- registerImagesWithNiftyreg(sourceImage, targetImage, types="nonlinear", estimateOnly=FALSE, finalInterpolation=finalInterpolation, nonlinearOptions=options)
-    
-    return (result)
 }
 
 invertTransformation <- function (transform)
