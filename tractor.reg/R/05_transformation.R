@@ -60,14 +60,24 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     }
 ))
 
-registerImages <- function (sourceImage, targetImage, targetMask = NULL, method = c("niftyreg","flirt"), types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, finalInterpolation = 1, cache = c("auto","read","write","ignore"), ...)
+registerImages <- function (sourceImage, targetImage, targetMask = NULL, method = c("niftyreg","flirt"), types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, finalInterpolation = 1, cache = c("auto","read","write","ignore"), file = NULL, ...)
 {
     method <- match.arg(method)
     types <- match.arg(types, several.ok=TRUE)
     cache <- match.arg(cache)
     
     transform <- NULL
+    fileHit <- TRUE
     cacheHit <- FALSE
+    
+    if (!is.null(file) && file.exists(file))
+    {
+        transform <- deserialiseReferenceObject(file)
+        if (all(types %in% transform$getTypes()))
+            fileHit <- TRUE
+        else
+            transform <- NULL
+    }
     
     if (cache %in% c("auto","read"))
     {
@@ -99,6 +109,9 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
     
     if (cache == "write" || (cache == "auto" && !cacheHit))
         updateTransformationCache(result$transform, force=TRUE)
+    
+    if (!is.null(file) && !fileHit)
+        result$transform$serialise(file)
     
     return (result)
 }
