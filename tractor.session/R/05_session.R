@@ -46,7 +46,13 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         return (readImageFile(fileName, ...))
     },
     
-    getImageFileNameByType = function (type, place = NULL, index = 1) { return (getImageFileNameForSession(.self, type, place, index)) },
+    getImageFileNameByType = function (type, place = NULL, index = 1)
+    {
+        if (!is.null(place) && tolower(place) == "mni")
+            return (getFileNameForStandardImage(type))
+        else
+            return (getImageFileNameForSession(.self, type, place, index))
+    },
     
     getMap = function (place) { return (mapCache.[[place]]) },
     
@@ -59,6 +65,16 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     },
     
     getObjectFileName = function (object) { return (file.path(getObjectDirectory(), ensureFileSuffix(object,"Rdata"))) },
+    
+    getTransformation = function (sourceSpace, targetSpace, ...)
+    {
+        sourceImageFile <- .self$getImageFileNameByType(.RegistrationTargets[[sourceSpace]], sourceSpace)
+        targetImageFile <- .self$getImageFileNameByType(.RegistrationTargets[[targetSpace]], targetSpace)
+        transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(sourceSpace,"2",targetSpace,sep=""),"Rdata"))
+        
+        result <- registerImages(sourceImageFile, targetImageFile, estimateOnly=TRUE, cache="ignore", file=transformFile, ...)
+        return (result$transform)
+    },
     
     updateCaches = function ()
     {
