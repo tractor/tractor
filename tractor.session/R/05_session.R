@@ -66,10 +66,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getObjectFileName = function (object) { return (file.path(getObjectDirectory(), ensureFileSuffix(object,"Rdata"))) },
     
+    getRegistrationTargetFileName = function (space) { return (.self$getImageFileNameByType(.RegistrationTargets[[space]], space)) },
+    
     getTransformation = function (sourceSpace, targetSpace, ...)
     {
-        sourceImageFile <- .self$getImageFileNameByType(.RegistrationTargets[[sourceSpace]], sourceSpace)
-        targetImageFile <- .self$getImageFileNameByType(.RegistrationTargets[[targetSpace]], targetSpace)
+        sourceImageFile <- .self$getRegistrationTargetFileName(sourceSpace)
+        targetImageFile <- .self$getRegistrationTargetFileName(targetSpace)
         transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(sourceSpace,"2",targetSpace,sep=""),"Rdata"))
         
         result <- registerImages(sourceImageFile, targetImageFile, estimateOnly=TRUE, cache="ignore", file=transformFile, ...)

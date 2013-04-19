@@ -26,6 +26,66 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     invisible (transform)
 }
 
+getTransformationBetweenSpaces <- function (sourceSpace, targetSpace, ...)
+{
+    sourcePieces <- unlist(strsplit(sourceSpace, ":", fixed=TRUE))
+    targetPieces <- unlist(strsplit(targetSpace, ":", fixed=TRUE))
+    
+    if (length(sourcePieces) == 2 && length(targetPieces) == 2 && sourcePieces[1] == targetPieces[2])
+}
+
+transformImageToSpace <- function (image, session, space, currentSpace = NULL, nonlinear = FALSE, reverse = FALSE, finalInterpolation = 1, ...)
+{
+    
+}
+
+transformPointsBetweenSpaces <- function (points, session, sourceSpace = NULL, targetSpace = NULL, pointType = NULL, preferAffine = FALSE, reverse = FALSE, nearest = FALSE, ...)
+{
+    resolveSpace <- function (space)
+    {
+        spacePieces <- unlist(strsplit(space, ":", fixed=TRUE))
+        if (length(spacePieces) == 2)
+        {
+            if (spacePieces[1] != session$getDirectory())
+                report(OL$Error, "The current space does not correspond to the specified session")
+            else
+                return (spacePieces[2])
+        }
+        else
+            return (spacePieces[1])
+    }
+    
+    constructSpace <- function (space)
+    {
+        if 
+    }
+    
+    if (is.null(pointType))
+    {
+        pointType <- attr(points, "pointType")
+        if (is.null(pointType))
+            report(OL$Error, "Current space is not stored with the points and must be specified")
+    }
+    
+    pointType <- match.arg(tolower(pointType), c("fsl","r","vox","mm"))
+    if (pointType == "fsl")
+        points <- points + 1
+    
+    if (reverse && is.null(targetSpace))
+        targetSpace <- attr(points, "space")
+    else if (!reverse && is.null(sourceSpace))
+        sourceSpace <- attr(points, "space")
+    
+    if (is.null(sourceSpace) || is.null(targetSpace))
+        report(OL$Error, "Source and target spaces are not both defined")
+    
+    transform <- session$getTransformation(resolveSpace(sourceSpace), resolveSpace(targetSpace), ...)
+    
+    newPoints <- transformPoints(transform, points, voxel=(pointType!="mm"), preferAffine=preferAffine, reverse=reverse, nearest=nearest)
+    
+    if (reverse)
+}
+
 getNativeSpacePointForSession <- function (session, point, pointType, isStandard, round = TRUE)
 {
     # NB: point types "r" and "vox" are equivalent
