@@ -40,7 +40,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
         return (spacePieces[1])
 }
 
-.constructSpace <- function (space)
+.constructSpace <- function (space, session)
 {
     if (tolower(space) == "mni")
         return ("mni")
@@ -113,9 +113,9 @@ transformPointsBetweenSpaces <- function (points, session, sourceSpace = NULL, t
     newPoints <- transformPoints(transform, points, voxel=(pointType!="mm"), preferAffine=preferAffine, reverse=reverse, nearest=nearest)
     
     if (reverse)
-        attr(newPoints, "space") <- .constructSpace(sourceSpace)
+        attr(newPoints, "space") <- .constructSpace(sourceSpace, session)
     else
-        attr(newPoints, "space") <- .constructSpace(targetSpace)
+        attr(newPoints, "space") <- .constructSpace(targetSpace, session)
     attr(newPoints, "pointType") <- ifelse(pointType=="mm", "mm", "r")
     
     return (newPoints)

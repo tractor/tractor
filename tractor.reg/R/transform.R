@@ -103,13 +103,13 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
         if (reverse)
             affine <- invertAffine(affine)
         
-        newPoints <- transformWithAffine(points, affine, as(source,"nifti"), as(target,"nifti"))
+        newPoints <- transformWithAffine(points, affine, as(sourceImage,"nifti"), as(targetImage,"nifti"))
         
         if (nearest)
             newPoints <- round(newPoints)
     }
     else
-        newPoints <- transformWithControlPoints(points, as(controlPoints,"nifti"), as(source,"nifti"), as(target,"nifti"), nearest=nearest)
+        newPoints <- transformWithControlPoints(points, as(controlPoints,"nifti"), as(sourceImage,"nifti"), as(targetImage,"nifti"), nearest=nearest)
     
     if (!voxel)
         newPoints <- transformWorldToVoxel(newPoints, targetImage, simple=TRUE)

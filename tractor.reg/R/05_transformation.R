@@ -67,7 +67,7 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
     cache <- match.arg(cache)
     
     transform <- NULL
-    fileHit <- TRUE
+    fileHit <- FALSE
     cacheHit <- FALSE
     
     if (!is.null(file) && file.exists(file))
