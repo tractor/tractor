@@ -48,7 +48,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
         return (paste(session$getDirectory(), space, sep=":"))
 }
 
-transformImageToSpace <- function (image, session, sourceSpace = NULL, targetSpace = NULL, preferAffine = FALSE, reverse = FALSE, finalInterpolation = 1, ...)
+transformImageBetweenSpaces <- function (image, session, sourceSpace = NULL, targetSpace = NULL, preferAffine = FALSE, reverse = FALSE, finalInterpolation = 1, ...)
 {
     require("tractor.reg")
     
@@ -116,7 +116,39 @@ transformPointsBetweenSpaces <- function (points, session, sourceSpace = NULL, t
         attr(newPoints, "space") <- .constructSpace(sourceSpace, session)
     else
         attr(newPoints, "space") <- .constructSpace(targetSpace, session)
+    
     attr(newPoints, "pointType") <- ifelse(pointType=="mm", "mm", "r")
+    
+    return (newPoints)
+}
+
+changePointType <- function (points, image, newPointType, oldPointType = NULL)
+{
+    require("tractor.reg")
+    
+    if (is.null(oldPointType))
+    {
+        oldPointType <- attr(points, "pointType")
+        if (is.null(oldPointType))
+            report(OL$Error, "Point type is not stored with the points and must be specified")
+    }
+    
+    # NB: point types "r" and "vox" are equivalent
+    oldPointType <- match.arg(tolower(oldPointType), c("fsl","r","vox","mm"))
+    newPointType <- match.arg(tolower(newPointType), c("fsl","r","vox","mm"))
+    
+    offsets <- list(fsl=1, r=0, vox=0)
+    
+    if (oldPointType == newPointType)
+        newPoints <- points
+    else if (oldPointType == "mm" && newPointType != "mm")
+        newPoints <- transformWorldToVoxel(points, image) - offsets[[newPointType]]
+    else if (oldPointType != "mm" && newPointType == "mm")
+        newPoints <- transformVoxelToWorld(points + offsets[[oldPointType]], image)
+    else
+        newPoints <- points + offsets[[oldPointType]] - offsets[[newPointType]]
+    
+    attr(newPoints, "pointType") <- ifelse(newPointType=="vox", "r", newPointType)
     
     return (newPoints)
 }

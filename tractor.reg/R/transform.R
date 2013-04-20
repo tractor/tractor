@@ -95,7 +95,7 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
     }
     
     if (!voxel)
-        points <- transformVoxelToWorld(points, sourceImage, simple=TRUE)
+        points <- transformWorldToVoxel(points, sourceImage)
         
     if (type == "affine")
     {
@@ -112,7 +112,7 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
         newPoints <- transformWithControlPoints(points, as(controlPoints,"nifti"), as(sourceImage,"nifti"), as(targetImage,"nifti"), nearest=nearest)
     
     if (!voxel)
-        newPoints <- transformWorldToVoxel(newPoints, targetImage, simple=TRUE)
+        newPoints <- transformVoxelToWorld(newPoints, targetImage)
     
     return (newPoints)
 }
