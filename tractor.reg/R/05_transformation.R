@@ -136,7 +136,7 @@ resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, origin = N
     return (result$transformedImage)
 }
 
-invertTransformation <- function (transform)
+invertTransformation <- function (transform, quiet = FALSE)
 {
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified transform is not a Transformation object")
@@ -149,7 +149,7 @@ invertTransformation <- function (transform)
         controlPointImages <- transform$getReverseControlPointImage()
         reverseControlPointImages <- transform$getControlPointImage()
     }
-    else if ("nonlinear" %in% availableTypes)
+    else if (!quiet && "nonlinear" %in% availableTypes)
         flag(OL$Warning, "Nonlinear part of the specified transformation is not invertible")
     
     if ("affine" %in% availableTypes)

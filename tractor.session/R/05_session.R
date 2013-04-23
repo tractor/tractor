@@ -70,11 +70,21 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getTransformation = function (sourceSpace, targetSpace, ...)
     {
+        require("tractor.reg")
+        
         sourceImageFile <- .self$getRegistrationTargetFileName(sourceSpace)
         targetImageFile <- .self$getRegistrationTargetFileName(targetSpace)
         transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(sourceSpace,"2",targetSpace,sep=""),"Rdata"))
         
         result <- registerImages(sourceImageFile, targetImageFile, estimateOnly=TRUE, cache="ignore", file=transformFile, ...)
+        
+        reverseTransformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(targetSpace,"2",sourceSpace,sep=""),"Rdata"))
+        if (!file.exists(reverseTransformFile))
+        {
+            inverseTransform <- invertTransformation(result$transform, quiet=TRUE)
+            inverseTransform$serialise(reverseTransformFile)
+        }
+        
         return (result$transform)
     },
     
