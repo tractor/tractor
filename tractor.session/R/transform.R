@@ -85,7 +85,7 @@ transformImageBetweenSpaces <- function (image, session, sourceSpace = NULL, tar
     return (newImage)
 }
 
-transformPointsBetweenSpaces <- function (points, session, sourceSpace = NULL, targetSpace = NULL, pointType = NULL, preferAffine = FALSE, reverse = FALSE, nearest = FALSE, ...)
+transformPointsBetweenSpaces <- function (points, session, sourceSpace = NULL, targetSpace = NULL, pointType = NULL, outputVoxel = FALSE, preferAffine = FALSE, reverse = FALSE, nearest = FALSE, ...)
 {
     require("tractor.reg")
     
@@ -117,7 +117,10 @@ transformPointsBetweenSpaces <- function (points, session, sourceSpace = NULL, t
     else
         attr(newPoints, "space") <- .constructSpace(targetSpace, session)
     
-    attr(newPoints, "pointType") <- ifelse(pointType=="mm", "mm", "r")
+    if (outputVoxel && pointType == "mm")
+        newPoints <- changePointType(newPoints, transform$getTargetImage(), "r", "mm")
+    else
+        attr(newPoints, "pointType") <- ifelse(pointType=="mm", "mm", "r")
     
     return (newPoints)
 }

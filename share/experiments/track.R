@@ -42,7 +42,10 @@ runExperiment <- function ()
     if (storeStreamlines && tracker == "fsl")
         report(OL$Error, "Streamlines may only be stored when using the internal tracker")
     
-    seed <- getNativeSpacePointForSession(session, seed, pointType, isStandardSeed)
+    if (isStandardSeed)
+        seed <- transformPointsBetweenSpaces(seed, session, sourceSpace="mni", targetSpace="diffusion", pointType=pointType, outputVoxel=TRUE, nearest=TRUE)
+    else
+        seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
     
     if (useGradientAscent)
     {

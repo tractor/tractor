@@ -66,6 +66,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getObjectFileName = function (object) { return (file.path(getObjectDirectory(), ensureFileSuffix(object,"Rdata"))) },
     
+    getRegistrationTarget = function (space, ...)  { return (.self$getImageByType(.RegistrationTargets[[space]], space, ...)) },
+    
     getRegistrationTargetFileName = function (space) { return (.self$getImageFileNameByType(.RegistrationTargets[[space]], space)) },
     
     getTransformation = function (sourceSpace, targetSpace, ...)

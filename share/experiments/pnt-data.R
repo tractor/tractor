@@ -25,9 +25,7 @@ runExperiment <- function ()
     if (!is.null(seedPoint) && !is.null(seedList))
         report(OL$Error, "Only one of \"SeedPoint\" and \"SeedPointList\" should be given")
     
-    if (is.null(seedPoint) && is.null(seedList))
-        pointType <- "r"
-    else
+    if (!is.null(seedPoint) || !is.null(seedList))
     {
         if (is.null(pointType))
             report(OL$Error, "Point type must be specified with the seed point(s)")
@@ -39,9 +37,6 @@ runExperiment <- function ()
             seedPoint <- splitAndConvertString(seedPoint, ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
             seedMatrix <- promote(seedPoint, byrow=TRUE)
         }
-        
-        if (pointType == "fsl")
-            seedMatrix <- transformFslVoxelToRVoxel(seedMatrix)
     }
     
     if (is.null(sessionNumbers))
@@ -66,19 +61,11 @@ runExperiment <- function ()
                 currentSession <- newSessionFromDirectory(sessionList)
             else
                 currentSession <- newSessionFromDirectory(sessionList[i])
-        
+            
             if (exists("seedMatrix"))
-            {
-                if (length(sessionList) == 1)
-                    currentSeed <- drop(seedMatrix)
-                else
-                    currentSeed <- seedMatrix[i,]
-            }
+                currentSeed <- round(changePointType(seedMatrix[i,], session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
             else
-                currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
-        
-            if (pointType == "mm")
-                currentSeed <- transformWorldToRVoxel(currentSeed, currentSession$getImageByType("maskedb0",metadataOnly=TRUE), useOrigin=TRUE)
+                currentSeed <- transformPointsBetweenSpaces(reference$getStandardSpaceSeedPoint(), currentSession, sourceSpace="mni", targetSpace="diffusion", pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
             
             neighbourhood <- createNeighbourhoodInfo(centre=currentSeed, width=searchWidth)
             splines <- calculateSplinesForNeighbourhood(currentSession, neighbourhood, reference, faThreshold, nSamples, tracker=tracker)
