@@ -20,9 +20,9 @@ streamlineTractWithOptions <- function (options, session, seed, refSession = NUL
     if (options$registerToReference)
     {
         if (is.null(refSession))
-            transform <- newAffineTransform3DByInversion(getMniTransformForSession(session))
+            transform <- session$getTransformation("diffusion", "mni")
         else
-            transform <- newAffineTransform3DFromFlirt(session$getImageFileNameByType("maskedb0"), refSession$getImageFileNameByType("maskedb0"))
+            transform <- registerImages(session$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
         
         streamline <- newStreamlineTractByTransformation(streamline, transform)
     }
@@ -108,9 +108,9 @@ calculateSplinesForStreamlineSetTract <- function (tract, testSession, refSessio
         if (options$registerToReference)
         {
             if (is.null(refSession))
-                transform <- newAffineTransform3DByInversion(getMniTransformForSession(testSession))
+                transform <- currentSession$getTransformation("diffusion", "mni")
             else
-                transform <- newAffineTransform3DFromFlirt(testSession$getImageFileNameByType("maskedb0"), refSession$getImageFileNameByType("maskedb0"))
+                transform <- registerImages(testSession$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
 
             streamline <- newStreamlineTractByTransformation(streamline, transform)
         }

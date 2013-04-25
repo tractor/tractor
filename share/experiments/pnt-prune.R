@@ -103,9 +103,9 @@ runExperiment <- function ()
         if (options$registerToReference)
         {
             if (is.null(refSession))
-                transform <- newAffineTransform3DByInversion(getMniTransformForSession(currentSession))
+                transform <- currentSession$getTransformation("diffusion", "mni")
             else
-                transform <- newAffineTransform3DFromFlirt(currentSession$getImageFileNameByType("maskedb0"), refSession$getImageFileNameByType("maskedb0"))
+                transform <- registerImages(currentSession$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
 
             transformedMedianLine <- newStreamlineTractByTransformation(medianLine, transform)
         }

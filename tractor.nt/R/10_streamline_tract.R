@@ -362,11 +362,11 @@ newStreamlineSetTractByTruncationToReference <- function (tract, reference, test
     if (reference$getTractOptions()$registerToReference)
     {
         if (is.null(refSession))
-            transform <- getMniTransformForSession(testSession)
+            transform <- testSession$getTransformation("diffusion", "mni")
         else
-            transform <- newAffineTransform3DFromFlirt(refSession$getImageFileNameByType("maskedb0"), testSession$getImageFileNameByType("maskedb0"))
+            transform <- registerImages(testSession$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
     
-        refPoints$points <- transformPoints(transform, refPoints$points, voxel=FALSE)
+        refPoints$points <- transformPoints(transform, refPoints$points, voxel=FALSE, reverse=TRUE)
     }
     
     refSteps <- calculateStepVectors(refPoints$points, refPoints$seedPoint)
@@ -378,7 +378,7 @@ newStreamlineSetTractByTruncationToReference <- function (tract, reference, test
     testStreamline <- which(tract$getLeftLengths() >= nTestPoints)[1]
     testPoints <- tract$getLeftPoints()[1:nTestPoints,,testStreamline]
     if (tract$getCoordinateUnit() == "vox")
-        testPoints <- transformRVoxelToWorld(testPoints, tract$getImageMetadata())
+        testPoints <- transformVoxelToWorld(testPoints, tract$getImageMetadata(), simple=TRUE)
     realStepLength <- mean(apply(diff(testPoints), 1, vectorLength), na.rm=TRUE)
     report(OL$Info, "Step length in streamline set is ", signif(realStepLength,3), " mm")
     
@@ -450,13 +450,13 @@ newStreamlineTractWithMetadata <- function (tract, metadata)
     # Coordinate unit from voxels to millimetres
     if (tract$getCoordinateUnit() == "vox" && metadata$getCoordinateUnit() == "mm")
     {
-        line <- transformRVoxelToWorld(line, imageMetadata)
-        seed <- transformRVoxelToWorld(seed, imageMetadata)
+        line <- transformVoxelToWorld(line, imageMetadata, simple=TRUE)
+        seed <- transformVoxelToWorld(seed, imageMetadata, simple=TRUE)
     }
     else if (tract$getCoordinateUnit() == "mm" && metadata$getCoordinateUnit() == "vox")
     {
-        line <- transformWorldToRVoxel(line, imageMetadata)
-        seed <- transformWorldToRVoxel(seed, imageMetadata)
+        line <- transformWorldToVoxel(line, imageMetadata, simple=TRUE)
+        seed <- transformWorldToVoxel(seed, imageMetadata, simple=TRUE)
     }
     
     if (metadata$isOriginAtSeed())
@@ -697,13 +697,13 @@ rescalePoints <- function (points, newUnit, metadata, seed)
 
         if (oldUnit == "vox" && newUnit == "mm")
         {
-            points <- transformRVoxelToWorld(points, imageMetadata)
-            seed <- transformRVoxelToWorld(seed, imageMetadata)
+            points <- transformVoxelToWorld(points, imageMetadata, simple=TRUE)
+            seed <- transformVoxelToWorld(seed, imageMetadata, simple=TRUE)
         }
         else if (oldUnit == "mm" && newUnit == "vox")
         {
-            points <- transformWorldToRVoxel(points, imageMetadata)
-            seed <- transformWorldToRVoxel(seed, imageMetadata)
+            points <- transformWorldToVoxel(points, imageMetadata, simple=TRUE)
+            seed <- transformWorldToVoxel(seed, imageMetadata, simple=TRUE)
         }
 
         if (metadata$isOriginAtSeed())

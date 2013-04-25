@@ -30,7 +30,7 @@ newMriImageAsVisitationMap <- function (tract, metadata = NULL)
             currentPoints <- tract$getPoints(i)
         
         if (tract$getCoordinateUnit() == "mm")
-            currentPoints <- transformWorldToRVoxel(currentPoints, metadata)
+            currentPoints <- transformWorldToVoxel(currentPoints, metadata, simple=TRUE)
         currentPoints <- round(currentPoints)
         
         # ProbTrack allows tracking to voxel positions in [0.5, dims+0.5]

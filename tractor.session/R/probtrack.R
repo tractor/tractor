@@ -29,7 +29,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
         else
             report(OL$Error, "Seed point(s) must be specified as a vector or matrix")
         
-        seed <- transformRVoxelToFslVoxel(originalSeed)
+        # Switch to the FSL indexing convention (from 0)
+        seed <- originalSeed - 1
     }
     
     bedpostDir <- session$getDirectory("bedpost")
@@ -196,7 +197,9 @@ runProbtrackForNeighbourhood <- function (session, x, y = NULL, z = NULL, width 
 retrieveProbtrackStreamline <- function (probtrackResult, i)
 {
     m <- as.matrix(read.table(paste(probtrackResult$particlesDir, "/particle", i-1, sep="")))
-    invisible (transformFslVoxelToRVoxel(m))
+    
+    # Convert back to the R indexing convention
+    invisible (m+1)
 }
 
 particleFileSizesForResult <- function (probtrackResult)

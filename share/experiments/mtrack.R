@@ -42,7 +42,7 @@ runExperiment <- function ()
     {
         seedMask <- readImageFile(seedMaskFile)
         if (seedMaskInStandardSpace)
-            seedMask <- transformStandardSpaceImage(session, seedMask)
+            seedMask <- transformImageBetweenSpaces(seedMask, session, sourceSpace="mni", targetSpace="diffusion")
     }
     
     if (!is.null(anisotropyThreshold))
@@ -63,7 +63,7 @@ runExperiment <- function ()
         {
             waypointMask <- readImageFile(waypointFile)
             if (waypointMasksInStandardSpace)
-                waypointMask <- transformStandardSpaceImage(session, waypointMask)
+                waypointMask <- transformImageBetweenSpaces(waypointMask, session, sourceSpace="mni", targetSpace="diffusion")
             waypointMasks <- c(waypointMasks, list(waypointMask))
             exclusion <- c(exclusion, FALSE)
         }
@@ -71,7 +71,7 @@ runExperiment <- function ()
         {
             exclusionMask <- readImageFile(exclusionFile)
             if (exclusionMasksInStandardSpace)
-                exclusionMask <- transformStandardSpaceImage(session, exclusionMask)
+                exclusionMask <- transformImageBetweenSpaces(exclusionMask, session, sourceSpace="mni", targetSpace="diffusion")
             waypointMasks <- c(waypointMasks, list(exclusionMask))
             exclusion <- c(exclusion, TRUE)
         }
@@ -90,7 +90,7 @@ runExperiment <- function ()
         {
             terminationMask <- newMriImageFromFile(terminationFile)
             if (terminationMasksInStandardSpace)
-                terminationMask <- transformStandardSpaceImage(session, terminationMask)
+                terminationMask <- transformImageBetweenSpaces(terminationMask, session, sourceSpace="mni", targetSpace="diffusion")
             trackingMask <- newMriImageWithBinaryFunction(trackingMask, terminationMask, function(x,y) ifelse(x>0 & y==0, 1, 0))
         }
         
