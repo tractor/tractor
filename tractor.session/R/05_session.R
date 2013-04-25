@@ -78,6 +78,10 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         targetImageFile <- .self$getRegistrationTargetFileName(targetSpace)
         transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(sourceSpace,"2",targetSpace,sep=""),"Rdata"))
         
+        targetMask <- NULL
+        if (sourceSpace == "diffusion" && targetSpace == "mni" && !("targetMask" %in% names(list(...))))
+            targetMask <- newMriImageWithSimpleFunction(getStandardImage("white"), function(x) x/10 + 1)
+        
         result <- registerImages(sourceImageFile, targetImageFile, estimateOnly=TRUE, cache="ignore", file=transformFile, ...)
         
         reverseTransformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(targetSpace,"2",sourceSpace,sep=""),"Rdata"))
