@@ -108,7 +108,7 @@ calculateSplinesForStreamlineSetTract <- function (tract, testSession, refSessio
         if (options$registerToReference)
         {
             if (is.null(refSession))
-                transform <- currentSession$getTransformation("diffusion", "mni")
+                transform <- testSession$getTransformation("diffusion", "mni")
             else
                 transform <- registerImages(testSession$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
 

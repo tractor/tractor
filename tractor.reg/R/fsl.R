@@ -3,7 +3,7 @@ registerImagesWithFlirt <- function (sourceFileName, targetFileName, targetMaskF
     if (!is.character(sourceFileName) || !is.character(targetFileName))
         report(OL$Error, "Source and target images must be specified by their filenames")
     if (!any(affineDof == c(6,7,9,12)))
-        report(OL$Error, "The specified affine degrees of freedom")
+        report(OL$Error, "The specified affine degrees of freedom is not valid")
     
     if (is.numeric(finalInterpolation))
         finalInterpolation <- c("nearestneighbour","trilinear","sinc","spline")[finalInterpolation]

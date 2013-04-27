@@ -16,8 +16,6 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     {
         if (is.null(x))
             report(OL$Error, "Seed point(s) must be specified in this mode")
-        else if (is.vector(x))
-            originalSeed <- resolveVector(len=3, x, y, z)
         else if (is.matrix(x))
         {
             if (ncol(x) == 3)
@@ -26,6 +24,8 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
                 originalSeed <- t(x)
             requireImage <- FALSE
         }
+        else if (is.numeric(x))
+            originalSeed <- resolveVector(len=3, x, y, z)
         else
             report(OL$Error, "Seed point(s) must be specified as a vector or matrix")
         
@@ -72,10 +72,10 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
 
             # Create a temporary file containing the seed point coordinates
             seedFile <- threadSafeTempFile()
-            if (is.vector(seed))
-                execute("echo", paste("'", implode(seed,sep=" "), "' >", seedFile, sep=""))
-            else if (is.matrix(seed))
+            if (is.matrix(seed))
                 write.table(seed, seedFile, row.names=FALSE, col.names=FALSE)
+            else if (is.numeric(seed))
+                execute("echo", paste("'", implode(seed,sep=" "), "' >", seedFile, sep=""))
             
             # FSL 4.1.5 changed the way the --dir and -o flags were used
             if (!is.null(fslVersion) && fslVersion >= 40105)

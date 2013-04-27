@@ -38,6 +38,7 @@ getImageAsFileName <- function (image, allowNull = TRUE, warnIfNotLas = FALSE)
                     flag(OL$Warning, "NIfTI image is not stored in the LAS convention - problems may occur")
             }
         }
+        return (fileName)
     }
     else
         report(OL$Error, "Specified image does not seem to be valid")

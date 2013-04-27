@@ -79,8 +79,8 @@ newReferenceTractWithTract <- function (tract, standardSeed = NULL, nativeSeed =
         else if (is.null(nativeSeed))
             report(OL$Error, "The native space point associated with the tract must be specified")
         
-        transform <- currentSession$getTransformation("diffusion", "mni")
-        standardSeed <- transformPoints(xfm, nativeSeed, voxel=(seedUnit!="mm"))
+        transform <- session$getTransformation("diffusion", "mni")
+        standardSeed <- transformPoints(transform, nativeSeed, voxel=(seedUnit!="mm"))
     }
     
     reference <- ReferenceTract$new(tract=tract, standardSeed=standardSeed, seedUnit=seedUnit, session=session, options=options)

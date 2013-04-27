@@ -42,7 +42,7 @@ runExperiment <- function ()
     {
         seedMask <- readImageFile(seedMaskFile)
         if (seedMaskInStandardSpace)
-            seedMask <- transformImageBetweenSpaces(seedMask, session, sourceSpace="mni", targetSpace="diffusion")
+            seedMask <- transformImageToSpace(seedMask, session, "diffusion", oldSpace="mni", reverseRegister=TRUE)
     }
     
     if (!is.null(anisotropyThreshold))
@@ -63,7 +63,7 @@ runExperiment <- function ()
         {
             waypointMask <- readImageFile(waypointFile)
             if (waypointMasksInStandardSpace)
-                waypointMask <- transformImageBetweenSpaces(waypointMask, session, sourceSpace="mni", targetSpace="diffusion")
+                waypointMask <- transformImageToSpace(waypointMask, session, "diffusion", oldSpace="mni", reverseRegister=TRUE)
             waypointMasks <- c(waypointMasks, list(waypointMask))
             exclusion <- c(exclusion, FALSE)
         }
@@ -71,7 +71,7 @@ runExperiment <- function ()
         {
             exclusionMask <- readImageFile(exclusionFile)
             if (exclusionMasksInStandardSpace)
-                exclusionMask <- transformImageBetweenSpaces(exclusionMask, session, sourceSpace="mni", targetSpace="diffusion")
+                exclusionMask <- transformImageToSpace(exclusionMask, session, "diffusion", oldSpace="mni", reverseRegister=TRUE)
             waypointMasks <- c(waypointMasks, list(exclusionMask))
             exclusion <- c(exclusion, TRUE)
         }
@@ -90,7 +90,7 @@ runExperiment <- function ()
         {
             terminationMask <- newMriImageFromFile(terminationFile)
             if (terminationMasksInStandardSpace)
-                terminationMask <- transformImageBetweenSpaces(terminationMask, session, sourceSpace="mni", targetSpace="diffusion")
+                terminationMask <- transformImageToSpace(terminationMask, session, "diffusion", oldSpace="mni", reverseRegister=TRUE)
             trackingMask <- newMriImageWithBinaryFunction(trackingMask, terminationMask, function(x,y) ifelse(x>0 & y==0, 1, 0))
         }
         

@@ -33,7 +33,7 @@ runExperiment <- function ()
     
     seedMask <- readImageFile(seedMaskFile)
     if (seedMaskInStandardSpace)
-        seedMask <- transformImageBetweenSpaces(seedMask, session, sourceSpace="mni", targetSpace="diffusion")
+        seedMask <- transformImageToSpace(seedMask, session, "diffusion", oldSpace="mni", reverseRegister=TRUE)
     
     seeds <- which(seedMask$getData() > 0, arr.ind=TRUE)
     if (nrow(seeds) == 0)

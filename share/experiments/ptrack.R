@@ -22,7 +22,7 @@ runExperiment <- function ()
     
     seedMask <- readImageFile(seedMaskFile)
     if (seedMaskInStandardSpace)
-        seedMask <- transformImageBetweenSpaces(seedMask, session, sourceSpace="mni", targetSpace="diffusion")
+        seedMask <- transformImageToSpace(seedMask, session, "diffusion", oldSpace="mni", reverseRegister=TRUE)
     
     if (!is.null(anisotropyThreshold))
     {
@@ -36,7 +36,7 @@ runExperiment <- function ()
     {
         targetMask <- readImageFile(targetFile)
         if (targetMasksInStandardSpace)
-            targetMask <- transformImageBetweenSpaces(targetMask, session, sourceSpace="mni", targetSpace="diffusion")
+            targetMask <- transformImageToSpace(targetMask, session, "diffusion", oldSpace="mni", reverseRegister=TRUE)
         targetMasks <- c(targetMasks, list(targetMask))
     }
     

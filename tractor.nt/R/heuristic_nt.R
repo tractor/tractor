@@ -2,7 +2,7 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
 {
     if (!is(refTract, "FieldTract"))
         report(OL$Error, "Reference tract must be specified as a FieldTract object")
-    if (!is.numeric(seed) || !is.vector(seed) || (length(seed) != 3))
+    if (!is.numeric(seed) || (length(seed) != 3))
         report(OL$Error, "Central seed point must be specified as a numeric vector of length 3")
     
     searchNeighbourhood <- createNeighbourhoodInfo(searchWidth, centre=seed)

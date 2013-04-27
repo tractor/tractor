@@ -48,7 +48,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
         return (paste(session$getDirectory(), space, sep=":"))
 }
 
-transformImageBetweenSpaces <- function (image, session, sourceSpace = NULL, targetSpace = NULL, preferAffine = FALSE, reverse = FALSE, finalInterpolation = 1, ...)
+transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, preferAffine = FALSE, reverseRegister = FALSE, finalInterpolation = 1, ...)
 {
     require("tractor.reg")
     
@@ -70,22 +70,23 @@ transformImageBetweenSpaces <- function (image, session, sourceSpace = NULL, tar
         return (NULL)
     }
     
-    if (reverse && is.null(targetSpace))
-        targetSpace <- guessSpace()
-    else if (!reverse && is.null(sourceSpace))
-        sourceSpace <- guessSpace()
+    if (is.null(oldSpace))
+        oldSpace <- guessSpace()
     
-    if (is.null(sourceSpace) || is.null(targetSpace))
+    if (is.null(oldSpace) || is.null(newSpace))
         report(OL$Error, "Source and target spaces are not both defined")
     
-    transform <- session$getTransformation(.resolveSpace(sourceSpace,session), .resolveSpace(targetSpace,session), ...)
+    if (reverseRegister)
+        transform <- session$getTransformation(.resolveSpace(newSpace,session), .resolveSpace(oldSpace,session), ...)
+    else
+        transform <- session$getTransformation(.resolveSpace(oldSpace,session), .resolveSpace(newSpace,session), ...)
     
-    newImage <- transformImage(transform, image, preferAffine=preferAffine, reverse=reverse, finalInterpolation=finalInterpolation)
+    newImage <- transformImage(transform, image, preferAffine=preferAffine, reverse=reverseRegister, finalInterpolation=finalInterpolation)
     
     return (newImage)
 }
 
-transformPointsBetweenSpaces <- function (points, session, sourceSpace = NULL, targetSpace = NULL, pointType = NULL, outputVoxel = FALSE, preferAffine = FALSE, reverse = FALSE, nearest = FALSE, ...)
+transformPointsToSpace <- function (points, session, newSpace, oldSpace = NULL, pointType = NULL, outputVoxel = FALSE, preferAffine = FALSE, reverseRegister = FALSE, nearest = FALSE, ...)
 {
     require("tractor.reg")
     
@@ -100,27 +101,30 @@ transformPointsBetweenSpaces <- function (points, session, sourceSpace = NULL, t
     if (pointType == "fsl")
         points <- points + 1
     
-    if (reverse && is.null(targetSpace))
-        targetSpace <- attr(points, "space")
-    else if (!reverse && is.null(sourceSpace))
-        sourceSpace <- attr(points, "space")
+    if (is.null(oldSpace))
+        oldSpace <- attr(points, "space")
     
-    if (is.null(sourceSpace) || is.null(targetSpace))
+    if (is.null(oldSpace) || is.null(newSpace))
         report(OL$Error, "Source and target spaces are not both defined")
     
-    transform <- session$getTransformation(.resolveSpace(sourceSpace,session), .resolveSpace(targetSpace,session), ...)
-    
-    newPoints <- transformPoints(transform, points, voxel=(pointType!="mm"), preferAffine=preferAffine, reverse=reverse, nearest=nearest)
-    
-    if (reverse)
-        attr(newPoints, "space") <- .constructSpace(sourceSpace, session)
+    if (reverseRegister)
+        transform <- session$getTransformation(.resolveSpace(newSpace,session), .resolveSpace(oldSpace,session), ...)
     else
-        attr(newPoints, "space") <- .constructSpace(targetSpace, session)
+        transform <- session$getTransformation(.resolveSpace(oldSpace,session), .resolveSpace(newSpace,session), ...)
     
     if (outputVoxel && pointType == "mm")
-        newPoints <- changePointType(newPoints, transform$getTargetImage(), "r", "mm")
-    else
-        attr(newPoints, "pointType") <- ifelse(pointType=="mm", "mm", "r")
+    {
+        if (reverseRegister)
+            points <- changePointType(points, transform$getTargetImage(), "r", "mm")
+        else
+            points <- changePointType(points, transform$getSourceImage(), "r", "mm")
+        pointType <- "r"
+    }
+    
+    newPoints <- transformPoints(transform, points, voxel=(pointType!="mm"), preferAffine=preferAffine, reverse=reverseRegister, nearest=nearest)
+    
+    attr(newPoints, "space") <- .constructSpace(newSpace, session)
+    attr(newPoints, "pointType") <- ifelse(pointType=="mm", "mm", "r")
     
     return (newPoints)
 }

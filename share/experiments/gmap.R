@@ -56,7 +56,7 @@ runExperiment <- function ()
         
         threshold <- baseThreshold * switch(thresholdMode, nothing=1, maximum=max(image,na.rm=TRUE), minimum=min(image,na.rm=TRUE))
         
-        transformedImage <- transformImageBetweenSpaces(image, session, sourceSpace="diffusion", targetSpace="mni")
+        transformedImage <- transformImageToSpace(image, session, "mni", oldSpace="diffusion")
         if (binarise)
             thresholdedImage <- newMriImageWithSimpleFunction(transformedImage, function(x) ifelse(x>=threshold,1,0))
         else

@@ -75,7 +75,7 @@ runExperiment <- function ()
             currentSeed <- round(apply(currentData[,c("x","y","z")], 2, median))
         }
         else
-            currentSeed <- transformPointsBetweenSpaces(reference$getStandardSpaceSeedPoint(), currentSession, sourceSpace="mni", targetSpace="diffusion", pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
+            currentSeed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), currentSession, "diffusion", oldSpace="mni", reverseRegister=TRUE, pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
         
         currentPosteriors <- results$getTractPosteriors(i)
         

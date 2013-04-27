@@ -94,7 +94,7 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
         if (estimateOnly)
             result <- list(transform=transform, transformedImage=NULL, reverseTransformedImage=NULL)
         else
-            result <- transformImage(transform, finalInterpolation=finalInterpolation, ...)
+            result <- list(transform=transform, transformedImage=transformImage(transform,finalInterpolation=finalInterpolation,...))
     }
     else if (method == "niftyreg")
         result <- registerImagesWithNiftyreg(getImageAsObject(sourceImage), getImageAsObject(targetImage), targetMask=getImageAsObject(targetMask), types=types, affineDof=affineDof, estimateOnly=estimateOnly, finalInterpolation=finalInterpolation, ...)
@@ -131,7 +131,7 @@ resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, origin = N
     if (is.null(imageDims))
         imageDims <- round(image$getFieldOfView() / abs(voxelDims))
     
-    targetImage <- MriImage$new(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=image$getVoxelUnits(), origin=origin)
+    targetImage <- getRefClass("MriImage")$new(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=image$getVoxelUnits(), origin=origin)
     
     options <- list(nLevels=0, verbose=FALSE, scope="affine")
     result <- registerImagesWithNiftyreg(image, targetImage, initAffine=NULL, types="affine", estimateOnly=FALSE, finalInterpolation=finalInterpolation, linearOptions=options)

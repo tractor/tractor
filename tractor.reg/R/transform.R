@@ -57,7 +57,7 @@ transformImage <- function (transform, newImage = NULL, index = 1, preferAffine 
     else
         result <- registerImagesWithNiftyreg(sourceImage, targetImage, types="nonlinear", estimateOnly=FALSE, finalInterpolation=finalInterpolation, nonlinearOptions=options)
     
-    return (result)
+    return (result$transformedImage)
 }
 
 transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferAffine = FALSE, reverse = FALSE, nearest = FALSE)
@@ -119,8 +119,10 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
 
 translatePoints <- function (points, offset)
 {
-    if (is.vector(points))
-        return (points + offset)
-    else if (is.matrix(points))
+    if (is.matrix(points))
         return (t(apply(points, 1, "+", offset)))
+    else if (is.numeric(points))
+        return (points + offset)
+    else
+        report(OL$Error, "Points must be specified as a numeric vector or matrix")
 }
