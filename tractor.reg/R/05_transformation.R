@@ -60,10 +60,13 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     }
 ))
 
-registerImages <- function (sourceImage, targetImage, targetMask = NULL, method = c("niftyreg","flirt"), types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, finalInterpolation = 1, cache = c("auto","read","write","ignore"), file = NULL, ...)
+registerImages <- function (sourceImage, targetImage, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, finalInterpolation = 1, cache = c("auto","read","write","ignore"), file = NULL, ...)
 {
-    method <- match.arg(method)
-    types <- match.arg(types, several.ok=TRUE)
+    if (is.null(method))
+        method <- "niftyreg"
+    else
+        method <- match.arg(method, c("niftyreg","flirt"))
+    types <- match.arg(types, c("affine","nonlinear","reverse-nonlinear"), several.ok=TRUE)
     cache <- match.arg(cache)
     
     transform <- NULL
