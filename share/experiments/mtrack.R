@@ -109,7 +109,7 @@ runExperiment <- function ()
     }
     else
     {
-        require(tractor.native)
+        require(tractor.track)
         result <- trackWithSession(session, seedMask, maskName=trackingMaskFileName, requireImage=is.null(waypointMasks), requireStreamlines=(storeStreamlines || !is.null(waypointMasks)), nSamples=nSamples, terminateOutsideMask=terminateOutsideMask)
         if (!is.null(waypointMasks))
         {

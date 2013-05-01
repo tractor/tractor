@@ -38,17 +38,17 @@ install-session:
 install-nt:
 	@$(INSTALL) tractor.nt
 
-install-native:
-	@$(INSTALL) tractor.native
+install-track:
+	@$(INSTALL) tractor.track
 
 install: build
 	@rm -f install.log
-	@$(MAKE) install-libs install-base install-utils install-reg install-session install-nt install-native post-install-info
+	@$(MAKE) install-libs install-base install-utils install-reg install-session install-nt install-track post-install-info
 
 install-all: install
 
 uninstall:
-	$(R) CMD REMOVE tractor.native tractor.nt tractor.session tractor.reg tractor.utils tractor.base
+	$(R) CMD REMOVE tractor.track tractor.nt tractor.session tractor.reg tractor.utils tractor.base
 
 uninstall-all: uninstall
 	$(R) CMD REMOVE RNiftyReg oro.nifti bitops multicore mmand reportr
@@ -58,7 +58,7 @@ clean:
 
 distclean: clean
 	@rm -f bin/exec/tractor src/build.log install.log
-	@rm -f tractor.native/config.log tractor.native/config.status tractor.native/src/Makevars tractor.native/src/config.h
+	@rm -f tractor.track/config.log tractor.track/config.status tractor.track/src/Makevars tractor.track/src/config.h
 
 test:
 	@cd tests && $(MAKE) run-tests

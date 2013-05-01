@@ -80,7 +80,7 @@ runExperiment <- function ()
         result <- runProbtrackWithSession(session, seed, mode="simple", requireImage=TRUE, nSamples=nSamples, force=force)
     else
     {
-        require("tractor.native")
+        require("tractor.track")
         result <- trackWithSession(session, seed, requireImage=TRUE, nSamples=nSamples, requireStreamlines=storeStreamlines)
         if (storeStreamlines)
             result$streamlines$serialise(paste(tractName,"streamlines",sep="_"))

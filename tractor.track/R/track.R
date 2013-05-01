@@ -1,6 +1,6 @@
 trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNames, phiNames, nSamples = 5000, maxSteps = 2000, stepLength = 0.5, avfThreshold = 0.05, curvatureThreshold = 0.2, useLoopcheck = TRUE, rightwardsVector = NULL, requireImage = TRUE, requireStreamlines = FALSE, terminateOutsideMask = FALSE)
 {
-    on.exit(.C("clean_up_streamlines", PACKAGE="tractor.native"))
+    on.exit(.C("clean_up_streamlines", PACKAGE="tractor.track"))
     
     if (!requireImage && !requireStreamlines)
         report(OL$Error, "Neither a visitation map nor a streamline collection was requested")
@@ -37,7 +37,7 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
         report(OL$Error, "AVF, theta and phi image names must be given for every anisotropic compartment")
     
     report(OL$Info, "Running ", nCompartments, "-compartment tractography with ", nSeeds, " seed(s) and ", nSamples, " streamline(s) per seed")
-    result <- .Call("track_with_seeds", seeds, as.integer(nSeeds), 1L, maskName, list(avf=avfNames,theta=thetaNames,phi=phiNames), as.integer(nCompartments), as.integer(nSamples), as.integer(maxSteps), as.double(stepLength), as.double(avfThreshold), as.double(curvatureThreshold), as.logical(useLoopcheck), rightwardsVector, as.logical(requireImage), as.logical(requireStreamlines), as.logical(terminateOutsideMask), PACKAGE="tractor.native")
+    result <- .Call("track_with_seeds", seeds, as.integer(nSeeds), 1L, maskName, list(avf=avfNames,theta=thetaNames,phi=phiNames), as.integer(nCompartments), as.integer(nSamples), as.integer(maxSteps), as.double(stepLength), as.double(avfThreshold), as.double(curvatureThreshold), as.logical(useLoopcheck), rightwardsVector, as.logical(requireImage), as.logical(requireStreamlines), as.logical(terminateOutsideMask), PACKAGE="tractor.track")
     
     returnValue <- list(seeds=seeds, nSamples=nSamples*nSeeds)
     if (requireImage)

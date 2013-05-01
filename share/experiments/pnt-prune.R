@@ -92,7 +92,7 @@ runExperiment <- function ()
         
         if (tracker == "tractor")
         {
-            require("tractor.native")
+            require("tractor.track")
             result <- trackWithSession(currentSession, bestSeed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlines=TRUE)
             streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
         }

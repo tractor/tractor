@@ -65,7 +65,7 @@ runExperiment <- function ()
         }
         else
         {
-            require(tractor.native)
+            require(tractor.track)
             nGroups <- (length(validSeeds) - 1) %/% groupSize + 1
             for (i in 1:nGroups)
             {
