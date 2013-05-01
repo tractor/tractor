@@ -45,18 +45,23 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), reportF
         setwd(workingDirectory)
         
         if (!exists("runExperiment"))
-            report(OL$Error, "The experiment script does not contain a \"runExperiment\" function")
+        {
+            on.exit(NULL)
+            return (invisible(NULL))
+        }
+        else
+        {
+            if (debug)
+                debug(runExperiment)
         
-        if (debug)
-            debug(runExperiment)
+            if (profile)
+                Rprof("tractor-Rprof.out")
         
-        if (profile)
-            Rprof("tractor-Rprof.out")
+            runExperiment()
         
-        runExperiment()
-        
-        if (profile)
-            Rprof(NULL)
+            if (profile)
+                Rprof(NULL)
+        }
     })
     
     reportFlags()
