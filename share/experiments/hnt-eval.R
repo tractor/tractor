@@ -6,8 +6,9 @@
 #@desc used to establish neighbourhood centre points. Any candidate seed point with
 #@desc anisotropy lower than AnisotropyThreshold will be ignored.
 
-suppressPackageStartupMessages(require(tractor.session))
-suppressPackageStartupMessages(require(tractor.nt))
+library(tractor.reg)
+library(tractor.session)
+library(tractor.nt)
 
 runExperiment <- function ()
 {
@@ -23,30 +24,21 @@ runExperiment <- function ()
     reference <- getNTResource("reference", "hnt", list(tractName=tractName))
     nSessions <- length(sessionList)
     
-    if (is.null(seedList))
-        pointType <- "r"
-    else
+    if (!is.null(seedList))
     {
         if (is.null(pointType))
             report(OL$Error, "Point type must be specified with the seed list")
-
         seedMatrix <- matrix(seedList, ncol=3, byrow=TRUE)
-
-        if (pointType == "fsl")
-            seedMatrix <- transformFslVoxelToRVoxel(seedMatrix)
     }
 
     results <- parallelApply(seq_len(nSessions), function (i) {
         currentSession <- newSessionFromDirectory(sessionList[i])
 
         if (exists("seedMatrix"))
-            currentSeed <- seedMatrix[i,]
+            currentSeed <- round(changePointType(seedMatrix[i,], session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
         else
-            currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
+            currentSeed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), currentSession, "diffusion", oldSpace="mni", reverseRegister=TRUE, pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
 
-        if (pointType == "mm")
-            currentSeed <- transformWorldToRVoxel(currentSeed, currentSession$getImageByType("maskedb0",metadataOnly=TRUE), useOrigin=TRUE)
-        
         result <- runNeighbourhoodTractography(currentSession, currentSeed, reference$getTract(), faThreshold, searchWidth, nSamples=nSamples)
         return (result)
     })

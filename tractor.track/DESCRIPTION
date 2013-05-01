@@ -1,0 +1,13 @@
+Package: tractor.track
+Version: 2.3.0
+Date: 2013-01-23
+Title: Compiled code for the TractoR package
+Author: Jon Clayden and Fani Deligianni
+Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
+Depends: R (>= 2.12.1), methods
+Imports: reportr, tractor.base, tractor.session, tractor.nt
+Description: The tractor.track package provides functions for performing tractography using diffusion MRI data
+Encoding: UTF-8
+LazyLoad: yes
+License: GPL-2
+URL: http://www.tractor-mri.org.uk

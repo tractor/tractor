@@ -75,7 +75,7 @@ runExperiment <- function ()
             currentSeed <- round(apply(currentData[,c("x","y","z")], 2, median))
         }
         else
-            currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
+            currentSeed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), currentSession, "diffusion", oldSpace="mni", reverseRegister=TRUE, pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
         
         currentPosteriors <- results$getTractPosteriors(i)
         
@@ -92,7 +92,7 @@ runExperiment <- function ()
         
         if (tracker == "tractor")
         {
-            require("tractor.native")
+            require("tractor.track")
             result <- trackWithSession(currentSession, bestSeed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlines=TRUE)
             streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
         }
@@ -103,9 +103,9 @@ runExperiment <- function ()
         if (options$registerToReference)
         {
             if (is.null(refSession))
-                transform <- newAffineTransform3DByInversion(getMniTransformForSession(currentSession))
+                transform <- currentSession$getTransformation("diffusion", "mni")
             else
-                transform <- newAffineTransform3DFromFlirt(currentSession$getImageFileNameByType("maskedb0"), refSession$getImageFileNameByType("maskedb0"))
+                transform <- registerImages(currentSession$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
 
             transformedMedianLine <- newStreamlineTractByTransformation(medianLine, transform)
         }

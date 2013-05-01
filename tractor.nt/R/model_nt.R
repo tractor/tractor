@@ -9,7 +9,7 @@ streamlineTractWithOptions <- function (options, session, seed, refSession = NUL
 {
     if (tracker == "tractor")
     {
-        require("tractor.native")
+        require("tractor.track")
         result <- trackWithSession(session, seed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlines=TRUE)
         streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
     }
@@ -20,9 +20,9 @@ streamlineTractWithOptions <- function (options, session, seed, refSession = NUL
     if (options$registerToReference)
     {
         if (is.null(refSession))
-            transform <- newAffineTransform3DByInversion(getMniTransformForSession(session))
+            transform <- session$getTransformation("diffusion", "mni")
         else
-            transform <- newAffineTransform3DFromFlirt(session$getImageFileNameByType("maskedb0"), refSession$getImageFileNameByType("maskedb0"))
+            transform <- registerImages(session$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
         
         streamline <- newStreamlineTractByTransformation(streamline, transform)
     }
@@ -108,9 +108,9 @@ calculateSplinesForStreamlineSetTract <- function (tract, testSession, refSessio
         if (options$registerToReference)
         {
             if (is.null(refSession))
-                transform <- newAffineTransform3DByInversion(getMniTransformForSession(testSession))
+                transform <- testSession$getTransformation("diffusion", "mni")
             else
-                transform <- newAffineTransform3DFromFlirt(testSession$getImageFileNameByType("maskedb0"), refSession$getImageFileNameByType("maskedb0"))
+                transform <- registerImages(testSession$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
 
             streamline <- newStreamlineTractByTransformation(streamline, transform)
         }

@@ -1,9 +1,6 @@
 #! /bin/bash
 
-status=1
 tmpdir=${TMPDIR:-/tmp}
-log_file="$tmpdir/tractor_Rinstall$$_log"
-trap 'rm -f $log_file; exit $status' 0 1 2 15
 
 export R_INSTALL_VANILLA=1
 export R_COMPILE_PKGS=1
@@ -25,15 +22,13 @@ usage()
 while [ $# -gt 0 ]; do
     name=`basename "$1"`
     echo -n "Installing R package \"${name}\"... "
-    R CMD INSTALL --clean "${1}" > $log_file 2>&1
+    R CMD INSTALL --clean "${1}" >>install.log 2>&1
     if [ $? -eq 0 ]; then
         echo "OK"
     else
-        echo "failed"
-        cat $log_file
-        exit
+        echo "FAIL"
+        cat install.log
+        exit 1
     fi
     shift
 done
-
-status=0

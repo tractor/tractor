@@ -46,6 +46,8 @@ setMethod("show", "SerialisableObject", function (object)
         summaryList <- object$summarise()
         if (is.list(summaryList) && all(c("labels","values") %in% names(summaryList)))
             printLabelledValues(summaryList$labels, summaryList$values)
+        else if (!is.null(names(summaryList)))
+            printLabelledValues(names(summaryList), as.character(summaryList))
     }
     else
         cat(paste("An object of class \"", class(object)[1], "\"\n", sep=""))

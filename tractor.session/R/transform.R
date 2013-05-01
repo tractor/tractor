@@ -1,138 +1,161 @@
-applyTransformation <- function (x, m)
+readEddyCorrectTransformsForSession <- function (session, index = NULL)
 {
-    if (is.null(x))
-        return (m)
-    else if (is.matrix(x))
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
+    
+    require("tractor.reg")
+    
+    logFile <- file.path(session$getDirectory("fdt"), "data.ecclog")
+    if (!file.exists(logFile))
+        report(OL$Error, "Eddy current correction log not found")
+    logLines <- readLines(logFile)
+    logLines <- subset(logLines, logLines %~% "^[0-9\\-\\. ]+$")
+    
+    connection <- textConnection(logLines)
+    matrices <- as.matrix(read.table(connection))
+    close(connection)
+    
+    if (is.null(index))
+        index <- seq_len(nrow(matrices) / 4)
+    
+    matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
+    
+    image <- session$getImageByType("refb0", "diffusion", metadataOnly=TRUE)
+    transform <- Transformation$new(sourceImage=image, targetImage=image, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="flirt")
+    
+    invisible (transform)
+}
+
+.resolveSpace <- function (space, session)
+{
+    spacePieces <- unlist(strsplit(space, ":", fixed=TRUE))
+    if (length(spacePieces) == 2)
     {
-        x <- cbind(x,1)
-        len <- ncol(x)
-        result <- m %*% t(x)
-        return (t(result[1:(len-1),]))
+        if (spacePieces[1] != session$getDirectory())
+            report(OL$Error, "The current space does not correspond to the specified session")
+        else
+            return (spacePieces[2])
     }
-    else if (is.vector(x))
+    else
+        return (spacePieces[1])
+}
+
+.constructSpace <- function (space, session)
+{
+    if (tolower(space) == "mni")
+        return ("mni")
+    else
+        return (paste(session$getDirectory(), space, sep=":"))
+}
+
+transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, preferAffine = FALSE, reverseRegister = FALSE, finalInterpolation = 1, ...)
+{
+    require("tractor.reg")
+    
+    guessSpace <- function ()
     {
-        x <- c(x,1)
-        len <- length(x)
-        result <- m %*% x
-        return (drop(result[1:(len-1),]))
-    }
-}
-
-transformWithTranslation <- function (x, ...)
-{
-    translation <- c(..., 1)
-    len <- length(translation)
-    
-    m <- diag(len)
-    m[,len] <- translation
-    
-    return (applyTransformation(x, m))
-}
-
-transformWithScaling <- function (x, ...)
-{
-    scaling <- c(..., 1)
-    m <- diag(scaling)
-    
-    return (applyTransformation(x, m))
-}
-
-transformRVoxelToFslVoxel <- function (x)
-{
-    if (is.null(x))
-        len <- 3
-    else if (is.matrix(x))
-        len <- ncol(x)
-    else if (is.vector(x))
-        len <- length(x)
-    return (transformWithTranslation(x, rep(-1,len)))
-}
-
-transformFslVoxelToRVoxel <- function (x)
-{
-    if (is.null(x))
-        len <- 3
-    else if (is.matrix(x))
-        len <- ncol(x)
-    else if (is.vector(x))
-        len <- length(x)
-    return (transformWithTranslation(x, rep(1,len)))
-}
-
-transformFslVoxelToWorld <- function (x, metadata, useOrigin = FALSE)
-{
-    if (useOrigin)
-    {
-        if (is.null(x))
-        {
-            m1 <- transformFslVoxelToRVoxel(NULL)
-            m2 <- transformWithTranslation(NULL, -metadata$getOrigin())
-            m3 <- transformWithScaling(NULL, metadata$getVoxelDimensions())
-            return (m3 %*% m2 %*% m1)
-        }
+        if (image$isInternal())
+            return (NULL)
+        else if (dirname(image$getSource()) == .StandardBrainPath)
+            return ("mni")
         else
         {
-            rVoxel <- transformFslVoxelToRVoxel(x)
-            zeroOrigin <- transformWithTranslation(rVoxel, -metadata$getOrigin())
-            worldLoc <- transformWithScaling(zeroOrigin, metadata$getVoxelDimensions())
-            return (worldLoc)
+            for (space in setdiff(names(.RegistrationTargets),"mni"))
+            {
+                if (dirname(image$getSource()) == session$getDirectory(space))
+                    return (space)
+            }
         }
+        
+        return (NULL)
     }
+    
+    if (is.null(oldSpace))
+        oldSpace <- guessSpace()
+    
+    if (is.null(oldSpace) || is.null(newSpace))
+        report(OL$Error, "Source and target spaces are not both defined")
+    
+    if (reverseRegister)
+        transform <- session$getTransformation(.resolveSpace(newSpace,session), .resolveSpace(oldSpace,session), ...)
     else
-        return (transformWithScaling(x, abs(metadata$getVoxelDimensions())))
+        transform <- session$getTransformation(.resolveSpace(oldSpace,session), .resolveSpace(newSpace,session), ...)
+    
+    newImage <- transformImage(transform, image, preferAffine=preferAffine, reverse=reverseRegister, finalInterpolation=finalInterpolation)
+    
+    return (newImage)
 }
 
-transformWorldToFslVoxel <- function (x, metadata, useOrigin = FALSE)
+transformPointsToSpace <- function (points, session, newSpace, oldSpace = NULL, pointType = NULL, outputVoxel = FALSE, preferAffine = FALSE, reverseRegister = FALSE, nearest = FALSE, ...)
 {
-    if (useOrigin)
+    require("tractor.reg")
+    
+    if (is.null(pointType))
     {
-        if (is.null(x))
-        {
-            m1 <- transformWithScaling(NULL, 1/metadata$getVoxelDimensions())
-            m2 <- transformWithTranslation(NULL, metadata$getOrigin())
-            m3 <- transformRVoxelToFslVoxel(NULL)
-            return (m3 %*% m2 %*% m1)
-        }
+        pointType <- attr(points, "pointType")
+        if (is.null(pointType))
+            report(OL$Error, "Point type is not stored with the points and must be specified")
+    }
+    
+    pointType <- match.arg(tolower(pointType), c("fsl","r","vox","mm"))
+    if (pointType == "fsl")
+        points <- points + 1
+    
+    if (is.null(oldSpace))
+        oldSpace <- attr(points, "space")
+    
+    if (is.null(oldSpace) || is.null(newSpace))
+        report(OL$Error, "Source and target spaces are not both defined")
+    
+    if (reverseRegister)
+        transform <- session$getTransformation(.resolveSpace(newSpace,session), .resolveSpace(oldSpace,session), ...)
+    else
+        transform <- session$getTransformation(.resolveSpace(oldSpace,session), .resolveSpace(newSpace,session), ...)
+    
+    if (outputVoxel && pointType == "mm")
+    {
+        if (reverseRegister)
+            points <- changePointType(points, transform$getTargetImage(), "r", "mm")
         else
-        {
-            zeroOrigin <- transformWithScaling(x, 1/metadata$getVoxelDimensions())
-            rVoxel <- transformWithTranslation(zeroOrigin, metadata$getOrigin())
-            fslVoxel <- transformRVoxelToFslVoxel(rVoxel)
-            return (fslVoxel)
-        }
+            points <- changePointType(points, transform$getSourceImage(), "r", "mm")
+        pointType <- "r"
     }
-    else
-        return (transformWithScaling(x, abs(1/metadata$getVoxelDimensions())))
+    
+    newPoints <- transformPoints(transform, points, voxel=(pointType!="mm"), preferAffine=preferAffine, reverse=reverseRegister, nearest=nearest)
+    
+    attr(newPoints, "space") <- .constructSpace(newSpace, session)
+    attr(newPoints, "pointType") <- ifelse(pointType=="mm", "mm", "r")
+    
+    return (newPoints)
 }
 
-transformRVoxelToWorld <- function (x, metadata, useOrigin = FALSE)
+changePointType <- function (points, image, newPointType, oldPointType = NULL)
 {
-    if (is.null(x))
+    require("tractor.reg")
+    
+    if (is.null(oldPointType))
     {
-        m1 <- transformRVoxelToFslVoxel(NULL)
-        m2 <- transformFslVoxelToWorld(NULL, metadata, useOrigin=useOrigin)
-        return (m2 %*% m1)
+        oldPointType <- attr(points, "pointType")
+        if (is.null(oldPointType))
+            report(OL$Error, "Point type is not stored with the points and must be specified")
     }
+    
+    # NB: point types "r" and "vox" are equivalent
+    oldPointType <- match.arg(tolower(oldPointType), c("fsl","r","vox","mm"))
+    newPointType <- match.arg(tolower(newPointType), c("fsl","r","vox","mm"))
+    
+    offsets <- list(fsl=1, r=0, vox=0)
+    
+    if (oldPointType == newPointType)
+        newPoints <- points
+    else if (oldPointType == "mm" && newPointType != "mm")
+        newPoints <- transformWorldToVoxel(points, image) - offsets[[newPointType]]
+    else if (oldPointType != "mm" && newPointType == "mm")
+        newPoints <- transformVoxelToWorld(points + offsets[[oldPointType]], image)
     else
-    {
-        fslVoxel <- transformRVoxelToFslVoxel(x)
-        worldLoc <- transformFslVoxelToWorld(fslVoxel, metadata, useOrigin=useOrigin)
-        return (worldLoc)
-    }
-}
-
-transformWorldToRVoxel <- function (x, metadata, useOrigin = FALSE)
-{
-    if (is.null(x))
-    {
-        m1 <- transformWorldToFslVoxel(NULL, metadata, useOrigin=useOrigin)
-        m2 <- transformFslVoxelToRVoxel(NULL)
-        return (m2 %*% m1)
-    }
-    else
-    {
-        fslVoxel <- transformWorldToFslVoxel(x, metadata, useOrigin=useOrigin)
-        rVoxel <- transformFslVoxelToRVoxel(fslVoxel)
-        return (rVoxel)
-    }
+        newPoints <- points + offsets[[oldPointType]] - offsets[[newPointType]]
+    
+    attr(newPoints, "pointType") <- ifelse(newPointType=="vox", "r", newPointType)
+    
+    return (newPoints)
 }

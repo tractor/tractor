@@ -1,0 +1,21 @@
+citHeader("To cite oro.nifti in publications use:")
+
+citEntry(entry = "Article",
+  title        = "Working with the {DICOM} and {NIfTI} Data Standards in {R}",
+  author       = personList(as.person("Brandon Whitcher"),
+                   as.person("Volker J. Schmid"),
+                   as.person("Andrew Thornton")),
+  journal      = "Journal of Statistical Software",
+  year         = "2011",
+  volume       = "44",
+  number       = "6",
+  pages        = "1--28",
+  url          = "http://www.jstatsoft.org/v44/i06/",
+
+  textVersion  =
+  paste("Brandon Whitcher, Volker J. Schmid, Andrew Thornton (2011).",
+        "Working with the DICOM and NIfTI Data Standards in R.",
+        "Journal of Statistical Software, 44(6), 1-28.",
+        "URL http://www.jstatsoft.org/v44/i06/.")
+)
+

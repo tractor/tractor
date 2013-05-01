@@ -6,7 +6,7 @@ Author: Jon Clayden
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
 Depends: R (>= 2.12.1), methods, splines
 Imports: reportr, tractor.base, tractor.session
-Suggests: tractor.native
+Suggests: tractor.track, tractor.reg
 Description: The tractor.nt package provides a reference implementation for white matter segmentation with neighbourhood tractography (NT). Functions for performing both heuristic and model-based NT are included.
 Encoding: UTF-8
 LazyLoad: yes

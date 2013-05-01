@@ -1,7 +1,8 @@
 #@args session directory, centre point
 #@desc Create an Analyze/NIfTI/MGH volume containing a cuboidal region of interest with fixed voxel width in all dimensions. A session directory must be specified in addition to the ROI centre point so that the script can identify the correct diffusion space to use. The output file name is set with the ROIName option.
 
-suppressPackageStartupMessages(require(tractor.session))
+library(tractor.reg)
+library(tractor.session)
 
 runExperiment <- function ()
 {
@@ -20,7 +21,11 @@ runExperiment <- function ()
     roiName <- getConfigVariable("ROIName", "roi")
     
     t2Image <- session$getImageByType("maskedb0")
-    centre <- getNativeSpacePointForSession(session, centre, pointType, isStandardPoint)
+    
+    if (isStandardPoint)
+        centre <- transformPointsToSpace(centre, session, "diffusion", oldSpace="mni", reverseRegister=TRUE, pointType=pointType, outputVoxel=TRUE, nearest=TRUE)
+    else
+        centre <- round(changePointType(centre, t2Image, "r", pointType))
     
     roiImage <- newMriImageAsShapeOverlay("block", t2Image, centre=round(centre), width=width)
     writeImageFile(roiImage, roiName)

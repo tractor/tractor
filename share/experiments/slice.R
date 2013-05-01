@@ -29,12 +29,7 @@ runExperiment <- function ()
     point <- round(c(x,y,z))
     nas <- is.na(point)
     point[nas] <- 1
-    
-    if (pointType == "fsl")
-        point <- transformFslVoxelToRVoxel(point)
-    else if (pointType == "mm")
-        point <- transformWorldToRVoxel(point, image$getMetadata(), useOrigin=TRUE)
-    
+    point <- changePointType(point, image, "r", pointType)
     point[nas] <- NA
     
     createSliceGraphic(image, point[1], point[2], point[3], device="png", file=outputFile, windowLimits=windowLimits)

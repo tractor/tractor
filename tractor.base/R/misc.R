@@ -130,7 +130,7 @@ promote <- function (x, byrow = FALSE)
 {
     if (is.matrix(x))
         return (x)
-    else if (is.vector(x))
+    else if (is.numeric(x))
     {
         m <- as.matrix(x)
         if (byrow)

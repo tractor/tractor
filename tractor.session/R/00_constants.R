@@ -9,7 +9,7 @@
     isSigned=c(  TRUE,       FALSE,      TRUE,       TRUE,       TRUE,       TRUE,       TRUE)
 )
 
-.DefaultSessionDirectories <- list(diffusion="diffusion", camino="camino", fdt="fdt", bedpost="fdt.bedpostX", probtrack="fdt.track")
+.DefaultSessionDirectories <- list(diffusion="diffusion", camino="camino", fdt="fdt", bedpost="fdt.bedpostX", probtrack="fdt.track", transforms="transforms")
 
 # All file names which do not contain a '.' are assumed to indicate images by
 # standardiseSessionHierarchy(), and possibly other functions
@@ -20,3 +20,5 @@
 )
 
 .FdtDiffusionMap <- list(rawdata="basic", data="data", refb0="nodif", mask="nodif_brain_mask", maskedb0="nodif_brain", s0="dti_S0", fa="dti_FA", md="dti_MD", eigenvalue="dti_L%", eigenvector="dti_V%", axialdiff="dti_L1", radialdiff="dti_Lrad")
+
+.RegistrationTargets <- list(mni="brain", diffusion="maskedb0")

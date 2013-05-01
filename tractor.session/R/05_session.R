@@ -46,7 +46,13 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         return (readImageFile(fileName, ...))
     },
     
-    getImageFileNameByType = function (type, place = NULL, index = 1) { return (getImageFileNameForSession(.self, type, place, index)) },
+    getImageFileNameByType = function (type, place = NULL, index = 1)
+    {
+        if (!is.null(place) && tolower(place) == "mni")
+            return (getFileNameForStandardImage(type))
+        else
+            return (getImageFileNameForSession(.self, type, place, index))
+    },
     
     getMap = function (place) { return (mapCache.[[place]]) },
     
@@ -59,6 +65,34 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     },
     
     getObjectFileName = function (object) { return (file.path(getObjectDirectory(), ensureFileSuffix(object,"Rdata"))) },
+    
+    getRegistrationTarget = function (space, ...)  { return (.self$getImageByType(.RegistrationTargets[[space]], space, ...)) },
+    
+    getRegistrationTargetFileName = function (space) { return (.self$getImageFileNameByType(.RegistrationTargets[[space]], space)) },
+    
+    getTransformation = function (sourceSpace, targetSpace, ...)
+    {
+        require("tractor.reg")
+        
+        sourceImageFile <- .self$getRegistrationTargetFileName(sourceSpace)
+        targetImageFile <- .self$getRegistrationTargetFileName(targetSpace)
+        transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(sourceSpace,"2",targetSpace,sep=""),"Rdata"))
+        
+        targetMask <- NULL
+        if (sourceSpace == "diffusion" && targetSpace == "mni" && !("targetMask" %in% names(list(...))))
+            targetMask <- newMriImageWithSimpleFunction(getStandardImage("white"), function(x) x/10 + 1)
+        
+        result <- registerImages(sourceImageFile, targetImageFile, targetMask=targetMask, estimateOnly=TRUE, cache="ignore", file=transformFile, ...)
+        
+        reverseTransformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(targetSpace,"2",sourceSpace,sep=""),"Rdata"))
+        if (!file.exists(reverseTransformFile))
+        {
+            inverseTransform <- invertTransformation(result$transform, quiet=TRUE)
+            inverseTransform$serialise(reverseTransformFile)
+        }
+        
+        return (result$transform)
+    },
     
     updateCaches = function ()
     {

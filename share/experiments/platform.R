@@ -1,4 +1,5 @@
 #@desc List information about the platform upon which TractoR is being run, including the operating system and versions of R, FSL and ImageMagick installed.
+#@nohistory TRUE
 
 runExperiment <- function ()
 {

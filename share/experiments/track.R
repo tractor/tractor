@@ -42,7 +42,10 @@ runExperiment <- function ()
     if (storeStreamlines && tracker == "fsl")
         report(OL$Error, "Streamlines may only be stored when using the internal tracker")
     
-    seed <- getNativeSpacePointForSession(session, seed, pointType, isStandardSeed)
+    if (isStandardSeed)
+        seed <- transformPointsToSpace(seed, session, "diffusion", oldSpace="mni", reverseRegister=TRUE, pointType=pointType, outputVoxel=TRUE, nearest=TRUE)
+    else
+        seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
     
     if (useGradientAscent)
     {
@@ -77,7 +80,7 @@ runExperiment <- function ()
         result <- runProbtrackWithSession(session, seed, mode="simple", requireImage=TRUE, nSamples=nSamples, force=force)
     else
     {
-        require("tractor.native")
+        require("tractor.track")
         result <- trackWithSession(session, seed, requireImage=TRUE, nSamples=nSamples, requireStreamlines=storeStreamlines)
         if (storeStreamlines)
             result$streamlines$serialise(paste(tractName,"streamlines",sep="_"))

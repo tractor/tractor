@@ -155,8 +155,6 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             .self$source <- newSource
     },
     
-    stripData = function () { .self$data <- NULL },
-    
     summarise = function ()
     {
         spatialUnit <- voxelDimUnits["spatial"]
@@ -198,8 +196,16 @@ setAs("MriImage", "nifti", function (from) {
         options(niftiAuditTrail=FALSE)
     loadNamespace("oro.nifti")
     
-    datatype <- chooseDataTypeForImage(from, "Nifti")
-    data <- as(from$getData(), "array")
+    if (from$isEmpty())
+    {
+        datatype <- list(code=2, type="integer", size=1, isSigned=FALSE)
+        data <- array(0L, dim=from$getDimensions())
+    }
+    else
+    {
+        datatype <- chooseDataTypeForImage(from, "Nifti")
+        data <- as(from$getData(), "array")
+    }
     
     # We default to 10 (mm and s)
     unitName <- from$getVoxelUnits()
@@ -236,7 +242,7 @@ setAs("nifti", "MriImage", function (from) {
     
     nDims <- from@dim_[1]
     voxelDims <- from@pixdim[seq_len(nDims)+1]
-    voxelDims3D <- c(voxelDims, rep(0,max(0,3-nDims))) * c(-1,1,1)
+    voxelDims3D <- c(voxelDims, rep(0,max(0,3-nDims)))[1:3] * c(-1,1,1)
     
     spatialUnitCode <- packBits(intToBits(from@xyzt_units) & intToBits(7), "integer")
     temporalUnitCode <- packBits(intToBits(from@xyzt_units) & intToBits(24), "integer")

@@ -1,0 +1,1180 @@
+
+R version 2.15.2 RC (2012-10-18 r60960) -- "Trick or Treat"
+Copyright (C) 2012 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "oro.nifti"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> library('oro.nifti')
+Loading required package: bitops
+
+oro.nifti: Rigorous - NIfTI+ANALYZE+AFNI Input / Output (version = 0.3.8)
+
+> 
+> assign(".oldSearch", search(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("afni-class")
+> ### * afni-class
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: afni-class
+> ### Title: Class "afni"
+> ### Aliases: afni-class show,afni-method
+> ### Keywords: classes
+> 
+> ### ** Examples
+> 
+> showClass("afni")
+Class "afni" [package "oro.nifti"]
+
+Slots:
+                                                        
+Name:                     .Data             DATASET_RANK
+Class:                    array                  integer
+                                                        
+Name:        DATASET_DIMENSIONS               TYPESTRING
+Class:                  integer                character
+                                                        
+Name:                SCENE_DATA          ORIENT_SPECIFIC
+Class:                  integer                  integer
+                                                        
+Name:                    ORIGIN                    DELTA
+Class:                  numeric                  numeric
+                                                        
+Name:                TAXIS_NUMS             TAXIS_FLOATS
+Class:                  integer                  numeric
+                                                        
+Name:             TAXIS_OFFSETS            IDCODE_STRING
+Class:                  numeric                character
+                                                        
+Name:               IDCODE_DATE         BYTEORDER_STRING
+Class:                character                character
+                                                        
+Name:               BRICK_STATS              BRICK_TYPES
+Class:                  numeric                  integer
+                                                        
+Name:          BRICK_FLOAT_FACS               BRICK_LABS
+Class:                  numeric                character
+                                                        
+Name:             BRICK_STATAUX                 STAT_AUX
+Class:                  numeric                  numeric
+                                                        
+Name:              HISTORY_NOTE              NOTES_COUNT
+Class:                character                  integer
+                                                        
+Name:               NOTE_NUMBER          TAGALIGN_MATVEC
+Class:                character                  numeric
+                                                        
+Name:             VOLREG_MATVEC            VOLREG_ROTCOM
+Class:                    array                character
+                                                        
+Name:         VOLREG_CENTER_OLD       VOLREG_CENTER_BASE
+Class:                  numeric                  numeric
+                                                        
+Name:   VOLREG_ROTPARENT_IDCODE    VOLREG_ROTPARENT_NAME
+Class:                character                character
+                                                        
+Name:  VOLREG_GRIDPARENT_IDCODE   VOLREG_GRIDPARENT_NAME
+Class:                character                character
+                                                        
+Name:       VOLREG_INPUT_IDCODE        VOLREG_INPUT_NAME
+Class:                character                character
+                                                        
+Name:        VOLREG_BASE_IDCODE         VOLREG_BASE_NAME
+Class:                character                character
+                                                        
+Name:         VOLREG_ROTCOM_NUM       IDCODE_ANAT_PARENT
+Class:                  integer                character
+                                                        
+Name:                 TO3D_ZPAD       IDCODE_WARP_PARENT
+Class:                  integer                character
+                                                        
+Name:                 WARP_TYPE                WARP_DATA
+Class:                  integer                  numeric
+                                                        
+Name:                 MARKS_XYZ                MARKS_LAB
+Class:                  numeric                character
+                                                        
+Name:                MARKS_HELP              MARKS_FLAGS
+Class:                character                  integer
+                                                        
+Name:                TAGSET_NUM            TAGSET_FLOATS
+Class:                  integer                  numeric
+                                                        
+Name:             TAGSET_LABELS                  LABEL_1
+Class:                character                character
+                                                        
+Name:                   LABEL_2             DATASET_NAME
+Class:                character                character
+                                                        
+Name:          DATASET_KEYWORDS           BRICK_KEYWORDS
+Class:                character                character
+
+Extends: 
+Class "array", from data part
+Class "matrix", by class "array", distance 2, with explicit test and coerce
+Class "structure", by class "array", distance 2
+Class "vector", by class "array", distance 3, with explicit coerce
+Class "vector", by class "array", distance 5, with explicit test and coerce
+> 
+> 
+> 
+> cleanEx()
+> nameEx("anlz-class")
+> ### * anlz-class
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: anlz-class
+> ### Title: Class "anlz"
+> ### Aliases: anlz-class show,anlz-method
+> ### Keywords: classes
+> 
+> ### ** Examples
+> 
+> showClass("anlz")
+Class "anlz" [package "oro.nifti"]
+
+Slots:
+                                                                            
+Name:          .Data    sizeof_hdr     data_type       db_name       extents
+Class:         array       numeric     character     character       numeric
+                                                                            
+Name:  session_error       regular      hkey_un0          dim_     vox_units
+Class:       numeric     character     character        vector     character
+                                                                            
+Name:      cal_units       unused1      datatype        bitpix       dim_un0
+Class:     character       numeric       numeric       numeric       numeric
+                                                                            
+Name:         pixdim    vox_offset      funused1      funused2      funused3
+Class:        vector       numeric       numeric       numeric       numeric
+                                                                            
+Name:        cal_max       cal_min    compressed      verified         glmax
+Class:       numeric       numeric       numeric       numeric       numeric
+                                                                            
+Name:          glmin       descrip      aux_file        orient        origin
+Class:       numeric     character     character     character       numeric
+                                                                            
+Name:      generated       scannum    patient_id      exp_date      exp_time
+Class:     character     character     character     character     character
+                                                                            
+Name:       hist_un0         views    vols_added   start_field    field_skip
+Class:     character       numeric       numeric       numeric       numeric
+                                                              
+Name:           omax          omin          smax          smin
+Class:       numeric       numeric       numeric       numeric
+
+Extends: 
+Class "array", from data part
+Class "matrix", by class "array", distance 2, with explicit test and coerce
+Class "structure", by class "array", distance 2
+Class "vector", by class "array", distance 3, with explicit coerce
+Class "vector", by class "array", distance 5, with explicit test and coerce
+> 
+> 
+> 
+> cleanEx()
+> nameEx("anlz")
+> ### * anlz
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: anlz
+> ### Title: Constructor for Analyze
+> ### Aliases: anlz is.anlz
+> 
+> ### ** Examples
+> 
+> (aim <- anlz()) # default
+ANALYZE 7.5 format
+  Type            : anlz
+  Data Type       : 2 (UNSIGNED_CHAR)
+  Bits per Pixel  : 8
+  Orient          : 0 (transverse unflipped)
+  Dimension       : 1 x 1 x 1 x 1
+  Pixel Dimension : 1 x 1 x 1 x 1
+  Voxel Units     : mm
+> 
+> 
+> 
+> cleanEx()
+> nameEx("audit_trail-methods")
+> ### * audit_trail-methods
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: audit.trail-methods
+> ### Title: Extract or Replace NIfTI Audit Trail
+> ### Aliases: audit.trail-methods audit.trail,nifti-method audit.trail
+> ###   audit.trail<-,nifti-method audit.trail<-
+> ### Keywords: methods
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D ## Sternberg Item Recognition Paradigm (SIRP) fMRI Study + XML
+> ##D ## Extension Data
+> ##D URL <- "http://nifti.nimh.nih.gov/nifti-1/data/sirp_fmri_study_ver4.tar.gz"
+> ##D download.file(URL, dest="sirp.tar.gz", quiet=TRUE)
+> ##D fnames <- system("tar zxvf sirp.tar.gz", intern=TRUE)
+> ##D sirp <- readNIfTI(fnames[1]) # newsirp_final_XML.nii
+> ##D (sirp.xml <- xmlTreeParse(sirp@"extensions"[[1]]@"edata", asText=TRUE))
+> ## End(Not run)
+> 
+> 
+> 
+> cleanEx()
+> nameEx("audit_trail")
+> ### * audit_trail
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: Audit Trails
+> ### Title: Facilitate the Creation and Modification of Audit Trails
+> ### Aliases: oro.nifti.info enableAuditTrail newAuditTrail
+> ###   niftiExtensionToAuditTrail niftiAuditTrailToExtension
+> ###   niftiAuditTrailSystemNode niftiAuditTrailSystemNodeEvent
+> ###   niftiAuditTrailCreated niftiAuditTrailEvent getLastCallWithName
+> 
+> ### ** Examples
+> 
+> ## A good example of the use of these functions is shown by this
+> ## wrapper function which takes a function fun(nim, ...) returning
+> ## lists of arrays which are nifti-ized using as(...)
+> options("niftiAuditTrail"=TRUE)
+> enableAuditTrail()
+Loading required package: XML
+> 
+> wrapper <- function(functionToWrap, nameOfCallingFunction, nim, ...) {
++   if (!is(nim, "nifti")) 
++     nim <- as(nim, "nifti")
++   
++   if (is(nim, "niftiAuditTrail")) {
++     ## This will force as(...) to set the call which created the
++     ## results to the calling function's call rather than
++     ## as(result, nifti) as it would otherwise do
++     nim@trail <- niftiAuditTrailEvent(nim@trail, "processing",
++                                       nameOfCallingFunction)
++   }
++   
++   result <- functionToWrap(nim, ...)
++   as(result, "nifti") <- nim
++   return(result)
++ }
+> 
+> ## An example of how wrapper is used follows:
+> functionToWrap <- function(ignored, x, y) {
++   return (array(1, dim=c(x,y)))
++ }
+> 
+> ## The niftiized form
+> niftiizedForm <- function(nim,...) {
++   return(wrapper(functionToWrap, "niftiizedForm", nim, ...))
++ }
+> 
+> ## Not run: 
+> ##D ## compare the trails
+> ##D if (isTRUE(getOption("niftiAuditTrail"))) {
+> ##D   print((as.nifti(functionToWrap(nifti(), 4, 4), nifti()))@trail)
+> ##D   print(niftiizedForm(nifti(), 4, 4)@trail)
+> ##D }
+> ## End(Not run)
+> 
+> 
+> 
+> cleanEx()
+
+detaching ‘package:XML’
+
+> nameEx("aux_file-methods")
+> ### * aux_file-methods
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: aux.file-methods
+> ### Title: Extract or Replace NIfTI/Analyze Auxiliary File
+> ### Aliases: aux.file-methods aux.file,anlz-method aux.file,nifti-method
+> ###   aux.file aux.file<-,nifti-method aux.file<-,anlz-method aux.file<-
+> ### Keywords: methods
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D url <- "http://nifti.nimh.nih.gov/nifti-1/data/avg152T1_RL_nifti.nii.gz"
+> ##D urlfile <- file.path(system.file("nifti", package="oro.nifti"),
+> ##D                      "mniRL.nii.gz")
+> ##D download.file(url, urlfile, quiet=TRUE)
+> ## End(Not run)
+> options("niftiAuditTrail"=FALSE)
+> 
+> urlfile <- file.path(system.file("nifti", package="oro.nifti"),
++                      "mniRL.nii.gz")
+> mniRL <- readNIfTI(urlfile)
+> aux.file(mniRL)
+[1] "none                   "
+> aux.file(mniRL) <- "avg152T1_RL_nifti"
+> aux.file(mniRL)
+[1] "avg152T1_RL_nifti"
+> 
+> 
+> 
+> cleanEx()
+> nameEx("calmin-methods")
+> ### * calmin-methods
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: cal.min-methods
+> ### Title: Extract or Replace NIfTI/Analyze Min or Max Values
+> ### Aliases: cal.min-methods cal.min,anlz-method cal.min,nifti-method
+> ###   cal.min<-,anlz-method cal.min<-,nifti-method cal.min cal.min<-
+> ###   cal.max-methods cal.max,anlz-method cal.max,nifti-method
+> ###   cal.max<-,anlz-method cal.max<-,nifti-method cal.max cal.max<-
+> ### Keywords: methods
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D url <- "http://nifti.nimh.nih.gov/nifti-1/data/avg152T1_LR_nifti.nii.gz"
+> ##D urlfile <- file.path(system.file("nifti", package="oro.nifti"),
+> ##D                      "mniLR.nii.gz")
+> ##D download.file(url, urlfile, quiet=TRUE)
+> ## End(Not run)
+> urlfile <- file.path(system.file("nifti", package="oro.nifti"),
++                      "mniLR.nii.gz")
+> mniLR <- readNIfTI(urlfile)
+> cal.min(mniLR)
+[1] 0
+> cal.max(mniLR)
+[1] 255
+> 
+> 
+> 
+> cleanEx()
+> nameEx("convert_afni")
+> ### * convert_afni
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: convert.scene
+> ### Title: Convert AFNI data codes
+> ### Aliases: convert.scene
+> ### Keywords: misc
+> 
+> ### ** Examples
+> 
+> ## 4 = CT for anatomic data
+> convert.scene(4, "3DIM_HEAD_ANAT")
+[1] "CT"
+> 
+> 
+> 
+> cleanEx()
+> nameEx("convert_anlz")
+> ### * convert_anlz
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: Convert ANALYZE Codes
+> ### Title: Convert NIfTI Codes
+> ### Aliases: convert.bitpix.anlz convert.datatype.anlz convert.orient.anlz
+> 
+> ### ** Examples
+> 
+> ##  4 = SIGNED_SHORT
+> convert.datatype.anlz(4)
+[1] "SIGNED_SHORT"
+> ## 16 = FLOAT
+> convert.datatype.anlz(16)
+[1] "FLOAT"
+> ##  2 = "saggital unflipped"
+> convert.orient.anlz(2)
+[1] "sagittal unflipped"
+> ##  4 = "coronal flipped"
+> convert.orient.anlz(4)
+[1] "coronal flipped"
+> 
+> 
+> 
+> cleanEx()
+> nameEx("convert_nifti")
+> ### * convert_nifti
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: Convert NIfTI Codes
+> ### Title: Convert NIfTI Codes
+> ### Aliases: convert.datatype convert.bitpix convert.intent convert.form
+> ###   convert.units convert.slice
+> 
+> ### ** Examples
+> 
+> ## No arguments produces a list structure
+> ## Use the abbreviation to obtain the code
+> convert.datatype()$INT16
+[1] 4
+> ## Use the code directly to obtain the abbreviation
+> convert.datatype(4)
+[1] "INT16"
+> ## No arguments produces a list structure
+> ## Use the abbreviation to obtain the code
+> convert.bitpix()$INT16
+[1] 16
+> ## No arguments produces a list structure
+> ## Use the abbreviation to obtain the code
+> convert.intent()$Estimate
+[1] 1001
+> ## Use the code directly to obtain the abbreviation
+> convert.intent(1001)
+[1] "Estimate"
+> ## 4 = MNI_152
+> convert.form(4)
+[1] "MNI_152"
+> ## 2 = mm
+> convert.units(2)
+[1] "mm"
+> ## 8 = sec
+> convert.units(8)
+[1] "sec"
+> ## 0 = Unknown
+> convert.slice(0)
+[1] "Unknown"
+> 
+> 
+> 
+> cleanEx()
+> nameEx("descrip-methods")
+> ### * descrip-methods
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: descrip-methods
+> ### Title: Extract or Replace NIfTI/Analyze Description
+> ### Aliases: descrip-methods descrip,anlz-method descrip,nifti-method
+> ###   descrip<-,anlz-method descrip<-,nifti-method descrip descrip<-
+> ### Keywords: methods
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D url <- "http://nifti.nimh.nih.gov/nifti-1/data/avg152T1_LR_nifti.nii.gz"
+> ##D urlfile <- file.path(system.file("nifti", package="oro.nifti"),
+> ##D                      "mniLR.nii.gz")
+> ##D download.file(url, urlfile, quiet=TRUE)
+> ## End(Not run)
+> urlfile <- file.path(system.file("nifti", package="oro.nifti"),
++                      "mniLR.nii.gz")
+> mniLR <- readNIfTI(urlfile)
+> descrip(mniLR)
+[1] "FSL3.2beta"
+> descrip(mniLR) <- paste(descrip(mniLR), version$version.string, sep="; ")
+> descrip(mniLR)
+[1] "FSL3.2beta; R version 2.15.2 RC (2012-10-18 r60960)"
+> 
+> 
+> 
+> cleanEx()
+> nameEx("hotmetal")
+> ### * hotmetal
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: hotmetal
+> ### Title: Hot Metal Color Table
+> ### Aliases: hotmetal
+> ### Keywords: aplot
+> 
+> ### ** Examples
+> 
+> hotmetal(10) 
+ [1] "#010000" "#4C0000" "#960000" "#E00000" "#FF2C00" "#FF7600" "#FFC100"
+ [8] "#FFFF12" "#FFFF81" "#FFFFF1"
+> image(outer(1:20,1:20,"+"), col=hotmetal(75), main="hotmetal")
+> 
+> 
+> 
+> cleanEx()
+> nameEx("nifti-class")
+> ### * nifti-class
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: nifti-class
+> ### Title: Class "nifti"
+> ### Aliases: nifti-class show,nifti-method
+> ### Keywords: classes
+> 
+> ### ** Examples
+> 
+> showClass("nifti")
+Class "nifti" [package "oro.nifti"]
+
+Slots:
+                                                                  
+Name:           .Data     sizeof_hdr      data_type        db_name
+Class:          array        numeric      character      character
+                                                                  
+Name:         extents  session_error        regular       dim_info
+Class:        numeric        numeric      character      character
+                                                                  
+Name:            dim_      intent_p1      intent_p2      intent_p3
+Class:         vector        numeric        numeric        numeric
+                                                                  
+Name:     intent_code       datatype         bitpix    slice_start
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:          pixdim     vox_offset      scl_slope      scl_inter
+Class:         vector        numeric        numeric        numeric
+                                                                  
+Name:       slice_end     slice_code     xyzt_units        cal_max
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:         cal_min slice_duration        toffset          glmax
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:           glmin        descrip       aux_file     qform_code
+Class:        numeric      character      character        numeric
+                                                                  
+Name:      sform_code      quatern_b      quatern_c      quatern_d
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:       qoffset_x      qoffset_y      qoffset_z         srow_x
+Class:        numeric        numeric        numeric         vector
+                                                                  
+Name:          srow_y         srow_z    intent_name          magic
+Class:         vector         vector      character      character
+                                    
+Name:        extender     reoriented
+Class:         vector        logical
+
+Extends: 
+Class "array", from data part
+Class "matrix", by class "array", distance 2, with explicit test and coerce
+Class "structure", by class "array", distance 2
+Class "vector", by class "array", distance 3, with explicit coerce
+Class "vector", by class "array", distance 5, with explicit test and coerce
+
+Known Subclasses: 
+Class "niftiExtension", directly
+Class "niftiAuditTrail", by class "niftiExtension", distance 2
+> 
+> 
+> 
+> cleanEx()
+> nameEx("nifti")
+> ### * nifti
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: nifti
+> ### Title: Constructor for NIfTI
+> ### Aliases: nifti is.nifti
+> 
+> ### ** Examples
+> 
+> options("niftiAuditTrail"=FALSE)
+> 
+> nim <- nifti() # default
+> nim
+NIfTI-1 format
+  Type            : nifti
+  Data Type       : 2 (UINT8)
+  Bits per Pixel  : 8
+  Slice Code      : 0 (Unknown)
+  Intent Code     : 0 (None)
+  Qform Code      : 0 (Unknown)
+  Sform Code      : 0 (Unknown)
+  Dimension       : 1 x 1 x 1 x 1
+  Pixel Dimension : 1 x 1 x 1 x 1
+  Voxel Units     : Unknown
+  Time Units      : Unknown
+> nim <- nifti(datatype=4) # 2-byte integers
+> nim
+NIfTI-1 format
+  Type            : nifti
+  Data Type       : 4 (INT16)
+  Bits per Pixel  : 16
+  Slice Code      : 0 (Unknown)
+  Intent Code     : 0 (None)
+  Qform Code      : 0 (Unknown)
+  Sform Code      : 0 (Unknown)
+  Dimension       : 1 x 1 x 1 x 1
+  Pixel Dimension : 1 x 1 x 1 x 1
+  Voxel Units     : Unknown
+  Time Units      : Unknown
+> 
+> 
+> 
+> cleanEx()
+> nameEx("niftiAuditTrail-class")
+> ### * niftiAuditTrail-class
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: niftiAuditTrail-class
+> ### Title: Class "niftiAuditTrail"
+> ### Aliases: niftiAuditTrail-class
+> ### Keywords: classes
+> 
+> ### ** Examples
+> 
+> showClass("niftiAuditTrail")
+Class "niftiAuditTrail" [package "oro.nifti"]
+
+Slots:
+                                                                  
+Name:           .Data          trail     extensions     sizeof_hdr
+Class:          array            ANY           list        numeric
+                                                                  
+Name:       data_type        db_name        extents  session_error
+Class:      character      character        numeric        numeric
+                                                                  
+Name:         regular       dim_info           dim_      intent_p1
+Class:      character      character         vector        numeric
+                                                                  
+Name:       intent_p2      intent_p3    intent_code       datatype
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:          bitpix    slice_start         pixdim     vox_offset
+Class:        numeric        numeric         vector        numeric
+                                                                  
+Name:       scl_slope      scl_inter      slice_end     slice_code
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:      xyzt_units        cal_max        cal_min slice_duration
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:         toffset          glmax          glmin        descrip
+Class:        numeric        numeric        numeric      character
+                                                                  
+Name:        aux_file     qform_code     sform_code      quatern_b
+Class:      character        numeric        numeric        numeric
+                                                                  
+Name:       quatern_c      quatern_d      qoffset_x      qoffset_y
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:       qoffset_z         srow_x         srow_y         srow_z
+Class:        numeric         vector         vector         vector
+                                                                  
+Name:     intent_name          magic       extender     reoriented
+Class:      character      character         vector        logical
+
+Extends: 
+Class "niftiExtension", directly
+Class "nifti", by class "niftiExtension", distance 2
+Class "array", by class "niftiExtension", distance 3
+Class "matrix", by class "niftiExtension", distance 4, with explicit test and coerce
+Class "structure", by class "niftiExtension", distance 4
+Class "vector", by class "niftiExtension", distance 5, with explicit coerce
+Class "vector", by class "niftiExtension", distance 7, with explicit test and coerce
+> 
+> 
+> 
+> cleanEx()
+> nameEx("niftiExtension-class")
+> ### * niftiExtension-class
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: niftiExtension-class
+> ### Title: Class "niftiExtension"
+> ### Aliases: niftiExtension-class
+> ### Keywords: classes
+> 
+> ### ** Examples
+> 
+> showClass("niftiExtension")
+Class "niftiExtension" [package "oro.nifti"]
+
+Slots:
+                                                                  
+Name:           .Data     extensions     sizeof_hdr      data_type
+Class:          array           list        numeric      character
+                                                                  
+Name:         db_name        extents  session_error        regular
+Class:      character        numeric        numeric      character
+                                                                  
+Name:        dim_info           dim_      intent_p1      intent_p2
+Class:      character         vector        numeric        numeric
+                                                                  
+Name:       intent_p3    intent_code       datatype         bitpix
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:     slice_start         pixdim     vox_offset      scl_slope
+Class:        numeric         vector        numeric        numeric
+                                                                  
+Name:       scl_inter      slice_end     slice_code     xyzt_units
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:         cal_max        cal_min slice_duration        toffset
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:           glmax          glmin        descrip       aux_file
+Class:        numeric        numeric      character      character
+                                                                  
+Name:      qform_code     sform_code      quatern_b      quatern_c
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:       quatern_d      qoffset_x      qoffset_y      qoffset_z
+Class:        numeric        numeric        numeric        numeric
+                                                                  
+Name:          srow_x         srow_y         srow_z    intent_name
+Class:         vector         vector         vector      character
+                                                   
+Name:           magic       extender     reoriented
+Class:      character         vector        logical
+
+Extends: 
+Class "nifti", directly
+Class "array", by class "nifti", distance 2
+Class "matrix", by class "nifti", distance 3, with explicit test and coerce
+Class "structure", by class "nifti", distance 3
+Class "vector", by class "nifti", distance 4, with explicit coerce
+Class "vector", by class "nifti", distance 6, with explicit test and coerce
+
+Known Subclasses: "niftiAuditTrail"
+> 
+> 
+> 
+> cleanEx()
+> nameEx("niftiExtensionSection-class")
+> ### * niftiExtensionSection-class
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: niftiExtensionSection-class
+> ### Title: Class "niftiExtensionSection"
+> ### Aliases: niftiExtensionSection-class
+> ### Keywords: classes
+> 
+> ### ** Examples
+> 
+> showClass("niftiExtensionSection")
+Class "niftiExtensionSection" [package "oro.nifti"]
+
+Slots:
+                                    
+Name:      esize     ecode     edata
+Class:   numeric   numeric character
+> 
+> 
+> 
+> cleanEx()
+> nameEx("pixdim-methods")
+> ### * pixdim-methods
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: pixdim-methods
+> ### Title: Extract or Replace NIfTI/Analyze Pixel Dimensions
+> ### Aliases: pixdim-methods pixdim,anlz-method pixdim,nifti-method
+> ###   pixdim<-,anlz-method pixdim<-,nifti-method pixdim pixdim<-
+> ### Keywords: methods
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D url <- "http://nifti.nimh.nih.gov/nifti-1/data/avg152T1_LR_nifti.nii.gz"
+> ##D urlfile <- file.path(system.file("nifti", package="oro.nifti"),
+> ##D                      "mniLR.nii.gz")
+> ##D download.file(url, urlfile, quiet=TRUE)
+> ## End(Not run)
+> urlfile <- file.path(system.file("nifti", package="oro.nifti"),
++                      "mniLR.nii.gz")
+> mniLR <- readNIfTI(urlfile)
+> pixdim(mniLR)
+[1] 0 2 2 2 1 1 1 1
+> 
+> 
+> 
+> cleanEx()
+> nameEx("q2R")
+> ### * q2R
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: quaternion2rotation
+> ### Title: Convert Quaternion into a Rotation Matrix
+> ### Aliases: quaternion2rotation quaternion2mat44
+> 
+> ### ** Examples
+> 
+> ## This R matrix is represented by quaternion [a,b,c,d] = [0,1,0,0]
+> ## (which encodes a 180 degree rotation about the x-axis).
+> (R <- quaternion2rotation(1, 0, 0))
+     [,1] [,2] [,3]
+[1,]    1    0    0
+[2,]    0   -1    0
+[3,]    0    0   -1
+> 
+> 
+> 
+> cleanEx()
+> nameEx("qformsform")
+> ### * qformsform
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: orientation-methods
+> ### Title: Extract NIfTI 3D Image Orientation
+> ### Aliases: qform-methods qform,nifti-method qform sform-methods
+> ###   sform,nifti-method sform
+> ### Keywords: methods
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D url <- "http://nifti.nimh.nih.gov/nifti-1/data/avg152T1_LR_nifti.nii.gz"
+> ##D urlfile <- file.path(system.file("nifti", package="oro.nifti"),
+> ##D                      "mniLR.nii.gz")
+> ##D download.file(url, urlfile, quiet=TRUE)
+> ## End(Not run)
+> urlfile <- file.path(system.file("nifti", package="oro.nifti"),
++                      "mniLR.nii.gz")
+> mniLR <- readNIfTI(urlfile)
+> sform(mniLR)
+     [,1] [,2] [,3] [,4]
+[1,]   -2    0    0   90
+[2,]    0    2    0 -126
+[3,]    0    0    2  -72
+> 
+> 
+> 
+> cleanEx()
+> nameEx("read_afni")
+> ### * read_afni
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: readAFNI
+> ### Title: readAFNI
+> ### Aliases: readAFNI
+> ### Keywords: file methods
+> 
+> ### ** Examples
+> 
+> ## Taken from the AFNI Matlab Library
+> ## http://afni.nimh.nih.gov/pub/dist/data/afni_matlab_data.tgz
+> afni.path <- system.file("afni", package="oro.nifti")
+> orig <- readAFNI(file.path(afni.path, "ARzs_CW_avvr.DEL+orig"))
+> image(orig, zlim=c(0.5,256), oma=rep(2,4))
+> orthographic(orig, zlim=c(0.5,256), oma=rep(2,4))
+> 
+> 
+> 
+> cleanEx()
+> nameEx("read_anlz")
+> ### * read_anlz
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: readANALYZE
+> ### Title: readANALYZE
+> ### Aliases: readANALYZE
+> ### Keywords: file
+> 
+> ### ** Examples
+> 
+> ## avg152T1
+> anlz.path <- system.file("anlz", package="oro.nifti")
+> mni152 <- readANALYZE(file.path(anlz.path, "avg152T1"))
+> image(mni152, oma=rep(2,4))
+> orthographic(mni152, oma=rep(2,4))
+> 
+> 
+> 
+> cleanEx()
+> nameEx("read_nifti")
+> ### * read_nifti
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: readNIfTI
+> ### Title: readNIfTI
+> ### Aliases: readNIfTI
+> ### Keywords: file
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D url <- "http://nifti.nimh.nih.gov/nifti-1/data/filtered_func_data.nii.gz"
+> ##D urlfile <- file.path(system.file("nifti", package="oro.nifti"),
+> ##D                      "filtered_func_data")
+> ##D download.file(url, urlfile, quiet=TRUE)
+> ## End(Not run)
+> ## The NIfTI file provided here contains the first 18 volumes (10%)
+> ## of the original data set
+> urlfile <- file.path(system.file("nifti", package="oro.nifti"),
++                      "filtered_func_data")
+> (ffd <- readNIfTI(urlfile))
+NIfTI-1 format
+  Type            : niftiExtension
+  Data Type       : 4 (INT16)
+  Bits per Pixel  : 16
+  Slice Code      : 0 (Unknown)
+  Intent Code     : 0 (None)
+  Qform Code      : 0 (Unknown)
+  Sform Code      : 0 (Unknown)
+  Dimension       : 64 x 64 x 21 x 64
+  Pixel Dimension : 1 x 1 x 1 x 1
+  Voxel Units     : Unknown
+  Time Units      : Unknown
+> image(ffd, oma=rep(2,4))
+> orthographic(ffd, oma=rep(2,4))
+> ## Not run: 
+> ##D ## 27 scans of Colin Holmes (MNI) brain co-registered and averaged
+> ##D ## NIfTI two-file format
+> ##D URL <- "http://imaging.mrc-cbu.cam.ac.uk/downloads/Colin/colin_1mm.tgz"
+> ##D urlfile <- file.path(tempdir(), "colin_1mm.tgz")
+> ##D download.file(URL, dest=urlfile, quiet=TRUE)
+> ##D untar(urlfile, exdir=tempdir())
+> ##D colin <- readNIfTI(file.path(tempdir(), "colin_1mm"))
+> ##D image(colin, oma=rep(2,4))
+> ##D orthographic(colin, oma=rep(2,4))
+> ## End(Not run)
+> 
+> 
+> 
+> cleanEx()
+> nameEx("tim_colors")
+> ### * tim_colors
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: tim.colors
+> ### Title: Tim's Useful Color Table
+> ### Aliases: tim.colors
+> ### Keywords: aplot
+> 
+> ### ** Examples
+> 
+> tim.colors(10) 
+ [1] "#00008F" "#0000FF" "#0070FF" "#00DFFF" "#50FFAF" "#BFFF40" "#FFCF00"
+ [8] "#FF6000" "#EF0000" "#800000"
+> image(outer(1:20, 1:20, "+"), col=tim.colors(75), main="tim.colors")
+> 
+> 
+> 
+> cleanEx()
+> nameEx("transformCoordinate")
+> ### * transformCoordinate
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: translateCoordinate
+> ### Title: translateCoordinate
+> ### Aliases: translateCoordinate
+> 
+> ### ** Examples
+> 
+> ffd <- readNIfTI(file.path(system.file("nifti", package="oro.nifti"),
++                            "filtered_func_data"))
+> xyz <- c(1,1,1)
+> translateCoordinate(xyz, ffd, verbose=TRUE)
+Input voxel coordinate:
+     [,1]
+[1,]    1
+[2,]    1
+[3,]    1
+QForm_code and SForm_code unset: Orientation by Method 1.
+     [,1]
+[1,]    0
+[2,]    0
+[3,]    0
+> xyz <- trunc(dim(ffd)[1:3]/2)
+> translateCoordinate(xyz, ffd, verbose=TRUE)
+Input voxel coordinate:
+     [,1]
+[1,]   32
+[2,]   32
+[3,]   10
+QForm_code and SForm_code unset: Orientation by Method 1.
+     [,1]
+[1,]   31
+[2,]   31
+[3,]    9
+> 
+> 
+> 
+> cleanEx()
+> nameEx("write_afni")
+> ### * write_afni
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: writeAFNI-methods
+> ### Title: writeAFNI
+> ### Aliases: writeAFNI-methods writeAFNI,afni-method writeAFNI,ANY-method
+> ###   writeAFNI
+> ### Keywords: file methods
+> 
+> ### ** Examples
+> 
+> ## Taken from the AFNI Matlab Library
+> ## http://afni.nimh.nih.gov/pub/dist/data/afni_matlab_data.tgz
+> afni.path <- system.file("afni", package="oro.nifti")
+> orig <- readAFNI(file.path(afni.path, "ARzs_CW_avvr.DEL+orig"))
+> writeAFNI(orig, "test-afni-image", verbose=TRUE)
+> 
+> data <- readAFNI("test-afni-image", verbose=TRUE)
+  fname = test-afni-image
+  files = test-afni-image.HEAD/BRIK
+  endianess = little
+> image(orig, zlim=c(0.5,256), oma=rep(2,4), bg="white")
+> image(data, zlim=c(0.5,256), oma=rep(2,4), bg="white")
+> abs.err <- abs(data - orig)
+> image(as(abs.err, "nifti"), zlim=range(0,1), oma=rep(2,4),
++       bg="white")
+> 
+> 
+> 
+> cleanEx()
+> nameEx("write_anlz")
+> ### * write_anlz
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: writeANALYZE-methods
+> ### Title: writeANALYZE
+> ### Aliases: writeANALYZE-methods writeANALYZE,anlz-method writeANALYZE
+> ### Keywords: file methods
+> 
+> ### ** Examples
+> 
+> norm <- dnorm(seq(-5, 5, length=32), sd=2)
+> norm <- (norm-min(norm)) / max(norm-min(norm))
+> img <- outer(outer(norm, norm), norm)
+> img <- round(255*img)
+> img[17:32,,] <- 255 - img[17:32,,]
+> img.anlz <- anlz(img) # create Analyze object
+> 
+> writeANALYZE(img.anlz, "test-anlz-image-uint8", verbose=TRUE)
+  dims = 32 32 32
+> ## These files should be viewable in, for example, FSLview
+> ## Make sure you adjust the min/max values for proper visualization
+> data <- readANALYZE("test-anlz-image-uint8", verbose=TRUE)
+  fname = test-anlz-image-uint8
+  files = test-anlz-image-uint8.{hdr.gz,img.gz}
+  hdr   = test-anlz-image-uint8.hdr.gz
+  img   = test-anlz-image-uint8.img.gz
+> image(img.anlz, oma=rep(2,4), bg="white")
+> image(data, oma=rep(2,4), bg="white")
+> abs.err <- abs(data - img.anlz)
+> image(as(abs.err, "anlz"), zlim=range(img.anlz), oma=rep(2,4), bg="white")
+> 
+> ## Not run: 
+> ##D ## Loop through all possible data types
+> ##D datatypes <- list(code=c(2, 4, 8, 16, 64),
+> ##D                   name=c("uint8", "int16", "int32", "float", "double"))
+> ##D equal <- vector("list")
+> ##D for (i in 1:length(datatypes$code)) {
+> ##D   fname <- paste("test-anlz-image-", datatypes$name[i], sep="")
+> ##D   rm(img.anlz)
+> ##D   img.anlz <- anlz(img, datatype=datatypes$code[i])
+> ##D   writeANALYZE(img.anlz, fname)
+> ##D   equal[[i]] <- all(readANALYZE(fname) == img)
+> ##D }
+> ##D names(equal) <- datatypes$name
+> ##D unlist(equal)
+> ## End(Not run)
+> 
+> 
+> 
+> cleanEx()
+> nameEx("write_nifti")
+> ### * write_nifti
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: writeNIfTI-methods
+> ### Title: writeNIfTI
+> ### Aliases: writeNIfTI-methods writeNIfTI,nifti-method
+> ###   writeNIfTI,anlz-method writeNIfTI,array-method writeNIfTI
+> ### Keywords: file methods
+> 
+> ### ** Examples
+> 
+> norm <- dnorm(seq(-5, 5, length=32), sd=2)
+> norm <- (norm-min(norm)) / max(norm-min(norm))
+> img <- outer(outer(norm, norm), norm)
+> img <- round(255 * img)
+> img[17:32,,] <- 255 - img[17:32,,]
+> img.nifti <- nifti(img) # create NIfTI object
+> 
+> writeNIfTI(img.nifti, "test-nifti-image-uint8", verbose=TRUE)
+  writing data at byte = 352
+> ## These files should be viewable in, for example, FSLview
+> ## Make sure you adjust the min/max values for proper visualization
+> data <- readNIfTI("test-nifti-image-uint8", verbose=TRUE)
+  fname = test-nifti-image-uint8
+  files = test-nifti-image-uint8.nii.gz
+  nii   = test-nifti-image-uint8.nii.gz
+  vox_offset = 352
+  seek(fid) = 352
+ # reorient = Method 1
+ ## performPermutation
+  trans =
+     [,1] [,2] [,3]
+[1,]    1    0    0
+[2,]    0    1    0
+[3,]    0    0    1
+  sum(T != 0) = 3
+       det(T) = 1
+  sum(T != 0) == 3 && det(T) != 0 is TRUE
+ ## else {
+ ## real.dimensions = 32 32 32
+ ## dim(out) = 32 32 32
+> image(img.nifti, oma=rep(2,4), bg="white")
+> image(data, oma=rep(2,4), bg="white")
+> abs.err <- abs(data - img.nifti)
+> image(as(abs.err, "nifti"), zlim=range(img.nifti), oma=rep(2,4),
++       bg="white")
+> 
+> ## Not run: 
+> ##D ## Loop through all possible data types
+> ##D datatypes <- list(code=c(2, 4, 8, 16, 64),
+> ##D                   name=c("uint8", "int16", "int32", "float", "double"))
+> ##D equal <- vector("list")
+> ##D for (i in 1:length(datatypes$code)) {
+> ##D   fname <- paste("test-nifti-image-", datatypes$name[i], sep="")
+> ##D   rm(img.nifti)
+> ##D   img.nifti <- nifti(img, datatype=datatypes$code[i])
+> ##D   writeNIfTI(img.nifti, fname, verbose=TRUE)
+> ##D   equal[[i]] <- all(readNIfTI(fname) == img)
+> ##D }
+> ##D names(equal) <- datatypes$name
+> ##D unlist(equal)
+> ## End(Not run)
+> 
+> 
+> 
+> ### * <FOOTER>
+> ###
+> cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  10.72 0.292 11.025 0 0 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

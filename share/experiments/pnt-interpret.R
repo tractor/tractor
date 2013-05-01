@@ -56,7 +56,7 @@ runExperiment <- function ()
             currentSeed <- round(apply(currentData[,c("x","y","z")], 2, median))
         }
         else
-            currentSeed <- getNativeSpacePointForSession(currentSession, reference$getStandardSpaceSeedPoint(), pointType=reference$getSeedUnit(), isStandard=TRUE)
+            currentSeed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), currentSession, "diffusion", oldSpace="mni", reverseRegister=TRUE, pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
         currentPosteriors <- results$getTractPosteriors(i)
         report(OL$Info, "Neighbourhood centre point is ", implode(currentSeed,sep=","))
         

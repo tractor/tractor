@@ -79,12 +79,8 @@ newReferenceTractWithTract <- function (tract, standardSeed = NULL, nativeSeed =
         else if (is.null(nativeSeed))
             report(OL$Error, "The native space point associated with the tract must be specified")
         
-        xfm <- newAffineTransform3DByInversion(getMniTransformForSession(session))
-        
-        if (seedUnit == "mm")
-            standardSeed <- transformWorldPointsWithAffine(xfm, nativeSeed)
-        else
-            standardSeed <- transformVoxelPointsWithAffine(xfm, nativeSeed)
+        transform <- session$getTransformation("diffusion", "mni")
+        standardSeed <- transformPoints(transform, nativeSeed, voxel=(seedUnit!="mm"))
     }
     
     reference <- ReferenceTract$new(tract=tract, standardSeed=standardSeed, seedUnit=seedUnit, session=session, options=options)

@@ -16,8 +16,6 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     {
         if (is.null(x))
             report(OL$Error, "Seed point(s) must be specified in this mode")
-        else if (is.vector(x))
-            originalSeed <- resolveVector(len=3, x, y, z)
         else if (is.matrix(x))
         {
             if (ncol(x) == 3)
@@ -26,10 +24,13 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
                 originalSeed <- t(x)
             requireImage <- FALSE
         }
+        else if (is.numeric(x))
+            originalSeed <- resolveVector(len=3, x, y, z)
         else
             report(OL$Error, "Seed point(s) must be specified as a vector or matrix")
         
-        seed <- transformRVoxelToFslVoxel(originalSeed)
+        # Switch to the FSL indexing convention (from 0)
+        seed <- originalSeed - 1
     }
     
     bedpostDir <- session$getDirectory("bedpost")
@@ -71,10 +72,10 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
 
             # Create a temporary file containing the seed point coordinates
             seedFile <- threadSafeTempFile()
-            if (is.vector(seed))
-                execute("echo", paste("'", implode(seed,sep=" "), "' >", seedFile, sep=""))
-            else if (is.matrix(seed))
+            if (is.matrix(seed))
                 write.table(seed, seedFile, row.names=FALSE, col.names=FALSE)
+            else if (is.numeric(seed))
+                execute("echo", paste("'", implode(seed,sep=" "), "' >", seedFile, sep=""))
             
             # FSL 4.1.5 changed the way the --dir and -o flags were used
             if (!is.null(fslVersion) && fslVersion >= 40105)
@@ -196,7 +197,9 @@ runProbtrackForNeighbourhood <- function (session, x, y = NULL, z = NULL, width 
 retrieveProbtrackStreamline <- function (probtrackResult, i)
 {
     m <- as.matrix(read.table(paste(probtrackResult$particlesDir, "/particle", i-1, sep="")))
-    invisible (transformFslVoxelToRVoxel(m))
+    
+    # Convert back to the R indexing convention
+    invisible (m+1)
 }
 
 particleFileSizesForResult <- function (probtrackResult)

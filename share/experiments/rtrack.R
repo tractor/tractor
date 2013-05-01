@@ -33,7 +33,7 @@ runExperiment <- function ()
     
     seedMask <- readImageFile(seedMaskFile)
     if (seedMaskInStandardSpace)
-        seedMask <- transformStandardSpaceImage(session, seedMask)
+        seedMask <- transformImageToSpace(seedMask, session, "diffusion", oldSpace="mni", reverseRegister=TRUE)
     
     seeds <- which(seedMask$getData() > 0, arr.ind=TRUE)
     if (nrow(seeds) == 0)
@@ -65,7 +65,7 @@ runExperiment <- function ()
         }
         else
         {
-            require(tractor.native)
+            require(tractor.track)
             nGroups <- (length(validSeeds) - 1) %/% groupSize + 1
             for (i in 1:nGroups)
             {

@@ -36,10 +36,7 @@ runExperiment <- function ()
     inPlaneAxes <- setdiff(1:3, throughPlaneAxis)
     
     point[inPlaneAxes] <- 1
-    if (pointType == "fsl")
-        point <- transformFslVoxelToRVoxel(point)
-    else if (pointType == "mm")
-        point <- transformWorldToRVoxel(point, faImage$getMetadata(), useOrigin=TRUE)
+    point <- changePointType(point, faImage, "r", pointType)
     point[inPlaneAxes] <- NA
     
     createSliceGraphic(faImage, point[1], point[2], point[3], device="internal", windowLimits=windowLimits)

@@ -26,7 +26,10 @@ runExperiment <- function ()
     if (!is.null(maxAngle))
         maxAngle <- maxAngle / 180 * pi
     
-    seed <- getNativeSpacePointForSession(session, seed, pointType, isStandardSeed)
+    if (isStandardSeed)
+        seed <- transformPointsToSpace(seed, session, "diffusion", oldSpace="mni", reverseRegister=TRUE, pointType=pointType, outputVoxel=TRUE, nearest=TRUE)
+    else
+        seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
     
     options <- createTractOptionList("knot", lengthQuantile, registerToReference, NULL, NULL)
     returnValue <- referenceSplineTractWithOptions(options, session, seed, nSamples=nSamples, maxAngle=maxAngle, tracker=tracker)

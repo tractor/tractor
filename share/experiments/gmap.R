@@ -1,8 +1,9 @@
 #@args volume prefix
 #@desc Create a group map by transforming a set of tract images into standard space and overlaying them. The colour scheme will indicate the number of sessions in which the tract passed through each voxel. The volume prefix given will usually have the form "TractName_session", to which session numbers will be appended by the script. Another prefix may be needed if the volumes were not created by "hnt-viz", "pnt-viz" or "pnt-prune".
 
-suppressPackageStartupMessages(require(tractor.session))
-suppressPackageStartupMessages(require(tractor.nt))
+library(tractor.reg)
+library(tractor.session)
+library(tractor.nt)
 
 runExperiment <- function ()
 {
@@ -55,7 +56,7 @@ runExperiment <- function ()
         
         threshold <- baseThreshold * switch(thresholdMode, nothing=1, maximum=max(image,na.rm=TRUE), minimum=min(image,na.rm=TRUE))
         
-        transformedImage <- transformStandardSpaceImage(session, image, toStandard=TRUE)
+        transformedImage <- transformImageToSpace(image, session, "mni", oldSpace="diffusion")
         if (binarise)
             thresholdedImage <- newMriImageWithSimpleFunction(transformedImage, function(x) ifelse(x>=threshold,1,0))
         else
@@ -98,7 +99,7 @@ runExperiment <- function ()
             if (reference$getSeedUnit() == "vox")
                 seedLoc <- reference$getStandardSpaceSeedPoint()
             else
-                seedLoc <- transformWorldToRVoxel(reference$getStandardSpaceSeedPoint(), brainImage$getMetadata(), useOrigin=TRUE)
+                seedLoc <- transformWorldToVoxel(reference$getStandardSpaceSeedPoint(), brainImage$getMetadata())
         }
         else
         {

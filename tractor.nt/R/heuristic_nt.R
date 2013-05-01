@@ -2,7 +2,7 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
 {
     if (!is(refTract, "FieldTract"))
         report(OL$Error, "Reference tract must be specified as a FieldTract object")
-    if (!is.numeric(seed) || !is.vector(seed) || (length(seed) != 3))
+    if (!is.numeric(seed) || (length(seed) != 3))
         report(OL$Error, "Central seed point must be specified as a numeric vector of length 3")
     
     searchNeighbourhood <- createNeighbourhoodInfo(searchWidth, centre=seed)
@@ -23,8 +23,9 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     if (!equivalent(refTract$getVoxelDimensions(), faImage$getVoxelDimensions(), signMatters=FALSE, tolerance=1e-3))
     {
         report(OL$Info, "Resampling reference tract to the resolution of the session's native space")
-        newRefImage <- resampleImageToDimensions(refTract$getImage(), faImage$getVoxelDimensions())
-        newRefSeed <- round(transformWorldToRVoxel(transformRVoxelToWorld(refTract$getSeedPoint(), refTract$getImage()), newRefImage))
+        require("tractor.reg")
+        newRefImage <- resampleImage(refTract$getImage(), faImage$getVoxelDimensions())
+        newRefSeed <- round(transformWorldToVoxel(transformVoxelToWorld(refTract$getSeedPoint(), refTract$getImage(), simple=TRUE), newRefImage, simple=TRUE))
         refTract <- newFieldTractFromMriImage(newRefImage, newRefSeed)
     }
     

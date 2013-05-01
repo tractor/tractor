@@ -4,7 +4,7 @@
 library(tractor.session)
 library(splines)
 library(tractor.nt)
-library(tractor.native)
+library(tractor.track)
 
 runExperiment <- function ()
 {
@@ -22,7 +22,7 @@ runExperiment <- function ()
     
     seedMask <- readImageFile(seedMaskFile)
     if (seedMaskInStandardSpace)
-        seedMask <- transformStandardSpaceImage(session, seedMask)
+        seedMask <- transformImageToSpace(seedMask, session, "diffusion", oldSpace="mni", reverseRegister=TRUE)
     
     if (!is.null(anisotropyThreshold))
     {
@@ -36,7 +36,7 @@ runExperiment <- function ()
     {
         targetMask <- readImageFile(targetFile)
         if (targetMasksInStandardSpace)
-            targetMask <- transformStandardSpaceImage(session, targetMask)
+            targetMask <- transformImageToSpace(targetMask, session, "diffusion", oldSpace="mni", reverseRegister=TRUE)
         targetMasks <- c(targetMasks, list(targetMask))
     }
     

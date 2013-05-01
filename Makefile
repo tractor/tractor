@@ -1,11 +1,15 @@
 R=R
 INSTALL=bin/tractor_Rinstall
 
-all:
-	@cd src && $(MAKE) R=$(R)
+default: build post-build-info
+
+post-build-info:
 	@echo 'Run "make install" to install packages'
 
-postinstall-info:
+build:
+	@cd src && $(MAKE) R=$(R)
+
+post-install-info:
 	@echo
 	@echo "Installation complete. You may wish to add the following lines"
 	@echo "to your ~/.bashrc file (or equivalent for other shells):"
@@ -17,7 +21,7 @@ postinstall-info:
 	@echo "The ~/.bashrc file can be created if it does not already exist."
 
 install-libs:
-	@$(INSTALL) lib/reportr
+	@$(INSTALL) lib/reportr lib/multicore
 
 install-base:
 	@$(INSTALL) tractor.base
@@ -25,36 +29,36 @@ install-base:
 install-utils:
 	@$(INSTALL) tractor.utils
 
+install-reg:
+	@$(INSTALL) lib/bitops lib/oro.nifti lib/RNiftyReg tractor.reg
+
 install-session:
-	@$(INSTALL) tractor.session
+	@$(INSTALL) lib/mmand tractor.session
 
 install-nt:
 	@$(INSTALL) tractor.nt
 
-install-interpreted: install-libs install-base install-utils install-session install-nt
+install-track:
+	@$(INSTALL) tractor.track
 
-install: install-interpreted postinstall-info
+install: build
+	@rm -f install.log
+	@$(MAKE) install-libs install-base install-utils install-reg install-session install-nt install-track post-install-info
 
-install-native:
-	@$(INSTALL) tractor.native
-	@$(INSTALL) lib/mmand
-	@$(INSTALL) lib/multicore
-
-install-all: install-interpreted install-native postinstall-info
+install-all: install
 
 uninstall:
-	$(R) CMD REMOVE tractor.nt tractor.session tractor.utils tractor.base reportr
+	$(R) CMD REMOVE tractor.track tractor.nt tractor.session tractor.reg tractor.utils tractor.base
 
-uninstall-native:
-	$(R) CMD REMOVE tractor.native multicore
-
-uninstall-all: uninstall uninstall-native
+uninstall-all: uninstall
+	$(R) CMD REMOVE RNiftyReg oro.nifti bitops multicore mmand reportr
 
 clean:
 	@cd tests && $(MAKE) clean
 
 distclean: clean
-	@rm -f bin/exec/tractor
+	@rm -f bin/exec/tractor src/build.log install.log
+	@rm -f tractor.track/config.log tractor.track/config.status tractor.track/src/Makevars tractor.track/src/config.h
 
 test:
 	@cd tests && $(MAKE) run-tests

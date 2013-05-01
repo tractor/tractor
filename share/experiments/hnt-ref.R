@@ -4,8 +4,9 @@
 #@desc an appropriate session and seed point, and the options are therefore closely
 #@desc related to those of the "track" experiment.
 
-suppressPackageStartupMessages(require(tractor.session))
-suppressPackageStartupMessages(require(tractor.nt))
+library(tractor.reg)
+library(tractor.session)
+library(tractor.nt)
 
 runExperiment <- function ()
 {
@@ -21,7 +22,11 @@ runExperiment <- function ()
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     tractName <- getConfigVariable("TractName", "tract")
     
-    seed <- getNativeSpacePointForSession(session, seed, pointType, isStandardSeed)
+    if (isStandardSeed)
+        seed <- transformPointsToSpace(seed, session, "diffusion", oldSpace="mni", reverseRegister=TRUE, pointType=pointType, outputVoxel=TRUE, nearest=TRUE)
+    else
+        seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
+    
     tract <- newFieldTractFromProbtrack(session, seed, nSamples=nSamples, threshold=0.01)
     reference <- newReferenceTractWithTract(tract, session=session, nativeSeed=seed)
     
