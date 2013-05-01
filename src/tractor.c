@@ -6,6 +6,7 @@
 
 #include "tractor.h"
 
+FILE *log_file = NULL;
 char *script_file = NULL, *working_dir = NULL, *report_file = NULL, *output_level = NULL, *config_file = NULL, *script_args = NULL;
 int parallelisation_factor = 1, profile_performance = 0;
 
@@ -62,6 +63,11 @@ void parse_arguments (int argc, const char **argv)
         else if (strcmp(argv[current_arg], "-c") == 0)
         {
             config_file = allocate_and_copy_string(argv[current_arg+1]);
+            to_drop = 2;
+        }
+        else if (strcmp(argv[current_arg], "-g") == 0)
+        {
+            log_file = fopen(argv[current_arg+1], "w");
             to_drop = 2;
         }
         else if (strcmp(argv[current_arg], "-p") == 0)
@@ -249,6 +255,12 @@ int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int
     {
         // Once bootstrap string is written, revert to usual prompt
         return_value = (*ptr_R_ReadConsole_default)(prompt, buffer, buffer_len, add_to_history);
+        
+        if (log_file != NULL)
+        {
+            fputs(prompt, log_file);
+            fputs(buffer, log_file);
+        }
     }
     
     return return_value;
@@ -305,10 +317,16 @@ void write_console (const char *buffer, int buffer_len, int output_type)
         
         fflush(stderr);
     }
+    
+    // Also write to the log file, if one is specified
+    if (log_file != NULL)
+        fputs(buffer, log_file);
 }
 
 void tidy_up ()
 {
+    if (log_file != NULL)
+        fclose(log_file);
     if (script_file != NULL)
         free(script_file);
     if (working_dir != NULL)
