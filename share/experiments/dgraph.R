@@ -130,6 +130,8 @@ runExperiment <- function ()
 			freesurferRoi <- newMriImageWithData(parcellation$getData(),parcellation$getMetadata() )
 			index <- which(as.array(freesurferRoi$getData()!=0) & as.array(freesurferRoi$getData())!=lookupTable[indices[[side]],1] )
 			freesurferRoi$data[index] <- 0
+			index <- which( as.array(freesurferRoi$getData()!=0) )
+			freesurferRoi$data[index] <- 1
 			freesurferRoi <- newMriImageWithDataRepresentation(freesurferRoi,"coordlist")    #use a sparse representation
 						
             #writeMriImageToFile(freesurferRoi, file.path(freesurferRoiDir,paste(regionName,side,sep="_")))
@@ -137,9 +139,9 @@ runExperiment <- function ()
             transformedMaskImages[[i]] <- newMriImageWithDataRepresentation(currentReg$image, "coordlist")
             #writeMriImageToFile(transformedMaskImages[[i]], file.path(diffusionRoiDir,paste(regionName,side,sep="_")))
             
-            regionLocations[i,] <- apply(which(currentReg$image$getData() > 0, arr.ind=TRUE), 2, median)
-            regionLocations[i,] <- transformRVoxelToWorld(regionLocations[i,], currentReg$image$getMetadata(), useOrigin=FALSE)
-            regionSizes[i] <- sum(currentReg$image$getData() > 0)
+            #regionLocations[i,] <- apply(which(currentReg$image$getData() > 0, arr.ind=TRUE), 2, median)
+            #regionLocations[i,] <- transformRVoxelToWorld(regionLocations[i,], currentReg$image$getMetadata(), useOrigin=FALSE)
+            #regionSizes[i] <- sum(currentReg$image$getData() > 0)
             i <- i + 1
         }
     }	
@@ -154,8 +156,10 @@ runExperiment <- function ()
 		mask <- newMriImageWithData(parcellation2$getData(),parcellation2$getMetadata() )
 		index <- which(as.array(mask$getData()!=0) & as.array(mask$getData())!=label )
 		mask$data[index] <- 0
+		index <- which( as.array(mask$getData()!=0)  )
+		mask$data[index] <- 1
 		mask <- newMriImageWithDataRepresentation(mask,"coordlist")    #use a sparse representation
-		maskName <- file.path(customRoiDir,paste('tmp_',label,'.nii.gz', sep=''))
+		maskName <- file.path(customRoiDir,paste('tmp_',label,'.nii.gz', sep='') )
 		maskImages2 <- c(maskImages2,mask)
 		#writeMriImageToFile(mask,fileName=maskName)
 	}
@@ -174,8 +178,8 @@ runExperiment <- function ()
 		transformedMaskImages <- c(transformedMaskImages,transformedMaskImages2)
 		allRegionNames <- c(allRegionNames,allRegionNames2)
 		nRegions <- nRegions + nRegions2
-		regionLocations <- rbind(regionLocations,regionLocations2)
-		regionSizes <- c(regionSizes,regionSizes2)
+		#regionLocations <- rbind(regionLocations,regionLocations2)
+		#regionSizes <- c(regionSizes,regionSizes2)
 	}
    
     report(OL$Info, "Building up a composite mask image")
@@ -185,7 +189,7 @@ runExperiment <- function ()
     {
         nonzeroLocs <- transformedMaskImages[[i]]$getData()$getCoordinates()
         imageValues <- transformedMaskImages[[i]]$getData()$getData()
-        locsToUpdate <- which(maxValues[nonzeroLocs] < imageValues & imageValues >= 0.2 )
+        locsToUpdate <- which( maxValues[nonzeroLocs] < imageValues & imageValues >= 0.2 )
         if (length(locsToUpdate) > 0)
         {
             mergedMask[nonzeroLocs[locsToUpdate,,drop=FALSE]] <- i
@@ -209,13 +213,13 @@ runExperiment <- function ()
 		terminateOutsideMask <- TRUE 
 		maskName <- session$getImageFileNameByType("mask", "diffusion")
 		brainMaskImg <- newMriImageFromFile(maskName)
-		brainMask <- brainMask$getData()
+		brainMask <- brainMaskImg$getData()
 		terminationMask <- mergedMask!=0 | brainMask==0
+		terminationMask <- terminationMask*1
 		terminationMaskMri <- newMriImageWithData( terminationMask,refb0$getMetadata() )
 		terminationMaskMriName <- file.path(diffusionRoiDir,"terminationMask.nii.gz")
 		writeMriImageToFile(terminationMaskMri,fileName=terminationMaskMriName)  #save merged masked to be used for tractography
-	}
-	else{
+	} else{
 		terminationMaskMriName <- NULL
 		terminateOutsideMask <- FALSE 
 	}
