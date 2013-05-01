@@ -17,10 +17,13 @@ write_history=1
 show_options=0
 rprofile_backed_up=0
 quiet=0
+profile_performance=0
 parallelisation_factor=1
 batch_mode=0
 verbose_level=1
 working_dir="."
+
+command_flags=""
 
 type expect >/dev/null 2>&1
 expect_available=$?
@@ -30,7 +33,7 @@ usage()
     echo "tractor (program v2.2.0)"
     echo "Run a TractoR experiment script in R and report the results"
     echo
-    echo "Usage: tractor [-ldzqbi] [-v level] [-p factor] [-a architecture] ..."
+    echo "Usage: tractor [-ldzqfbi] [-v level] [-p factor] [-a architecture] ..."
     echo "               [-w working_dir] [-c config_file] script [arg1 [arg2 ...]]"
     echo "       tractor -o [-w working_dir] script"
     echo "       tractor -h"
@@ -43,6 +46,7 @@ usage()
     echo "  -z          Do not write the command line used into a history log file"
     echo "  -q          Run in quiet mode; the tractor script will not produce any"
     echo "              output of its own"
+    echo "  -f          Profile the performance of the script"
     echo "  -b          Run R in batch mode, which is entirely noninteractive, and"
     echo "              will produce no output until it finishes running: this can"
     echo "              be useful when running multiple experiments in parallel"
@@ -69,7 +73,7 @@ usage()
     echo
 }
 
-set -- `getopt "hldozqbriv:p:a:w:c:" "$@"` || {
+set -- `getopt "hldozqfbriv:p:a:w:c:" "$@"` || {
     usage 1>&2
     exit
 }
@@ -91,6 +95,7 @@ while [ $# -gt 0 ]
         -o) show_options=1 ;;
         -z) write_history=0 ;;
         -q) quiet=1 ;;
+        -f) profile_performance=1; command_flags="-f ${command_flags}" ;;
         -b) batch_mode=1 ;;
         -r) keep_report=1 ;;
         -v) shift; verbose_level=$1 ;;
@@ -188,16 +193,16 @@ fi
 [ $quiet -eq 0 ] && echo "Starting TractoR environment..."
 
 if [ -x "$TRACTOR_HOME/bin/exec/tractor" ]; then
-    R --vanilla CMD "$TRACTOR_HOME/bin/exec/tractor" "$script_file" -w "$working_dir" -r "$report_file" -l "$output_level" -c "$config_file" -p "$parallelisation_factor" $args 2>&1 | tee $log_file
+    R --vanilla CMD "$TRACTOR_HOME/bin/exec/tractor" "$script_file" -w "$working_dir" -r "$report_file" -l "$output_level" -c "$config_file" -p "$parallelisation_factor" $command_flags $args 2>&1 | tee $log_file
 elif [ $batch_mode -eq 1 ]; then
     cat >"$expect_file" <<EOF
 library(utils)
 library(tractor.utils)
-bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\$$output_level, '$config_file', '$args', $parallelisation_factor)
+bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\$$output_level, '$config_file', '$args', $parallelisation_factor, $profile_performance)
 EOF
     R CMD BATCH --slave --vanilla $expect_file $log_file
 elif [ $interactive -eq 0 ]; then
-    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\$$output_level, '$config_file', '$args', $parallelisation_factor)" | R --slave --vanilla 2>&1 | tee $log_file
+    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\$$output_level, '$config_file', '$args', $parallelisation_factor, $profile_performance)" | R --slave --vanilla 2>&1 | tee $log_file
 elif [ $expect_available -eq 0 ]; then
     cat >"$expect_file" <<EOF
 log_user 0
@@ -207,7 +212,7 @@ send "library(utils)\n"
 expect -re ">.+\r\n"
 send "library(tractor.utils)\n"
 expect -re ">.+\r\n"
-send "bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\\\$$output_level, '$config_file', '$args', $parallelisation_factor)\n"
+send "bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\\\$$output_level, '$config_file', '$args', $parallelisation_factor, $profile_performance)\n"
 expect -re ">.+\r\n"
 interact
 EOF
@@ -217,7 +222,7 @@ EOF
     }
     expect -f $expect_file | tee $log_file
 else
-    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\$$output_level, '$config_file', '$args', $parallelisation_factor)" >.Rprofile
+    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\$$output_level, '$config_file', '$args', $parallelisation_factor, $profile_performance)" >.Rprofile
     R --slave --no-save --no-restore --no-site-file --no-environ 2>&1 | tee $log_file
 fi
 
@@ -233,6 +238,11 @@ errors=`grep -c ERROR $log_file`
 [ $expect_available -ne 0 ] && {
     rm -f .Rprofile
     [ $rprofile_backed_up -eq 1 ] && mv .Rprofile.bak .Rprofile
+}
+
+[ $profile_performance -eq 1 ] && {
+    R CMD Rprof "$working_dir/tractor-Rprof.out" > "$working_dir/${script_name}.Rprof"
+    rm -f "$working_dir/tractor-Rprof.out"
 }
 
 if [ $quiet -eq 0 ]; then

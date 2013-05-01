@@ -1,5 +1,7 @@
-bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), reportFile = NULL, outputLevel = OL$Warning, configFiles = NULL, configText = NULL, parallelisationFactor = 1, standalone = TRUE, debug = FALSE)
+bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), reportFile = NULL, outputLevel = OL$Warning, configFiles = NULL, configText = NULL, parallelisationFactor = 1, profile = FALSE, standalone = TRUE, debug = FALSE)
 {
+    profile <- as.logical(profile)
+    
     if (standalone)
         on.exit(quit(save="no"))
     
@@ -48,7 +50,13 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), reportF
         if (debug)
             debug(runExperiment)
         
+        if (profile)
+            Rprof("tractor-Rprof.out")
+        
         runExperiment()
+        
+        if (profile)
+            Rprof(NULL)
     })
     
     reportFlags()
