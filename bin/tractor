@@ -173,6 +173,11 @@ fi
 
 interactive=`grep -ci '#@interactive TRUE' $script_file`
 
+if [ $write_history -eq 1 ]; then
+    nohistory_flag=`grep -ci '#@nohistory TRUE' $script_file`
+    [ $nohistory_flag -eq 1 ] && write_history=0
+fi
+
 [ ! -e $working_dir ] && mkdir -p $working_dir
 
 export verbose_level
