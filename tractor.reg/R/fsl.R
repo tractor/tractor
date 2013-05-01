@@ -49,7 +49,7 @@ registerImagesWithFlirt <- function (sourceFileName, targetFileName, targetMaskF
     report(OL$Verbose, "FSL-FLIRT registration completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
     
     affine <- as.matrix(read.table(outputMatrixFile))
-    transform <- Transformation$new(sourceImage=readImageFile(sourceFileName), targetImage=readImageFile(targetFileName), affineMatrices=list(affine), controlPointImages=list(), reverseControlPointImages=list(), method="flirt")
+    transform <- Transformation$new(sourceImage=readImageFile(sourceFileName,metadataOnly=TRUE), targetImage=readImageFile(targetFileName,metadataOnly=TRUE), affineMatrices=list(affine), controlPointImages=list(), reverseControlPointImages=list(), method="flirt")
     
     result <- list(transform=transform, transformedImage=NULL, reverseTransformedImage=NULL)
     if (!estimateOnly)

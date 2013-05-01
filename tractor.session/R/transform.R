@@ -20,7 +20,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     
     matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
     
-    image <- session$getImageByType("refb0", "diffusion")
+    image <- session$getImageByType("refb0", "diffusion", metadataOnly=TRUE)
     transform <- Transformation$new(sourceImage=image, targetImage=image, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="flirt")
     
     invisible (transform)

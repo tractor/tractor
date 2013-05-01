@@ -2,4 +2,6 @@ import(reportr)
 import(tractor.base)
 import(RNiftyReg)
 
+importFrom(oro.nifti, nifti, is.nifti, as.nifti, convert.datatype, convert.bitpix)
+
 exportPattern("^[^\\.]")

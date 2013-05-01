@@ -69,6 +69,6 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = N
     else
         transformedImage <- as(linearResult$image, "MriImage")
     
-    transform <- Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=as.list(linearResult$affine), controlPointImages=as.list(nonlinearResult$control), reverseControlPointImages=as.list(nonlinearResult$reverseControl), method="niftyreg")
+    transform <- Transformation$new(sourceImage=sourceImage$getMetadata(), targetImage=targetImage$getMetadata(), affineMatrices=as.list(linearResult$affine), controlPointImages=as.list(nonlinearResult$control), reverseControlPointImages=as.list(nonlinearResult$reverseControl), method="niftyreg")
     return (list(transform=transform, transformedImage=transformedImage, reverseTransformedImage=nonlinearResult$reverseImage))
 }
