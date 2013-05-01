@@ -2,6 +2,7 @@
 #@desc Identify the session directory corresponding to the specified number. This
 #@desc correspondence depends on the session list for the experiment, which is usually
 #@desc stored in a configuration file.
+#@nohistory TRUE
 
 library(tractor.base)
 

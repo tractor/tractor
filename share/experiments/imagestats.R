@@ -1,5 +1,6 @@
 #@args image file
 #@desc Print various statistics of the specified image, optionally limiting the calculations by voxel value or by mask. The 5% trimmed range is obtained by discarding the 5% largest and smallest values and taking the range of the remainder, thereby giving an indication of the influence of extreme values. This script may currently only be applied to 3D images.
+#@nohistory TRUE
 
 library(tractor.base)
 

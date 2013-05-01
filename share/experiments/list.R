@@ -1,4 +1,5 @@
-#@desc List all available TractoR experiments
+#@desc List all available TractoR experiments.
+#@nohistory TRUE
 
 library(tractor.base)
 
