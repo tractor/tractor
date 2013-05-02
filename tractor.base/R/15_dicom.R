@@ -775,6 +775,8 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
                 
                 if (nValues > 1)
                     values <- c(values, implode(value,sep="\\"))
+                else if (nValues == 0)
+                    values <- c(values, "")
                 else
                     values <- c(values, as.character(value))
             }
