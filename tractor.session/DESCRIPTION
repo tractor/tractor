@@ -1,6 +1,6 @@
 Package: tractor.session
-Version: 2.3.0
-Date: 2013-02-04
+Version: 2.3.2
+Date: 2013-03-08
 Title: Functions for maintaining and working with scan sessions
 Author: Jon Clayden
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
