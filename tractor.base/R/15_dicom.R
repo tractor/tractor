@@ -585,12 +585,18 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         data <- data[orderX,orderY,orderZ,,drop=TRUE]
     }
     
-    # Origin is at 1 for spatial dimensions (first 3), and 0 for temporal ones
-    origin <- rep(1,length(imageDims))
-    origin[setdiff(seq_along(origin),1:3)] <- 0
-
     dimsToKeep <- which(imageDims > 1)
-    image <- newMriImageWithData(data, templateImage=images[[1]], imageDims=imageDims[dimsToKeep], voxelDims=voxelDims[dimsToKeep], origin=origin[dimsToKeep])
+    imageDims <- imageDims[dimsToKeep]
+    voxelDims <- voxelDims[dimsToKeep]
+    
+    # Origin is 0 for temporal dimensions
+    origin <- rep(0, length(dimsToKeep))
+    refLoc <- c(1, imageDims[2], 1)
+    if (!volumePerDicomFile)
+        refLoc[absoluteSliceDirections[2]] <- imageDims[absoluteSliceDirections[2]]
+    origin[1:3] <- refLoc - c(1,-1,1) * (imagePosition / abs(voxelDims))
+    
+    image <- newMriImageWithData(data, templateImage=images[[1]], imageDims=imageDims, voxelDims=voxelDims, origin=origin)
     
     returnValue <- list(image=image, seriesDescriptions=unique(info$seriesDescription))
     if (readDiffusionParams)
