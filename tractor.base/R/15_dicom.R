@@ -270,6 +270,12 @@ readImageParametersFromMetadata <- function (metadata, untileMosaics = TRUE, met
         pixels <- readBin(connection, "integer", n=metadata$getDataLength()/bytesPerPixel, size=bytesPerPixel, signed=ifelse(bytesPerPixel > 2, TRUE, isSigned), endian=endian)
         pixels <- maskPixels(pixels, metadata)
         close(connection)
+        
+        # Apply slope and intercept, if defined
+        if (!is.na(metadata$getTagValue(0x0028, 0x1053)))
+            pixels <- pixels * metadata$getTagValue(0x0028, 0x1053)
+        if (!is.na(metadata$getTagValue(0x0028, 0x1052)))
+            pixels <- pixels + metadata$getTagValue(0x0028, 0x1052)
     
         if (nDims == 2)
             data <- array(pixels, dim=dims)
