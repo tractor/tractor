@@ -192,6 +192,7 @@ newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE, untileMosaics 
     dataColumns <- metadata$getTagValue(0x0028, 0x0011)
     voxelDims <- metadata$getTagValue(0x0028, 0x0030)
     endian <- metadata$getEndianness()
+    mosaic <- FALSE
     
     if (is.na(rows))
         rows <- dataRows
@@ -227,6 +228,7 @@ newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE, untileMosaics 
                 rows <- dataRows
                 columns <- dataColumns
             }
+            mosaic <- TRUE
         }
         else
         {
@@ -277,7 +279,7 @@ newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE, untileMosaics 
         }
         else if (nDims == 3)
         {
-            if (identical(metadata$getTagValue(0x0008,0x0070), "SIEMENS") && untileMosaics)
+            if (mosaic)
             {
                 # Handle Siemens mosaic images, which encapsulate a whole 3D image in a single-frame DICOM file
                 mosaicDims <- c(metadata$getTagValue(0x0028, 0x0010), metadata$getTagValue(0x0028, 0x0011))
@@ -299,7 +301,7 @@ newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE, untileMosaics 
         }
     }
     
-    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), source=metadata$getSource(), origin=rep(1,nDims), data=data)
+    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), source=metadata$getSource(), origin=rep(1,nDims), data=data, tags=list(keys=".mosaic",values=mosaic))
     invisible (image)
 }
 
@@ -414,31 +416,36 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         metadata <- newDicomMetadataFromFile(files[i], dictionary=dictionary)
         if (is.null(metadata))
         {
+            # Not a DICOM file - skip it
             report(OL$Verbose, "Skipping ", files[i])
             valid[i] <- FALSE
             next
         }
         else if (!seenValidFile)
         {
+            # Read slice dimensions and orientation once - these are assumed not to vary across files
             sliceDim <- metadata$getTagValue(0x0018,0x0050)
             sliceOrientation <- metadata$getTagValue(0x0020,0x0037)
             
-            # Calculate through-slice orientation and convert to LAS
+            # Calculate through-slice orientation (in LPS convention)
             throughSliceOrientation <- vectorCrossProduct(sliceOrientation[1:3], sliceOrientation[4:6])
-            sliceOrientation <- replace(sliceOrientation, c(2,5), -sliceOrientation[c(2,5)])
-            throughSliceOrientation <- replace(throughSliceOrientation, 2, -throughSliceOrientation[2])
             
+            # Read TR for temporal dimension
             repetitionTime <- metadata$getTagValue(0x0018,0x0080) / 1000
         }
-
+        
+        # Read in metadata specific to this file
         info$seriesNumber[i] <- metadata$getTagValue(0x0020,0x0011)
         info$seriesDescription[i] <- metadata$getTagValue(0x0008,0x103e)
         info$acquisitionNumber[i] <- metadata$getTagValue(0x0020,0x0012)
         info$imageNumber[i] <- metadata$getTagValue(0x0020,0x0013)
         imagePosition <- metadata$getTagValue(0x0020,0x0032)
-        info$sliceLocation[i] <- replace(imagePosition,2,-imagePosition[2]) %*% throughSliceOrientation
+        info$sliceLocation[i] <- imagePosition %*% throughSliceOrientation
+        
+        # Read in the pixel data and usual MriImage metadata
         images[[i]] <- newMriImageFromDicomMetadata(metadata, flipY=FALSE, untileMosaics=untileMosaics)
-
+        
+        # Check for diffusion metadata if requested
         if (readDiffusionParams)
         {
             diffusion <- readDiffusionParametersFromMetadata(metadata)
@@ -447,14 +454,14 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
             bValues[i] <- diffusion$bval
             bVectors[,i] <- diffusion$bvec
         }
-
+        
         if (!seenValidFile)
             seenValidFile <- TRUE
         
         if (i %% 100 == 0)
             report(OL$Verbose, "Done ", count)
     }
-
+    
     nDicomFiles <- sum(valid)
     if (nDicomFiles == 0)
         report(OL$Error, "No readable DICOM files were found")
@@ -470,14 +477,13 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     if (length(unique(info$seriesDescription)) > 1)
         report(OL$Warning, "DICOM directory contains more than one unique series description - merging them may not make sense")
     
-    uniqueSlices <- sort(unique(info$sliceLocation))
-    info$sliceIndex <- match(info$sliceLocation, uniqueSlices)
-    
-    # The sum() function recovers the sign in the sapply() call here
+    # Slice orientations are the in-plane X and Y and through plane direction vectors, in that order
+    # Slice directions are 1, 2 and 3 for X, Y and Z in the LPS reference system; sign indicates flip
+    # NB: The sum() function recovers the sign in the sapply() call here
     sliceOrientation <- list(sliceOrientation[1:3], sliceOrientation[4:6], throughSliceOrientation)
     sliceDirections <- sapply(sliceOrientation, function (x) round(which(abs(x) == 1) * sum(x)))
     
-    # Oblique slices case
+    # Oblique slices case: look for the closest reference orientations and warn
     if (!is.numeric(sliceDirections) || length(sliceDirections) != 3)
     {
         sliceDirections <- sapply(sliceOrientation, function (x) {
@@ -495,11 +501,20 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         }
     }
     
-    report(OL$Info, "Image orientation is ", implode(c("I","P","R","","L","A","S")[sliceDirections+4],sep=""))
+    report(OL$Info, "Image orientation is ", implode(c("I","A","R","","L","P","S")[sliceDirections+4],sep=""))
     absoluteSliceDirections <- abs(sliceDirections)
-
-    volumePerDicomFile <- (images[[1]]$getDimensionality() == 3)
     
+    # Find all unique slice positions and find the index corresponding to each image
+    uniqueSlices <- sort(unique(info$sliceLocation))
+    info$sliceIndex <- match(info$sliceLocation, uniqueSlices)
+    if (length(uniqueSlices) < 2)
+        report(OL$Error, "Reading a single 2D image from DICOM is not supported at present")
+    
+    # Is there a volume stored in each DICOM file? Is the image a mosaic?
+    volumePerDicomFile <- (images[[1]]$getDimensionality() == 3)
+    mosaic <- identical(images[[1]]$getTag(".mosaic"), as.character(TRUE))
+    
+    # Work out the image and voxel dimensions of the unpermuted image
     if (volumePerDicomFile)
     {
         nSlices <- images[[1]]$getDimensions()[3]
@@ -538,10 +553,12 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         bValues <- bValues[sortOrder]
         bVectors <- bVectors[,sortOrder]
         
+        # Initialisation
         volumeBValues <- rep(NA, nVolumes)
         volumeBVectors <- matrix(NA, nrow=3, ncol=nVolumes)
     }
     
+    # Insert data into the appropriate places
     for (i in 1:nrow(info))
     {
         if (volumePerDicomFile)
@@ -555,7 +572,8 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
             volume <- ((i-1) %/% nSlices) + 1
             data[,,slice,volume] <- images[[i]]$getData()
         }
-
+        
+        # Insert diffusion parameters once per volume
         if (readDiffusionParams && is.na(volumeBValues[volume]))
         {
             volumeBValues[volume] <- bValues[i]
@@ -563,13 +581,16 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         }
     }
 
-    if (volumePerDicomFile)
+    if (mosaic)
     {
-        # DICOM uses LPS, we want LAS
+        # NB: This assumes that the slices in the mosaic are axial, with the usual DICOM LPS convention
+        # This assumption has been met by images seen to date, but may not always be
         data <- data[,imageDims[2]:1,,,drop=TRUE]
+        ordering <- c(1,-1,1)
     }
     else
     {
+        # Permute the data dimensions as required
         dimPermutation <- c(match(1:3,absoluteSliceDirections), 4)
         if (!equivalent(dimPermutation, 1:4))
         {
@@ -578,7 +599,8 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
             voxelDims <- abs(voxelDims[dimPermutation]) * c(-1,1,1,1)
         }
         
-        ordering <- sign(sliceDirections[dimPermutation])
+        # Check for any flips required to achieve LAS orientation
+        ordering <- sign(sliceDirections[dimPermutation])[1:3] * c(1,-1,1)
         orderX <- (if (ordering[1] == 1) seq_len(imageDims[1]) else rev(seq_len(imageDims[1])))
         orderY <- (if (ordering[2] == 1) seq_len(imageDims[2]) else rev(seq_len(imageDims[2])))
         orderZ <- (if (ordering[3] == 1) seq_len(imageDims[3]) else rev(seq_len(imageDims[3])))
@@ -589,14 +611,20 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     imageDims <- imageDims[dimsToKeep]
     voxelDims <- voxelDims[dimsToKeep]
     
-    # Origin is 0 for temporal dimensions
-    origin <- rep(0, length(dimsToKeep))
-    refLoc <- c(1, imageDims[2], 1)
-    if (!volumePerDicomFile)
-        refLoc[absoluteSliceDirections[2]] <- imageDims[absoluteSliceDirections[2]]
-    origin[1:3] <- refLoc - c(1,-1,1) * (imagePosition / abs(voxelDims))
+    # Set the image position in the through-slice direction to the location of the first slice
+    imagePosition[absoluteSliceDirections[3]] <- info$sliceLocation[info$sliceIndex == 1][1]
     
-    image <- newMriImageWithData(data, templateImage=images[[1]], imageDims=imageDims, voxelDims=voxelDims, origin=origin)
+    # Invert position for Y direction due to switch to LAS convention
+    imagePosition[2] <- -imagePosition[2]
+    
+    # Origin is 0 for temporal dimensions
+    # For other dimensions, use the image position (which is the centre of the first voxel stored)
+    origin <- rep(0, length(dimsToKeep))
+    origin[1:3] <- 1 - ordering[1:3] * round(imagePosition/voxelDims[1:3],2)
+    origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], imageDims[1:3]-origin[1:3]+1)
+    
+    # Create the final image
+    image <- newMriImageWithData(data, templateImage=images[[1]], imageDims=imageDims, voxelDims=voxelDims, origin=origin, tags=list())
     
     returnValue <- list(image=image, seriesDescriptions=unique(info$seriesDescription))
     if (readDiffusionParams)
