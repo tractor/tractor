@@ -507,12 +507,13 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     # Find all unique slice positions and find the index corresponding to each image
     uniqueSlices <- sort(unique(info$sliceLocation))
     info$sliceIndex <- match(info$sliceLocation, uniqueSlices)
-    if (length(uniqueSlices) < 2)
-        report(OL$Error, "Reading a single 2D image from DICOM is not supported at present")
     
     # Is there a volume stored in each DICOM file? Is the image a mosaic?
     volumePerDicomFile <- (images[[1]]$getDimensionality() == 3)
     mosaic <- identical(images[[1]]$getTag(".mosaic"), as.character(TRUE))
+    
+    if (!volumePerDicomFile && length(uniqueSlices) < 2)
+        report(OL$Error, "Reading a single 2D image from DICOM is not supported at present")
     
     # Work out the image and voxel dimensions of the unpermuted image
     if (volumePerDicomFile)
