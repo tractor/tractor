@@ -30,7 +30,7 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = N
         startTime <- Sys.time()
         linearResult <- do.call("niftyreg.linear", linearOptions)
         endTime <- Sys.time()
-        report(OL$Verbose, "Linear registration completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
+        report(OL$Info, "Linear registration completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
         
         # Update affine initialisation from result
         initAffine <- linearResult$affine
@@ -52,7 +52,7 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = N
         startTime <- Sys.time()
         nonlinearResult <- do.call("niftyreg.nonlinear", nonlinearOptions)
         endTime <- Sys.time()
-        report(OL$Verbose, "Nonlinear registration completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
+        report(OL$Info, "Nonlinear registration completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
     }
     
     if (!is.null(nonlinearResult$control))
