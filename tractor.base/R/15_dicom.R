@@ -180,7 +180,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     }
 }
 
-newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE, untileMosaics = TRUE, metadataOnly = FALSE)
+readImageParametersFromMetadata <- function (metadata, untileMosaics = TRUE, metadataOnly = FALSE)
 {
     if (metadata$getTagValue(0x0008, 0x0060) != "MR")
         flag(OL$Warning, "DICOM file does not contain MR image data")
@@ -272,11 +272,7 @@ newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE, untileMosaics 
         close(connection)
     
         if (nDims == 2)
-        {
             data <- array(pixels, dim=dims)
-            if (flipY)
-                data <- data[,(dims[2]:1)]
-        }
         else if (nDims == 3)
         {
             if (mosaic)
@@ -295,18 +291,14 @@ newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE, untileMosaics 
             }
             else
                 data <- array(pixels, dim=dims)
-        
-            if (flipY)
-                data <- data[,(dims[2]:1),]
         }
     }
     
+    returnValue <- list(imageDims=dims, voxelDims=voxelDims, data=data, mosaic=mosaic)
     if (mosaic)
-        image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), source=metadata$getSource(), origin=rep(1,nDims), data=data, tags=list(keys=".mosaicDims",values=mosaicDims))
-    else
-        image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), source=metadata$getSource(), origin=rep(1,nDims), data=data, tags=list())
+        returnValue$mosaicDims <- mosaicDims
     
-    invisible (image)
+    return (returnValue)
 }
 
 maskPixels <- function (pixels, metadata)
@@ -334,12 +326,6 @@ maskPixels <- function (pixels, metadata)
         flag(OL$Warning, "Masking has altered the pixel values")
     
     return (newPixels)
-}
-
-newMriImageFromDicom <- function (fileName, ...)
-{
-    metadata <- newDicomMetadataFromFile(fileName)
-    invisible (newMriImageFromDicomMetadata(metadata, ...))
 }
 
 readDiffusionParametersFromMetadata <- function (metadata)
@@ -388,7 +374,7 @@ readDiffusionParametersFromMetadata <- function (metadata)
         return (list(bval=NA, bvec=rep(NA,3), defType="none"))
 }
 
-newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
+readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
 {
     if (!file.exists(dicomDir) || !file.info(dicomDir)$isdir)
         report(OL$Error, "The specified path (", dicomDir, ") does not point to a directory")
@@ -447,7 +433,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         info$sliceLocation[i] <- imagePosition %*% throughSliceOrientation
         
         # Read in the pixel data and usual MriImage metadata
-        images[[i]] <- newMriImageFromDicomMetadata(metadata, flipY=FALSE, untileMosaics=untileMosaics)
+        images[[i]] <- readImageParametersFromMetadata(metadata, untileMosaics=untileMosaics)
         
         # Check for diffusion metadata if requested
         if (readDiffusionParams)
@@ -513,8 +499,8 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     info$sliceIndex <- match(info$sliceLocation, uniqueSlices)
     
     # Is there a volume stored in each DICOM file? Is the image a mosaic?
-    volumePerDicomFile <- (images[[1]]$getDimensionality() == 3)
-    mosaic <- !is.na(images[[1]]$getTag(".mosaicDims"))
+    volumePerDicomFile <- (length(images[[1]]$imageDims) == 3)
+    mosaic <- images[[1]]$mosaic
     
     if (!volumePerDicomFile && length(uniqueSlices) < 2)
         report(OL$Error, "Reading a single 2D image from DICOM is not supported at present")
@@ -522,10 +508,10 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     # Work out the image and voxel dimensions of the unpermuted image
     if (volumePerDicomFile)
     {
-        nSlices <- images[[1]]$getDimensions()[3]
+        nSlices <- images[[1]]$imageDims[3]
         nVolumes <- nDicomFiles
-        imageDims <- c(images[[1]]$getDimensions(), nVolumes)
-        voxelDims <- c(images[[1]]$getVoxelDimensions(), repetitionTime)
+        imageDims <- c(images[[1]]$imageDims, nVolumes)
+        voxelDims <- c(images[[1]]$voxelDims, repetitionTime)
     }
     else
     {
@@ -541,8 +527,8 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
             report(OL$Error, "Number of files (", nDicomFiles, ") is not a multiple of the number of slices detected (", nSlices, ")")
         
         # Dimensions of initial image, to be permuted later if necessary
-        imageDims <- c(images[[1]]$getDimensions(), nSlices, nVolumes)
-        voxelDims <- c(images[[1]]$getVoxelDimensions(), sliceDim, repetitionTime)
+        imageDims <- c(images[[1]]$imageDims, nSlices, nVolumes)
+        voxelDims <- c(images[[1]]$voxelDims, sliceDim, repetitionTime)
     }
 
     report(OL$Info, "Data set contains ", nVolumes, " volume(s); ", nSlices, " slice(s) per volume")
@@ -569,13 +555,13 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         if (volumePerDicomFile)
         {
             volume <- i
-            data[,,,volume] <- images[[i]]$getData()
+            data[,,,volume] <- images[[i]]$data
         }
         else
         {
             slice <- info$sliceIndex[i]
             volume <- ((i-1) %/% nSlices) + 1
-            data[,,slice,volume] <- images[[i]]$getData()
+            data[,,slice,volume] <- images[[i]]$data
         }
         
         # Insert diffusion parameters once per volume
@@ -588,13 +574,14 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
 
     if (mosaic)
     {
-        # NB: This assumes that the slices in the mosaic are axial, with the usual DICOM LPS convention
-        # This assumption has been met by images seen to date, but may not always be
+        if (!equivalent(sliceDirections, 1:3))
+            flag(OL$Warning, "Mosaic image is not stored in LPS orientation - results are unlikely to be correct")
+        
         data <- data[,imageDims[2]:1,,,drop=TRUE]
         ordering <- c(1,-1,1)
         
         # The image position in plane is stored wrongly for mosaic images, so we need to correct it
-        imagePosition[1:2] <- imagePosition[1:2] + abs(voxelDims[1:2]) * ((as.numeric(images[[1]]$getTag(".mosaicDims"))-imageDims[1:2]) / 2)
+        imagePosition[1:2] <- imagePosition[1:2] + abs(voxelDims[1:2]) * ((images[[1]]$mosaicDims-imageDims[1:2]) / 2)
     }
     else
     {
@@ -632,7 +619,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], imageDims[1:3]-origin[1:3]+1)
     
     # Create the final image
-    image <- newMriImageWithData(data, templateImage=images[[1]], imageDims=imageDims, voxelDims=voxelDims, origin=origin, tags=list())
+    image <- newMriImageWithData(data, imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), origin=origin, tags=list())
     
     returnValue <- list(image=image, seriesDescriptions=unique(info$seriesDescription))
     if (readDiffusionParams)

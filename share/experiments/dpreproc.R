@@ -65,7 +65,7 @@ runExperiment <- function ()
                 dicomDir <- file.path(session$getDirectory(), dicomDir)
             dicomDir <- gsub("//+", "/", dicomDir, perl=TRUE)
 
-            info <- newMriImageFromDicomDirectory(dicomDir, readDiffusionParams=TRUE)
+            info <- readDicomDirectory(dicomDir, readDiffusionParams=TRUE)
 
             session$getDirectory("diffusion", createIfMissing=TRUE)
             writeImageFile(info$image, session$getImageFileNameByType("rawdata","diffusion"))

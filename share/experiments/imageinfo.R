@@ -12,7 +12,7 @@ runExperiment <- function ()
     fileName <- implode(Arguments, sep=" ")
     
     if (isTRUE(file.info(fileName)$isdir))
-        print(newMriImageFromDicomDirectory(fileName)$image)
+        print(readDicomDirectory(fileName)$image)
     else
         print(readImageFile(fileName, metadataOnly=TRUE))
 }
