@@ -301,7 +301,11 @@ newMriImageFromDicomMetadata <- function (metadata, flipY = TRUE, untileMosaics 
         }
     }
     
-    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), source=metadata$getSource(), origin=rep(1,nDims), data=data, tags=list(keys=".mosaic",values=mosaic))
+    if (mosaic)
+        image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), source=metadata$getSource(), origin=rep(1,nDims), data=data, tags=list(keys=".mosaicDims",values=mosaicDims))
+    else
+        image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), source=metadata$getSource(), origin=rep(1,nDims), data=data, tags=list())
+    
     invisible (image)
 }
 
@@ -510,7 +514,7 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
     
     # Is there a volume stored in each DICOM file? Is the image a mosaic?
     volumePerDicomFile <- (images[[1]]$getDimensionality() == 3)
-    mosaic <- identical(images[[1]]$getTag(".mosaic"), as.character(TRUE))
+    mosaic <- !is.na(images[[1]]$getTag(".mosaicDims"))
     
     if (!volumePerDicomFile && length(uniqueSlices) < 2)
         report(OL$Error, "Reading a single 2D image from DICOM is not supported at present")
@@ -588,6 +592,9 @@ newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE
         # This assumption has been met by images seen to date, but may not always be
         data <- data[,imageDims[2]:1,,,drop=TRUE]
         ordering <- c(1,-1,1)
+        
+        # The image position in plane is stored wrongly for mosaic images, so we need to correct it
+        imagePosition[1:2] <- imagePosition[1:2] + abs(voxelDims[1:2]) * ((as.numeric(images[[1]]$getTag(".mosaicDims"))-imageDims[1:2]) / 2)
     }
     else
     {
