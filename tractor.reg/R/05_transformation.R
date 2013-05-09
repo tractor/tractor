@@ -172,12 +172,12 @@ decomposeTransformation <- function (transform)
     nSourceDims <- transform$getSourceImage()$getDimensionality()
     nTargetDims <- transform$getTargetImage()$getDimensionality()
     if (nSourceDims == nTargetDims)
-        return (list(decomposeAffine(transform$getAffineMatrix(1), as(transform$getSourceImage(),"nifti"), as(transform$getTargetImage(),"nifti"))))
+        return (list(decomposeAffine(transform$getAffineMatrix(1), transform$getSourceImage(), transform$getTargetImage())))
     else
     {
         targetImageNifti <- as(transform$getTargetImage(), "nifti")
         result <- lapply(seq_len(transform$getSourceImage()$getDimensions()[nSourceDims]), function (i) {
-            currentSourceImage <- as.nifti(extractDataFromMriImage(transform$getSourceImage(),nSourceDims,i), as(transform$getSourceImage(),"nifti"))
+            currentSourceImage <- as.nifti(extractDataFromMriImage(transform$getSourceImage(),nSourceDims,i), transform$getSourceImage())
             decomposeAffine(transform$getAffineMatrix(i), currentSourceImage, targetImageNifti)
         })
         return (result)

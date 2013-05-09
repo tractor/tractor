@@ -16,10 +16,9 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = N
         if (!any(affineDof == c(6,12)))
             report(OL$Error, "Only 6 and 12 degrees of freedom are supported by NiftyReg")
         
-        linearOptions$source <- as(sourceImage, "nifti")
-        linearOptions$target <- as(targetImage, "nifti")
-        if (!is.null(targetMask))
-            linearOptions$targetMask <- as(targetMask, "nifti")
+        linearOptions$source <- sourceImage
+        linearOptions$target <- targetImage
+        linearOptions$targetMask <- targetMask
         linearOptions$initAffine <- initAffine
         linearOptions$scope <- ifelse(affineDof==6, "rigid", "affine")
         if (is.null(linearOptions$estimateOnly))
@@ -39,10 +38,9 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = N
     # Run the nonlinear part of the registration, if required
     if ("nonlinear" %in% types)
     {
-        nonlinearOptions$source <- as(sourceImage, "nifti")
-        nonlinearOptions$target <- as(targetImage, "nifti")
-        if (!is.null(targetMask))
-            nonlinearOptions$targetMask <- as(targetMask, "nifti")
+        nonlinearOptions$source <- sourceImage
+        nonlinearOptions$target <- targetImage
+        nonlinearOptions$targetMask <- targetMask
         nonlinearOptions$initAffine <- initAffine
         if (is.null(nonlinearOptions$estimateOnly))
             nonlinearOptions$estimateOnly <- estimateOnly

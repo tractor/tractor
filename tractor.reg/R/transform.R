@@ -1,13 +1,3 @@
-transformVoxelToWorld <- function (points, image, simple = FALSE, ...)
-{
-    return (RNiftyReg::transformVoxelToWorld(points, as(image,"nifti"), simple, ...))
-}
-
-transformWorldToVoxel <- function (points, image, simple = FALSE, ...)
-{
-    return (RNiftyReg::transformWorldToVoxel(points, as(image,"nifti"), simple, ...))
-}
-
 transformImage <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, finalInterpolation = 1)
 {
     if (!is(transform, "Transformation"))
@@ -103,13 +93,13 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
         if (reverse)
             affine <- invertAffine(affine)
         
-        newPoints <- transformWithAffine(points, affine, as(sourceImage,"nifti"), as(targetImage,"nifti"))
+        newPoints <- transformWithAffine(points, affine, sourceImage, targetImage)
         
         if (nearest)
             newPoints <- round(newPoints)
     }
     else
-        newPoints <- transformWithControlPoints(points, as(controlPoints,"nifti"), as(sourceImage,"nifti"), as(targetImage,"nifti"), nearest=nearest)
+        newPoints <- transformWithControlPoints(points, controlPoints, sourceImage, targetImage, nearest=nearest)
     
     if (!voxel)
         newPoints <- transformVoxelToWorld(newPoints, targetImage)

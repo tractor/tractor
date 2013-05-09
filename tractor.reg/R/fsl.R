@@ -30,8 +30,8 @@ registerImagesWithFlirt <- function (sourceFileName, targetFileName, targetMaskF
         inputMatrixFile <- ensureFileSuffix(threadSafeTempFile(), "mat")
         if (attr(initAffine, "affineType") == "niftyreg")
         {
-            sourceImage <- as(readImageFile(sourceFileName), "nifti")
-            targetImage <- as(readImageFile(targetFileName), "nifti")
+            sourceImage <- readImageFile(sourceFileName)
+            targetImage <- readImageFile(targetFileName)
             initAffine <- convertAffine(initAffine, sourceImage, targetImage, "fsl")
         }
         write.table(initAffine, inputMatrixFile, row.names=FALSE, col.names=FALSE)
