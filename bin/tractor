@@ -127,6 +127,8 @@ script_name=`echo $1 | sed 's/\.R$//'`
 
 [ $keep_report -eq 1 ] && report_file="$working_dir/tractor_report.yaml"
 
+[ -d "${TRACTOR_HOME}/lib/R" ] && export R_LIBS="${TRACTOR_HOME}/lib/R"
+
 file_found=0
 script_file="${script_name}.R"
 shift

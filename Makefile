@@ -45,10 +45,17 @@ install: build
 	@rm -f install.log
 	@$(MAKE) install-libs install-base install-utils install-reg install-session install-nt install-track post-install-info
 
+install-local:
+	@mkdir -p lib/R
+	@export TRACTOR_LIBRARY=lib/R && $(MAKE) install
+
 install-all: install
 
 uninstall:
 	$(R) CMD REMOVE tractor.track tractor.nt tractor.session tractor.reg tractor.utils tractor.base
+
+uninstall-local:
+	@rm -rf lib/R
 
 uninstall-all: uninstall
 	$(R) CMD REMOVE RNiftyReg oro.nifti bitops multicore mmand reportr
