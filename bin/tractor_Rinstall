@@ -1,7 +1,5 @@
 #! /bin/bash
 
-tmpdir=${TMPDIR:-/tmp}
-
 export R_INSTALL_VANILLA=1
 export R_COMPILE_PKGS=1
 
