@@ -1,4 +1,5 @@
 #@args source image file, target image file, [output file]
+#@desc Linearly register a source image to a target image, estimating a transformation between them and optionally producing a transformed output image. NiftyReg (Method:niftyreg) and FSL-FLIRT (Method:flirt) methods are available, although the latter requires FSL to be installed and the "flirt" executable to be on the user's PATH. FSL-FLIRT allows for 12 (affine), 9 (traditional), 7 (global rescale) or 6 (rigid body) degrees of freedom for 3D registration; NiftyReg allows only 12 or 6. The Levels, MaximumIterations and UseBlockPercentage options apply only to NiftyReg. The registration can be initialised from an existing transformation (which will be updated), or from an affine text file.
 
 library(tractor.reg)
 
@@ -22,8 +23,24 @@ runExperiment <- function ()
     if (!estimateOnly && nArguments() < 3)
         report(OL$Error, "An output file name is required (as a third argument)")
     
-    if (is.null(transformName) && nArguments() >= 3)
-        transformName <- Arguments[3]
+    initAffine <- NULL
+    
+    if (is.null(transformName))
+    {
+        if (nArguments() >= 3)
+            transformName <- paste(Arguments[3], "xfm", sep="_")
+        else
+            report(OL$Error, "Transformation name must be specified if there is no output file")
+    }
+    else if (file.exists(ensureFileSuffix(transformName,"Rdata")))
+    {
+        transform <- deserialiseReferenceObject(transformName)
+        if (is(transform, "Transformation") && "affine" %in% transform$getTypes())
+        {
+            report(OL$Info, "Using affine matrix stored in transformation for initialisation")
+            initAffine <- transform$getAffineMatrix()
+        }
+    }
     
     if (!is.null(initAffineFile))
     {
@@ -34,13 +51,14 @@ runExperiment <- function ()
             attr(initAffine,"affineType") <- ifelse(method=="flirt","fsl","niftyreg")
         }
     }
-    else
-        initAffine <- NULL
     
-    result <- registerImages(Arguments[1], Arguments[2], targetMask=targetMaskFile, method=method, types="affine", affineDof=degreesOfFreedom, estimateOnly=estimateOnly, finalInterpolation=interpolation, cache="ignore", initAffine=initAffine, nLevels=nLevels, maxIterations=maxIterations, useBlockPercentage=useBlockPercentage)
+    report(OL$Info, "Performing registration")
+    result <- registerImages(Arguments[1], Arguments[2], targetMask=targetMaskFile, method=method, types="affine", affineDof=degreesOfFreedom, estimateOnly=estimateOnly, finalInterpolation=interpolation, cache="ignore", initAffine=initAffine, linearOptions=list(nLevels=nLevels,maxIterations=maxIterations,useBlockPercentage=useBlockPercentage))
     
-    result$transform$serialise(ensureFileSuffix(transformName,"Rdata"))
+    result$transform$serialise(transformName)
     
     if (!estimateOnly)
         writeImageFile(result$transformedImage, Arguments[3])
+    
+    invisible(NULL)
 }
