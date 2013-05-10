@@ -8,7 +8,7 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), reportF
     for (packageName in c("utils","grDevices","graphics","stats","methods","reportr","tractor.base"))
         library(packageName, character.only=TRUE)
     
-    if (capabilities()["aqua"])
+    if (capabilities("aqua"))
         options(device="quartz")
     
     setOutputLevel(outputLevel)
