@@ -6,7 +6,9 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = N
     types <- match.arg(types, several.ok=TRUE)
     
     if (is.character(finalInterpolation))
-        finalInterpolation <- switch(finalInterpolation, nearestneighbour=0, trilinear=1, spline=3, cubicspline=3, NULL)
+        finalInterpolation <- switch(finalInterpolation, nearestneighbour=0, trilinear=1, sinc=2, spline=3, cubicspline=3, NULL)
+    if (finalInterpolation == 2)
+        report(OL$Error, "NiftyReg does not support sinc interpolation")
     
     linearResult <- nonlinearResult <- list()
     
