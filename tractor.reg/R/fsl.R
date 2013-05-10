@@ -1,4 +1,4 @@
-registerImagesWithFlirt <- function (sourceFileName, targetFileName, targetMaskFileName = NULL, initAffine = NULL, affineDof = 12, estimateOnly = FALSE, finalInterpolation = 1)
+registerImagesWithFlirt <- function (sourceFileName, targetFileName, targetMaskFileName = NULL, initAffine = NULL, affineDof = 12, estimateOnly = FALSE, finalInterpolation = 1, ...)
 {
     if (!is.character(sourceFileName) || !is.character(targetFileName))
         report(OL$Error, "Source and target images must be specified by their filenames")
