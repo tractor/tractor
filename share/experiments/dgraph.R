@@ -20,13 +20,13 @@ runExperiment <- function ()
         invisible(result)
     }
     
-    selectionFunction <- function (x, values)
-    {
-        dims <- dim(x)
-        data <- ifelse(x %in% values, 1, 0)
-        dim(data) <- dims
-        return (data)
-    }
+    # selectionFunction <- function (x, values)
+    # {
+    #     dims <- dim(x)
+    #     data <- ifelse(x %in% values, 1, 0)
+    #     dim(data) <- dims
+    #     return (data)
+    # }
     
     session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
     
@@ -35,6 +35,7 @@ runExperiment <- function ()
 	parcellationFile <- getConfigVariable("parcellationFile", NULL, "character")
 	T1File <- getConfigVariable("T1File", NULL, "character")
 	terminationFlag <- getConfigVariable("terminationFlag", TRUE)
+	saveStreamLFlag <- getConfigVariable("saveStreamLFlag", FALSE)
 
     if (file.exists(file.path(Sys.getenv("FREESURFER_HOME"), "FreeSurferColorLUT.txt"))){
         lookupTable <- read.table(file.path(Sys.getenv("FREESURFER_HOME"), "FreeSurferColorLUT.txt"))
@@ -96,6 +97,7 @@ runExperiment <- function ()
 
     regions <- tractor.graph:::.FreesurferRegionNameMapping$aparc
     allRegionNames <- paste(rep(names(regions),2), rep(c("left","right"),each=length(regions)), sep="_")
+	allRegionNames <- c(allRegionNames,allRegionNames2)
     nRegions <- length(allRegionNames)
     regionLocations <- matrix(NA, nrow=nRegions, ncol=3)
     regionSizes <- numeric(nRegions)		
@@ -146,9 +148,9 @@ runExperiment <- function ()
         }
     }	
 
-    order <- c(seq(1,nRegions,2), seq(2,nRegions,2))
-    regionLocations <- regionLocations[order,]
-    regionSizes <- regionSizes[order]
+    # order <- c(seq(1,nRegions,2), seq(2,nRegions,2))
+    # regionLocations <- regionLocations[order,]
+    # regionSizes <- regionSizes[order]
 	
 	#create sub-mask images -- custom parcellation
 	maskImages2 <- list()
@@ -176,8 +178,8 @@ runExperiment <- function ()
 	#concatenate transformed masks
 	if( !is.null(parcellationFile) ){
 		transformedMaskImages <- c(transformedMaskImages,transformedMaskImages2)
-		allRegionNames <- c(allRegionNames,allRegionNames2)
-		nRegions <- nRegions + nRegions2
+		#allRegionNames <- c(allRegionNames,allRegionNames2)
+		#nRegions <- nRegions + nRegions2
 		#regionLocations <- rbind(regionLocations,regionLocations2)
 		#regionSizes <- c(regionSizes,regionSizes2)
 	}
@@ -196,7 +198,7 @@ runExperiment <- function ()
             maxValues[nonzeroLocs[locsToUpdate,,drop=FALSE]] <- imageValues[locsToUpdate]
         }
         else
-            report(OL$Warning, "Region \"", parc_labels[i], "\" is unrepresented in the composite mask")
+            report(OL$Warning, "Region \"", allRegionNames[i], "\" is unrepresented in the composite mask")
 		
 		regionLocations[i,] <- apply(which(mergedMask==i, arr.ind=TRUE), 2, median)
 		regionLocations[i,] <- transformRVoxelToWorld(regionLocations[i,], transformedMaskImages[[i]]$getMetadata(), useOrigin=FALSE)
@@ -230,6 +232,8 @@ runExperiment <- function ()
     seeds <- which(mask$getData() > 0, arr.ind=TRUE)
     seeds <- seeds + runif(length(seeds), -0.5, 0.5)
     result <- trackWithSession(session, seeds, nSamples=2, requireImage=FALSE, maskName=terminationMaskMriName, requireStreamlines=TRUE, terminateOutsideMask=terminateOutsideMask)
+	if( saveStreamLFlag )
+		result$streamlines$serialise( file.path(diffusionRoiDir,"streamlines.Rdata") )
     
     report(OL$Info, "Finding streamlines passing through each region")
 	matchingIndices <- list()
@@ -329,7 +333,7 @@ runExperiment <- function ()
 	
     report(OL$Info, "Creating and writing graph")
     graph <- newGraphFromConnectionMatrix(connectivityMatrix, directed=FALSE, ignoreSelfConnections=TRUE)
-	graph$setVertexAttributes( list(NumVoxelsRegion=regionSizes, VoxelDims=VoxelDims) )
+	graph$setVertexAttributes( c(graph$vertexAttributes,list(NumVoxelsRegion=regionSizes, VoxelDims=VoxelDims)) )
 	graph$setEdgeAttributes( list(FAConMatrix=FAConMatrix[indEdges],FAWConMatrix=FAWConMatrix[indEdges],MDConMatrix=MDConMatrix[indEdges],MDWConMatrix=MDWConMatrix[indEdges],LenStreamsMatrix=LenStreamsMatrix[indEdges],NumUniqueVoxs=NumUniqueVoxs[indEdges],NumVisVoxs=NumVisVoxs[indEdges], NumStreamsConMatrix=NumStreamsConMatrix[indEdges]) )
     graph$setVertexLocations(regionLocations, "mm")
     graph$serialise("dgraph.Rdata")
