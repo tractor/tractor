@@ -36,6 +36,8 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = N
         # Update affine initialisation from result
         initAffine <- linearResult$affine
     }
+    else if (!is.null(initAffine))
+        linearResult$affine <- initAffine
     
     # Run the nonlinear part of the registration, if required
     if ("nonlinear" %in% types)
@@ -48,6 +50,7 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, targetMask = N
             nonlinearOptions$estimateOnly <- estimateOnly
         if (is.null(nonlinearOptions$finalInterpolation) && !is.null(finalInterpolation))
             nonlinearOptions$finalInterpolation <- finalInterpolation
+        nonlinearOptions$symmetric <- ("reverse-nonlinear" %in% types)
         
         startTime <- Sys.time()
         nonlinearResult <- do.call("niftyreg.nonlinear", nonlinearOptions)

@@ -35,7 +35,9 @@ runExperiment <- function ()
     else if (file.exists(ensureFileSuffix(transformName,"Rdata")))
     {
         transform <- deserialiseReferenceObject(transformName)
-        if (is(transform, "Transformation") && "affine" %in% transform$getTypes())
+        if (!is(transform, "Transformation"))
+            report(OL$Warning, "Existing transformation file is not valid")
+        else if (is.null(initAffineFile) && "affine" %in% transform$getTypes())
         {
             report(OL$Info, "Using affine matrix stored in transformation for initialisation")
             initAffine <- transform$getAffineMatrix()
