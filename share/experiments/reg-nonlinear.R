@@ -34,11 +34,12 @@ runExperiment <- function ()
         sourceMaskFile <- NULL
     }
     
-    initAffine <- NULL
-    initControl <- NULL
+    initAffine <- initControl <- NULL
     
     if (is.null(transformName))
     {
+        # Create an output transformation name from output image name
+        # This file will NOT be used for initialisation, and will simply be overwritten if it exists
         if (nArguments() >= 3)
             transformName <- paste(Arguments[3], "xfm", sep="_")
         else
