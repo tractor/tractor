@@ -1,7 +1,7 @@
 setClassUnion("MriImageData", c("SparseArray","array","NULL"))
 
-MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",storedXform="matrix",tags="list",data="MriImageData"), methods=list(
-    initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, storedXform = matrix(NA,0,0), tags = list(), data = NULL, ...)
+MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",storedXform="matrix",reordered="logical",tags="list",data="MriImageData"), methods=list(
+    initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, storedXform = matrix(NA,0,0), reordered = TRUE, tags = list(), data = NULL, ...)
     {
         if (length(tags) != 0 && !all(c("keys","values") %in% names(tags)))
             report(OL$Error, "Tag list must be empty, or else contain \"keys\" and \"values\" components")
@@ -23,10 +23,10 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             oldFields <- list(...)
             if (is.null(oldFields$voxunit))
                 oldFields$voxunit <- "unknown"
-            object <- initFields(imageDims=as.integer(oldFields$imagedims), voxelDims=as.numeric(oldFields$voxdims), voxelDimUnits=oldFields$voxunit, source=source, origin=as.numeric(origin), storedXform=storedXform, tags=tags, data=data)
+            object <- initFields(imageDims=as.integer(oldFields$imagedims), voxelDims=as.numeric(oldFields$voxdims), voxelDimUnits=oldFields$voxunit, source=source, origin=as.numeric(origin), storedXform=storedXform, reordered=reordered, tags=tags, data=data)
         }
         else
-            object <- initFields(imageDims=as.integer(imageDims), voxelDims=as.numeric(voxelDims), voxelDimUnits=voxelDimUnits, source=source, origin=as.numeric(origin), storedXform=as.matrix(storedXform), tags=tags, data=data)
+            object <- initFields(imageDims=as.integer(imageDims), voxelDims=as.numeric(voxelDims), voxelDimUnits=voxelDimUnits, source=source, origin=as.numeric(origin), storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
         
         names(object$voxelDimUnits)[object$voxelDimUnits %~% "m$"] <- "spatial"
         names(object$voxelDimUnits)[object$voxelDimUnits %~% "s$"] <- "temporal"
@@ -73,7 +73,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         if (.self$isEmpty())
             return (.self$copy())
         else
-            return (MriImage$new(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, source=source, origin=origin, storedXform=storedXform, tags=tags, data=NULL))
+            return (MriImage$new(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, source=source, origin=origin, storedXform=storedXform, reordered=reordered, tags=tags, data=NULL))
     },
     
     getNonzeroIndices = function (array = TRUE, positiveOnly = FALSE)
@@ -135,6 +135,14 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     isEmpty = function () { return (is.null(data)) },
     
     isInternal = function () { return (source == "") },
+    
+    isReordered = function ()
+    {
+        if (.self$isInternal())
+            return (NA)
+        else
+            return (reordered)
+    },
     
     isSparse = function () { return (is(data,"SparseArray")) },
     

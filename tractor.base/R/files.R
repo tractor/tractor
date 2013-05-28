@@ -191,7 +191,7 @@ chooseDataTypeForImage <- function (image, format)
     return (list(code=code, type=rType, size=size, isSigned=isSigned))
 }
 
-readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL)
+readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
 {
     fileNames <- identifyImageFileNames(fileName, fileType)
     
@@ -204,6 +204,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     voxelDims <- info$imageMetadata$voxelDims
     nVoxels <- prod(dims)
     nDims <- length(dims)
+    reordered <- FALSE
     
     if (sparse && !is.null(mask))
     {
@@ -254,6 +255,9 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
             }
         }
     }
+    
+    originalImageDims <- dims
+    originalVoxelDims <- voxelDims
     
     if (!metadataOnly)
     {
@@ -347,12 +351,14 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         dimPermutation <- dimPermutation[1:nDims]
     if (!identical(dimPermutation, seq_len(nDims)))
     {
-        if (!metadataOnly)
+        if (!metadataOnly && reorder)
         {
             if (sparse)
                 data$aperm(dimPermutation)
             else
                 data <- aperm(data, dimPermutation)
+            
+            reordered <- TRUE
         }
         dims <- dims[dimPermutation]
         voxelDims <- voxelDims[dimPermutation]
@@ -377,7 +383,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], dims[1:3]-origin[1:3]+1)
     }
         
-    if (!metadataOnly && any(ordering[1:min(3,nDims)] < 0))
+    if (!metadataOnly && reorder && any(ordering[1:min(3,nDims)] < 0))
     {
         if (sparse)
             data$flip(which(ordering[1:min(3,nDims)] < 0))
@@ -396,12 +402,20 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
             else
                 data <- array(apply(data, dimsToKeep, "[", orderX, orderY, orderZ), dim=dim(data))
         }
+        
+        reordered <- TRUE
+    }
+    
+    if (!reorder)
+    {
+        dims <- originalImageDims
+        voxelDims <- originalVoxelDims
     }
     
     if (metadataOnly)
-        image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, origin=origin, storedXform=info$storageMetadata$xformMatrix, tags=info$imageMetadata$tags)
+        image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, origin=origin, storedXform=info$storageMetadata$xformMatrix, reordered=reordered, tags=info$imageMetadata$tags)
     else
-        image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, origin=origin, storedXform=info$storageMetadata$xformMatrix, tags=info$imageMetadata$tags, data=data)
+        image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, origin=origin, storedXform=info$storageMetadata$xformMatrix, reordered=reordered, tags=info$imageMetadata$tags, data=data)
     
     invisible (image)
 }
