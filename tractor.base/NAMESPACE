@@ -16,6 +16,7 @@ S3method(print, DicomMetadata)
 export(nilObject)
 export(is.nilObject)
 export(isDeserialisable)
+export(serialiseReferenceObject)
 export(deserialiseReferenceObject)
 
 export(equivalent)
