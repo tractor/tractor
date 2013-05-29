@@ -221,20 +221,32 @@ setAs("MriImage", "nifti", function (from) {
     fullDims <- c(nDims, abs(from$getDimensions()), rep(1,7-nDims))
     fullVoxelDims <- c(-1, abs(from$getVoxelDimensions()), rep(0,7-nDims))
     
-    origin <- (from$getOrigin() - 1) * abs(from$getVoxelDimensions())
-    if (length(origin) > 3)
-        origin <- origin[1:3]
-    else if (length(origin) < 3)
-        origin <- c(origin, rep(0,3-length(origin)))
-    origin <- ifelse(origin < 0, rep(0,3), origin)
-    origin[2:3] <- -origin[2:3]
-    sformRows <- c(-fullVoxelDims[2], 0, 0, origin[1],
-                    0, fullVoxelDims[3], 0, origin[2],
-                    0, 0, fullVoxelDims[4], origin[3])
+    if (from$isReordered())
+    {
+        origin <- (from$getOrigin() - 1) * abs(from$getVoxelDimensions())
+        if (length(origin) > 3)
+            origin <- origin[1:3]
+        else if (length(origin) < 3)
+            origin <- c(origin, rep(0,3-length(origin)))
+        origin <- ifelse(origin < 0, rep(0,3), origin)
+        origin[2:3] <- -origin[2:3]
+        sformRows <- c(-fullVoxelDims[2], 0, 0, origin[1],
+                        0, fullVoxelDims[3], 0, origin[2],
+                        0, 0, fullVoxelDims[4], origin[3])
+        
+        quaternion <- list(q=c(0,0,1,0), offset=origin, handedness=-1)
+    }
+    else
+    {
+        xform <- from$getStoredXformMatrix()
+        sformRows <- c(xform[1,], xform[2,], xform[3,])
+        quaternion <- xformToQuaternion(xform)
+        fullVoxelDims[1] <- quaternion$handedness
+    }
     
     xformCode <- ifelse(from$getDimensionality() == 2, 0, 2)
     
-    return (new(structure("nifti",package="oro.nifti"), .Data=data, dim_=fullDims, datatype=datatype$code, bitpix=8*datatype$size, pixdim=fullVoxelDims, xyzt_units=unitCode, qform_code=xformCode, sform_code=xformCode, quatern_b=0, quatern_c=1, quatern_d=0, qoffset_x=origin[1], qoffset_y=origin[2], qoffset_z=origin[3], srow_x=sformRows[1:4], srow_y=sformRows[5:8], srow_z=sformRows[9:12], cal_min=min(data), cal_max=max(data)))
+    return (new(structure("nifti",package="oro.nifti"), .Data=data, dim_=fullDims, datatype=datatype$code, bitpix=8*datatype$size, pixdim=fullVoxelDims, xyzt_units=unitCode, qform_code=xformCode, sform_code=xformCode, quatern_b=quaternion$q[2], quatern_c=quaternion$q[3], quatern_d=quaternion$q[4], qoffset_x=quaternion$offset[1], qoffset_y=quaternion$offset[2], qoffset_z=quaternion$offset[3], srow_x=sformRows[1:4], srow_y=sformRows[5:8], srow_z=sformRows[9:12], cal_min=min(data), cal_max=max(data)))
 })
 
 setAs("nifti", "MriImage", function (from) {
@@ -244,7 +256,7 @@ setAs("nifti", "MriImage", function (from) {
     
     nDims <- from@dim_[1]
     voxelDims <- from@pixdim[seq_len(nDims)+1]
-    voxelDims3D <- c(voxelDims, rep(0,max(0,3-nDims)))[1:3] * c(-1,1,1)
+    voxelDims3D <- c(voxelDims, rep(0,max(0,3-nDims)))[1:3]
     
     spatialUnitCode <- packBits(intToBits(from@xyzt_units) & intToBits(7), "integer")
     temporalUnitCode <- packBits(intToBits(from@xyzt_units) & intToBits(24), "integer")
@@ -254,20 +266,19 @@ setAs("nifti", "MriImage", function (from) {
     
     if (from@qform_code > 0)
     {
-        if (!equivalent(c(from@quatern_b,from@quatern_c,from@quatern_d), c(0,1,0)))
-            report(OL$Error, "Only images using the LAS orientation convention can be converted at present")
-        origin <- c(from@qoffset_x, from@qoffset_y, from@qoffset_z)
+        xform <- quaternionToXform(c(from@quatern_b,from@quatern_c,from@quatern_d))
+        xform[1:3,4] <- c(from@qoffset_x, from@qoffset_y, from@qoffset_z)
+        qfactor <- sign(from@pixdim[1] + 0.1)
+        xform[1:3,1:3] <- xform[1:3,1:3] * rep(c(abs(voxelDims3D[1:2]), qfactor*abs(voxelDims[3])), each=3)
     }
     else if (from@sform_code > 0)
-    {
-        if (!equivalent(c(from@srow_x[1:3],from@srow_y[1:3],from@srow_z[1:3]), c(-voxelDims3D[1],0,0,0,voxelDims3D[2],0,0,0,voxelDims3D[3])))
-            report(OL$Error, "Only images using the LAS orientation convention can be converted at present")
-        origin <- c(from@srow_x[4], from@srow_y[4], from@srow_z[4])
-    }
+        xform <- rbind(from@srow_x, from@srow_y, from@srow_z, c(0,0,0,1))
     else
-        origin <- rep(0, 3)
+        xform <- diag(c(-1, 1, 1, 1))
     
-    image <- newMriImageWithData(from@.Data, imageDims=from@dim_[seq_len(nDims)+1], voxelDims=voxelDims, voxelDimUnits=voxelUnit, origin=c(1-origin/voxelDims3D,rep(0,max(0,3-nDims))))
+    origin <- c(1-xform[1:3,4]/voxelDims3D, rep(0,max(0,3-nDims)))
+    
+    image <- MriImage$new(imageDims=from@dim_[seq_len(nDims)+1], voxelDims=voxelDims, voxelDimUnits=voxelUnit, origin=origin, storedXform=xform, reordered=FALSE, data=from@.Data)
     return (image)
 })
 
