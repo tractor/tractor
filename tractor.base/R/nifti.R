@@ -1,22 +1,102 @@
-getDataTypeByNiftiCode <- function (code)
+xformToQuaternion <- function (xformMatrix)
 {
-    typeIndex <- which(.Nifti$datatypes$codes == code)
-    if (length(typeIndex) != 1)
-        return (NULL)
+    if (!is.matrix(xformMatrix) || !equivalent(dim(xform),c(4,4)))
+        report(OL$Error, "The xform must be a 4x4 matrix")
+    
+    offset <- xformMatrix[1:3,4]
+    rotationMatrix <- xformMatrix[1:3,1:3]
+    
+    columnLengths <- apply(rotationMatrix, 2, vectorLength)
+    if (any(columnLengths == 0))
+        report(OL$Error, "The specified xform matrix contains one or more zero-length columns")
+    
+    # Normalise the rotation matrix
+    rotationMatrix <- sapply(1:3, function(i) rotationMatrix[,i] / columnLengths[i])
+    
+    # If the matrix is not orthogonal, find a near orthogonal matrix
+    if (!equivalent(rotationMatrix %*% t(rotationMatrix), diag(3), tolerance=1e-6))
+    {
+        svd <- La.svd(rotationMatrix)
+        rotationMatrix <- svd$u %*% svd$vt
+    }
+    
+    handedness <- sign(det(rotationMatrix))
+    
+    # Compute quaternion parameters (code translated from nifti1_io.c)
+    r <- rotationMatrix
+    a <- diag(r) + 1
+    if (a > 0.5)
+    {
+        a <- 0.5 * sqrt(a)
+        b <- 0.25 * (r[3,2]-r[2,3]) / a
+        c <- 0.25 * (r[1,3]-r[3,1]) / a
+        d <- 0.25 * (r[2,1]-r[1,2]) / a
+        
+        q <- c(a,b,c,d)
+    }
     else
-        return (list(type=.Nifti$datatypes$rTypes[typeIndex], size=.Nifti$datatypes$sizes[typeIndex], isSigned=.Nifti$datatypes$isSigned[typeIndex]))
+    {
+        xd <- 1 + r[1,1] - (r[2,2]+r[3,3])
+        yd <- 1 + r[1,1] - (r[1,1]+r[3,3])
+        zd <- 1 + r[1,1] - (r[1,1]+r[2,2])
+        if (xd > 1)
+        {
+            b <- 0.5 * sqrt(xd)
+            c <- 0.25 * (r[1,2]+r[2,1]) / b
+            d <- 0.25 * (r[1,3]+r[3,1]) / b
+            a <- 0.25 * (r[3,2]-r[2,3]) / b
+        }
+        else if (yd > 1)
+        {
+            c <- 0.5 * sqrt(yd)
+            b <- 0.25 * (r[1,2]+r[2,1]) / c
+            d <- 0.25 * (r[2,3]+r[3,2]) / c
+            a <- 0.25 * (r[1,3]-r[3,1]) / c
+        }
+        else
+        {
+            d <- 0.5 * sqrt(zd)
+            b <- 0.25 * (r[1,3]+r[3,1]) / d
+            c <- 0.25 * (r[2,3]+r[3,2]) / d
+            a <- 0.25 * (r[2,1]-r[1,2]) / d
+        }
+        
+        q <- c(a,b,c,d)
+        if (a < 0)
+            q <- (-q)
+     }
+     
+     return (list(q=q, offset=offset, handedness=handedness))
 }
 
-getNiftiCodeForDataType <- function (datatype)
+quaternionToXform <- function (quaternion)
 {
-    if (length(datatype) == 0)
-        return (NULL)
+    if (length(quaternion) < 3 || length(quaternion) > 4)
+        report(OL$Error, "The quaternion should have length 3 or 4")
+    if (length(quaternion) == 4)
+        quaternion <- quaternion[2:4]
     
-    typeIndex <- which((.Nifti$datatypes$rTypes == datatype$type) & (.Nifti$datatypes$sizes == datatype$size) & (.Nifti$datatypes$isSigned == datatype$isSigned))
-    if (length(typeIndex) != 1)
-        return (NULL)
+    matrix <- diag(4)
+    
+    quaternionSumOfSquares <- sum(quaternion^2)
+    if (equivalent(quaternionSumOfSquares, 1, tolerance=1e-6))
+        q <- c(0, quaternion)
+    else if (quaternionSumOfSquares > 1)
+        report(OL$Error, "Quaternion parameters are invalid")
     else
-        return (.Nifti$datatypes$codes[typeIndex])
+        q <- c(sqrt(1 - quaternionSumOfSquares), quaternion)
+
+    matrix[1:3,1:3] <- c(  q[1]*q[1] +   q[2]*q[2] - q[3]*q[3] - q[4]*q[4],
+                         2*q[2]*q[3] + 2*q[1]*q[4],
+                         2*q[2]*q[4] - 2*q[1]*q[3],
+                         2*q[2]*q[3] - 2*q[1]*q[4],
+                           q[1]*q[1] +   q[3]*q[3] - q[2]*q[2] - q[4]*q[4],
+                         2*q[3]*q[4] + 2*q[1]*q[2],
+                         2*q[2]*q[4] + 2*q[1]*q[3],
+                         2*q[3]*q[4] - 2*q[1]*q[2],
+                           q[1]*q[1] +   q[4]*q[4] - q[3]*q[3] - q[2]*q[2])
+    
+    return (matrix)
 }
 
 hasNiftiMagicString <- function (fileName)
@@ -42,27 +122,9 @@ readNifti <- function (fileNames)
         else if (qformCode > 0)
         {
             report(OL$Debug, "Using qform (code ", qformCode, ") for origin")
-            matrix <- diag(4)
+            matrix <- quaternionToXform(quaternionParams[1:3])
             matrix[1:3,4] <- quaternionParams[4:6]
             
-            quaternionSumOfSquares <- sum(quaternionParams[1:3]^2)
-            if (equivalent(quaternionSumOfSquares, 1, tolerance=1e-6))
-                q <- c(0, quaternionParams[1:3])
-            else if (quaternionSumOfSquares > 1)
-                report(OL$Error, "Quaternion parameters are invalid")
-            else
-                q <- c(sqrt(1 - quaternionSumOfSquares), quaternionParams[1:3])
-
-            matrix[1:3,1:3] <- c(  q[1]*q[1] +   q[2]*q[2] - q[3]*q[3] - q[4]*q[4],
-                                 2*q[2]*q[3] + 2*q[1]*q[4],
-                                 2*q[2]*q[4] - 2*q[1]*q[3],
-                                 2*q[2]*q[3] - 2*q[1]*q[4],
-                                   q[1]*q[1] +   q[3]*q[3] - q[2]*q[2] - q[4]*q[4],
-                                 2*q[3]*q[4] + 2*q[1]*q[2],
-                                 2*q[2]*q[4] + 2*q[1]*q[3],
-                                 2*q[3]*q[4] - 2*q[1]*q[2],
-                                   q[1]*q[1] +   q[4]*q[4] - q[3]*q[3] - q[2]*q[2])
-
             # The qfactor should be stored as 1 or -1, but the NIfTI standard says
             # 0 should be treated as 1; this does that (the 0.1 is arbitrary)
             qfactor <- sign(voxelDims[1] + 0.1)

@@ -40,8 +40,6 @@ export(createNeighbourhoodInfo)
 
 export(newSparseArrayWithData)
 
-export(getDataTypeByNiftiCode)
-export(getNiftiCodeForDataType)
 export(readDicomDirectory)
 export(readImageFile)
 export(writeImageFile)
