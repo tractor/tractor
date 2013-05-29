@@ -8,7 +8,7 @@ findVoxelValues <- function (tract, centre, unvisited, searchNeighbourhood)
     indices <- replace(indices, which(indices < 1 | indices > dims), NA)
     indices <- t(indices)
     
-    voxelValues <- tract$getData()[indices] * unvisited[indices]
+    voxelValues <- tract[indices] * unvisited[indices]
     return (voxelValues)
 }
 
