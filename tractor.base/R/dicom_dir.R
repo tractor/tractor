@@ -394,7 +394,9 @@ readImageParametersFromMetadata <- function (metadata, untileMosaics = TRUE, met
                 rows <- dataRows
                 columns <- dataColumns
             }
+            
             mosaic <- TRUE
+            mosaicDims <- c(metadata$getTagValue(0x0028, 0x0010), metadata$getTagValue(0x0028, 0x0011))
         }
         else
         {
@@ -450,7 +452,6 @@ readImageParametersFromMetadata <- function (metadata, untileMosaics = TRUE, met
             if (mosaic)
             {
                 # Handle Siemens mosaic images, which encapsulate a whole 3D image in a single-frame DICOM file
-                mosaicDims <- c(metadata$getTagValue(0x0028, 0x0010), metadata$getTagValue(0x0028, 0x0011))
                 mosaicGrid <- mosaicDims / dims[1:2]
                 mosaicCellDims <- mosaicDims / mosaicGrid
                 gridColumns <- rep(1:mosaicGrid[2], times=mosaicDims[2], each=mosaicCellDims[1])

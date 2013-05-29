@@ -1,6 +1,6 @@
 xformToQuaternion <- function (xformMatrix)
 {
-    if (!is.matrix(xformMatrix) || !equivalent(dim(xform),c(4,4)))
+    if (!is.matrix(xformMatrix) || !equivalent(dim(xformMatrix),c(4,4)))
         report(OL$Error, "The xform must be a 4x4 matrix")
     
     offset <- xformMatrix[1:3,4]
@@ -16,6 +16,7 @@ xformToQuaternion <- function (xformMatrix)
     # If the matrix is not orthogonal, find a near orthogonal matrix
     if (!equivalent(rotationMatrix %*% t(rotationMatrix), diag(3), tolerance=1e-6))
     {
+        report(OL$Debug, "Rotation matrix is not orthogonal")
         svd <- La.svd(rotationMatrix)
         rotationMatrix <- svd$u %*% svd$vt
     }
@@ -24,7 +25,7 @@ xformToQuaternion <- function (xformMatrix)
     
     # Compute quaternion parameters (code translated from nifti1_io.c)
     r <- rotationMatrix
-    a <- diag(r) + 1
+    a <- sum(diag(r)) + 1
     if (a > 0.5)
     {
         a <- 0.5 * sqrt(a)
@@ -37,8 +38,8 @@ xformToQuaternion <- function (xformMatrix)
     else
     {
         xd <- 1 + r[1,1] - (r[2,2]+r[3,3])
-        yd <- 1 + r[1,1] - (r[1,1]+r[3,3])
-        zd <- 1 + r[1,1] - (r[1,1]+r[2,2])
+        yd <- 1 + r[2,2] - (r[1,1]+r[3,3])
+        zd <- 1 + r[3,3] - (r[1,1]+r[2,2])
         if (xd > 1)
         {
             b <- 0.5 * sqrt(xd)
