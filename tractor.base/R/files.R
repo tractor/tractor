@@ -335,7 +335,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     absRotationMatrix <- abs(rotationMatrix)
     tolerance <- 1e-3 * max(abs(voxelDims[1:min(3,nDims)]))
     
-    # The rotation matrix should have exactly one nonzero element per row and column - if not, warn but try to figure out the closest primary orientation
+    # The rotation matrix should have exactly one nonzero element per row and column
+    # If not, warn but try to figure out the closest primary orientation
     if (!equivalent(rowSums(absRotationMatrix > tolerance), c(1,1,1)) || !equivalent(colSums(absRotationMatrix > tolerance), c(1,1,1)))
     {
         flag(OL$Warning, "The image is stored in a rotated frame of reference")
@@ -367,19 +368,20 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     # Fix signs of voxel dimensions to correspond to LAS
     voxelDims <- abs(voxelDims) * c(-1, rep(1,nDims-1))
         
-    # Figure out which dimensions need to be flipped - we sum by row because the data dimensions have already been permuted
+    # Figure out which dimensions need to be flipped
+    # We sum by row because the data dimensions have already been permuted
     ordering <- round(rowSums(rotationMatrix) / c(abs(voxelDims[1:min(3,nDims)]),rep(1,max(0,3-nDims))))
     ordering <- ordering * c(-1, 1, 1)
-        
+    
     if (nDims == 2)
     {
-        origin <- 1 - ordering[1:2] * round(info$storageMetadata$xformMatrix[1:2,4]/voxelDims[1:2],2)
+        origin <- 1 - ordering[1:2] * (info$storageMetadata$xformMatrix[1:2,4] / voxelDims[1:2])
         origin <- ifelse(ordering[1:2] == c(1,1), origin, dims-origin+1)
     }
     else
     {
         report(OL$Debug, "Image orientation is ", implode(c("I","P","R","","L","A","S")[(1:3)*ordering+4][match(1:3,dimPermutation[1:3])],sep=""))
-        origin <- c(1 - ordering[1:3] * round(info$storageMetadata$xformMatrix[1:3,4]/voxelDims[1:3],2), rep(0,nDims-3))
+        origin <- c(1 - ordering[1:3] * (info$storageMetadata$xformMatrix[1:3,4] / voxelDims[1:3]), rep(0,nDims-3))
         origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], dims[1:3]-origin[1:3]+1)
     }
         

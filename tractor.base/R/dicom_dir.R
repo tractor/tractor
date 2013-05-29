@@ -333,7 +333,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     # Origin is 0 for temporal dimensions
     # For other dimensions, use the image position (which is the centre of the first voxel stored)
     origin <- rep(0, length(dimsToKeep))
-    origin[1:3] <- 1 - ordering[1:3] * round(imagePosition/voxelDims[1:3],2)
+    origin[1:3] <- 1 - ordering[1:3] * (imagePosition / voxelDims[1:3])
     origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], imageDims[1:3]-origin[1:3]+1)
     
     # Create the final image
