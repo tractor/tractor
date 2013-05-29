@@ -379,6 +379,8 @@ newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = 
 {
     if (is.null(data))
         report(OL$Error, "Data may not be NULL")
+    if (is.logical(data))
+        data <- as.integer(data)
     if (!is.numeric(data) && !is(data,"SparseArray"))
         report(OL$Error, "The specified data is not numeric")
     
