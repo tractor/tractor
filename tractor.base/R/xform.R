@@ -46,6 +46,9 @@ xformToQuaternion <- function (xformMatrix)
     r <- extractRotationMatrixFromXform(xformMatrix)
     handedness <- sign(det(r))
     
+    if (handedness < 0)
+        r[,3] <- (-r[,3])
+    
     # Compute quaternion parameters (code translated from nifti1_io.c)
     a <- sum(diag(r)) + 1
     if (a > 0.5)
