@@ -185,7 +185,8 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     
     writeBin(raw(3), connection)
     writeBin(as.integer(unitCode), connection, size=1)
-    writeBin(raw(24), connection)
+    writeBin(as.double(rev(range(image$getData(),na.rm=TRUE))), connection, size=4)
+    writeBin(raw(16), connection)
     writeBin(charToRaw(description), connection, size=1)
     writeBin(raw(24+80-nchar(description)), connection)
     
