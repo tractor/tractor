@@ -329,6 +329,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
             data <- data * slope + intercept
     }
     
+    report(OL$Debug, "Image orientation is ", xformToOrientation(info$storageMetadata$xformMatrix))
+    
     # The origin is world position (0,0,0); the xform is a voxel-to-world affine matrix
     origin <- c(rep(1,min(nDims,3)), rep(0,max(0,nDims-3)))
     if (equivalent(dim(info$storageMetadata$xformMatrix), c(4,4)))
