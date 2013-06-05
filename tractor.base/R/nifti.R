@@ -1,9 +1,8 @@
-xformToQuaternion <- function (xformMatrix)
+extractRotationMatrixFromXform <- function (xformMatrix)
 {
     if (!is.matrix(xformMatrix) || !equivalent(dim(xformMatrix),c(4,4)))
         report(OL$Error, "The xform must be a 4x4 matrix")
     
-    offset <- xformMatrix[1:3,4]
     rotationMatrix <- xformMatrix[1:3,1:3]
     
     columnLengths <- apply(rotationMatrix, 2, vectorLength)
@@ -21,10 +20,20 @@ xformToQuaternion <- function (xformMatrix)
         rotationMatrix <- svd$u %*% svd$vt
     }
     
-    handedness <- sign(det(rotationMatrix))
+    return (rotationMatrix)
+}
+
+xformToQuaternion <- function (xformMatrix)
+{
+    if (!is.matrix(xformMatrix) || !equivalent(dim(xformMatrix),c(4,4)))
+        report(OL$Error, "The xform must be a 4x4 matrix")
+    
+    offset <- xformMatrix[1:3,4]
+    
+    r <- extractRotationMatrixFromXform(xformMatrix)
+    handedness <- sign(det(r))
     
     # Compute quaternion parameters (code translated from nifti1_io.c)
-    r <- rotationMatrix
     a <- sum(diag(r)) + 1
     if (a > 0.5)
     {
