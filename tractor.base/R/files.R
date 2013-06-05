@@ -413,6 +413,9 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
     imageFile <- ensureFileSuffix(fileStem, params$imageSuffix)
     fileNames <- list(fileStem=fileStem, headerFile=headerFile, imageFile=imageFile)
     
+    if (!image$isReordered() && params$format != "Nifti")
+        report(OL$Error, "An unreordered image can only be written to NIfTI format")
+    
     if (params$format == "Analyze")
         writeMriImageToAnalyze(image, fileNames, gzipped=params$gzipped)
     else if (params$format == "Nifti")

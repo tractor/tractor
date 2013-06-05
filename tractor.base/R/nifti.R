@@ -129,7 +129,7 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
     
-    description <- "TractoR NIfTI writer v2.2.0"
+    description <- "TractoR NIfTI writer v2.4.0"
     fileFun <- (if (gzipped) gzfile else file)
     
     datatype <- chooseDataTypeForImage(image, "Nifti")
@@ -146,16 +146,28 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     else
         unitCode <- sum(unitCode)
     
-    origin <- (image$getOrigin() - 1) * abs(image$getVoxelDimensions())
-    if (length(origin) > 3)
-        origin <- origin[1:3]
-    else if (length(origin) < 3)
-        origin <- c(origin, rep(0,3-length(origin)))
-    origin <- ifelse(origin < 0, rep(0,3), origin)
-    origin[2:3] <- -origin[2:3]
-    sformRows <- c(-fullVoxelDims[2], 0, 0, origin[1],
-                    0, fullVoxelDims[3], 0, origin[2],
-                    0, 0, fullVoxelDims[4], origin[3])
+    if (image$isReordered())
+    {
+        origin <- (image$getOrigin() - 1) * abs(image$getVoxelDimensions())
+        if (length(origin) > 3)
+            origin <- origin[1:3]
+        else if (length(origin) < 3)
+            origin <- c(origin, rep(0,3-length(origin)))
+        origin <- ifelse(origin < 0, rep(0,3), origin)
+        origin[2:3] <- -origin[2:3]
+        sformRows <- c(-fullVoxelDims[2], 0, 0, origin[1],
+                        0, fullVoxelDims[3], 0, origin[2],
+                        0, 0, fullVoxelDims[4], origin[3])
+        
+        quaternion <- list(q=c(0,0,1,0), offset=origin, handedness=-1)
+    }
+    else
+    {
+        xform <- image$getStoredXformMatrix()
+        sformRows <- c(xform[1,], xform[2,], xform[3,])
+        quaternion <- xformToQuaternion(xform)
+        fullVoxelDims[1] <- quaternion$handedness
+    }
     
     connection <- fileFun(fileNames$headerFile, "w+b")
     
@@ -182,7 +194,8 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
         writeBin(as.integer(c(0,0)), connection, size=2)
     else
         writeBin(as.integer(c(2,2)), connection, size=2)
-    writeBin(c(0,1,0,origin), connection, size=4)
+    writeBin(quaternion$q[2:4], connection, size=4)
+    writeBin(quaternion$offset, connection, size=4)
     writeBin(sformRows, connection, size=4)
     
     writeBin(raw(16), connection)
