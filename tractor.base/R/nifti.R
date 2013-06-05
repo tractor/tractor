@@ -23,6 +23,19 @@ extractRotationMatrixFromXform <- function (xformMatrix)
     return (rotationMatrix)
 }
 
+xformToOrientation <- function (xformMatrix, string = TRUE)
+{
+    rotationMatrix <- extractRotationMatrixFromXform(xformMatrix)
+    
+    directions <- apply(abs(rotationMatrix) > 0.5, 2, which)
+    directions <- directions * sign(rotationMatrix[cbind(directions,1:3)])
+    
+    if (string)
+        return (implode(c("I","P","L","","R","A","S")[directions+4], sep=""))
+    else
+        return (directions * c(-1,1,1))
+}
+
 xformToQuaternion <- function (xformMatrix)
 {
     if (!is.matrix(xformMatrix) || !equivalent(dim(xformMatrix),c(4,4)))

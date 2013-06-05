@@ -284,7 +284,8 @@ setAs("nifti", "MriImage", function (from) {
 
 .warnIfIndexingUnreorderedImage <- function (image)
 {
-    if (is(image,"MriImage") && !image$isReordered())
+    # The argument is an unreordered image and contains a non-LAS xform
+    if (is(image,"MriImage") && !image$isReordered() && equivalent(dim(image$getStoredXformMatrix()),c(4,4)) && xformToOrientation(image$getStoredXformMatrix()) != "LAS")
         flag(OL$Warning, "Indexing into an image which is not reordered has no consistent meaning")
 }
 
@@ -559,7 +560,7 @@ newMriImageByTrimming <- function (image, clearance = 4)
     invisible (newImage)
 }
 
-reorderImage <- function (image)
+newMriImageByReordering <- function (image)
 {
     # Image is already reordered
     if (image$isReordered())
@@ -576,10 +577,10 @@ reorderImage <- function (image)
     voxelDims <- image$getVoxelDimensions()
     nDims <- image$getDimensionality()
     origin <- image$getOrigin()
-    reordered <- FALSE
     
     # Extract the 3x3 matrix which relates to rotation
     rotationMatrix <- extractRotationMatrixFromXform(xformMatrix)
+    absRotationMatrix <- abs(rotationMatrix)
     tolerance <- 1e-3
     
     # The rotation matrix should have exactly one nonzero element per row and column
@@ -600,9 +601,9 @@ reorderImage <- function (image)
         dimPermutation <- dimPermutation[1:nDims]
     if (!identical(dimPermutation, seq_len(nDims)))
     {
-        reordered <- TRUE
         dims <- dims[dimPermutation]
         voxelDims <- voxelDims[dimPermutation]
+        origin <- origin[dimPermutation]
         
         if (!image$isEmpty())
         {
@@ -626,7 +627,6 @@ reorderImage <- function (image)
     indices <- 1:min(3,nDims)
     if (any(ordering[indices] < 0))
     {
-        reordered <- TRUE
         origin[indices] <- ifelse(ordering[indices] < 0, dims[indices]-origin[indices]+1, origin[indices])
         
         if (!image$isEmpty())
@@ -651,7 +651,7 @@ reorderImage <- function (image)
         }
     }
     
-    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=image$getVoxelUnits(), source=image$getSource(), origin=origin, storedXform=xformMatrix, reordered=reordered, tags=image$getTags(), data=data)
+    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=image$getVoxelUnits(), source=image$getSource(), origin=origin, storedXform=xformMatrix, reordered=TRUE, tags=image$getTags(), data=data)
     
     return (image)
 }
