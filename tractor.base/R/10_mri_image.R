@@ -426,7 +426,7 @@ newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = 
     else
         report(OL$Error, "No information on image dimensions is available")
     
-    defaults <- list(voxelDims=rep(1,nDims), voxelDimUnits="unknown", origin=c(1,1,1,0,0,0,0), tags=list())
+    defaults <- list(voxelDims=rep(1,nDims), voxelDimUnits="unknown", origin=c(1,1,1,0,0,0,0), storedXform=matrix(NA,0,0), reordered=TRUE, tags=list())
     template <- templateImage$serialise()
     params <- list(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, origin=origin, tags=tags)
     params <- params[!is.na(params)]
@@ -434,7 +434,7 @@ newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = 
     composite <- c(params, template, defaults)
     composite <- composite[!duplicated(names(composite))]
     
-    image <- MriImage$new(imageDims=composite$imageDims[1:nDims], voxelDims=composite$voxelDims[1:nDims], voxelDimUnits=composite$voxelDimUnits, origin=composite$origin[1:nDims], tags=composite$tags, data=data)
+    image <- MriImage$new(imageDims=composite$imageDims[1:nDims], voxelDims=composite$voxelDims[1:nDims], voxelDimUnits=composite$voxelDimUnits, origin=composite$origin[1:nDims], storedXform=composite$storedXform, reordered=composite$reordered, tags=composite$tags, data=data)
     invisible (image)
 }
 
