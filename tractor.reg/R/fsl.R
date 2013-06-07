@@ -30,8 +30,8 @@ registerImagesWithFlirt <- function (sourceFileName, targetFileName, targetMaskF
         inputMatrixFile <- ensureFileSuffix(threadSafeTempFile(), "mat")
         if (attr(initAffine, "affineType") == "niftyreg")
         {
-            sourceImage <- readImageFile(sourceFileName)
-            targetImage <- readImageFile(targetFileName)
+            sourceImage <- readImageFile(sourceFileName, metadataOnly=TRUE, reorder=FALSE)
+            targetImage <- readImageFile(targetFileName, metadataOnly=TRUE, reorder=FALSE)
             initAffine <- convertAffine(initAffine, sourceImage, targetImage, "fsl")
         }
         write.table(initAffine, inputMatrixFile, row.names=FALSE, col.names=FALSE)
@@ -49,11 +49,11 @@ registerImagesWithFlirt <- function (sourceFileName, targetFileName, targetMaskF
     report(OL$Info, "FSL-FLIRT registration completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
     
     affine <- as.matrix(read.table(outputMatrixFile))
-    transform <- Transformation$new(sourceImage=readImageFile(sourceFileName,metadataOnly=TRUE), targetImage=readImageFile(targetFileName,metadataOnly=TRUE), affineMatrices=list(affine), controlPointImages=list(), reverseControlPointImages=list(), method="flirt")
+    transform <- Transformation$new(sourceImage=readImageFile(sourceFileName,metadataOnly=TRUE,reorder=FALSE), targetImage=readImageFile(targetFileName,metadataOnly=TRUE,reorder=FALSE), affineMatrices=list(affine), controlPointImages=list(), reverseControlPointImages=list(), method="flirt")
     
     result <- list(transform=transform, transformedImage=NULL, reverseTransformedImage=NULL)
     if (!estimateOnly)
-        result$transformedImage <- readImageFile(outputFileName)
+        result$transformedImage <- readImageFile(outputFileName, reorder=FALSE)
     
     # Tidy up
     if (!is.null(initAffine))

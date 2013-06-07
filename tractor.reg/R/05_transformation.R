@@ -97,15 +97,15 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
             result <- list(transform=transform, transformedImage=transformImage(transform,finalInterpolation=finalInterpolation,...))
     }
     else if (method == "niftyreg")
-        result <- registerImagesWithNiftyreg(getImageAsObject(sourceImage), getImageAsObject(targetImage), targetMask=getImageAsObject(targetMask), types=types, affineDof=affineDof, estimateOnly=estimateOnly, finalInterpolation=finalInterpolation, ...)
+        result <- registerImagesWithNiftyreg(getImageAsObject(sourceImage,reorder=FALSE), getImageAsObject(targetImage,reorder=FALSE), targetMask=getImageAsObject(targetMask,reorder=FALSE), types=types, affineDof=affineDof, estimateOnly=estimateOnly, finalInterpolation=finalInterpolation, ...)
     else if (method == "flirt")
     {
         if (any(c("nonlinear","reverse-nonlinear") %in% types))
             report(OL$Error, "FSL-FLIRT does not perform nonlinear registration")
         
-        sourceFileName <- getImageAsFileName(sourceImage, warnIfNotLas=TRUE)
-        targetFileName <- getImageAsFileName(targetImage, warnIfNotLas=TRUE)
-        targetMaskFileName <- getImageAsFileName(targetMask, warnIfNotLas=TRUE)
+        sourceFileName <- getImageAsFileName(sourceImage)
+        targetFileName <- getImageAsFileName(targetImage)
+        targetMaskFileName <- getImageAsFileName(targetMask)
         
         result <- registerImagesWithFlirt(sourceFileName, targetFileName, targetMaskFileName=targetMaskFileName, affineDof=affineDof, estimateOnly=estimateOnly, finalInterpolation=finalInterpolation, ...)
     }
