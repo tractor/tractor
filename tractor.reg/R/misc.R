@@ -3,7 +3,7 @@ isTemporaryFile <- function (fileName)
     return (regexpr(tempdir(), fileName, fixed=TRUE) == 1)
 }
 
-getImageAsFileName <- function (image, allowNull = TRUE)
+getImageAsFileName <- function (image, allowNull = FALSE)
 {
     if (is.null(image))
     {
@@ -29,7 +29,7 @@ getImageAsFileName <- function (image, allowNull = TRUE)
         report(OL$Error, "Specified image does not seem to be valid")
 }
 
-getImageAsObject <- function (image, ..., allowNull = TRUE)
+getImageAsObject <- function (image, ..., allowNull = FALSE)
 {
     if (is.null(image))
     {
