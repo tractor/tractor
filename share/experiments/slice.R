@@ -26,10 +26,10 @@ runExperiment <- function ()
             report(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
     }
     
-    point <- round(c(x,y,z))
+    point <- c(x,y,z)
     nas <- is.na(point)
     point[nas] <- 1
-    point <- changePointType(point, image, "r", pointType)
+    point <- round(changePointType(point, image, "r", pointType))
     point[nas] <- NA
     
     createSliceGraphic(image, point[1], point[2], point[3], device="png", file=outputFile, windowLimits=windowLimits)
