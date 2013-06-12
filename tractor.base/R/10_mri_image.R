@@ -51,6 +51,8 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         if (is.null(data))
             return (NA)
         
+        .warnIfIndexingUnreorderedImage(.self)
+        
         dim <- getDimensionality()
         loc <- resolveVector(len=dim, ...)
         if (is.null(loc) || (length(...) != dim))
@@ -78,6 +80,8 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getNonzeroIndices = function (array = TRUE, positiveOnly = FALSE)
     {
+        .warnIfIndexingUnreorderedImage(.self)
+        
         if (.self$isEmpty())
             report(OL$Error, "The image contains no data")
         else if (.self$isSparse())
@@ -485,6 +489,8 @@ extractDataFromMriImage <- function (image, dim, loc)
         report(OL$Error, "The dimensionality of the specified image is too low")
     if (!(loc %in% 1:(image$getDimensions()[dim])))
         report(OL$Error, "The specified location is out of bounds")
+    
+    .warnIfIndexingUnreorderedImage(image)
     
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
     if (image$isSparse())
