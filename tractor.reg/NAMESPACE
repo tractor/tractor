@@ -4,6 +4,10 @@ import(RNiftyReg)
 
 importFrom(oro.nifti, nifti, is.nifti, as.nifti, convert.datatype, convert.bitpix)
 
+exportClasses(Transformation)
+
+S3method(plot, Transformation)
+
 exportPattern("^[^\\.]")
 export(transformVoxelToWorld)
 export(transformWorldToVoxel)

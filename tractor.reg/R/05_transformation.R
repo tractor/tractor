@@ -60,6 +60,106 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     }
 ))
 
+plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, sourceImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, ...)
+{
+    reorderPoints <- function (points, image)
+    {
+        xform <- image$getStoredXformMatrix()
+        if (!is.matrix(xform) || !equivalent(dim(xform),c(4,4)))
+            return (points)
+        
+        orientation <- tractor.base:::xformToOrientation(xform, string=FALSE)
+        dimPermutation <- match(1:3, abs(orientation))
+        points <- points[,dimPermutation,drop=FALSE]
+        
+        ordering <- orientation[dimPermutation]
+        if (any(ordering < 0))
+        {
+            dims <- image$getDimensions()[1:3]
+            for (i in which(ordering < 0))
+                points[,i] <- dims[i] - points[,i] + 1
+        }
+        
+        return (points)
+    }
+    
+    loc <- c(xLoc, yLoc, zLoc)
+    throughPlaneAxis <- which(!is.na(loc))
+    if (length(throughPlaneAxis) != 1)
+        report(OL$Error, "Exactly one element of the location should be specified")
+    inPlaneAxes <- setdiff(1:3, throughPlaneAxis)
+    
+    availableTypes <- x$getTypes()
+    affine <- controlPointImage <- NULL
+    
+    if (is.null(sourceImage))
+    {
+        if (reverse)
+            sourceImage <- x$getTargetImage()
+        else
+            sourceImage <- x$getSourceImage()
+        
+        if (sourceImage$isEmpty())
+        {
+            if (sourceImage$isInternal())
+                report(OL$Error, "Original image source is unknown - a source image must be provided")
+            sourceImage <- readImageFile(sourceImage$getSource())
+        }
+        else if (!sourceImage$isReordered())
+            sourceImage <- newMriImageByReordering(sourceImage)
+    }
+    
+    if (preferAffine && ("affine" %in% availableTypes))
+        affine <- x$getAffineMatrix(index)
+    else if (reverse && ("reverse-nonlinear" %in% availableTypes))
+        controlPointImage <- x$getReverseControlPointImage(index)
+    else if (!reverse && ("nonlinear" %in% availableTypes))
+        controlPointImage <- x$getControlPointImage(index)
+    else if ("affine" %in% availableTypes)
+        affine <- x$getAffineMatrix(index)
+    else
+        report(OL$Error, "The specified Transformation object does not contain the necessary information")
+    
+    if (!is.null(affine) && reverse)
+        affine <- invertAffine(affine)
+    
+    # Calculate the deformation field
+    if (reverse)
+        deformationField <- getDeformationField(x$getSourceImage(), affine=affine, controlPointImage=controlPointImage, jacobian=TRUE)
+    else
+        deformationField <- getDeformationField(x$getTargetImage(), affine=affine, controlPointImage=controlPointImage, jacobian=TRUE)
+    
+    # Find the requested slice of the Jacobian map and deformation field
+    jacobian <- extractDataFromMriImage(newMriImageByReordering(as(deformationField$jacobian,"MriImage")), throughPlaneAxis, loc[throughPlaneAxis])
+    field <- extractDataFromMriImage(newMriImageByReordering(as(deformationField$deformationField,"MriImage")), throughPlaneAxis, loc[throughPlaneAxis])
+    
+    # Remove the last row and column from the data, because NiftyReg seems to calculate it wrongly
+    fieldDims <- dim(field)
+    jacobian <- jacobian[1:(fieldDims[1]-1),1:(fieldDims[2]-1)]
+    field <- field[1:(fieldDims[1]-1),1:(fieldDims[2]-1),,]
+    
+    # Convert the field to voxel positions and find the closest plane (on average) in source space
+    fieldDims <- dim(field)
+    dim(field) <- c(prod(fieldDims[1:2]), fieldDims[3])
+    fieldVoxels <- reorderPoints(transformWorldToVoxel(field,sourceImage$getMetadata()), sourceImage$getMetadata())
+    sourceLoc <- rep(NA, 3)
+    sourceLoc[throughPlaneAxis] <- round(mean(fieldVoxels[,throughPlaneAxis], na.rm=TRUE))
+    fieldVoxels <- fieldVoxels[,inPlaneAxes]
+    
+    # Use the 2.5% trimmed range of the whole Jacobian map to create a colour scale (centred at 1)
+    jacobianTrimmedRange <- quantile(abs(deformationField$jacobian@.Data), c(0.025,0.975), na.rm=TRUE) - 1
+    vizLimit <- max(abs(jacobianTrimmedRange))
+    colourIndices <- 1 + round(99 * ((abs(jacobian)-1) + vizLimit) / (2*vizLimit))
+    colourIndices[colourIndices < 1] <- 1
+    colourIndices[colourIndices > 100] <- 100
+    colours <- paste(getColourScale(4)$colours, "60", sep="")
+    
+    # Create the visualisation
+    createSliceGraphic(sourceImage, sourceLoc[1], sourceLoc[2], sourceLoc[3])
+    width <- sourceImage$getDimensions()[inPlaneAxes] - 1
+    points((fieldVoxels[,1]-1)/width[1], (fieldVoxels[,2]-1)/width[2], pch=3, col=colours[colourIndices])
+}
+
 registerImages <- function (sourceImage, targetImage, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, finalInterpolation = 1, cache = c("auto","read","write","ignore"), file = NULL, ...)
 {
     if (is.null(method))
