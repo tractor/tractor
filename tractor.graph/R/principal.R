@@ -45,12 +45,12 @@ calculatePrincipalGraphsForGraph <- function (graph, nComponents = NULL, loading
     # Calculate residual association matrices after subtracting out higher components
     residualMatrices <- Reduce("-", fullMatrices, init=connectionMatrix, accumulate=TRUE)
     residualMatrices <- residualMatrices[-1]
-    residualGraphs <- lapply(residualMatrices, newGraphFromConnectionMatrix, allVertexNames=graph$getVertexNames())
+    residualGraphs <- lapply(residualMatrices, newGraphFromConnectionMatrix, allVertexNames=graph$getVertexAttributes()$names)
     residualGraphs <- lapply(residualGraphs, function (x) { x$setVertexLocations(graph$getVertexLocations(),graph$getVertexLocationUnit()); x })
     
     verticesToKeep <- abs(eigensystem$vectors) >= loadingThreshold
     matrices <- lapply(1:nComponents, function (i) fullMatrices[[i]][verticesToKeep[,i],verticesToKeep[,i]])
-    componentGraphs <- lapply(matrices, newGraphFromConnectionMatrix, allVertexNames=graph$getVertexNames())
+    componentGraphs <- lapply(matrices, newGraphFromConnectionMatrix, allVertexNames=graph$getVertexAttributes()$names)
     componentGraphs <- lapply(componentGraphs, function (x) { x$setVertexLocations(graph$getVertexLocations(),graph$getVertexLocationUnit()); x })
     
     return (list(eigenvalues=eigensystem$values, eigenvectors=eigensystem$vectors, componentGraphs=componentGraphs, residualGraphs=residualGraphs, scores=NULL))
