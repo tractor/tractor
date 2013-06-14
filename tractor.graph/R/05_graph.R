@@ -324,3 +324,77 @@ newGraphWithEdgeWeightThreshold <- function (graph, threshold, ignoreSign = FALS
     
     return (Graph$new(vertexCount=graph$nVertices(), vertexAttributes=graph$getVertexAttributes(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), edges=graph$getEdges()[toKeep,,drop=FALSE], edgeAttributes=edgeAttributes, edgeWeights=edgeWeights[toKeep], directed=graph$isDirected()))
 }
+
+calculateMetricsForGraph <- function (graph, metrics = c("density","msp","mcc","globaleff","localeff"))
+{
+    efficiency <- function (graph, type = c("global","local"))
+    {
+        require("igraph")
+        type <- match.arg(type)
+        
+        v <- graph$getConnectedVertices()
+        if (length(v) < 2)
+        {
+            if (type == "global")
+                return (0)
+            else
+                return (rep(0,length(v)))
+        }
+        
+        graph <- induced.subgraph(as(graph,"igraph"), v)
+        
+        if (type == "global")
+        {
+            sp <- shortest.paths(graph)
+            ge <- mean(1/sp[upper.tri(sp) | lower.tri(sp)])
+            return (ge)
+        }
+        else
+        {
+            # Find neighbourhoods and remove self-connections
+            v <- V(graph)
+            n <- neighborhood(graph, 1, v)
+            n <- lapply(seq_along(n), function(i) setdiff(n[[i]],v[i]))
+    
+            le <- sapply(n, function (cn) {
+                if (length(cn) < 2)
+                    return (0)
+                else
+                {
+                    subgraph <- induced.subgraph(graph, cn)
+                    sp <- shortest.paths(subgraph)
+                    return (mean(1/sp[upper.tri(sp) | lower.tri(sp)]))
+                }
+            })
+            return (le)
+        }
+    }
+    
+    metrics <- match.arg(metrics, several.ok=TRUE)
+    result <- list()
+    
+    for (i in seq_along(metrics))
+    {
+        value <- switch(metrics[i], density={
+            nConnectedVertices <- length(graph$getConnectedVertices())
+            if (graph$isDirected())
+                graph$nEdges() / (nConnectedVertices^2)
+            else
+                graph$nEdges() / (nConnectedVertices*(nConnectedVertices+1)/2)
+        }, msp={
+            require("igraph")
+            average.path.length(as(graph,"igraph"), directed=graph$isDirected())
+        }, mcc={
+            require("igraph")
+            mean(transitivity(as(graph,"igraph"),"local"), na.rm=TRUE)
+        }, globaleff={
+            efficiency(graph, "global")
+        }, localeff={
+            efficiency(graph, "local")
+        })
+        
+        result[[metrics[i]]] <- value
+    }
+    
+    return (result)
+}
