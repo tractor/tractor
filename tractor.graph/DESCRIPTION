@@ -6,7 +6,7 @@ Author: Jon Clayden <jon.clayden+tractor@gmail.com>
 Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
 Depends: R (>= 2.12.1), graphics, grDevices, methods, stats, utils
 Imports: reportr, tractor.base
-Suggests: tractor.session, lattice, igraph
+Suggests: tractor.session, lattice, igraph, GPArotation
 Description: The tractor.graph package provides methods for creating and manipulating graphs based on information derived from medical images.
 Encoding: UTF-8
 LazyLoad: yes
