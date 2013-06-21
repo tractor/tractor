@@ -1,7 +1,19 @@
+.EmptyMatrix <- matrix(NA, nrow=0, ncol=0)
+
+emptyMatrix <- function ()
+{
+    return (.EmptyMatrix)
+}
+
+is.emptyMatrix <- function (object)
+{
+    return (identical(object, .EmptyMatrix))
+}
+
 setClassUnion("MriImageData", c("SparseArray","array","NULL"))
 
 MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",storedXform="matrix",reordered="logical",tags="list",data="MriImageData"), methods=list(
-    initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, storedXform = matrix(NA,0,0), reordered = TRUE, tags = list(), data = NULL, ...)
+    initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, storedXform = emptyMatrix(), reordered = TRUE, tags = list(), data = NULL, ...)
     {
         if (length(tags) != 0 && !all(c("keys","values") %in% names(tags)))
             report(OL$Error, "Tag list must be empty, or else contain \"keys\" and \"values\" components")
@@ -430,7 +442,7 @@ newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = 
     else
         report(OL$Error, "No information on image dimensions is available")
     
-    defaults <- list(voxelDims=rep(1,nDims), voxelDimUnits="unknown", origin=c(1,1,1,0,0,0,0), storedXform=matrix(NA,0,0), reordered=TRUE, tags=list())
+    defaults <- list(voxelDims=rep(1,nDims), voxelDimUnits="unknown", origin=c(1,1,1,0,0,0,0), storedXform=emptyMatrix(), reordered=TRUE, tags=list())
     template <- templateImage$serialise()
     params <- list(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, origin=origin, tags=tags)
     params <- params[!is.na(params)]
