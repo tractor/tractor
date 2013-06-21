@@ -1,5 +1,5 @@
 #@args session directory
-#@desc Run tractography using a mask, as with the "mtrack" experiment, except that each nonzero voxel in the mask will generate a SEPARATE output volume (with CreateVolumes:true) and/or projection image (CreateImages:true). This experiment can therefore generate a very large number of files. With Tracker:tractor the seed points in the mask are taken in groups to avoid memory problems: the number of seeds in each group can be set with the SeedGroupSize option.
+#@desc Run tractography using a mask, as with the "mtrack" experiment, except that each nonzero voxel in the mask will generate a SEPARATE output volume (with CreateVolumes:true) and/or projection image (CreateImages:true). This experiment can therefore generate a very large number of files. The seed points in the mask are taken in groups to avoid memory problems: the number of seeds in each group can be set with the SeedGroupSize option.
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
@@ -13,7 +13,7 @@ runExperiment <- function ()
     seedMaskInStandardSpace <- getConfigVariable("SeedMaskInStandardSpace", FALSE)
     thresholdType <- getConfigVariable("SeedThresholdType", "FA", validValues=c("FA","MD","axialdiff","radialdiff"), deprecated=TRUE)
     thresholdLevel <- getConfigVariable("SeedThresholdLevel", NULL, "numeric", errorIfInvalid=TRUE, deprecated=TRUE)
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"))
+    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     groupSize <- getConfigVariable("SeedGroupSize", 100)
     newThresholdLevel <- getConfigVariable("AnisotropyThreshold", NULL)

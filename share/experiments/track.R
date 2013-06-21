@@ -16,7 +16,7 @@ runExperiment <- function ()
     pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
     isStandardSeed <- getConfigVariable("SeedInMNISpace", FALSE)
     
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"))
+    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     
     useGradientAscent <- getConfigVariable("UseGradientAscent", FALSE)
     thresholdType <- getConfigVariable("GradientAscentThresholdType", "FA", validValues=c("FA","MD","axialdiff","radialdiff"), deprecated=TRUE)

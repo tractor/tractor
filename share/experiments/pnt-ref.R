@@ -14,7 +14,7 @@ runExperiment <- function ()
         report(OL$Error, "Seed point must be given as a single vector in 3D space, comma or space separated")
     
     pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"))
+    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     isStandardSeed <- getConfigVariable("SeedInMNISpace", FALSE)
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     maxAngle <- getConfigVariable("MaximumAngle", NULL, "numeric")

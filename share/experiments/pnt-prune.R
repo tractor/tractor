@@ -11,7 +11,7 @@ runExperiment <- function ()
     sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
     modelName <- getConfigVariable("ModelName", NULL, "character")
     sessionNumbers <- getConfigVariable("SessionNumbers", NULL, "character")
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"))
+    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     
     nSamples <- getConfigVariable("NumberOfSamples", 1000)
     subgroupSize <- getConfigVariable("SubgroupSize", 500)

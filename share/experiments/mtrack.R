@@ -17,7 +17,7 @@ runExperiment <- function ()
     exclusionMasksInStandardSpace <- getConfigVariable("ExclusionMasksInStandardSpace", FALSE)
     terminationMaskFiles <- getConfigVariable("TerminationMaskFiles", NULL, "character", errorIfInvalid=TRUE)
     terminationMasksInStandardSpace <- getConfigVariable("TerminationMasksInStandardSpace", FALSE)
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"))
+    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL)
     

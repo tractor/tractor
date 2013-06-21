@@ -7,7 +7,7 @@ runExperiment <- function ()
 {
     tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
     sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"))
+    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     seedPoint <- getConfigVariable("SeedPoint", NULL, "character")
     seedList <- getConfigVariable("SeedPointList", NULL, "integer")
     pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
