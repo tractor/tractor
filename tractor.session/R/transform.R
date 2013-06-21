@@ -131,3 +131,66 @@ changePointType <- function (points, image, newPointType, oldPointType = NULL)
     
     return (newPoints)
 }
+
+coregisterDataVolumesForSession <- function (session, type, reference = 1, useMask = FALSE, nLevels = 2, ...)
+{
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
+    
+    require("tractor.reg")
+    
+    if (is(reference, "MriImage"))
+        targetImage <- reference
+    else
+        targetImage <- session$getImageByType("rawdata", type, volumes=reference)
+    
+    if (useMask)
+        maskImage <- session$getImageByType("mask", type)
+    else
+        maskImage <- NULL
+    
+    sourceMetadata <- session$getImageByType("rawdata", type, metadataOnly=TRUE)
+    if (sourceMetadata$getDimensionality() != 4)
+        report(OL$Error, "The raw data image is not 4-dimensional")
+    nVolumes <- sourceMetadata$getDimensions()[4]
+    
+    if (length(nLevels) != nVolumes)
+        nLevels <- rep(nLevels, length.out=nVolumes)
+    
+    finalArray <- array(NA, dim=sourceMetadata$getDimensions())
+    transforms <- vector("list", nVolumes)
+    
+    report(OL$Info, "Coregistering data to reference volume...")
+    for (i in seq_len(nVolumes))
+    {
+        report(OL$Verbose, "Reading and registering volume ", i)
+        volume <- session$getImageByType("rawdata", type, volumes=i)
+        result <- registerImages(volume, targetImage, targetMask=maskImage, types="affine", cache="ignore", ..., linearOptions=list(nLevels=nLevels[i]))
+        finalArray[,,,i] <- result$transformedImage$getData()
+        transforms[[i]] <- result$transform
+    }
+    
+    finalImage <- newMriImageFromData(finalArray, sourceMetadata)
+    writeImageFile(finalImage, session$getImageFileNameByType("data",type))
+    
+    transform <- mergeTransformations(transforms, sourceMetadata)
+    transform$serialise(file.path(session$getDirectory(type), "coreg_xfm.Rdata"))
+    
+    return (transform)
+}
+
+getVolumeTransformationForSession <- function (session, type)
+{
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
+    
+    directory <- session$getDirectory(type)
+    transformFileName <- file.path(directory, "coreg_xfm.Rdata")
+    
+    if (file.exists(transformFileName))
+        return (deserialiseReferenceObject(transformFileName))
+    else if (type == "diffusion")
+        return (readEddyCorrectTransformsForSession(session))
+    else
+        report(OL$Error, "Transformation file does not exist for ", type, " data")
+}
