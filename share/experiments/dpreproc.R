@@ -19,6 +19,7 @@ runExperiment <- function ()
     nClusters <- getConfigVariable("KMeansClusters", 2, "integer")
     betIntensityThreshold <- getConfigVariable("BetIntensityThreshold", 0.3)
     betVerticalGradient <- getConfigVariable("BetVerticalGradient", 0)
+    eddyCorrectMethod <- getConfigVariable("EddyCorrectionMethod", "fsl", validValues=c("fsl","niftyreg"))
     
     if ((interactive || statusOnly) && getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
@@ -200,7 +201,15 @@ runExperiment <- function ()
         if (runStages[4] && (!skipCompleted || !stagesComplete[4]))
         {
             refVolume <- as.integer(readLines(file.path(session$getDirectory("diffusion"),"refb0-index.txt")))
-            runEddyCorrectWithSession(session, refVolume)
+            if (eddyCorrectMethod == "fsl")
+                runEddyCorrectWithSession(session, refVolume)
+            else
+            {
+                scheme <- newSimpleDiffusionSchemeFromSession(session)
+                bValues <- scheme$expandComponents()$bValues
+                nLevels <- ifelse(bValues>1500, 3, 2)
+                coregisterDataVolumesForSession(session, "diffusion", refVolume, nLevels, method="niftyreg")
+            }
         }
     }
     
