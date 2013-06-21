@@ -279,3 +279,22 @@ decomposeTransformation <- function (transform)
         return (result)
     }
 }
+
+mergeTransformations <- function (transforms, newSourceImage)
+{
+    if (!is.list(transforms))
+        report(OL$Error, "Transformations must be specified in a list")
+    if (length(transforms) == 0)
+        report(OL$Error, "At least one transformation must be given")
+    
+    methods <- sapply(transforms, function(x) x$getMethod())
+    if (!all(methods == methods[1]))
+        report(OL$Error, "Method must be the same for all transformations")
+    
+    affineMatrices <- do.call("c", lapply(transforms, function(x) x$getAffineMatrix()))
+    controlPointImages <- do.call("c", lapply(transforms, function(x) x$getControlPointImage()))
+    reverseControlPointImages <- do.call("c", lapply(transforms, function(x) x$getReverseControlPointImage()))
+    
+    transform <- Transformation$new(sourceImage=newSourceImage, targetImage=transforms$getTargetImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=methods[1])
+    return (transform)
+}
