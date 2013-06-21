@@ -48,6 +48,34 @@ runEddyCorrectWithSession <- function (session, refVolume)
     file.rename(file.path(session$getDirectory("diffusion"),"data.ecclog"), file.path(targetDir,"data.ecclog"))
 }
 
+readEddyCorrectTransformsForSession <- function (session, index = NULL)
+{
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
+    
+    require("tractor.reg")
+    
+    logFile <- file.path(session$getDirectory("fdt"), "data.ecclog")
+    if (!file.exists(logFile))
+        report(OL$Error, "Eddy current correction log not found")
+    logLines <- readLines(logFile)
+    logLines <- subset(logLines, logLines %~% "^[0-9\\-\\. ]+$")
+    
+    connection <- textConnection(logLines)
+    matrices <- as.matrix(read.table(connection))
+    close(connection)
+    
+    if (is.null(index))
+        index <- seq_len(nrow(matrices) / 4)
+    
+    matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
+    
+    image <- session$getImageByType("refb0", "diffusion", metadataOnly=TRUE)
+    transform <- Transformation$new(sourceImage=image, targetImage=image, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="flirt")
+    
+    invisible (transform)
+}
+
 createFdtFilesForSession <- function (session, overwriteExisting = FALSE)
 {
     targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
