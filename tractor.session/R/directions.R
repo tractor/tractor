@@ -100,7 +100,7 @@ rotateGradientVectorsForSession <- function (session)
     
     require("tractor.reg")
     
-    transform <- readEddyCorrectTransformsForSession(session)
+    transform <- getVolumeTransformationForSession(session, "diffusion")
     decompositions <- decomposeTransformation(transform)
     
     unrotatedScheme <- newSimpleDiffusionSchemeFromSession(session, unrotated=TRUE)

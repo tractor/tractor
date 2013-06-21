@@ -10,8 +10,8 @@ runExperiment <- function ()
     session <- newSessionFromDirectory(Arguments[1])
     index <- as.numeric(Arguments[2])
     
-    transform <- readEddyCorrectTransformsForSession(session, index)
-    decomposition <- decomposeTransformation(transform)[[1]]
+    transform <- getVolumeTransformationForSession(session, "diffusion")
+    decomposition <- decomposeTransformation(transform)[[index]]
     
     report(OL$Info, "Translation (mm): ", implode(round(decomposition$translation,6),", "))
     report(OL$Info, "Scales          : ", implode(round(decomposition$scales,6),", "))

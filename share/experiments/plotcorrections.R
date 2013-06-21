@@ -23,7 +23,7 @@ runExperiment <- function ()
                                       scale=c("X (left-right)","Y (anterior-posterior)","Z (superior-inferior)"),
                                       skew=c("X-Y", "X-Z", "Y-Z"))
     
-        transform <- readEddyCorrectTransformsForSession(session)
+        transform <- getVolumeTransformationForSession(session, "diffusion")
         decomposition <- decomposeTransformation(transform)
         if (currentMode == "rotation")
             values <- sapply(decomposition, function(x) x$angles / pi * 180)
