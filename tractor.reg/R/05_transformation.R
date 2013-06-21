@@ -5,7 +5,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         {
             mat <- affineMatrices
             mat <- lapply(mat, function(m) {
-                attr(m, "affineType") <- ifelse(method=="flirt", "fsl", "niftyreg")
+                attr(m, "affineType") <- method
                 return (m)
             })
             return (mat)
@@ -13,7 +13,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         else
         {
             mat <- affineMatrices[[i]]
-            attr(mat, "affineType") <- ifelse(method=="flirt", "fsl", "niftyreg")
+            attr(mat, "affineType") <- method
             return (mat)
         }
     },
@@ -165,7 +165,7 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
     if (is.null(method))
         method <- "niftyreg"
     else
-        method <- match.arg(method, c("niftyreg","flirt"))
+        method <- match.arg(method, c("niftyreg","fsl"))
     types <- match.arg(types, c("affine","nonlinear","reverse-nonlinear"), several.ok=TRUE)
     cache <- match.arg(cache)
     
@@ -198,7 +198,7 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
     }
     else if (method == "niftyreg")
         result <- registerImagesWithNiftyreg(getImageAsObject(sourceImage,reorder=FALSE), getImageAsObject(targetImage,reorder=FALSE), targetMask=getImageAsObject(targetMask,allowNull=TRUE,reorder=FALSE), types=types, affineDof=affineDof, estimateOnly=estimateOnly, finalInterpolation=finalInterpolation, ...)
-    else if (method == "flirt")
+    else if (method == "fsl")
     {
         if (any(c("nonlinear","reverse-nonlinear") %in% types))
             report(OL$Error, "FSL-FLIRT does not perform nonlinear registration")

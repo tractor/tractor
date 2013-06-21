@@ -1,11 +1,11 @@
 #@args source image file, target image file, [output file]
-#@desc Linearly register a source image to a target image, estimating a transformation between them and optionally producing a transformed output image. NiftyReg (Method:niftyreg) and FSL-FLIRT (Method:flirt) methods are available, although the latter requires FSL to be installed and the "flirt" executable to be on the user's PATH. FSL-FLIRT allows for 12 (affine), 9 (traditional), 7 (global rescale) or 6 (rigid body) degrees of freedom for 3D registration; NiftyReg allows only 12 or 6. The Levels, MaximumIterations and UseBlockPercentage options apply only to NiftyReg. The registration can be initialised from an existing transformation (which will be updated), or from an affine text file.
+#@desc Linearly register a source image to a target image, estimating a transformation between them and optionally producing a transformed output image. NiftyReg (Method:niftyreg) and FSL-FLIRT (Method:fsl) methods are available, although the latter requires FSL to be installed and the "flirt" executable to be on the user's PATH. FSL-FLIRT allows for 12 (affine), 9 (traditional), 7 (global rescale) or 6 (rigid body) degrees of freedom for 3D registration; NiftyReg allows only 12 or 6. The Levels, MaximumIterations and UseBlockPercentage options apply only to NiftyReg. The registration can be initialised from an existing transformation (which will be updated), or from an affine text file.
 
 library(tractor.reg)
 
 runExperiment <- function ()
 {
-    method <- getConfigVariable("Method", "niftyreg", validValues=c("niftyreg","flirt"), errorIfInvalid=TRUE)
+    method <- getConfigVariable("Method", "niftyreg", validValues=c("niftyreg","fsl"), errorIfInvalid=TRUE)
     interpolation <- getConfigVariable("Interpolation", "trilinear", validValues=c("nearestneighbour","trilinear","sinc","spline"))
     initAffineFile <- getConfigVariable("InitialAffineFile", NULL, "character")
     targetMaskFile <- getConfigVariable("TargetMaskFile", NULL, "character")
@@ -51,8 +51,8 @@ runExperiment <- function ()
         initAffine <- RNiftyReg::readAffine(initAffineFile)
         if (is.null(attr(initAffine,"affineType")))
         {
-            report(OL$Warning, "Assuming that stored affine matrix uses the ", ifelse(method=="flirt","FSL","NiftyReg"), " convention")
-            attr(initAffine,"affineType") <- ifelse(method=="flirt","fsl","niftyreg")
+            report(OL$Warning, "Assuming that stored affine matrix uses the ", ifelse(method=="fsl","FSL","NiftyReg"), " convention")
+            attr(initAffine,"affineType") <- method
         }
     }
     
