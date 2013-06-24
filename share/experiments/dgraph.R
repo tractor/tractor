@@ -217,6 +217,7 @@ runExperiment <- function ()
 		brainMaskImg <- newMriImageFromFile(maskName)
 		brainMask <- brainMaskImg$getData()
 		terminationMask <- mergedMask!=0 | brainMask==0
+		terminationMask <- !terminationMask
 		terminationMask <- terminationMask*1
 		terminationMaskMri <- newMriImageWithData( terminationMask,refb0$getMetadata() )
 		terminationMaskMriName <- file.path(diffusionRoiDir,"terminationMask.nii.gz")
@@ -229,7 +230,12 @@ runExperiment <- function ()
     report(OL$Info, "Performing tractography")
     fa <- session$getImageByType("FA")
     mask <- newMriImageByThresholding(fa, 0.2)
-    seeds <- which(mask$getData() > 0, arr.ind=TRUE)
+	if(terminationFlag){
+		seeds <- which(mask$getData() > 0 & terminationMask==0, arr.ind=TRUE)
+	}else 
+	{
+		seeds <- which(mask$getData() > 0 , arr.ind=TRUE)
+	}
     seeds <- seeds + runif(length(seeds), -0.5, 0.5)
     result <- trackWithSession(session, seeds, nSamples=2, requireImage=FALSE, maskName=terminationMaskMriName, requireStreamlines=TRUE, terminateOutsideMask=terminateOutsideMask)
 	if( saveStreamLFlag )
