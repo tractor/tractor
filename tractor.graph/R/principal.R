@@ -27,14 +27,8 @@ calculatePrincipalGraphsForGraph <- function (graph, components = "vertices", lo
     if (any(eigensystem$values < -sqrt(.Machine$double.eps)))
         flag(OL$Warning, "Connection matrix is not positive semidefinite")
     
-    # Rotate the loading matrix if requested
-    loadings <- eigensystem$vectors
-    loadings <- switch(rotation, none=loadings,
-                                 varimax=varimax(loadings,normalize=FALSE)$loadings,
-                                 promax=promax(loadings)$loadings,
-                                 oblimin={ require("GPArotation"); oblimin(loadings)$loadings })
-    
     # Arrange for the eigenvector components to always sum to a positive value
+    loadings <- eigensystem$vectors
     loadings <- apply(loadings, 2, function(x) x * ifelse(sum(x)<0,-1,1))
     
     rownames(loadings) <- graph$getVertexAttributes("names")
@@ -43,7 +37,7 @@ calculatePrincipalGraphsForGraph <- function (graph, components = "vertices", lo
     # Choosing the components to keep and loading threshold can be an interative process
     iteration <- 1
     prevComponents <- 1:nComponents
-    prevLoadingThreshold <- Inf    
+    prevLoadingThreshold <- 0    
     repeat
     {
         if (is.numeric(components))
@@ -94,7 +88,9 @@ calculatePrincipalGraphsForGraph <- function (graph, components = "vertices", lo
         }
         
         # Check for convergence
-        if (is.numeric(loadingThreshold) && is.numeric(components))
+        if (length(components) == 0)
+            report(OL$Error, "No components will be retained")
+        else if (is.numeric(loadingThreshold) && is.numeric(components))
             break
         else
         {
@@ -106,6 +102,12 @@ calculatePrincipalGraphsForGraph <- function (graph, components = "vertices", lo
     
     report(OL$Info, "Retaining component graphs ", implode(components,sep=", ",finalSep=" and "))
     report(OL$Info, "Loading threshold is ", signif(loadingThreshold,3))
+    
+    # Rotate the loading matrix if requested
+    rotatedLoadings <- switch(rotation, none=loadings[,components],
+                                        varimax=varimax(loadings[,components],normalize=FALSE)$loadings,
+                                        promax=promax(loadings[,components])$loadings,
+                                        oblimin={ require("GPArotation"); oblimin(loadings[,components])$loadings })
     
     # Calculate the connection matrices for each component (including ones to be discarded later)
     fullMatrices <- lapply(1:nComponents, function(i) {
@@ -129,7 +131,7 @@ calculatePrincipalGraphsForGraph <- function (graph, components = "vertices", lo
     componentGraphs <- lapply(componentGraphs, function(x) { x$setVertexLocations(graph$getVertexLocations(),graph$getVertexLocationUnit()); x })
     names(componentGraphs) <- paste("PN", components, sep="")
     
-    return (list(eigenvalues=eigensystem$values, eigenvectors=loadings, loadingThreshold=loadingThreshold, edgeWeightThreshold=edgeWeightThreshold, rotation=rotation, components=components, componentGraphs=componentGraphs, residualGraphs=residualGraphs, scores=NULL))
+    return (list(eigenvalues=eigensystem$values, eigenvectors=loadings, loadings=rotatedLoadings, loadingThreshold=loadingThreshold, edgeWeightThreshold=edgeWeightThreshold, rotation=rotation, components=components, componentGraphs=componentGraphs, residualGraphs=residualGraphs, scores=NULL))
 }
 
 printLoadings <- function (loadings, threshold = 0.1)
