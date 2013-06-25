@@ -170,7 +170,7 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
         transforms[[i]] <- result$transform
     }
     
-    finalImage <- newMriImageFromData(finalArray, sourceMetadata)
+    finalImage <- newMriImageWithData(finalArray, sourceMetadata)
     writeImageFile(finalImage, session$getImageFileNameByType("data",type))
     
     transform <- mergeTransformations(transforms, sourceMetadata)

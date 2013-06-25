@@ -295,6 +295,6 @@ mergeTransformations <- function (transforms, newSourceImage)
     controlPointImages <- do.call("c", lapply(transforms, function(x) x$getControlPointImage()))
     reverseControlPointImages <- do.call("c", lapply(transforms, function(x) x$getReverseControlPointImage()))
     
-    transform <- Transformation$new(sourceImage=newSourceImage, targetImage=transforms$getTargetImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=methods[1])
+    transform <- Transformation$new(sourceImage=newSourceImage, targetImage=transforms[[1]]$getTargetImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=methods[1])
     return (transform)
 }
