@@ -505,7 +505,9 @@ extractDataFromMriImage <- function (image, dim, loc)
     .warnIfIndexingUnreorderedImage(image)
     
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
-    if (image$isSparse())
+    if (image$isEmpty())
+        newData <- NULL
+    else if (image$isSparse())
     {
         # This code is faster when working with a sparse array
         newData <- array(0, dim=image$getDimensions()[dimsToKeep])
@@ -528,7 +530,7 @@ newMriImageByExtraction <- function (image, dim, loc)
     newData <- extractDataFromMriImage(image, dim, loc)
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
     
-    image <- newMriImageWithData(newData, image, imageDims=image$getDimensions()[dimsToKeep], voxelDims=image$getVoxelDimensions()[dimsToKeep], origin=image$getOrigin()[dimsToKeep])
+    image <- MriImage$new(imageDims=image$getDimensions()[dimsToKeep], voxelDims=image$getVoxelDimensions()[dimsToKeep], voxelDimUnits=image$getVoxelUnits(), origin=image$getOrigin()[dimsToKeep], storedXform=image$getStoredXformMatrix(), reordered=image$isReordered(), tags=image$getTags(), data=newData)
     return (image)
 }
 

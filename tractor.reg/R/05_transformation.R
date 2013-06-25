@@ -273,7 +273,7 @@ decomposeTransformation <- function (transform)
     {
         targetImageNifti <- as(transform$getTargetImage(), "nifti")
         result <- lapply(seq_len(transform$getSourceImage()$getDimensions()[nSourceDims]), function (i) {
-            currentSourceImage <- as.nifti(extractDataFromMriImage(transform$getSourceImage(),nSourceDims,i), transform$getSourceImage())
+            currentSourceImage <- newMriImageByExtraction(transform$getSourceImage(), nSourceDims, i)
             decomposeAffine(transform$getAffineMatrix(i), currentSourceImage, targetImageNifti)
         })
         return (result)
