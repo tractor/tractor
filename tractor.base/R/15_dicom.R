@@ -75,7 +75,7 @@ print.DicomMetadata <- function (x, descriptions = FALSE, ...)
 getDescriptionForDicomTag <- function (groupRequired, elementRequired, dictionary = NULL)
 {
     if (is.null(dictionary))
-        data("dictionary", envir=environment(NULL))
+        data("dictionary", package="tractor.base", envir=environment(NULL))
     
     dictionaryRow <- subset(dictionary, (dictionary$group==groupRequired & dictionary$element==elementRequired))
     if (nrow(dictionaryRow) == 0)
@@ -102,7 +102,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
     dataOffset <- NULL
     
     if (is.null(dictionary))
-        data("dictionary", envir=environment(NULL))
+        data("dictionary", package="tractor.base", envir=environment(NULL))
     dictionary$type <- as.vector(dictionary$type)
     typeCol <- which(colnames(dictionary) == "type")
     connection <- file(fileName, "rb")
