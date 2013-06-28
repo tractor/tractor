@@ -132,7 +132,7 @@ changePointType <- function (points, image, newPointType, oldPointType = NULL)
     return (newPoints)
 }
 
-coregisterDataVolumesForSession <- function (session, type, reference = 1, useMask = FALSE, nLevels = 2, ...)
+coregisterDataVolumesForSession <- function (session, type, reference = 1, useMask = FALSE, nLevels = 2, options = list(), ...)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
@@ -165,7 +165,7 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
     {
         report(OL$Verbose, "Reading and registering volume ", i)
         volume <- session$getImageByType("rawdata", type, volumes=i)
-        result <- registerImages(volume, targetImage, targetMask=maskImage, types="affine", cache="ignore", ..., linearOptions=list(nLevels=nLevels[i]))
+        result <- registerImages(volume, targetImage, targetMask=maskImage, types="affine", cache="ignore", ..., linearOptions=c(list(nLevels=nLevels[i]),options))
         finalArray[,,,i] <- result$transformedImage$getData()
         transforms[[i]] <- result$transform
     }
