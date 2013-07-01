@@ -28,7 +28,7 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
     storage.mode(seeds) <- "double"
     nSeeds <- nrow(seeds)
     
-    metadata <- newMriImageFromFile(maskName, metadataOnly=TRUE)
+    metadata <- readImageFile(maskName, metadataOnly=TRUE)
     dims <- metadata$getDimensions()
     
     lengths <- sapply(list(avfNames,thetaNames,phiNames), length)

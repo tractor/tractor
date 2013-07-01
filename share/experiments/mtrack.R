@@ -88,14 +88,14 @@ runExperiment <- function ()
         trackingMask <- session$getImageByType("mask", "diffusion")
         for (terminationFile in terminationMaskFiles)
         {
-            terminationMask <- newMriImageFromFile(terminationFile)
+            terminationMask <- readImageFile(terminationFile)
             if (terminationMasksInStandardSpace)
                 terminationMask <- transformImageToSpace(terminationMask, session, "diffusion", oldSpace="mni", reverseRegister=TRUE)
             trackingMask <- newMriImageWithBinaryFunction(trackingMask, terminationMask, function(x,y) ifelse(x>0 & y==0, 1, 0))
         }
         
         trackingMaskFileName <- threadSafeTempFile()
-        writeMriImageToFile(trackingMask, trackingMaskFileName)
+        writeImageFile(trackingMask, trackingMaskFileName)
         terminateOutsideMask <- TRUE
     }
     

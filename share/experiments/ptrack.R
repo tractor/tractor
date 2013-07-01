@@ -53,7 +53,7 @@ runExperiment <- function ()
         brainMask <- session$getImageByType("mask", "diffusion")
         trackingMask <- newMriImageWithBinaryFunction(brainMask, sumOfTargetMasks, function(x,y) ifelse(x>0 & y==0, 1, 0))
         trackingMaskFileName <- threadSafeTempFile()
-        writeMriImageToFile(trackingMask, trackingMaskFileName)
+        writeImageFile(trackingMask, trackingMaskFileName)
     }
     
     streamlineCounts <- matrix(NA, nrow=nrow(seeds), ncol=length(targetNames), dimnames=list(NULL,targetNames))

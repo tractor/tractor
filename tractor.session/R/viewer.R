@@ -33,7 +33,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
     {
         images <- lapply(imageList, function (image) {
             if (is.character(image))
-                return (newMriImageFromFile(image))
+                return (readImageFile(image))
             else if (is(image, "MriImage"))
                 return (image)
             else
@@ -46,8 +46,8 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
             opacity <- rep(opacity, length.out=length(images))
             for (i in seq_along(images))
             {
-                colourScales[[i]]$colours <- rgb(t(col2rgb(colourScales[[i]]$colours)), alpha=round(opacity[i]*255), max=255)
-                colourScales[[i]]$background <- rgb(t(col2rgb(colourScales[[i]]$background)), alpha=round(opacity[i]*255), max=255)
+                colourScales[[i]]$colours <- rgb(t(col2rgb(colourScales[[i]]$colours)), alpha=round(opacity[i]*255), maxColorValue=255)
+                colourScales[[i]]$background <- rgb(t(col2rgb(colourScales[[i]]$background)), alpha=round(opacity[i]*255), maxColorValue=255)
             }
         }
         
@@ -75,8 +75,8 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
                     if (imageInfo$format == "Mgh" || (imageInfo$format == "Nifti" && tractor.base:::readNifti(imageInfo)$storageMetadata$datatype$code > 64))
                     {
                         dir.create(file.path(tempDir, i))
-                        imageLoc <- file.path(tempDir, i, basename(metadata$getSource()))
-                        imageInfo <- writeMriImageToFile(newMriImageFromFile(imageInfo$imageFile), imageLoc, fileType="ANALYZE_GZ")
+                        imageLoc <- file.path(tempDir, i, basename(imageInfo$fileStem))
+                        imageInfo <- writeImageFile(readImageFile(imageInfo$imageFile), imageLoc, fileType="ANALYZE_GZ")
                     }
                 }
             }
@@ -84,7 +84,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
             {
                 dir.create(file.path(tempDir, i))
                 imageLoc <- file.path(tempDir, i, basename(imageList[[i]]$getSource()))
-                imageInfo <- writeMriImageToFile(imageList[[i]], imageLoc, fileType="ANALYZE_GZ")
+                imageInfo <- writeImageFile(imageList[[i]], imageLoc, fileType="ANALYZE_GZ")
             }
             else
                 report(OL$Error, "Images must be specified as MriImage objects or file names")
