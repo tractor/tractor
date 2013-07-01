@@ -1,0 +1,8 @@
+An object of class "Transformation"
+---
+    Registration method : niftyreg
+ Stored transformations : affine, nonlinear
+Source image dimensions : 96 x 96 x 25 voxels
+Source voxel dimensions : 2.5 x 2.5 x 5 mm
+Target image dimensions : 91 x 109 x 91 voxels
+Target voxel dimensions : 2 x 2 x 2 mm
