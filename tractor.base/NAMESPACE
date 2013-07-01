@@ -19,6 +19,9 @@ export(isDeserialisable)
 export(serialiseReferenceObject)
 export(deserialiseReferenceObject)
 
+export(emptyMatrix)
+export(is.emptyMatrix)
+
 export(equivalent)
 export(implode)
 export(printLabelledValues)
