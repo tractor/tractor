@@ -1,0 +1,14 @@
+An object of class "Transformation"
+---
+    Registration method : fsl
+ Stored transformations : affine
+Source image dimensions : 96 x 96 x 25 voxels
+Source voxel dimensions : 2.5 x 2.5 x 5 mm
+Target image dimensions : 91 x 109 x 91 voxels
+Target voxel dimensions : 2 x 2 x 2 mm
+---
+             V1         V2         V3       V4
+[1,]  1.0671300  0.0300202 -0.0086852 -40.5203
+[2,] -0.0268472  0.9846070  0.3491870 -11.9631
+[3,]  0.0252052 -0.2480680  1.1061600  37.4622
+[4,]  0.0000000  0.0000000  0.0000000   1.0000
