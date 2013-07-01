@@ -39,7 +39,7 @@ writeMriImageToCamino <- function (image, fileName, gzipped = FALSE, datatype = 
     fileFun <- (if (gzipped) gzfile else file)
     
     # Every Analyze datatype has a valid Camino equivalent
-    datatype <- chooseDataTypeForImage(image, "Analyze")
+    datatype <- tractor.base:::chooseDataTypeForImage(image, "Analyze")
     typeIndex <- which(.Camino$rTypes == datatype$type & .Camino$sizes == datatype$size & .Camino$isSigned == datatype$isSigned)
     
     data <- image$getData()

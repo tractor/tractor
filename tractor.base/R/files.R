@@ -347,9 +347,9 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     invisible (image)
 }
 
-newMriImageFromFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL)
+newMriImageFromFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
 {
-    readImageFile(fileName, fileType, metadataOnly, volumes, sparse, mask)
+    readImageFile(fileName, fileType, metadataOnly, volumes, sparse, mask, reorder)
 }
 
 writeImageData <- function (image, connection, type, size, endian = .Platform$endian)

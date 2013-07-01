@@ -1,6 +1,6 @@
 import(reportr)
 
-exportClasses(SerialisableObject, SparseArray, MriImageData, MriImage, DicomMetadata)
+exportClasses(SerialisableObject, SparseArray, MriImage, DicomMetadata)
 
 S3method(Math, MriImage)
 S3method(Ops, MriImage)
@@ -66,8 +66,6 @@ export(imageFileExists)
 export(removeImageFilesWithName)
 export(copyImageFiles)
 export(symlinkImageFiles)
-
-export(chooseDataTypeForImage)
 
 export(sortDicomDirectory)
 export(newDicomMetadataFromFile)

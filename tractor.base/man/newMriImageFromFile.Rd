@@ -1,6 +1,7 @@
 \name{newMriImageFromFile}
+\alias{readImageFile}
+\alias{writeImageFile}
 \alias{newMriImageFromFile}
-\alias{newMriImageMetadataFromFile}
 \alias{writeMriImageToFile}
 \alias{identifyImageFileNames}
 \alias{imageFileExists}
@@ -12,9 +13,11 @@
 Functions for reading, writing, locating, copying and removing MRI images stored in NIfTI, Analyze and MGH formats.
 }
 \usage{
-newMriImageFromFile(fileName, fileType = NULL, volumes = NULL, sparse = FALSE, mask = NULL)
-newMriImageMetadataFromFile(fileName, fileType = NULL)
-writeMriImageToFile(image, fileName = NULL, fileType = NA, datatype = NULL, overwrite = TRUE)
+readImageFile(fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
+writeImageFile(image, fileName = NULL, fileType = NA, overwrite = TRUE)
+
+newMriImageFromFile(fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
+writeMriImageToFile(image, fileName = NULL, fileType = NA, overwrite = TRUE)
 
 identifyImageFileNames(fileName, fileType = NULL, errorIfMissing = TRUE)
 imageFileExists(fileName, fileType = NULL)
@@ -26,14 +29,18 @@ symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE)
   \item{fileName, from, to}{File names, with or without appropriate extension.}
   \item{image}{An \code{\linkS4class{MriImage}} object.}
   \item{fileType}{A character vector of length one, giving the file type required or expected. If this option is missing, the file type used for writing images will be taken from the \code{tractorFileType} option. See Details.}
+  \item{metadataOnly}{Logical value: if \code{TRUE}, only metadata are read into the object.}
   \item{volumes}{An optional integer vector specifying a subset of volumes to read (generally to save memory). If given, only the requested volumes in the 4D file will be read.}
   \item{sparse}{Logical value: should the image data be stored in a \code{\linkS4class{SparseArray}} object?}
   \item{mask}{An optional \code{\linkS4class{MriImage}} object representing a mask, outside of which the image to be read should be considered to be zero. This can be used to save memory when only a small part of a large image is of interest. Ignored if \code{sparse} is not \code{TRUE}.}
-  \item{datatype}{A storage data type. See \code{\link{getDataTypeByNiftiCode}}.}
+  \item{reorder}{Logical value: should the image data be reordered to LAS? This is recommended in most circumstances.}
   \item{overwrite}{Logical value: overwrite an existing image file? For \code{writeMriImageToFile}, an error will be raised if there is an existing file and this is set to FALSE.}
   \item{errorIfMissing}{Logical value: raise an error if no suitable files were found?}
   \item{deleteOriginals}{Logical value: if \code{TRUE}, \code{copyImageFiles} performs a move rather than a copy.}
   \item{relative}{Logical value: if \code{TRUE}, the path stored in the symlink will be relative (e.g. \code{"../some_dir/some_image.nii"}) rather than absolute (e.g. \code{"/path/to/some_dir/some_image.nii"}).}
+}
+\note{
+  The functions \code{readImageFile} and \code{writeImageFile} are equivalent to \code{newMriImageFromFile} and \code{writeMriImageToFile}, but preferred for brevity. The latter are likely to be deprecated in a future release.
 }
 \details{
   NIfTI and Analyze are related formats for storing magnetic resonance images. NIfTI is a more recent extension of Analyze, and contains more specific information about, for example, the orientation of the image. Its use is therefore recommended where possible. MGH format is used by the popular image processing package FreeSurfer. These formats use a number of different file extensions, but the details are abstracted away from the user by these functions.
@@ -45,7 +52,7 @@ symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE)
   Since multiple files may be involved, copying, moving or symlinking images is not trivial. \code{copyImageFiles} and \code{symlinkImageFiles} are wrappers around the standard functions \code{\link{file.copy}} and \code{\link{file.symlink}} which handle this complexity.
 }
 \value{
-  \code{newMriImageFromFile} and \code{newMriImageMetadataFromFile} return the appropriate image or metadata object. \code{imageFileExists} returns \code{TRUE} if an existing file with the specified name exists (all file extensions are checked), and \code{FALSE} otherwise. \code{removeImageFilesWithName} returns the result of \code{\link{unlink}} applied to all relevant files. \code{writeMriImageToFile} and \code{identifyImageFileNames} return a list with the following elements, describing the identified or written files:
+  \code{readImageFile} returns an \code{\linkS4class{MriImage}} object. \code{imageFileExists} returns \code{TRUE} if an existing file with the specified name exists (all file extensions are checked), and \code{FALSE} otherwise. \code{removeImageFilesWithName} returns the result of \code{\link{unlink}} applied to all relevant files. \code{writeImageFile} and \code{identifyImageFileNames} return a list with the following elements, describing the identified or written files:
   \item{fileStem}{The file name without extension.}
   \item{headerFile}{The full header file name.}
   \item{imageFile}{The full image file name.}
@@ -58,4 +65,4 @@ Please cite the following reference when using TractoR in your work:
 
 J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A. Clark (2011). TractoR: Magnetic resonance imaging and tractography with R. Journal of Statistical Software 44(8):1-18. \url{http://www.jstatsoft.org/v44/i08/}.
 }
-\seealso{The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}); \code{\linkS4class{MriImage}}, \code{\linkS4class{MriImageMetadata}}, \code{\link{getDataTypeByNiftiCode}} and \code{\link{unlink}}.}
+\seealso{The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}) and \code{\linkS4class{MriImage}}.}

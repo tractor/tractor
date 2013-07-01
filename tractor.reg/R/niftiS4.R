@@ -36,7 +36,7 @@ setAs("MriImage", "nifti", function (from) {
     }
     else
     {
-        datatype <- chooseDataTypeForImage(from, "Nifti")
+        datatype <- tractor.base:::chooseDataTypeForImage(from, "Nifti")
         data <- as(from$getData(), "array")
     }
     

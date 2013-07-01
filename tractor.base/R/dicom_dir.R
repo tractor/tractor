@@ -346,6 +346,11 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     invisible (returnValue)
 }
 
+newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
+{
+    readDicomDirectory(dicomDir, readDiffusionParams, untileMosaics)
+}
+
 readImageParametersFromMetadata <- function (metadata, untileMosaics = TRUE, metadataOnly = FALSE)
 {
     if (metadata$getTagValue(0x0008, 0x0060) != "MR")

@@ -24,6 +24,7 @@ showClass("SerialisableObject")
 \section{Class-Based Methods}{
   \describe{
     \item{\code{serialise(file)}:}{If the \code{file} argument is missing, serialises the object to a list containing the (named) fields of the object, with its \code{"originalClass"} attribute set to the class name of the original object. If the file argument is supplied, this object is saved to the corresponding file name using the standard \code{\link{save}} function.}
+    \item{\code{fields()}:}{Retrieve a character vector describing the fields in the object.}
     \item{\code{methods()}:}{Retrieve a character vector describing the methods available to the object.}
   }
 }

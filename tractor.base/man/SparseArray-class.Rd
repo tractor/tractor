@@ -35,7 +35,7 @@ Using the current ``coordinate list'' storage convention, there is rarely any da
 Indexing with logical or character vectors is currently not supported.
 }
 \seealso{
-\code{\linkS4class{SparseOrDenseArray}} and \code{\link{array}}. The implementation of indexing owes lot to the slam package.
+\code{\link{array}}. The implementation of indexing owes lot to the \code{slam} package.
 }
 \examples{
 showClass("SparseArray")
