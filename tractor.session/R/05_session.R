@@ -56,16 +56,6 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getMap = function (place) { return (mapCache.[[place]]) },
     
-    getObjectDirectory = function (createIfMissing = TRUE)
-    {
-        objectDir <- file.path(getDirectory("root"), "objects")
-        if (createIfMissing && !file.exists(objectDir))
-            dir.create(objectDir, recursive=TRUE)
-        return (objectDir)
-    },
-    
-    getObjectFileName = function (object) { return (file.path(getObjectDirectory(), ensureFileSuffix(object,"Rdata"))) },
-    
     getRegistrationTarget = function (space, ...)  { return (.self$getImageByType(.RegistrationTargets[[space]], space, ...)) },
     
     getRegistrationTargetFileName = function (space) { return (.self$getImageFileNameByType(.RegistrationTargets[[space]], space)) },
@@ -211,7 +201,7 @@ updateSessionHierarchy <- function (session)
         
         createFdtFilesForSession(session)
         
-        objectDirectory <- session$getObjectDirectory(createIfMissing=FALSE)
+        objectDirectory <- file.path(session$getDirectory("root"), "objects")
         if (file.exists(objectDirectory))
             unlink(objectDirectory, recursive=TRUE)
     }
