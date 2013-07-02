@@ -9,7 +9,6 @@ runExperiment <- function ()
     initAffineFile <- getConfigVariable("InitialAffineFile", NULL, "character")
     initControlFile <- getConfigVariable("InitialControlPointFile", NULL, "character")
     targetMaskFile <- getConfigVariable("TargetMaskFile", NULL, "character")
-    degreesOfFreedom <- getConfigVariable("DegreesOfFreedom", 12L, "integer")
     estimateOnly <- getConfigVariable("EstimateOnly", FALSE)
     transformName <- getConfigVariable("TransformationName", NULL, "character")
     
