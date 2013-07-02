@@ -38,7 +38,7 @@
   <td class="tab"><a href="downloads.html">Downloads</a></td>
   <td class="tab"><a href="changelog.html">Changelog</a></td>
   <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
+  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
   </tr>
 </table>
 
@@ -50,7 +50,8 @@
 <p>The TractoR (Tractography with R) project includes R packages for reading, writing and visualising magnetic resonance images stored in Analyze, NIfTI and DICOM file formats (DICOM support is read only). It also contains functions specifically designed for working with diffusion MRI and tractography, including a standard implementation of the neighbourhood tractography approach to white matter tract segmentation. A shell script is also provided to run experiments with TractoR without interacting with R. Using TractoR you can easily</p>
 
 <ul>
-<li>Convert DICOM files from your MR scanner to Analyze/NIfTI format.</li>
+<li>Convert <a href="TractoR-and-DICOM.html">DICOM files</a> from your MR scanner to Analyze/NIfTI format.</li>
+<li>Perform linear and nonlinear <a href="registration.html">image registration</a>.</li>
 <li>Preprocess diffusion MR data and calculate tensor metrics including fractional anisotropy (FA), mean diffusivity (MD), and principal directions (see <a href="diffusion-processing.html">diffusion processing</a>).</li>
 <li>Run probabilistic tractography using single seed points or one or more masks.</li>
 <li>Segment specific tracts in groups automatically using neighbourhood tractography (see <a href="PNT-tutorial.html">PNT tutorial</a> and <a href="HNT-tutorial.html">HNT tutorial</a>).</li>
@@ -58,7 +59,7 @@
 <li>Create graphics to visualise image slices or maximum-intensity projections.</li>
 </ul>
 
-<p>If you use TractoR in your work, please cite <a href="#reference">the reference below</a>. For details of research papers underlying the methods implemented in the package, please see the <a href="references.html">references page</a>. If you would like to hear about new releases and other TractoR-related news, we would suggest joining the <a href="http://groups.google.com/group/tractor-users">users&#39; mailing list</a>. General queries or problems may also be raised there, while bugs and other specific issues may be reported using the <a href="https://github.com/jonclayden/tractor/issues">GitHub issue tracker</a>. Please describe any problem as fully as possible.</p>
+<p>If you use TractoR in your work, please cite <a href="#reference">the reference below</a>. For details of research papers underlying the methods implemented in the package, please see the <a href="references.html">references page</a>. If you would like to hear about new releases and other TractoR-related news, we would suggest joining the <a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">users&#39; mailing list</a>. General queries or problems may also be raised there, while bugs and other specific issues may be reported using the <a href="https://github.com/jonclayden/tractor/issues">GitHub issue tracker</a>. Please describe any problem as fully as possible.</p>
 
 <p>TractoR is developed primarily by <a href="http://www.homepages.ucl.ac.uk/%7Esejjjd2/">Jonathan Clayden</a> and colleagues at <a href="http://www.ucl.ac.uk">University College London</a>, with contributions and collaborations from other groups.</p>
 
@@ -73,6 +74,7 @@
 <li>Users of TractoR 1.x may find the information on <a href="upgrading-to-TractoR-2.html">upgrading to TractoR 2</a> helpful, and an <a href="paper-addendum.html">addendum</a> to the <a href="http://www.jstatsoft.org/v44/i08/">TractoR paper</a> for version 2 is also available.</li>
 <li>There is specific information on <a href="TractoR-for-R-users.html">TractoR for R users</a>, and additional <a href="guidelines-for-contributors.html">detailed information</a> for anyone actually contributing to the project.</li>
 <li>Useful information about TractoR-specific conventions can be found on the aptly-named <a href="conventions.html">conventions</a> page.</li>
+<li>A specific page covers TractoR&#39;s <a href="registration.html">image registration</a> capabilities.</li>
 <li>The <a href="diffusion-processing.html">diffusion processing</a> page covers the processing of diffusion-weighted MR images using TractoR.</li>
 <li>TractoR provides reference implementations of various <a href="http://www.homepages.ucl.ac.uk/%7Esejjjd2/research/#neighbourhood-tractography">neighbourhood tractography</a> methods, both &ldquo;heuristic&rdquo; and &ldquo;probabilistic&rdquo;, for segmenting specific white matter structures. An <a href="HNT-tutorial.html">HNT tutorial</a> and a <a href="PNT-tutorial.html">PNT tutorial</a> using TractoR are available, as well as information on the <a href="reference-tracts.html">reference tracts</a> used by both methods.</li>
 <li>There is a specific page about the <a href="TractoR-and-DICOM.html">facilities in TractoR for handling DICOM files</a> and, importantly, their limitations.</li>

@@ -38,7 +38,7 @@
   <td class="tab"><a href="downloads.html">Downloads</a></td>
   <td class="tab"><a href="changelog.html">Changelog</a></td>
   <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
+  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
   </tr>
 </table>
 
@@ -46,6 +46,40 @@
 <h1>Changelog</h1>
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
+
+<h2 id="240-2013-07-02">2.4.0 (2013-07-02)</h2>
+
+<ul>
+<li>A C/C++ compiler, such as <code>gcc</code>/<code>g++</code>, is now required to install TractoR. A suitable compiler can be installed using an appropriate package manager (<code>aptitude</code>, <code>yum</code>, etc.) on Linux, or with Xcode (from the Mac App Store) on OS X. R handles all the details of actually compiling code.</li>
+<li>TractoR now offers tools for linear and nonlinear image registration, and the entire infrastructure for transforming images and points between different spaces has been totally reworked. A new family of scripts (<code>reg-linear</code>, <code>reg-nonlinear</code>, <code>reg-apply</code> and <code>reg-viz</code>) has been added for direct registration. Implicit registration, whereby points or images are transformed between spaces as part of another operation such as neighbourhood tractography, behaves as before by default, but the new NiftyReg back-end can be used by setting the <code>TRACTOR_REG_METHOD</code> environment variable to <code>niftyreg</code>. The new <code>tractor.reg</code> package supports all registration and transformation, and supporting packages <code>bitops</code>, <code>oro.nifti</code> and <code>RNiftyReg</code> have been added to the TractoR distribution.</li>
+<li>The <code>dpreproc</code> script gains a new <code>EddyCorrectionMethod</code> option, which allows NiftyReg to be used for volume-to-volume coregistration.</li>
+<li>TractoR now uses its own command-line front-end, rather than the standard R interface. This allows for greater flexibility, and removes the need for ugly hacks to get R to behave as required. The main user-visible effect of this change is that error and warning messages will now appear in colour, if supported by your terminal emulator.</li>
+<li>A new <code>console</code> script has been added, which starts an interactive R session using TractoR&#39;s front-end, in a context where all TractoR-related R packages have been loaded.</li>
+<li>The new <code>reshape</code> script can be used to reshape the data in an image.</li>
+<li>The <code>Tracker</code> option is deprecated everywhere it occurs. Now that a compiler is required, the internal tracker should always be available.</li>
+<li>The <code>tractor.native</code> package is now called <code>tractor.track</code>, to more specifically indicate its purpose.</li>
+<li>Calls to scripts whose function is purely informative (<code>dicomtags</code>, <code>imageinfo</code>, <code>view</code>, etc.) are no longer recorded in the &ldquo;tractor-history.log&rdquo; file.</li>
+<li>Further improvements have been made to DICOM processing. Transfer syntaxes, and slope and intercept values, are now respected; and image origins are now extracted from the metadata.</li>
+<li>TractoR R packages can now be installed within the TractoR file hierarchy using <code>make install-local</code>. This can be convenient to avoid permissions issues, or when running multiple versions of TractoR in parallel.</li>
+<li>The <code>platform</code> script now additionally reports the main R package library in use. This will differ between &ldquo;local&rdquo; and &ldquo;nonlocal&rdquo; installs.</li>
+<li>The main <code>tractor</code> program gains a &ldquo;-f&rdquo; option, which can be used to profile the performance of a script. Information on the time spent in each function will be written to a file named &ldquo;(script name).Rprof&rdquo; in the working directory. This is intended for advanced users only.</li>
+<li>The data type of an image file is no longer stored internally, and instead a suitable type is chosen when the image is written to a file. The <code>TypeCode</code> option in the <code>chfiletype</code> script is therefore defunct.</li>
+<li>The <code>cal_max</code> and <code>cal_min</code> fields of a NIfTI image are now written using appropriate values.</li>
+<li>Image data can now be stored without reordering to LAS internally, and writing non-LAS images is supported for NIfTI format (only).</li>
+<li>There have been significant changes to <code>MriImage</code>, one of TractoR&#39;s key internal data structures, but this should only affect those who use TractoR packages from within R.</li>
+<li>X11 should no longer be started as a side effect when a TractoR script is called on Mac OS X. This could cause a delay of several seconds.</li>
+<li>Voxel locations are now rounded after being converted to R indexing, rather than before, in the <code>slice</code> script.</li>
+<li>Handling of sparse images has been improved slightly.</li>
+</ul>
+
+<h2 id="232-2013-05-02">2.3.2 (2013-05-02)</h2>
+
+<ul>
+<li>The origin would sometimes be read incorrectly from MGH-format files. This has been corrected.</li>
+<li>The &ldquo;dti_SSE&rdquo; image created by <code>tensorfit</code> could sometimes contain large numbers of <code>NA</code> values. This has been corrected.</li>
+<li>Empty DICOM tags no longer cause spurious errors.</li>
+<li>The debug-level message describing the orientation of an image being read should now always be accurate.</li>
+</ul>
 
 <h2 id="231-2013-02-12">2.3.1 (2013-02-12)</h2>
 

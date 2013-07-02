@@ -184,6 +184,8 @@ tr {
 td {
     padding: 0px;
     padding-right: 10px;
+    text-align: left;
+    vertical-align: top;
 }
 
 #download-box {

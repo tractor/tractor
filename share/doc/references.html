@@ -38,7 +38,7 @@
   <td class="tab"><a href="downloads.html">Downloads</a></td>
   <td class="tab"><a href="changelog.html">Changelog</a></td>
   <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
+  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
   </tr>
 </table>
 
@@ -47,15 +47,57 @@
 
 <p>This page outlines the relevant papers which should be cited when using various parts of the functionality provided by TractoR.</p>
 
-<ul>
-<li><code>dpreproc</code> (stage 3, with <code>MaskingMethod:bet</code> only): Smith S. (2002). Fast robust automated brain extraction. <em>Human Brain Mapping</em> <strong>17</strong>(3):143-155.</li>
-<li><code>bedpost</code>: Behrens T., Johansen-Berg H., Jbabdi S., Rushworth M. &amp; Woolrich M. (2007). Probabilistic diffusion tractography with multiple fibre orientations: What can we gain? <em>NeuroImage</em> <strong>34</strong>(1):144-155.</li>
-<li><code>track</code>, <code>mtrack</code>, <code>rtrack</code>: Behrens T., Johansen-Berg H., Jbabdi S., Rushworth M. &amp; Woolrich M. (2007). Probabilistic diffusion tractography with multiple fibre orientations: What can we gain? <em>NeuroImage</em> <strong>34</strong>(1):144-155.</li>
-<li><code>hnt-eval</code>, <code>hnt-interpret</code>, <code>hnt-ref</code>, <code>hnt-viz</code>: Clayden J., Bastin M. &amp; Storkey A. (2006). Improved segmentation reproducibility in group tractography using a quantitative tract similarity measure. <em>NeuroImage</em> <strong>33</strong>(2):482-492.</li>
-<li><code>pnt-ref</code>, <code>pnt-train</code>, <code>pnt-eval</code>: Clayden J., Storkey A. &amp; Bastin M. (2007). A probabilistic model-based approach to consistent white matter tract segmentation. <em>IEEE Transactions on Medical Imaging</em> <strong>26</strong>(11):1555–1561.</li>
-<li><code>pnt-em</code>: Clayden J., Storkey A., Muñoz Maniega S. &amp; Bastin M. (2009). Reproducibility of tract segmentation between sessions using an unsupervised modelling-based approach. <em>NeuroImage</em> <strong>45</strong>(2):377-385.</li>
-<li><code>pnt-prune</code>: Clayden J., King M. &amp; Clark C. (2009). Shape modelling for tract selection. In Yang G.-Z., Hawkes D., Rueckert D., Noble A. &amp; Taylor C. (eds), <em>Proceedings of the 12th International Conference on Medical Image Computing and Computer Assisted Intervention</em> (MICCAI). <em>Lecture Notes in Computer Science</em>, vol. 5762, pp. 150-157. Springer-Verlag.</li>
-</ul>
+<table><thead>
+<tr>
+<th>Script name(s)</th>
+<th>Reference(s)</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>dpreproc</code> (stage 3, with <code>MaskingMethod:bet</code> only)</td>
+<td>Smith S. (2002). Fast robust automated brain extraction. <em>Human Brain Mapping</em> <strong>17</strong>(3):143-155.</td>
+</tr>
+<tr>
+<td><code>bedpost</code></td>
+<td>Behrens T., Johansen-Berg H., Jbabdi S., Rushworth M. &amp; Woolrich M. (2007). Probabilistic diffusion tractography with multiple fibre orientations: What can we gain? <em>NeuroImage</em> <strong>34</strong>(1):144-155.</td>
+</tr>
+<tr>
+<td><code>track</code>, <code>mtrack</code>, <code>rtrack</code></td>
+<td>Behrens T., Johansen-Berg H., Jbabdi S., Rushworth M. &amp; Woolrich M. (2007). Probabilistic diffusion tractography with multiple fibre orientations: What can we gain? <em>NeuroImage</em> <strong>34</strong>(1):144-155.</td>
+</tr>
+<tr>
+<td><code>hnt-eval</code>, <code>hnt-interpret</code>, <code>hnt-ref</code>, <code>hnt-viz</code></td>
+<td>Clayden J., Bastin M. &amp; Storkey A. (2006). Improved segmentation reproducibility in group tractography using a quantitative tract similarity measure. <em>NeuroImage</em> <strong>33</strong>(2):482-492.</td>
+</tr>
+<tr>
+<td><code>pnt-ref</code>, <code>pnt-train</code>, <code>pnt-eval</code></td>
+<td>Clayden J., Storkey A. &amp; Bastin M. (2007). A probabilistic model-based approach to consistent white matter tract segmentation. <em>IEEE Transactions on Medical Imaging</em> <strong>26</strong>(11):1555–1561.</td>
+</tr>
+<tr>
+<td><code>pnt-em</code></td>
+<td>Clayden J., Storkey A., Muñoz Maniega S. &amp; Bastin M. (2009). Reproducibility of tract segmentation between sessions using an unsupervised modelling-based approach. <em>NeuroImage</em> <strong>45</strong>(2):377-385.</td>
+</tr>
+<tr>
+<td><code>pnt-prune</code></td>
+<td>Clayden J., King M. &amp; Clark C. (2009). Shape modelling for tract selection. In Yang G.-Z., Hawkes D., Rueckert D., Noble A. &amp; Taylor C. (eds), <em>Proceedings of the 12th International Conference on Medical Image Computing and Computer Assisted Intervention</em> (MICCAI). <em>Lecture Notes in Computer Science</em>, vol. 5762, pp. 150-157. Springer-Verlag.</td>
+</tr>
+<tr>
+<td><code>reg-linear</code> (with <code>Method:fsl</code>)</td>
+<td>Jenkinson M., Bannister P., Brady J. &amp; Smith S. (2002). Improved optimisation for the robust and accurate linear registration and motion correction of brain images. <em>NeuroImage</em> <strong>17</strong>(2):825-841.</td>
+</tr>
+<tr>
+<td><code>reg-linear</code> (with <code>Method:niftyreg</code>)</td>
+<td>Ourselin S., Roche A., Subsol G., Pennec X. &amp; Ayache N. (2000). Reconstructing a 3D structure from serial histological sections. <em>Image and Vision Computing</em> <strong>19</strong>(1-2):25-31.</td>
+</tr>
+<tr>
+<td></td>
+<td>Ourselin S., Stefanescu R. &amp; Pennec X. (2002). Robust registration of multi-modal images: towards real-time clinical applications. <em>Medical Image Computing and Computer-Assisted Intervention</em>. Vol. 2489 of <em>Lecture Notes in Computer Science</em>, pp. 140-147.</td>
+</tr>
+<tr>
+<td><code>reg-nonlinear</code></td>
+<td>Modat M., Ridgway G., Taylor Z., Lehmann M., Barnes J., Hawkes D., Fox N. &amp; Ourselin S. (2010). Fast free-form deformation using graphics processing units. <em>Computer Methods and Programs in Biomedicine</em> <strong>98</strong>(3):278-284.</td>
+</tr>
+</tbody></table>
 
 <p>In addition to these specific references, please cite the general paper on TractoR:</p>
 

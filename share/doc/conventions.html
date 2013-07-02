@@ -38,7 +38,7 @@
   <td class="tab"><a href="downloads.html">Downloads</a></td>
   <td class="tab"><a href="changelog.html">Changelog</a></td>
   <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
+  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
   </tr>
 </table>
 
@@ -49,11 +49,11 @@
 
 <h2 id="sessions">Sessions</h2>
 
-<p>TractoR is designed to work with diffusion MRI data sets, each consisting of a series of magnetic resonance images, potentially including structural, diffusion-weighted and functional images. The package stores all images and other files within a managed file hierarchy called a session. The overall layout of a session directory is shown below.</p>
+<p>TractoR is designed to work with MRI data sets, each consisting of a series of magnetic resonance images, potentially including structural, diffusion-weighted and functional images. The package stores all images and other files within a managed file hierarchy called a session. The overall layout of a session directory is shown below.</p>
 
 <pre><code>session......................top-level session directory
   /tractor...................main managed directory
-    /objects.................serialised R objects relating to this session directory
+    /transforms..............stored transformations between different spaces
     /diffusion...............diffusion-weighted images and their derivatives (e.g. diffusion tensor components)
     /fdt.....................images and other files used by FSL&#39;s diffusion toolbox
     /fdt.bedpostX............images and other files produced by FSL BEDPOSTX
@@ -88,16 +88,15 @@ sse: dti_SSE
 <pre><code>diffusion: /data/subject1_2fibres/tractor/diffusion
 </code></pre>
 
-<p>It should, however, be bourne in mind that this will make the session less portable. The full default map, as of TractoR v2.1.0, is</p>
+<p>It should, however, be bourne in mind that this will make the session less portable. The full default map, as of TractoR v2.4.0, is</p>
 
-<pre><code>diffusion: diffusion
+<pre><code>transforms: transforms
+diffusion: diffusion
 fdt: fdt
 bedpost: fdt.bedpostX
 probtrack: fdt.track
 camino: camino
 </code></pre>
-
-<p>Note that the <code>objects</code> subdirectory cannot be relocated.</p>
 
 <h2 id="point-types">Point types</h2>
 
