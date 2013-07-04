@@ -619,6 +619,24 @@ newStreamlineTractByTrimming <- function (tract, trimLeft, trimRight)
     invisible (newTract)
 }
 
+newStreamlineCollectionTractByMerging <- function (tract1, tract2)
+{
+    if (!is(tract1, "StreamlineCollectionTract"))
+        report(OL$Error, "Tract1 is not a StreamlineCollectionTract object")
+    if (!is(tract2, "StreamlineCollectionTract"))
+        report(OL$Error, "Tract2 is not a StreamlineCollectionTract object")
+	if( !all( tract1$imageMetadata$voxelDims == tract2$imageMetadata$voxelDims ) )
+		report(OL$Error,"Voxel dimensions of the two tracks do not agree.")
+	if( !all( tract1$imageMetadata$imageDims == tract2$imageMetadata$imageDims ) )
+		report(OL$Error,"Image dimensions of the two tracks do not agree.")
+		
+	
+	lenPnts <- tract1$nPoints()
+	
+    newTract <- StreamlineCollectionTract$new(points=rbind(tract1$getPoints(),tract2$getPoints()), seedIndices=c(tract1$seedIndices,(tract2$seedIndices+lenPnts)), startIndices=c(tract1$startIndices,(tract2$startIndices+lenPnts)), metadata=tract1$getMetadata())
+	invisible (newTract)	
+}
+
 writeStreamlineCollectionTractToTrackvis <- function (tract, fileName)
 {
     if (!is(tract, "StreamlineCollectionTract"))
