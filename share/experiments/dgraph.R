@@ -36,6 +36,8 @@ runExperiment <- function ()
 	T1File <- getConfigVariable("T1File", NULL, "character")
 	terminationFlag <- getConfigVariable("terminationFlag", TRUE)
 	saveStreamLFlag <- getConfigVariable("saveStreamLFlag", FALSE)
+	numStrPerSeed <- getConfigVariable("numStrPerSeed",2, "numeric")
+	suffixS <- getConfigVariable(suffixS, "test","character")
 
     if (file.exists(file.path(Sys.getenv("FREESURFER_HOME"), "FreeSurferColorLUT.txt"))){
         lookupTable <- read.table(file.path(Sys.getenv("FREESURFER_HOME"), "FreeSurferColorLUT.txt"))
@@ -49,6 +51,11 @@ runExperiment <- function ()
     
     diffusionDir <- session$getDirectory("diffusion")
     diffusionRoiDir <- session$getDirectory("diffusion-rois", createIfMissing=TRUE)
+	outputDirDebug <- file.path(diffusionRoiDir,"debug")
+	if(saveStreamLFlag){
+		if(!file.exists(outputDirDebug))
+			dir.create(outputDirDebug)
+	}
 
 	freesurferDir <- session$getDirectory("freesurfer")
 	if (!imageFileExists(file.path(freesurferDir, "mri", "rawavg")))
@@ -148,10 +155,6 @@ runExperiment <- function ()
         }
     }	
 
-    # order <- c(seq(1,nRegions,2), seq(2,nRegions,2))
-    # regionLocations <- regionLocations[order,]
-    # regionSizes <- regionSizes[order]
-	
 	#create sub-mask images -- custom parcellation
 	maskImages2 <- list()
 	for (label in parc_labels2){
@@ -216,8 +219,8 @@ runExperiment <- function ()
 		maskName <- session$getImageFileNameByType("mask", "diffusion")
 		brainMaskImg <- newMriImageFromFile(maskName)
 		brainMask <- brainMaskImg$getData()
-		terminationMask <- mergedMask!=0 | brainMask==0
-		terminationMask <- !terminationMask
+		terminationMask <- mergedMask==0 & brainMask==1
+		#terminationMask <- !terminationMask
 		terminationMask <- terminationMask*1
 		terminationMaskMri <- newMriImageWithData( terminationMask,refb0$getMetadata() )
 		terminationMaskMriName <- file.path(diffusionRoiDir,"terminationMask.nii.gz")
@@ -231,15 +234,16 @@ runExperiment <- function ()
     fa <- session$getImageByType("FA")
     mask <- newMriImageByThresholding(fa, 0.2)
 	if(terminationFlag){
-		seeds <- which(mask$getData() > 0 & terminationMask==0, arr.ind=TRUE)
+		seeds <- which((mask$getData() > 0.2 & terminationMask==1), arr.ind=TRUE)
 	}else 
 	{
 		seeds <- which(mask$getData() > 0 , arr.ind=TRUE)
 	}
     seeds <- seeds + runif(length(seeds), -0.5, 0.5)
-    result <- trackWithSession(session, seeds, nSamples=2, requireImage=FALSE, maskName=terminationMaskMriName, requireStreamlines=TRUE, terminateOutsideMask=terminateOutsideMask)
+    #result <- trackWithSession(session, seeds, nSamples=numStrPerSeed, requireImage=FALSE, maskName=terminationMaskMriName, requireStreamlines=TRUE, terminateOutsideMask=terminateOutsideMask)
+    result <- trackWithSession(session, seeds, nSamples=numStrPerSeed, requireImage=FALSE, maskName=terminationMaskMriName, requireStreamlines=TRUE, terminateOutsideMask=terminateOutsideMask)
 	if( saveStreamLFlag )
-		result$streamlines$serialise( file.path(diffusionRoiDir,"streamlines.Rdata") )
+		result$streamlines$serialise( file.path(outputDirDebug,"streamlines.Rdata") )
     
     report(OL$Info, "Finding streamlines passing through each region")
 	matchingIndices <- list()
@@ -248,9 +252,9 @@ runExperiment <- function ()
 		dataM <- array( 0, dim(mergedMask) )
 		indextmp <- which(mergedMask==i)
 		dataM[indextmp] <- i
-		region <- newMriImageWithData( dataM, mergedMaskMriImg$getMetadata()  )
-        matchingIndices[[i]] <-findWaypointHits(result$streamlines, list(region))
-	}	
+		region <- newMriImageWithData( dataM, mergedMaskMriImg$getMetadata() )
+        matchingIndices[[i]] <- findWaypointHits(result$streamlines, list(region))
+	}
     
     report(OL$Info, "Creating connectivity matrix")
     NumStreamsConMatrix <- matrix(0, nrow=nRegions, ncol=nRegions)
@@ -267,59 +271,68 @@ runExperiment <- function ()
 	md <- session$getImageByType("MD")
 	mdVals <- md$getData()
 	mdVals[is.nan(mdVals)] <- 0
+	flag_notPass <- TRUE
     for (i in seq_along(allRegionNames))
     {
         for (j in seq_along(1:i)){
+			if(i==j)
+				next
 			ConStreams <- intersect(matchingIndices[[i]], matchingIndices[[j]])  #streamlines indices that connect two regions
 			lenC <- length(ConStreams) 
+			#print(c(i,j,lenC))
+			#print(lenC)
 			if( lenC==0 )
 				next
-            NumStreamsConMatrix[i,j] <- lenC                     
-			#connectivityMatrix[i,j] <-  lenC / mean(regionSizes[c(i,j)])
-			#print( NumStreamsConMatrix[i,j] )
+            NumStreamsConMatrix[j,i] <- lenC                     
 			startInd <- result$streamlines$startIndices[ConStreams]
 			endInd <- result$streamlines$getEndIndices()[ConStreams]
-			LenStreamsMatrix[i,j] <- mean(endInd-startInd+1)
-			pntstmp <- array(0,c(1,3))
-			for (k in seq_along(ConStreams))
-				pntstmp <- rbind(pntstmp, result$streamlines$points[startInd[k]:endInd[k],])
-			pntstmp <- pntstmp[2:dim(pntstmp)[1],]
+			LenStreamsMatrix[j,i] <- mean(endInd-startInd+1)
+			
+			newTrack <- newStreamlineCollectionTractBySubsetting(result$streamlines,ConStreams)
+			if( saveStreamLFlag && i!=j ){
+				if(flag_notPass){  #initialise
+					totTrack <- newTrack$copy()
+					flag_notPass <- FALSE
+				} else{
+					totTrack <- newStreamlineCollectionTractByMerging(totTrack,newTrack)
+				}
+			}
+			
+			pntstmp <- newTrack$points
 			pntstmp <- round(pntstmp)
-			FAWConMatrix[i,j] <- sum(faVals[pntstmp])
-			FAConMatrix[i,j] <- sum(faVals[unique(pntstmp,by='rows')])
-			MDWConMatrix[i,j] <- sum(mdVals[pntstmp])
-			MDConMatrix[i,j] <- sum(mdVals[unique(pntstmp,by='rows')])
-			NumUniqueVoxs[i,j] <- dim( unique(pntstmp,by='rows') )[1]
-			NumVisVoxs[i,j] <- dim(pntstmp)[1]
-			
-            NumStreamsConMatrix[j,i] <- NumStreamsConMatrix[i,j]          
-			LenStreamsMatrix[j,i] <- LenStreamsMatrix[i,j]
-			FAWConMatrix[j,i] <- FAWConMatrix[i,j]
-			FAConMatrix[j,i] <- FAConMatrix[i,j]
-			MDWConMatrix[j,i] <- MDWConMatrix[i,j]
-			MDConMatrix[j,i] <- MDConMatrix[i,j]
-			NumUniqueVoxs[j,i] <- NumUniqueVoxs[i,j]
-			NumVisVoxs[j,i] <- NumVisVoxs[i,j]
-			#connectivityMatrix[j,i] <- connectivityMatrix[i,j]
-			
+			FAWConMatrix[j,i] <- sum(faVals[pntstmp])
+			FAConMatrix[j,i] <- sum(faVals[unique(pntstmp,by='rows')])
+			MDWConMatrix[j,i] <- sum(mdVals[pntstmp])
+			MDConMatrix[j,i] <- sum(mdVals[unique(pntstmp,by='rows')])
+			NumUniqueVoxs[j,i] <- dim( unique(pntstmp,by='rows') )[1]
+			NumVisVoxs[j,i] <- dim(pntstmp)[1]
+						
 		}  #for (j in seq_along(allRegionNames))
 	}  #for (i in seq_along(allRegionNames))
-    rownames(NumStreamsConMatrix) <- allRegionNames
-    colnames(NumStreamsConMatrix) <- allRegionNames
-    rownames(FAConMatrix) <- allRegionNames
-    colnames(FAConMatrix) <- allRegionNames
-    rownames(FAWConMatrix) <- allRegionNames
-    colnames(FAWConMatrix) <- allRegionNames
-    rownames(MDConMatrix) <- allRegionNames
-    colnames(MDConMatrix) <- allRegionNames
-    rownames(MDWConMatrix) <- allRegionNames
-    colnames(MDWConMatrix) <- allRegionNames
-	rownames(LenStreamsMatrix) <- allRegionNames
-    colnames(LenStreamsMatrix) <- allRegionNames
-    rownames(NumUniqueVoxs) <- allRegionNames
-    colnames(NumUniqueVoxs) <- allRegionNames
-    rownames(NumVisVoxs) <- allRegionNames
-    colnames(NumVisVoxs) <- allRegionNames
+	
+	if( saveStreamLFlag ){
+		maskPath <- file.path(outputDirDebug,"track_masks")
+		if(!file.exists(maskPath))
+			dir.create(maskPath)
+		perm <- unique( as.vector(mergedMask) )
+		numROIs <- length(perm)
+		fileNBase <- paste("streamlinesExtracted_",as.character(numROIs),sep="_") 
+
+		report( OL$Info,"Saving track to Rdata format...")
+		totTrack$serialise( file.path(outputDirDebug, fileNBase) )
+		report( OL$Info,"Saving track to trackvis format..." )
+		writeStreamlineCollectionTractToTrackvis(totTrack, file.path(outputDirDebug, paste(fileNBase,".trk",sep="") ) )		
+		report( OL$Info,"Export masks in nifti format...")
+		for(r in seq_along(perm)){
+			if(perm[r]==0)
+				next
+			roi <- array(0,dim=dim(refb0))
+			ind <- which(mergedMask==perm[r])
+			roi[ind] <- 1
+			newRoiImg <- newMriImageWithData(roi,templateImage=refb0)
+			writeMriImageToFile(newRoiImg,fileName=file.path(maskPath, paste(allRegionNames[perm[r]],".nii.gz",sep="")),fileType="NIFTI_GZ")
+		}		
+	}
 	
     NumStreamsConMatrix[lower.tri(NumStreamsConMatrix,diag=FALSE)] <- NA
 	diag(NumStreamsConMatrix) <- NA
@@ -342,7 +355,7 @@ runExperiment <- function ()
 	graph$setVertexAttributes( c(graph$vertexAttributes,list(NumVoxelsRegion=regionSizes, VoxelDims=VoxelDims)) )
 	graph$setEdgeAttributes( list(FAConMatrix=FAConMatrix[indEdges],FAWConMatrix=FAWConMatrix[indEdges],MDConMatrix=MDConMatrix[indEdges],MDWConMatrix=MDWConMatrix[indEdges],LenStreamsMatrix=LenStreamsMatrix[indEdges],NumUniqueVoxs=NumUniqueVoxs[indEdges],NumVisVoxs=NumVisVoxs[indEdges], NumStreamsConMatrix=NumStreamsConMatrix[indEdges]) )
     graph$setVertexLocations(regionLocations, "mm")
-    graph$serialise("dgraph.Rdata")
+    graph$serialise( paste("dgraph_",suffixS,".Rdata",sep="") )
     
     invisible(NULL)
 }
