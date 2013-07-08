@@ -100,21 +100,18 @@ void parse_arguments (int argc, const char **argv)
     }
     
     // Second pass: sum up the lengths of unflagged arguments
-    current_arg = 1;
-    while (current_arg < argc)
+    for (current_arg = 1; current_arg < argc; current_arg++)
     {
         if (argv[current_arg] != NULL)
-            script_args_len += strlen(argv[current_arg]) + 1;
-        current_arg++;
+            script_args_len += strlen(argv[current_arg]) + 1;   // +1 for the space
     }
     
     if (script_args_len > 0)
     {
-        script_args = (char *) malloc(script_args_len);
+        script_args = (char *) malloc(script_args_len + 1);
     
         // Third pass: copy unflagged arguments into "script_args"
-        current_arg = 1;
-        while (current_arg < argc)
+        for (current_arg = 1; current_arg < argc; current_arg++)
         {
             if (argv[current_arg] != NULL)
             {
@@ -123,7 +120,6 @@ void parse_arguments (int argc, const char **argv)
                 strcpy(script_args + script_args_index, " ");
                 script_args_index++;
             }
-            current_arg++;
         }
         
         script_args[script_args_index-1] = '\0';
