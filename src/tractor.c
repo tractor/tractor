@@ -6,6 +6,7 @@
 #include "tractor.h"
 
 FILE *log_file = NULL;
+char *bootstrap_string = NULL;
 char *script_file = NULL, *working_dir = NULL, *report_file = NULL, *output_level = NULL, *config_file = NULL, *script_args = NULL;
 int parallelisation_factor = 1, profile_performance = 0;
 
@@ -161,13 +162,12 @@ int main (int argc, char **argv)
     return 0;
 }
 
-char * build_bootstrap_string ()
+void build_bootstrap_string ()
 {
     // R prototype is: function (scriptFile, workingDirectory = getwd(), reportFile = NULL, outputLevel = OL$Warning,
     //           configFiles = NULL, configText = NULL, parallelisationFactor = 1, standalone = TRUE, debug = FALSE)
     
     size_t len, offset;
-    char *bootstrap_string;
     const char *fixed_part = "library(utils); library(tractor.utils); bootstrapExperiment(";
     
     // Work out the length of string required
@@ -213,14 +213,11 @@ char * build_bootstrap_string ()
         offset += sprintf(bootstrap_string + offset, ", profile=TRUE");
     
     sprintf(bootstrap_string + offset, ")\n");
-    
-    return bootstrap_string;
 }
 
 int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int add_to_history)
 {
     // Preserved across calls to this function
-    static char *bootstrap_string = NULL;
     static size_t remaining_len = -1;
     static size_t current_offset = 0;
     
@@ -229,7 +226,7 @@ int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int
     // First time: build bootstrap string
     if (remaining_len == -1)
     {
-        bootstrap_string = build_bootstrap_string();
+        build_bootstrap_string();
         remaining_len = strlen(bootstrap_string);
         
         // Print bootstrap string to stdout if running in debug mode
@@ -246,7 +243,6 @@ int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int
         if (remaining_len < buffer_len)
         {
             strcpy((char *) buffer, bootstrap_string + current_offset);
-            free(bootstrap_string);
             remaining_len = 0;
         }
         else
@@ -332,6 +328,8 @@ void tidy_up ()
 {
     if (log_file != NULL)
         fclose(log_file);
+    if (bootstrap_string != NULL)
+        free(bootstrap_string);
     if (script_file != NULL)
         free(script_file);
     if (working_dir != NULL)
