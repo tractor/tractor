@@ -216,10 +216,10 @@ char * build_bootstrap_string ()
 int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int add_to_history)
 {
     // Preserved across calls to this function
+    static char *bootstrap_string = NULL;
     static size_t remaining_len = -1;
     static size_t current_offset = 0;
     
-    char *bootstrap_string;
     int return_value = 1;
     
     // First time: build bootstrap string
@@ -242,6 +242,7 @@ int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int
         if (remaining_len < buffer_len)
         {
             strcpy((char *) buffer, bootstrap_string + current_offset);
+            free(bootstrap_string);
             remaining_len = 0;
         }
         else
