@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h>
 
 #include "tractor.h"
 
@@ -75,6 +74,11 @@ void parse_arguments (int argc, const char **argv)
             if (argv[current_arg+1] != NULL)
             {
                 parallelisation_factor = atoi(argv[current_arg+1]);
+                if (parallelisation_factor < 1 || parallelisation_factor > 99)
+                {
+                    fprintf(stderr, "\x1b[33mParallelisation factor must be between 1 and 99 - ignoring value of %d\x1b[0m\n", parallelisation_factor);
+                    parallelisation_factor = 1;
+                }
                 to_drop = 2;
             }
         }
@@ -183,7 +187,7 @@ char * build_bootstrap_string ()
     if (script_args != NULL)
         len += strlen(script_args) + strlen(", configText=") + 2;
     if (parallelisation_factor > 1)
-        len += ((size_t) ceil(log10(parallelisation_factor))) + strlen(", parallelisationFactor=");
+        len += ((size_t) parallelisation_factor > 9 ? 2 : 1) + strlen(", parallelisationFactor=");
     if (profile_performance == 1)
         len += strlen(", profile=TRUE");
     
