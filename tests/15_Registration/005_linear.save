@@ -6,9 +6,3 @@ Source image dimensions : 96 x 96 x 25 voxels
 Source voxel dimensions : 2.5 x 2.5 x 5 mm
 Target image dimensions : 91 x 109 x 91 voxels
 Target voxel dimensions : 2 x 2 x 2 mm
----
-          [,1]     [,2]      [,3]       [,4]
-[1,]  0.948196 0.017261 -0.022155 -119.77823
-[2,] -0.028032 0.939225 -0.300671  120.40840
-[3,]  0.038499 0.224917  0.811307   55.46689
-[4,]  0.000000 0.000000  0.000000    1.00000
