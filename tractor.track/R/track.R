@@ -75,3 +75,58 @@ trackWithSession <- function (session, x, y = NULL, z = NULL, maskName = NULL, .
     invisible (returnValue)
 }
 
+trackInNeighbourhood <- function (session, x, y = NULL, z = NULL, width = 7, mask = FALSE, weights = NULL, weightThreshold = 1e-3, nSamples = 5000, ...)
+{
+    if (is.list(x))
+        neighbourhoodInfo <- x
+    else
+    {
+        centre <- resolveVector(len=3, x, y, z)
+        neighbourhoodInfo <- createNeighbourhoodInfo(width, centre=centre)
+    }
+    
+    if (mask)
+    {
+        metadata <- session$getImageByType("maskedb0", metadataOnly=TRUE)
+        data <- generateImageDataForShape("block", metadata$getDimensions(), centre=centre, width=width)
+        seedMask <- newMriImageWithData(data, metadata)
+        result <- trackWithSession(session, seedMask, nSamples=nSamples, ...)
+    }
+    else if (!is.null(weights))
+    {
+        if (length(weights) != ncol(neighbourhoodInfo$vectors))
+            report(OL$Error, "Number of weights must match the number of points in the seed neighbourhood")
+        
+        validSeeds <- which(weights >= weightThreshold)
+        nValidSeeds <- length(validSeeds)
+        report(OL$Info, nValidSeeds, " seed point(s) have weights above the threshold of ", weightThreshold)
+        
+        if (nValidSeeds > 0)
+        {
+            metadata <- session$getImageByType("maskedb0", metadataOnly=TRUE)
+            sequence <- match(sort(weights[validSeeds]), weights)
+            seeds <- t(neighbourhoodInfo$vectors[,sequence])
+            result <- trackWithSession(session, seeds, requireImage=FALSE, requireStreamlines=TRUE, nSamples=nSamples, ...)
+            
+            data <- array(0, dim=metadata$getDimensions())
+            for (i in 1:nValidSeeds)
+            {
+                firstStreamline <- nSamples * (i-1) + 1
+                lastStreamline <- i * nSamples
+                streamlinesForSeed <- newStreamlineCollectionTractBySubsetting(result$streamlines, firstStreamline:lastStreamline)
+                imageForSeed <- newMriImageAsVisitationMap(streamlinesForSeed)
+                data <- data + imageForSeed$getData() * weights[sequence[i]]
+            }
+            
+            result$streamlines <- NULL
+            normalisationFactor <- sum(weights[sequence])
+            result$image <- newMriImageWithData(data/normalisationFactor, metadata)
+        }
+        else
+            result <- NULL
+    }
+    else
+        result <- trackWithSession(session, t(neighbourhoodInfo$vectors), nSamples=nSamples, ...)
+    
+    invisible(result)
+}

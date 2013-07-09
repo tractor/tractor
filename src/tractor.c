@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h>
 
 #include "tractor.h"
 
 FILE *log_file = NULL;
+char *bootstrap_string = NULL;
 char *script_file = NULL, *working_dir = NULL, *report_file = NULL, *output_level = NULL, *config_file = NULL, *script_args = NULL;
 int parallelisation_factor = 1, profile_performance = 0;
 
@@ -75,6 +75,11 @@ void parse_arguments (int argc, const char **argv)
             if (argv[current_arg+1] != NULL)
             {
                 parallelisation_factor = atoi(argv[current_arg+1]);
+                if (parallelisation_factor < 1 || parallelisation_factor > 99)
+                {
+                    fprintf(stderr, "\x1b[33mParallelisation factor must be between 1 and 99 - ignoring value of %d\x1b[0m\n", parallelisation_factor);
+                    parallelisation_factor = 1;
+                }
                 to_drop = 2;
             }
         }
@@ -95,21 +100,18 @@ void parse_arguments (int argc, const char **argv)
     }
     
     // Second pass: sum up the lengths of unflagged arguments
-    current_arg = 1;
-    while (current_arg < argc)
+    for (current_arg = 1; current_arg < argc; current_arg++)
     {
         if (argv[current_arg] != NULL)
-            script_args_len += strlen(argv[current_arg]) + 1;
-        current_arg++;
+            script_args_len += strlen(argv[current_arg]) + 1;   // +1 for the space
     }
     
     if (script_args_len > 0)
     {
-        script_args = (char *) malloc(script_args_len);
+        script_args = (char *) malloc(script_args_len + 1);
     
         // Third pass: copy unflagged arguments into "script_args"
-        current_arg = 1;
-        while (current_arg < argc)
+        for (current_arg = 1; current_arg < argc; current_arg++)
         {
             if (argv[current_arg] != NULL)
             {
@@ -118,7 +120,6 @@ void parse_arguments (int argc, const char **argv)
                 strcpy(script_args + script_args_index, " ");
                 script_args_index++;
             }
-            current_arg++;
         }
         
         script_args[script_args_index-1] = '\0';
@@ -157,13 +158,12 @@ int main (int argc, char **argv)
     return 0;
 }
 
-char * build_bootstrap_string ()
+void build_bootstrap_string ()
 {
     // R prototype is: function (scriptFile, workingDirectory = getwd(), reportFile = NULL, outputLevel = OL$Warning,
     //           configFiles = NULL, configText = NULL, parallelisationFactor = 1, standalone = TRUE, debug = FALSE)
     
     size_t len, offset;
-    char *bootstrap_string;
     const char *fixed_part = "library(utils); library(tractor.utils); bootstrapExperiment(";
     
     // Work out the length of string required
@@ -183,7 +183,7 @@ char * build_bootstrap_string ()
     if (script_args != NULL)
         len += strlen(script_args) + strlen(", configText=") + 2;
     if (parallelisation_factor > 1)
-        len += ((size_t) ceil(log10(parallelisation_factor))) + strlen(", parallelisationFactor=");
+        len += ((size_t) parallelisation_factor > 9 ? 2 : 1) + strlen(", parallelisationFactor=");
     if (profile_performance == 1)
         len += strlen(", profile=TRUE");
     
@@ -209,8 +209,6 @@ char * build_bootstrap_string ()
         offset += sprintf(bootstrap_string + offset, ", profile=TRUE");
     
     sprintf(bootstrap_string + offset, ")\n");
-    
-    return bootstrap_string;
 }
 
 int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int add_to_history)
@@ -219,13 +217,12 @@ int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int
     static size_t remaining_len = -1;
     static size_t current_offset = 0;
     
-    char *bootstrap_string;
     int return_value = 1;
     
     // First time: build bootstrap string
     if (remaining_len == -1)
     {
-        bootstrap_string = build_bootstrap_string();
+        build_bootstrap_string();
         remaining_len = strlen(bootstrap_string);
         
         // Print bootstrap string to stdout if running in debug mode
@@ -327,6 +324,8 @@ void tidy_up ()
 {
     if (log_file != NULL)
         fclose(log_file);
+    if (bootstrap_string != NULL)
+        free(bootstrap_string);
     if (script_file != NULL)
         free(script_file);
     if (working_dir != NULL)

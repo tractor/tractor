@@ -13,22 +13,6 @@ FieldTract <- setRefClass("FieldTract", contains="MriImage", fields=list(seed="n
     getSeedPoint = function () { return (seed) }
 ))
 
-newFieldTractFromProbtrack <- function (..., threshold=NA)
-{
-    probtrackResult <- runProbtrackWithSession(..., requireImage=TRUE)
-    if (is.na(threshold))
-        image <- probtrackResult$image
-    else
-    {
-        absoluteThreshold <- threshold * probtrackResult$nSamples
-        thresholdFunction <- function (x) { return (x * (x >= absoluteThreshold)) }
-        image <- newMriImageWithSimpleFunction(probtrackResult$image, thresholdFunction)
-    }
-    
-    tract <- FieldTract$new(drop(probtrackResult$seeds), image)
-    invisible (tract)
-}
-
 newFieldTractFromMriImage <- function (image, seed)
 {
     tract <- FieldTract$new(seed, image)

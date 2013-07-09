@@ -1,5 +1,7 @@
 runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold = 0.2, searchWidth = 7, nSamples = 5000)
 {
+    require("tractor.track")
+    
     if (!is(refTract, "FieldTract"))
         report(OL$Error, "Reference tract must be specified as a FieldTract object")
     if (!is.numeric(seed) || (length(seed) != 3))
@@ -33,11 +35,15 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     reducedRefTract <- createReducedTractInfo(refTract)
     report(OL$Info, "Reference tract contains ", reducedRefTract$nVoxels, " nonzero voxels; length is ", reducedRefTract$length)
     
-    runProbtrackWithSession(session, candidateSeeds[validSeeds,], requireFile=TRUE, nSamples=nSamples)
-    for (d in validSeeds)
+    result <- trackWithSession(session, candidateSeeds[validSeeds,], requireImage=FALSE, requireStreamlines=TRUE, nSamples=nSamples)
+    for (i in seq_along(validSeeds))
     {
-        candidateTract <- newFieldTractFromProbtrack(session, candidateSeeds[d,], expectExists=TRUE, threshold=0.01, nSamples=nSamples)
-        similarities[d] <- calculateSimilarity(reducedRefTract, candidateTract)
+        firstStreamline <- nSamples * (i-1) + 1
+        lastStreamline <- i * nSamples
+        streamlinesForSeed <- newStreamlineCollectionTractBySubsetting(result$streamlines, firstStreamline:lastStreamline)
+        imageForSeed <- newMriImageAsVisitationMap(streamlinesForSeed)
+        candidateTract <- newFieldTractFromMriImage(imageForSeed, candidateSeeds[validSeeds[i],])
+        similarities[validSeeds[i]] <- calculateSimilarity(reducedRefTract, candidateTract)
     }
     
     naiveSimilarity <- similarities[middle]

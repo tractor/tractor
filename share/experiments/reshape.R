@@ -35,7 +35,7 @@ runExperiment <- function ()
             
             dimPermutation <- match(sub("^-","",tolower(request),perl=TRUE), c(letters[24:26],letters[20:23]))
             if (!all(1:nDims %in% dimPermutation))
-                report(OL$Error, "The specified dimension-permuation sequence (\"", request, "\") is invalid")
+                report(OL$Error, "The axis labels ", implode(c(letters[24:26],letters[20:23])[1:nDims],sep=", ",finalSep=" and "), " must all appear in the permutation string")
             
             data <- aperm(data, dimPermutation)
             

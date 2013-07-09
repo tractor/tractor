@@ -26,7 +26,7 @@ void parse_arguments (int argc, const char **argv);
 
 int main (int argc, char **argv);
 
-char * build_bootstrap_string ();
+void build_bootstrap_string ();
 
 int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int add_to_history);
 
