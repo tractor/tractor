@@ -8,5 +8,5 @@ importFrom(tractor.nt, newStreamlineTractMetadataFromImageMetadata, newStreamlin
 importClassesFrom(tractor.session, MriSession)
 importClassesFrom(tractor.nt, StreamlineTractMetadata, StreamlineSetTract, StreamlineCollectionTract)
 
-export(trackWithSession, trackWithImages)
+export(trackWithSession, trackWithImages, trackInNeighbourhood)
 export(findWaypointHits, newStreamlineCollectionTractWithWaypointConstraints)

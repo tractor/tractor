@@ -1,12 +1,10 @@
 #@args session directory, seed point
-#@desc Create a reference tract for use with heuristic neighbourhood tractography.
-#@desc This is a matter of simply running the ProbTrack tractography algorithm with
-#@desc an appropriate session and seed point, and the options are therefore closely
-#@desc related to those of the "track" experiment.
+#@desc Create a reference tract for use with heuristic neighbourhood tractography. This is a matter of simply running tractography with an appropriate session and seed point, and the options are therefore closely related to those of the "track" experiment.
 
 library(tractor.reg)
 library(tractor.session)
 library(tractor.nt)
+library(tractor.track)
 
 runExperiment <- function ()
 {
@@ -27,7 +25,9 @@ runExperiment <- function ()
     else
         seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
     
-    tract <- newFieldTractFromProbtrack(session, seed, nSamples=nSamples, threshold=0.01)
+    trackingResult <- trackWithSession(session, seed, nSamples=nSamples, requireImage=TRUE)
+    image <- newMriImageByThresholding(trackingResult$image, 0.01*nSamples)
+    tract <- newFieldTractFromMriImage(image, seed)
     reference <- newReferenceTractWithTract(tract, session=session, nativeSeed=seed)
     
     writeNTResource(reference, "reference", "hnt", list(tractName=tractName))

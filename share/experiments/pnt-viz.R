@@ -2,6 +2,7 @@
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
+suppressPackageStartupMessages(require(tractor.track))
 
 runExperiment <- function ()
 {
@@ -82,8 +83,8 @@ runExperiment <- function ()
         indices <- match(1:maxSeeds, ranks)
         currentPosteriors[setdiff(1:nPoints,indices)] <- NA
         
-        ptResult <- runProbtrackForNeighbourhood(currentSession, currentSeed, width=searchWidth, weights=currentPosteriors, weightThreshold=minPosterior, nSamples=nSamples, requireImage=TRUE)
-        if (is.null(ptResult))
+        trackingResult <- trackInNeighbourhood(currentSession, currentSeed, width=searchWidth, weights=currentPosteriors, weightThreshold=minPosterior, nSamples=nSamples)
+        if (is.null(trackingResult))
         {
             report(OL$Warning, "No seed points above threshold for session number ", i)
             return (invisible(NULL))
@@ -91,8 +92,8 @@ runExperiment <- function ()
         
         currentTractName <- paste(tractName, "_session", i, sep="")
         if (createVolumes)
-            writeImageFile(ptResult$image, currentTractName)
+            writeImageFile(trackingResult$image, currentTractName)
         if (createImages)
-            writePngsForResult(ptResult, prefix=currentTractName, threshold=vizThreshold, showSeed=showSeed)
+            writePngsForResult(trackingResult, prefix=currentTractName, threshold=vizThreshold, showSeed=showSeed)
     })
 }

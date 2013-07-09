@@ -141,59 +141,6 @@ runProbtrackWithSession <- function (session, x = NULL, y = NULL, z = NULL, mode
     invisible (result)
 }
 
-runProbtrackForNeighbourhood <- function (session, x, y = NULL, z = NULL, width = 7, mask = FALSE, weights = NULL, weightThreshold = 1e-3, nSamples = 5000, ...)
-{
-    if (is.list(x))
-        neighbourhoodInfo <- x
-    else
-    {
-        centre <- resolveVector(len=3, x, y, z)
-        neighbourhoodInfo <- createNeighbourhoodInfo(width, centre=centre)
-    }
-    
-    if (mask)
-    {
-        metadata <- session$getImageByType("maskedb0", metadataOnly=TRUE)
-        data <- generateImageDataForShape("block", metadata$getDimensions(), centre=centre, width=width)
-        seedMask <- newMriImageWithData(data, metadata)
-        result <- runProbtrackWithSession(session, seedMask=seedMask, mode="seedmask", nSamples=nSamples, ...)
-    }
-    else if (!is.null(weights))
-    {
-        if (length(weights) != ncol(neighbourhoodInfo$vectors))
-            report(OL$Error, "Number of weights must match the number of points in the seed neighbourhood")
-        
-        validSeeds <- which(weights >= weightThreshold)
-        nValidSeeds <- length(validSeeds)
-        report(OL$Info, nValidSeeds, " seed point(s) have weights above the threshold of ", weightThreshold)
-        
-        if (nValidSeeds > 0)
-        {
-            metadata <- session$getImageByType("maskedb0", metadataOnly=TRUE)
-            sequence <- match(sort(weights[validSeeds]), weights)
-            seeds <- t(neighbourhoodInfo$vectors[,sequence])
-            runProbtrackWithSession(session, seeds, mode="simple", requireFile=TRUE, nSamples=nSamples)
-            
-            data <- array(0, dim=metadata$getDimensions())
-            for (i in 1:nValidSeeds)
-            {
-                subResult <- runProbtrackWithSession(session, seeds[i,], mode="simple", requireImage=TRUE, nSamples=nSamples)
-                data <- data + subResult$image$getData() * weights[sequence[i]]
-            }
-            
-            result <- subResult
-            normalisationFactor <- sum(weights[sequence])
-            result$image <- newMriImageWithData(data/normalisationFactor, metadata)
-        }
-        else
-            result <- NULL
-    }
-    else
-        result <- runProbtrackWithSession(session, t(neighbourhoodInfo$vectors), mode="simple", nSamples=nSamples, ...)
-    
-    invisible(result)
-}
-
 retrieveProbtrackStreamline <- function (probtrackResult, i)
 {
     m <- as.matrix(read.table(paste(probtrackResult$particlesDir, "/particle", i-1, sep="")))
