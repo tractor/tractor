@@ -146,3 +146,85 @@ printLoadings <- function (loadings, threshold = 0.1)
     order <- do.call("order", c(loadingList,list(decreasing=TRUE)))
     printSparse(loadings[order,])
 }
+
+matchLoadings <- function (newLoadings, refLoadings)
+{
+    if (!is.matrix(newLoadings) || !is.matrix(refLoadings))
+        report(OL$Error, "Loadings should be specified as matrices")
+    if (nrow(newLoadings) != nrow(refLoadings))
+        report(OL$Error, "Lengths of the loading vectors do not match")
+    if (ncol(newLoadings) != ncol(refLoadings))
+        report(OL$Error, "The number of components should be the same in both loading matrices")
+    
+    nComponents <- ncol(newLoadings)
+    
+    newLengths <- apply(newLoadings, 2, vectorLength)
+    refLengths <- apply(refLoadings, 2, vectorLength)
+    
+    componentsLeft <- seq_len(ncol(newLoadings))
+    permutation <- rep(NA, nComponents)
+    finalCosines <- rep(NA, nComponents)
+    for (i in 1:nComponents)
+    {
+        cosines <- sapply(1:ncol(newLoadings), function(j) {
+            if (!any(componentsLeft == j))
+                return (0)
+            else
+                return ((newLoadings[,j] %*% refLoadings[,i]) / (newLengths[j] * refLengths[i]))
+        })
+        
+        maxAbsoluteCosine <- max(abs(cosines))
+        index <- which.max(abs(cosines))
+        if (maxAbsoluteCosine > 0)
+        {
+            permutation[i] <- index
+            finalCosines[i] <- cosines[index]
+            componentsLeft <- setdiff(componentsLeft, index)
+        }
+    }
+    
+    finalLoadings <- newLoadings[,permutation]
+    toNegate <- which(finalCosines < 0)
+    finalLoadings[,toNegate] <- (-finalLoadings[,toNegate])
+    
+    return (structure(finalLoadings, permutation=permutation, cosines=abs(finalCosines)))
+}
+
+bootstrapLoadings <- function (graphs, iterations = 1000, threshold = 0, confidence = 0.95)
+{
+    getLoadings <- function (graphs)
+    {
+        nGraphs <- length(graphs)
+        meanConnectionMatrix <- graphs[[1]]$getConnectionMatrix()
+        for (i in 2:nGraphs)
+            meanConnectionMatrix <- meanConnectionMatrix + graphs[[i]]$getConnectionMatrix()
+        meanConnectionMatrix <- meanConnectionMatrix / nGraphs
+        loadings <- eigen(meanConnectionMatrix)$vectors
+        return (loadings)
+    }
+    
+    if (!is.list(graphs))
+        report(OL$Error, "Graphs must be specified in a list")
+    if (length(graphs) < 2)
+        report(OL$Error, "At least two graphs must be specified")
+    
+    refLoadings <- getLoadings(graphs)
+    allLoadings <- array(NA, dim=c(dim(refLoadings),iterations))
+    
+    for (i in 1:iterations)
+    {
+        sample <- sample(seq_along(graphs), replace=TRUE)
+        allLoadings[,,i] <- matchLoadings(getLoadings(graphs[sample]), refLoadings)
+        
+        if (i %% 100 == 0)
+            report(OL$Verbose, "Done ", i)
+    }
+    
+    quantiles <- c(0,confidence) + (1-confidence)/2
+    limits <- apply(allLoadings, 1:2, quantile, quantiles, na.rm=TRUE, names=FALSE)
+    limits <- aperm(limits, c(2,3,1))
+    
+    significance <- limits[,,1] > threshold | limits[,,2] < (-threshold)
+    
+    return (list(estimate=refLoadings, limits=limits, significance=significance))
+}
