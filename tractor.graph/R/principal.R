@@ -7,101 +7,83 @@ calculatePrincipalGraphsForTable <- function (table, ..., allVertexNames = NULL)
     return(principalGraphs)
 }
 
-calculatePrincipalGraphsForGraph <- function (graph, components = "vertices", loadingThreshold = "complete", rotation = c("none","varimax","promax","oblimin"), edgeWeightThreshold = 0.2, eigenvalueThreshold = NULL)
+calculatePrincipalGraphsForGraphs <- function (graphs, components = "vertices", loadingThreshold = 0.1, iterations = 1, confidence = 0.95, rotation = c("none","varimax","promax","oblimin"), edgeWeightThreshold = 0.2, eigenvalueThreshold = NULL)
 {
-    if (!is(graph, "Graph"))
-        report(OL$Error, "The specified graph is not a valid Graph object")
+    if (is(graphs, "Graph"))
+    {
+        if (iterations > 1)
+        {
+            flag(OL$Warning, "Bootstrapping cannot be performed with only one graph")
+            iterations <- 1
+        }
+        graphs <- list(graphs)
+    }
+    else if (!is.list(graphs))
+        report(OL$Error, "Graphs should be specified in a list")
     
     rotation <- match.arg(rotation)
+    
+    # The "components" option can also be a literal integer vector
     if (is.character(components))
         components <- match.arg(components, c("eigenvalue","vertices"))
-    if (is.character(loadingThreshold))
-        loadingThreshold <- match.arg(loadingThreshold, "complete")
     
-    connectionMatrix <- graph$getConnectionMatrix()
+    nGraphs <- length(graphs)
+    if (nGraphs == 1)
+        connectionMatrix <- graphs[[1]]$getConnectionMatrix()
+    else
+        connectionMatrix <- Reduce("+", lapply(graphs, function(x) x$getConnectionMatrix())) / nGraphs
     
-    eigensystem <- eigen(connectionMatrix, symmetric=!graph$isDirected())
+    eigensystem <- eigen(connectionMatrix)
     nComponents <- length(eigensystem$values)
     
     # Check for substantially negative eigenvalues
     if (any(eigensystem$values < -sqrt(.Machine$double.eps)))
         flag(OL$Warning, "Connection matrix is not positive semidefinite")
     
-    # Arrange for the eigenvector components to always sum to a positive value
-    loadings <- eigensystem$vectors
-    loadings <- apply(loadings, 2, function(x) x * ifelse(sum(x)<0,-1,1))
+    if (iterations > 1)
+    {
+        report(OL$Info, "Bootstrapping loading matrix with threshold ", signif(loadingThreshold,3), " and confidence ", confidence)
+        bootstrapResult <- bootstrapLoadings(graphs, iterations, loadingThreshold, confidence)
+        loadings <- structure(bootstrapResult$estimate, salience=bootstrapResult$significance)
+    }
+    else
+    {
+        report(OL$Info, "Using fixed loading threshold of ", signif(loadingThreshold,3))
+        loadings <- structure(eigensystem$vectors, salience=abs(loadings)>loadingThreshold)
+    }
     
-    rownames(loadings) <- graph$getVertexAttributes("names")
+    # Arrange for the eigenvector components to always sum to a positive value
+    for (i in seq_len(ncol(loadings)))
+        loadings[,i] <- loadings[,i] * ifelse(loadings[,i] < 0, -1, 1)
+    
+    rownames(loadings) <- graphs[[1]]$getVertexAttributes("names")
     colnames(loadings) <- paste("PN", 1:nComponents, sep="")
     
-    # Choosing the components to keep and loading threshold can be an interative process
-    iteration <- 1
-    prevComponents <- 1:nComponents
-    prevLoadingThreshold <- 0    
-    repeat
+    if (is.numeric(components))
+        components <- intersect(components, 1:nComponents)
+    else if (components == "eigenvalue")
     {
-        if (is.numeric(components))
-            components <- intersect(components, 1:nComponents)
-        else if (components == "eigenvalue")
+        # If no eigenvalue threshold is given, choose an "equal share" threshold
+        if (is.null(eigenvalueThreshold))
         {
-            # If no eigenvalue threshold is given, choose an "equal share" threshold
-            if (is.null(eigenvalueThreshold))
-            {
-                contributions <- eigensystem$values / sum(eigensystem$values)
-                components <- which(contributions >= 1/length(contributions))
-            }
-            else
-                components <- which(eigensystem$values >= eigenvalueThreshold)
+            contributions <- eigensystem$values / sum(eigensystem$values)
+            components <- which(contributions >= 1/length(contributions))
         }
-        else if (components == "vertices")
-        {
-            if (is.numeric(loadingThreshold))
-                tempLoadingThreshold <- loadingThreshold
-            else if (!exists("tempLoadingThreshold"))
-                tempLoadingThreshold <- prevLoadingThreshold
-            
-            # Keep components which contain at least one connection between vertices
-            tempComponents <- which(sapply(1:nComponents, function(i) {
-                m <- eigensystem$values[i] * (loadings[,i] %o% loadings[,i])
-                v <- which(abs(loadings[,i]) >= tempLoadingThreshold)
-                m <- m[v,v]
-                return (any(m >= edgeWeightThreshold & (upper.tri(m) | lower.tri(m))))
-            }))
-            
-            if (identical(tempComponents, prevComponents))
-                components <- tempComponents
-            else
-                prevComponents <- tempComponents
-        }
-        
-        if (loadingThreshold == "complete")
-        {
-            if (is.numeric(components))
-                tempComponents <- components
-            
-            # Choose the largest loading threshold which will allow each vertex to appear in at least one PN
-            tempLoadingThreshold <- min(apply(abs(loadings[,tempComponents]), 1, max))
-            if (identical(tempLoadingThreshold, prevLoadingThreshold))
-                loadingThreshold <- tempLoadingThreshold
-            else
-                prevLoadingThreshold <- tempLoadingThreshold
-        }
-        
-        # Check for convergence
-        if (length(components) == 0)
-            report(OL$Error, "No components will be retained")
-        else if (is.numeric(loadingThreshold) && is.numeric(components))
-            break
         else
-        {
-            report(OL$Debug, "Component graphs on loop ", iteration, " are ", implode(tempComponents,sep=", ",finalSep=" and "))
-            report(OL$Debug, "Loading threshold on loop ", iteration, " is ", signif(tempLoadingThreshold,3))
-            iteration <- iteration + 1
-        }
+            components <- which(eigensystem$values >= eigenvalueThreshold)
+    }
+    else if (components == "vertices")
+    {
+        # Keep components which contain at least one connection between vertices
+        components <- which(sapply(1:nComponents, function(i) {
+            m <- eigensystem$values[i] * (loadings[,i] %o% loadings[,i])
+            v <- which(attr(loadings,"salience")[,i])
+            m <- m[v,v]
+            return (any(m >= edgeWeightThreshold & (upper.tri(m) | lower.tri(m))))
+        }))
     }
     
     report(OL$Info, "Retaining component graphs ", implode(components,sep=", ",finalSep=" and "))
-    report(OL$Info, "Loading threshold is ", signif(loadingThreshold,3))
     
     # Rotate the loading matrix if requested
     rotatedLoadings <- switch(rotation, none=loadings[,components],
@@ -121,25 +103,29 @@ calculatePrincipalGraphsForGraph <- function (graph, components = "vertices", lo
     # Calculate residual association matrices after subtracting out higher components
     residualMatrices <- Reduce("-", fullMatrices, init=connectionMatrix, accumulate=TRUE)
     residualMatrices <- residualMatrices[-1]
-    residualGraphs <- lapply(residualMatrices[components], newGraphFromConnectionMatrix, allVertexNames=graph$getVertexAttributes()$names)
-    residualGraphs <- lapply(residualGraphs, function(x) { x$setVertexLocations(graph$getVertexLocations(),graph$getVertexLocationUnit()); x })
+    residualGraphs <- lapply(residualMatrices[components], newGraphFromConnectionMatrix, allVertexNames=graphs[[1]]$getVertexAttributes()$names)
+    residualGraphs <- lapply(residualGraphs, function(x) { x$setVertexLocations(graphs[[1]]$getVertexLocations(),graphs[[1]]$getVertexLocationUnit()); x })
     names(residualGraphs) <- paste("PN", components, sep="")
     
-    verticesToKeep <- abs(loadings) >= loadingThreshold
+    verticesToKeep <- attr(loadings, "salience")
     matrices <- lapply(components, function(i) fullMatrices[[i]][verticesToKeep[,i],verticesToKeep[,i]])
-    componentGraphs <- lapply(matrices, newGraphFromConnectionMatrix, allVertexNames=graph$getVertexAttributes()$names)
-    componentGraphs <- lapply(componentGraphs, function(x) { x$setVertexLocations(graph$getVertexLocations(),graph$getVertexLocationUnit()); x })
+    componentGraphs <- lapply(matrices, newGraphFromConnectionMatrix, allVertexNames=graphs[[1]]$getVertexAttributes()$names)
+    componentGraphs <- lapply(componentGraphs, function(x) { x$setVertexLocations(graphs[[1]]$getVertexLocations(),graphs[[1]]$getVertexLocationUnit()); x })
     names(componentGraphs) <- paste("PN", components, sep="")
     
     return (list(eigenvalues=eigensystem$values, eigenvectors=loadings, loadings=rotatedLoadings, loadingThreshold=loadingThreshold, edgeWeightThreshold=edgeWeightThreshold, rotation=rotation, components=components, componentGraphs=componentGraphs, residualGraphs=residualGraphs, scores=NULL))
 }
 
-printLoadings <- function (loadings, threshold = 0.1)
+printLoadings <- function (loadings, threshold = 0.1, ignoreAttribute = FALSE)
 {
     if (!is.matrix(loadings))
         report(OL$Error, "Loadings should be specified as a matrix")
     
-    loadings[abs(loadings) < threshold] <- 0
+    if (!ignoreAttribute && !is.null(attr(loadings,"salience")))
+        loadings <- loadings * as.numeric(attr(loadings,"salience"))
+    else
+        loadings[abs(loadings) < threshold] <- 0
+    
     nonzero <- rowSums(loadings != 0)
     loadings <- loadings[nonzero>0,]
     loadingList <- lapply(1:ncol(loadings), function(i) abs(loadings[,i]))
@@ -195,14 +181,11 @@ bootstrapLoadings <- function (graphs, iterations = 1000, threshold = 0, confide
     getLoadings <- function (graphs)
     {
         nGraphs <- length(graphs)
-        meanConnectionMatrix <- graphs[[1]]$getConnectionMatrix()
-        for (i in 2:nGraphs)
-            meanConnectionMatrix <- meanConnectionMatrix + graphs[[i]]$getConnectionMatrix()
-        meanConnectionMatrix <- meanConnectionMatrix / nGraphs
+        meanConnectionMatrix <- Reduce("+", lapply(graphs, function(x) x$getConnectionMatrix())) / nGraphs
         loadings <- eigen(meanConnectionMatrix)$vectors
         return (loadings)
     }
-    
+
     if (!is.list(graphs))
         report(OL$Error, "Graphs must be specified in a list")
     if (length(graphs) < 2)
