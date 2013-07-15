@@ -1,6 +1,42 @@
-implode <- function (strings, sep = "", finalSep = NULL)
+implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
 {
-    strings <- as.character(strings)
+    # Transform runs of integers into ranges
+    # This is surprisingly tricky to get right!
+    if (ranges && is.integer(strings))
+    {
+        # Perform run-length encoding on the differences between elements
+        gapRunLengths <- rle(diff(strings))
+        
+        # Mark all elements not taken and find ranges (>1 consecutive unit difference)
+        taken <- rep(FALSE, length(strings))
+        withinRange <- gapRunLengths$values == 1 & gapRunLengths$lengths > 1
+        
+        # Convert range groups into strings, marking elements as taken to avoid double-counting
+        rangeStrings <- lapply(which(withinRange), function(i) {
+            # NB: Sum of a length-zero vector is zero
+            start <- sum(gapRunLengths$lengths[seq_len(i-1)]) + 1
+            end <- start + gapRunLengths$lengths[i]
+            taken[start:end] <<- TRUE
+            return (paste(strings[start], strings[end], sep="-"))
+        })
+        
+        # Convert remaining elements into strings
+        nonRangeStrings <- lapply(which(!withinRange), function(i) {
+            start <- sum(gapRunLengths$lengths[seq_len(i-1)]) + 1
+            end <- start + gapRunLengths$lengths[i]
+            toKeep <- setdiff(start:end, which(taken))
+            taken[toKeep] <<- TRUE
+            return (as.character(strings)[toKeep])
+        })
+        
+        # Arrange list of strings in the right order, and convert back to character vector
+        strings <- vector("list", length(withinRange))
+        strings[withinRange] <- rangeStrings
+        strings[!withinRange] <- nonRangeStrings
+        strings <- unlist(strings)
+    }
+    else
+        strings <- as.character(strings)
     
     if (length(strings) == 1)
         return (strings[1])
