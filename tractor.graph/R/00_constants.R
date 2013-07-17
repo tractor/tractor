@@ -1,5 +1,6 @@
 .FreesurferRegionNameMapping <- list(
     aparc=list(
+		banks_superior_temporal_sulcus="bankssts",
         caudal_anterior_cingulate_cortex="caudalanteriorcingulate",
         caudal_middle_frontal_gyrus="caudalmiddlefrontal",
         cuneus="cuneus",
@@ -31,7 +32,8 @@
         supramarginal_gyrus="supramarginal",
         frontal_pole="frontalpole",
         temporal_pole="temporalpole",
-        transverse_temporal_gyrus="transversetemporal"
+        transverse_temporal_gyrus="transversetemporal",
+		insula="insula"
     ),
     aparc.a2009s=list(
         frontomarginal_gyrus="G_and_S_frontomargin",
