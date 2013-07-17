@@ -5,7 +5,8 @@ library(splines)
 library(tractor.session)
 library(tractor.nt)
 library(tractor.graph)
-library(tractor.native)
+#library(tractor.native)
+library(tractor.track)
 library(RNiftyReg)
 suppressPackageStartupMessages(library(oro.nifti))
 
@@ -41,9 +42,14 @@ runExperiment <- function ()
 	if ( !is.null(lookupTableFile) )
 		lookupTable2 <- read.table(lookupTableFile, stringsAsFactors=FALSE)
 	
-    
-    diffusionDir <- session$getDirectory("diffusion")
-    diffusionRoiDir <- session$getDirectory("diffusion-rois", createIfMissing=TRUE)
+    tmpDir <- file.path(session$getDirectory(), "rois" )
+	if(!file.exists(tmpDir))
+		dir.create(tmpDir)	
+    diffusionRoiDir <- file.path( tmpDir,"diffusion" )
+	if(!file.exists(diffusionRoiDir))
+		dir.create(diffusionRoiDir)	
+    #diffusionRoiDir <- session$getDirectory("diffusion-rois", createIfMissing=TRUE)
+	
 	outputDirDebug <- file.path(diffusionRoiDir,"debug")
 	if(saveStreamLFlag){
 		if(!file.exists(outputDirDebug))
@@ -64,7 +70,7 @@ runExperiment <- function ()
 	
 
 	if ( !is.null(parcellationFile) ){
-	    customRoiDir <- session$getDirectory("customparcellation-rois", createIfMissing=TRUE)
+	    #customRoiDir <- session$getDirectory("customparcellation-rois", createIfMissing=TRUE)
 	    report(OL$Info, "Reading custom parcellation")
 	    parcellation2 <- newMriImageFromFile( file.path(parcellationFile) )
 	}
@@ -152,7 +158,7 @@ runExperiment <- function ()
 		index <- which( as.array(mask$getData()!=0)  )
 		mask$data[index] <- 1
 		mask <- newMriImageWithDataRepresentation(mask,"coordlist")    #use a sparse representation
-		maskName <- file.path(customRoiDir,paste('tmp_',label,'.nii.gz', sep='') )
+		#maskName <- file.path(customRoiDir,paste('tmp_',label,'.nii.gz', sep='') )
 		maskImages2 <- c(maskImages2,mask)
 	}
 	
@@ -187,7 +193,8 @@ runExperiment <- function ()
             report(OL$Warning, "Region \"", allRegionNames[i], "\" is unrepresented in the composite mask")
 		
 		regionLocations[i,] <- apply(which(mergedMask==i, arr.ind=TRUE), 2, median)
-		regionLocations[i,] <- transformRVoxelToWorld(regionLocations[i,], transformedMaskImages[[i]]$getMetadata(), useOrigin=FALSE)
+		regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], transformedMaskImages[[i]]$getMetadata() )
+		#regionLocations[i,] <- transformRVoxelToWorld(regionLocations[i,], transformedMaskImages[[i]]$getMetadata(), useOrigin=FALSE)
 		regionSizes[i] <- sum(as.array(transformedMaskImages[[i]]$getData()) > 0)
     }
 	
@@ -262,7 +269,7 @@ runExperiment <- function ()
 				next
             NumStreamsConMatrix[j,i] <- lenC 
 			totSN <- totSN+lenC 
-			report(OL$Info,i," ",j," ", lenC," ",totSN)                   
+			# report(OL$Info,i," ",j," ", lenC," ",totSN)                   
 			newTrack <- newStreamlineCollectionTractBySubsetting(result$streamlines,ConStreams)
 			startInd <- newTrack$getStartIndices()
 			endInd <- newTrack$getEndIndices()
