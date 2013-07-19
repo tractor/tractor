@@ -92,7 +92,7 @@ setAs("Graph", "igraph", function (from) {
     return (graph.edgelist(from$getEdges(), directed=from$isDirected()))
 })
     
-setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useLocations = FALSE, locationAxes = NULL) {
+setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
     
@@ -103,7 +103,13 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, lwd = 2, radi
         weights <- abs(weights)
     
     if (is.null(weightLimits))
+    {
         weightLimits <- range(weights)
+        if (weightLimits[1] < 0 && weightLimits[2] > 0)
+            weightLimits <- max(abs(weightLimits)) * c(-1,1)
+        else
+            weightLimits[which.min(abs(weightLimits))] <- 0
+    }
     else if (ignoreBeyondLimits)
         weights[weights < weightLimits[1] | weights > weightLimits[2]] <- NA
     else
@@ -114,6 +120,15 @@ setMethod("plot", "Graph", function(x, y, col = "grey60", cex = 1, lwd = 2, radi
     
     absWeights <- abs(weights)
     
+    if (is.null(col))
+    {
+        if (weightLimits[1] < 0 && weightLimits[2] > 0)
+            col <- 4
+        else if (weightLimits[1] >= 0 && weightLimits[2] > 0)
+            col <- 5
+        else if (weightLimits[1] < 0 && weightLimits[2] <= 0)
+            col <- 6
+    }
     if (is.numeric(col))
         col <- tractor.base:::getColourScale(col)$colours
     
