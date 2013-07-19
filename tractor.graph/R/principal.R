@@ -203,9 +203,6 @@ bootstrapLoadings <- function (graphs, iterations = 1000, loadingThreshold = 0, 
     salient <- limits[1,] > eigenvalueThreshold | limits[2,] < (-eigenvalueThreshold)
     values <- list(estimate=reference$values, limits=t(limits), salient=salient)
     
-    print(reference$vectors[,1])
-    print(rowMeans(allVectors[,1,]))
-    
     limits <- apply(allVectors, 1:2, quantile, quantiles, na.rm=TRUE, names=FALSE)
     salient <- limits[1,,] > loadingThreshold | limits[2,,] < (-loadingThreshold)
     vectors <- list(estimate=reference$vectors, limits=aperm(limits,c(2,3,1)), salient=salient)
