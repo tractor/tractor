@@ -9,6 +9,7 @@ runExperiment <- function ()
 	require("tractor.session")
 	require("tractor.graph")
 	require("tractor.nt")
+	require("RNiftyReg")
 	require("mmand")
 	
 	boundExtractROIs <- function (parc_img, gmRoi, wmLabels){		#use this function to extract the wm voxels that surround a given region
@@ -28,6 +29,7 @@ runExperiment <- function ()
 
 	multipleFilesFlag <- getConfigVariable("MultipleFiles", FALSE) #streamlines split to multiple files and sorted according to which lobes they connect. In this case streamlines is a basename
 	wmLabelsF <- getConfigVariable("WMLabelsF","NULL","character") #text file with labels that correspond to wm labels. To be used for extracting the white matter boundary voxels
+	suffixS <- getConfigVariable("SuffixS","NULL","character")
 	
 	streamlines_file <- Arguments[2]
 	if( !file.exists(streamlines_file) && !multipleFilesFlag )
@@ -208,13 +210,18 @@ runExperiment <- function ()
 	length(numVoxPerRoi) <- nRegions
 	numWMVoxPerRoi <- list()
 	length(numWMVoxPerRoi) <- nRegions
+	regionLocations <- matrix(NA, nrow=nRegions, ncol=3)
+	rownames(regionLocations) <- namesR
 	names(numVoxPerRoi) <- namesR
 	names(numWMVoxPerRoi) <- namesR
 	for( i in 1:nRegions ){
 		gm <- array( parc == perm[i], dim=parc_img$getDimensions() )
+		regionLocations[i,] <- apply(which(parc==perm[i], arr.ind=TRUE), 2, median)
+		regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], parc_img$getMetadata() )
+		
 		numVoxPerRoi[i] <- length(which(gm))
 		if(!is.na(wmLabelsF)){
-			boundVoxs <- boundExtractROIs(parc_img,perm[i],wmLabels) 
+			boundVoxs <- boundExtractROIs(parc_img,perm[i],as.numeric(wmLabels[,1])) 
 			numWMVoxPerRoi[i] <- length( which(boundVoxs!=0))
 		}
 	}
@@ -222,10 +229,10 @@ runExperiment <- function ()
 	
     report(OL$Info, "Creating and writing graph")
     graph <- newGraphFromConnectionMatrix(connectivityMatrix, directed=FALSE, ignoreSelfConnections=TRUE)
-	graph$setVertexAttributes( c(graph$vertexAttributes,list(numVoxPerRoi=numVoxPerRoi, numWMVoxPerRoi=numWMVoxPerRoi, VoxelDims=VoxelDims)) )
+	graph$setVertexAttributes( c(graph$vertexAttributes,list(numVoxPerRoi=as.numeric(numVoxPerRoi), numWMVoxPerRoi=as.numeric(numWMVoxPerRoi), VoxelDims=VoxelDims)) )
 	graph$setEdgeAttributes( list(FAConMatrix=FAConMatrix[indEdges],FAWConMatrix=FAWConMatrix[indEdges],MDConMatrix=MDConMatrix[indEdges],MDWConMatrix=MDWConMatrix[indEdges],LenStreamsMatrix=LenStreamsMatrix[indEdges],NumUniqueVoxs=NumUniqueVoxs[indEdges],NumVisVoxs=NumVisVoxs[indEdges], NumStreamsConMatrix=NumStreamsConMatrix[indEdges]) )
     graph$setVertexLocations(regionLocations, "mm")
-    graph$serialise( paste("dgraph_",suffixS,".Rdata",sep="") )
+    graph$serialise( file.path(writeDir,paste("dgraph_",suffixS,".Rdata",sep="")) )
     
     invisible(graph)
 
