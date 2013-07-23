@@ -5,8 +5,8 @@
 \description{The \code{viewImages} function provides a simple interactive viewer for \code{MriImage} objects. 3D and 4D images may be used.}
 \usage{
 viewImages(images, colourScales = NULL, point = NULL, interactive = TRUE,
-             crosshairs = TRUE, orientationLabels = TRUE,
-             infoPanel = defaultInfoPanel, ...)
+    crosshairs = TRUE, orientationLabels = TRUE, infoPanel = defaultInfoPanel,
+    ...)
 
 defaultInfoPanel(point, data, imageNames)
 }

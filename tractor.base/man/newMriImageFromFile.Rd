@@ -13,10 +13,12 @@
 Functions for reading, writing, locating, copying and removing MRI images stored in NIfTI, Analyze and MGH formats.
 }
 \usage{
-readImageFile(fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
+readImageFile(fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL,
+    sparse = FALSE, mask = NULL, reorder = TRUE)
 writeImageFile(image, fileName = NULL, fileType = NA, overwrite = TRUE)
 
-newMriImageFromFile(fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
+newMriImageFromFile(fileName, fileType = NULL, metadataOnly = FALSE,
+    volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
 writeMriImageToFile(image, fileName = NULL, fileType = NA, overwrite = TRUE)
 
 identifyImageFileNames(fileName, fileType = NULL, errorIfMissing = TRUE)

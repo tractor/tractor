@@ -5,7 +5,7 @@
 This function returns a version of its first argument using the specified data representation.
 }
 \usage{
-newMriImageWithDataRepresentation(image, representation = c("dense", "coordlist"))
+newMriImageWithDataRepresentation(image, representation = c("dense","coordlist"))
 }
 \arguments{
   \item{image}{An \code{MriImage} object.}
