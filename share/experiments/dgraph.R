@@ -222,12 +222,19 @@ runExperiment <- function ()
     report(OL$Info, "Performing tractography")
     fa <- session$getImageByType("FA")
     mask <- newMriImageByThresholding(fa, 0.2)
-	if(terminationFlag){
-		seeds <- which((mask$getData() > 0.2 & terminationMask==1), arr.ind=TRUE)
+	if(!is.na(wmLabelsF)){
+		wmLabelsF <- getConfigVariable("WMLabelsFile", NULL, "character")
+		wmLabels <- as.numeric(read.table(wmLabelsF)[,1])
+		parc_b0 <- registerImages(parcellation, refb0, scope="nonlinear", initControl=controlPoints, nLevels=0, finalInterpolation=0)
+		parc_b0 <- parc_b0$image$getData()  #use white matter for seeding
+		parc_wm <- parc_b0 %in% wmLabels
+		parc_wm <- array(parc_wm,dim(parc_b0))
+		seeds <- which(parc_wm,arr.ind=TRUE)
 	}else 
 	{
-		seeds <- which(mask$getData() > 0 , arr.ind=TRUE)
+		seeds <- which((mask$getData() > 0.2 & terminationMask==1), arr.ind=TRUE)
 	}
+	
     seeds <- seeds + runif(length(seeds), -0.5, 0.5)
     result <- trackWithSession(session, seeds, nSamples=numStrPerSeed, requireImage=FALSE, maskName=terminationMaskMriName, requireStreamlines=TRUE, terminateOutsideMask=terminateOutsideMask)
 	if( saveStreamLFlag )
