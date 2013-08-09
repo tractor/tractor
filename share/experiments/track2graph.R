@@ -22,7 +22,7 @@ runExperiment <- function ()
 		invisible(bound2)
 	}	
 	
-    requireArguments("session directory", "streamlines file", "parcellation file in B0 space", "Table with GM regions")
+    requireArguments("session directory", "streamlines file-basename", "parcellation file in B0 space", "File with GM labels")
     
 	
     session <- newSessionFromDirectory(Arguments[1])
@@ -125,7 +125,7 @@ runExperiment <- function ()
 				if( !file.exists(fiberName) )
 					fiberName <- paste(streamlines_file, lobeB, "2", lobeA,".Rdata", sep="")
 				if( !file.exists(fiberName) ){
-					report(OL$Warning,"Streamline file between lobes:", lobeA, " and ", lobeB, "does not exist! Skip to next!")
+					report(OL$Warning,"Streamline file between lobes:", lobeA, " and ", lobeB, " does not exist! Skip to next!")
 					next
 				}
 				report(OL$Info,"Reading streamlines:", fiberName)
@@ -140,9 +140,9 @@ runExperiment <- function ()
 				corLabels <- union(areasInLobeA,areasInLobeB)
 				indLabels <- union(indInLobeA,indInLobeB)		 #use this index later to recover the position in the connectivity matrix 
 				matchingIndices <- list()
-				length(indP) <- length(perm)
+				length(matchingIndices) <- length(perm)
 				for(area1 in seq_along(corLabels) )
-					matchingIndices[indLabels[area1]] <- which( ((stPntsGM %in% corLabels[area1]) | (endPntsGM %in% corLabels[area1])) & stPntsGM!=endPntsGM ) 
+					matchingIndices[[indLabels[area1]]] <- which( ((stPntsGM %in% corLabels[area1]) | (endPntsGM %in% corLabels[area1])) & stPntsGM!=endPntsGM ) 
 
 			}	#if(multipleFilesFlag)
 			
@@ -163,7 +163,7 @@ runExperiment <- function ()
 					endInd <- newTrack$getEndIndices()
 					LenStreamsMatrix[indtmp1,indtmp2] <- mean(endInd-startInd+1)
 					visitationMap <- newMriImageAsVisitationMap( newTrack,fa$getMetadata() )
-					indVisVox <- which( visitationMap$getData()!=0 & !is.nan(visitationMap$getData()) )
+					indVisVox <- which( visitationMap$getData()!=0 & !is.na(visitationMap$getData()) & !is.na(fa$getData())  )
 					FAWConMatrix[indtmp1,indtmp2] <- sum( fa$getData()[indVisVox] * visitationMap$getData()[indVisVox] )
 					FAConMatrix[indtmp1,indtmp2] <- sum( fa$getData()[indVisVox] )
 					MDWConMatrix[indtmp1,indtmp2] <- sum( md$getData()[indVisVox] * visitationMap$getData()[indVisVox] )
