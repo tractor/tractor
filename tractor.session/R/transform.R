@@ -132,7 +132,7 @@ changePointType <- function (points, image, newPointType, oldPointType = NULL)
     return (newPoints)
 }
 
-coregisterDataVolumesForSession <- function (session, type, reference = 1, useMask = FALSE, nLevels = 2, options = list(), ...)
+coregisterDataVolumesForSession <- function (session, type, reference = 1, useMask = FALSE, nLevels = 2, method = c("niftyreg","fsl","none"), options = list(), ...)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
@@ -144,34 +144,47 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
     else
         targetImage <- session$getImageByType("rawdata", type, volumes=reference)
     
-    if (useMask)
-        maskImage <- session$getImageByType("mask", type)
-    else
-        maskImage <- NULL
-    
     sourceMetadata <- session$getImageByType("rawdata", type, metadataOnly=TRUE)
     if (sourceMetadata$getDimensionality() != 4)
         report(OL$Error, "The raw data image is not 4-dimensional")
     nVolumes <- sourceMetadata$getDimensions()[4]
     
-    if (length(nLevels) != nVolumes)
-        nLevels <- rep(nLevels, length.out=nVolumes)
-    
-    finalArray <- array(NA, dim=sourceMetadata$getDimensions())
-    transforms <- vector("list", nVolumes)
-    
-    report(OL$Info, "Coregistering data to reference volume...")
-    for (i in seq_len(nVolumes))
+    if (method == "none")
     {
-        report(OL$Verbose, "Reading and registering volume ", i)
-        volume <- session$getImageByType("rawdata", type, volumes=i)
-        result <- registerImages(volume, targetImage, targetMask=maskImage, types="affine", cache="ignore", ..., linearOptions=c(list(nLevels=nLevels[i]),options))
-        finalArray[,,,i] <- result$transformedImage$getData()
-        transforms[[i]] <- result$transform
+        report(OL$Info, "Storing identity transforms")
+        volume <- session$getImageByType("rawdata", type, volumes=1)
+        transforms <- rep(list(identityTransformation(volume,targetImage)), nVolumes)
+        
+        report(OL$Info, "Symlinking data volume")
+        symlinkImageFiles(session$getImageFileNameByType("rawdata",type), session$getImageFileNameByType("data",type), overwrite=TRUE)
     }
+    else
+    {
+        if (useMask)
+            maskImage <- session$getImageByType("mask", type)
+        else
+            maskImage <- NULL
     
-    finalImage <- newMriImageWithData(finalArray, sourceMetadata)
-    writeImageFile(finalImage, session$getImageFileNameByType("data",type))
+        if (length(nLevels) != nVolumes)
+            nLevels <- rep(nLevels, length.out=nVolumes)
+    
+        finalArray <- array(NA, dim=sourceMetadata$getDimensions())
+        transforms <- vector("list", nVolumes)
+    
+        report(OL$Info, "Coregistering data to reference volume...")
+        for (i in seq_len(nVolumes))
+        {
+            report(OL$Verbose, "Reading and registering volume ", i)
+            volume <- session$getImageByType("rawdata", type, volumes=i)
+            result <- registerImages(volume, targetImage, targetMask=maskImage, types="affine", cache="ignore", method=method, ..., linearOptions=c(list(nLevels=nLevels[i]),options))
+            finalArray[,,,i] <- result$transformedImage$getData()
+            transforms[[i]] <- result$transform
+        }
+        
+        report(OL$Info, "Writing out transformed data")
+        finalImage <- newMriImageWithData(finalArray, sourceMetadata)
+        writeImageFile(finalImage, session$getImageFileNameByType("data",type))
+    }
     
     transform <- mergeTransformations(transforms, sourceMetadata)
     transform$serialise(file.path(session$getDirectory(type), "coreg_xfm.Rdata"))
