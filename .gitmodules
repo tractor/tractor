@@ -13,3 +13,6 @@
 [submodule "lib/Rcpp"]
 	path = lib/Rcpp
 	url = git://github.com/jonclayden/Rcpp.git
+[submodule "lib/RcppArmadillo"]
+	path = lib/RcppArmadillo
+	url = git://github.com/jonclayden/RcppArmadillo.git
