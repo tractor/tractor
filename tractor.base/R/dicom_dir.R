@@ -292,33 +292,26 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
 
     if (mosaic)
     {
-        if (!equivalent(sliceDirections, 1:3))
-            flag(OL$Warning, "Mosaic image is not stored in LPS orientation - results are unlikely to be correct")
-        
-        data <- data[,imageDims[2]:1,,,drop=TRUE]
-        ordering <- c(1,-1,1)
-        
         # The image position in plane is stored wrongly for mosaic images, so we need to correct it
-        imagePosition[1:2] <- imagePosition[1:2] + abs(voxelDims[1:2]) * ((images[[1]]$mosaicDims-imageDims[1:2]) / 2)
+        inPlaneDims <- absoluteSliceDirections[1:2]
+        imagePosition[inPlaneDims] <- imagePosition[inPlaneDims] + abs(voxelDims[inPlaneDims]) * ((images[[1]]$mosaicDims-imageDims[inPlaneDims]) / 2)
     }
-    else
+    
+    # Permute the data dimensions as required
+    dimPermutation <- c(match(1:3,absoluteSliceDirections), 4)
+    if (!equivalent(dimPermutation, 1:4))
     {
-        # Permute the data dimensions as required
-        dimPermutation <- c(match(1:3,absoluteSliceDirections), 4)
-        if (!equivalent(dimPermutation, 1:4))
-        {
-            data <- aperm(data, dimPermutation)
-            imageDims <- imageDims[dimPermutation]
-            voxelDims <- abs(voxelDims[dimPermutation]) * c(-1,1,1,1)
-        }
-        
-        # Check for any flips required to achieve LAS orientation
-        ordering <- sign(sliceDirections[dimPermutation])[1:3] * c(1,-1,1)
-        orderX <- (if (ordering[1] == 1) seq_len(imageDims[1]) else rev(seq_len(imageDims[1])))
-        orderY <- (if (ordering[2] == 1) seq_len(imageDims[2]) else rev(seq_len(imageDims[2])))
-        orderZ <- (if (ordering[3] == 1) seq_len(imageDims[3]) else rev(seq_len(imageDims[3])))
-        data <- data[orderX,orderY,orderZ,,drop=TRUE]
+        data <- aperm(data, dimPermutation)
+        imageDims <- imageDims[dimPermutation]
+        voxelDims <- abs(voxelDims[dimPermutation]) * c(-1,1,1,1)
     }
+    
+    # Check for any flips required to achieve LAS orientation
+    ordering <- sign(sliceDirections[dimPermutation])[1:3] * c(1,-1,1)
+    orderX <- (if (ordering[1] == 1) seq_len(imageDims[1]) else rev(seq_len(imageDims[1])))
+    orderY <- (if (ordering[2] == 1) seq_len(imageDims[2]) else rev(seq_len(imageDims[2])))
+    orderZ <- (if (ordering[3] == 1) seq_len(imageDims[3]) else rev(seq_len(imageDims[3])))
+    data <- data[orderX,orderY,orderZ,,drop=TRUE]
     
     dimsToKeep <- which(imageDims > 1)
     imageDims <- imageDims[dimsToKeep]
