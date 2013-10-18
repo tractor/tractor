@@ -1,4 +1,5 @@
 import(reportr)
+import(methods)
 
 exportClasses(SerialisableObject, SparseArray, MriImage, DicomMetadata)
 
