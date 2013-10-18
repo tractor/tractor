@@ -7,7 +7,8 @@ Read a DICOM file into a DicomMetadata object
   This function reads a DICOM file into a \code{\link{DicomMetadata}} object. Only DICOM files from magnetic resonance scanners are supported.
 }
 \usage{
-newDicomMetadataFromFile(fileName, checkFormat = TRUE, dictionary = NULL, stopTag = NULL, ignoreTransferSyntax = FALSE)
+newDicomMetadataFromFile(fileName, checkFormat = TRUE, dictionary = NULL,
+    stopTag = NULL, ignoreTransferSyntax = FALSE)
 }
 \arguments{
   \item{fileName}{The name of a DICOM file.}

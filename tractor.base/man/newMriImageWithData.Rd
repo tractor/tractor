@@ -16,7 +16,8 @@
   Functions for creating MriImage objects from data, including other images.
 }
 \usage{
-newMriImageWithData(data, templateImage = nilObject(), imageDims = NA, voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA)
+newMriImageWithData(data, templateImage = nilObject(), imageDims = NA,
+    voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA)
 
 newMriImageByExtraction(image, dim, loc)
 extractDataFromMriImage(image, dim, loc)
@@ -27,7 +28,7 @@ newMriImageByReordering(image)
 
 newMriImageAsShapeOverlay(type = c("cross", "block"), baseImage, ...)
 generateImageDataForShape(type = c("cross", "block"), dim, background = 0,
-                            centre = NA, width = NA)
+    centre = NA, width = NA)
 
 newMriImageWithSimpleFunction(image, fun, ...)
 newMriImageWithBinaryFunction(image1, image2, fun, ...)

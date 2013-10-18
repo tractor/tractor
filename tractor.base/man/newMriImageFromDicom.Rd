@@ -7,7 +7,8 @@
 }
 \usage{
 readDicomDirectory(dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
-newMriImageFromDicomDirectory(dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
+newMriImageFromDicomDirectory(dicomDir, readDiffusionParams = FALSE,
+    untileMosaics = TRUE)
 }
 \arguments{
   \item{dicomDir}{Character vector of length one giving the name of a directory containing DICOM files.}
