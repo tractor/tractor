@@ -47,6 +47,16 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="242-2013-10-18">2.4.2 (2013-10-18)</h2>
+
+<ul>
+<li>The binary front-end program should no longer misinterpret script arguments beginning with a dash (<code>-</code>). Previously it would try to interpret these as its own arguments, most likely leading to an error.</li>
+<li>The DICOM reading code is now more flexible with regard to the orientation of Siemens mosaic images. Credit goes to <a href="http://www.nmr.mgh.harvard.edu/%7Egreve/dicom-unpack">Doug Greve</a>, among others, for information on the some of the subtleties, both in this release and in 2.4.0.</li>
+<li>The <code>streamlines2trk</code> script should no longer produce a &ldquo;could not find function&rdquo; error.</li>
+<li>The installation instructions have been updated to reflect the recent system requirement for a C/C++ compiler.</li>
+<li>There have been minor tweaks to the R documentation for the <code>tractor.base</code> package.</li>
+</ul>
+
 <h2 id="241-2013-07-09">2.4.1 (2013-07-09)</h2>
 
 <ul>
@@ -63,7 +73,7 @@
 <li>TractoR now offers tools for linear and nonlinear image registration, and the entire infrastructure for transforming images and points between different spaces has been totally reworked. A new family of scripts (<code>reg-linear</code>, <code>reg-nonlinear</code>, <code>reg-apply</code> and <code>reg-viz</code>) has been added for direct registration. Implicit registration, whereby points or images are transformed between spaces as part of another operation such as neighbourhood tractography, behaves as before by default, but the new NiftyReg back-end can be used by setting the <code>TRACTOR_REG_METHOD</code> environment variable to <code>niftyreg</code>. The new <code>tractor.reg</code> package supports all registration and transformation, and supporting packages <code>bitops</code>, <code>oro.nifti</code> and <code>RNiftyReg</code> have been added to the TractoR distribution.</li>
 <li>The <code>dpreproc</code> script gains a new <code>EddyCorrectionMethod</code> option, which allows NiftyReg to be used for volume-to-volume coregistration.</li>
 <li>TractoR now uses its own command-line front-end, rather than the standard R interface. This allows for greater flexibility, and removes the need for ugly hacks to get R to behave as required. The main user-visible effect of this change is that error and warning messages will now appear in colour, if supported by your terminal emulator.</li>
-<li>A new <code>console</code> script has been added, which starts an interactive R session using TractoR&#39;s front-end, in a context where all TractoR-related R packages have been loaded.</li>
+<li>A new <code>console</code> script has been added, which starts an interactive R session using TractoR&rsquo;s front-end, in a context where all TractoR-related R packages have been loaded.</li>
 <li>The new <code>reshape</code> script can be used to reshape the data in an image.</li>
 <li>The <code>Tracker</code> option is deprecated everywhere it occurs. Now that a compiler is required, the internal tracker should always be available.</li>
 <li>The <code>tractor.native</code> package is now called <code>tractor.track</code>, to more specifically indicate its purpose.</li>
@@ -75,7 +85,7 @@
 <li>The data type of an image file is no longer stored internally, and instead a suitable type is chosen when the image is written to a file. The <code>TypeCode</code> option in the <code>chfiletype</code> script is therefore defunct.</li>
 <li>The <code>cal_max</code> and <code>cal_min</code> fields of a NIfTI image are now written using appropriate values.</li>
 <li>Image data can now be stored without reordering to LAS internally, and writing non-LAS images is supported for NIfTI format (only).</li>
-<li>There have been significant changes to <code>MriImage</code>, one of TractoR&#39;s key internal data structures, but this should only affect those who use TractoR packages from within R.</li>
+<li>There have been significant changes to <code>MriImage</code>, one of TractoR&rsquo;s key internal data structures, but this should only affect those who use TractoR packages from within R.</li>
 <li>X11 should no longer be started as a side effect when a TractoR script is called on Mac OS X. This could cause a delay of several seconds.</li>
 <li>Voxel locations are now rounded after being converted to R indexing, rather than before, in the <code>slice</code> script.</li>
 <li>Handling of sparse images has been improved slightly.</li>
@@ -99,10 +109,10 @@
 <h2 id="230-2013-02-04">2.3.0 (2013-02-04)</h2>
 
 <ul>
-<li>TractoR now includes a simple interactive image viewer, which is used by default unless the <code>TRACTOR_VIEWER</code> environment variable is set to <code>fslview</code> (for FSLview, as in earlier releases) or <code>freeview</code> (to use FreeSurfer&#39;s FreeView, for which a new interface has also been added). The new TractoR viewer remains work in progress, and FSLview is still favoured by scripts for showing 4D or vector-valued images.</li>
-<li>The <code>dicomsort</code> script&#39;s <code>SortBySubjectFirst</code> option has been replaced by a more general <code>SortOn</code> option, which allows the files to be sorted by series, subject and/or date in any order. The script is also more careful to avoid deleting files which are not moved because they are already in the right place.</li>
+<li>TractoR now includes a simple interactive image viewer, which is used by default unless the <code>TRACTOR_VIEWER</code> environment variable is set to <code>fslview</code> (for FSLview, as in earlier releases) or <code>freeview</code> (to use FreeSurfer&rsquo;s FreeView, for which a new interface has also been added). The new TractoR viewer remains work in progress, and FSLview is still favoured by scripts for showing 4D or vector-valued images.</li>
+<li>The <code>dicomsort</code> script&rsquo;s <code>SortBySubjectFirst</code> option has been replaced by a more general <code>SortOn</code> option, which allows the files to be sorted by series, subject and/or date in any order. The script is also more careful to avoid deleting files which are not moved because they are already in the right place.</li>
 <li>The <code>mtrack</code> script now allows the user to specify &ldquo;termination&rdquo; masks, which cause truncation of streamlines. It is possible to specify a single mask as both a waypoint and a termination mask. Likewise, <code>ptrack</code> gains a <code>TerminateAtTarget</code> option.</li>
-<li>TractoR&#39;s internal tractography algorithm is now the default for <code>rtrack</code> and <code>mtrack</code>.</li>
+<li>TractoR&rsquo;s internal tractography algorithm is now the default for <code>rtrack</code> and <code>mtrack</code>.</li>
 <li>If the <code>gradrotate</code> script is applied to a session, the original (unrotated) gradient directions are first copied to the file <code>tractor/diffusion/directions-orig.txt</code>. This makes it much easier to tell whether rotation has been performed, and is used by the code to make sure that the gradients are not rotated twice.</li>
 <li>The <code>gmap</code> script gains a <code>UseReferencePlanes</code> option: if it is &ldquo;false&rdquo; then the plane of the maximum in the image is used for visualisation. In addition, the script should no longer produce an error when the reference seed point is not in the centre of a voxel.</li>
 <li>The <code>dirviz</code> script gains a <code>ScaleFactor</code> option to control the size of the PNG image produced.</li>
@@ -132,7 +142,7 @@
 <li>The newly-added <code>upgrade</code> script can be used to convert objects stored in &ldquo;.Rdata&rdquo; files from TractoR 1.x formats to their TractoR 2.x equivalents.</li>
 <li>The code underlying the <code>dicomread</code> script has been substantially reworked to improve speed (in some cases substantially) and reliability in determining the orientation of the data. The script also gains an option to inhibit the untiling of DICOM files which appear to use the Siemens &ldquo;mosaic&rdquo; format.</li>
 <li>The <code>view</code> script no longer requires the user to press Enter to quit, and does not spend time converting images to Analyze format when not necessary.</li>
-<li>Substantial additions to the package&#39;s support for sparse images have been made, and the <code>values</code> script now takes advantage of these.</li>
+<li>Substantial additions to the package&rsquo;s support for sparse images have been made, and the <code>values</code> script now takes advantage of these.</li>
 <li>The <code>TRACTOR_HOME</code> environment variable is now guessed if it is not set, although routine reliance on this mechanism is not advised.</li>
 <li>Support for scripts in <code>/etc/tractor</code> has been removed. These have been deprecated since TractoR 1.0.0.</li>
 <li>Interrelationships between the various TractoR packages have now been more explicitly declared. This may avoid occasional problems when using them within R.</li>
@@ -142,9 +152,9 @@
 <h2 id="212-2012-05-03">2.1.2 (2012-05-03)</h2>
 
 <ul>
-<li>The <code>dpreproc</code> script now warns if the <em>diffusion subdirectory</em> already exists within the session, rather than just if the session&#39;s root directory exists.</li>
+<li>The <code>dpreproc</code> script now warns if the <em>diffusion subdirectory</em> already exists within the session, rather than just if the session&rsquo;s root directory exists.</li>
 <li>Spurious errors, about images not having been created yet, should no longer occur when TractoR updates the structure of a session directory created with version 1.x.</li>
-<li>An issue with installing the &ldquo;tractor.native&rdquo; package on some Linux systems has been addressed. The package&#39;s &ldquo;configure&rdquo; process has been somewhat simplified at the same time. (Reported by Mark Bastin.)</li>
+<li>An issue with installing the &ldquo;tractor.native&rdquo; package on some Linux systems has been addressed. The package&rsquo;s &ldquo;configure&rdquo; process has been somewhat simplified at the same time. (Reported by Mark Bastin.)</li>
 </ul>
 
 <h2 id="211-2012-03-23">2.1.1 (2012-03-23)</h2>
@@ -193,7 +203,7 @@
 <h2 id="208-2011-11-16">2.0.8 (2011-11-16)</h2>
 
 <ul>
-<li>Fixes to TractoR&#39;s handling of images stored using nondiagonal xforms (or the equivalent) have been made.</li>
+<li>Fixes to TractoR&rsquo;s handling of images stored using nondiagonal xforms (or the equivalent) have been made.</li>
 <li>Thread-safe temporary files are now used more widely.</li>
 </ul>
 
@@ -219,7 +229,7 @@
 <ul>
 <li>An error about a missing &ldquo;dti_eigval1&rdquo; image should no longer appear when calling <code>mean</code> or <code>gmean</code> with <code>Metric:axialdiff</code> on data originally preprocessed with TractoR 1.x. (Reported by Mark Bastin.)</li>
 <li>Errors about &ldquo;no loop to break from&rdquo; should no longer be generated by <code>pnt-viz</code> or <code>pnt-prune</code> when a data set with no match data is encountered. (Reported by Michael Yoong.)</li>
-<li>The error &ldquo;object &#39;nullPosterior&#39; not found&rdquo; should no longer appear when calling <code>pnt-interpret</code> with <code>Mode:null-posterior</code>.</li>
+<li>The error &ldquo;object &lsquo;nullPosterior&rsquo; not found&rdquo; should no longer appear when calling <code>pnt-interpret</code> with <code>Mode:null-posterior</code>.</li>
 </ul>
 
 <h2 id="204-2011-10-07">2.0.4 (2011-10-07)</h2>
@@ -255,8 +265,8 @@
 <h2 id="201-2011-08-05">2.0.1 (2011-08-05)</h2>
 
 <ul>
-<li>This is a major new release with many significant changes. The main intention has been to broaden the scope of the package and make it more flexible, laying the foundations for future development. The package&#39;s dependence on FSL has also been lessened substantially. It is not fully backwards compatible with TractoR 1.x, so it is recommended that the two not be mixed within a single study.</li>
-<li>TractoR&#39;s internals have changed substantially, and make use of features relatively recently added to R. Therefore, R 2.12.1 (released December 2010) or later is required to install TractoR 2.0.</li>
+<li>This is a major new release with many significant changes. The main intention has been to broaden the scope of the package and make it more flexible, laying the foundations for future development. The package&rsquo;s dependence on FSL has also been lessened substantially. It is not fully backwards compatible with TractoR 1.x, so it is recommended that the two not be mixed within a single study.</li>
+<li>TractoR&rsquo;s internals have changed substantially, and make use of features relatively recently added to R. Therefore, R 2.12.1 (released December 2010) or later is required to install TractoR 2.0.</li>
 <li>The session hierarchy has been revamped. The primary directory for diffusion-weighted data is now called &ldquo;diffusion&rdquo;, although an &ldquo;fdt&rdquo; directory will still be created for interoperability with FSL if needed. The image file names within the &ldquo;diffusion&rdquo; directory are also different by default, although greater flexibility on these names is now available through so-called &ldquo;session maps&rdquo;. TractoR 2.0 will automatically update a session hierarchy created with TractoR 1.x when it first encounters it, but the image file names in the new &ldquo;diffusion&rdquo; (old &ldquo;fdt&rdquo;) directory will be left alone, and a map file will be created to allow TractoR 2.0 find what it needs. NB: Using TractoR 1.x with a session directory updated in this way is not guaranteed to work correctly, and is not recommended.</li>
 <li>Two scripts have been renamed in light of the broader scope of the new version: <code>mkbvecs</code> is now called <code>gradread</code>; and <code>preproc</code> is now called <code>dpreproc</code>, since it is specific to diffusion-weighted data.</li>
 <li>The functionality of the former <code>preproc</code> script (now <code>dpreproc</code>) has been split up for flexibility, and to avoid confusion. It now only handles functions which are truly preprocessing operations, so diffusion tensor fitting is now performed by the new <code>tensorfit</code> script, gradient direction checking (and flipping if necessary) by <code>gradcheck</code>, gradient rotation by <code>gradrotate</code>, and FSL-BEDPOSTX by <code>bedpost</code>. Run &ldquo;tractor -o tensorfit&rdquo;, and so on, to see the options for these new scripts. DICOM to NIfTI conversion, eddy current distortion correction and brain extraction remain in <code>dpreproc</code>, and it now has four stages rather than five. The progress of that pipeline can be shown using the StatusOnly option.</li>
@@ -278,7 +288,7 @@
 
 <ul>
 <li>The <code>pnt-prune</code> script would sometimes misinterpret the median streamline which is used as a baseline, resulting in a far less tightly pruned final tract than expected for some data sets. This has now been corrected. (Back-ported from version 2.2.1.)</li>
-<li>A number of improvements have been made relating to TractoR&#39;s handling of very short tracts. (Partly back-ported from version 2.0.7.)</li>
+<li>A number of improvements have been made relating to TractoR&rsquo;s handling of very short tracts. (Partly back-ported from version 2.0.7.)</li>
 </ul>
 
 <h2 id="182-2011-10-20">1.8.2 (2011-10-20)</h2>
@@ -302,14 +312,14 @@
 <ul>
 <li>The NIfTI file reading code in TractoR is now substantially more flexible, and supports images stored using conventions other than the LAS arrangement which is used internally.</li>
 <li>Read support for the proposed new <a href="http://www.nitrc.org/forum/forum.php?thread_id=2148&amp;forum_id=1941">NIfTI-2 file format</a> has been added.</li>
-<li>Image origins are now adjusted appropriately when image data are flipped on reading, and negative and noninteger values are allowed for. The result of the <code>imageinfo</code> script may therefore differ from previous versions for some files, but the new output is more consistent with TractoR&#39;s conventions.</li>
+<li>Image origins are now adjusted appropriately when image data are flipped on reading, and negative and noninteger values are allowed for. The result of the <code>imageinfo</code> script may therefore differ from previous versions for some files, but the new output is more consistent with TractoR&rsquo;s conventions.</li>
 <li>Any gradient flip specified with the FlipGradientAxes option is now performed during stage 2 of the <code>preproc</code> script, to avoid problems with doing it after rotating the directions.</li>
 </ul>
 
 <h2 id="171-2011-02-07">1.7.1 (2011-02-07)</h2>
 
 <ul>
-<li>When installing the &ldquo;tractor.native&rdquo; package, a greater effort is now made to find &ldquo;zlib&rdquo; on the user&#39;s system. If it is not available, the package is compiled without support for reading gzipped NIfTI files. Previously the compilation would simply fail. (Reported by Mark Bastin.)</li>
+<li>When installing the &ldquo;tractor.native&rdquo; package, a greater effort is now made to find &ldquo;zlib&rdquo; on the user&rsquo;s system. If it is not available, the package is compiled without support for reading gzipped NIfTI files. Previously the compilation would simply fail. (Reported by Mark Bastin.)</li>
 </ul>
 
 <h2 id="170-2010-12-20">1.7.0 (2010-12-20)</h2>
@@ -318,7 +328,7 @@
 <li>TractoR now contains its own tractography algorithm, provided in the new &ldquo;tractor.native&rdquo; R package. The bulk of the tracker is written in C for speed, so this package requires compilation. Use of this tracker is optional and currently only supported in scripts which use one seed point at a time (i.e. <code>track</code>, <code>pnt-data</code>, <code>pnt-data-sge</code>, <code>pnt-ref</code> and <code>pnt-prune</code>). However, the speed gains can be considerable: in testing, <code>track</code> ran up to 30% faster using the TractoR tracker, and <code>pnt-data</code> ran 50-70% faster. Results from the FSL and TractoR trackers should be similar but will not be identical, so it may be wise not to mix the two within studies. FSL remains the default for now.</li>
 <li>The main <code>tractor</code> program now supports a &ldquo;-a&rdquo; flag, which can be used to select between subarchitectures on R platforms that support them, such as Mac OS X. This allows users to select between, for example, 32-bit and 64-bit versions of R for running TractoR scripts.</li>
 <li>In TractoR version 1.5.0 and later, <code>pnt-data</code> no longer collated its output into a single file. This was unintentional and has now been corrected: collation will now happen automatically unless the SessionNumbers option is used to select a subgroup of sessions to process. (Reported by Ping-Hong Yeh.)</li>
-<li>The full data set image for the example session used by TractoR&#39;s self-tests is now included in the distribution.</li>
+<li>The full data set image for the example session used by TractoR&rsquo;s self-tests is now included in the distribution.</li>
 </ul>
 
 <h2 id="160-2010-10-22">1.6.0 (2010-10-22)</h2>
@@ -328,7 +338,7 @@
 <li>MNI standard space images representing the brain and regions of grey matter, white matter and CSF have been added to the distribution in the <code>share/mni</code> directory. TractoR therefore no longer relies on versions of these images supplied with FSL. We are grateful to the International Consortium for Brain Mapping (ICBM) for making these available.</li>
 <li>New scripts have been added for cloning session hierarchies (<code>clone</code>), extracting the voxel values of an image within a mask (<code>values</code>), and viewing an image in <code>fslview</code> in a way that avoids an incompatibility between that viewer and certain NIfTI data types (<code>view</code>).</li>
 <li>Mask-based tractography (using the <code>mtrack</code> script) now reports the number of nonzero voxels in the mask, and the number of streamlines retained after applying waypoint masks. (This output is produced at the &ldquo;info&rdquo; level, so <code>-v1</code> must be given to <code>tractor</code> to see it.)</li>
-<li>The <code>dicomsort</code> script will now handle data sets with duplicate file names within a series. In addition, this script&#39;s functionality is now available at the R level.</li>
+<li>The <code>dicomsort</code> script will now handle data sets with duplicate file names within a series. In addition, this script&rsquo;s functionality is now available at the R level.</li>
 <li>The <code>dicomtags</code> script will now look in subdirectories for a DICOM file if its argument is a directory, rather than just in the directory itself.</li>
 <li>Tests that fail will now be rerun, rather than skipped, if <code>make test</code> is run again from the main TractoR directory.</li>
 <li>The way that diffusion encoding schemes are handled within the core code of TractoR has been changed to improve consistency and portability. However, this change should not have any effect for those using only the <code>tractor</code> program to perform standard tasks.</li>
@@ -358,7 +368,7 @@
 <h2 id="144-2010-06-14">1.4.4 (2010-06-14)</h2>
 
 <ul>
-<li>Gradient caching code used by the <code>preproc</code> script will no longer fail if no &ldquo;.tractor&rdquo; directory exists in the user&#39;s home directory. The directory will now be created if it is missing.</li>
+<li>Gradient caching code used by the <code>preproc</code> script will no longer fail if no &ldquo;.tractor&rdquo; directory exists in the user&rsquo;s home directory. The directory will now be created if it is missing.</li>
 <li>The TractoR NIfTI file reader now accepts files with negative qform elements, as intended.</li>
 </ul>
 
@@ -380,7 +390,7 @@
 <h2 id="141-2010-03-31">1.4.1 (2010-03-31)</h2>
 
 <ul>
-<li>The &ldquo;avscale&rdquo; test previously failed on some Linux installations due to a slight platform dependence in the FSL program&#39;s output. This issue has been avoided in this release, so the tests should run successfully on these platforms.</li>
+<li>The &ldquo;avscale&rdquo; test previously failed on some Linux installations due to a slight platform dependence in the FSL program&rsquo;s output. This issue has been avoided in this release, so the tests should run successfully on these platforms.</li>
 <li>Unneeded files which were accidentally included in the version 1.4.0 release (&ldquo;filter.R&rdquo; and the &ldquo;multicore&rdquo; directory) have been removed.</li>
 </ul>
 
@@ -388,10 +398,10 @@
 
 <ul>
 <li>TractoR now supports B-matrix/gradient vector rotation to compensate for the motion/eddy current distortion correction applied. Just set the RotateGradients option to &ldquo;true&rdquo; for stage 2 of the <code>preproc</code> script. The new experiment script <code>plotrotations</code> can be used to get a set of how big the effect will be for a particular data set.</li>
-<li>Gradient directions (before rotation) for diffusion MRI acquisitions are now cached in the user&#39;s ~/.tractor directory and automatically placed into a session directory if the series description matches and no gradient direction information is found in the DICOM files. This facility can save a lot of time manually copying bvals and bvecs files into session directories. Its use is determined by the UseGradientCache option to the <code>preproc</code> script.</li>
+<li>Gradient directions (before rotation) for diffusion MRI acquisitions are now cached in the user&rsquo;s ~/.tractor directory and automatically placed into a session directory if the series description matches and no gradient direction information is found in the DICOM files. This facility can save a lot of time manually copying bvals and bvecs files into session directories. Its use is determined by the UseGradientCache option to the <code>preproc</code> script.</li>
 <li>Group mapping, in particular of tracts produced by <code>hnt-viz</code>, <code>pnt-viz</code> and <code>pnt-prune</code>, is now available through the new <code>gmap</code> script. A set of images are transferred into standard (MNI) space and overlaid to visualise spatial consistency. Run &ldquo;tractor -o gmap&rdquo; for options.</li>
 <li>Contact sheet style visualisation is now available for Analyze/NIfTI volumes, wherein all slices of an image along a particular direction are shown in a grid. The new <code>contact</code> script is the interface to this functionality.</li>
-<li>The new <code>age</code> script can be used to determine a subject&#39;s age to the day from a DICOM file.</li>
+<li>The new <code>age</code> script can be used to determine a subject&rsquo;s age to the day from a DICOM file.</li>
 <li>The new <code>binarise</code> script can be used to binarise Analyze/NIfTI volumes, with an optional threshold.</li>
 <li>Options such as RunStages in <code>preproc</code> and SessionNumbers in <code>pnt-prune</code> now allow number ranges (e.g. 1-10) as input, for convenience and conciseness.</li>
 <li>The HowRunBedpost option in the <code>preproc</code> script now defaults to &ldquo;fg&rdquo; (running in the foreground). The use of &ldquo;screen&rdquo; was confusing for several users, but can be forced if required. The &ldquo;auto&rdquo; value is no longer used or supported.</li>
@@ -413,7 +423,7 @@
 <li>The <code>pnt-ref</code> and <code>hnt-eval</code> scripts now support a NumberOfSamples option, to set the number of streamlines used by the underlying tractography algorithm.</li>
 <li>The <code>track</code> and <code>mtrack</code> scripts now have a CreateVolumes option, for consistency with other similar scripts. The behaviour of the <code>rtrack</code> script has also been brought into line with other related scripts.</li>
 <li>The <code>chfiletype</code> script can now be used with multiple files.</li>
-<li>The <code>tractor</code> program now supports a &ldquo;-i&rdquo; flag to suppress the user&#39;s default configuration file.</li>
+<li>The <code>tractor</code> program now supports a &ldquo;-i&rdquo; flag to suppress the user&rsquo;s default configuration file.</li>
 <li>Running &ldquo;tractor -o (script)&rdquo; no longer requires <code>ruby</code>.</li>
 <li>The DICOM reading code should no longer incorrectly identify non-Siemens images as mosaic volumes.</li>
 <li>Duplicated stack traces were sometimes produced when <code>tractor</code> was run in debug mode. This has been corrected.</li>
@@ -454,7 +464,7 @@
 <li>The <code>dicomread</code> script now uses the FSLOUTPUTTYPE environment variable to decide on a file format to use if TRACTOR_FILETYPE is not set. This was always the intended behaviour.</li>
 <li>Fixing an issue that would produce an error when reading a 2D NIfTI image file.</li>
 <li>The <code>pnt-eval</code> script will now find standard reference tracts as intended.</li>
-<li>The <code>caminofiles</code> script would previously always ask for confirmation, even if the camino directory didn&#39;t previously exist.</li>
+<li>The <code>caminofiles</code> script would previously always ask for confirmation, even if the camino directory didn&rsquo;t previously exist.</li>
 </ul>
 
 <h2 id="100-2009-02-13">1.0.0 (2009-02-13)</h2>
@@ -464,7 +474,7 @@
 <li>New neighbourhood tractography functionality has been added, for &ldquo;unsupervised&rdquo; tract segmentation (using the new <code>pnt-em</code> experiment) and extracting parameters of interest from NT results (<code>hnt-interpret</code> and <code>pnt-interpret</code>).</li>
 <li>The new <code>list</code> experiment lists all available TractoR experiment scripts.</li>
 <li>The new <code>dicomread</code> experiment has been added to convert any directory of DICOM files into an Analyze/NIfTI volume. DICOM read support is now more flexible, and can read images with nonaxial slices.</li>
-<li>The format and name of the file which stores the transform from MNI space to each session&#39;s diffusion space (in the tractor/objects directory) has changed. As a result the registration will be repeated the first time it is needed. The new <code>xfmconvert</code> script can be used to convert existing files to the new format (<code>tractor -o xfmconvert</code> for usage information).</li>
+<li>The format and name of the file which stores the transform from MNI space to each session&rsquo;s diffusion space (in the tractor/objects directory) has changed. As a result the registration will be repeated the first time it is needed. The new <code>xfmconvert</code> script can be used to convert existing files to the new format (<code>tractor -o xfmconvert</code> for usage information).</li>
 <li>The <code>preproc</code> experiment now shows the principal directions of the diffusion tensor in FSLview during stage 4. It also interprets its DicomDirectory parameter as representing a full path if it begins with a &ldquo;/&rdquo; character.</li>
 <li>The <code>chfiletype</code> experiment can now be used to change the datatype of an image as well as the file format.</li>
 <li>Warning messages that occur multiple times are now generally shown only once &ndash; along with the number of occurrences. Warnings from R core code are also reported in this way.</li>
@@ -477,7 +487,7 @@
 
 <ul>
 <li>A mistake in the <code>dicomsort</code> and <code>peek</code> experiment scripts meant that they produced errors about missing functions. This has been corrected.</li>
-<li>Following the dropping of support for the Analyze file format by FSL 4.1, this beta provides some extra tools for those who wish to continue using the format. Specifically, the environment variable TRACTOR_FILETYPE can be set to ANALYZE if the user wishes TractoR to output Analyze files by default. (This is no longer a legal value for FSL&#39;s environment variable FSLOUTPUTTYPE, which was previously used for TractoR&#39;s default.) The <code>chfiletype</code> script has also been created for converting between formats as required: please run <code>tractor -o chfiletype</code> for details.</li>
+<li>Following the dropping of support for the Analyze file format by FSL 4.1, this beta provides some extra tools for those who wish to continue using the format. Specifically, the environment variable TRACTOR_FILETYPE can be set to ANALYZE if the user wishes TractoR to output Analyze files by default. (This is no longer a legal value for FSL&rsquo;s environment variable FSLOUTPUTTYPE, which was previously used for TractoR&rsquo;s default.) The <code>chfiletype</code> script has also been created for converting between formats as required: please run <code>tractor -o chfiletype</code> for details.</li>
 </ul>
 
 <h2 id="beta-30-2008-08-11">Beta 3.0 (2008-08-11)</h2>
@@ -487,7 +497,7 @@
 <li>Three new utility scripts have been added. The <code>caminofiles</code> experiment converts a data set into file formats suitable for use with the Camino diffusion MRI toolkit; <code>mkbvecs</code> assists with the creation of valid &ldquo;bvals&rdquo; and &ldquo;bvecs&rdquo; files for use with FSL; and <code>dicomsort</code> sorts a directory of DICOM files into subdirectories by series number. The latter is useful for separating diffusion data from structural acquisitions.</li>
 <li>The time-consuming <code>pnt-data</code> experiment script now writes partial output as it goes and supports resuming a partially completed run. This makes interruptions to this process, such as major errors or power loss, far less painful in terms of the time lost. The script also allows a single seed point to be specified on the command line with the new SeedPoint option.</li>
 <li>The <code>preproc</code> experiment checks more robustly to make sure that its first stage has been completed properly. The script also more faithfully obeys its Interactive flag.</li>
-<li>TractoR will now use R&#39;s batch mode if requested. This is not that useful under most usual circumstances, but can occasionally be helpful.</li>
+<li>TractoR will now use R&rsquo;s batch mode if requested. This is not that useful under most usual circumstances, but can occasionally be helpful.</li>
 <li>More minor tweaks and fixes.</li>
 </ul>
 
@@ -495,7 +505,7 @@
 
 <ul>
 <li>Entities which are stored in &ldquo;.Rdata&rdquo; files are now saved in a different way. This means that objects such as reference tracts created with beta 1.0 will not directly work with beta 2.0. However, this new arrangement should generally be forward-compatible with future releases. The new <code>peek</code> experiment script can be used to inspect these stored R objects.</li>
-<li>The main <code>tractor</code> script has had some tweaks. The log file, &ldquo;tractor_output.log&rdquo; will now receive output from the experiment script in real time rather than all at the end. Multiple configuration files (specified with the &ldquo;-c&rdquo; flag) are now permitted, and paths to these files are now relative to the current working directory rather than the experiment&#39;s working directory (which was a bit counterintuitive). <code>tractor -o</code> now reports &ldquo;None&rdquo; if no options are available.</li>
+<li>The main <code>tractor</code> script has had some tweaks. The log file, &ldquo;tractor_output.log&rdquo; will now receive output from the experiment script in real time rather than all at the end. Multiple configuration files (specified with the &ldquo;-c&rdquo; flag) are now permitted, and paths to these files are now relative to the current working directory rather than the experiment&rsquo;s working directory (which was a bit counterintuitive). <code>tractor -o</code> now reports &ldquo;None&rdquo; if no options are available.</li>
 <li>The user can set up default options for TractoR experiments using a ~/.tractor/config file. See the <code>tractor</code> man page for more details.</li>
 <li>History log files (&ldquo;tractor_history.log&rdquo;) now include the date and time that the experiment script completed.</li>
 <li>Added the <code>gmean</code> experiment script, a companion to <code>mean</code> aimed at applying the same calculation to a group of images. Run <code>tractor -o gmean</code> for details.</li>
