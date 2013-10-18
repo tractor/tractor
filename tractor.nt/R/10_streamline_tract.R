@@ -692,6 +692,8 @@ rescalePoints <- function (points, newUnit, metadata, seed)
     
     if (!is.null(newUnit) && (newUnit != oldUnit))
     {
+        require("tractor.reg")
+        
         if (metadata$isOriginAtSeed())
             points <- translatePoints(points, seed)
 
