@@ -13,10 +13,11 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
     method <- match.arg(method)
     
     data <- promote(data, byrow=TRUE)
-    if (any(data <= 0))
+    invalid <- which(data <= 0)
+    if (length(invalid) > 0)
     {
-        report(OL$Warning, "Data contains ", sum(data<=0), " nonpositive values - these will be ignored")
-        data[data<=0] <- NA
+        report(OL$Warning, "Data contains ", length(invalid), " nonpositive values - these will be ignored")
+        data[invalid] <- NA
     }
     logData <- log(data)
     rm(data)
@@ -34,7 +35,20 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
     }
     
     report(OL$Info, "Fitting tensors by ordinary least-squares", ifelse(method=="iwls"," (for initialisation)",""))
-    solution <- lsfit(bMatrix, t(logData))
+    if (length(invalid) > 0)
+    {
+        # If there are missing values we need to fit voxels one at a time
+        ordinaryLeastSquaresFit <- function (i)
+        {
+            tempSolution <- suppressWarnings(lsfit(bMatrix, logData[i,]))
+            return (c(tempSolution$coefficients, tempSolution$residuals))
+        }
+        
+        values <- sapply(1:nrow(logData), ordinaryLeastSquaresFit)
+        solution <- list(coefficients=values[1:7,], residuals=values[-(1:7),])
+    }
+    else
+        solution <- lsfit(bMatrix, t(logData))
     
     if (method == "iwls")
     {
@@ -51,7 +65,7 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
                 # Weights are simply the predicted signals; nonpositive data values get zero weight
                 weights <- exp(voxelLogData - voxelResiduals)
                 weights[is.na(weights)] <- 0
-                tempSolution <- lsfit(bMatrix, voxelLogData, wt=weights)
+                tempSolution <- suppressWarnings(lsfit(bMatrix, voxelLogData, wt=weights))
                 voxelResiduals <- tempSolution$residuals
                 
                 sumOfSquares <- sum(tempSolution$residuals^2, na.rm=TRUE)

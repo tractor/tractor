@@ -25,7 +25,7 @@ char * allocate_and_copy_string (const char *from)
 
 void parse_arguments (int argc, const char **argv)
 {
-    int i, to_drop, to_skip, current_arg;
+    int i, to_drop, current_arg;
     size_t script_args_len = 0, script_args_index = 0;
     
     // First pass: identify and remove flagged options
@@ -33,18 +33,16 @@ void parse_arguments (int argc, const char **argv)
     while (current_arg < argc)
     {
         to_drop = 0;
-        to_skip = 0;
         
         if (strncmp(argv[current_arg],"-",1) != 0)
         {
             if (script_file == NULL)
             {
                 script_file = allocate_and_copy_string(argv[current_arg]);
-                to_drop = 1;
+                argv[current_arg] = NULL;
+                break;
             }
-            else
-                to_skip = 1;
-        }  
+        }
         else if (strcmp(argv[current_arg], "-w") == 0)
         {
             working_dir = allocate_and_copy_string(argv[current_arg+1]);
@@ -96,7 +94,7 @@ void parse_arguments (int argc, const char **argv)
         
         for (i=0; i<to_drop; i++)
             argv[current_arg+i] = NULL;
-        current_arg += to_drop + to_skip;
+        current_arg += to_drop;
     }
     
     // Second pass: sum up the lengths of unflagged arguments

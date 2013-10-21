@@ -19,7 +19,7 @@ runExperiment <- function ()
     nClusters <- getConfigVariable("KMeansClusters", 2, "integer")
     betIntensityThreshold <- getConfigVariable("BetIntensityThreshold", 0.3)
     betVerticalGradient <- getConfigVariable("BetVerticalGradient", 0)
-    eddyCorrectMethod <- getConfigVariable("EddyCorrectionMethod", "fsl", validValues=c("fsl","niftyreg"))
+    eddyCorrectMethod <- getConfigVariable("EddyCorrectionMethod", "fsl", validValues=c("fsl","niftyreg","none"))
     
     if ((interactive || statusOnly) && getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
@@ -208,7 +208,7 @@ runExperiment <- function ()
                 scheme <- newSimpleDiffusionSchemeFromSession(session)
                 bValues <- scheme$expandComponents()$bValues
                 nLevels <- ifelse(bValues>1500, 3, 2)
-                coregisterDataVolumesForSession(session, "diffusion", refVolume, useMask=FALSE, nLevels=nLevels, method="niftyreg")
+                coregisterDataVolumesForSession(session, "diffusion", refVolume, useMask=FALSE, nLevels=nLevels, method=eddyCorrectMethod)
             }
         }
     }

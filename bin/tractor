@@ -200,7 +200,7 @@ fi
 [ $quiet -eq 0 ] && echo "Starting TractoR environment..."
 
 if [ -x "$TRACTOR_HOME/bin/exec/tractor" ]; then
-    R --vanilla CMD "$TRACTOR_HOME/bin/exec/tractor" "$script_file" -w "$working_dir" -r "$report_file" -l "$output_level" -c "$config_file" -p "$parallelisation_factor" -g "$log_file" $command_flags $args 2>&1
+    R --vanilla CMD "$TRACTOR_HOME/bin/exec/tractor" -w "$working_dir" -r "$report_file" -l "$output_level" -c "$config_file" -p "$parallelisation_factor" -g "$log_file" $command_flags "$script_file" $args 2>&1
 elif [ $batch_mode -eq 1 ]; then
     cat >"$expect_file" <<EOF
 library(utils)

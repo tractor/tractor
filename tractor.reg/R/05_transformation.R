@@ -235,6 +235,12 @@ resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, origin = N
     return (result$transformedImage)
 }
 
+identityTransformation <- function (sourceImage, targetImage)
+{
+    result <- registerImages(sourceImage, targetImage, method="niftyreg", types="affine", estimateOnly=TRUE, linearOptions=list(nLevels=0,verbose=FALSE))
+    return (result$transform)
+}
+
 invertTransformation <- function (transform, quiet = FALSE)
 {
     if (!is(transform, "Transformation"))
