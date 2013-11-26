@@ -11,6 +11,9 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), reportF
     if (capabilities("aqua"))
         options(device="quartz")
     
+    if (Sys.getenv("COLUMNS") != "")
+        options(width=as.integer(Sys.getenv("COLUMNS")))
+    
     setOutputLevel(outputLevel)
     options(reportrStackTraceLevel=OL$Warning)
     

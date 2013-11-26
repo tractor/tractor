@@ -161,14 +161,15 @@ fi
     exit
 }
 
+[ -z $COLUMNS ] && {
+    type tput >/dev/null 2>&1
+    tput_available=$?
+    [ $tput_available -eq 0 ] && COLUMNS=`tput cols` || COLUMNS=80
+    export COLUMNS
+}
+
 if [ $show_options -eq 1 ]; then
-    [ -z $COLUMNS ] && {
-        type tput >/dev/null 2>&1
-        tput_available=$?
-        [ $tput_available -eq 0 ] && COLUMNS=`tput cols`
-    }
-    
-    echo "library(utils); library(tractor.utils); describeExperiment('$script_file', ${COLUMNS:-80})" | R --slave --vanilla 2>&1
+    echo "library(utils); library(tractor.utils); describeExperiment('$script_file', $COLUMNS)" | R --slave --vanilla 2>&1
     status=0
     exit
 fi
