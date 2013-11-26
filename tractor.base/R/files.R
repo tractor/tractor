@@ -145,7 +145,7 @@ chooseDataTypeForImage <- function (image, format)
     # If double-mode data can be represented as integers, convert it to save space
     # Note that this slows the function down
     rType <- storage.mode(data)
-    if (rType == "double" && equivalent(as.double(data),as.integer(data)))
+    if (rType == "double" && equivalent(as.double(data),suppressWarnings(as.integer(data))))
         rType <- "integer"
     
     isSigned <- (rType == "double" || min(data,na.rm=TRUE) < 0)
