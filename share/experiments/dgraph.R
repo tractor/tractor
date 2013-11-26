@@ -351,7 +351,7 @@ runExperiment <- function ()
 	LenStreamsMatrix <- LenStreamsMatrix * stepLength 
 	
     report(OL$Info, "Creating and writing graph")
-    graph <- newGraphFromConnectionMatrix(connectivityMatrix, directed=FALSE, ignoreSelfConnections=TRUE)
+    graph <- asGraph(connectivityMatrix, directed=FALSE, ignoreSelfConnections=TRUE)
 	graph$setVertexAttributes( c(graph$vertexAttributes,list(NumVoxelsRegion=regionSizes, VoxelDims=VoxelDims)) )
 	graph$setEdgeAttributes( list(FAConMatrix=FAConMatrix[indEdges],FAWConMatrix=FAWConMatrix[indEdges],MDConMatrix=MDConMatrix[indEdges],MDWConMatrix=MDWConMatrix[indEdges],LenStreamsMatrix=LenStreamsMatrix[indEdges],NumUniqueVoxs=NumUniqueVoxs[indEdges],NumVisVoxs=NumVisVoxs[indEdges], NumStreamsConMatrix=NumStreamsConMatrix[indEdges]) )
     graph$setVertexLocations(regionLocations, "mm")

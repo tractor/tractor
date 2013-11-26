@@ -9,7 +9,7 @@ runExperiment <- function ()
     
     sessionList <- lapply(sessionList, newSessionFromDirectory)
     data <- createCorticalThicknessTableForSessions(sessionList)
-    graph <- newGraphFromTable(data, method="correlation")
+    graph <- asGraph(cor(data), directed=FALSE)
     
     graph$serialise("ctgraph.Rdata")
     

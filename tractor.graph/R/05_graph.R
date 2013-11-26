@@ -136,6 +136,48 @@ setAs("Graph", "igraph", function (from) {
     return (igraph)
 })
 
+setAs("matrix", "Graph", function (from) asGraph(from))
+
+asGraph <- function (x, ...)
+{
+    UseMethod("asGraph")
+}
+
+asGraph.matrix <- function (x, directed = NULL, allVertexNames = NULL, ignoreSelfConnections = FALSE, ...)
+{
+    if (is.null(directed))
+        directed <- !isSymmetric(x)
+    else if (directed == isSymmetric(x))
+        flag(OL$Warning, "The \"directed\" argument does not match the symmetry of the matrix - the lower triangle will be ignored")
+    
+    if (!directed)
+        x[lower.tri(x,diag=FALSE)] <- NA
+    if (ignoreSelfConnections)
+        diag(x) <- NA
+    
+    if (is.null(allVertexNames))
+        allVertexNames <- union(rownames(x), colnames(x))
+    
+    if (is.null(allVertexNames))
+    {
+        rowVertexLocs <- 1:nrow(x)
+        colVertexLocs <- 1:ncol(x)
+    }
+    else
+    {
+        rowVertexLocs <- match(rownames(x), allVertexNames)
+        colVertexLocs <- match(colnames(x), allVertexNames)
+    }
+    
+    edges <- which(!is.na(x) & x != 0, arr.ind=TRUE)
+    edgeWeights <- x[edges]
+    edges[,1] <- rowVertexLocs[edges[,1]]
+    edges[,2] <- colVertexLocs[edges[,2]]
+    dimnames(edges) <- NULL
+    
+    return (Graph$new(vertexCount=length(allVertexNames), vertexAttributes=list(names=allVertexNames), edges=edges, edgeWeights=edgeWeights, directed=directed))
+}
+
 as.matrix.Graph <- function (x, ...)
 {
     as(x, "matrix")
@@ -294,42 +336,6 @@ levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, use
     labels <- as.character(activeVertices)
     
     levelplot(associationMatrix[activeVertices,activeVertices], col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
-}
-
-newGraphFromTable <- function (table, method = c("correlation","covariance"), allVertexNames = NULL)
-{
-    method <- match.arg(method)
-    
-    if (method == "correlation")
-        associationMatrix <- cor(table)
-    else if (method == "covariance")
-        associationMatrix <- cov(table)
-    
-    return (newGraphFromConnectionMatrix(associationMatrix, directed=FALSE, allVertexNames=allVertexNames))
-}
-
-newGraphFromConnectionMatrix <- function (associationMatrix, directed = FALSE, allVertexNames = NULL, ignoreSelfConnections = FALSE)
-{
-    if (!is.matrix(associationMatrix))
-        report(OL$Error, "Specified association matrix is not a matrix object")
-    
-    if (!directed)
-        associationMatrix[lower.tri(associationMatrix,diag=FALSE)] <- NA
-    if (ignoreSelfConnections)
-        diag(associationMatrix) <- NA
-    
-    if (is.null(allVertexNames))
-        allVertexNames <- union(rownames(associationMatrix), colnames(associationMatrix))
-    rowVertexLocs <- match(rownames(associationMatrix), allVertexNames)
-    colVertexLocs <- match(colnames(associationMatrix), allVertexNames)
-    
-    edges <- which(!is.na(associationMatrix) & associationMatrix != 0, arr.ind=TRUE)
-    edgeWeights <- associationMatrix[edges]
-    edges[,1] <- rowVertexLocs[edges[,1]]
-    edges[,2] <- colVertexLocs[edges[,2]]
-    dimnames(edges) <- NULL
-    
-    return (Graph$new(vertexCount=length(allVertexNames), vertexAttributes=list(names=allVertexNames), edges=edges, edgeWeights=edgeWeights, directed=directed))
 }
 
 newGraphWithVertices <- function (graph, vertices)

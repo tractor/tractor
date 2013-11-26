@@ -64,7 +64,7 @@ runExperiment <- function ()
     })
     
     colnames(signals) <- maskNames
-    graph <- newGraphFromTable(signals, method="correlation", allVertexNames=maskNames)
+    graph <- asGraph(cor(signals), directed=FALSE, allVertexNames=maskNames)
     graph$serialise("rsgraph.Rdata")
     
     invisible(NULL)

@@ -14,7 +14,7 @@
 
 calculatePrincipalGraphsForTable <- function (table, ..., allVertexNames = NULL)
 {
-    graph <- newGraphFromTable(table, method="correlation", allVertexNames=allVertexNames)
+    graph <- asGraph(cor(table), directed=TRUE, allVertexNames=allVertexNames)
     principalGraphs <- calculatePrincipalGraphsForGraphs(graph, ...)
     principalGraphs$scores <- scale(table) %*% principalGraphs$eigenvectors
     
@@ -99,13 +99,13 @@ calculatePrincipalGraphsForGraphs <- function (graphs, components = NULL, eigenv
     # Calculate residual association matrices after subtracting out higher components
     residualMatrices <- Reduce("-", fullMatrices, init=associationMatrix, accumulate=TRUE)
     residualMatrices <- residualMatrices[-1]
-    residualGraphs <- lapply(residualMatrices[components], newGraphFromConnectionMatrix, allVertexNames=graphs[[1]]$getVertexAttributes()$names)
+    residualGraphs <- lapply(residualMatrices[components], asGraph, allVertexNames=graphs[[1]]$getVertexAttributes()$names)
     residualGraphs <- lapply(residualGraphs, function(x) { x$setVertexLocations(graphs[[1]]$getVertexLocations(),graphs[[1]]$getVertexLocationUnit()); x })
     names(residualGraphs) <- paste("PN", components, sep="")
     
     verticesToKeep <- attr(loadings, "salient")
     matrices <- lapply(components, function(i) fullMatrices[[i]][verticesToKeep[,i],verticesToKeep[,i]])
-    componentGraphs <- lapply(matrices, newGraphFromConnectionMatrix, allVertexNames=graphs[[1]]$getVertexAttributes()$names)
+    componentGraphs <- lapply(matrices, asGraph, allVertexNames=graphs[[1]]$getVertexAttributes()$names)
     componentGraphs <- lapply(componentGraphs, function(x) { x$setVertexLocations(graphs[[1]]$getVertexLocations(),graphs[[1]]$getVertexLocationUnit()); x })
     names(componentGraphs) <- paste("PN", components, sep="")
     
