@@ -2,6 +2,7 @@
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
+library(tractor.reg)
 
 runExperiment <- function ()
 {
