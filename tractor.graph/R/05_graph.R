@@ -99,10 +99,52 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     }
 ))
 
+setAs("Graph", "matrix", function (from) from$getConnectionMatrix())
+
 setAs("Graph", "igraph", function (from) {
-    require(igraph)
-    return (graph.edgelist(from$getEdges(), directed=from$isDirected()))
+    require("igraph")
+
+    igraph <- graph.edgelist(from$getEdges(), directed=from$isDirected())
+    
+    vertexAttributes <- from$getVertexAttributes()
+    edgeAttributes <- from$getEdgeAttributes()
+    
+    for (i in seq_along(vertexAttributes))
+    {
+        indices <- which(!is.na(vertexAttributes[[i]]))
+        if (names(vertexAttributes)[i] == "names")
+            V(igraph)$name[indices] <- vertexAttributes[[i]]
+        else
+            igraph <- set.vertex.attribute(igraph, names(vertexAttributes)[i], indices, vertexAttributes[[i]][indices])
+    }
+    
+    for (i in seq_along(edgeAttributes))
+    {
+        indices <- which(!is.na(edgeAttributes[[i]]))
+        if (names(edgeAttributes)[i] == "names")
+            E(igraph)$name[indices] <- edgeAttributes[[i]]
+        else
+            igraph <- set.edge.attribute(igraph, names(edgeAttributes)[i], indices, edgeAttributes[[i]][indices])
+    }
+    
+    if (!all(is.na(from$getEdgeWeights()) | (from$getEdgeWeights() %in% c(0,1))))
+    {
+        indices <- which(!is.na(from$getEdgeWeights()))
+        E(igraph)$weight[indices] <- from$getEdgeWeights()[indices]
+    }
+    
+    return (igraph)
 })
+
+as.matrix.Graph <- function (x, ...)
+{
+    as(x, "matrix")
+}
+
+setMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getConnectionMatrix()[,,drop=drop]))
+setMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getConnectionMatrix()[i,,drop=drop]))
+setMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getConnectionMatrix()[,j,drop=drop]))
+setMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getConnectionMatrix()[i,j,drop=drop]))
     
 setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
