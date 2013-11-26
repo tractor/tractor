@@ -1,5 +1,5 @@
 Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexCount="integer",vertexAttributes="list",vertexLocations="matrix",locationUnit="character",edges="matrix",edgeAttributes="list",edgeWeights="numeric",directed="logical"), methods=list(
-    initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = matrix(NA,0,0), locationUnit = "", edges = matrix(NA,0,0), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
+    initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = emptyMatrix(), locationUnit = "", edges = emptyMatrix(), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
     {
         oldFields <- list(...)
         if ("vertexNames" %in% names(oldFields))
@@ -79,6 +79,18 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     nEdges = function () { return (nrow(edges)) },
     
     nVertices = function () { return (vertexCount) },
+    
+    setEdgeAttributes = function (...)
+    {
+        attributes <- c(list(...), edgeAttributes)
+        .self$edgeAttributes <- attributes[!duplicated(names(attributes))]
+    },
+    
+    setVertexAttributes = function (...)
+    {
+        attributes <- c(list(...), vertexAttributes)
+        .self$vertexAttributes <- attributes[!duplicated(names(attributes))]
+    },
     
     setVertexLocations = function (locs, unit)
     {
