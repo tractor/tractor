@@ -11,5 +11,5 @@ runExperiment <- function ()
     fileName <- ensureFileSuffix(Arguments[1], "Rdata")
     graph <- deserialiseReferenceObject(fileName)
     fileName <- ensureFileSuffix(fileName, "csv", strip="Rdata")
-    write.table(graph$getConnectionMatrix(), fileName, sep=",", row.names=FALSE, col.names=FALSE)
+    write.table(graph$getAssociationMatrix(), fileName, sep=",", row.names=FALSE, col.names=FALSE)
 }

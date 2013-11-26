@@ -12,18 +12,18 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     getConnectedVertices = function () { return (sort(unique(as.vector(edges)))) },
     
-    getConnectionMatrix = function ()
+    getAssociationMatrix = function ()
     {
-        connectionMatrix <- matrix(0, nrow=vertexCount, ncol=vertexCount)
+        associationMatrix <- matrix(0, nrow=vertexCount, ncol=vertexCount)
         if (!is.null(vertexAttributes$names))
         {
-            rownames(connectionMatrix) <- vertexAttributes$names
-            colnames(connectionMatrix) <- vertexAttributes$names
+            rownames(associationMatrix) <- vertexAttributes$names
+            colnames(associationMatrix) <- vertexAttributes$names
         }
-        connectionMatrix[edges] <- edgeWeights
+        associationMatrix[edges] <- edgeWeights
         if (!directed)
-            connectionMatrix[edges[,2:1]] <- edgeWeights
-        return (connectionMatrix)
+            associationMatrix[edges[,2:1]] <- edgeWeights
+        return (associationMatrix)
     },
         
     getEdge = function (i)
@@ -53,9 +53,9 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         if (directed)
             report(OL$Error, "Laplacian matrix calculation for directed graphs is not yet implemented")
         
-        connectionMatrix <- .self$getConnectionMatrix()
-        degreeMatrix <- diag(colSums(connectionMatrix))
-        return (degreeMatrix - connectionMatrix)
+        associationMatrix <- .self$getAssociationMatrix()
+        degreeMatrix <- diag(colSums(associationMatrix))
+        return (degreeMatrix - associationMatrix)
     },
     
     getVertexAttributes = function (attributes = NULL)
@@ -99,7 +99,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     }
 ))
 
-setAs("Graph", "matrix", function (from) from$getConnectionMatrix())
+setAs("Graph", "matrix", function (from) from$getAssociationMatrix())
 
 setAs("Graph", "igraph", function (from) {
     require("igraph")
@@ -141,10 +141,10 @@ as.matrix.Graph <- function (x, ...)
     as(x, "matrix")
 }
 
-setMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getConnectionMatrix()[,,drop=drop]))
-setMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getConnectionMatrix()[i,,drop=drop]))
-setMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getConnectionMatrix()[,j,drop=drop]))
-setMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getConnectionMatrix()[i,j,drop=drop]))
+setMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,,drop=drop]))
+setMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,,drop=drop]))
+setMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,j,drop=drop]))
+setMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,j,drop=drop]))
     
 setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
@@ -260,23 +260,23 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius =
 
 levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE, ...)
 {
-    connectionMatrix <- x$getConnectionMatrix()
+    associationMatrix <- x$getAssociationMatrix()
     edges <- x$getEdges()
     
-    if (all(is.na(connectionMatrix)))
+    if (all(is.na(associationMatrix)))
         report(OL$Error, "There are no connection weights in the specified graph")
     
     if (useAbsoluteWeights)
-        connectionMatrix <- abs(connectionMatrix)
+        associationMatrix <- abs(associationMatrix)
     
     if (is.null(weightLimits))
-        weightLimits <- range(connectionMatrix, na.rm=TRUE)
+        weightLimits <- range(associationMatrix, na.rm=TRUE)
     else if (ignoreBeyondLimits)
-        connectionMatrix[connectionMatrix < weightLimits[1] | connectionMatrix > weightLimits[2]] <- NA
+        associationMatrix[associationMatrix < weightLimits[1] | associationMatrix > weightLimits[2]] <- NA
     else
     {
-        connectionMatrix[connectionMatrix < weightLimits[1]] <- weightLimits[1]
-        connectionMatrix[connectionMatrix > weightLimits[2]] <- weightLimits[2]
+        associationMatrix[associationMatrix < weightLimits[1]] <- weightLimits[1]
+        associationMatrix[associationMatrix > weightLimits[2]] <- weightLimits[2]
     }
     
     if (is.numeric(col))
@@ -293,7 +293,7 @@ levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, use
     
     labels <- as.character(activeVertices)
     
-    levelplot(connectionMatrix[activeVertices,activeVertices], col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
+    levelplot(associationMatrix[activeVertices,activeVertices], col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
 }
 
 newGraphFromTable <- function (table, method = c("correlation","covariance"), allVertexNames = NULL)
@@ -301,30 +301,30 @@ newGraphFromTable <- function (table, method = c("correlation","covariance"), al
     method <- match.arg(method)
     
     if (method == "correlation")
-        connectionMatrix <- cor(table)
+        associationMatrix <- cor(table)
     else if (method == "covariance")
-        connectionMatrix <- cov(table)
+        associationMatrix <- cov(table)
     
-    return (newGraphFromConnectionMatrix(connectionMatrix, directed=FALSE, allVertexNames=allVertexNames))
+    return (newGraphFromConnectionMatrix(associationMatrix, directed=FALSE, allVertexNames=allVertexNames))
 }
 
-newGraphFromConnectionMatrix <- function (connectionMatrix, directed = FALSE, allVertexNames = NULL, ignoreSelfConnections = FALSE)
+newGraphFromConnectionMatrix <- function (associationMatrix, directed = FALSE, allVertexNames = NULL, ignoreSelfConnections = FALSE)
 {
-    if (!is.matrix(connectionMatrix))
-        report(OL$Error, "Specified connection matrix is not a matrix object")
+    if (!is.matrix(associationMatrix))
+        report(OL$Error, "Specified association matrix is not a matrix object")
     
     if (!directed)
-        connectionMatrix[lower.tri(connectionMatrix,diag=FALSE)] <- NA
+        associationMatrix[lower.tri(associationMatrix,diag=FALSE)] <- NA
     if (ignoreSelfConnections)
-        diag(connectionMatrix) <- NA
+        diag(associationMatrix) <- NA
     
     if (is.null(allVertexNames))
-        allVertexNames <- union(rownames(connectionMatrix), colnames(connectionMatrix))
-    rowVertexLocs <- match(rownames(connectionMatrix), allVertexNames)
-    colVertexLocs <- match(colnames(connectionMatrix), allVertexNames)
+        allVertexNames <- union(rownames(associationMatrix), colnames(associationMatrix))
+    rowVertexLocs <- match(rownames(associationMatrix), allVertexNames)
+    colVertexLocs <- match(colnames(associationMatrix), allVertexNames)
     
-    edges <- which(!is.na(connectionMatrix) & connectionMatrix != 0, arr.ind=TRUE)
-    edgeWeights <- connectionMatrix[edges]
+    edges <- which(!is.na(associationMatrix) & associationMatrix != 0, arr.ind=TRUE)
+    edgeWeights <- associationMatrix[edges]
     edges[,1] <- rowVertexLocs[edges[,1]]
     edges[,2] <- colVertexLocs[edges[,2]]
     dimnames(edges) <- NULL
