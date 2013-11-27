@@ -46,6 +46,19 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
             return (edgeAttributes[attributes])
     },
     
+    getEdgeDensity = function (ignoreDisconnectedVertices = TRUE, ignoreSelfConnections = TRUE)
+    {
+        if (ignoreDisconnectedVertices)
+            nConnectedVertices <- length(.self$getConnectedVertices())
+        else
+            nConnectedVertices <- .self$nVertices()
+        
+        nEdges <- .self$nEdges() - ifelse(ignoreSelfConnections, sum(edges[,1]==edges[,2]), 0)
+        nPossibleEdges <- ifelse(.self$isDirected(), nConnectedVertices^2, nConnectedVertices*(nConnectedVertices+1)/2) - ifelse(ignoreSelfConnections, nConnectedVertices, 0)
+        
+        return (nEdges / nPossibleEdges)
+    },
+    
     getEdgeWeights = function () { return (edgeWeights) },
     
     getLaplacianMatrix = function ()
@@ -76,6 +89,8 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     isDirected = function () { return (directed) },
     
+    isWeighted = function () { return (!all(is.na(edgeWeights) | (edgeWeights %in% c(0,1)))) },
+    
     nEdges = function () { return (nrow(edges)) },
     
     nVertices = function () { return (vertexCount) },
@@ -96,6 +111,22 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     {
         .self$vertexLocations <- locs
         .self$locationUnit <- unit
+    },
+    
+    summarise = function ()
+    {
+        properties <- c(ifelse(.self$isDirected(),"directed","undirected"), ifelse(.self$isWeighted(),"weighted","unweighted"))
+        
+        vertexAttribNames <- names(vertexAttributes)
+        if (length(vertexAttribNames) == 0)
+            vertexAttribNames <- "(none)"
+        edgeAttribNames <- names(edgeAttributes)
+        if (length(edgeAttribNames) == 0)
+            edgeAttribNames <- "(none)"
+        
+        values <- c(implode(properties,sep=", "), .self$nVertices(), .self$nEdges(), s("#{.self$getEdgeDensity()*100}%",round=2), implode(vertexAttribNames,sep=", "), implode(edgeAttribNames,sep=", "))
+        names(values) <- c("Graph properties", "Number of vertices", "Number of edges", "Edge density", "Vertex attributes", "Edge attributes")
+        return (values)
     }
 ))
 
