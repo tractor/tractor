@@ -219,7 +219,7 @@ setMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ...,
 setMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,j,drop=drop]))
 setMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,j,drop=drop]))
     
-setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useLocations = FALSE, locationAxes = NULL) {
+setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useNames = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
     
@@ -231,11 +231,13 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius =
     
     if (is.null(weightLimits))
     {
-        weightLimits <- range(weights)
+        weightLimits <- range(weights, na.rm=TRUE)
         if (weightLimits[1] < 0 && weightLimits[2] > 0)
             weightLimits <- max(abs(weightLimits)) * c(-1,1)
         else
             weightLimits[which.min(abs(weightLimits))] <- 0
+        
+        report(OL$Info, s("Setting weight limits of #{weightLimits[1]} to #{weightLimits[2]}",signif=4))
     }
     else if (ignoreBeyondLimits)
         weights[weights < weightLimits[1] | weights > weightLimits[2]] <- NA
@@ -257,7 +259,7 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius =
             col <- 6
     }
     if (is.numeric(col))
-        col <- tractor.base:::getColourScale(col)$colours
+        col <- getColourScale(col)$colours
     
     if (length(col) > 1)
     {
@@ -326,7 +328,12 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius =
     }
     segments(xLocs[from], yLocs[from], xLocs[to], yLocs[to], lwd=lwd, col=colours)
     symbols(xLocs, yLocs, circles=rep(radius,nActiveVertices), inches=FALSE, col="grey50", lwd=lwd, bg="white", add=TRUE)
-    text(xLocs, yLocs, as.character(activeVertices), col="grey40", cex=cex)
+    
+    if (useNames)
+        text(xLocs, yLocs, x$getVertexAttributes("names")[activeVertices], col="grey40", cex=cex)
+    else
+        text(xLocs, yLocs, as.character(activeVertices), col="grey40", cex=cex)
+    
     if (!add)
         par(oldPars)
 })
