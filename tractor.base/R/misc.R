@@ -1,3 +1,25 @@
+# Simple expression substitution
+s <- function (string, round = NULL, signif = NULL)
+{
+    while ((match <- regexpr("\\#\\{([^\\}]|(?<=\\\\)\\})+\\}", string, perl=TRUE)) != -1)
+    {
+        expressionString <- substr(string, match+2, match+attr(match,"match.length")-2)
+        value <- eval.parent(parse(text=expressionString))
+        
+        if (is.double(value))
+        {
+            if (!is.null(round))
+                value <- round(value, round)
+            else if (!is.null(signif))
+                value <- signif(value, signif)
+        }
+        
+        string <- paste(substr(string,1,match-1), as.character(value)[1], substr(string,match+attr(match,"match.length"),nchar(string)), sep="")
+    }
+    
+    return (string)
+}
+
 implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
 {
     # Transform runs of integers into ranges
