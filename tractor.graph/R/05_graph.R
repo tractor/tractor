@@ -432,7 +432,7 @@ inducedSubgraph <- function (graph, vertices)
     return (Graph$new(vertexCount=length(vertices), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=graph$getVertexLocationUnit(), edges=edges, edgeAttributes=edgeAttributes, edgeWeights=graph$getEdgeWeights()[edgesToKeep], directed=graph$isDirected()))
 }
 
-newGraphWithEdgeWeightThreshold <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted = TRUE)
+thresholdEdges <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted = TRUE, binarise = FALSE)
 {
     if (!is(graph, "Graph"))
         report(OL$Error, "Specified graph is not a valid Graph object")
@@ -457,7 +457,12 @@ newGraphWithEdgeWeightThreshold <- function (graph, threshold, ignoreSign = FALS
             return (attrib)
     })
     
-    return (Graph$new(vertexCount=graph$nVertices(), vertexAttributes=graph$getVertexAttributes(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), edges=graph$getEdges()[toKeep,,drop=FALSE], edgeAttributes=edgeAttributes, edgeWeights=edgeWeights[toKeep], directed=graph$isDirected()))
+    if (binarise)
+        finalEdgeWeights <- rep(1, length(toKeep))
+    else
+        finalEdgeWeights <- edgeWeights[toKeep]
+    
+    return (Graph$new(vertexCount=graph$nVertices(), vertexAttributes=graph$getVertexAttributes(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), edges=graph$getEdges()[toKeep,,drop=FALSE], edgeAttributes=edgeAttributes, edgeWeights=finalEdgeWeights, directed=graph$isDirected()))
 }
 
 calculateMetricsForGraph <- function (graph, metrics = c("density","msp","mcc","globaleff","localeff"))
