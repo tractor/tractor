@@ -396,13 +396,15 @@ levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, use
     levelplot(associationMatrix[activeVertices,activeVertices], col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
 }
 
-newGraphWithVertices <- function (graph, vertices)
+inducedSubgraph <- function (graph, vertices)
 {
     if (!is(graph, "Graph"))
         report(OL$Error, "Specified graph is not a valid Graph object")
     if (length(vertices) == 0)
         report(OL$Error, "At least one vertex must be retained")
     
+    if (is.character(vertices))
+        vertices <- match(vertices, graph$getVertexAttributes("names"))
     vertices <- sort(vertices)
     
     nVertices <- graph$nVertices()
