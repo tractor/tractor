@@ -158,7 +158,7 @@ setAs("Graph", "igraph", function (from) {
             igraph <- set.edge.attribute(igraph, names(edgeAttributes)[i], indices, edgeAttributes[[i]][indices])
     }
     
-    if (!all(is.na(from$getEdgeWeights()) | (from$getEdgeWeights() %in% c(0,1))))
+    if (from$isWeighted())
     {
         indices <- which(!is.na(from$getEdgeWeights()))
         E(igraph)$weight[indices] <- from$getEdgeWeights()[indices]
