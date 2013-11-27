@@ -338,7 +338,7 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius =
         par(oldPars)
 })
 
-levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE, ...)
+levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE, useNames = FALSE, ...)
 {
     associationMatrix <- x$getAssociationMatrix()
     edges <- x$getEdges()
@@ -350,7 +350,15 @@ levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, use
         associationMatrix <- abs(associationMatrix)
     
     if (is.null(weightLimits))
+    {
         weightLimits <- range(associationMatrix, na.rm=TRUE)
+        if (weightLimits[1] < 0 && weightLimits[2] > 0)
+            weightLimits <- max(abs(weightLimits)) * c(-1,1)
+        else
+            weightLimits[which.min(abs(weightLimits))] <- 0
+        
+        report(OL$Info, s("Setting weight limits of #{weightLimits[1]} to #{weightLimits[2]}",signif=4))
+    }
     else if (ignoreBeyondLimits)
         associationMatrix[associationMatrix < weightLimits[1] | associationMatrix > weightLimits[2]] <- NA
     else
@@ -359,8 +367,17 @@ levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, use
         associationMatrix[associationMatrix > weightLimits[2]] <- weightLimits[2]
     }
     
+    if (is.null(col))
+    {
+        if (weightLimits[1] < 0 && weightLimits[2] > 0)
+            col <- 4
+        else if (weightLimits[1] >= 0 && weightLimits[2] > 0)
+            col <- 5
+        else if (weightLimits[1] < 0 && weightLimits[2] <= 0)
+            col <- 6
+    }
     if (is.numeric(col))
-        col <- tractor.base:::getColourScale(col)$colours
+        col <- getColourScale(col)$colours
     
     if (hideDisconnected)
         activeVertices <- x$getConnectedVertices()
@@ -371,7 +388,10 @@ levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, use
     if (!is.null(order))
         activeVertices <- order[is.element(order,activeVertices)]
     
-    labels <- as.character(activeVertices)
+    if (useNames)
+        labels <- x$getVertexAttributes("names")[activeVertices]
+    else
+        labels <- as.character(activeVertices)
     
     levelplot(associationMatrix[activeVertices,activeVertices], col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
 }
