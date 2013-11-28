@@ -5,23 +5,11 @@ library(splines)
 library(tractor.session)
 library(tractor.nt)
 library(tractor.graph)
-#library(tractor.native)
 library(tractor.track)
-library(RNiftyReg)
-suppressPackageStartupMessages(library(oro.nifti))
+library(tractor.reg)
 
 runExperiment <- function ()
 {
-    registerImages <- function (from, to, ...)
-    {
-        from <- as(from, "nifti")
-        to <- as(to, "nifti")
-        result <- niftyreg(from, to, ...)
-        result$image <- as(result$image, "MriImage")
-        invisible(result)
-    }
-    
-    
     session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
     
 	#specify lookuptable, parcellation file and T1 file for adding extra regions of interest
@@ -108,15 +96,11 @@ runExperiment <- function ()
     
     report(OL$Info, "Registering structural image to diffusion space: Freesurfer")
     refb0 <- session$getImageByType("refb0","diffusion")
-    result <- registerImages(averageT1wImage, refb0, scope="affine")
-    result <- registerImages(averageT1wImage, refb0, scope="nonlinear", initAffine=result$affine)
-    controlPoints <- result$control[[1]]
+    result <- registerImages(averageT1wImage, refb0, method="niftyreg", types=c("affine","nonlinear"), estimateOnly=TRUE)
 	
 	if( !is.null(T1File) ){
 	    report(OL$Info, "Registering structural image to diffusion space: Specified T1 File")
-	    result2 <- registerImages(averageT1wImage2, refb0, scope="affine")
-	    result2 <- registerImages(averageT1wImage2, refb0, scope="nonlinear", initAffine=result2$affine)
-	    controlPoints2 <- result2$control[[1]]
+        result2 <- registerImages(averageT1wImage2, refb0, method="niftyreg", types=c("affine","nonlinear"), estimateOnly=TRUE)
 	}
 	
 		
@@ -140,8 +124,8 @@ runExperiment <- function ()
 			freesurferRoi <- newMriImageWithDataRepresentation(freesurferRoi,"coordlist")    #use a sparse representation
 						
             #writeMriImageToFile(freesurferRoi, file.path(freesurferRoiDir,paste(regionName,side,sep="_")))
-            currentReg <- registerImages(freesurferRoi, refb0, scope="nonlinear", initControl=controlPoints, nLevels=0, finalInterpolation=1)
-            transformedMaskImages[[i]] <- newMriImageWithDataRepresentation(currentReg$image, "coordlist")
+            transformedImage <- transformImage(result$transform, freesurferRoi)
+            transformedMaskImages[[i]] <- newMriImageWithDataRepresentation(transformedImage, "coordlist")
 			
 			allRegionNames[[i]] <- paste(side,"_",regions[[regionName]],sep="")
 
@@ -166,8 +150,8 @@ runExperiment <- function ()
     report(OL$Info, "Transforming custom parcellation masks into native space...")
     transformedMaskImages2 <- lapply(maskImages2, function (image) {
         report(OL$Verbose, "Transforming \"", basename(image$getSource()), "\"")
-        currentReg <- registerImages(image, refb0, scope="nonlinear", initControl=controlPoints2, nLevels=0, finalInterpolation=1)
-        return (newMriImageWithDataRepresentation(currentReg$image, "coordlist"))
+        transformedImage <- transformImage(result2$transform, image)
+        return (newMriImageWithDataRepresentation(transformedImage, "coordlist"))
     })	
 	rm(maskImages2)
 	
@@ -225,8 +209,8 @@ runExperiment <- function ()
 	if(!is.na(wmLabelsF)){
 		wmLabelsF <- getConfigVariable("WMLabelsFile", NULL, "character")
 		wmLabels <- as.numeric(read.table(wmLabelsF)[,1])
-		parc_b0 <- registerImages(parcellation, refb0, scope="nonlinear", initControl=controlPoints, nLevels=0, finalInterpolation=0)
-		parc_b0 <- parc_b0$image$getData()  #use white matter for seeding
+        parc_b0 <- transformImage(result$transform, parcellation, finalInterpolation=0)
+		parc_b0 <- parc_b0$getData()  #use white matter for seeding
 		parc_wm <- parc_b0 %in% wmLabels
 		parc_wm <- array(parc_wm,dim(parc_b0))
 		seeds <- which(parc_wm,arr.ind=TRUE)
