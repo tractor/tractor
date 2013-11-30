@@ -1,5 +1,5 @@
 Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexCount="integer",vertexAttributes="list",vertexLocations="matrix",locationUnit="character",edges="matrix",edgeAttributes="list",edgeWeights="numeric",directed="logical"), methods=list(
-    initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = matrix(NA,0,0), locationUnit = "", edges = matrix(NA,0,0), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
+    initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = emptyMatrix(), locationUnit = "", edges = emptyMatrix(), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
     {
         oldFields <- list(...)
         if ("vertexNames" %in% names(oldFields))
@@ -12,18 +12,18 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     getConnectedVertices = function () { return (sort(unique(as.vector(edges)))) },
     
-    getConnectionMatrix = function ()
+    getAssociationMatrix = function ()
     {
-        connectionMatrix <- matrix(0, nrow=vertexCount, ncol=vertexCount)
+        associationMatrix <- matrix(0, nrow=vertexCount, ncol=vertexCount)
         if (!is.null(vertexAttributes$names))
         {
-            rownames(connectionMatrix) <- vertexAttributes$names
-            colnames(connectionMatrix) <- vertexAttributes$names
+            rownames(associationMatrix) <- vertexAttributes$names
+            colnames(associationMatrix) <- vertexAttributes$names
         }
-        connectionMatrix[edges] <- edgeWeights
+        associationMatrix[edges] <- edgeWeights
         if (!directed)
-            connectionMatrix[edges[,2:1]] <- edgeWeights
-        return (connectionMatrix)
+            associationMatrix[edges[,2:1]] <- edgeWeights
+        return (associationMatrix)
     },
         
     getEdge = function (i)
@@ -46,6 +46,19 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
             return (edgeAttributes[attributes])
     },
     
+    getEdgeDensity = function (ignoreDisconnectedVertices = TRUE, ignoreSelfConnections = TRUE)
+    {
+        if (ignoreDisconnectedVertices)
+            nConnectedVertices <- length(.self$getConnectedVertices())
+        else
+            nConnectedVertices <- .self$nVertices()
+        
+        nEdges <- .self$nEdges() - ifelse(ignoreSelfConnections, sum(edges[,1]==edges[,2]), 0)
+        nPossibleEdges <- ifelse(.self$isDirected(), nConnectedVertices^2, nConnectedVertices*(nConnectedVertices+1)/2) - ifelse(ignoreSelfConnections, nConnectedVertices, 0)
+        
+        return (nEdges / nPossibleEdges)
+    },
+    
     getEdgeWeights = function () { return (edgeWeights) },
     
     getLaplacianMatrix = function ()
@@ -53,9 +66,9 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         if (directed)
             report(OL$Error, "Laplacian matrix calculation for directed graphs is not yet implemented")
         
-        connectionMatrix <- .self$getConnectionMatrix()
-        degreeMatrix <- diag(colSums(connectionMatrix))
-        return (degreeMatrix - connectionMatrix)
+        associationMatrix <- .self$getAssociationMatrix()
+        degreeMatrix <- diag(colSums(associationMatrix))
+        return (degreeMatrix - associationMatrix)
     },
     
     getVertexAttributes = function (attributes = NULL)
@@ -76,23 +89,137 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     isDirected = function () { return (directed) },
     
+    isWeighted = function () { return (!all(is.na(edgeWeights) | (edgeWeights %in% c(0,1)))) },
+    
     nEdges = function () { return (nrow(edges)) },
     
     nVertices = function () { return (vertexCount) },
+    
+    setEdgeAttributes = function (...)
+    {
+        attributes <- c(list(...), edgeAttributes)
+        .self$edgeAttributes <- attributes[!duplicated(names(attributes))]
+    },
+    
+    setVertexAttributes = function (...)
+    {
+        attributes <- c(list(...), vertexAttributes)
+        .self$vertexAttributes <- attributes[!duplicated(names(attributes))]
+    },
     
     setVertexLocations = function (locs, unit)
     {
         .self$vertexLocations <- locs
         .self$locationUnit <- unit
+    },
+    
+    summarise = function ()
+    {
+        properties <- c(ifelse(.self$isDirected(),"directed","undirected"), ifelse(.self$isWeighted(),"weighted","unweighted"))
+        
+        vertexAttribNames <- names(vertexAttributes)
+        if (length(vertexAttribNames) == 0)
+            vertexAttribNames <- "(none)"
+        edgeAttribNames <- names(edgeAttributes)
+        if (length(edgeAttribNames) == 0)
+            edgeAttribNames <- "(none)"
+        
+        values <- c(implode(properties,sep=", "), .self$nVertices(), .self$nEdges(), s("#{.self$getEdgeDensity()*100}%",round=2), implode(vertexAttribNames,sep=", "), implode(edgeAttribNames,sep=", "))
+        names(values) <- c("Graph properties", "Number of vertices", "Number of edges", "Edge density", "Vertex attributes", "Edge attributes")
+        return (values)
     }
 ))
 
+setAs("Graph", "matrix", function (from) from$getAssociationMatrix())
+
 setAs("Graph", "igraph", function (from) {
-    require(igraph)
-    return (graph.edgelist(from$getEdges(), directed=from$isDirected()))
-})
+    require("igraph")
+
+    igraph <- graph.edgelist(from$getEdges(), directed=from$isDirected())
     
-setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useLocations = FALSE, locationAxes = NULL) {
+    vertexAttributes <- from$getVertexAttributes()
+    edgeAttributes <- from$getEdgeAttributes()
+    
+    for (i in seq_along(vertexAttributes))
+    {
+        indices <- which(!is.na(vertexAttributes[[i]]))
+        if (names(vertexAttributes)[i] == "names")
+            V(igraph)$name[indices] <- vertexAttributes[[i]]
+        else
+            igraph <- set.vertex.attribute(igraph, names(vertexAttributes)[i], indices, vertexAttributes[[i]][indices])
+    }
+    
+    for (i in seq_along(edgeAttributes))
+    {
+        indices <- which(!is.na(edgeAttributes[[i]]))
+        if (names(edgeAttributes)[i] == "names")
+            E(igraph)$name[indices] <- edgeAttributes[[i]]
+        else
+            igraph <- set.edge.attribute(igraph, names(edgeAttributes)[i], indices, edgeAttributes[[i]][indices])
+    }
+    
+    if (from$isWeighted())
+    {
+        indices <- which(!is.na(from$getEdgeWeights()))
+        E(igraph)$weight[indices] <- from$getEdgeWeights()[indices]
+    }
+    
+    return (igraph)
+})
+
+setAs("matrix", "Graph", function (from) asGraph(from))
+
+asGraph <- function (x, ...)
+{
+    UseMethod("asGraph")
+}
+
+asGraph.matrix <- function (x, directed = NULL, allVertexNames = NULL, ignoreSelfConnections = FALSE, ...)
+{
+    if (is.null(directed))
+        directed <- !isSymmetric(x)
+    else if (directed == isSymmetric(x))
+        flag(OL$Warning, "The \"directed\" argument does not match the symmetry of the matrix - the lower triangle will be ignored")
+    
+    if (!directed)
+        x[lower.tri(x,diag=FALSE)] <- NA
+    if (ignoreSelfConnections)
+        diag(x) <- NA
+    
+    if (is.null(allVertexNames))
+        allVertexNames <- union(rownames(x), colnames(x))
+    
+    if (is.null(allVertexNames))
+    {
+        rowVertexLocs <- 1:nrow(x)
+        colVertexLocs <- 1:ncol(x)
+    }
+    else
+    {
+        rowVertexLocs <- match(rownames(x), allVertexNames)
+        colVertexLocs <- match(colnames(x), allVertexNames)
+    }
+    
+    edges <- which(!is.na(x) & x != 0, arr.ind=TRUE)
+    edgeWeights <- x[edges]
+    edges[,1] <- rowVertexLocs[edges[,1]]
+    edges[,2] <- colVertexLocs[edges[,2]]
+    dimnames(edges) <- NULL
+    
+    return (Graph$new(vertexCount=length(allVertexNames), vertexAttributes=list(names=allVertexNames), edges=edges, edgeWeights=edgeWeights, directed=directed))
+}
+
+as.matrix.Graph <- function (x, ...)
+{
+    as(x, "matrix")
+}
+
+setMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,,drop=drop]))
+setMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,,drop=drop]))
+setMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,j,drop=drop]))
+setMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,j,drop=drop]))
+    
+setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useNames = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
     
@@ -104,11 +231,13 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius =
     
     if (is.null(weightLimits))
     {
-        weightLimits <- range(weights)
+        weightLimits <- range(weights, na.rm=TRUE)
         if (weightLimits[1] < 0 && weightLimits[2] > 0)
             weightLimits <- max(abs(weightLimits)) * c(-1,1)
         else
             weightLimits[which.min(abs(weightLimits))] <- 0
+        
+        report(OL$Info, s("Setting weight limits of #{weightLimits[1]} to #{weightLimits[2]}",signif=4))
     }
     else if (ignoreBeyondLimits)
         weights[weights < weightLimits[1] | weights > weightLimits[2]] <- NA
@@ -130,7 +259,7 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius =
             col <- 6
     }
     if (is.numeric(col))
-        col <- tractor.base:::getColourScale(col)$colours
+        col <- getColourScale(col)$colours
     
     if (length(col) > 1)
     {
@@ -199,34 +328,56 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius =
     }
     segments(xLocs[from], yLocs[from], xLocs[to], yLocs[to], lwd=lwd, col=colours)
     symbols(xLocs, yLocs, circles=rep(radius,nActiveVertices), inches=FALSE, col="grey50", lwd=lwd, bg="white", add=TRUE)
-    text(xLocs, yLocs, as.character(activeVertices), col="grey40", cex=cex)
+    
+    if (useNames)
+        text(xLocs, yLocs, x$getVertexAttributes("names")[activeVertices], col="grey40", cex=cex)
+    else
+        text(xLocs, yLocs, as.character(activeVertices), col="grey40", cex=cex)
+    
     if (!add)
         par(oldPars)
 })
 
-levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE, ...)
+levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE, useNames = FALSE, ...)
 {
-    connectionMatrix <- x$getConnectionMatrix()
+    associationMatrix <- x$getAssociationMatrix()
     edges <- x$getEdges()
     
-    if (all(is.na(connectionMatrix)))
+    if (all(is.na(associationMatrix)))
         report(OL$Error, "There are no connection weights in the specified graph")
     
     if (useAbsoluteWeights)
-        connectionMatrix <- abs(connectionMatrix)
+        associationMatrix <- abs(associationMatrix)
     
     if (is.null(weightLimits))
-        weightLimits <- range(connectionMatrix, na.rm=TRUE)
+    {
+        weightLimits <- range(associationMatrix, na.rm=TRUE)
+        if (weightLimits[1] < 0 && weightLimits[2] > 0)
+            weightLimits <- max(abs(weightLimits)) * c(-1,1)
+        else
+            weightLimits[which.min(abs(weightLimits))] <- 0
+        
+        report(OL$Info, s("Setting weight limits of #{weightLimits[1]} to #{weightLimits[2]}",signif=4))
+    }
     else if (ignoreBeyondLimits)
-        connectionMatrix[connectionMatrix < weightLimits[1] | connectionMatrix > weightLimits[2]] <- NA
+        associationMatrix[associationMatrix < weightLimits[1] | associationMatrix > weightLimits[2]] <- NA
     else
     {
-        connectionMatrix[connectionMatrix < weightLimits[1]] <- weightLimits[1]
-        connectionMatrix[connectionMatrix > weightLimits[2]] <- weightLimits[2]
+        associationMatrix[associationMatrix < weightLimits[1]] <- weightLimits[1]
+        associationMatrix[associationMatrix > weightLimits[2]] <- weightLimits[2]
     }
     
+    if (is.null(col))
+    {
+        if (weightLimits[1] < 0 && weightLimits[2] > 0)
+            col <- 4
+        else if (weightLimits[1] >= 0 && weightLimits[2] > 0)
+            col <- 5
+        else if (weightLimits[1] < 0 && weightLimits[2] <= 0)
+            col <- 6
+    }
     if (is.numeric(col))
-        col <- tractor.base:::getColourScale(col)$colours
+        col <- getColourScale(col)$colours
     
     if (hideDisconnected)
         activeVertices <- x$getConnectedVertices()
@@ -237,54 +388,23 @@ levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, use
     if (!is.null(order))
         activeVertices <- order[is.element(order,activeVertices)]
     
-    labels <- as.character(activeVertices)
+    if (useNames)
+        labels <- x$getVertexAttributes("names")[activeVertices]
+    else
+        labels <- as.character(activeVertices)
     
-    levelplot(connectionMatrix[activeVertices,activeVertices], col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
+    levelplot(associationMatrix[activeVertices,activeVertices], col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
 }
 
-newGraphFromTable <- function (table, method = c("correlation","covariance"), allVertexNames = NULL)
-{
-    method <- match.arg(method)
-    
-    if (method == "correlation")
-        connectionMatrix <- cor(table)
-    else if (method == "covariance")
-        connectionMatrix <- cov(table)
-    
-    return (newGraphFromConnectionMatrix(connectionMatrix, directed=FALSE, allVertexNames=allVertexNames))
-}
-
-newGraphFromConnectionMatrix <- function (connectionMatrix, directed = FALSE, allVertexNames = NULL, ignoreSelfConnections = FALSE)
-{
-    if (!is.matrix(connectionMatrix))
-        report(OL$Error, "Specified connection matrix is not a matrix object")
-    
-    if (!directed)
-        connectionMatrix[lower.tri(connectionMatrix,diag=FALSE)] <- NA
-    if (ignoreSelfConnections)
-        diag(connectionMatrix) <- NA
-    
-    if (is.null(allVertexNames))
-        allVertexNames <- union(rownames(connectionMatrix), colnames(connectionMatrix))
-    rowVertexLocs <- match(rownames(connectionMatrix), allVertexNames)
-    colVertexLocs <- match(colnames(connectionMatrix), allVertexNames)
-    
-    edges <- which(!is.na(connectionMatrix) & connectionMatrix != 0, arr.ind=TRUE)
-    edgeWeights <- connectionMatrix[edges]
-    edges[,1] <- rowVertexLocs[edges[,1]]
-    edges[,2] <- colVertexLocs[edges[,2]]
-    dimnames(edges) <- NULL
-    
-    return (Graph$new(vertexCount=length(allVertexNames), vertexAttributes=list(names=allVertexNames), edges=edges, edgeWeights=edgeWeights, directed=directed))
-}
-
-newGraphWithVertices <- function (graph, vertices)
+inducedSubgraph <- function (graph, vertices)
 {
     if (!is(graph, "Graph"))
         report(OL$Error, "Specified graph is not a valid Graph object")
     if (length(vertices) == 0)
         report(OL$Error, "At least one vertex must be retained")
     
+    if (is.character(vertices))
+        vertices <- match(vertices, graph$getVertexAttributes("names"))
     vertices <- sort(vertices)
     
     nVertices <- graph$nVertices()
@@ -312,7 +432,7 @@ newGraphWithVertices <- function (graph, vertices)
     return (Graph$new(vertexCount=length(vertices), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=graph$getVertexLocationUnit(), edges=edges, edgeAttributes=edgeAttributes, edgeWeights=graph$getEdgeWeights()[edgesToKeep], directed=graph$isDirected()))
 }
 
-newGraphWithEdgeWeightThreshold <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted = TRUE)
+thresholdEdges <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted = TRUE, binarise = FALSE)
 {
     if (!is(graph, "Graph"))
         report(OL$Error, "Specified graph is not a valid Graph object")
@@ -337,79 +457,80 @@ newGraphWithEdgeWeightThreshold <- function (graph, threshold, ignoreSign = FALS
             return (attrib)
     })
     
-    return (Graph$new(vertexCount=graph$nVertices(), vertexAttributes=graph$getVertexAttributes(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), edges=graph$getEdges()[toKeep,,drop=FALSE], edgeAttributes=edgeAttributes, edgeWeights=edgeWeights[toKeep], directed=graph$isDirected()))
+    if (binarise)
+        finalEdgeWeights <- rep(1, length(toKeep))
+    else
+        finalEdgeWeights <- edgeWeights[toKeep]
+    
+    return (Graph$new(vertexCount=graph$nVertices(), vertexAttributes=graph$getVertexAttributes(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), edges=graph$getEdges()[toKeep,,drop=FALSE], edgeAttributes=edgeAttributes, edgeWeights=finalEdgeWeights, directed=graph$isDirected()))
 }
 
-calculateMetricsForGraph <- function (graph, metrics = c("density","msp","mcc","globaleff","localeff"))
+graphEfficiency <- function (graph, type = c("global","local"))
 {
-    efficiency <- function (graph, type = c("global","local"))
+    if (!is(graph, "Graph"))
+        report(OL$Error, "Specified graph is not a valid Graph object")
+    
+    require("igraph")
+    type <- match.arg(type)
+    
+    v <- graph$getConnectedVertices()
+    if (length(v) < 2)
     {
-        require("igraph")
-        type <- match.arg(type)
-        
-        v <- graph$getConnectedVertices()
-        if (length(v) < 2)
-        {
-            if (type == "global")
+        if (type == "global")
+            return (0)
+        else
+            return (rep(0,length(v)))
+    }
+    
+    graph <- induced.subgraph(as(graph,"igraph"), v)
+    
+    if (type == "global")
+    {
+        sp <- shortest.paths(graph)
+        ge <- mean(1/sp[upper.tri(sp) | lower.tri(sp)])
+        return (ge)
+    }
+    else
+    {
+        # Find neighbourhoods and remove self-connections
+        v <- V(graph)
+        n <- neighborhood(graph, 1, v)
+        n <- lapply(seq_along(n), function(i) setdiff(n[[i]],v[i]))
+
+        le <- sapply(n, function (cn) {
+            if (length(cn) < 2)
                 return (0)
             else
-                return (rep(0,length(v)))
-        }
-        
-        graph <- induced.subgraph(as(graph,"igraph"), v)
-        
-        if (type == "global")
-        {
-            sp <- shortest.paths(graph)
-            ge <- mean(1/sp[upper.tri(sp) | lower.tri(sp)])
-            return (ge)
-        }
-        else
-        {
-            # Find neighbourhoods and remove self-connections
-            v <- V(graph)
-            n <- neighborhood(graph, 1, v)
-            n <- lapply(seq_along(n), function(i) setdiff(n[[i]],v[i]))
-    
-            le <- sapply(n, function (cn) {
-                if (length(cn) < 2)
-                    return (0)
-                else
-                {
-                    subgraph <- induced.subgraph(graph, cn)
-                    sp <- shortest.paths(subgraph)
-                    return (mean(1/sp[upper.tri(sp) | lower.tri(sp)]))
-                }
-            })
-            return (le)
-        }
-    }
-    
-    metrics <- match.arg(metrics, several.ok=TRUE)
-    result <- list()
-    
-    for (i in seq_along(metrics))
-    {
-        value <- switch(metrics[i], density={
-            nConnectedVertices <- length(graph$getConnectedVertices())
-            if (graph$isDirected())
-                graph$nEdges() / (nConnectedVertices^2)
-            else
-                graph$nEdges() / (nConnectedVertices*(nConnectedVertices+1)/2)
-        }, msp={
-            require("igraph")
-            average.path.length(as(graph,"igraph"), directed=graph$isDirected())
-        }, mcc={
-            require("igraph")
-            mean(transitivity(as(graph,"igraph"),"local"), na.rm=TRUE)
-        }, globaleff={
-            efficiency(graph, "global")
-        }, localeff={
-            efficiency(graph, "local")
+            {
+                subgraph <- induced.subgraph(graph, cn)
+                sp <- shortest.paths(subgraph)
+                return (mean(1/sp[upper.tri(sp) | lower.tri(sp)]))
+            }
         })
-        
-        result[[metrics[i]]] <- value
+        return (le)
     }
+}
+
+meanShortestPath <- function (graph)
+{
+    paths <- shortestPathLengths(graph)
+    return (mean(paths[upper.tri(paths)], na.rm=TRUE))
+}
+
+shortestPaths <- function (graph)
+{
+    if (!is(graph, "Graph"))
+        report(OL$Error, "Specified graph is not a valid Graph object")
     
-    return (result)
+    require("igraph")
+    return (shortest.paths(as(graph,"igraph")))
+}
+
+clusteringCoefficients <- function (graph)
+{
+    if (!is(graph, "Graph"))
+        report(OL$Error, "Specified graph is not a valid Graph object")
+    
+    require("igraph")
+    return (transitivity(as(graph,"igraph"),"local"))
 }

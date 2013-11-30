@@ -8,7 +8,7 @@ partitionGraph <- function (graph, method = "modularity")
     if (method == "modularity")
     {
         # Following Newman (PNAS, 2006)
-        adjacencyMatrix <- ifelse(graph$getConnectionMatrix() != 0, 1, 0)
+        adjacencyMatrix <- ifelse(graph$getAssociationMatrix() != 0, 1, 0)
         diag(adjacencyMatrix) <- diag(adjacencyMatrix) * 2
         degree <- graph$getVertexDegree()
         nEdges <- graph$nEdges()

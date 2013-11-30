@@ -2,9 +2,9 @@
 {
     nGraphs <- length(graphs)
     if (nGraphs == 1)
-        meanConnectionMatrix <- graphs[[1]]$getConnectionMatrix()
+        meanConnectionMatrix <- graphs[[1]]$getAssociationMatrix()
     else
-        meanConnectionMatrix <- Reduce("+", lapply(graphs, function(x) x$getConnectionMatrix())) / nGraphs
+        meanConnectionMatrix <- Reduce("+", lapply(graphs, function(x) x$getAssociationMatrix())) / nGraphs
     
     eigensystem <- eigen(meanConnectionMatrix)
     eigensystem$matrix <- meanConnectionMatrix
@@ -14,7 +14,7 @@
 
 calculatePrincipalGraphsForTable <- function (table, ..., allVertexNames = NULL)
 {
-    graph <- newGraphFromTable(table, method="correlation", allVertexNames=allVertexNames)
+    graph <- asGraph(cor(table), directed=TRUE, allVertexNames=allVertexNames)
     principalGraphs <- calculatePrincipalGraphsForGraphs(graph, ...)
     principalGraphs$scores <- scale(table) %*% principalGraphs$eigenvectors
     
@@ -37,7 +37,7 @@ calculatePrincipalGraphsForGraphs <- function (graphs, components = NULL, eigenv
     
     nGraphs <- length(graphs)
     eigensystem <- .averageAndDecomposeGraphs(graphs)
-    connectionMatrix <- eigensystem$matrix
+    associationMatrix <- eigensystem$matrix
     nComponents <- length(eigensystem$values)
     
     # Check for substantially negative eigenvalues
@@ -90,22 +90,22 @@ calculatePrincipalGraphsForGraphs <- function (graphs, components = NULL, eigenv
     # Calculate the connection matrices for each component (including ones to be discarded later)
     fullMatrices <- lapply(1:nComponents, function(i) {
         m <- eigensystem$values[i] * (eigensystem$vectors[,i] %o% eigensystem$vectors[,i])
-        m[is.na(connectionMatrix)] <- NA
-        rownames(m) <- rownames(connectionMatrix)
-        colnames(m) <- colnames(connectionMatrix)
+        m[is.na(associationMatrix)] <- NA
+        rownames(m) <- rownames(associationMatrix)
+        colnames(m) <- colnames(associationMatrix)
         return (m)
     })
     
     # Calculate residual association matrices after subtracting out higher components
-    residualMatrices <- Reduce("-", fullMatrices, init=connectionMatrix, accumulate=TRUE)
+    residualMatrices <- Reduce("-", fullMatrices, init=associationMatrix, accumulate=TRUE)
     residualMatrices <- residualMatrices[-1]
-    residualGraphs <- lapply(residualMatrices[components], newGraphFromConnectionMatrix, allVertexNames=graphs[[1]]$getVertexAttributes()$names)
+    residualGraphs <- lapply(residualMatrices[components], asGraph, allVertexNames=graphs[[1]]$getVertexAttributes()$names)
     residualGraphs <- lapply(residualGraphs, function(x) { x$setVertexLocations(graphs[[1]]$getVertexLocations(),graphs[[1]]$getVertexLocationUnit()); x })
     names(residualGraphs) <- paste("PN", components, sep="")
     
     verticesToKeep <- attr(loadings, "salient")
     matrices <- lapply(components, function(i) fullMatrices[[i]][verticesToKeep[,i],verticesToKeep[,i]])
-    componentGraphs <- lapply(matrices, newGraphFromConnectionMatrix, allVertexNames=graphs[[1]]$getVertexAttributes()$names)
+    componentGraphs <- lapply(matrices, asGraph, allVertexNames=graphs[[1]]$getVertexAttributes()$names)
     componentGraphs <- lapply(componentGraphs, function(x) { x$setVertexLocations(graphs[[1]]$getVertexLocations(),graphs[[1]]$getVertexLocationUnit()); x })
     names(componentGraphs) <- paste("PN", components, sep="")
     
