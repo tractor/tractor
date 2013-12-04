@@ -16,7 +16,7 @@ readNifti <- function (fileNames)
         if (qformCode <= 0 && sformCode <= 0)
         {
             report(OL$Warning, "Nifti qform and sform codes are both zero in file ", fileNames$headerFile, " - orientation can only be guessed")
-            return (diag(c(-abs(voxelDims[2]), abs(voxelDims[3:4]), 1)))
+            return (diag(c(-abs(voxelDims[2]), abs(voxelDims[3]), ifelse(voxelDims[4]==0,1,abs(voxelDims[4])), 1)))
         }
         else if (qformCode > 0)
         {
