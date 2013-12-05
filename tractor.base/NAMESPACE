@@ -24,7 +24,6 @@ export(emptyMatrix)
 export(is.emptyMatrix)
 
 export(equivalent)
-export(s)
 export(implode)
 export(printLabelledValues)
 export(relativePath)
