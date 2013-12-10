@@ -46,11 +46,11 @@ install-graph:
 
 install: build
 	@rm -f install.log
-	@$(MAKE) install-libs install-base install-utils install-reg install-session install-nt install-track install-graph post-install-info
+	@test -d lib/R && export TRACTOR_LIBRARY=lib/R; $(MAKE) install-libs install-base install-utils install-reg install-session install-nt install-track install-graph post-install-info
 
 install-local:
 	@mkdir -p lib/R
-	@export TRACTOR_LIBRARY=lib/R && $(MAKE) install
+	@$(MAKE) install
 
 install-all: install
 
