@@ -511,9 +511,11 @@ graphEfficiency <- function (graph, type = c("global","local"))
     }
 }
 
-meanShortestPath <- function (graph)
+meanShortestPath <- function (graph, ignoreInfinite = TRUE)
 {
-    paths <- shortestPathLengths(graph)
+    paths <- shortestPaths(graph)
+    if (ignoreInfinite)
+        paths[is.infinite(paths)] <- NA
     return (mean(paths[upper.tri(paths)], na.rm=TRUE))
 }
 
