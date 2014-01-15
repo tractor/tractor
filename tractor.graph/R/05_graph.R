@@ -136,6 +136,9 @@ setAs("Graph", "igraph", function (from) {
     require("igraph")
 
     igraph <- graph.edgelist(from$getEdges(), directed=from$isDirected())
+    vertexCountDifference <- from$nVertices() - vcount(igraph)
+    if (vertexCountDifference > 0)
+        igraph <- add.vertices(igraph, vertexCountDifference)
     
     vertexAttributes <- from$getVertexAttributes()
     edgeAttributes <- from$getEdgeAttributes()
