@@ -47,10 +47,10 @@ runExperiment <- function ()
 	freesurferDir <- session$getDirectory("freesurfer")
 	if (!imageFileExists(file.path(freesurferDir, "mri", "rawavg")))
 		report(OL$Error, "Freesurfer has not yet been run for this session")
-	averageT1wImage <- newMriImageFromFile(file.path(freesurferDir, "mri", "rawavg"))
+	averageT1wImage <- readImageFile(file.path(freesurferDir, "mri", "rawavg"))
 	
 	if( !is.null(T1File) )
-		averageT1wImage2 <- newMriImageFromFile(T1File)
+		averageT1wImage2 <- readImageFile(T1File)
 	
 	freesurferRoiDir <- session$getDirectory("freesurfer-rois", createIfMissing=TRUE)
 	report(OL$Info, "Reading freesurfer parcellation")
@@ -60,7 +60,7 @@ runExperiment <- function ()
 	if ( !is.null(parcellationFile) ){
 	    #customRoiDir <- session$getDirectory("customparcellation-rois", createIfMissing=TRUE)
 	    report(OL$Info, "Reading custom parcellation")
-	    parcellation2 <- newMriImageFromFile( file.path(parcellationFile) )
+	    parcellation2 <- readImageFile( file.path(parcellationFile) )
 	}
 	
 	if( !is.null(parcellationFile) | !is.null(lookupTableFile) ){
@@ -123,7 +123,7 @@ runExperiment <- function ()
 			freesurferRoi$data[index] <- 1
 			freesurferRoi <- newMriImageWithDataRepresentation(freesurferRoi,"coordlist")    #use a sparse representation
 						
-            #writeMriImageToFile(freesurferRoi, file.path(freesurferRoiDir,paste(regionName,side,sep="_")))
+            #writeImageFile(freesurferRoi, file.path(freesurferRoiDir,paste(regionName,side,sep="_")))
             transformedImage <- transformImage(result$transform, freesurferRoi)
             transformedMaskImages[[i]] <- newMriImageWithDataRepresentation(transformedImage, "coordlist")
 			
@@ -185,19 +185,19 @@ runExperiment <- function ()
     report(OL$Info, "Saving the composite mask image")
 	mergedMaskMriImg <- newMriImageWithData(mergedMask,refb0$getMetadata() ) 
 	mergedMaskName <- file.path(diffusionRoiDir,"mergedMask.nii.gz")
-	writeMriImageToFile(mergedMaskMriImg,fileName=mergedMaskName)  #save merged masked to be used for tractography
+	writeImageFile(mergedMaskMriImg,fileName=mergedMaskName)  #save merged masked to be used for tractography
 
 	#create the termination mask:
 	if(terminationFlag){
 		terminateOutsideMask <- TRUE 
 		maskName <- session$getImageFileNameByType("mask", "diffusion")
-		brainMaskImg <- newMriImageFromFile(maskName)
+		brainMaskImg <- readImageFile(maskName)
 		brainMask <- brainMaskImg$getData()
 		terminationMask <- mergedMask==0 & brainMask==1
 		terminationMask <- terminationMask*1
 		terminationMaskMri <- newMriImageWithData( terminationMask,refb0$getMetadata() )
 		terminationMaskMriName <- file.path(diffusionRoiDir,"terminationMask.nii.gz")
-		writeMriImageToFile(terminationMaskMri,fileName=terminationMaskMriName)  #save merged masked to be used for tractography
+		writeImageFile(terminationMaskMri,fileName=terminationMaskMriName)  #save merged masked to be used for tractography
 	} else{
 		terminationMaskMriName <- NULL
 		terminateOutsideMask <- FALSE 
@@ -308,7 +308,7 @@ runExperiment <- function ()
 			ind <- which(mergedMask==perm[r])
 			roi[ind] <- 1
 			newRoiImg <- newMriImageWithData(roi,templateImage=refb0)
-			writeMriImageToFile(newRoiImg,fileName=file.path(maskPath, paste(allRegionNames[perm[r]],".nii.gz",sep="")),fileType="NIFTI_GZ")
+			writeImageFile(newRoiImg,fileName=file.path(maskPath, paste(allRegionNames[perm[r]],".nii.gz",sep="")),fileType="NIFTI_GZ")
 		}		
 	}
 	

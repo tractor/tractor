@@ -24,7 +24,7 @@ runFreesurferForSession <- function (session)
     {
         image <- session$getImageByType("t1", "structural", index=i)
         targetFileName <- file.path(imagesDirectory, sprintf("%03d",i))
-        writeMriImageToFile(image, targetFileName, "MGH_GZ")
+        writeImageFile(image, targetFileName, "MGH_GZ")
     }
     
     subjectName <- basename(session$getDirectory())

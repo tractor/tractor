@@ -30,7 +30,7 @@ runExperiment <- function ()
 		}
 	}
 	
-	seedMask <- newMriImageFromFile(seedMaskFile)
+	seedMask <- readImageFile(seedMaskFile)
 	seed0 <- which(seedMask$getData()!=0,arr.ind = T)
 	numSd <- dim(seed0)[1]
 	     
@@ -119,7 +119,7 @@ runExperiment <- function ()
         
 		report(OL$Info, "Creating tract images")
     	if (createVolumes)
-        	writeMriImageToFile(result$image, tractName)
+        	writeImageFile(result$image, tractName)
     	if (createImages)
         	writePngsForResult(result, prefix=tractName, threshold=vizThreshold, showSeed=showSeed)
 		rm(result)

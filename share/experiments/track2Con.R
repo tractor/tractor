@@ -57,7 +57,7 @@ runExperiment <- function ()
 					
 	#load free surfer segmentation
 	parcB0_file <- file.path( session_dir, "tractor", "T12B0", "aparc+aseg2B0.nii.gz" )
-	parc_img <- newMriImageFromFile( parcB0_file )
+	parc_img <- readImageFile( parcB0_file )
 	parc <- parc_img$getData()
 	gm <- parc %in% perm
 	gm <- array(gm,dim(parc))
@@ -121,7 +121,7 @@ runExperiment <- function ()
 			ind <- which(parc==perm[r])
 			roi[ind] <- 1
 			newRoiImg <- newMriImageWithData(roi,templateImage=parc_img)
-			writeMriImageToFile(newRoiImg,fileName=file.path(maskPath, paste("mask_",as.character(perm[r]),".nii.gz",sep="")),fileType="NIFTI_GZ")
+			writeImageFile(newRoiImg,fileName=file.path(maskPath, paste("mask_",as.character(perm[r]),".nii.gz",sep="")),fileType="NIFTI_GZ")
 		}
 	}
 

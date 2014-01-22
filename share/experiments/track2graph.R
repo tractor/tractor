@@ -72,7 +72,7 @@ runExperiment <- function ()
 	fileNameCon <- file.path(writeDir,paste("graphObj_",as.character(nRegions),".Rdata",sep="") )
 
 	#load free surfer segmentation
-	parc_img <- newMriImageFromFile( parcB0_file )
+	parc_img <- readImageFile( parcB0_file )
 	parc <- parc_img$getData()
 	gm <- parc %in% perm
 	gm <- array(gm,dim(parc))

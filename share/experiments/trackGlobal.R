@@ -126,13 +126,13 @@ runExperiment <- function ()
 	res$endIndex <- res$endIndex+1
 	res$startIndex <- res$startIndex+1
 	pntsW <- cbind(res$PntsX, res$PntsY, res$PntsZ)
-	metadata <- newMriImageFromFile(restrictMaskFile,metadataOnly=TRUE)
+	metadata <- readImageFile(restrictMaskFile,metadataOnly=TRUE)
 	points1 <- transformWorldToRVoxel(pntsW, metadata)
 	points2 <- abs(points1)
 		
 	
 	#extract WM, GM from parcellation file: Perhaps this part must be coded as separate function
-	parc_img <- newMriImageFromFile( parcB0_file )
+	parc_img <- readImageFile( parcB0_file )
 	wm <- array(as.logical(parc_img$getData() == 2 | +   #Left-Cerebral white matter
 						   parc_img$getData() == 7 | +   #Left-Cerebellum-White-Matter
 		 				   parc_img$getData() == 41 | +  #Right-Cerebral White matter

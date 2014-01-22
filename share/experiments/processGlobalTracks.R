@@ -69,7 +69,7 @@ runExperiment <- function ()
 	
 
 	#extract WM, GM from parcellation file
-	parc_img <- newMriImageFromFile( parcB0_file )
+	parc_img <- readImageFile( parcB0_file )
 	gm <- parc_img$getData() %in% perm
 	gm <- array( gm, dim(parc_img$getData()) )
 	if( is.null(wmLabelsF) ){  
