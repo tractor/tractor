@@ -198,7 +198,7 @@ fi
     rprofile_backed_up=1
 }
 
-[ $quiet -eq 0 ] && echo "Starting TractoR environment..."
+[ $quiet -eq 0 ] && echo "Starting TractoR environment..." 1>&2
 
 if [ -x "$TRACTOR_HOME/bin/exec/tractor" ]; then
     R --vanilla CMD "$TRACTOR_HOME/bin/exec/tractor" -w "$working_dir" -r "$report_file" -l "$output_level" -c "$config_file" -p "$parallelisation_factor" -g "$log_file" $command_flags "$script_file" $args 2>&1
@@ -255,7 +255,7 @@ errors=`grep -c ERROR $log_file`
 
 if [ $quiet -eq 0 ]; then
 	[ -f "$report_file" ] && cat "$report_file" | sed 's/^/- /'
-    echo "Experiment completed with $warnings warning(s) and $errors error(s)"
+    echo "Experiment completed with $warnings warning(s) and $errors error(s)" 1>&2
 fi
 
 [ $errors -eq 0 ] && status=0
