@@ -1,4 +1,4 @@
-runFreesurferForSession <- function (session)
+runFreesurferForSession <- function (session, options = NULL)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
@@ -31,7 +31,7 @@ runFreesurferForSession <- function (session)
     file.symlink(freesurferDirectory, file.path(subjectsDirectory,subjectName))
     
     report(OL$Info, "Running Freesurfer (recon-all)...")
-    reconAllArguments <- paste("-subjid", subjectName, "-all", sep=" ")
+    reconAllArguments <- paste("-subjid", subjectName, "-all", options, sep=" ")
     execute("recon-all", reconAllArguments)
     
     unlink(file.path(subjectsDirectory,subjectName))
