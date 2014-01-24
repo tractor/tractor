@@ -1,5 +1,5 @@
 #@args session directory, image files or DICOM directories
-#@desc Import images from DICOM, Analyze, NIfTI or MGH files, copying them into the appropriate places in a session directory. If any of the specified paths point to a directory they will be assumed to contain DICOM files. Images may be T1, T2, proton density or diffusion weighted. In the latter case this is an alternative to stage 1 of the "dpreproc" script, but without the ability to read gradient directions.
+#@desc Import images from DICOM, Analyze, NIfTI or MGH files, copying them into the appropriate places in a session directory. If any of the specified paths point to a directory they will be assumed to contain DICOM files. Images may be T1, T2, proton density or diffusion weighted. In the latter case this is an alternative to stage 1 of the "dpreproc" script, but without the ability to read gradient directions. Multiple T1-weighted images (only) will be coregistered together and a median reference image created, unless Coregister:false is given.
 
 library(tractor.session)
 
@@ -11,6 +11,7 @@ runExperiment <- function ()
     nImages <- nArguments() - 1
     
     weighting <- getConfigVariable("ImageWeighting", "t1", validValues=c("t1","t2","pd","diffusion"))
+    coregister <- getConfigVariable("Coregister", TRUE)
     
     if (weighting == "diffusion")
     {
@@ -53,5 +54,30 @@ runExperiment <- function ()
                 currentIndex <- currentIndex + 1
             }
         }
+    }
+    
+    if (coregister && weighting == "t1")
+    {
+        nImages <- getImageCountForSession(session, "t1", "structural")
+        if (nImages > 1)
+        {
+            library(tractor.reg)
+            
+            reference <- session$getImageByType("t1", "structural", index=1)
+            data <- array(NA, dim=c(reference$getDimensions(),nImages))
+            data[,,,1] <- reference$getData()
+            
+            for (i in 2:nImages)
+            {
+                currentImage <- session$getImageByType("t1", "structural", index=i)
+                result <- registerImages(currentImage, reference, types="affine", affineDof=6, cache="ignore")
+                data[,,,i] <- result$transformedImage$getData()
+            }
+            
+            finalImage <- newMriImageWithData(apply(data,1:3,median), reference)
+            writeImageFile(finalImage, session$getImageFileNameByType("reft1","structural"))
+        }
+        else
+            symlinkImageFiles(session$getImageFileNameByType("t1","structural",index=1), session$getImageFileNameByType("reft1","structural"))
     }
 }
