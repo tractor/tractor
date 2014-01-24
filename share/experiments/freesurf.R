@@ -8,10 +8,16 @@ runExperiment <- function ()
     session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
     
     force <- getConfigVariable("Force", FALSE)
-    options <- getConfigVariable("Options", NULL, "character")
+    options <- getConfigVariable("Options", "-all", "character")
     
     if (!force && imageFileExists(session$getImageFileNameByType("desikan-killiany")))
         report(OL$Info, "Freesurfer has been previously run for this session - use Force:true to run it again")
     else
         runFreesurferForSession(session, options)
+    
+    if (!imageFileExists(session$getImageFileNameByType("reft1","structural")) && imageFileExists(session$getImageFileNameByType("reft1","freesurfer")))
+    {
+        reft1 <- session$getImageByType("reft1", "freesurfer")
+        writeImageFile(session$getImageFileNameByType("reft1", "structural"))
+    }
 }

@@ -31,7 +31,7 @@ runFreesurferForSession <- function (session, options = NULL)
     file.symlink(freesurferDirectory, file.path(subjectsDirectory,subjectName))
     
     report(OL$Info, "Running Freesurfer (recon-all)...")
-    reconAllArguments <- paste("-subjid", subjectName, "-all", options, sep=" ")
+    reconAllArguments <- paste("-subjid", subjectName, options, sep=" ")
     execute("recon-all", reconAllArguments)
     
     unlink(file.path(subjectsDirectory,subjectName))
