@@ -60,10 +60,11 @@ writeMriImageToCamino <- function (image, fileName, gzipped = FALSE, datatype = 
     invisible (fileName)
 }
 
-readParcellation <- function (fileName, ...)
+readParcellation <- function (imageFileName, regionFileName = NULL, ...)
 {
     image <- readImageFile(fileName, ...)
-    regionFileName <- ensureFileSuffix(image$getSource(), "txt")
+    if (is.null(regionFileName))
+        regionFileName <- ensureFileSuffix(image$getSource(), "txt")
     regions <- read.table(regionFileName, header=TRUE, stringsAsFactors=FALSE)
     return (list(image=image, regions=regions))
 }
