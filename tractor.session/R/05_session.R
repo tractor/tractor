@@ -85,6 +85,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         return (result$transform)
     },
     
+    imageExists = function (type, place = NULL, index = 1) { return (imageFileExists(.self$getImageFileNameByType(type, place, index))) },
+    
     updateCaches = function ()
     {
         mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")
