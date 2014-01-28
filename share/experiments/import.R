@@ -61,6 +61,7 @@ runExperiment <- function ()
         nImages <- getImageCountForSession(session, "t1", "structural")
         if (nImages > 1)
         {
+            report(OL$Info, "Coregistering volumes")
             library(tractor.reg)
             
             reference <- session$getImageByType("t1", "structural", index=1)
@@ -74,10 +75,20 @@ runExperiment <- function ()
                 data[,,,i] <- result$transformedImage$getData()
             }
             
-            finalImage <- newMriImageWithData(apply(data,1:3,median), reference)
+            # NB: For n=2, the mean and median are equivalent, but the mean is quicker to calculate
+            report(OL$Info, "Calculating voxelwise median image for reference")
+            if (nImages == 2)
+                finalImage <- newMriImageWithData(apply(data,1:3,mean), reference)
+            else
+                finalImage <- newMriImageWithData(apply(data,1:3,median), reference)
+            
+            report(OL$Info, "Writing median image")
             writeImageFile(finalImage, session$getImageFileNameByType("reft1","structural"))
         }
         else
+        {
+            report(OL$Info, "Symlinking volume to reference")
             symlinkImageFiles(session$getImageFileNameByType("t1","structural",index=1), session$getImageFileNameByType("reft1","structural"))
+        }
     }
 }
