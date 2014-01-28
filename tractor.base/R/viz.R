@@ -19,7 +19,8 @@ getColourScale <- function (n)
                         rainbow(100, start=0.7, end=0.1),
                         interpolatePalette(c("#053061","#2166AC","#4393C3","#92C5DE","#D1E5F0","#F7F7F7","#FDDBC7","#F4A582","#D6604D","#B2182B","#67001F"), 100),  # ColorBrewer "RdBu" diverging palette
                         interpolatePalette(c("#F7F7F7","#FDDBC7","#F4A582","#D6604D","#B2182B","#67001F"), 100),                                                    # Just the red part of "RdBu"
-                        interpolatePalette(c("#F7F7F7","#D1E5F0","#92C5DE","#4393C3","#2166AC","#053061"), 100))                                                    # Just the blue part of "RdBu"
+                        interpolatePalette(c("#F7F7F7","#D1E5F0","#92C5DE","#4393C3","#2166AC","#053061"), 100),                                                    # Just the blue part of "RdBu"
+                        interpolatePalette(c("#800026","#BD0026","#E31A1C","#FC4E2A","#FD8D3C","#FEB24C","#FED976","#FFEDA0","#FFFFCC"), 100))  # ColorBrewer "YlOrRd" sequential palette
     
         if (n < 0)
             scale <- list(colours=rev(colours[[-n]]))
