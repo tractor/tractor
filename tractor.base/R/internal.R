@@ -15,9 +15,9 @@ displayGraphic <- function (data, colourScale = 1, add = FALSE, windowLimits = N
         if (!all(is.na(data)))
         {
             if (is.null(windowLimits))
-                image(data, col=scale$colours, add=TRUE)
+                image(data, col=scale$colours, add=TRUE, useRaster=TRUE)
             else
-                image(data, col=scale$colours, add=TRUE, zlim=sort(windowLimits))
+                image(data, col=scale$colours, add=TRUE, useRaster=TRUE, zlim=sort(windowLimits))
         }
     }
     else
@@ -27,9 +27,9 @@ displayGraphic <- function (data, colourScale = 1, add = FALSE, windowLimits = N
         
         oldPars <- par(mai=c(0,0,0,0), bg=scale$background)
         if (is.null(windowLimits))
-            image(data, col=scale$colours, axes=FALSE, asp=asp)
+            image(data, col=scale$colours, useRaster=TRUE, axes=FALSE, asp=asp)
         else
-            image(data, col=scale$colours, axes=FALSE, asp=asp, zlim=sort(windowLimits))
+            image(data, col=scale$colours, useRaster=TRUE, axes=FALSE, asp=asp, zlim=sort(windowLimits))
         par(oldPars)
     }
 }
