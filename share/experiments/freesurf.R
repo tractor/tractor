@@ -18,6 +18,6 @@ runExperiment <- function ()
     if (!imageFileExists(session$getImageFileNameByType("reft1","structural")) && imageFileExists(session$getImageFileNameByType("reft1","freesurfer")))
     {
         reft1 <- session$getImageByType("reft1", "freesurfer")
-        writeImageFile(session$getImageFileNameByType("reft1", "structural"))
+        writeImageFile(reft1, session$getImageFileNameByType("reft1","structural"))
     }
 }
