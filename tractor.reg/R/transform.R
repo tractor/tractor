@@ -50,6 +50,41 @@ transformImage <- function (transform, newImage = NULL, index = 1, preferAffine 
     return (result$transformedImage)
 }
 
+# Parcellation images can be transformed using nearest neighbour interpolation, but this function gives more flexibility while still ensuring a sensible, nonoverlapping result
+transformParcellation <- function (transform, parcellationImage, threshold = 0.5, index = 1, preferAffine = FALSE, reverse = FALSE)
+{
+    if (!is(transform, "Transformation"))
+        report(OL$Error, "The specified transform is not a Transformation object")
+    
+    if (reverse)
+        targetSpace <- transform$getSourceImage()
+    else
+        targetSpace <- transform$getTargetImage()
+    
+    # NB: "threshold - .Machine$double.eps" should always evaluate (just) strictly less than "threshold"
+    # This allows values at threshold to be kept without adding an extra evaluation every time below
+    finalParcellation <- array(0L, dim=targetSpace$getDimensions())
+    maxValues <- array(max(0, threshold - .Machine$double.eps), dim=targetSpace$getDimensions())
+    
+    uniqueIndices <- setdiff(unique(as.vector(parcellationImage$getData())), 0L)
+    for (i in uniqueIndices)
+    {
+        currentImage <- newMriImageWithSimpleFunction(parcellationImage, function(x) ifelse(x==i,1,0))
+        transformedImage <- transformImage(transform, currentImage, index=index, preferAffine=preferAffine, reverse=reverse, finalInterpolation=1)
+        toUpdate <- which(transformedImage$getData() > maxValues)
+        if (length(toUpdate) > 0)
+        {
+            finalParcellation[toUpdate] <- i
+            maxValues[toUpdate] <- transformedImage[toUpdate]
+        }
+        else
+            report(OL$Warning, "Region with index #{i} is unrepresented in the transformed parcellation")
+    }
+    
+    finalImage <- newMriImageWithData(finalParcellation, targetSpace)
+    return (finalImage)
+}
+
 transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferAffine = FALSE, reverse = FALSE, nearest = FALSE)
 {
     if (!is(transform, "Transformation"))
