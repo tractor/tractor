@@ -1,6 +1,7 @@
 #@args session directory, segmentation images
 #@desc Read and merge together parcellations for a T1-weighted image. Labels in segmentations specified later in the command will take priority over duplicates appearing in earlier segmentations. The special symbol '@' can be used to indicate that the session hierarchy should be checked for the parcellation in question, which is useful in combination with the "freesurf" script. Any existing parcellation will be taken as a starting point unless IgnoreExisting:true is given. A region description file in the format used in $TRACTOR_HOME/etc/parcellations must be provided for any parcellation type which is not specified there.
 
+library(tractor.reg)
 library(tractor.session)
 
 runExperiment <- function ()
@@ -9,6 +10,7 @@ runExperiment <- function ()
     
     types <- getConfigVariable("Types", NULL, "character", errorIfMissing=TRUE)
     ignoreExisting <- getConfigVariable("IgnoreExisting", FALSE)
+    freesurferSpaceReference <- getConfigVariable("FreesurferSpaceReference", NULL, "character")
     
     session <- newSessionFromDirectory(Arguments[1])
     
@@ -18,12 +20,28 @@ runExperiment <- function ()
     if (length(segmentationFiles) != length(types))
         report(OL$Error, "A type must be specified for each segmentation file")
     
+    # Freesurfer parcellations are defined in its own standardised space, so we need a reference image in that space
+    if (any(types %in% c("desikan-killiany","destrieux")))
+    {
+        report(OL$Info, "Reading Freesurfer reference image and the session's T1w image")
+        if (!is.null(freesurferSpaceReference))
+            freesurferSpaceImage <- readImageFile(freesurferSpaceReference)
+        else
+            freesurferSpaceImage <- session$getRegistrationTarget("freesurfer")
+        t1Image <- session$getImageByType("reft1", "structural")
+    }
+    
     parcellation <- NULL
     if (!ignoreExisting && session$imageExists("parcellation","structural"))
+    {
+        report(OL$Info, "Reading initial parcellation")
         parcellation <- readParcellation(session$getImageFileNameByType("parcellation","structural"))
+    }
     
     for (i in seq_len(nArguments()-1))
     {
+        report(OL$Info, "Reading and merging parcellation #{i} of #{nArguments()-1}...")
+        
         regionFileName <- ensureFileSuffix(types[i], "txt")
         if (file.exists(regionFileName))
             regionFilePath <- regionFileName
@@ -37,6 +55,13 @@ runExperiment <- function ()
         else
             currentParcellation <- readParcellation(segmentationFiles[i], regionFilePath)
         
+        if (types[i] %in% c("desikan-killiany","destrieux"))
+        {
+            report(OL$Info, "Registering Freesurfer space image back to the original T1w space")
+            result <- registerImages(freesurferSpaceImage, t1Image, estimateOnly=TRUE)
+            currentParcellation$image <- transformImage(result$transform, currentParcellation$image, finalInterpolation=0)
+        }
+        
         if (is.null(parcellation))
             parcellation <- currentParcellation
         else
@@ -44,16 +69,24 @@ runExperiment <- function ()
             duplicates <- which(parcellation$regions$label %in% currentParcellation$regions$label)
             if (length(duplicates) > 0)
             {
-                parcellation$regions <- parcellation$regions[-duplicates,]
+                # Order is important here, since the duplicates vector will be wrong if the lookup table is modified first
                 parcellation$image <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% parcellation$regions$index[duplicates], 0, x))
+                parcellation$regions <- parcellation$regions[-duplicates,]
             }
             
             if (any(currentParcellation$regions$index %in% parcellation$regions$index))
-                currentParcellation$regions$index <- currentParcellation$regions$index + max(parcellation$regions$index)
+            {
+                delta <- max(parcellation$regions$index)
+                currentParcellation$regions$index <- currentParcellation$regions$index + delta
+            }
+            else
+                delta <- 0
+            
+            parcellation$image <- newMriImageWithBinaryFunction(parcellation$image, currentParcellation$image, function(x,y) ifelse(y==0,x,y+delta))
             parcellation$regions <- rbind(parcellation$regions, currentParcellation$regions)
-            parcellation$image <- newMriImageWithBinaryFunction(parcellation$image, currentParcellation$image, function(x,y) ifelse(y==0,x,y))
         }
     }
     
+    report(OL$Info, "Writing out final parcellation")
     writeParcellation(parcellation$image, parcellation$regions, session$getImageFileNameByType("parcellation","structural"))
 }
