@@ -3,7 +3,7 @@ isTemporaryFile <- function (fileName)
     return (regexpr(tempdir(), fileName, fixed=TRUE) == 1)
 }
 
-getImageAsFileName <- function (image, allowNull = FALSE)
+getImageAsFileName <- function (image, allowNull = FALSE, allowMgh = FALSE)
 {
     if (is.null(image))
     {
@@ -18,15 +18,22 @@ getImageAsFileName <- function (image, allowNull = FALSE)
         {
             fileName <- threadSafeTempFile()
             writeImageFile(image, fileName)
-            return (fileName)
         }
         else    
-            return (image$getSource())
+            fileName <- image$getSource()
     }
     else if (is.character(image))
-        return (expandFileName(image))
+        fileName <- expandFileName(image)
     else
         report(OL$Error, "Specified image does not seem to be valid")
+    
+    if (!allowMgh && identifyImageFileNames(fileName)$format == "Mgh")
+    {
+        fileName <- threadSafeTempFile()
+        writeImageFile(image, fileName, "NIFTI_GZ")
+    }
+    
+    return (fileName)
 }
 
 getImageAsObject <- function (image, ..., allowNull = FALSE)
