@@ -6,7 +6,7 @@ registerImagesWithFlirt <- function (sourceFileName, targetFileName, targetMaskF
         report(OL$Error, "The specified affine degrees of freedom is not valid")
     
     if (is.numeric(finalInterpolation))
-        finalInterpolation <- c("nearestneighbour","trilinear","sinc","spline")[finalInterpolation]
+        finalInterpolation <- c("nearestneighbour","trilinear","sinc","spline")[finalInterpolation+1]
     else
         finalInterpolation <- match.arg(finalInterpolation, c("nearestneighbour","trilinear","sinc","spline"))
     
