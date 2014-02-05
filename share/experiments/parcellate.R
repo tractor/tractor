@@ -22,7 +22,7 @@ runExperiment <- function ()
     if (!ignoreExisting && session$imageExists("parcellation","structural"))
         parcellation <- readParcellation(session$getImageFileNameByType("parcellation","structural"))
     
-    for (i in 2:nArguments())
+    for (i in seq_len(nArguments()-1))
     {
         regionFileName <- ensureFileSuffix(types[i], "txt")
         if (file.exists(regionFileName))
@@ -45,11 +45,11 @@ runExperiment <- function ()
             if (length(duplicates) > 0)
             {
                 parcellation$regions <- parcellation$regions[-duplicates,]
-                parcellation$image <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% parcellation$regions$index[duplicates], 0, x)
+                parcellation$image <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% parcellation$regions$index[duplicates], 0, x))
             }
             
             if (any(currentParcellation$regions$index %in% parcellation$regions$index))
-                currentParcellation$regions$index <- currentParcellation$regions$index + max(parcellation$regions)
+                currentParcellation$regions$index <- currentParcellation$regions$index + max(parcellation$regions$index)
             parcellation$regions <- rbind(parcellation$regions, currentParcellation$regions)
             parcellation$image <- newMriImageWithBinaryFunction(parcellation$image, currentParcellation$image, function(x,y) ifelse(y==0,x,y))
         }
