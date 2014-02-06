@@ -38,9 +38,9 @@ runExperiment <- function ()
         parcellation <- readParcellation(session$getImageFileNameByType("parcellation","structural"))
     }
     
-    for (i in seq_len(nArguments()-1))
+    for (i in seq_along(segmentationFiles))
     {
-        report(OL$Info, "Reading and merging parcellation #{i} of #{nArguments()-1}...")
+        report(OL$Info, "Reading and merging parcellation #{i} of #{length(segmentationFiles)}...")
         
         regionFileName <- ensureFileSuffix(types[i], "txt")
         if (file.exists(regionFileName))
