@@ -9,6 +9,7 @@ runExperiment <- function ()
     
     force <- getConfigVariable("Force", FALSE)
     options <- getConfigVariable("Options", "-all", "character")
+    parcellationName <- getConfigVariable("Parcellation", "desikan-killiany", validValues=c("desikan-killiany","destrieux","none"))
     
     if (!force && imageFileExists(session$getImageFileNameByType("desikan-killiany")))
         report(OL$Info, "Freesurfer has been previously run for this session - use Force:true to run it again")
@@ -19,5 +20,12 @@ runExperiment <- function ()
     {
         reft1 <- session$getImageByType("reft1", "freesurfer")
         writeImageFile(reft1, session$getImageFileNameByType("reft1","structural"))
+    }
+    
+    if (parcellationName != "none")
+    {
+        regionFilePath <- file.path(Sys.getenv("TRACTOR_HOME"), "etc", "parcellations", ensureFileSuffix(parcellationName,"txt"))
+        parcellation <- readParcellation(session$getImageFileNameByType(parcellationName), regionFilePath)
+        writeParcellation(parcellation$image, parcellation$regions, session$getImageFileNameByType("parcellation","structural"))
     }
 }
