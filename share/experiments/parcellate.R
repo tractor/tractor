@@ -66,7 +66,8 @@ runExperiment <- function ()
             parcellation <- currentParcellation
         else
         {
-            duplicates <- which(parcellation$regions$label %in% currentParcellation$regions$label)
+            allCurrentLabels <- splitAndConvertString(currentParcellation$regions$label, ",", fixed=TRUE)
+            duplicates <- which(sapply(parcellation$regions$label, function(x) any(splitAndConvertString(x,",",fixed=TRUE) %in% allCurrentLabels)))
             if (length(duplicates) > 0)
             {
                 # Order is important here, since the duplicates vector will be wrong if the lookup table is modified first
@@ -88,5 +89,6 @@ runExperiment <- function ()
     }
     
     report(OL$Info, "Writing out final parcellation")
+    parcellation$regions <- parcellation$regions[order(parcellation$regions$index),]
     writeParcellation(parcellation$image, parcellation$regions, session$getImageFileNameByType("parcellation","structural"))
 }
