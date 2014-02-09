@@ -23,12 +23,16 @@ runExperiment <- function ()
     # Freesurfer parcellations are defined in its own standardised space, so we need a reference image in that space
     if (any(types %in% c("desikan-killiany","destrieux")))
     {
-        report(OL$Info, "Reading Freesurfer reference image and the session's T1w image")
         if (!is.null(freesurferSpaceReference))
+        {
+            report(OL$Info, "Reading Freesurfer reference image and registering to the session's T1w image")
             freesurferSpaceImage <- readImageFile(freesurferSpaceReference)
+            t1Image <- session$getImageByType("reft1", "structural")
+            result <- registerImages(freesurferSpaceImage, t1Image, estimateOnly=TRUE)
+            freesurferTransform <- result$transform
+        }
         else
-            freesurferSpaceImage <- session$getRegistrationTarget("freesurfer")
-        t1Image <- session$getImageByType("reft1", "structural")
+            freesurferTransform <- session$getTransformation("freesurfer", "structural")
     }
     
     parcellation <- NULL
@@ -57,9 +61,8 @@ runExperiment <- function ()
         
         if (types[i] %in% c("desikan-killiany","destrieux"))
         {
-            report(OL$Info, "Registering Freesurfer space image back to the original T1w space")
-            result <- registerImages(freesurferSpaceImage, t1Image, estimateOnly=TRUE)
-            currentParcellation$image <- transformImage(result$transform, currentParcellation$image, finalInterpolation=0)
+            report(OL$Info, "Transforming Freesurfer image back to the original T1w space")
+            currentParcellation$image <- transformImage(freesurferTransform, currentParcellation$image, finalInterpolation=0)
         }
         
         if (is.null(parcellation))

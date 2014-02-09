@@ -26,6 +26,7 @@ runExperiment <- function ()
     {
         regionFilePath <- file.path(Sys.getenv("TRACTOR_HOME"), "etc", "parcellations", ensureFileSuffix(parcellationName,"txt"))
         parcellation <- readParcellation(session$getImageFileNameByType(parcellationName), regionFilePath)
+        parcellation$image <- transformImageToSpace(parcellation$image, session, "structural", "freesurfer", finalInterpolation=0)
         writeParcellation(parcellation$image, parcellation$regions, session$getImageFileNameByType("parcellation","structural"))
     }
 }
