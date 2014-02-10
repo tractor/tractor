@@ -29,6 +29,8 @@ getImageAsFileName <- function (image, allowNull = FALSE, allowMgh = FALSE)
     
     if (!allowMgh && identifyImageFileNames(fileName)$format == "Mgh")
     {
+        if (!is(image, "MriImage"))
+            image <- readImageFile(fileName)
         fileName <- threadSafeTempFile()
         writeImageFile(image, fileName, "NIFTI_GZ")
     }
