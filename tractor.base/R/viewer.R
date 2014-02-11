@@ -42,6 +42,8 @@ viewImages <- function (images, colourScales = NULL, point = NULL, interactive =
             x
     })
     
+    windows <- lapply(images3D, function(x) range(x$getData(),na.rm=TRUE))
+    
     if (is.null(point))
         point <- round(dims / 2)
     imageNames <- sapply(images, function(x) basename(x$getSource()))
@@ -85,11 +87,11 @@ viewImages <- function (images, colourScales = NULL, point = NULL, interactive =
             currentPoint <- rep(NA, 3)
             currentPoint[i] <- point[i]
             
-            createSliceGraphic(images3D[[1]], currentPoint[1], currentPoint[2], currentPoint[3], device="internal", colourScale=colourScales[[1]])
+            createSliceGraphic(images3D[[1]], currentPoint[1], currentPoint[2], currentPoint[3], device="internal", colourScale=colourScales[[1]], windowLimits=windows[[1]])
             if (nImages > 1)
             {
                 for (j in 2:nImages)
-                    createSliceGraphic(images3D[[j]], currentPoint[1], currentPoint[2], currentPoint[3], device="internal", add=TRUE, colourScale=colourScales[[j]])
+                    createSliceGraphic(images3D[[j]], currentPoint[1], currentPoint[2], currentPoint[3], device="internal", add=TRUE, colourScale=colourScales[[j]], windowLimits=windows[[j]])
             }
             
             region <- par("usr")
