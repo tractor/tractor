@@ -4,7 +4,7 @@
     11  caudate_left             Left-Caudate              "#7ABADC"  deep_grey_matter  left        NA
     12  putamen_left             Left-Putamen              "#EC0DB0"  deep_grey_matter  left        NA
     13  pallidum_left            Left-Pallidum             "#0C30FF"  deep_grey_matter  left        NA
-    16  brainstem,4th_ventricle  Brain-Stem/4th-Ventricle  "#000000"  other             NA          NA
+    16  brainstem,4th_ventricle  Brain-Stem/4th-Ventricle  "#779FB0"  other             NA          NA
     17  hippocampus_left         Left-Hippocampus          "#DCD814"  deep_grey_matter  left        NA
     18  amygdala_left            Left-Amygdala             "#67FFFF"  deep_grey_matter  left        NA
     26  accumbens_left           Left-Accumbens-area       "#FFA500"  deep_grey_matter  left        NA
