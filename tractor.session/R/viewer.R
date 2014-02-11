@@ -41,6 +41,18 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
         })
         
         colourScales <- lapply(lookupTable, tractor.base::getColourScale)
+        for (i in seq_along(images))
+        {
+            if (!images[[i]]$isInternal() && file.exists(ensureFileSuffix(images[[i]]$getSource(),"lut")))
+            {
+                regions <- read.table(ensureFileSuffix(images[[i]]$getSource(),"lut"), header=TRUE, stringsAsFactors=FALSE)
+                indexRange <- range(regions$index)
+                colours <- rep(NA, indexRange[2]-indexRange[1]+1)
+                colours[regions$index - min(regions$index) + 1] <- regions$colour
+                colourScales[[i]] <- list(background="#000000", colours=colours)
+            }
+        }
+        
         if (!is.null(opacity))
         {
             opacity <- rep(opacity, length.out=length(images))
