@@ -46,7 +46,7 @@ runExperiment <- function ()
     {
         report(OL$Info, "Reading and merging parcellation #{i} of #{length(segmentationFiles)}...")
         
-        regionFileName <- ensureFileSuffix(types[i], "txt")
+        regionFileName <- ensureFileSuffix(types[i], "lut")
         if (file.exists(regionFileName))
             regionFilePath <- regionFileName
         else if (file.exists(file.path(Sys.getenv("TRACTOR_HOME"), "etc", "parcellations", regionFileName)))

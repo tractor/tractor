@@ -64,7 +64,7 @@ readParcellation <- function (imageFileName, regionFileName = NULL, ...)
 {
     image <- readImageFile(imageFileName, ...)
     if (is.null(regionFileName))
-        regionFileName <- ensureFileSuffix(image$getSource(), "txt")
+        regionFileName <- ensureFileSuffix(image$getSource(), "lut")
     regions <- read.table(regionFileName, header=TRUE, stringsAsFactors=FALSE)
     return (list(image=image, regions=regions))
 }
@@ -77,7 +77,7 @@ writeParcellation <- function (image, regions, ...)
         report(OL$Error, "Regions data frame is empty")
     
     info <- writeImageFile(image, ...)
-    regionFileName <- ensureFileSuffix(info$fileStem, "txt")
+    regionFileName <- ensureFileSuffix(info$fileStem, "lut")
     regionMatrix <- as.matrix(format(regions, justify="left"))
     regionMatrix[,"colour"] <- paste('"', regionMatrix[,"colour"], '"', sep="")
     
