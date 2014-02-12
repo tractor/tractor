@@ -41,7 +41,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getImageByType = function (type, place = NULL, index = 1, ...)
     {
-        fileName <- getImageFileNameByType(type, place, index)
+        fileName <- .self$getImageFileNameByType(type, place, index)
         if (tolower(type) == "radialdiff" && !imageFileExists(fileName))
             createRadialDiffusivityMapForSession(.self)
         return (readImageFile(fileName, ...))
@@ -56,6 +56,25 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     },
     
     getMap = function (place) { return (mapCache.[[place]]) },
+    
+    getParcellation = function (place, ...)
+    {
+        fileName <- .self$getImageFileNameByType("parcellation", place)
+        if (!imageFileExists(fileName))
+        {
+            if (place == "structural")
+                report(OL$Error, "T1w image parcellation has not yet been performed")
+            else
+            {
+                parcellation <- transformParcellationToSpace(.self$getParcellation("structural"), .self, place, ...)
+                writeParcellation(parcellation, fileName)
+            }
+        }
+        else
+            parcellation <- readParcellation(fileName)
+        
+        return (parcellation)
+    },
     
     getRegistrationTarget = function (space, ...)  { return (.self$getImageByType(.RegistrationTargets[[space]], space, ...)) },
     

@@ -20,10 +20,8 @@
         return (paste(session$getDirectory(), space, sep=":"))
 }
 
-transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, preferAffine = FALSE, reverseRegister = FALSE, finalInterpolation = 1, ...)
+.findTransformation <- function (image, session, newSpace, oldSpace = NULL, reverseRegister = FALSE, ...)
 {
-    require("tractor.reg")
-    
     guessSpace <- function ()
     {
         if (image$isInternal())
@@ -53,9 +51,27 @@ transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, pr
     else
         transform <- session$getTransformation(.resolveSpace(oldSpace,session), .resolveSpace(newSpace,session), ...)
     
+    return (transform)
+}
+
+transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, preferAffine = FALSE, reverseRegister = FALSE, finalInterpolation = 1, ...)
+{
+    require("tractor.reg")
+    
+    transform <- .findTransformation(image, session, newSpace, oldSpace, reverseRegister, ...)
     newImage <- transformImage(transform, image, preferAffine=preferAffine, reverse=reverseRegister, finalInterpolation=finalInterpolation)
     
     return (newImage)
+}
+
+transformParcellationToSpace <- function (parcellation, session, newSpace, oldSpace = "structural", threshold = 0.5, preferAffine = FALSE, reverseRegister = FALSE, ...)
+{
+    require("tractor.reg")
+    
+    transform <- .findTransformation(parcellation$image, session, newSpace, oldSpace, reverseRegister, ...)
+    newParcellation <- transformParcellation(transform, parcellation, threshold, preferAffine=preferAffine, reverse=reverseRegister)
+    
+    return (newParcellation)
 }
 
 transformPointsToSpace <- function (points, session, newSpace, oldSpace = NULL, pointType = NULL, outputVoxel = FALSE, preferAffine = FALSE, reverseRegister = FALSE, nearest = FALSE, ...)
