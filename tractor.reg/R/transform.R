@@ -51,7 +51,7 @@ transformImage <- function (transform, newImage = NULL, index = 1, preferAffine 
 }
 
 # Parcellation images can be transformed using nearest neighbour interpolation, but this function gives more flexibility while still ensuring a sensible, nonoverlapping result
-transformParcellation <- function (transform, parcellationImage, threshold = 0.5, index = 1, preferAffine = FALSE, reverse = FALSE)
+transformParcellation <- function (transform, parcellation, threshold = 0.5, index = 1, preferAffine = FALSE, reverse = FALSE)
 {
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified transform is not a Transformation object")
@@ -66,10 +66,10 @@ transformParcellation <- function (transform, parcellationImage, threshold = 0.5
     finalParcellation <- array(0L, dim=targetSpace$getDimensions())
     maxValues <- array(max(0, threshold - .Machine$double.eps), dim=targetSpace$getDimensions())
     
-    uniqueIndices <- setdiff(unique(as.vector(parcellationImage$getData())), 0L)
+    uniqueIndices <- setdiff(unique(as.vector(parcellation$image$getData())), 0L)
     for (i in uniqueIndices)
     {
-        currentImage <- newMriImageWithSimpleFunction(parcellationImage, function(x) ifelse(x==i,1,0))
+        currentImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x==i,1,0))
         transformedImage <- transformImage(transform, currentImage, index=index, preferAffine=preferAffine, reverse=reverse, finalInterpolation=1)
         toUpdate <- which(transformedImage$getData() > maxValues)
         if (length(toUpdate) > 0)
@@ -82,7 +82,7 @@ transformParcellation <- function (transform, parcellationImage, threshold = 0.5
     }
     
     finalImage <- newMriImageWithData(finalParcellation, targetSpace)
-    return (finalImage)
+    return (list(image=finalImage, regions=parcellation$regions))
 }
 
 transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferAffine = FALSE, reverse = FALSE, nearest = FALSE)
