@@ -93,5 +93,5 @@ runExperiment <- function ()
     
     report(OL$Info, "Writing out final parcellation")
     parcellation$regions <- parcellation$regions[order(parcellation$regions$index),]
-    writeParcellation(parcellation$image, parcellation$regions, session$getImageFileNameByType("parcellation","structural"))
+    writeParcellation(parcellation, session$getImageFileNameByType("parcellation","structural"))
 }

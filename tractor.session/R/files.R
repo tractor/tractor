@@ -69,8 +69,11 @@ readParcellation <- function (imageFileName, regionFileName = NULL, ...)
     return (list(image=image, regions=regions))
 }
 
-writeParcellation <- function (image, regions, ...)
+writeParcellation <- function (parcellation, ...)
 {
+    image <- parcellation$image
+    regions <- parcellation$regions
+    
     if (!is.data.frame(regions))
         report(OL$Error, "Regions should be specified as a data frame")
     else if (nrow(regions) == 0)
