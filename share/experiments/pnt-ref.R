@@ -27,7 +27,7 @@ runExperiment <- function ()
         maxAngle <- maxAngle / 180 * pi
     
     if (isStandardSeed)
-        seed <- transformPointsToSpace(seed, session, "diffusion", oldSpace="mni", reverseRegister=TRUE, pointType=pointType, outputVoxel=TRUE, nearest=TRUE)
+        seed <- transformPointsToSpace(seed, session, "diffusion", oldSpace="mni", pointType=pointType, outputVoxel=TRUE, nearest=TRUE)
     else
         seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
     

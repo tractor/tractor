@@ -37,7 +37,7 @@ runExperiment <- function ()
         if (exists("seedMatrix"))
             currentSeed <- round(changePointType(seedMatrix[i,], session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
         else
-            currentSeed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), currentSession, "diffusion", oldSpace="mni", reverseRegister=TRUE, pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
+            currentSeed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), currentSession, "diffusion", oldSpace="mni", pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
 
         result <- runNeighbourhoodTractography(currentSession, currentSeed, reference$getTract(), faThreshold, searchWidth, nSamples=nSamples)
         return (result)

@@ -23,7 +23,7 @@ runExperiment <- function ()
     t2Image <- session$getImageByType("maskedb0")
     
     if (isStandardPoint)
-        centre <- transformPointsToSpace(centre, session, "diffusion", oldSpace="mni", reverseRegister=TRUE, pointType=pointType, outputVoxel=TRUE, nearest=TRUE)
+        centre <- transformPointsToSpace(centre, session, "diffusion", oldSpace="mni", pointType=pointType, outputVoxel=TRUE, nearest=TRUE)
     else
         centre <- round(changePointType(centre, t2Image, "r", pointType))
     
