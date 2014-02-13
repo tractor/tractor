@@ -1,0 +1,10 @@
+# Diffusion to MNI space transforms are affine by default for backwards
+# compatibility; this is liable to change in a future release
+diffusion2mni: affine
+mni2diffusion: [ affine, reverse ]
+
+diffusion2structural: [ nonlinear, symmetric ]
+structural2diffusion: [ nonlinear, symmetric, reverse ]
+
+structural2mni: [ nonlinear, symmetric ]
+mni2structural: [ nonlinear, symmetric ]

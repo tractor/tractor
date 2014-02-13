@@ -1,4 +1,4 @@
-MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",subdirectoryCache.="list",mapCache.="list"), methods=list(
+MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",subdirectoryCache.="list",mapCache.="list",transformStrategyCache.="list"), methods=list(
     initialize = function (directory = NULL, ...)
     {
         if (is.null(directory))
@@ -80,28 +80,40 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getRegistrationTargetFileName = function (space) { return (.self$getImageFileNameByType(.RegistrationTargets[[space]], space)) },
     
-    getTransformation = function (sourceSpace, targetSpace, ...)
+    getTransformation = function (sourceSpace, targetSpace)
     {
         require("tractor.reg")
         
-        sourceImageFile <- .self$getRegistrationTargetFileName(sourceSpace)
-        targetImageFile <- .self$getRegistrationTargetFileName(targetSpace)
-        transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(sourceSpace,"2",targetSpace,sep=""),"Rdata"))
-        
-        targetMask <- NULL
-        if (sourceSpace == "diffusion" && targetSpace == "mni" && !("targetMask" %in% names(list(...))))
-            targetMask <- newMriImageWithSimpleFunction(getStandardImage("white"), function(x) x/10 + 1)
-        
-        result <- registerImages(sourceImageFile, targetImageFile, targetMask=targetMask, estimateOnly=TRUE, cache="ignore", file=transformFile, ...)
-        
-        reverseTransformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(targetSpace,"2",sourceSpace,sep=""),"Rdata"))
-        if (!file.exists(reverseTransformFile))
+        strategy <- transformStrategyCache.[[s("#{sourceSpace}2#{targetSpace}")]]
+        if ("reverse" %in% strategy)
+            return (invertTransformation(.self$getTransformation(targetSpace, sourceSpace)))
+        else
         {
-            inverseTransform <- invertTransformation(result$transform, quiet=TRUE)
-            inverseTransform$serialise(reverseTransformFile)
-        }
+            sourceImageFile <- .self$getRegistrationTargetFileName(sourceSpace)
+            targetImageFile <- .self$getRegistrationTargetFileName(targetSpace)
+            transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(sourceSpace,"2",targetSpace,sep=""),"Rdata"))
         
-        return (result$transform)
+            targetMask <- NULL
+            if (sourceSpace == "diffusion" && targetSpace == "mni" && !("targetMask" %in% names(list(...))))
+                targetMask <- newMriImageWithSimpleFunction(getStandardImage("white"), function(x) x/10 + 1)
+        
+            options <- list(sourceImageFile, targetImageFile, targetMask=targetMask, estimateOnly=TRUE, cache="ignore", file=transformFile)
+            options$types <- "affine"
+            if ("nonlinear" %in% strategy)
+                options$types <- c(types, "nonlinear")
+            if (all(c("nonlinear","symmetric") %in% strategy))
+                options$types <- c(types, "reverse-nonlinear")
+            result <- do.call(registerImages, options)
+        
+            reverseTransformFile <- file.path(.self$getDirectory("transforms"), ensureFileSuffix(paste(targetSpace,"2",sourceSpace,sep=""),"Rdata"))
+            if (!file.exists(reverseTransformFile))
+            {
+                inverseTransform <- invertTransformation(result$transform, quiet=TRUE)
+                inverseTransform$serialise(reverseTransformFile)
+            }
+        
+            return (result$transform)
+        }
     },
     
     imageExists = function (type, place = NULL, index = 1) { return (imageFileExists(.self$getImageFileNameByType(type, place, index))) },
@@ -133,6 +145,16 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         }
             
         .self$mapCache. <- maps
+        
+        transformStrategies <- readYaml(file.path(Sys.getenv("TRACTOR_HOME"), "etc", "session", "transforms", "strategy.yaml"))
+        strategyFileName <- file.path(.self$getDirectory("transforms"), "strategy.yaml")
+        if (file.exists(strategyFileName))
+        {
+            transformStrategies <- c(readYaml(strategyFileName), transformStrategies)
+            transformStrategies <- transformStrategies[!duplicated(names(transformStrategies))]
+        }
+        
+        .self$transformStrategyCache. <- transformStrategies
     }
 ))
 
