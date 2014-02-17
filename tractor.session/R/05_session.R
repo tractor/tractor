@@ -101,9 +101,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             options <- list(sourceImageFile, targetImageFile, targetMask=targetMask, estimateOnly=TRUE, cache="ignore", file=transformFile)
             options$types <- "affine"
             if ("nonlinear" %in% strategy)
-                options$types <- c(types, "nonlinear")
+            {
+                options$types <- c(options$types, "nonlinear")
+                options$method <- "niftyreg"
+            }
             if (all(c("nonlinear","symmetric") %in% strategy))
-                options$types <- c(types, "reverse-nonlinear")
+                options$types <- c(options$types, "reverse-nonlinear")
             result <- do.call(registerImages, options)
             
             reverseTransformFile <- file.path(.self$getDirectory("transforms"), ensureFileSuffix(paste(targetSpace,"2",sourceSpace,sep=""),"Rdata"))
