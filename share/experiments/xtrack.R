@@ -1,0 +1,113 @@
+#@args session directory
+#@desc Track the interconnections between target regions, which have been delineated in a parcellation (typically via "parcellate" or "freesurf").
+
+library(tractor.reg)
+library(tractor.session)
+library(tractor.track)
+
+runExperiment <- function ()
+{
+    requireArguments("session directory")
+    session <- newSessionFromDirectory(Arguments[1])
+    
+    seedRegions <- getConfigVariable("SeedRegions", NULL, "character")
+    boundaryManipulation <- getConfigVariable("BoundaryManipulation", "none", validValues=c("none","erode","dilate","inner","outer"))
+    anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL)
+    targetRegions <- getConfigVariable("TargetRegions", "cerebral_cortex")
+    parcellationConfidence <- getConfigVariable("ParcellationConfidence", 0.2)
+    nSamples <- getConfigVariable("NumberOfSamples", 100)
+    
+    tractName <- getConfigVariable("TractName", "tract")
+    createVolumes <- getConfigVariable("CreateVolumes", FALSE)
+    createImages <- getConfigVariable("CreateImages", FALSE)
+    storeStreamlines <- getConfigVariable("StoreStreamlines", TRUE)
+    vizThreshold <- getConfigVariable("VisualisationThreshold", 0.01)
+    
+    if (!createVolumes && !createImages && !storeStreamlines)
+        report(OL$Error, "At least one of \"CreateVolumes\", \"CreateImages\" and \"StoreStreamlines\" must be true")
+    
+    if (!is.null(seedRegions))
+        seedRegions <- splitAndConvertString(seedRegions, ",", fixed=TRUE)
+    targetRegions <- splitAndConvertString(targetRegions, ",", fixed=TRUE)
+    
+    report(OL$Info, "Transforming and reading diffusion-space parcellation")
+    parcellation <- session$getParcellation("diffusion", threshold=parcellationConfidence)
+    
+    findRegion <- function (name, table)
+    {
+        haystack <- as.matrix(table[,c("label","lobe","type","hemisphere")])
+        match <- (haystack == name)
+        matchCounts <- colSums(match)
+        if (all(matchCounts == 0))
+            report(OL$Error, "Region specification \"#{name}\" does not match the parcellation lookup table")
+        colToUse <- which(matchCounts > 0)[1]
+        return (match[,colToUse])
+    }
+    
+    if (is.null(seedRegions))
+        seedImage <- session$getImageByType("mask", "diffusion")
+    else
+    {
+        seedMatches <- rep(FALSE, nrow(parcellation$regions))
+        for (regionName in seedRegions)
+            seedMatches <- seedMatches | findRegion(regionName, parcellation$regions)
+        seedMatches <- which(seedMatches)
+        report(OL$Info, "Using #{length(seedMatches)} matched seed regions")
+    
+        seedImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% parcellation$regions$index[seedMatches], 1, 0))
+        if (boundaryManipulation != "none")
+        {
+            report(OL$Info, "Performing boundary manipulation")
+        
+            library(mmand)
+            kernel <- shapeKernel(c(3,3,3), type="box")
+            if (boundaryManipulation == "erode")
+                seedImage <- newMriImageWithSimpleFunction(seedImage, erode, kernel=kernel)
+            else if (boundaryManipulation == "dilate")
+                seedImage <- newMriImageWithSimpleFunction(seedImage, dilate, kernel=kernel)
+            else if (boundaryManipulation == "inner")
+                seedImage <- newMriImageWithSimpleFunction(seedImage, function(x) x - erode(x,kernel=kernel))
+            else if (boundaryManipulation == "outer")
+                seedImage <- newMriImageWithSimpleFunction(seedImage, function(x) dilate(x,kernel=kernel) - x)
+        }
+    }
+    
+    if (!is.null(anisotropyThreshold))
+    {
+        report(OL$Info, "Applying FA threshold to seed mask")
+        fa <- session$getImageByType("FA", "diffusion")
+        seedImage <- newMriImageWithBinaryFunction(seedImage, fa, function(x,y) ifelse(y>=anisotropyThreshold,x,0))
+    }
+    
+    targetMatches <- rep(FALSE, nrow(parcellation$regions))
+    for (regionName in targetRegions)
+        targetMatches <- targetMatches | findRegion(regionName, parcellation$regions)
+    targetMatches <- which(targetMatches)
+    report(OL$Info, "Using #{length(targetMatches)} matched target regions")
+    
+    report(OL$Info, "Creating tracking mask")
+    mask <- session$getImageByType("mask", "diffusion")
+    mask <- newMriImageWithBinaryFunction(mask, parcellation$image, function(x,y) ifelse(y %in% parcellation$regions$index[targetMatches], 0, x))
+    maskFileName <- threadSafeTempFile()
+    writeImageFile(mask, maskFileName)
+    
+    result <- trackWithSession(session, seedImage, maskName=maskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE)
+    
+    report(OL$Info, "Removing streamlines which do not reach targets")
+    waypointMask <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% parcellation$regions$index[targetMatches], 1, 0))
+    result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, list(waypointMask))
+    
+    report(OL$Info, "Writing outputs")
+    if (storeStreamlines)
+        result$streamlines$serialise(paste(tractName,"streamlines",sep="_"))
+    if (createVolumes || createImages)
+    {
+        library(tractor.nt)
+        result$image <- newMriImageAsVisitationMap(result$streamlines)
+        result$nSamples <- result$streamlines$nStreamlines()
+    }
+    if (createVolumes)
+        writeImageFile(result$image, tractName)
+    if (createImages)
+        writePngsForResult(result, prefix=tractName, threshold=vizThreshold, showSeed=FALSE)
+}
