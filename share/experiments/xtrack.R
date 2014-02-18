@@ -34,28 +34,14 @@ runExperiment <- function ()
     report(OL$Info, "Transforming and reading diffusion-space parcellation")
     parcellation <- session$getParcellation("diffusion", threshold=parcellationConfidence)
     
-    findRegion <- function (name, table)
-    {
-        haystack <- as.matrix(table[,c("label","lobe","type","hemisphere")])
-        match <- (haystack == name)
-        matchCounts <- colSums(match)
-        if (all(matchCounts == 0))
-            report(OL$Error, "Region specification \"#{name}\" does not match the parcellation lookup table")
-        colToUse <- which(matchCounts > 0)[1]
-        return (match[,colToUse])
-    }
-    
     if (is.null(seedRegions))
         seedImage <- session$getImageByType("mask", "diffusion")
     else
     {
-        seedMatches <- rep(FALSE, nrow(parcellation$regions))
-        for (regionName in seedRegions)
-            seedMatches <- seedMatches | findRegion(regionName, parcellation$regions)
-        seedMatches <- which(seedMatches)
+        seedMatches <- matchRegions(seedRegions, parcellation)
         report(OL$Info, "Using #{length(seedMatches)} matched seed regions")
     
-        seedImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% parcellation$regions$index[seedMatches], 1, 0))
+        seedImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% seedMatches, 1, 0))
         if (boundaryManipulation != "none")
         {
             report(OL$Info, "Performing boundary manipulation")
@@ -80,22 +66,19 @@ runExperiment <- function ()
         seedImage <- newMriImageWithBinaryFunction(seedImage, fa, function(x,y) ifelse(y>=anisotropyThreshold,x,0))
     }
     
-    targetMatches <- rep(FALSE, nrow(parcellation$regions))
-    for (regionName in targetRegions)
-        targetMatches <- targetMatches | findRegion(regionName, parcellation$regions)
-    targetMatches <- which(targetMatches)
+    targetMatches <- matchRegions(targetRegions, parcellation)
     report(OL$Info, "Using #{length(targetMatches)} matched target regions")
     
     report(OL$Info, "Creating tracking mask")
     mask <- session$getImageByType("mask", "diffusion")
-    mask <- newMriImageWithBinaryFunction(mask, parcellation$image, function(x,y) ifelse(y %in% parcellation$regions$index[targetMatches], 0, x))
+    mask <- newMriImageWithBinaryFunction(mask, parcellation$image, function(x,y) ifelse(y %in% targetMatches, 0, x))
     maskFileName <- threadSafeTempFile()
     writeImageFile(mask, maskFileName)
     
     result <- trackWithSession(session, seedImage, maskName=maskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE, jitter=jitter)
     
     report(OL$Info, "Removing streamlines which do not reach targets")
-    waypointMask <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% parcellation$regions$index[targetMatches], 1, 0))
+    waypointMask <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% targetMatches, 1, 0))
     result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, list(waypointMask))
     
     report(OL$Info, "Writing outputs")

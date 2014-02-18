@@ -49,3 +49,32 @@ writeParcellation <- function (parcellation, ...)
     
     writeLines(lines, regionFileName)
 }
+
+matchRegions <- function (regionNames, parcellation, labels = FALSE)
+{
+    if (!is.character(regionNames))
+        report(OL$Error, "Region names must be specified in a character vector")
+    if (!is.list(parcellation) || !all(c("image","regions") %in% names(parcellation)))
+        report(OL$Error, "The specified parcellation does not seem to be valid")
+    
+    findRegion <- function (name)
+    {
+        haystack <- as.matrix(parcellation$regions[,c("label","lobe","type","hemisphere")])
+        match <- (haystack == name)
+        matchCounts <- colSums(match)
+        if (all(matchCounts == 0))
+            report(OL$Error, "Region specification \"#{name}\" does not match the parcellation lookup table")
+        colToUse <- which(matchCounts > 0)[1]
+        return (match[,colToUse])
+    }
+    
+    matches <- rep(FALSE, nrow(parcellation$regions))
+    for (regionName in regionNames)
+        matches <- matches | findRegion(regionName)
+    matches <- which(matches)
+    
+    if (labels)
+        return (parcellation$regions$label[matches])
+    else
+        return (parcellation$regions$index[matches])
+}
