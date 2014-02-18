@@ -59,6 +59,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getParcellation = function (place, ...)
     {
+        require("tractor.reg")
+        
         fileName <- .self$getImageFileNameByType("parcellation", place)
         if (!imageFileExists(fileName))
         {
