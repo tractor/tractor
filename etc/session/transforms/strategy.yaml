@@ -3,8 +3,8 @@
 diffusion2mni: affine
 mni2diffusion: [ affine, reverse ]
 
-diffusion2structural: [ nonlinear, symmetric ]
-structural2diffusion: [ nonlinear, symmetric, reverse ]
+diffusion2structural: [ nonlinear, symmetric, reverse ]
+structural2diffusion: [ nonlinear, symmetric ]
 
 structural2mni: [ nonlinear, symmetric ]
 mni2structural: [ nonlinear, symmetric ]
