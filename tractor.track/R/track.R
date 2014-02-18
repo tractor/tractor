@@ -1,4 +1,4 @@
-trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNames, phiNames, nSamples = 5000, maxSteps = 2000, stepLength = 0.5, avfThreshold = 0.05, curvatureThreshold = 0.2, useLoopcheck = TRUE, rightwardsVector = NULL, requireImage = TRUE, requireStreamlines = FALSE, terminateOutsideMask = FALSE)
+trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNames, phiNames, nSamples = 5000, maxSteps = 2000, stepLength = 0.5, avfThreshold = 0.05, curvatureThreshold = 0.2, useLoopcheck = TRUE, rightwardsVector = NULL, requireImage = TRUE, requireStreamlines = FALSE, terminateOutsideMask = FALSE, jitter = FALSE)
 {
     on.exit(.C("clean_up_streamlines", PACKAGE="tractor.track"))
     
@@ -15,6 +15,9 @@ trackWithImages <- function (x, y = NULL, z = NULL, maskName, avfNames, thetaNam
         if (x$getDimensionality() != 3)
             report(OL$Error, "Seed image should be three-dimensional")
         seeds <- which(x$getData() > 0, arr.ind=TRUE)
+        
+        if (jitter)
+            seeds <- seeds + runif(length(seeds), -0.5, 0.5)
     }
     else if (is.matrix(x))
     {

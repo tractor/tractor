@@ -11,6 +11,7 @@ runExperiment <- function ()
     
     seedMaskFile <- getConfigVariable("SeedMaskFile", NULL, "character", errorIfInvalid=TRUE)
     seedMaskInStandardSpace <- getConfigVariable("SeedMaskInStandardSpace", FALSE)
+    jitter <- getConfigVariable("JitterSeeds", FALSE)
     waypointMaskFiles <- getConfigVariable("WaypointMaskFiles", NULL, "character", errorIfInvalid=TRUE)
     waypointMasksInStandardSpace <- getConfigVariable("WaypointMasksInStandardSpace", FALSE)
     exclusionMaskFiles <- getConfigVariable("ExclusionMaskFiles", NULL, "character", errorIfInvalid=TRUE)
@@ -110,7 +111,7 @@ runExperiment <- function ()
     else
     {
         require(tractor.track)
-        result <- trackWithSession(session, seedMask, maskName=trackingMaskFileName, requireImage=is.null(waypointMasks), requireStreamlines=(storeStreamlines || !is.null(waypointMasks)), nSamples=nSamples, terminateOutsideMask=terminateOutsideMask)
+        result <- trackWithSession(session, seedMask, maskName=trackingMaskFileName, requireImage=is.null(waypointMasks), requireStreamlines=(storeStreamlines || !is.null(waypointMasks)), nSamples=nSamples, terminateOutsideMask=terminateOutsideMask, jitter=jitter)
         if (!is.null(waypointMasks))
         {
             result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks, exclusion)
