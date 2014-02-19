@@ -228,7 +228,7 @@ runExperiment <- function ()
 	
 	
     report(OL$Info, "Creating and writing graph")
-    graph <- newGraphFromConnectionMatrix(connectivityMatrix, directed=FALSE, ignoreSelfConnections=TRUE)
+    graph <- newGraphFromConnectionMatrix(connectivityMatrix, directed=FALSE, selfConnections=FALSE)
 	graph$setVertexAttributes( c(graph$vertexAttributes,list(numVoxPerRoi=as.numeric(numVoxPerRoi), numWMVoxPerRoi=as.numeric(numWMVoxPerRoi), VoxelDims=VoxelDims)) )
 	graph$setEdgeAttributes( list(FAConMatrix=FAConMatrix[indEdges],FAWConMatrix=FAWConMatrix[indEdges],MDConMatrix=MDConMatrix[indEdges],MDWConMatrix=MDWConMatrix[indEdges],LenStreamsMatrix=LenStreamsMatrix[indEdges],NumUniqueVoxs=NumUniqueVoxs[indEdges],NumVisVoxs=NumVisVoxs[indEdges], NumStreamsConMatrix=NumStreamsConMatrix[indEdges]) )
     graph$setVertexLocations(regionLocations, "mm")

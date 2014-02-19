@@ -46,15 +46,15 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
             return (edgeAttributes[attributes])
     },
     
-    getEdgeDensity = function (ignoreDisconnectedVertices = TRUE, ignoreSelfConnections = TRUE)
+    getEdgeDensity = function (disconnectedVertices = FALSE, selfConnections = FALSE)
     {
-        if (ignoreDisconnectedVertices)
+        if (!disconnectedVertices)
             nConnectedVertices <- length(.self$getConnectedVertices())
         else
             nConnectedVertices <- .self$nVertices()
         
-        nEdges <- .self$nEdges() - ifelse(ignoreSelfConnections, sum(edges[,1]==edges[,2]), 0)
-        nPossibleEdges <- ifelse(.self$isDirected(), nConnectedVertices^2, nConnectedVertices*(nConnectedVertices+1)/2) - ifelse(ignoreSelfConnections, nConnectedVertices, 0)
+        nEdges <- .self$nEdges() - ifelse(selfConnections, 0, sum(edges[,1]==edges[,2]))
+        nPossibleEdges <- ifelse(.self$isDirected(), nConnectedVertices^2, nConnectedVertices*(nConnectedVertices+1)/2) - ifelse(selfConnections, 0, nConnectedVertices)
         
         return (nEdges / nPossibleEdges)
     },
@@ -99,6 +99,18 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     {
         attributes <- c(list(...), edgeAttributes)
         .self$edgeAttributes <- attributes[!duplicated(names(attributes))]
+    },
+    
+    setEdgeWeights = function (newWeights)
+    {
+        if (length(newWeights) == 1)
+            newWeights <- rep(newWeights, .self$nEdges())
+        else if (length(newWeights) != .self$nEdges())
+        {
+            flag(OL$Warning, "Recycling edge weights (length #{length(newWeights)}) to match the number of edges (#{.self$nEdges()})")
+            newWeights <- rep(newWeights, length.out=.self$nEdges())
+        }
+        .self$edgeWeights <- newWeights
     },
     
     setVertexAttributes = function (...)
@@ -177,39 +189,71 @@ asGraph <- function (x, ...)
     UseMethod("asGraph")
 }
 
-asGraph.matrix <- function (x, directed = NULL, allVertexNames = NULL, ignoreSelfConnections = FALSE, ...)
+asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections = TRUE, allVertexNames = NULL, ...)
 {
-    if (is.null(directed))
-        directed <- !isSymmetric(x)
-    else if (directed == isSymmetric(x))
-        flag(OL$Warning, "The \"directed\" argument does not match the symmetry of the matrix - the lower triangle will be ignored")
+    if (is.null(edgeList))
+        edgeList <- (ncol(x) == 2)
     
-    if (!directed)
-        x[lower.tri(x,diag=FALSE)] <- NA
-    if (ignoreSelfConnections)
-        diag(x) <- NA
-    
-    if (is.null(allVertexNames))
-        allVertexNames <- union(rownames(x), colnames(x))
-    
-    if (is.null(allVertexNames))
+    if (edgeList)
     {
-        rowVertexLocs <- 1:nrow(x)
-        colVertexLocs <- 1:ncol(x)
+        if (is.null(directed))
+            report(OL$Error, "Directedness must be specified when creating a graph from an edge list")
+        
+        nVertices <- max(x, length(allVertexNames))
+        edges <- structure(x, dimnames=NULL)
+        
+        if (!directed)
+        {
+            toSwitch <- (edges[,1] > edges[,2])
+            edges[toSwitch,] <- edges[toSwitch,2:1]
+            edges <- edges[!duplicated(edges),,drop=FALSE]
+        }
+        if (!selfConnections)
+        {
+            toDrop <- (edges[,1] == edges[,2])
+            edges <- edges[!toDrop,,drop=FALSE]
+        }
+        
+        edgeWeights <- rep(1, nrow(edges))
     }
     else
     {
-        rowVertexLocs <- match(rownames(x), allVertexNames)
-        colVertexLocs <- match(colnames(x), allVertexNames)
+        if (ncol(x) != nrow(x))
+            report(OL$Error, "Association matrix must be square")
+        else if (is.null(directed))
+            directed <- !isSymmetric(x)
+        else if (directed == isSymmetric(x))
+            flag(OL$Warning, "The \"directed\" argument does not match the symmetry of the matrix")
+    
+        if (!directed)
+            x[lower.tri(x,diag=FALSE)] <- NA
+        if (!selfConnections)
+            diag(x) <- NA
+    
+        if (is.null(allVertexNames))
+            allVertexNames <- union(rownames(x), colnames(x))
+        
+        nVertices <- max(ncol(x), length(allVertexNames))
+    
+        if (is.null(allVertexNames))
+        {
+            rowVertexLocs <- 1:nrow(x)
+            colVertexLocs <- 1:ncol(x)
+        }
+        else
+        {
+            rowVertexLocs <- match(rownames(x), allVertexNames)
+            colVertexLocs <- match(colnames(x), allVertexNames)
+        }
+    
+        edges <- which(!is.na(x) & x != 0, arr.ind=TRUE)
+        edgeWeights <- x[edges]
+        edges[,1] <- rowVertexLocs[edges[,1]]
+        edges[,2] <- colVertexLocs[edges[,2]]
+        dimnames(edges) <- NULL
     }
     
-    edges <- which(!is.na(x) & x != 0, arr.ind=TRUE)
-    edgeWeights <- x[edges]
-    edges[,1] <- rowVertexLocs[edges[,1]]
-    edges[,2] <- colVertexLocs[edges[,2]]
-    dimnames(edges) <- NULL
-    
-    return (Graph$new(vertexCount=length(allVertexNames), vertexAttributes=list(names=allVertexNames), edges=edges, edgeWeights=edgeWeights, directed=directed))
+    return (Graph$new(vertexCount=nVertices, vertexAttributes=list(names=allVertexNames), edges=edges, edgeWeights=edgeWeights, directed=directed))
 }
 
 as.matrix.Graph <- function (x, ...)
