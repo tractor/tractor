@@ -1,5 +1,5 @@
-Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexCount="integer",vertexAttributes="list",vertexLocations="matrix",locationUnit="character",edges="matrix",edgeAttributes="list",edgeWeights="numeric",directed="logical"), methods=list(
-    initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = emptyMatrix(), locationUnit = "", edges = emptyMatrix(), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
+Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexCount="integer",vertexAttributes="list",vertexLocations="matrix",locationUnit="character",locationSpace="character",edges="matrix",edgeAttributes="list",edgeWeights="numeric",directed="logical"), methods=list(
+    initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = emptyMatrix(), locationUnit = "", locationSpace = "", edges = emptyMatrix(), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
     {
         oldFields <- list(...)
         if ("vertexNames" %in% names(oldFields))
@@ -7,7 +7,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         if ("edgeNames" %in% names(oldFields))
             edgeAttributes <- list(names=as.character(oldFields$edgeNames))
         
-        return (initFields(vertexCount=as.integer(vertexCount), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=locationUnit, edges=edges, edgeAttributes=edgeAttributes, edgeWeights=as.numeric(edgeWeights), directed=directed))
+        return (initFields(vertexCount=as.integer(vertexCount), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=locationUnit, locationSpace=locationSpace, edges=edges, edgeAttributes=edgeAttributes, edgeWeights=as.numeric(edgeWeights), directed=directed))
     },
     
     getConnectedVertices = function () { return (sort(unique(as.vector(edges)))) },
@@ -87,6 +87,8 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     getVertexLocationUnit = function () { return (locationUnit) },
     
+    getVertexLocationSpace = function () { return (locationSpace) },
+    
     isDirected = function () { return (directed) },
     
     isWeighted = function () { return (!all(is.na(edgeWeights) | (edgeWeights %in% c(0,1)))) },
@@ -119,10 +121,11 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         .self$vertexAttributes <- attributes[!duplicated(names(attributes))]
     },
     
-    setVertexLocations = function (locs, unit)
+    setVertexLocations = function (locs, unit, space)
     {
         .self$vertexLocations <- locs
         .self$locationUnit <- unit
+        .self$locationSpace <- space
     },
     
     summarise = function ()
@@ -266,7 +269,7 @@ setMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ...,
 setMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,j,drop=drop]))
 setMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,j,drop=drop]))
     
-setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useNames = FALSE, useLocations = FALSE, locationAxes = NULL) {
+setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useNames = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
     
@@ -330,6 +333,9 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius =
         activeVertices <- 1:x$nVertices()
     nActiveVertices <- length(activeVertices)
     
+    if (is.null(cex))
+        cex <- 50 / nActiveVertices
+    
     if (!is.null(order))
         activeVertices <- order[is.element(order,activeVertices)]
     
@@ -371,7 +377,7 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius =
     if (!add)
     {
         oldPars <- par(mai=c(0,0,0,0))
-        plot(NA, type="n", xlim=xlim, ylim=ylim, asp=1)    
+        plot(NA, type="n", xlim=xlim, ylim=ylim, asp=1, axes=FALSE)
     }
     segments(xLocs[from], yLocs[from], xLocs[to], yLocs[to], lwd=lwd, col=colours)
     symbols(xLocs, yLocs, circles=rep(radius,nActiveVertices), inches=FALSE, col="grey50", lwd=lwd, bg="white", add=TRUE)
@@ -385,7 +391,7 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = 1, lwd = 2, radius =
         par(oldPars)
 })
 
-levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE, useNames = FALSE, ...)
+levelplot.Graph <- function (x, data = NULL, col = NULL, cex = NULL, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE, useNames = FALSE, ...)
 {
     associationMatrix <- x$getAssociationMatrix()
     edges <- x$getEdges()
@@ -431,6 +437,9 @@ levelplot.Graph <- function (x, data = NULL, col = 4, cex = 1, order = NULL, use
     else
         activeVertices <- 1:x$nVertices()
     nActiveVertices <- length(activeVertices)
+    
+    if (is.null(cex))
+        cex <- 30 / nActiveVertices
     
     if (!is.null(order))
         activeVertices <- order[is.element(order,activeVertices)]

@@ -86,7 +86,7 @@ runExperiment <- function ()
         report(OL$Info, "Creating and writing graph")
         graph <- asGraph(edgeList, edgeList=TRUE, directed=FALSE, selfConnections=selfConnections, allVertexNames=targetMatches)
         graph$setVertexAttributes(voxelCount=voxelCount, volume=volume)
-        graph$setVertexLocations(regionLocations, "mm")
+        graph$setVertexLocations(regionLocations, "mm", paste(session$getDirectory(),"diffusion",sep=":"))
         graph$setEdgeAttributes(nStreamlines=nStreamlines, binaryFA=binaryFA, weightedFA=weightedFA, binaryMD=binaryMD, weightedMD=weightedMD, streamlineLength=streamlineLength, uniqueVoxels=uniqueVoxels, voxelVisits=voxelVisits)
         graph$serialise(graphName)
     }
