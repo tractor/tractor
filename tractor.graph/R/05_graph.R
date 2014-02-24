@@ -1,11 +1,22 @@
 Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexCount="integer",vertexAttributes="list",vertexLocations="matrix",locationUnit="character",locationSpace="character",edges="matrix",edgeAttributes="list",edgeWeights="numeric",directed="logical"), methods=list(
     initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = emptyMatrix(), locationUnit = "", locationSpace = "", edges = emptyMatrix(), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
     {
+        # Backwards compatibility
         oldFields <- list(...)
         if ("vertexNames" %in% names(oldFields))
-            vertexAttributes <- list(names=as.character(oldFields$vertexNames))
+            vertexAttributes <- list(name=as.character(oldFields$vertexNames))
         if ("edgeNames" %in% names(oldFields))
-            edgeAttributes <- list(names=as.character(oldFields$edgeNames))
+            edgeAttributes <- list(name=as.character(oldFields$edgeNames))
+        if ("names" %in% names(vertexAttributes))
+        {
+            index <- match("names", names(vertexAttributes))
+            names(vertexAttributes)[index] <- "name"
+        }
+        if ("names" %in% names(edgeAttributes))
+        {
+            index <- match("names", names(edgeAttributes))
+            names(edgeAttributes)[index] <- "name"
+        }
         
         return (initFields(vertexCount=as.integer(vertexCount), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=locationUnit, locationSpace=locationSpace, edges=edges, edgeAttributes=edgeAttributes, edgeWeights=as.numeric(edgeWeights), directed=directed))
     },
@@ -15,10 +26,10 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     getAssociationMatrix = function ()
     {
         associationMatrix <- matrix(0, nrow=vertexCount, ncol=vertexCount)
-        if (!is.null(vertexAttributes$names))
+        if (!is.null(vertexAttributes$name))
         {
-            rownames(associationMatrix) <- vertexAttributes$names
-            colnames(associationMatrix) <- vertexAttributes$names
+            rownames(associationMatrix) <- vertexAttributes$name
+            colnames(associationMatrix) <- vertexAttributes$name
         }
         associationMatrix[edges] <- edgeWeights
         if (!directed)
@@ -161,19 +172,13 @@ setAs("Graph", "igraph", function (from) {
     for (i in seq_along(vertexAttributes))
     {
         indices <- which(!is.na(vertexAttributes[[i]]))
-        if (names(vertexAttributes)[i] == "names")
-            V(igraph)$name[indices] <- vertexAttributes[[i]]
-        else
-            igraph <- set.vertex.attribute(igraph, names(vertexAttributes)[i], indices, vertexAttributes[[i]][indices])
+        igraph <- set.vertex.attribute(igraph, names(vertexAttributes)[i], indices, vertexAttributes[[i]][indices])
     }
     
     for (i in seq_along(edgeAttributes))
     {
         indices <- which(!is.na(edgeAttributes[[i]]))
-        if (names(edgeAttributes)[i] == "names")
-            E(igraph)$name[indices] <- edgeAttributes[[i]]
-        else
-            igraph <- set.edge.attribute(igraph, names(edgeAttributes)[i], indices, edgeAttributes[[i]][indices])
+        igraph <- set.edge.attribute(igraph, names(edgeAttributes)[i], indices, edgeAttributes[[i]][indices])
     }
     
     if (from$isWeighted())
@@ -256,7 +261,7 @@ asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections
         dimnames(edges) <- NULL
     }
     
-    return (Graph$new(vertexCount=nVertices, vertexAttributes=list(names=allVertexNames), edges=edges, edgeWeights=edgeWeights, directed=directed))
+    return (Graph$new(vertexCount=nVertices, vertexAttributes=list(name=allVertexNames), edges=edges, edgeWeights=edgeWeights, directed=directed))
 }
 
 as.matrix.Graph <- function (x, ...)
@@ -383,7 +388,7 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radiu
     symbols(xLocs, yLocs, circles=rep(radius,nActiveVertices), inches=FALSE, col="grey50", lwd=lwd, bg="white", add=TRUE)
     
     if (useNames)
-        text(xLocs, yLocs, x$getVertexAttributes("names")[activeVertices], col="grey40", cex=cex)
+        text(xLocs, yLocs, x$getVertexAttributes("name")[activeVertices], col="grey40", cex=cex)
     else
         text(xLocs, yLocs, as.character(activeVertices), col="grey40", cex=cex)
     
@@ -445,7 +450,7 @@ levelplot.Graph <- function (x, data = NULL, col = NULL, cex = NULL, order = NUL
         activeVertices <- order[is.element(order,activeVertices)]
     
     if (useNames)
-        labels <- x$getVertexAttributes("names")[activeVertices]
+        labels <- x$getVertexAttributes("name")[activeVertices]
     else
         labels <- as.character(activeVertices)
     
@@ -460,7 +465,7 @@ inducedSubgraph <- function (graph, vertices)
         report(OL$Error, "At least one vertex must be retained")
     
     if (is.character(vertices))
-        vertices <- match(vertices, graph$getVertexAttributes("names"))
+        vertices <- match(vertices, graph$getVertexAttributes("name"))
     vertices <- sort(vertices)
     
     nVertices <- graph$nVertices()
