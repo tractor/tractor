@@ -1,5 +1,6 @@
 #@args image file(s), R expression
 #@desc Generate a new image by applying an R expression to one or more input images. The original images are represented in the expression using the symbols a, b, c, etc. The number of input images is usually guessed, but can be specified explicitly with the Inputs variable. If the result is a single value then it will be printed, otherwise a new image is created and written to file. Metadata for the result image will be based on the first image specified.
+#@example # Create a new image from the log of the voxelwise sum of two others
 #@example tractor apply image1 image2 "log(a+b)"
 
 runExperiment <- function ()

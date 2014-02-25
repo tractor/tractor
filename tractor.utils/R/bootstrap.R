@@ -110,11 +110,18 @@ describeExperiment <- function (scriptFile, fill = FALSE)
         outputLines <- c(outputLines, paste("ARGUMENTS:", argsString, sep=" "))
     }
     
+    relevantInputLines <- grep("#@example", inputLines, value=TRUE, fixed=TRUE)
+    if (length(relevantInputLines) != 0)
+    {
+        exampleStrings <- sub("^\\s*\\#\\@example\\s*", "", relevantInputLines, perl=TRUE)
+        outputLines <- c(outputLines, "\nEXAMPLES:", exampleStrings)
+    }
+    
     relevantInputLines <- grep("#@desc", inputLines, value=TRUE, fixed=TRUE)
     if (length(relevantInputLines) != 0)
     {
         descriptionString <- implode(sub("^\\s*\\#\\@desc\\s*", "", relevantInputLines, perl=TRUE), sep=" ")
-        outputLines <- c(outputLines, "", descriptionString)
+        outputLines <- c(outputLines, "\nDESCRIPTION:", descriptionString)
     }
     
     if (fill == FALSE)
