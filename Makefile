@@ -42,6 +42,7 @@ install-track:
 	@$(INSTALL) tractor.track
 
 install-graph:
+	@$(INSTALL) -k lib/igraph
 	@$(INSTALL) tractor.graph
 
 install: build

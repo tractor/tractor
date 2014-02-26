@@ -1,0 +1,448 @@
+
+importFrom(stats, as.dendrogram)
+importFrom(stats, as.hclust)
+importFrom(stats, median)
+importFrom(stats, quantile)
+import(methods)
+
+# The igraph interface
+
+export(add.vertices, delete.edges,
+       delete.vertices, ecount, neighbors, incident, get.edges, get.edge.ids)
+
+export("[.igraph", "[[.igraph", "[<-.igraph")
+
+S3method("[", "igraph")
+S3method("[[", "igraph")
+S3method("[<-", "igraph")
+
+export(edge, edges, vertex, vertices, path,
+       "+.igraph", "-.igraph")
+
+S3method("+", "igraph")
+S3method("-", "igraph")
+
+# Attributes
+
+export(get.graph.attribute, set.graph.attribute, graph.attributes,
+       get.vertex.attribute, set.vertex.attribute, vertex.attributes,
+       get.edge.attribute, set.edge.attribute, edge.attributes,
+       list.graph.attributes, list.vertex.attributes,
+       list.edge.attributes, remove.graph.attribute,
+       remove.vertex.attribute, remove.edge.attribute,
+       "graph.attributes<-", "vertex.attributes<-", "edge.attributes<-")
+
+# iterators
+
+export(V, E, "$.igraph.vs", "$.igraph.es",
+       "[.igraph.vs", "[[.igraph.vs", "[.igraph.es", "[[.igraph.es",
+       "[<-.igraph.vs", "[<-.igraph.es", "[[<-.igraph.vs", "[[<-.igraph.es",
+       "$<-.igraph.vs", "$<-.igraph.es", "V<-", "E<-",
+       print.igraph.vs, print.igraph.es, "%--%", "%->%", "%<-%")
+
+S3method("$", igraph)
+S3method("$<-", igraph)
+S3method("$", igraph.vs)
+S3method("[", igraph.vs)
+S3method("[[", igraph.vs)
+S3method("[<-", igraph.vs)
+S3method("[[<-", igraph.vs)
+S3method("$<-", igraph.vs)
+S3method("$", igraph.es)
+S3method("[", igraph.es)
+S3method("[[", igraph.es)
+S3method("[<-", igraph.es)
+S3method("[[<-", igraph.es)
+S3method("$<-", igraph.es)
+S3method(print, igraph.vs)
+S3method(print, igraph.es)
+  
+# basic functions, printing
+
+export(is.igraph, is.named, is.weighted, is.bipartite,
+       are.connected, print.igraph, str.igraph, summary.igraph,
+       is.directed, get.edge)
+
+S3method("str", "igraph")
+
+# structure generators
+
+export(graph, graph.adjacency, graph.star, graph.tree, graph.lattice,
+       graph.ring, graph.full, graph.atlas, graph.data.frame, graph.edgelist,
+       graph.extended.chordal.ring, line.graph, graph.de.bruijn, graph.kautz,
+       graph.formula, graph.famous)
+
+# games
+
+export(erdos.renyi.game, random.graph.game, degree.sequence.game,
+       aging.prefatt.game, aging.barabasi.game, aging.ba.game,
+       growing.random.game, barabasi.game, ba.game,
+       callaway.traits.game, establishment.game, grg.game,
+       preference.game, asymmetric.preference.game, connect.neighborhood,
+       rewire.edges, watts.strogatz.game, lastcit.game, cited.type.game,
+       citing.cited.type.game, bipartite.random.game)
+
+# community structure
+
+export(edge.betweenness.community,
+       spinglass.community, walktrap.community,
+       edge.betweenness.community.merges, fastgreedy.community,
+       community.to.membership)
+
+export(membership, modularity, sizes, algorithm, is.hierarchical, merges,
+       cutat, communities, crossing, plot.communities, compare,
+       compare.communities, showtrace, code.length, asPhylo, dendPlot)
+
+S3method("print", communities)
+S3method("modularity", communities)
+S3method("length", communities)
+S3method("as.dendrogram", communities)
+S3method("as.hclust", communities)
+S3method("asPhylo", communities)
+S3method("modularity", igraph)
+S3method("dendPlot", communities)
+S3method("compare", communities)
+S3method("compare", numeric)
+S3method("compare", default)
+
+# conversion
+
+export(get.adjacency, get.edgelist, as.directed, as.undirected,
+       get.adjlist, get.adjedgelist, igraph.from.graphNEL, 
+       igraph.to.graphNEL, get.data.frame)
+
+# fitting, other
+
+export(power.law.fit, running.mean, igraph.sample, srand)
+
+# foreign formats
+
+export(read.graph, write.graph, graph.graphdb)
+
+# layouts
+
+export(layout.auto, layout.random, layout.circle,
+       layout.spring, layout.kamada.kawai, layout.lgl,
+       layout.fruchterman.reingold.grid, layout.sphere, layout.merge,
+       layout.reingold.tilford, layout.norm, piecewise.layout)
+export(igraph.drl.default, igraph.drl.coarsen, igraph.drl.coarsest,
+       igraph.drl.refine, igraph.drl.final)
+
+# structural properties
+
+export(subgraph, degree, degree.distribution, diameter,
+       subcomponent, betweenness, bibcoupling, cocitation,
+       shortest.paths, minimum.spanning.tree,
+       get.shortest.paths, average.path.length, transitivity,
+       get.all.shortest.paths, get.diameter, farthest.nodes,
+       constraint, page.rank, reciprocity, rewire,
+       graph.density, neighborhood.size, neighborhood, graph.neighborhood,
+       graph.coreness, topological.sort, girth, is.loop, is.multiple,
+       count.multiple)
+
+# plotting
+
+export(plot.igraph, tkplot, tkplot.close, tkplot.off, tkplot.fit.to.screen,
+       tkplot.reshape, tkplot.export.postscript, tkplot.getcoords,
+       tkplot.center, tkplot.rotate, tkplot.canvas, tkplot.setcoords,
+       rglplot.igraph, rglplot,
+       autocurve.edges, vertex.shapes, add.vertex.shape,
+       igraph.shape.noclip, igraph.shape.noplot)
+
+S3method(rglplot, igraph)
+
+# components
+
+export(cluster.distribution, is.connected, decompose.graph,
+       no.clusters)
+
+# centrality
+
+export(evcent, bonpow, alpha.centrality, subgraph.centrality)
+export(igraph.arpack.default, igraph.eigen.default)
+
+# dynamics measurement
+
+export(revolver.d, revolver.error.d,
+       revolver.ad, revolver.error.ad,
+       revolver.ade, revolver.error.ade,
+       revolver.e, revolver.error.e,
+       revolver.de, revolver.error.de,
+       revolver.l, revolver.error.l,
+       revolver.dl, revolver.error.dl,
+       revolver.el, revolver.error.el,
+       revolver.r, revolver.error.r,
+       revolver.ar, revolver.error.ar,
+       revolver.di, revolver.error.di,
+       revolver.adi, revolver.error.adi,
+       revolver.il, revolver.error.il,
+       revolver.ir, revolver.error.ir,
+       revolver.air, revolver.error.air)
+
+export (revolver.d.d, revolver.p.p)
+
+export (evolver.d)
+
+# isomorphism, motifs
+
+export(graph.isoclass, graph.isomorphic, graph.motifs,
+       graph.motifs.est, graph.isocreate, graph.motifs.no,
+       graph.isomorphic.vf2, graph.subisomorphic.vf2,
+       graph.count.isomorphisms.vf2, graph.count.subisomorphisms.vf2,
+       graph.get.isomorphisms.vf2, graph.get.subisomorphisms.vf2)
+
+# operators
+
+export(graph.disjoint.union, "%du%", graph.intersection, "%s%",
+       graph.union, "%u%", graph.difference, "%m%",
+       graph.complementer, graph.compose, "%c%")
+
+# parameters, config
+
+export(igraph.par, igraph.options, getIgraphOpt, igraphtest, igraph.version)
+
+# console
+
+export(igraph.console, .igraph.progress, .igraph.status)
+
+# flows, cuts, etc.
+
+export(graph.mincut, vertex.connectivity, edge.connectivity,
+       edge.disjoint.paths, vertex.disjoint.paths, graph.adhesion,
+       graph.cohesion)
+
+# cliques
+
+export(cliques, largest.cliques, maximal.cliques, clique.number,
+       independent.vertex.sets, largest.independent.vertex.sets,
+       maximal.independent.vertex.sets, independence.number)
+
+# cohesive blocking, this is what remains from the old implementation
+
+S3method(layout.svd, igraph)
+export(layout.svd)
+
+# cohesive blocking, new style 
+
+export(blocks, blockGraphs, cohesion, hierarchy, parent,
+       plotHierarchy, exportPajek, maxcohesion)
+
+S3method(print, cohesiveBlocks)
+S3method(summary, cohesiveBlocks)
+S3method(plot, cohesiveBlocks)
+S3method(length, cohesiveBlocks)
+
+# arpack
+
+export(arpack)
+
+# tkigraph, demo
+
+export(tkigraph,igraphdemo)
+
+# HRG
+
+S3method(print, igraphHRG)
+S3method(print, igraphHRGConsensus)
+S3method("as.dendrogram", igraphHRG)
+S3method("as.hclust", igraphHRG)
+S3method("asPhylo", igraphHRG)
+S3method("dendPlot", igraphHRG)
+
+# SCG
+
+export(scg)
+S3method(scg, "igraph")
+S3method(scg, "matrix")
+S3method(scg, "Matrix")
+
+# nexus
+
+export(nexus.get, nexus.list, nexus.info, nexus.search)
+S3method(print, nexusDatasetInfo)
+S3method(print, nexusDatasetInfoList)
+S3method(summary, nexusDatasetInfoList)
+S3method("[", nexusDatasetInfoList)
+
+# Sparse data frame
+
+S3method(as.data.frame, igraphSDF)
+S3method("[", igraphSDF)
+S3method("[<-", igraphSDF)
+
+# convert to igraph
+
+export(as.igraph)
+S3method(as.igraph, "igraphHRG")
+
+# Graphlets
+
+export(graphlets, graphlets.project)
+
+# SIR
+
+export(plot.sir, time_bins)
+S3method(plot, sir)
+S3method(median, sir)
+S3method(quantile, sir)
+S3method(time_bins, sir)
+
+######################## REST IS GENERATED BY stimulus
+export(graph.empty)
+export(add.edges)
+export(vcount)
+export(graph.full.citation)
+export(graph.lcf)
+export(graph.adjlist)
+export(graph.full.bipartite)
+export(forest.fire.game)
+export(interconnected.islands.game)
+export(static.fitness.game)
+export(static.power.law.game)
+export(k.regular.game)
+export(sbm.game)
+export(closeness)
+export(closeness.estimate)
+export(betweenness.estimate)
+export(edge.betweenness)
+export(edge.betweenness.estimate)
+export(page.rank.old)
+export(page.rank)
+export(induced.subgraph)
+export(subgraph.edges)
+export(path.length.hist)
+export(simplify)
+export(is.dag)
+export(is.simple)
+export(has.multiple)
+export(evcent)
+export(hub.score)
+export(authority.score)
+export(arpack.unpack.complex)
+export(unfold.tree)
+export(is.mutual)
+export(maximum.cardinality.search)
+export(is.chordal)
+export(graph.knn)
+export(graph.strength)
+export(centralize.scores)
+export(centralization.degree)
+export(centralization.degree.tmax)
+export(centralization.betweenness)
+export(centralization.betweenness.tmax)
+export(centralization.closeness)
+export(centralization.closeness.tmax)
+export(centralization.evcent)
+export(centralization.evcent.tmax)
+export(assortativity.nominal)
+export(assortativity)
+export(assortativity.degree)
+export(contract.vertices)
+export(eccentricity)
+export(radius)
+export(graph.diversity)
+export(is.degree.sequence)
+export(is.graphical.degree.sequence)
+export(graph.bfs)
+export(graph.dfs)
+export(bipartite.projection.size)
+export(bipartite.projection)
+export(graph.bipartite)
+export(graph.incidence)
+export(get.incidence)
+export(bipartite.mapping)
+export(graph.laplacian)
+export(clusters)
+export(articulation.points)
+export(biconnected.components)
+export(maximal.cliques.count)
+export(layout.star)
+export(layout.grid)
+export(layout.grid.3d)
+export(layout.fruchterman.reingold)
+export(layout.graphopt)
+export(layout.drl)
+export(layout.drl)
+export(layout.sugiyama)
+export(layout.mds)
+export(layout.bipartite)
+export(similarity.jaccard)
+export(similarity.dice)
+export(similarity.invlogweighted)
+export(community.le.to.membership)
+export(mod.matrix)
+export(leading.eigenvector.community)
+export(label.propagation.community)
+export(multilevel.community)
+export(optimal.community)
+export(hrg.fit)
+export(hrg.game)
+export(hrg.dendrogram)
+export(hrg.consensus)
+export(hrg.predict)
+export(hrg.create)
+export(infomap.community)
+export(graphlets)
+export(graphlets.candidate.basis)
+export(graphlets.project)
+export(as.undirected)
+export(get.stochastic)
+export(dyad.census)
+export(triad.census)
+export(adjacent.triangles)
+export(graph.maxflow)
+export(dominator.tree)
+export(stCuts)
+export(stMincuts)
+export(is.separator)
+export(is.minimal.separator)
+export(minimal.st.separators)
+export(minimum.size.separators)
+export(cohesive.blocks)
+export(graph.isoclass)
+export(graph.isomorphic)
+export(graph.isoclass.subgraph)
+export(graph.isocreate)
+export(graph.isomorphic.vf2)
+export(graph.count.isomorphisms.vf2)
+export(graph.get.isomorphisms.vf2)
+export(graph.subisomorphic.vf2)
+export(graph.count.subisomorphisms.vf2)
+export(graph.get.subisomorphisms.vf2)
+export(graph.isomorphic.34)
+export(canonical.permutation)
+export(permute.vertices)
+export(graph.isomorphic.bliss)
+export(graph.automorphisms)
+export(graph.subisomorphic.lad)
+export(scgGrouping)
+export(scgSemiProjectors)
+export(scgNormEps)
+export(is.matching)
+export(is.maximal.matching)
+export(maximum.bipartite.matching)
+export(graph.eigen)
+export(sir)
+export(convex.hull)
+export(revolver.ml.d)
+export(revolver.probs.d)
+export(revolver.ml.de)
+export(revolver.probs.de)
+export(revolver.ml.ade)
+export(revolver.probs.ade)
+export(revolver.ml.f)
+export(revolver.ml.df)
+export(revolver.ml.l)
+export(revolver.ml.ad)
+export(revolver.probs.ad)
+export(revolver.ml.D.alpha)
+export(revolver.ml.D.alpha.a)
+export(revolver.ml.DE.alpha.a)
+export(revolver.ml.AD.alpha.a.beta)
+export(revolver.ml.AD.dpareto)
+export(revolver.ml.AD.dpareto.eval)
+export(revolver.ml.ADE.alpha.a.beta)
+export(revolver.ml.ADE.dpareto)
+export(revolver.ml.ADE.dpareto.eval)
+export(revolver.ml.ADE.dpareto.evalf)
+export(revolver.probs.ADE.dpareto)
