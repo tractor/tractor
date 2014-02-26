@@ -3,13 +3,20 @@
 export R_INSTALL_VANILLA=1
 export R_COMPILE_PKGS=1
 
+keep_going=0
+
 usage()
 {
-    echo "tractor_Rinstall (program v2.1.0)"
+    echo "tractor_Rinstall (program v2.5.0)"
     echo "TractoR-specific wrapper for installing R packages"
     echo
-    echo "Usage: tractor_Rinstall pkg_path [pkg_path ...]"
+    echo "Usage: tractor_Rinstall [-k] pkg_path [pkg_path ...]"
     echo
+}
+
+[ "$1" = "-k" ] && {
+    keep_going=1
+    shift
 }
 
 [ $# -lt 1 -o ! -d "$1" ] && {
@@ -34,8 +41,10 @@ while [ $# -gt 0 ]; do
         echo "OK"
     else
         echo "FAIL"
-        cat install.log
-        exit 1
+        if [ keep_going -eq 0 ]; then
+            cat install.log
+            exit 1
+        fi
     fi
     shift
 done
