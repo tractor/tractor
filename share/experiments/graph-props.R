@@ -1,0 +1,37 @@
+#@desc Print out various graph-theoretical properties of a graph object. The object may be specified as an argument (which takes priority), or through the GraphName option. This script requires the "igraph" R package. Note that further properties of the graph, such as the attributes which are defined for it, may be seen using the "peek" script.
+#@args [graph file]
+#@nohistory TRUE
+
+library(tractor.base)
+library(igraph)
+library(tractor.graph)
+
+runExperiment <- function ()
+{
+    graphName <- getConfigVariable("GraphName", NULL, "character")
+    edgeWeightThreshold <- getConfigVariable("EdgeWeightThreshold", 0, "numeric")
+    binarise <- getConfigVariable("Binarise", FALSE)
+    disconnectedVertices <- getConfigVariable("DisconnectedVertices", FALSE)
+    
+    if (nArguments() > 0)
+        graph <- deserialiseReferenceObject(implode(Arguments, " "))
+    else
+        graph <- deserialiseReferenceObject(graphName)
+    
+    if (!is(graph, "Graph"))
+        report(OL$Error, "The specified file does not contain a valid graph object")
+    
+    if (edgeWeightThreshold > 0)
+        graph <- thresholdEdges(graph, edgeWeightThreshold, ignoreSign=TRUE, binarise=binarise)
+    else if (edgeWeightThreshold < 0 || binarise)
+        graph <- thresholdEdges(graph, edgeWeightThreshold, ignoreSign=FALSE, binarise=binarise)
+    
+    meanShortestPath <- meanShortestPath(graph, ignoreInfinite=!disconnectedVertices)
+    globalEfficiency <- graphEfficiency(graph, type="global")
+    localEfficiency <- mean(graphEfficiency(graph, type="local"), na.rm=TRUE)
+    meanClusteringCoefficient <- mean(clusteringCoefficients(graph), na.rm=TRUE)
+    values <- c(graph$nVertices(), graph$nEdges(), s("#{graph$getEdgeDensity(disconnectedVertices=disconnectedVertices)*100}%",round=2), s("#{meanShortestPath}#{ifelse(graph$isWeighted(),'',' steps')}",signif=3), signif(c(globalEfficiency, localEfficiency, meanClusteringCoefficient),3))
+    labels <- c("Number of vertices", "Number of edges", "Edge density", "Mean shortest path", "Global efficiency", "Mean local efficiency", "Mean clustering coefficient")
+    
+    printLabelledValues(labels, values)
+}
