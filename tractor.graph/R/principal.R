@@ -12,31 +12,40 @@
     return (eigensystem)
 }
 
-calculatePrincipalGraphsForTable <- function (table, ..., allVertexNames = NULL)
+principalNetworks <- function (x, ...)
 {
-    graph <- asGraph(cor(table), directed=TRUE, allVertexNames=allVertexNames)
+    UseMethod("principalNetworks")
+}
+
+# Table of raw data, e.g. cortical thickness measurements
+principalNetworks.matrix <- function (x, ..., allVertexNames = NULL)
+{
+    graph <- asGraph(cor(x), directed=TRUE, allVertexNames=allVertexNames)
     principalGraphs <- calculatePrincipalGraphsForGraphs(graph, ...)
-    principalGraphs$scores <- scale(table) %*% principalGraphs$eigenvectors
+    principalGraphs$scores <- scale(x) %*% principalGraphs$eigenvectors
     
     return(principalGraphs)
 }
 
-calculatePrincipalGraphsForGraphs <- function (graphs, components = NULL, eigenvalueThreshold = NULL, loadingThreshold = 0.1, iterations = 0, confidence = 0.95, edgeWeightThreshold = 0.2, dropTrivial = TRUE)
+# Single graph
+principalNetworks.Graph <- function (x, ...)
 {
-    if (is(graphs, "Graph"))
+    principalNetworks.list(list(x), ...)
+}
+
+# One or more graphs in a list
+principalNetworks.list <- function (x, components = NULL, eigenvalueThreshold = NULL, loadingThreshold = 0.1, iterations = 0, confidence = 0.95, edgeWeightThreshold = 0.2, dropTrivial = TRUE)
+{
+    if (!is(x[[1]], "Graph"))
+        report(OL$Error, "The specified list does not seem to contain Graph objects")
+    if (length(x) == 1 && iterations > 0)
     {
-        graphs <- list(graphs)
-        if (iterations > 0)
-        {
-            flag(OL$Warning, "Bootstrapping cannot be performed with only one graph")
-            iterations <- 0
-        }
+        flag(OL$Warning, "Bootstrapping cannot be performed with only one graph")
+        iterations <- 0
     }
-    else if (!is.list(graphs))
-        report(OL$Error, "Graphs should be specified in a list")
     
-    nGraphs <- length(graphs)
-    eigensystem <- .averageAndDecomposeGraphs(graphs)
+    nGraphs <- length(x)
+    eigensystem <- .averageAndDecomposeGraphs(x)
     associationMatrix <- eigensystem$matrix
     nComponents <- length(eigensystem$values)
     
@@ -51,7 +60,7 @@ calculatePrincipalGraphsForGraphs <- function (graphs, components = NULL, eigenv
     if (iterations > 0)
     {
         report(OL$Info, "Bootstrapping loading matrix with threshold ", signif(loadingThreshold,3), " and confidence ", confidence)
-        bootstrapResult <- bootstrapLoadings(graphs, iterations, loadingThreshold, eigenvalueThreshold, confidence)
+        bootstrapResult <- bootstrapLoadings(x, iterations, loadingThreshold, eigenvalueThreshold, confidence)
         if (is.null(components))
             components <- which(bootstrapResult$values$salient)
         loadings <- structure(bootstrapResult$vectors$estimate, salient=bootstrapResult$vectors$salient)
@@ -68,7 +77,7 @@ calculatePrincipalGraphsForGraphs <- function (graphs, components = NULL, eigenv
     for (i in seq_len(ncol(loadings)))
         loadings[,i] <- loadings[,i] * ifelse(sum(loadings[attr(loadings,"salient")[,i],i]) < 0, -1, 1)
     
-    rownames(loadings) <- graphs[[1]]$getVertexAttributes("name")
+    rownames(loadings) <- x[[1]]$getVertexAttributes("name")
     colnames(loadings) <- paste("PN", 1:nComponents, sep="")
     
     report(OL$Info, "Component graphs ", implode(components,sep=", ",finalSep=" and ",ranges=TRUE), " have eigenvalues above threshold")
@@ -99,14 +108,14 @@ calculatePrincipalGraphsForGraphs <- function (graphs, components = NULL, eigenv
     # Calculate residual association matrices after subtracting out higher components
     residualMatrices <- Reduce("-", fullMatrices, init=associationMatrix, accumulate=TRUE)
     residualMatrices <- residualMatrices[-1]
-    residualGraphs <- lapply(residualMatrices[components], asGraph, allVertexNames=graphs[[1]]$getVertexAttributes("name"))
-    residualGraphs <- lapply(residualGraphs, function(x) { x$setVertexLocations(graphs[[1]]$getVertexLocations(),graphs[[1]]$getVertexLocationUnit()); x })
+    residualGraphs <- lapply(residualMatrices[components], asGraph, allVertexNames=x[[1]]$getVertexAttributes("name"))
+    residualGraphs <- lapply(residualGraphs, function(r) { r$setVertexLocations(x[[1]]$getVertexLocations(),x[[1]]$getVertexLocationUnit()); r })
     names(residualGraphs) <- paste("PN", components, sep="")
     
     verticesToKeep <- attr(loadings, "salient")
     matrices <- lapply(components, function(i) fullMatrices[[i]][verticesToKeep[,i],verticesToKeep[,i]])
-    componentGraphs <- lapply(matrices, asGraph, allVertexNames=graphs[[1]]$getVertexAttributes("name"))
-    componentGraphs <- lapply(componentGraphs, function(x) { x$setVertexLocations(graphs[[1]]$getVertexLocations(),graphs[[1]]$getVertexLocationUnit()); x })
+    componentGraphs <- lapply(matrices, asGraph, allVertexNames=x[[1]]$getVertexAttributes("name"))
+    componentGraphs <- lapply(componentGraphs, function(r) { r$setVertexLocations(x[[1]]$getVertexLocations(),x[[1]]$getVertexLocationUnit()); r })
     names(componentGraphs) <- paste("PN", components, sep="")
     
     loadings <- structure(loadings[,components], salient=attr(loadings,"salient")[,components])
