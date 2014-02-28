@@ -1,5 +1,5 @@
 #@args file name
-#@desc Convert a Graph object stored in an ".Rdata" file into a comma-separated list of numbers representing the corresponding connection or adjacency matrix.
+#@desc Convert a Graph object stored in an ".Rdata" file into a comma-separated list of numbers representing the corresponding association or adjacency matrix.
 
 library(tractor.base)
 library(tractor.graph)

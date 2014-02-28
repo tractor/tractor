@@ -1,4 +1,5 @@
 #@args [session directory]
+#@desc Build a graph representing interregional connectivity from the specified data source. At present only diffusion tractography data may be used, and the source is specified using the TractName option. (A corresponding streamline file generated with "xtrack" or "mtrack" must exist.) Target regions may be specified individually or by type, using names from the parcellation's lookup table. The ParcellationConfidence variable controls the inclusiveness of the transformed parcellation: the closer to 1, the more inclusive.
 
 library(tractor.graph)
 

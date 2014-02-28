@@ -1,4 +1,4 @@
-#@desc Visualise the specified graph, either topologically or as an association matrix.
+#@desc Visualise the specified graph, either topologically or as an association matrix. The graph can be shown overlaid on the brain if the vertex location space is stored with the graph, and a mask exists in that space.
 #@interactive TRUE
 #@nohistory TRUE
 
