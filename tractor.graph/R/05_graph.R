@@ -547,7 +547,7 @@ graphEfficiency <- function (graph, type = c("global","local"))
     
     if (type == "global")
     {
-        sp <- shortest.paths(graph)
+        sp <- shortestPaths(graph)
         ge <- mean(1/sp[upper.tri(sp) | lower.tri(sp)])
         return (ge)
     }
@@ -564,7 +564,7 @@ graphEfficiency <- function (graph, type = c("global","local"))
             else
             {
                 subgraph <- induced.subgraph(graph, cn)
-                sp <- shortest.paths(subgraph)
+                sp <- shortestPaths(subgraph)
                 return (mean(1/sp[upper.tri(sp) | lower.tri(sp)]))
             }
         })
@@ -582,17 +582,26 @@ meanShortestPath <- function (graph, ignoreInfinite = TRUE)
 
 shortestPaths <- function (graph)
 {
-    if (!is(graph, "Graph"))
-        report(OL$Error, "Specified graph is not a valid Graph object")
-    
     require("igraph")
-    return (shortest.paths(as(graph,"igraph")))
+    
+    if (!is(graph,"Graph") && !is(graph,"igraph"))
+        report(OL$Error, "Specified graph is not a valid Graph or igraph object")
+    
+    # The shortest.paths() function treats weights as costs, so we need to invert
+    if (is(graph, "Graph") && graph$isWeighted())
+        weights <- 1 / graph$getEdgeWeights()
+    else if (is(graph,"igraph") && is.weighted(graph))
+        weights <- 1 / E(graph)$weight
+    else
+        weights <- NULL
+    
+    return (shortest.paths(as(graph,"igraph"), weights=weights))
 }
 
 clusteringCoefficients <- function (graph)
 {
-    if (!is(graph, "Graph"))
-        report(OL$Error, "Specified graph is not a valid Graph object")
+    if (!is(graph,"Graph") && !is(graph,"igraph"))
+        report(OL$Error, "Specified graph is not a valid Graph or igraph object")
     
     require("igraph")
     return (transitivity(as(graph,"igraph"),"local"))
