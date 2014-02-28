@@ -86,7 +86,13 @@ describeExperiment <- function (scriptFile, fill = FALSE)
         if (!deprecated)
         {
             leadString <- ifelse(errorIfMissing, " * ", "   ")
-            defaultValueString <- ifelse(is.null(defaultValue), "NULL", as.character(defaultValue))
+            if (identical(defaultValue, TRUE))
+                defaultValueString <- "true"
+            else if (identical(defaultValue, FALSE))
+                defaultValueString <- "false"
+            else
+                defaultValueString <- ifelse(is.null(defaultValue), "NULL", as.character(defaultValue))
+            
             if (!is.null(validValues))
             {
                 otherValues <- (if (is.null(defaultValue)) validValues else validValues[-match(defaultValue,validValues)])
