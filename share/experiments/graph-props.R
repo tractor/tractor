@@ -10,7 +10,7 @@ runExperiment <- function ()
 {
     graphName <- getConfigVariable("GraphName", NULL, "character")
     edgeWeightThreshold <- getConfigVariable("EdgeWeightThreshold", 0, "numeric")
-    binarise <- getConfigVariable("Binarise", FALSE)
+    binarise <- getConfigVariable("Binarise", TRUE)
     disconnectedVertices <- getConfigVariable("DisconnectedVertices", FALSE)
     
     if (nArguments() > 0)
