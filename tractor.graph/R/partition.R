@@ -31,6 +31,8 @@ partitionGraph <- function (graph, method = "modularity")
                 return (list(indices))
         }
         
-        return (findPartition(graph$getConnectedVertices()))
+        partition <- findPartition(graph$getConnectedVertices())
+        report(OL$Info, "Graph has been partitioned into #{length(partition)} parts, containing #{implode(sapply(partition,length),sep=', ',finalSep=' and ')} vertices")
+        return (partition)
     }
 }

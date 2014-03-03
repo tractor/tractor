@@ -1,10 +1,13 @@
-.averageAndDecomposeGraphs <- function (graphs)
+.averageAndDecomposeGraphs <- function (graphs, setDiagonal = TRUE)
 {
     nGraphs <- length(graphs)
     if (nGraphs == 1)
         meanConnectionMatrix <- graphs[[1]]$getAssociationMatrix()
     else
         meanConnectionMatrix <- Reduce("+", lapply(graphs, function(x) x$getAssociationMatrix())) / nGraphs
+    
+    if (setDiagonal)
+        diag(meanConnectionMatrix) <- pmax(apply(meanConnectionMatrix,1,max,na.rm=TRUE), apply(meanConnectionMatrix,2,max,na.rm=TRUE))
     
     eigensystem <- eigen(meanConnectionMatrix)
     eigensystem$matrix <- meanConnectionMatrix
@@ -34,7 +37,7 @@ principalNetworks.Graph <- function (x, ...)
 }
 
 # One or more graphs in a list
-principalNetworks.list <- function (x, components = NULL, eigenvalueThreshold = NULL, loadingThreshold = 0.1, iterations = 0, confidence = 0.95, edgeWeightThreshold = 0.2, dropTrivial = TRUE)
+principalNetworks.list <- function (x, components = NULL, eigenvalueThreshold = NULL, loadingThreshold = 0.1, iterations = 0, confidence = 0.95, edgeWeightThreshold = 0.2, dropTrivial = TRUE, setDiagonal = TRUE)
 {
     if (!is(x[[1]], "Graph"))
         report(OL$Error, "The specified list does not seem to contain Graph objects")
