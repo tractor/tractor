@@ -490,7 +490,7 @@ inducedSubgraph <- function (graph, vertices)
             return (attrib)
     })
     
-    return (Graph$new(vertexCount=length(vertices), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=graph$getVertexLocationUnit(), edges=edges, edgeAttributes=edgeAttributes, edgeWeights=graph$getEdgeWeights()[edgesToKeep], directed=graph$isDirected()))
+    return (Graph$new(vertexCount=length(vertices), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=graph$getVertexLocationUnit(), locationSpace=graph$getVertexLocationSpace(), edges=edges, edgeAttributes=edgeAttributes, edgeWeights=graph$getEdgeWeights()[edgesToKeep], directed=graph$isDirected()))
 }
 
 thresholdEdges <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted = TRUE, binarise = FALSE)
@@ -523,7 +523,7 @@ thresholdEdges <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted
     else
         finalEdgeWeights <- edgeWeights[toKeep]
     
-    return (Graph$new(vertexCount=graph$nVertices(), vertexAttributes=graph$getVertexAttributes(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), edges=graph$getEdges()[toKeep,,drop=FALSE], edgeAttributes=edgeAttributes, edgeWeights=finalEdgeWeights, directed=graph$isDirected()))
+    return (Graph$new(vertexCount=graph$nVertices(), vertexAttributes=graph$getVertexAttributes(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), locationSpace=graph$getVertexLocationSpace(), edges=graph$getEdges()[toKeep,,drop=FALSE], edgeAttributes=edgeAttributes, edgeWeights=finalEdgeWeights, directed=graph$isDirected()))
 }
 
 graphEfficiency <- function (graph, type = c("global","local"))

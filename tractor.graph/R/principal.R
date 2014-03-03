@@ -112,13 +112,13 @@ principalNetworks.list <- function (x, components = NULL, eigenvalueThreshold = 
     residualMatrices <- Reduce("-", fullMatrices, init=associationMatrix, accumulate=TRUE)
     residualMatrices <- residualMatrices[-1]
     residualGraphs <- lapply(residualMatrices[components], asGraph, allVertexNames=x[[1]]$getVertexAttributes("name"))
-    residualGraphs <- lapply(residualGraphs, function(r) { r$setVertexLocations(x[[1]]$getVertexLocations(),x[[1]]$getVertexLocationUnit()); r })
+    residualGraphs <- lapply(residualGraphs, function(r) { r$setVertexLocations(x[[1]]$getVertexLocations(),x[[1]]$getVertexLocationUnit(),x[[1]]$getVertexLocationSpace()); r })
     names(residualGraphs) <- paste("PN", components, sep="")
     
     verticesToKeep <- attr(loadings, "salient")
     matrices <- lapply(components, function(i) fullMatrices[[i]][verticesToKeep[,i],verticesToKeep[,i]])
     componentGraphs <- lapply(matrices, asGraph, allVertexNames=x[[1]]$getVertexAttributes("name"))
-    componentGraphs <- lapply(componentGraphs, function(r) { r$setVertexLocations(x[[1]]$getVertexLocations(),x[[1]]$getVertexLocationUnit()); r })
+    componentGraphs <- lapply(componentGraphs, function(r) { r$setVertexLocations(x[[1]]$getVertexLocations(),x[[1]]$getVertexLocationUnit(),x[[1]]$getVertexLocationSpace()); r })
     names(componentGraphs) <- paste("PN", components, sep="")
     
     loadings <- structure(loadings[,components], salient=attr(loadings,"salient")[,components])
