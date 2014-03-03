@@ -110,8 +110,17 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     setEdgeAttributes = function (...)
     {
-        attributes <- c(list(...), edgeAttributes)
-        .self$edgeAttributes <- attributes[!duplicated(names(attributes))]
+        newAttributes <- lapply(list(...), function(x) {
+            if (length(x) == 1)
+                return (rep(x, .self$nEdges()))
+            else if (length(x) != .self$nEdges())
+            {
+                flag(OL$Warning, "Recycling edge attribute (length #{length(x)}) to match the number of edges (#{.self$nEdges()})")
+                return (rep(x, length.out=.self$nEdges()))
+            }
+        })
+        newAttributes <- c(newAttributes, .self$edgeAttributes)
+        .self$edgeAttributes <- newAttributes[!duplicated(names(newAttributes))]
     },
     
     setEdgeWeights = function (newWeights)
@@ -128,8 +137,17 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     setVertexAttributes = function (...)
     {
-        attributes <- c(list(...), vertexAttributes)
-        .self$vertexAttributes <- attributes[!duplicated(names(attributes))]
+        newAttributes <- lapply(list(...), function(x) {
+            if (length(x) == 1)
+                return (rep(x, .self$nVertices()))
+            else if (length(x) != .self$nVertices())
+            {
+                flag(OL$Warning, "Recycling vertex attribute (length #{length(x)}) to match the number of vertices (#{.self$nVertices()})")
+                return (rep(x, length.out=.self$nVertices()))
+            }
+        })
+        newAttributes <- c(newAttributes, .self$vertexAttributes)
+        .self$vertexAttributes <- newAttributes[!duplicated(names(newAttributes))]
     },
     
     setVertexLocations = function (locs, unit, space)
