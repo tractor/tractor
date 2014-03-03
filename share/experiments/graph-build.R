@@ -1,5 +1,5 @@
 #@args [session directory]
-#@desc Build a graph representing interregional connectivity from the specified data source. At present only diffusion tractography data may be used, and the source is specified using the TractName option. (A corresponding streamline file generated with "xtrack" or "mtrack" must exist.) Target regions may be specified individually or by type, using names from the parcellation's lookup table. The ParcellationConfidence variable controls the inclusiveness of the transformed parcellation: the closer to 1, the more inclusive.
+#@desc Build a graph representing interregional connectivity from the specified data source. At present only diffusion tractography data may be used, and the source is specified using the TractName option. (A corresponding streamline file generated with "xtrack" or "mtrack" must exist.) Target regions may be specified individually or by type, using names from the parcellation's lookup table. The ParcellationConfidence variable controls the inclusiveness of the transformed parcellation: the closer to 1, the more inclusive. Self-connections are included by default.
 
 library(tractor.graph)
 
@@ -8,7 +8,7 @@ runExperiment <- function ()
     targetRegions <- getConfigVariable("TargetRegions", "cerebral_cortex")
     parcellationConfidence <- getConfigVariable("ParcellationConfidence", 0.2)
     graphName <- getConfigVariable("GraphName", "graph")
-    selfConnections <- getConfigVariable("SelfConnections", FALSE)
+    selfConnections <- getConfigVariable("SelfConnections", TRUE)
     tractName <- getConfigVariable("TractName", NULL, "character")
     
     if (!is.null(tractName))
