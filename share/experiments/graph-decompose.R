@@ -1,21 +1,30 @@
+#@desc Decompose a graph into parts by factoring or partitioning it. Available algorithms for this include "principal networks" (Clayden et al., PLoS ONE, 2013) and modularity maximisation (Newman, PNAS, 2006). An edge weight threshold can be applied beforehand if required. Eigenvalue and loading thresholds apply to the principal networks approach only.
+
 runExperiment <- function ()
 {
-    # eigenvalueThreshold = NULL, loadingThreshold = 0.1, iterations = 0, confidence = 0.95, edgeWeightThreshold = 0.2, dropTrivial = TRUE
     graphName <- getConfigVariable("GraphName", NULL, "character", errorIfMissing=TRUE)
     method <- getConfigVariable("Method", "principal-networks", validValues=c("principal-networks","modularity"))
+    edgeWeightThreshold <- getConfigVariable("EdgeWeightThreshold", 0)
     eigenvalueThreshold <- getConfigVariable("EigenvalueThreshold", NULL, "numeric")
     loadingThreshold <- getConfigVariable("LoadingThreshold", 0.1)
-    edgeWeightThreshold <- getConfigVariable("EdgeWeightThreshold", 0.2)
     dropTrivial <- getConfigVariable("DropTrivial", TRUE)
     
     graph <- deserialiseReferenceObject(graphName)
+    outputFileName <- paste(graphName, "decomposed", sep="_")
     
     if (method == "principal-networks")
     {
-        decomposition <- principalNetworks(graph, eigenvalueThreshold=eigenvalueThreshold, loadingThreshold=loadingThreshold, edgeWeightThreshold=edgeWeightThreshold, dropTrivial=dropTrivial)
+        decomposition <- principalNetworks(graph, eigenvalueThreshold=eigenvalueThreshold, loadingThreshold=loadingThreshold, edgeWeightThreshold=edgeWeightThreshold)
+        printLoadings(decomposition$loadings)
+        serialiseReferenceObject(decomposition$componentGraphs, outputFileName)
     }
-    else if (method == "modularity")
+    else
     {
+        if (graph$isWeighted())
+            graph <- thresholdEdges(graph, edgeWeightThreshold, ignoreSign=TRUE)
         
+        partition <- partitionGraph(graph, method=method)
+        subgraphs <- lapply(partition, function(x) inducedSubgraph(graph,x))
+        serialiseReferenceObject(subgraphs, outputFileName)
     }
 }
