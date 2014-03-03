@@ -17,6 +17,11 @@ writeParcellation <- function (parcellation, ...)
     else if (nrow(regions) == 0)
         report(OL$Error, "Regions data frame is empty")
     
+    indicesPresent <- unique(as.vector(image$getData()))
+    missing <- which(!(regions$index %in% indicesPresent))
+    if (length(missing) > 0)
+        regions <- regions[-missing,,drop=FALSE]
+    
     info <- writeImageFile(image, ...)
     regionFileName <- ensureFileSuffix(info$fileStem, "lut")
     regionMatrix <- as.matrix(format(regions, justify="left"))
