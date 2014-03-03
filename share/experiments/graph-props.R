@@ -27,12 +27,16 @@ runExperiment <- function ()
         graph <- thresholdEdges(graph, edgeWeightThreshold, ignoreSign=FALSE, binarise=binarise)
     
     meanAbsEdgeWeight <- mean(abs(graph$getEdgeWeights()), na.rm=TRUE)
+    edgeWeightRange <- range(graph$getEdgeWeights(), na.rm=TRUE)
     meanShortestPath <- meanShortestPath(graph, ignoreInfinite=!disconnectedVertices)
     globalEfficiency <- graphEfficiency(graph, type="global")
     localEfficiency <- mean(graphEfficiency(graph, type="local"), na.rm=TRUE)
     meanClusteringCoefficient <- mean(clusteringCoefficients(graph), na.rm=TRUE)
-    values <- c(s("#{graph$nVertices()} (#{length(graph$getConnectedVertices())} connected)"), graph$nEdges(), s("#{graph$getEdgeDensity(disconnectedVertices=disconnectedVertices)*100}%",round=2), signif(meanAbsEdgeWeight,3), s("#{meanShortestPath} #{ifelse(graph$isWeighted(),'(inverse weight)','steps')}",signif=3), signif(c(globalEfficiency, localEfficiency, meanClusteringCoefficient),3))
+    values <- c(s("#{graph$nVertices()} (#{length(graph$getConnectedVertices())} connected)"), graph$nEdges(), s("#{graph$getEdgeDensity(disconnectedVertices=disconnectedVertices)*100}%",round=2), s("#{meanAbsEdgeWeight} (range: #{edgeWeightRange[1]} to #{edgeWeightRange[2]})",signif=3), s("#{meanShortestPath} #{ifelse(graph$isWeighted(),'(inverse weight)','steps')}",signif=3), signif(c(globalEfficiency, localEfficiency, meanClusteringCoefficient),3))
     labels <- c("Number of vertices", "Number of edges", "Edge density", "Mean absolute edge weight", "Mean shortest path", "Global efficiency", "Mean local efficiency", "Mean clustering coefficient")
     
-    printLabelledValues(labels, values)
+    if (binarise)
+        printLabelledValues(labels[-4], values[-4])
+    else
+        printLabelledValues(labels, values)
 }
