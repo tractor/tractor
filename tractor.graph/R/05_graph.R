@@ -118,9 +118,12 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
                 flag(OL$Warning, "Recycling edge attribute (length #{length(x)}) to match the number of edges (#{.self$nEdges()})")
                 return (rep(x, length.out=.self$nEdges()))
             }
+            else
+                return (x)
         })
         newAttributes <- c(newAttributes, .self$edgeAttributes)
         .self$edgeAttributes <- newAttributes[!duplicated(names(newAttributes))]
+        .self$edgeAttributes <- .self$edgeAttributes[!sapply(.self$edgeAttributes,is.null)]
     },
     
     setEdgeWeights = function (newWeights)
@@ -145,9 +148,12 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
                 flag(OL$Warning, "Recycling vertex attribute (length #{length(x)}) to match the number of vertices (#{.self$nVertices()})")
                 return (rep(x, length.out=.self$nVertices()))
             }
+            else
+                return (x)
         })
         newAttributes <- c(newAttributes, .self$vertexAttributes)
         .self$vertexAttributes <- newAttributes[!duplicated(names(newAttributes))]
+        .self$vertexAttributes <- .self$vertexAttributes[!sapply(.self$vertexAttributes,is.null)]
     },
     
     setVertexLocations = function (locs, unit, space)
