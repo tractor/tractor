@@ -1,24 +1,32 @@
+SHELL=/bin/bash
+export SHELL
+
 R=R
+DIFF=diff
+ECHO=/bin/echo
+ECHO_N=/bin/echo -n
+GIT=git
+MD5=md5
 INSTALL=bin/tractor_Rinstall
 
 default: build post-build-info
 
 post-build-info:
-	@echo 'Run "make install" to install packages'
+	@$(ECHO) 'Run "make install" to install packages'
 
 build:
 	@cd src && $(MAKE) R=$(R)
 
 post-install-info:
-	@echo
-	@echo "Installation complete. You may wish to add the following lines"
-	@echo "to your ~/.bashrc file (or equivalent for other shells):"
-	@echo
-	@echo "  export TRACTOR_HOME=`pwd`"
-	@echo '  export PATH=$${TRACTOR_HOME}/bin:$${PATH}'
-	@echo '  export MANPATH=$${TRACTOR_HOME}/man:$${MANPATH}'
-	@echo
-	@echo "The ~/.bashrc file can be created if it does not already exist."
+	@$(ECHO)
+	@$(ECHO) "Installation complete. You may wish to add the following lines"
+	@$(ECHO) "to your ~/.bashrc file (or equivalent for other shells):"
+	@$(ECHO)
+	@$(ECHO) "  export TRACTOR_HOME=`pwd`"
+	@$(ECHO) '  export PATH=$${TRACTOR_HOME}/bin:$${PATH}'
+	@$(ECHO) '  export MANPATH=$${TRACTOR_HOME}/man:$${MANPATH}'
+	@$(ECHO)
+	@$(ECHO) "The ~/.bashrc file can be created if it does not already exist."
 
 install-libs:
 	@$(INSTALL) lib/reportr lib/multicore
@@ -76,3 +84,12 @@ test:
 
 dtest:
 	@cd tests && $(MAKE) debug-tests
+
+create-md5:
+	@$(GIT) ls-files | grep -v -e '^lib/' -e '^etc/md5.txt' -e '\.git' | xargs $(MD5) -r >etc/md5.txt
+
+check-md5:
+	@$(ECHO_N) "Checking MD5 checksums... "
+	@awk '{ print $$2 }' etc/md5.txt | xargs $(MD5) -r >tmp/md5.txt
+	@$(DIFF) etc/md5.txt tmp/md5.txt && $(ECHO) "OK"
+	@rm -f tmp/md5.txt
