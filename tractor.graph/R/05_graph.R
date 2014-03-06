@@ -501,7 +501,7 @@ inducedSubgraph <- function (graph, vertices)
     })
     vertexLocations <- graph$getVertexLocations()
     if (nrow(vertexLocations) == nVertices)
-        vertexLocations <- vertexLocations[vertices,]
+        vertexLocations <- vertexLocations[vertices,,drop=FALSE]
     
     nEdges <- graph$nEdges()
     edges <- graph$getEdges()
