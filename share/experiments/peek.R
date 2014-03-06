@@ -18,11 +18,17 @@ runExperiment <- function ()
     setOutputLevel(OL$Info)
     
     object <- deserialiseReferenceObject(file=fileName, raw=TRUE)
-    if (!is.null(attr(object,"originalClass")))
-        report(OL$Info, "An object of class \"", implode(attr(object,"originalClass"),", "), "\"", prefixFormat="")
-    
-    object <- deserialiseReferenceObject(object=object)
-    
-    cat("---\n")
-    print(object)
+    if (is.null(attr(object,"originalClass")))
+    {
+        elementClasses <- sapply(object, attr, "originalClass")
+        elementClasses <- paste("\"", elementClasses, "\"", sep="")
+        report(OL$Info, "A list of #{length(object)} object(s) of class(es) #{implode(unique(elementClasses),', ')}", prefixFormat="")
+    }
+    else
+    {
+        report(OL$Info, "An object of class \"#{implode(attr(object,'originalClass'),', ')}\"", prefixFormat="")
+        object <- deserialiseReferenceObject(object=object)
+        cat("---\n")
+        print(object)
+    }
 }

@@ -109,7 +109,7 @@ deserialiseReferenceObject <- function (file = NULL, object = NULL, raw = FALSE)
     if (!isDeserialisable(object))
     {
         if (is.list(object))
-            return (invisible(lapply(object, function(x) deserialiseReferenceObject(object=x))))
+            return (invisible(lapply(object, function(x) deserialiseReferenceObject(object=x,raw=raw))))
         else
             report(OL$Error, "The specified object or file is not deserialisable")
     }
@@ -126,7 +126,7 @@ deserialiseReferenceObject <- function (file = NULL, object = NULL, raw = FALSE)
     
     packageName <- attr(object, "originalPackage")
     if (!is.null(packageName) && !(paste("package",packageName,sep=":") %in% search()))
-        require(packageName, character.only=TRUE)
+        require(packageName, character.only=TRUE, quietly=TRUE)
     
     className <- attr(object, "originalClass")
     if (className %in% names(.Deserialisers))
