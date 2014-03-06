@@ -363,7 +363,7 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radiu
     nActiveVertices <- length(activeVertices)
     
     if (is.null(cex))
-        cex <- 50 / nActiveVertices
+        cex <- ifelse(useLocations, 0.6, min(1.5,50/nActiveVertices))
     
     if (!is.null(order))
         activeVertices <- order[is.element(order,activeVertices)]
@@ -468,7 +468,7 @@ levelplot.Graph <- function (x, data = NULL, col = NULL, cex = NULL, order = NUL
     nActiveVertices <- length(activeVertices)
     
     if (is.null(cex))
-        cex <- 30 / nActiveVertices
+        cex <- min(1.5, 30/nActiveVertices)
     
     if (!is.null(order))
         activeVertices <- order[is.element(order,activeVertices)]
