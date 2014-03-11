@@ -181,11 +181,17 @@ getImageFileNameForSession <- function (session, type, place = NULL, index = 1)
     {
         locs <- which(sapply(.DefaultSessionMap, function(x) type %in% names(x)))
         if (length(locs) < 1)
-            report(OL$Error, "The specified file type (\"", type, "\") does not have a standard location")
+            report(OL$Error, "The specified file type (\"#{type}\") does not have a standard location")
         else if (length(locs) > 1)
-            report(OL$Warning, "The specified file type \"#{type}\" is ambiguous: it can exist in places #{implode(paste('\"',names(.DefaultSessionMap)[locs],'\"',sep=''),', ',finalSep=' and ')}")
-        
-        place <- names(.DefaultSessionMap)[locs[1]]
+        {
+            locs <- names(.DefaultSessionMap)[locs]
+            if (length(which(locs %in% .PrimarySessionDirectories)) == 1)
+                place <- locs[locs %in% .PrimarySessionDirectories]
+            else
+                report(OL$Error, "The specified file type (\"#{type}\") is ambiguous: it can exist in places #{implode(paste('\"',locs,'\"',sep=''),', ',finalSep=' and ')}")
+        }
+        else
+            place <- names(.DefaultSessionMap)[locs[1]]
     }
     
     map <- session$getMap(place)

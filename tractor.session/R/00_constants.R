@@ -11,6 +11,8 @@
 
 .DefaultSessionDirectories <- list(diffusion="diffusion", camino="camino", fdt="fdt", bedpost="fdt.bedpostX", probtrack="fdt.track", transforms="transforms", structural="structural", freesurfer="freesurfer")
 
+.PrimarySessionDirectories <- c("diffusion", "structural")
+
 # All file names which do not contain a '.' are assumed to indicate images by
 # standardiseSessionHierarchy(), and possibly other functions
 .DefaultSessionMap <- list(
