@@ -1,3 +1,15 @@
+# Default strategy file for establishing transformations between spaces.
+# Any or all of the elements of this file can be overridden by an equiva-
+# lent file within a session directory, at session/transforms/strategy.yaml.
+# Options have the following meanings:
+#   affine: use affine registration
+#   nonlinear: use nonlinear registration
+#   symmetric: use symmetric nonlinear registration to allow for inverse
+#              transformations (affine is implicitly symmetric)
+#   reverse: use the reference image from the source space as the target
+#            image, rather than the equivalent from the target space
+#            (requires a symmetric registration)
+
 # Diffusion to MNI space transforms are affine by default for backwards
 # compatibility; this is liable to change in a future release
 diffusion2mni: affine
