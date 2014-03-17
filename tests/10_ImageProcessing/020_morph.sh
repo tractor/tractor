@@ -1,5 +1,5 @@
 #@desc Checking mathematical morphology operations
-cp data/session/tractor/diffusion/dti_FA.* tmp/
+${TRACTOR} binarise data/session/tractor/diffusion/dti_FA tmp/dti_FA ThresholdLevel:0.5 ThresholdRelativeTo:nothing
 ${TRACTOR} morph tmp/dti_FA 3 Operation:dilate KernelShape:box WidthUnit:vox
 ${TRACTOR} imagestats tmp/dti_FA_morphed Scope:nonzero
 ${TRACTOR} morph tmp/dti_FA 3 Operation:closing KernelShape:diamond WidthUnit:vox

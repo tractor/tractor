@@ -1,8 +1,8 @@
-  Number of voxels : 230,400
-            Volume : 7,200,000 mm^3 (7,200 ml)
-   Intensity range : 0 to 1.225
-  5% trimmed range : 0 to 0.293
-              Mean : 0.0485
-   5% trimmed mean : 0.02817
-            Median : 0
-Standard deviation : 0.1192
+  Number of voxels : 114,581
+            Volume : 1,790,328 mm^3 (1,790.33 ml)
+   Intensity range : 0.008014 to 1.225
+  5% trimmed range : 0.06877 to 0.6992
+              Mean : 0.2798
+   5% trimmed mean : 0.2556
+            Median : 0.2135
+Standard deviation : 0.2149
