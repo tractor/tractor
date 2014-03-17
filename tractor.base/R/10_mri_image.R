@@ -335,7 +335,7 @@ Summary.MriImage <- function (x, ..., na.rm = FALSE)
     if (nargs() > 2)
         report(OL$Error, "Function \"", .Generic, "\" is not defined for more than one image object")
     
-    result <- get(.Generic)(x$getData())
+    result <- get(.Generic)(x$getData(),na.rm=na.rm)
     return (result)
 }
 
