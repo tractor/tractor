@@ -2,15 +2,17 @@
 \alias{sortDicomDirectory}
 \title{Sort a directory of DICOM files into series}
 \description{
-  This function sorts a directory containing DICOM files into subdirectories by series number, DICOM tag (0x0020,0x0011), and/or subject name, DICOM tag (0x0010,0x0010). Each unique identifier, together with its description, will be used as the name for a new subdirectory of the specified top-level directory, and all relevant files will be copied into that subdirectory. Duplicate file names are disambiguated if necessary.
+  This function sorts a directory containing DICOM files into subdirectories by series number (DICOM tag 0x0020,0x0011) series time (0x0008,0x0031), subject name (0x0010,0x0010) and/or scan date (0x0008,0x0020). Each unique identifier, together with its description, will be used as the name for a new subdirectory of the specified top-level directory, and all relevant files will be copied into that subdirectory. Duplicate file names are disambiguated if necessary.
 }
 \usage{
-sortDicomDirectory(directory, deleteOriginals = FALSE, sortOn = "series")
+sortDicomDirectory(directory, deleteOriginals = FALSE, sortOn = "series",
+    useSeriesTime = FALSE)
 }
 \arguments{
   \item{directory}{A length-1 character vector giving the directory to search for DICOM files. Subdirectories will also be searched.}
   \item{deleteOriginals}{A single logical value. If \code{TRUE}, then the source files will be deleted after being copied to their new locations, making the operation a move rather than a copy. Nothing will be deleted if the copy fails.}
-  \item{sortOn}{Either \code{"series"} or \code{"subject"}, or both in the order desired. This will be the basis of the sort, which will be nested if both types are specified.}
+  \item{sortOn}{The string \code{"series"}, \code{"subject"} or \code{"date"}, or any combination in the order desired. This will be the basis of the sort, which will be nested if more than one type is specified.}
+  \item{useSeriesTime}{Logical value. If \code{TRUE}, use the series time rather than number as the identifier. This can be more reliable if the files are from multiple scan sessions.}
 }
 \value{
   This function is called for its side effect.

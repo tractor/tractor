@@ -1,4 +1,4 @@
-sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "series")
+sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "series", useSeriesTime = FALSE)
 {
     if (!file.exists(directory) || !file.info(directory)$isdir)
         report(OL$Error, "Specified path (", directory, ") does not exist or does not point to a directory")
@@ -6,7 +6,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     sortOn <- match.arg(sortOn, c("series","subject","date"), several.ok=TRUE)
     currentSort <- sortOn[1]
     remainingSorts <- sortOn[-1]
-    identifierTag <- switch(currentSort, series=c(0x0020,0x0011), subject=c(0x0010,0x0010), date=c(0x0008,0x0020))
+    identifierTag <- switch(currentSort, series=(if (useSeriesTime) c(0x0008,0x0031) else c(0x0020,0x0011)), subject=c(0x0010,0x0010), date=c(0x0008,0x0020))
     descriptionTag <- switch(currentSort, series=c(0x0008,0x103e), subject=c(0x0010,0x0010), date=c(0x0008,0x0020))
     
     directory <- expandFileName(directory)
@@ -29,6 +29,8 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
         else
         {
             identifiers[i] <- as.character(metadata$getTagValue(identifierTag[1], identifierTag[2]))
+            if (useSeriesTime && currentSort == "series")
+                identifiers[i] <- sub("\\..+$", "", identifiers[i], perl=TRUE)
             count <- count + 1
             if (count %% 100 == 0)
                 report(OL$Verbose, "Done ", count)
