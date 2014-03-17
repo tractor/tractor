@@ -1,5 +1,5 @@
 #@desc Checking that ROI-based tractography works
-${TRACTOR} mkroi data/session-12dir 49 58 14 PointType:R Width:1 ROIName:tmp/region
-${TRACTOR} mtrack data/session-12dir SeedMaskFile:tmp/region NumberOfSamples:50 TractName:tmp/tract CreateVolumes:true
-${TRACTOR} value tmp/tract 49 58 14
+${TRACTOR} mkroi data/session 50 59 33 PointType:R Width:1 ROIName:tmp/region
+${TRACTOR} mtrack data/session SeedMaskFile:tmp/region NumberOfSamples:50 TractName:tmp/tract CreateVolumes:true
+${TRACTOR} value tmp/tract 50 59 33
 rm -f tmp/tract* tmp/region.*
