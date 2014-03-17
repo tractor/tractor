@@ -52,6 +52,8 @@ runExperiment <- function ()
     if (threshold > 0)
         data <- data[data >= threshold]
     
+    data <- na.omit(data)
+    
     if (length(data) == 0)
     {
         labels <- "Number of voxels"
