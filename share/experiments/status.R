@@ -18,9 +18,9 @@ runExperiment <- function ()
     {
         report(OL$Info, "\nDIFFUSION:", prefixFormat="")
         labels <- c("Preprocessing complete", "Data dimensions", "Voxel dimensions", "Diffusion b-values", "Number of gradient directions", "Diffusion tensors fitted", "FSL BEDPOST run", "Camino files created")
-        if (imageFileExists(session$getImageFileNameByType("data","diffusion")))
+        if (session$imageExists("data","diffusion"))
         {
-            metadata <- session$getImageByType("data","diffusion",metadataOnly=TRUE)
+            metadata <- session$getImageByType("data", "diffusion", metadataOnly=TRUE)
             metadataSummary <- metadata$summarise()
             dims <- metadataSummary$values[2]
             voxelDims <- metadataSummary$values[3]
@@ -40,7 +40,35 @@ runExperiment <- function ()
             bValues <- paste(implode(round(scheme$getBValues()),", "), "s/mm^2")
             directions <- implode(scheme$nDirections(), ", ")
         }
-        values <- c(imageFileExists(session$getImageFileNameByType("data","diffusion")), dims, voxelDims, bValues, directions, imageFileExists(session$getImageFileNameByType("fa","diffusion")), bedpostValue, file.exists(file.path(session$getDirectory("camino"),"sequence.scheme")))
+        
+        values <- c(session$imageExists("data","diffusion"), dims, voxelDims, bValues, directions, session$imageExists("FA","diffusion"), bedpostValue, file.exists(file.path(session$getDirectory("camino"),"sequence.scheme")))
+        printLabelledValues(labels, values, leftJustify=TRUE)
+    }
+    
+    if (file.exists(session$getDirectory("structural")))
+    {
+        report(OL$Info, "\nSTRUCTURAL:", prefixFormat="")
+        labels <- c("Number of T1w volumes", "T1w space dimensions", "T1w voxel dimensions", "Parcellation created", "Number of T2w volumes", "Number of PDw volumes")
+        
+        t1Count <- getImageCountForSession(session, "t1", "structural")
+        t2Count <- getImageCountForSession(session, "t2", "structural")
+        pdCount <- getImageCountForSession(session, "pd", "structural")
+        
+        if (t1Count > 0)
+        {
+            if (session$imageExists("refT1", "structural"))
+                metadata <- session$getImageByType("refT1", "structural", metadataOnly=TRUE)
+            else
+                metadata <- session$getImageByType("t1", "structural", index=1, metadataOnly=TRUE)
+            
+            metadataSummary <- metadata$summarise()
+            dims <- metadataSummary$values[2]
+            voxelDims <- metadataSummary$values[3]
+        }
+        else
+            dims <- voxelDims <- NA
+        
+        values <- c(t1Count, dims, voxelDims, session$imageExists("parcellation","structural"), t2Count, pdCount)
         printLabelledValues(labels, values, leftJustify=TRUE)
     }
 }
