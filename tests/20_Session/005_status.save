@@ -10,3 +10,11 @@ DIFFUSION:
   Diffusion tensors fitted      : TRUE
   FSL BEDPOST run               : TRUE (1 fibre(s) per voxel)
   Camino files created          : FALSE
+
+STRUCTURAL:
+  Number of T1w volumes : 1
+  T1w space dimensions  : 176 x 232 x 256 voxels
+  T1w voxel dimensions  : 1 x 1 x 1 mm
+  Parcellation created  : TRUE
+  Number of T2w volumes : 0
+  Number of PDw volumes : 0
