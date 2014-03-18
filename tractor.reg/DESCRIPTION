@@ -2,7 +2,7 @@ Package: tractor.reg
 Version: 2.5.0
 Date: 2014-03-18
 Title: Image registration in TractoR
-Author: Jon Clayden <code@clayden.org>
+Author: Jon Clayden
 Maintainer: Jon Clayden <code@clayden.org>
 Depends: R (>= 2.12.1), methods
 Imports: reportr, tractor.base, oro.nifti, RNiftyReg
