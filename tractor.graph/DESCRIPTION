@@ -1,12 +1,12 @@
 Package: tractor.graph
-Version: 2.1.0
-Date: 2011-11-17
+Version: 2.5.0
+Date: 2014-03-06
 Title: Functions for working with connectivity graphs
-Author: Jon Clayden <jon.clayden+tractor@gmail.com>
-Maintainer: Jon Clayden <jon.clayden+tractor@gmail.com>
+Author: Jon Clayden <code@clayden.org>
+Maintainer: Jon Clayden <code@clayden.org>
 Depends: R (>= 2.12.1), graphics, grDevices, methods, stats, utils
 Imports: reportr, tractor.base
-Suggests: tractor.session, lattice, igraph, GPArotation
+Suggests: lattice, igraph
 Description: The tractor.graph package provides methods for creating and manipulating graphs based on information derived from medical images.
 Encoding: UTF-8
 LazyLoad: yes
