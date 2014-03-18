@@ -1,15 +1,15 @@
 An object of class "MatchingTractModel"
 ---
  Asymmetric model : FALSE
-           Alphas : 76.11, 52.62, 733.52, 17.64, 3.7
+           Alphas : 117.96, 57.47, 194.99, 30.56, 29.49
 Ref tract lengths : 6 (left), 6 (right)
-    Length cutoff : 12
+    Length cutoff : 9
        Point type : knot
 An object of class "MatchingTractModel"
 ---
  Asymmetric model : TRUE
-    Alphas (left) : 46.79, 85.53, 482.66, 58.94, 33.68
-   Alphas (right) : 203.8, 38, 1527.4, 10.37, 1.96
+    Alphas (left) : 79.09, 38.81, 175.3, 24.98, 111.57
+   Alphas (right) : 231.98, 110.71, 219.66, 39.34, 16.99
 Ref tract lengths : 6 (left), 6 (right)
-    Length cutoff : 12
+    Length cutoff : 9
        Point type : knot

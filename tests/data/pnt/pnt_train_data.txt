@@ -1,2 +1,2 @@
-"pointType" "leftLength" "rightLength" "subject" "leftSimCosine1" "leftSimCosine2" "leftSimCosine3" "leftSimCosine4" "leftSimCosine5" "leftSimCosine6" "rightSimCosine1" "rightSimCosine2" "rightSimCosine3" "rightSimCosine4" "rightSimCosine5" "rightSimCosine6"
-"1" "knot" 10 12 1 NA 0.978854286702558 0.988376727445983 0.99793028385976 0.983176384248783 0.970742570872981 NA 0.995105202657545 0.974027709264048 0.99934550595315 0.9080844244012 0.599715457425864
+"pointType" "leftLength" "rightLength" "subject" "x" "y" "z" "leftSimCosine1" "leftSimCosine2" "leftSimCosine3" "leftSimCosine4" "leftSimCosine5" "leftSimCosine6" "rightSimCosine1" "rightSimCosine2" "rightSimCosine3" "rightSimCosine4" "rightSimCosine5" "rightSimCosine6"
+"1" "knot" 9 8 1 50 59 33 NA 0.98743561052805 0.974563360844821 0.99431172224959 0.960759404364786 0.991076901514129 NA 0.995698640802283 0.991008375637036 0.99545793896277 0.974901630734613 0.942850836802875
