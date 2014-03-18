@@ -66,7 +66,7 @@ matchRegions <- function (regionNames, parcellation, labels = FALSE)
     {
         haystack <- as.matrix(parcellation$regions[,c("label","lobe","type","hemisphere")])
         match <- (haystack == name)
-        matchCounts <- colSums(match)
+        matchCounts <- colSums(match, na.rm=TRUE)
         if (all(matchCounts == 0))
             report(OL$Error, "Region specification \"#{name}\" does not match the parcellation lookup table")
         colToUse <- which(matchCounts > 0)[1]
