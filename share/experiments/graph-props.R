@@ -35,6 +35,9 @@ runExperiment <- function ()
     values <- c(s("#{graph$nVertices()} (#{length(graph$getConnectedVertices())} connected)"), graph$nEdges(), s("#{graph$getEdgeDensity(disconnectedVertices=disconnectedVertices)*100}%",round=2), s("#{meanAbsEdgeWeight} (range: #{edgeWeightRange[1]} to #{edgeWeightRange[2]})",signif=3), s("#{meanShortestPath} #{ifelse(graph$isWeighted(),'(inverse weight)','steps')}",signif=3), signif(c(globalEfficiency, localEfficiency, meanClusteringCoefficient),3))
     labels <- c("Number of vertices", "Number of edges", "Edge density", "Mean absolute edge weight", "Mean shortest path", "Global efficiency", "Mean local efficiency", "Mean clustering coefficient")
     
+    if (getOutputLevel() > OL$Info)
+        setOutputLevel(OL$Info)
+    
     if (binarise)
         printLabelledValues(labels[-4], values[-4])
     else
