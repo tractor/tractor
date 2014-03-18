@@ -47,6 +47,33 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="250-2014-03-18">2.5.0 (2014-03-18)</h2>
+
+<ul>
+<li>TractoR now has facilities for working with graph representations of brain connectivity, including a reference implementation of the Principal Networks approach to graph decomposition. A set of new scripts has been added to support this, including <code>graph-build</code>, <code>graph-reweight</code>, <code>graph-decompose</code>, <code>graph-props</code>, <code>graph-viz</code> and <code>graph2csv</code>. Please see the new <a href="connectivity-graphs.html">connectivity graphs tutorial</a> for further information.</li>
+<li>In support of the new graph capabilities, TractoR can now work with structural (particularly T1-weighted) images, as well as diffusion data. It can also work with anatomical parcellations of the brain, and transform them between spaces. A wrapper script for Freesurfer&rsquo;s <code>recon-all</code> tool is also provided. New TractoR scripts relevant to structural data are <code>import</code>, <code>parcellate</code> and <code>freesurf</code>. Please see the new page on <a href="structural.html">working with structural data</a> for more information.</li>
+<li>A new test data set, which includes structural data, has been introduced to replace the previous test data.</li>
+<li>Transformation strategies between different imaging spaces are now configurable, with defaults given by the <code>$TRACTOR_HOME/etc/session/transforms/strategy.yaml</code> file.</li>
+<li>The new <code>xtrack</code> script can be used for tracking between parcellated regions, specified by name or type.</li>
+<li>The <code>trim</code> script has been added for removing volumes from multivolume data sets.</li>
+<li>The new <code>apply</code> script can be used to apply an arbitrary R expression to the contents of one or more images.</li>
+<li>The <code>path</code> script has been added for identifying the path to an image within a managed session hierarchy.</li>
+<li>The <code>split</code> script can be used to split a serialised list of objects into its components.</li>
+<li>The <code>dpreproc</code> script now accepts <code>EddyCorrectionMethod:none</code> for data sets which are already well aligned and have minimal eddy current induced distortion.</li>
+<li>The <code>mtrack</code> script now allows seed points to be subjected to random jitter, to move them off the regular grid.</li>
+<li>The <code>tensorfit</code> script with <code>Method:ls</code> (the default) is now more statistically efficient in the presence of invalid or missing data.</li>
+<li>The <code>imagestats</code> script now handles missing values in images gracefully.</li>
+<li>The <code>dicomsort</code> script gains an option to use series time rather than series number as the identifier. This can be more reliable if DICOM files were acquired from multiple scan sessions.</li>
+<li>TractoR&rsquo;s internal image viewer now fixes the black and white point across a whole image for consistency.</li>
+<li>R&rsquo;s raster plotting functionality is now used when plotting images, for speed.</li>
+<li>Textual output and messages should now use the full width of the terminal screen more effectively.</li>
+<li>Running <code>make install</code> from the main TractoR installation directory is now equivalent to <code>make install-local</code> after the latter has been run once. In other words, the initial preference for a local install is maintained even if the <code>-local</code> suffix is missed in future invocations.</li>
+<li>The output format for <code>tractor -o</code> has been tweaked, and their is now support for examples.</li>
+<li>It should now be possible to coregister files stored in Freesurfer&rsquo;s MGH format with FSL-FLIRT.</li>
+<li>The first and last messages printed by the main <code>tractor</code> script are now output to the standard error stream.</li>
+<li>Checksums for each file in the distribution are now included and can be checked using <code>make check-md5</code>. This is mainly intended for checking whether local modifications have been made.</li>
+</ul>
+
 <h2 id="242-2013-10-18">2.4.2 (2013-10-18)</h2>
 
 <ul>

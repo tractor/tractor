@@ -59,12 +59,14 @@
     /fdt.bedpostX............images and other files produced by FSL BEDPOSTX
     /fdt.track...............FSL tractography output
     /camino..................images and other files used by the Camino toolkit
+    /structural..............structural (e.g. T1-weighted) images
+    /freesurfer..............output from the Freesurfer pipeline
   [other subdirectories].....unmanaged files, such as DICOM-format files
 </code></pre>
 
 <p>TractoR maintains this structure and expects to find the files it uses in these places. This is arranged by the package itself if the session hierarchy is set up using TractoR preprocessing scripts, but if the preprocessing steps are carried out independently then the hierarchy must be arranged in this way manually.</p>
 
-<p>The reason for using a managed file hierarchy is to avoid the need to specify the locations of several standard image files when using TractoR&#39;s core functionality. By establishing standard locations for all such files, only the top-level session directory needs to be specified, since everything else can be found by the code. TractoR therefore favours <a href="http://en.wikipedia.org/wiki/Convention_over_configuration">convention over configuration</a>, but if the names of specific images within a managed directory are not in keeping with the default, there is a mechanism for telling TractoR about this, through so-called &ldquo;session maps&rdquo;. For example, the default map for the <code>diffusion</code> subdirectory, as of TractoR v2.0.2, is</p>
+<p>The reason for using a managed file hierarchy is to avoid the need to specify the locations of several standard image files when using TractoR&rsquo;s core functionality. By establishing standard locations for all such files, only the top-level session directory needs to be specified, since everything else can be found by the code. TractoR therefore favours <a href="http://en.wikipedia.org/wiki/Convention_over_configuration">convention over configuration</a>, but if the names of specific images within a managed directory are not in keeping with the default, there is a mechanism for telling TractoR about this, through so-called &ldquo;session maps&rdquo;. For example, the default map for the <code>diffusion</code> subdirectory, as of TractoR v2.0.2, is</p>
 
 <pre><code>rawdata: rawdata
 data: data
@@ -83,12 +85,19 @@ sse: dti_SSE
 
 <p>Any or all of these default names can be overridden by placing a file called <code>map.yaml</code> in the <code>diffusion</code> subdirectory, using the format above. Note that the <code>%</code> symbol is used to indicate an index, so the first eigenvalue image will be called <code>dti_eigval1</code>, the second <code>dti_eigval2</code>, and so on. No image format suffix (e.g. <code>.nii</code>) should be given.</p>
 
+<p>The <code>path</code> script (added in TractoR v2.5.0) can be used to obtain the actual full path to the image of a particular type. For example,</p>
+
+<pre>
+<code>$ </code><kbd>tractor -q path /data/subject1 FA</kbd>
+<code>/data/subject1/tractor/diffusion/dti_FA</code>
+</pre>
+
 <p>Similarly, the names of the subdirectories within the main <code>tractor</code> directory can be specified in a top-level session map. This mechanism can be used to point to data outside the session directory as well, and this can be useful, for example, when processing a single data set in several different ways. For example, say we want to process the data from a single subject using <code>bedpost</code>, with both 2 and 3 fibre options. We could process the 2 fibres case, and then create a new session, say <code>/data/subject1_3fibres</code>, which points to the same diffusion data. The <code>/data/subject1_3fibres/tractor/map.yaml</code> file would then contain</p>
 
 <pre><code>diffusion: /data/subject1_2fibres/tractor/diffusion
 </code></pre>
 
-<p>It should, however, be bourne in mind that this will make the session less portable. The full default map, as of TractoR v2.4.0, is</p>
+<p>It should, however, be bourne in mind that this will make the session less portable. The full default map, as of TractoR v2.5.0, is</p>
 
 <pre><code>transforms: transforms
 diffusion: diffusion
@@ -96,6 +105,8 @@ fdt: fdt
 bedpost: fdt.bedpostX
 probtrack: fdt.track
 camino: camino
+structural: structural
+freesurfer: freesurfer
 </code></pre>
 
 <h2 id="point-types">Point types</h2>

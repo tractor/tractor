@@ -163,6 +163,16 @@ pre {
 code {
     font-family: "inconsolata", "courier new", courier;
     background-color: #ddd;
+    padding: 0 0.2em;
+}
+
+kbd {
+    font-family: "inconsolata", "courier new", courier;
+    font-weight: bold;
+}
+
+pre code {
+    padding: 0px;
 }
 
 table {
@@ -172,18 +182,26 @@ table {
     margin-left: 20px;
 }
 
+table code {
+    background: none;
+}
+
 th {
+    background: #eeeeee;
     font-weight: bold;
-    padding: 0px;
+    padding: 0 5px;
 }
 
 tr {
     padding: 0px;
 }
 
+tr:nth-child(even) {
+    background: #eeeeee;
+}
+
 td {
-    padding: 0px;
-    padding-right: 10px;
+    padding: 0 5px;
     text-align: left;
     vertical-align: top;
 }

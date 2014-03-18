@@ -38,7 +38,7 @@
   <td class="tab"><a href="downloads.html">Downloads</a></td>
   <td class="tab"><a href="changelog.html">Changelog</a></td>
   <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
+  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
   </tr>
 </table>
 
@@ -55,8 +55,8 @@
 
 <ul>
 <li>Long, descriptive function and variable names are strongly favoured, so as to make code as self-documenting as possible. Hinting at the input and output types of a function is helpful: hence <code>newMriImageByMasking()</code> rather than, say, <code>mask()</code>. (Although see the <a href="#functions-versus-methods">&ldquo;functions versus methods&rdquo;</a> section below.) Variables with meaningful names also make understanding the effect of a line more obvious, as in <code>spatialUnitCode &lt;- packBits(intToBits(from@xyzt_units) &amp; intToBits(7), &quot;integer&quot;)</code>. It may not be clear what the right hand side of the assignment is doing, but the result is a spatial unit code. This would be much less obvious if the variable was just named <code>s</code>, or similar.</li>
-<li>Use of vectorised functions, <code>apply()</code> and similar is always preferable to extensive use of <code>for</code> loops, for reasons of both speed and conciseness. R&#39;s functional programming features are very powerful, and full advantage should be taken of them.</li>
-<li>TractoR aims to follow the <a href="http://en.wikipedia.org/wiki/Don%27t_Repeat_Yourself">&ldquo;don&#39;t repeat yourself&rdquo;</a> principle. Constants and other key pieces of information are stored in one place whenever practical, and there is usually a single point of contact between the code and external software or data. Code duplication is avoided except where a large penalty to clarity or speed would result. Conventions are standardised wherever practical to avoid handling many cases.</li>
+<li>Use of vectorised functions, <code>apply()</code> and similar is always preferable to extensive use of <code>for</code> loops, for reasons of both speed and conciseness. R&rsquo;s functional programming features are very powerful, and full advantage should be taken of them.</li>
+<li>TractoR aims to follow the <a href="http://en.wikipedia.org/wiki/Don%27t_Repeat_Yourself">&ldquo;don&rsquo;t repeat yourself&rdquo;</a> principle. Constants and other key pieces of information are stored in one place whenever practical, and there is usually a single point of contact between the code and external software or data. Code duplication is avoided except where a large penalty to clarity or speed would result. Conventions are standardised wherever practical to avoid handling many cases.</li>
 <li>Extensive commenting is not currently required, but counterintuitive or very obscure operations should be explained just before they occur.</li>
 </ul>
 
@@ -64,7 +64,7 @@
 
 <ul>
 <li>Since version 2.0, TractoR makes extensive use of the <a href="http://stat.ethz.ch/R-manual/R-devel/library/methods/html/refClass.html">reference classes</a> introduced in R 2.12.0. All such classes defined within TractoR packages should be named using upper <a href="http://en.wikipedia.org/wiki/CamelCase">camel case</a> convention, downcasing standard acronyms (as in <code>MriImage</code>) if necessary. Classes that do not inherit from any other class should use <code>SerialisableObject</code> (defined in the <code>tractor.base</code> package) as their superclass. Files defining such classes in a package should include a number in their name to ensure that the classes are not created before types upon which they depend (files will be loaded by R in name order).</li>
-<li>Reference class fields and methods should be named using lower camel case convention (as in <code>dataOffset</code>). &ldquo;Private&rdquo; fields should have names ending with a period. Methods should be provided for accessing all public fields, and should be named &ldquo;get&rdquo; followed by the field name (as in <code>getDataOffset()</code>). These accessor methods should be used in code outside the class&#39;s methods, rather than accessing the fields directly.</li>
+<li>Reference class fields and methods should be named using lower camel case convention (as in <code>dataOffset</code>). &ldquo;Private&rdquo; fields should have names ending with a period. Methods should be provided for accessing all public fields, and should be named &ldquo;get&rdquo; followed by the field name (as in <code>getDataOffset()</code>). These accessor methods should be used in code outside the class&rsquo;s methods, rather than accessing the fields directly.</li>
 <li>Very simple data structures which contain only small data elements, and are unlikely to be modified after creation, can be simply constructed using an R <code>list</code> with a simple (<a href="https://github.com/hadley/devtools/wiki/S3">&ldquo;S3&rdquo;</a>) class attribute. The probability distributions defined in <code>tractor.nt/R/distns.R</code> are good examples.</li>
 <li>Constants for internal use should be named using upper camel case, with a leading period, in a file called <code>00_constants.R</code> in the relevant package.</li>
 <li>Standard local variables and functions should be named using lower camel case.</li>

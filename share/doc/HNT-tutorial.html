@@ -38,7 +38,7 @@
   <td class="tab"><a href="downloads.html">Downloads</a></td>
   <td class="tab"><a href="changelog.html">Changelog</a></td>
   <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
+  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
   </tr>
 </table>
 
@@ -59,7 +59,7 @@
 
 <h2 id="segmenting-in-novel-data">Segmenting in novel data</h2>
 
-<p>Once a suitable reference tract is chosen and available, segmenting a similar tract in another brain volume is a matter of identifying the appropriate session directory (we&#39;ll use /data/testsubject for the sake of example) and the size of the search neighbourhood. These parameters are passed to <code>hnt-eval</code>, along with the tract name:</p>
+<p>Once a suitable reference tract is chosen and available, segmenting a similar tract in another brain volume is a matter of identifying the appropriate session directory (we&rsquo;ll use /data/testsubject for the sake of example) and the size of the search neighbourhood. These parameters are passed to <code>hnt-eval</code>, along with the tract name:</p>
 
 <pre><code>tractor hnt-eval SessionList:/data/testsubject TractName:genu SearchWidth:7
 </code></pre>
@@ -87,7 +87,7 @@
 
 <h2 id="using-a-design-file">Using a design file</h2>
 
-<p>Since the various HNT scripts have a number of options in common, which are typically repeated from one to the other, it is often convenient to store these options in a file, rather than specifying them on the command line. Moreover, since any given script will simply ignore any options which it does not use, the entire experiment&#39;s parameters can be stored in a single configuration file, or design file. For example, if we place into a file called &ldquo;design.yaml&rdquo; the following</p>
+<p>Since the various HNT scripts have a number of options in common, which are typically repeated from one to the other, it is often convenient to store these options in a file, rather than specifying them on the command line. Moreover, since any given script will simply ignore any options which it does not use, the entire experiment&rsquo;s parameters can be stored in a single configuration file, or design file. For example, if we place into a file called &ldquo;design.yaml&rdquo; the following</p>
 
 <pre><code>SessionList: /data/testsubject
 TractName: genu

@@ -38,7 +38,7 @@
   <td class="tab"><a href="downloads.html">Downloads</a></td>
   <td class="tab"><a href="changelog.html">Changelog</a></td>
   <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
+  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
   </tr>
 </table>
 
@@ -60,7 +60,7 @@
 <p>Whichever method is used to perform them, the requisite steps are as follows.</p>
 
 <ol>
-<li>Convert DICOM files from an MR scanner into a 4D data set file in Analyze or NIfTI format. TractoR can perform this conversion for a number of types of DICOM files, but users may prefer to use their own site tools for this step. (Please bear in mind that TractoR&#39;s DICOM support has <a href="TractoR-and-DICOM.html">some limitations</a>.) The result is an image called <code>rawdata</code> (with appropriate suffix depending on the file type) in the <code>diffusion</code> subdirectory of the TractoR session hierarchy. The file <code>directions.txt</code>, which describes the diffusion weighting applied to the images, will also be created if possible. <strong>If the relevant information is not available, this latter file must be created manually</strong>&ndash;if this is the case then TractoR will produce a warning.</li>
+<li>Convert DICOM files from an MR scanner into a 4D data set file in Analyze or NIfTI format. TractoR can perform this conversion for a number of types of DICOM files, but users may prefer to use their own site tools for this step. (Please bear in mind that TractoR&rsquo;s DICOM support has <a href="TractoR-and-DICOM.html">some limitations</a>.) The result is an image called <code>rawdata</code> (with appropriate suffix depending on the file type) in the <code>diffusion</code> subdirectory of the TractoR session hierarchy. The file <code>directions.txt</code>, which describes the diffusion weighting applied to the images, will also be created if possible. <strong>If the relevant information is not available, this latter file must be created manually</strong>&ndash;if this is the case then TractoR will produce a warning.</li>
 <li>Identify an image volume with little or no diffusion weighting, to be used as an anatomical reference. By default this file will be called <code>refb0</code> and stored in the <code>diffusion</code> subdirectory.</li>
 <li>Create a mask which covers only that part of the <code>refb0</code> volume which is within the brain. Skull and other nonbrain tissue is left outside this mask. The image file <code>mask</code> is created in the <code>diffusion</code> subdirectory, as well as a masked version of the anatomical reference image, called <code>maskedb0</code>.</li>
 <li>Correct for eddy current-induced distortion effects in the data, using the anatomical reference volume as a registration target. This step currently uses the FSL tool <code>eddy_correct</code>, and produces a file called <code>data</code> in the <code>diffusion</code> subdirectory.</li>
@@ -122,7 +122,7 @@ tractor dpreproc
 
 <p>This should normally only be necessary once for a given sequence, since a cache is automatically used to store gradient directions for use with other data sets acquired the same way.</p>
 
-<p>Whichever way the gradients are initially obtained, it is a good idea to check that the signs of the directions are correct. The <code>gradcheck</code> script assists with this by showing the principal directions of diffusion in three representative slices of the brain, for checking against the user&#39;s expectations. It can be run from the session directory with</p>
+<p>Whichever way the gradients are initially obtained, it is a good idea to check that the signs of the directions are correct. The <code>gradcheck</code> script assists with this by showing the principal directions of diffusion in three representative slices of the brain, for checking against the user&rsquo;s expectations. It can be run from the session directory with</p>
 
 <pre><code>tractor gradcheck
 </code></pre>
@@ -168,7 +168,7 @@ tractor caminofiles
 <p>To find out information about a particular session directory and the data stored within it, you can use the <code>status</code> script, which produces output like the following:</p>
 
 <pre><code>GENERAL:
-  Session directory        : /usr/local/tractor/tests/data/session-12dir
+  Session directory        : /usr/local/tractor/tests/data/session
   Working directory exists : TRUE
 
 DIFFUSION:

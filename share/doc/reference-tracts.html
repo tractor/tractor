@@ -38,7 +38,7 @@
   <td class="tab"><a href="downloads.html">Downloads</a></td>
   <td class="tab"><a href="changelog.html">Changelog</a></td>
   <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
+  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
   </tr>
 </table>
 
@@ -49,7 +49,7 @@
 
 <h2 id="using-standard-reference-tracts">Using standard reference tracts</h2>
 
-<p>Since version 1.0.0, TractoR has been supplied with a set of standard reference tracts for both heuristic and probabilistic neighbourhood tractography (NT). These reference tracts are based on a white matter tract atlas kindly made available by Dr Susumu Mori&#39;s lab at Johns Hopkins University. Further information about the atlas can be found at <a href="http://cmrm.med.jhmi.edu/">http://cmrm.med.jhmi.edu/</a> and in Ref. (1) below. If you use these reference tracts in your work, please cite Ref. (2) below.</p>
+<p>Since version 1.0.0, TractoR has been supplied with a set of standard reference tracts for both heuristic and probabilistic neighbourhood tractography (NT). These reference tracts are based on a white matter tract atlas kindly made available by Dr Susumu Mori&rsquo;s lab at Johns Hopkins University. Further information about the atlas can be found at <a href="http://cmrm.med.jhmi.edu/">http://cmrm.med.jhmi.edu/</a> and in Ref. (1) below. If you use these reference tracts in your work, please cite Ref. (2) below.</p>
 
 <p>Using these standard references is by far the easiest way to start using NT. TractoR &ldquo;knows&rdquo; where to find them, so you need only to specify the tract name when running the <code>hnt-eval</code> or <code>pnt-data</code> experiment scripts. Available tract names as of TractoR 2.1.0 are:</p>
 
@@ -103,13 +103,13 @@
 
 <p>TractoR scripts which are likely to be useful for creating a custom reference tract include <code>mkroi</code> (to create a region of interest), <code>rtrack</code> (to generate a series of tract images, from which to choose a reference tract), and <code>hnt-ref</code> or <code>pnt-ref</code> (to create reference tracts for use with HNT or PNT, respectively).</p>
 
-<p>Let&#39;s assume that we wish to create a reference tract representing the corpus callosum genu. We begin by creating a directory for this experiment, and changing to this directory. For example,</p>
+<p>Let&rsquo;s assume that we wish to create a reference tract representing the corpus callosum genu. We begin by creating a directory for this experiment, and changing to this directory. For example,</p>
 
 <pre><code>mkdir /expts/hnt-genu
 cd /expts/hnt-genu
 </code></pre>
 
-<p>Next we observe that the point (6,22,14) - in millimetre coordinates - appears to be within the genu in an MNI standard space brain volume. A suitable location such as this can be chosen using <code>tractor view</code> or <a href="http://www.fmrib.ox.ac.uk/fsl/fslview/index.html">FSL&#39;s data viewer</a>. We see the location shown on a slice of the MNI white matter map below:</p>
+<p>Next we observe that the point (6,22,14) - in millimetre coordinates - appears to be within the genu in an MNI standard space brain volume. A suitable location such as this can be chosen using <code>tractor view</code> or <a href="http://www.fmrib.ox.ac.uk/fsl/fslview/index.html">FSL&rsquo;s data viewer</a>. We see the location shown on a slice of the MNI white matter map below:</p>
 
 <p><img src="genu-point.png" alt="genu seed point location"></p>
 

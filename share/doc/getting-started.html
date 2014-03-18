@@ -47,15 +47,15 @@
 
 <h2 id="system-requirements">System requirements</h2>
 
-<p>TractoR was developed for Unix-like systems. It has been developed and tested on Mac OS X and Linux operating systems, and should work on other Unix variants that meet <a href="http://www.r-project.org">R&#39;s</a> requirements. Support for Windows/Cygwin is not guaranteed but things may work. A better bet on Windows may be to run Linux within a virtual machine environment such as <a href="http://www.virtualbox.org/">VirtualBox</a> or <a href="http://www.vmware.com">VMware</a>.</p>
+<p>TractoR was developed for Unix-like systems. It has been developed and tested on Mac OS X and Linux operating systems, and should work on other Unix variants that meet <a href="http://www.r-project.org">R&rsquo;s</a> requirements. Support for Windows/Cygwin is not guaranteed but things may work. A better bet on Windows may be to run Linux within a virtual machine environment such as <a href="http://www.virtualbox.org/">VirtualBox</a> or <a href="http://www.vmware.com">VMware</a>.</p>
 
 <p>In its basic form, TractoR is a set of packages written for the R language and environment. R (version 2.12.1 or later) is therefore an absolute prerequisite. R is an open-source package that is easy to install. Precompiled binaries are available from a number of <a href="http://cran.r-project.org/mirrors.html">CRAN mirror sites</a>, along with the source code.</p>
 
-<p>A C/C++ compiler, such as <code>gcc</code>/<code>g++</code>, is also required. A suitable compiler can be installed using an appropriate package manager (<code>aptitude</code>, <code>yum</code>, etc.) on Linux, or with Xcode (from the Mac App Store) on OS X. R handles all the details of actually compiling code.</p>
+<p>A C/C++ compiler, such as <code>gcc</code>/<code>g++</code>, is also required. A suitable compiler can be installed using an appropriate package manager (<code>aptitude</code>, <code>yum</code>, etc.) on Linux, or with Xcode (from the Mac App Store) on OS X. R handles all the details of actually compiling code. A Fortran compiler is also required to build the <code>igraph</code> package, but this is currently optional.</p>
 
 <p>TractoR makes use of the <a href="http://www.imagemagick.org">ImageMagick</a> image processing suite for 2D visualisation. While TractoR will be more-or-less fully functional without ImageMagick, it is nevertheless recommended to install this software (unless it is preinstalled, which is not uncommon on Unix-like systems).</p>
 
-<p>Finally, TractoR&#39;s tractography is currently based on output from the BEDPOSTX tool in the <a href="http://www.fmrib.ox.ac.uk/fsl/">FSL package</a>. FSL is therefore required for performing tractography. TractoR also provides interfaces to other third-party medical imaging tools, such as FSL&#39;s BET (for brain extraction) and FLIRT (for linear registration), as well as image viewers such as FSLview and Freeview, but these are all optional.</p>
+<p>Finally, TractoR&rsquo;s tractography is currently based on output from the BEDPOSTX tool in the <a href="http://www.fmrib.ox.ac.uk/fsl/">FSL package</a>. FSL is therefore required for performing tractography. TractoR also provides interfaces to other third-party medical imaging tools, such as FSL&rsquo;s BET (for brain extraction) and FLIRT (for linear registration), as well as image viewers such as FSLview and Freeview, but these are all optional.</p>
 
 <h2 id="installation">Installation</h2>
 
@@ -73,7 +73,7 @@ make install
 <pre><code>make install-local
 </code></pre>
 
-<p>which will install the required R packages within TractoR&#39;s own file hierarchy. This can also be useful if you want to run multiple versions of TractoR in parallel.</p>
+<p>which will install the required R packages within TractoR&rsquo;s own file hierarchy. This can also be useful if you want to run multiple versions of TractoR in parallel, or if you want to keep TractoR&rsquo;s versions of the various R packages separate to others which you may have installed.</p>
 
 <p>To check that the TractoR packages have been installed properly and TractoR scripts can be run successfully, you can run the set of tests included with TractoR 1.3.0 and later by typing</p>
 
@@ -114,7 +114,7 @@ Experiment scripts found in /usr/local/tractor/share/experiments:
 Experiment completed with 0 warning(s) and 0 error(s)
 </code></pre>
 
-<p>If instead you get an error from the shell saying that it couldn&#39;t find the <code>tractor</code> executable, or from <code>tractor</code> itself reporting the script file not found, the install has not worked correctly. Check that you have set up your environment correctly, as shown above, and make sure that you have started a new shell or sourced your <code>.bashrc</code> file to pick up the changes (<code>source ~/.bashrc</code>). Running the command <code>man tractor</code> should show the <code>tractor</code> man page.</p>
+<p>If instead you get an error from the shell saying that it couldn&rsquo;t find the <code>tractor</code> executable, or from <code>tractor</code> itself reporting the script file not found, the install has not worked correctly. Check that you have set up your environment correctly, as shown above, and make sure that you have started a new shell or sourced your <code>.bashrc</code> file to pick up the changes (<code>source ~/.bashrc</code>). Running the command <code>man tractor</code> should show the <code>tractor</code> man page.</p>
 
 <h2 id="usage">Usage</h2>
 
@@ -124,7 +124,7 @@ Experiment completed with 0 warning(s) and 0 error(s)
 
 <h2 id="next-steps">Next steps</h2>
 
-<p>TractoR provides implementations of &ldquo;neighbourhood tractography&rdquo; methods for consistent white matter tract segmentation. Tutorials on the earlier (and simpler) <a href="HNT-tutorial.html">heuristic approach</a> and the more complex but more robust <a href="PNT-tutorial.html">probabilistic approach</a> to neighbourhood tractography are good places to start to gain familiarity with TractoR&#39;s way of doing things. A quick overview of TractoR&#39;s specific <a href="conventions.html">conventions</a> is also provided.</p>
+<p>TractoR provides implementations of &ldquo;neighbourhood tractography&rdquo; methods for consistent white matter tract segmentation. Tutorials on the earlier (and simpler) <a href="HNT-tutorial.html">heuristic approach</a> and the more complex but more robust <a href="PNT-tutorial.html">probabilistic approach</a> to neighbourhood tractography are good places to start to gain familiarity with TractoR&rsquo;s way of doing things. A quick overview of TractoR&rsquo;s specific <a href="conventions.html">conventions</a> is also provided.</p>
 
 
 </div>

@@ -38,7 +38,7 @@
   <td class="tab"><a href="downloads.html">Downloads</a></td>
   <td class="tab"><a href="changelog.html">Changelog</a></td>
   <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="http://groups.google.com/group/tractor-users">Mailing list</a></td>
+  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
   </tr>
 </table>
 
@@ -69,7 +69,7 @@ tractor bedpost
 
 <p>The first of these commands runs the old stages 1-3, now split into four stages, with the order of eddy-current distortion correction and brain extraction reversed. <code>MaskingMethod</code> now defaults to <code>kmeans</code>, so if you wish to use BET (the old default), you must specify this explicitly. Likewise, the default value of <code>BetIntensityThreshold</code> is now 0.3, so again you may want to explicitly revert to the old default of 0.5 &ndash; although this is not recommended because experience suggests that 0.3 gives more reliable results.</p>
 
-<p>The second command gives you the opportunity to check interactively that your gradient directions have the correct sign. If you know that this is the case, then you can skip this altogether. The third command rotates the diffusion gradient directions to compensate for eddy-current distortion correction, as <code>preproc</code> did with the option <code>RotateGradients:true</code>, and is optional. The fourth command fits diffusion tensors to the data, which is optional but recommended. In this case the FSL <code>dtifit</code> program is used, but TractoR&#39;s own fitter can be used instead, in particular if you want to use an iterative weighted least-squares approach for robustness. Lastly, <code>tractor bedpost</code> performs the old <code>preproc</code> stage 5. This is currently required for tractography, but may not remain so in the future.</p>
+<p>The second command gives you the opportunity to check interactively that your gradient directions have the correct sign. If you know that this is the case, then you can skip this altogether. The third command rotates the diffusion gradient directions to compensate for eddy-current distortion correction, as <code>preproc</code> did with the option <code>RotateGradients:true</code>, and is optional. The fourth command fits diffusion tensors to the data, which is optional but recommended. In this case the FSL <code>dtifit</code> program is used, but TractoR&rsquo;s own fitter can be used instead, in particular if you want to use an iterative weighted least-squares approach for robustness. Lastly, <code>tractor bedpost</code> performs the old <code>preproc</code> stage 5. This is currently required for tractography, but may not remain so in the future.</p>
 
 <p>Most of these scripts have options that you can see using <code>tractor -o (script_name)</code> in the usual way.</p>
 
@@ -87,7 +87,7 @@ tractor bedpost
 <p>The <code>status</code> script is now both more general and more informative. Example output as of TractoR v2.0.2 is below.</p>
 
 <pre><code>GENERAL:
-  Session directory        : /usr/local/tractor/tests/data/session-12dir
+  Session directory        : /usr/local/tractor/tests/data/session
   Working directory exists : TRUE
 
 DIFFUSION:
@@ -138,8 +138,9 @@ R_LIBS_USER=~/tractor2libs make install-native  # if native packages are require
 
 <p>where <code>/usr/local/tractor2</code> is the directory containing the TractoR 2.x installation. You can then run <code>tractor2</code> instead of <code>tractor</code> from the command line when you want to use the new version:</p>
 
-<pre><code>$ tractor2 -z platform
-Starting TractoR environment...
+<pre>
+<code>$ </code><kbd>tractor2 -z platform</kbd>
+<code>Starting TractoR environment...
                Machine : x86_64
                OS name : Darwin
             OS release : 11.1.0
@@ -149,8 +150,8 @@ TractoR home directory : /usr/local/tractor2
       R build platform : x86_64-apple-darwin9.8.0
            FSL version : 4.1.8
    ImageMagick version : 6.7.1-1
-Experiment completed with 0 warning(s) and 0 error(s)
-</code></pre>
+Experiment completed with 0 warning(s) and 0 error(s)</code>
+</pre>
 
 
 </div>

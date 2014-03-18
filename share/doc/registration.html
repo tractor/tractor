@@ -45,7 +45,7 @@
 
 <h1>Registration</h1>
 
-<p>This page documents TractoR&#39;s facilities for image registration, and the concepts used by them.</p>
+<p>This page documents TractoR&rsquo;s facilities for image registration, and the concepts used by them.</p>
 
 <h2 id="transformations">Transformations</h2>
 
@@ -57,7 +57,7 @@
 
 <p>Here, a global rotation can be observed from the oblique grid, but additionally, some areas are expanded by the transformation (red) while others are contracted (blue).</p>
 
-<p>In TractoR, images are stored in Analyze/NIfTI/MGH files, while transformations are stored in binary files with an &ldquo;.Rdata&rdquo; suffix. Information about the latter can be obtained using the <code>peek</code> script. Transformation objects contain metadata about the source and target files, as well as the actual linear and/or nonlinear transformation information. TractoR&#39;s image registration scripts create, modify and use these transformation files as a matter of course.</p>
+<p>In TractoR, images are stored in Analyze/NIfTI/MGH files, while transformations are stored in binary files with an &ldquo;.Rdata&rdquo; suffix. Information about the latter can be obtained using the <code>peek</code> script. Transformation objects contain metadata about the source and target files, as well as the actual linear and/or nonlinear transformation information. TractoR&rsquo;s image registration scripts create, modify and use these transformation files as a matter of course.</p>
 
 <h2 id="linear-registration">Linear registration</h2>
 
@@ -73,7 +73,7 @@
 <pre><code>tractor reg-linear source target result Method:niftyreg
 </code></pre>
 
-<p>If you want only to estimate the transformation, but not actually resample the image, then the third argument isn&#39;t needed, but a name for the transformation file is.</p>
+<p>If you want only to estimate the transformation, but not actually resample the image, then the third argument isn&rsquo;t needed, but a name for the transformation file is.</p>
 
 <pre><code>tractor reg-linear source target Method:niftyreg EstimateOnly:true TransformationName:source2target
 </code></pre>
@@ -108,7 +108,7 @@ tractor reg-nonlinear source target EstimateOnly:true TransformationName:source2
 
 <p>A number of operations which can be performed with TractoR, including <a href="HNT-tutorial.html">neighbourhood</a> <a href="PNT-tutorial.html">tractography</a>, require images or points to be transformed between different spaces. Registration must therefore take place to estimate the relevant transformation in these cases.</p>
 
-<p>TractoR estimates these transformations on demand, at the point that the code first requires them, and then stores them within the <code>tractor/transforms</code> subdirectory of the relevant <a href="conventions.html">session</a> for future reference. Files stored in that location have a naming convention giving the source and target space names, separated by the digit &ldquo;2&rdquo;: for example, the transformation from diffusion to MNI standard space is called &ldquo;diffusion2mni.Rdata&rdquo;. Registration is currently performed in this case using FSL-FLIRT by default, but NiftyReg can be used instead by setting the <code>TRACTOR_REG_METHOD</code> environment variable to <code>niftyreg</code>. Nonlinear implicit registration is not yet supported. The actual source and target images are chosen to be representative of the space in question: for example, the &ldquo;maskedb0&rdquo; image for diffusion space, and the &ldquo;brain&rdquo; template for MNI standard space.</p>
+<p>TractoR estimates these transformations on demand, at the point that the code first requires them, and then stores them within the <code>tractor/transforms</code> subdirectory of the relevant <a href="conventions.html">session</a> for future reference. Files stored in that location have a naming convention giving the source and target space names, separated by the digit &ldquo;2&rdquo;: for example, the transformation from diffusion to MNI standard space is called &ldquo;diffusion2mni.Rdata&rdquo;. The strategy for transforming between each pair of image spaces—specifying, for example, whether linear or nonlinear registration should be used—is determined by the <code>etc/session/transforms/strategy.yaml</code> file in the TractoR installation directory, which can be overridden by a file of the same name in a particular session. Implicit linear registration is currently performed using FSL-FLIRT by default, but NiftyReg can be used instead by setting the <code>TRACTOR_REG_METHOD</code> environment variable to <code>niftyreg</code>. The actual source and target images are chosen to be representative of the space in question: for example, the &ldquo;maskedb0&rdquo; image for diffusion space, and the &ldquo;brain&rdquo; template for MNI standard space.</p>
 
 
 </div>

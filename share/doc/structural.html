@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <title>TractoR ~ Working with structural data</title>
+
+  <meta charset="utf-8" />
+  <meta name="author" content="Jon Clayden" />
+  <link rel="stylesheet" href="style.css" />
+  
+  <script type="text/javascript" src="hyphenator.js"></script>
+  
+  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
+  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-563735-7']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</head>
+
+<body>
+
+<div id="main" class="hyphenate">
+
+<table id="tabs">
+  <tr>
+  <td class="tab"><a href="home.html">Home</a></td>
+  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
+  <td class="tab"><a href="downloads.html">Downloads</a></td>
+  <td class="tab"><a href="changelog.html">Changelog</a></td>
+  <td class="tab"><a href="references.html">References</a></td>
+  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
+  </tr>
+</table>
+
+
+<h1>Working with structural data</h1>
+
+<p>This tutorial covers TractoR&rsquo;s facilities for working with structural T1-weighted or T2-weighted MRI images. These are presently limited to importing files from DICOM and parcellating the brain into anatomical regions.</p>
+
+<h2 id="importing-data">Importing data</h2>
+
+<p>Structural images relevant to a particular <a href="conventions.html">session</a>, say <code>/data/subject1</code>, may be imported using a command like</p>
+
+<pre><code>tractor import /data/subject1 /data/dicom/subject1/T1W_sequence ImageWeighting:t1
+</code></pre>
+
+<p>The <code>ImageWeighting</code> option tells TractoR that this is a T1-weighted volume. This option may also be set to <code>t2</code> for T2-weighted data, <code>pd</code> for proton density weighted data, or <code>diffusion</code> for diffusion-weighted data (although the <code>dpreproc</code> script is <a href="diffusion-processing.html">usually preferable</a> for the latter).</p>
+
+<p>If multiple T1-weighted images are given then by default TractoR will coregister them and create a median image. This is then used as the standard registration target for structural imaging space for the session. An alternative is to let Freesurfer perform this coregistration operation later, in which case <code>Coregister:false</code> can be given to the <code>import</code> script.</p>
+
+<h2 id="parcellation">Parcellation</h2>
+
+<p>Anatomical parcellation of a structural image is a prerequisite for some kinds of analysis, and must be performed before the parcellation can be propagated to any other space, such as diffusion. The key script for this is <code>parcellate</code>. It is passed a parcellated image, of the same dimensions as the averaged reference T1-weighted image but with coherent regions labelled with an integer index. A lookup table is required to convert between numerical indices and region names, and some examples for typical atlases are included in <code>$TRACTOR_HOME/etc/parcellations</code>.</p>
+
+<p>For example, to run FSL-FLIRT on the reference T1 image for a session and import the parcellation created by it, you might run</p>
+
+<pre><code>cd /data/subject1
+run_first_all -i `tractor -q path . refT1` -o first
+tractor parcellate . first_all_fast_firstseg Types:first
+</code></pre>
+
+<p>Note that TractoR does not provide a wrapper script for FIRST, but the <code>path</code> script can be used to get the path to the relevant input file for the FIRST command line tool, <code>run_first_all</code>. The TractoR <code>parcellate</code> script then needs to be told that the parcellation was performed by FIRST, and since there is a standard parcellation lookup table for this type of parcellation, it will use it automatically.</p>
+
+<p>Another alternative is to use Freesurfer, and in this case TractoR does provide a wrapper script, viz.</p>
+
+<pre><code>tractor freesurf /data/subject1 Parcellation:destrieux
+</code></pre>
+
+<p>The <code>parcellate</code> script can also handle merging multiple parcellations together: for example, you can run <code>freesurf</code> first to obtain a parcellation from Freesurfer, and then run FIRST and pass the result to <code>parcellate</code>. In that case regions which appear in both parcellations will be overwritten by the FIRST parcellation. A merged parcellation image and lookup table gets written into the session directory.</p>
+
+
+</div>
+
+</body>
+
+</html>
