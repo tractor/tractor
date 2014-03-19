@@ -2,7 +2,6 @@ SHELL=/bin/bash
 export SHELL
 
 R=R
-DIFF=diff
 ECHO=/bin/echo
 ECHO_N=/bin/echo -n
 GIT=git
@@ -90,6 +89,5 @@ create-md5:
 
 check-md5:
 	@$(ECHO_N) "Checking MD5 checksums... "
-	@awk '{ print $$2 }' etc/md5.txt | xargs $(MD5) -r >tmp/md5.txt
-	@$(DIFF) etc/md5.txt tmp/md5.txt && $(ECHO) "OK"
+	@bin/tractor -q -z -i tests/scripts/check-md5 etc/md5.txt >tmp/md5.txt && $(ECHO) "OK" || ( $(ECHO) "FAIL"; sed '$$ d' tmp/md5.txt )
 	@rm -f tmp/md5.txt
