@@ -1,8 +1,0 @@
-An object of class "Graph"
----
-  Graph properties : undirected, weighted
-Number of vertices : 8
-   Number of edges : 22
-      Edge density : 50%
- Vertex attributes : voxelCount, volume, name
-   Edge attributes : nStreamlines, binaryFA, weightedFA, binaryMD, weightedMD, streamlineLength, uniqueVoxels, voxelVisits
