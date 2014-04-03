@@ -10,7 +10,27 @@ defaultInfoPanel <- function (point, data, imageNames)
     text(rep(0.5,nImages+1), yLocs, rev(labels), col=c(rep("red",nImages),"grey70"))
 }
 
-viewImages <- function (images, colourScales = NULL, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, infoPanel = defaultInfoPanel, ...)
+timeSeriesPanel <- function (point, data, imageNames)
+{
+    usingQuartz <- isTRUE(names(dev.cur()) == "quartz")
+    quitInstructions <- paste(ifelse(usingQuartz,"Press Esc","Right click"), "to exit", sep=" ")
+    
+    lengths <- sapply(data, length)
+    suppressWarnings(range <- c(min(sapply(data,min,na.rm=T)), max(sapply(data,max,na.rm=T))))
+    range[is.infinite(range)] <- 0
+    plot(NA, xlim=c(1,max(lengths)), ylim=range, xlab="", ylab="", bty="n", main=paste("Location: (",implode(point,","),")",sep=""))
+    oldPars <- par(xpd=TRUE)
+    text(max(lengths)/2, range[1]-0.35*diff(range), quitInstructions, col="grey70")
+    par(oldPars)
+    
+    for (i in seq_along(data))
+    {
+        if (lengths[i] > 1)
+            lines(1:lengths[i], data[[i]], col="red", lwd=2)
+    }
+}
+
+viewImages <- function (images, colourScales = NULL, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, fixedWindow = TRUE, infoPanel = defaultInfoPanel, ...)
 {
     if (is(images, "MriImage"))
         images <- list(images)
@@ -42,7 +62,10 @@ viewImages <- function (images, colourScales = NULL, point = NULL, interactive =
             x
     })
     
-    windows <- lapply(images3D, function(x) range(x$getData(),na.rm=TRUE))
+    if (fixedWindow)
+        windows <- lapply(images3D, function(x) range(x$getData(),na.rm=TRUE))
+    else
+        windows <- rep(list(NULL), length(images3D))
     
     if (is.null(point))
         point <- round(dims / 2)

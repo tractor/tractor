@@ -10,13 +10,15 @@ runExperiment <- function ()
     requireArguments("image file(s)")
     
     requestedViewer <- getConfigVariable("Viewer", NULL, "character", validValues=c("tractor","fslview","freeview"))
+    fixedWindow <- getConfigVariable("FixedWindow", TRUE)
+    timeSeries <- getConfigVariable("TimeSeries", FALSE)
     
     if (nArguments() > 1)
         lookupTable <- c("greyscale", rep("heat",nArguments()-1))
     else
         lookupTable <- "greyscale"
     
-    viewerArguments <- c(as.list(Arguments), list(wait=TRUE,lookupTable=lookupTable))
+    viewerArguments <- c(as.list(Arguments), list(wait=TRUE,lookupTable=lookupTable,fixedWindow=fixedWindow,timeSeries=timeSeries))
     if (!is.null(requestedViewer))
         viewerArguments <- c(viewerArguments, list(viewer=requestedViewer))
     
