@@ -43,8 +43,11 @@ runExperiment <- function ()
                 report(OL$Info, "Removing old installation")
                 unlink(Sys.getenv("TRACTOR_HOME"), recursive=TRUE)
                 report(OL$Info, "Moving unpacked directory to ", Sys.getenv("TRACTOR_HOME"))
-                file.rename(file.path(targetDir,"tractor"), Sys.getenv("TRACTOR_HOME"))
-                report(OL$Info, "Update complete - you may wish to run \"make install\" or \"make install-all\" from the TractoR home directory now")
+                success <- copyDirectory(file.path(targetDir,"tractor"), Sys.getenv("TRACTOR_HOME"), deleteOriginal=TRUE)
+                if (success)
+                    report(OL$Info, "Update complete - you may wish to run \"make install\" or \"make install-local\" from the TractoR home directory now")
+                else
+                    report(OL$Error, "Moving the directory into place failed")
             }
             else
                 report(OL$Error, "The unpacking operation did not report success")

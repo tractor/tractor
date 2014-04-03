@@ -7,29 +7,6 @@ library(tractor.session)
 
 runExperiment <- function ()
 {
-    recursiveDirectoryCopy <- function (from, to, all.files = FALSE)
-    {
-        sourceFiles <- list.files(from, all.files=all.files, full.names=TRUE)
-        sourceFiles <- sourceFiles[!(basename(sourceFiles) %in% c(".",".."))]
-        
-        report(OL$Info, "Creating directory ", to)
-        success <- dir.create(to)
-        targetFiles <- file.path(to, basename(sourceFiles))
-        
-        for (i in seq_along(sourceFiles))
-        {            
-            if (file.info(sourceFiles[i])$isdir)
-                success <- success && recursiveDirectoryCopy(sourceFiles[i], targetFiles[i], all.files=all.files)
-            else
-            {
-                report(OL$Verbose, "Copying file ", targetFiles[i])
-                success <- success && file.copy(sourceFiles[i], targetFiles[i], overwrite=TRUE)
-            }
-        }
-        
-        return (success)
-    }
-    
     requireArguments("session directory", "target directory")
     
     deleteOriginal <- getConfigVariable("DeleteOriginal", FALSE, errorIfInvalid=TRUE)
@@ -61,11 +38,9 @@ runExperiment <- function ()
     if (!success)
         report(OL$Error, "Could not create new session directory")
     
-    success <- recursiveDirectoryCopy(session$getDirectory("root"), file.path(targetSessionDir,basename(session$getDirectory("root"))), all.files=copyHidden)
+    success <- copyDirectory(session$getDirectory("root"), file.path(targetSessionDir,basename(session$getDirectory("root"))), allFiles=copyHidden, deleteOriginal=deleteOriginal)
     if (!success)
-        report(OL$Warning, "Not all files copied successfully - nothing will be deleted")
-    else if (deleteOriginal)
-        unlink(session$getDirectory("root"), recursive=TRUE)
+        report(OL$Error, "Directory copy failed")
     
     return (invisible(NULL))
 }
