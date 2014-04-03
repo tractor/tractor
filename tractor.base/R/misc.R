@@ -86,6 +86,45 @@ relativePath <- function (path, referencePath)
     return (implode(newPieces, sep=.Platform$file.sep))
 }
 
+copyDirectory <- function (from, to, allFiles = TRUE, deleteOriginal = FALSE)
+{
+    if (length(from) != 1 || length(to) != 1)
+        report(OL$Error, "Source and target paths must be single strings")
+    
+    from <- expandFileName(from)
+    to <- expandFileName(to)
+    
+    if (file.exists(to))
+    {
+        if (!file.info(to)$isdir)
+            report(OL$Error, "Target path already exists but isn't a directory")
+        else if (file.exists(file.path(to, basename(from))))
+            report(OL$Error, "Subdirectory of the target directory matching the source name already exists - it will not be overwritten")
+        else
+            to <- file.path(to, basename(from))
+    }
+    
+    # The "to" path should not exist at this point
+    success <- dir.create(to, recursive=TRUE)
+    
+    files <- list.files(from, all.files=allFiles, full.names=FALSE, recursive=TRUE, include.dirs=TRUE)
+    isDirectory <- file.info(file.path(from,files))$isdir
+    
+    for (dir in files[isDirectory])
+    {
+        if (!success)
+            break
+        success <- dir.create(file.path(to,dir), recursive=TRUE)
+    }
+    if (any(!isDirectory))
+        success <- file.copy(file.path(from,files[!isDirectory]), file.path(to,files[!isDirectory]))
+    
+    if (deleteOriginal && all(success))
+        unlink(from, recursive=TRUE)
+    
+    return (all(success))
+}
+
 expandFileName <- function (fileName, base = getwd())
 {
     fileName <- path.expand(fileName)
