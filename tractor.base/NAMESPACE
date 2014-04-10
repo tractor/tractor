@@ -11,6 +11,8 @@ S3method(as.array, MriImage)
 
 S3method(dim, SparseArray)
 S3method(as.array, SparseArray)
+S3method(as.vector, SparseArray)
+S3method(aperm, SparseArray)
 
 S3method(print, DicomMetadata)
 

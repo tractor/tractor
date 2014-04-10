@@ -72,9 +72,9 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
     }
 ))
 
-setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
+setMethod("[", "SparseArray", function (x, i, j, ..., dotsEnvironment = NULL, drop = TRUE) {
     # This implementation owes a lot to the equivalent in the "slam" package (credit: Kurt Hornik, David Meyer and Christian Buchta)
-    nArgs <- nargs() - as.integer(!missing(drop))
+    nArgs <- nargs() - as.integer(!missing(dotsEnvironment)) - as.integer(!missing(drop))
     
     nDims <- x$getDimensionality()
     dims <- x$getDimensions()
@@ -108,11 +108,19 @@ setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
         report(OL$Error, "Number of dimensions given does not match image")
     else
     {
-        # Find missing arguments and replace with NULL (code borrowed from the "slam" package)
-        args <- substitute(list(i, j, ...))
-        argsEmpty <- sapply(args, function(a) identical(as.character(a), ""))
-        args[argsEmpty] <- list(NULL)
-        args <- eval(args, envir=parent.frame())
+        browser()
+        # Find missing arguments and replace with NULL (code adapted from the "slam" package)
+        args <- vector("list", nArgs-1)
+        if (!missing(i))
+            args[[1]] <- i
+        if (!missing(j))
+            args[[2]] <- j
+        if (nArgs > 3)
+        {
+            dotsArgs <- substitute(list(...))
+            dotsArgs[as.character(dotsArgs) == ""] <- list(NULL)
+            args[3:(nArgs-1)] <- eval(dotsArgs, envir=dotsEnvironment)
+        }
         
         dataToKeep <- rep.int(TRUE, length(data))
         finalDims <- dims
@@ -156,8 +164,8 @@ setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
     return (returnValue)
 })
 
-setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
-    nArgs <- nargs() - 1
+setReplaceMethod("[", "SparseArray", function (x, i, j, ..., dotsEnvironment = parent.frame(), value) {
+    nArgs <- nargs() - as.integer(!missing(dotsEnvironment)) - 1
     
     nDims <- x$getDimensionality()
     dims <- x$getDimensions()
@@ -187,10 +195,17 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
         report(OL$Error, "Number of dimensions given does not match image")
     else
     {
-        args <- substitute(list(i, j, ...))
-        argsEmpty <- sapply(args, function(a) identical(as.character(a), ""))
-        args[argsEmpty] <- list(NULL)
-        args <- eval(args, envir=parent.frame())
+        args <- vector("list", nArgs-1)
+        if (!missing(i))
+            args[[1]] <- i
+        if (!missing(j))
+            args[[2]] <- j
+        if (nArgs > 3)
+        {
+            dotsArgs <- substitute(list(...))
+            dotsArgs[as.character(dotsArgs) == ""] <- list(NULL)
+            args[3:(nArgs-1)] <- eval(dotsArgs, envir=dotsEnvironment)
+        }
         
         args <- lapply(seq_len(nDims), function(i) {
             if (is.null(args[i]))
@@ -252,6 +267,11 @@ setAs("SparseArray", "array", function (from) {
 as.array.SparseArray <- function (x, ...)
 {
     as(x, "array")
+}
+
+as.vector.SparseArray <- function (x, mode = "any")
+{
+    as.vector(as(x,"array"), mode=mode)
 }
 
 dim.SparseArray <- function (x)

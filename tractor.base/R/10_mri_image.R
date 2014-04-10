@@ -343,28 +343,38 @@ setMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, 
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - as.integer(!missing(drop))
     if (nArgs < 2)
-        return (x$getData())
+        return (x$data)
+    else if (x$isSparse())
+        return (x$data[,,...,dotsEnvironment=parent.frame(),drop=drop])
     else
-        return (x$getData()[,,...,drop=drop])
+        return (x$data[,,...,drop=drop])
 })
 
 setMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - as.integer(!missing(drop))
     if (nArgs < 3)
-        return (x$getData()[i,drop=drop])
+        return (x$data[i,drop=drop])
+    else if (x$isSparse())
+        return (x$data[i,,...,dotsEnvironment=parent.frame(),drop=drop])
     else
-        return (x$getData()[i,,...,drop=drop])
+        return (x$data[i,,...,drop=drop])
 })
 
 setMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
-    return (x$getData()[,j,...,drop=drop])
+    if (x$isSparse())
+        return (x$data[,j,...,dotsEnvironment=parent.frame(),drop=drop])
+    else
+        return (x$data[,j,...,drop=drop])
 })
 
 setMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
-    return (x$getData()[i,j,...,drop=drop])
+    if (x$isSparse())
+        return (x$data[i,j,...,dotsEnvironment=parent.frame(),drop=drop])
+    else
+        return (x$data[i,j,...,drop=drop])
 })
 
 setReplaceMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, j, ..., value) {
@@ -372,6 +382,8 @@ setReplaceMethod("[", signature(x="MriImage",i="missing",j="missing"), function 
     nArgs <- nargs() - 1
     if (nArgs < 2)
         x$data[] <- value
+    else if (x$isSparse())
+        x$data[,,...,dotsEnvironment=parent.frame()] <- value
     else
         x$data[,,...] <- value
     x$setSource(NULL)
@@ -383,6 +395,8 @@ setReplaceMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, 
     nArgs <- nargs() - 1
     if (nArgs < 3)
         x$data[i] <- value
+    else if (x$isSparse())
+        x$data[i,,...,dotsEnvironment=parent.frame()] <- value
     else
         x$data[i,,...] <- value
     x$setSource(NULL)
@@ -391,14 +405,20 @@ setReplaceMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, 
 
 setReplaceMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
-    x$data[,j,...] <- value
+    if (x$isSparse())
+        x$data[,j,...,dotsEnvironment=parent.frame()] <- value
+    else
+        x$data[,j,...] <- value
     x$setSource(NULL)
     return (x)
 })
 
 setReplaceMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
-    x$data[i,j,...] <- value
+    if (x$isSparse())
+        x$data[i,j,...,dotsEnvironment=parent.frame()] <- value
+    else
+        x$data[i,j,...] <- value
     x$setSource(NULL)
     return (x)
 })
