@@ -1,8 +1,8 @@
 b63ca80fd2ea72871f283ff4da676d9a COPYRIGHT.md
 34db5bbdec11d49778cef3280b0211d8 INSTALL.md
-97bcaf8585e43a40dea27c81fd00de77 Makefile
+479ece0172f6b2223e40340cdd050698 Makefile
 1007bf010c80155249c69c0caaa45e80 README.md
-90d03bebeb88f1b007f47b68aaeb9893 VERSION
+5a32127a3c55e9922139f60a2a4a43ba VERSION
 75b3208cd8e5129dbadb2c86931b0a36 bin/tractor
 4f9b42ebc86e56ff7e013ca707c56259 bin/tractor_Rinstall
 41bbdb495cafa8777a74812c63bee5c0 etc/parcellations/desikan-killiany.lut
@@ -16,12 +16,12 @@ f2bf061ab3b00346fc35e7ce0078599b man/man1/tractor.1
 f2a0688a67e316b8ec2339764ea0196f share/doc/TractoR-for-R-users.html
 5e82bf5f2a8e65a9fbefa89a9765c2d0 share/doc/box_bottom.gif
 e05a1252b51781ffd6e8a24c7266fcdc share/doc/box_top.gif
-922381a97fc1de9009f195cbd1e19c6f share/doc/changelog.html
+9e09063758b5e5b485710a3a1ba22441 share/doc/changelog.html
 17092827569bfa92391ad59f760a5103 share/doc/connectivity-graphs.html
 c2b5e1a448544b770437dc918b83682f share/doc/conventions.html
 700c960ae93ba39a9bf27550d8c0ddc2 share/doc/diffusion-processing.html
 0d66d29aa7dcadd51f330f04bfe8f919 share/doc/download.png
-78b52227892050440dbf722bd486fbb3 share/doc/downloads.html
+682dcc76dd3a590cdf6c4d3f03b1f627 share/doc/downloads.html
 fe6cd3a90e2ecf534ec95be9a25762a8 share/doc/genu-point.png
 f3e4b724bc8ebe92ce703cc9ff6196b1 share/doc/getting-started.html
 cd8cec91833ffa792d4ad33729f8acbf share/doc/graph-brain.png
@@ -63,7 +63,7 @@ c2bf0b9e064e4f41e6804d975cafa7e6 share/experiments/gmap.R
 e97d3ec3e890b65cbd3cee6e83f39482 share/experiments/gradcheck.R
 10f8665b3857d3bd78ae367c0fc7cd33 share/experiments/gradread.R
 092b7a10b3003a3853e3f260c7509012 share/experiments/gradrotate.R
-a122e0c5d10002667c9a9d0e90d9b244 share/experiments/graph-build.R
+b24a0229ba9d21127a9a3d2e465a90c7 share/experiments/graph-build.R
 6b499c41ed83e806662455cfd5be7d9a share/experiments/graph-decompose.R
 2dab39c94830ff64859257491e45b920 share/experiments/graph-props.R
 1fc4b6a2a380e18a28e6e768f12ff0c1 share/experiments/graph-reweight.R
