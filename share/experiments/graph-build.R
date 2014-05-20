@@ -11,6 +11,8 @@ runExperiment <- function ()
     selfConnections <- getConfigVariable("SelfConnections", TRUE)
     tractName <- getConfigVariable("TractName", NULL, "character")
     
+    targetRegions <- splitAndConvertString(targetRegions, ",", fixed=TRUE)
+    
     if (!is.null(tractName))
     {
         library(tractor.reg)
