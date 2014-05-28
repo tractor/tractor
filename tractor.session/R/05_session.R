@@ -124,6 +124,28 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     imageExists = function (type, place = NULL, index = 1) { return (imageFileExists(.self$getImageFileNameByType(type, place, index))) },
     
+    unlinkDirectory = function (type, ask = TRUE)
+    {
+        dirToRemove <- expandFileName(.self$getDirectory(type))
+        rootDir <- expandFileName(.self$getDirectory("root"))
+        
+        if (!file.exists(dirToRemove))
+            return (NULL)
+        
+        if (regexpr(fullRoot, dirToRemove, fixed=TRUE) != 1)
+            report(OL$Error, "Existing externally-mapped directory #{dirToRemove} will not be overwritten")
+        else
+        {
+            if (ask)
+                ans <- ask("Directory #{dirToRemove} already exists. Delete it? [yn]")
+            else
+                ans <- "y"
+            
+            if (tolower(ans) == "y")
+                unlink(dirToRemove, recursive=TRUE)
+        }
+    },
+    
     updateCaches = function ()
     {
         mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")
@@ -340,21 +362,12 @@ createCaminoFilesForSession <- function (session)
     if (!is(session, "MriSession"))
         report(OL$Error, "The specified session is not an MriSession object")
     
-    caminoDir <- session$getDirectory("camino")
-    if (file.exists(caminoDir))
-    {
-        ans <- ask("Internal directory ", caminoDir, " exists. This operation will DESTROY it. Continue? [yn]")
-        if (tolower(ans) != "y")
-            return (invisible(NULL))
-        else
-            unlink(caminoDir, recursive=TRUE)
-    }
+    session$unlinkDirectory("camino", ask=TRUE)
+    caminoDir <- session$getDirectory("camino", createIfMissing=TRUE)
     
     sourceDir <- session$getDirectory("fdt")
     if (!file.exists(file.path(sourceDir,"bvals")) || !file.exists(file.path(sourceDir,"bvecs")) || !imageFileExists(session$getImageFileNameByType("data","diffusion")) || !imageFileExists(session$getImageFileNameByType("mask","diffusion")))
         report(OL$Error, "Some required files are missing - the session must be processed for FSL first")
-    
-    dir.create(caminoDir)
     
     # Having created the Camino directory, reading and writing back the
     # scheme is sufficient to create the Camino file

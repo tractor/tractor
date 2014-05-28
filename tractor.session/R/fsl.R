@@ -152,7 +152,7 @@ runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","scre
     targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
     createFdtFilesForSession(session)
     
-    unlink(session$getDirectory("bedpost"), recursive=TRUE)
+    session$unlinkDirectory("bedpost")
     
     if (how == "screen")
     {

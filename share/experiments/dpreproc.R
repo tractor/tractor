@@ -47,19 +47,9 @@ runExperiment <- function ()
     {
         if (runStages[1] && (!skipCompleted || !stagesComplete[1]))
         {
-            workingDir <- session$getDirectory("diffusion")
-            if (file.exists(workingDir))
-            {
-                if (interactive)
-                {
-                    ans <- ask("Internal directory ", workingDir, " exists. This operation will DESTROY it. Continue? [yn]")
-                    if (tolower(ans) != "y")
-                        return (invisible(NULL))
-                }
-                
-                unlink(workingDir, recursive=TRUE)
-            }
-
+            session$unlinkDirectory("diffusion", ask=interactive)
+            workingDir <- session$getDirectory("diffusion", createIfMissing=TRUE)
+            
             if (is.null(dicomDir))
                 dicomDir <- session$getDirectory()
             else if (dicomDir %!~% "^([A-Za-z]:)?/")
@@ -68,7 +58,6 @@ runExperiment <- function ()
 
             info <- readDicomDirectory(dicomDir, readDiffusionParams=TRUE)
 
-            session$getDirectory("diffusion", createIfMissing=TRUE)
             writeImageFile(info$image, session$getImageFileNameByType("rawdata","diffusion"))
             print(info$image)
 

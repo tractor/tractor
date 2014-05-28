@@ -3,9 +3,6 @@ runFreesurferForSession <- function (session, options = NULL)
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    freesurferDirectory <- session$getDirectory("freesurfer")
-    imagesDirectory <- file.path(freesurferDirectory, "mri", "orig")
-    
     subjectsDirectory <- Sys.getenv("SUBJECTS_DIR")
     if (subjectsDirectory == "")
         report(OL$Error, "Freesurfer does not seem to be fully set up: can't identify subjects directory")
@@ -14,9 +11,9 @@ runFreesurferForSession <- function (session, options = NULL)
     if (nT1wImages == 0)
         report(OL$Error, "No T1-weighted images are currently stored in the session directory")
     
-    if (file.exists(freesurferDirectory))
-        unlink(freesurferDirectory, recursive=TRUE)
-    
+    session$unlinkDirectory("freesurfer")
+    freesurferDirectory <- session$getDirectory("freesurfer", createIfMissing=TRUE)
+    imagesDirectory <- file.path(freesurferDirectory, "mri", "orig")
     dir.create(imagesDirectory, recursive=TRUE)
     
     report(OL$Info, "Reading ", nT1wImages, " T1-weighted image(s) and converting to MGH format")
