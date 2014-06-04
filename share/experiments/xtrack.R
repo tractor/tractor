@@ -77,9 +77,9 @@ runExperiment <- function ()
     
     result <- trackWithSession(session, seedImage, maskName=maskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE, jitter=jitter)
     
-    report(OL$Info, "Removing streamlines which do not reach targets")
-    waypointMask <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% targetMatches, 1, 0))
-    result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, list(waypointMask))
+    # report(OL$Info, "Removing streamlines which do not reach targets")
+    # waypointMask <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% targetMatches, 1, 0))
+    # result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, list(waypointMask))
     
     report(OL$Info, "Writing outputs")
     if (storeStreamlines)
