@@ -46,6 +46,9 @@ runEddyCorrectWithSession <- function (session, refVolume)
     
     targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
     file.rename(file.path(session$getDirectory("diffusion"),"data.ecclog"), file.path(targetDir,"data.ecclog"))
+    
+    transform <- readEddyCorrectTransformsForSession(session)
+    transform$serialise(file.path(session$getDirectory("diffusion"), "coreg_xfm.Rdata"))
 }
 
 readEddyCorrectTransformsForSession <- function (session, index = NULL)
