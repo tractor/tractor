@@ -133,15 +133,15 @@ SEXP track_with_seeds (SEXP seeds, SEXP n_seeds, SEXP mode, SEXP mask_image_name
                 }
                 SET_ELEMENT(return_value, 1, streamline_points);
                 
-                PROTECT(streamline_starts = NEW_INTEGER((R_len_t) nd*ns));
+                PROTECT(streamline_starts = NEW_INTEGER((R_len_t) current_index));
                 int_ptr = INTEGER(streamline_starts);
-                for (j=0; j<(nd*ns); j++)
+                for (j=0; j<(current_index); j++)
                     int_ptr[j] = start_indices[j] + 1;
                 SET_ELEMENT(return_value, 2, streamline_starts);
                 
-                PROTECT(streamline_seeds = NEW_INTEGER((R_len_t) nd*ns));
+                PROTECT(streamline_seeds = NEW_INTEGER((R_len_t) current_index));
                 int_ptr = INTEGER(streamline_seeds);
-                for (j=0; j<(nd*ns); j++)
+                for (j=0; j<(current_index); j++)
                     int_ptr[j] = seed_indices[j] + 1;
                 SET_ELEMENT(return_value, 3, streamline_seeds);
                 
@@ -319,8 +319,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
         {
 			if(terminate_outside_mask && terminatedBeforeTarget){ //terminate and do not store streamline
 				break;
-			}
-				
+			}				
 				
             // Initialise streamline front
             for (i=0; i<3; i++)
@@ -368,8 +367,11 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                 // Stop if outside the mask, possibly deferring termination by one step if required
                 if (mask[vector_loc] != 1)
                 {
-                    if (terminate_outside_mask)
+                    if (terminate_outside_mask){
                         terminate_on_next_step = 1;
+						if(step==0) //the seed point is outside tracking mask
+							terminatedBeforeTarget = 1;
+                    }
                     else
                         break;
                 }
@@ -474,7 +476,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
             }
         }
         
-        if (require_streamlines & !terminatedBeforeTarget )
+        if (require_streamlines & !terminatedBeforeTarget ) //& (left_steps+right_steps>2)
         {
             // The seed will be trimmed from the left points, and must always be present in the right points
             if (left_steps > 0)

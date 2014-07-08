@@ -68,19 +68,22 @@ runExperiment <- function ()
     
     targetMatches <- matchRegions(targetRegions, parcellation)
     report(OL$Info, "Using #{length(targetMatches)} matched target regions")
+
+ 	seedImage <- newMriImageWithBinaryFunction(seedImage, parcellation$image, function(x,y) ifelse(y %in% targetMatches, 0, x))
     
     report(OL$Info, "Creating tracking mask")
-    mask <- session$getImageByType("mask", "diffusion")
-    mask <- newMriImageWithBinaryFunction(mask, parcellation$image, function(x,y) ifelse(y %in% targetMatches, 0, x))
-    maskFileName <- threadSafeTempFile()
+	mask <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% targetMatches, 0, 1))
+    #maskFileName <- threadSafeTempFile()
+	maskFileName <- file.path(session$getDirectory("Diffusion"),"track_mask")
     writeImageFile(mask, maskFileName)
-    
     result <- trackWithSession(session, seedImage, maskName=maskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE, jitter=jitter)
-    
-    # report(OL$Info, "Removing streamlines which do not reach targets")
-    # waypointMask <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% targetMatches, 1, 0))
-    # result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, list(waypointMask))
-    
+    gc()
+	
+    report(OL$Info, "Removing streamlines which do not reach targets")
+    waypointMask <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% targetMatches, 1, 0))
+    result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, list(waypointMask))
+	gc()
+	
     report(OL$Info, "Writing outputs")
     if (storeStreamlines)
         result$streamlines$serialise(paste(tractName,"streamlines",sep="_"))
