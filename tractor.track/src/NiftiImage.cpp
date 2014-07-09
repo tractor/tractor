@@ -1,22 +1,30 @@
-#include "Rcpp.h"
+#include "RcppArmadillo.h"
 #include "nifti1.h"
 
 #include "NiftiImage.h"
 
-template <typename StorageType>
-template <typename FileStorageType> void NiftiImage<StorageType>::copyData ()
-{
-    FileStorageType *original = static_cast<FileStorageType *>(info->data);
-    std::transform(original, original + info->nvox, data, convertValue<FileStorageType>);
-}
-
-template <typename StorageType>
-void NiftiImage<StorageType>::convertData ()
+template <typename DataType>
+template <typename StorageType> void NiftiImage<DataType>::copyData ()
 {
     if (info == NULL)
         return;
     
-    data = new StorageType[info->nvox];
+    StorageType *original = static_cast<StorageType *>(info->data);
+    std::vector<DataType> values(info->nvox);
+    std::transform(original, original + info->nvox, values.begin(), convertValue<StorageType>);
+    
+    std::vector<int> dims(info->ndim);
+    for (int i=0; i<info->ndim; i++)
+        dims[i] = info->dim[i+1];
+    
+    data = Array<DataType>(values, dims);
+}
+
+template <typename DataType>
+void NiftiImage<DataType>::convertData ()
+{
+    if (info == NULL)
+        return;
     
     switch (info->datatype)
     {

@@ -3,14 +3,16 @@
 
 #include "nifti1_io.h"
 
-template <typename StorageType> class NiftiImage
+#include "Array.h"
+
+template <typename DataType> class NiftiImage
 {
 private:
     nifti_image *info;
-    StorageType *data;
+    Array<DataType> *data;
     
-    template <typename FileStorageType> StorageType convertValue (FileStorageType value) { return static_cast<StorageType>(value); }
-    template <typename FileStorageType> void copyData ();
+    template <typename StorageType> DataType convertValue (StorageType value) { return static_cast<DataType>(value); }
+    template <typename StorageType> void copyData ();
     void convertData ();
     
 public:
@@ -18,6 +20,7 @@ public:
     NiftiImage (const std::string &fileName, const bool readData = true)
     {
         info = nifti_image_read(fileName.c_str(), static_cast<int>(readData));
+        
         if (readData)
             convertData();
         else
