@@ -33,18 +33,22 @@ runExperiment <- function ()
         regionLocations <- matrix(NA, nrow=nRegions, ncol=3)    # Physical location of each region's spatial median, in mm
         voxelCount      <- integer(nRegions)                    # Number of voxels
         volume          <- numeric(nRegions)                    # Volume in mm^3
+
+		report(OL$Info, Sys.time() )
         for (i in seq_len(nRegions))
         {
     	    report(OL$Verbose, "Matching region \"#{targetMatches[i]}\"")
             index <- parcellation$regions$index[which(parcellation$regions$label == targetMatches[i])]
             regionImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x==index,1,0))
-            matchingIndices[[i]] <- findWaypointHits(streamlines, list(regionImage))
+            matchingIndices[[i]] <- findWaypointHits(streamlines, list(regionImage), flag_matchEndPnts=TRUE )
     		regionLocations[i,] <- apply(regionImage$getNonzeroIndices(array=TRUE), 2, median)
     		regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
             voxelCount[i] <- length(regionImage$getNonzeroIndices(array=FALSE))
             volume[i] <- voxelCount[i] * abs(prod(regionImage$getVoxelDimensions()))
+			gc()
         }
         
+		
         fa <- session$getImageByType("FA", "diffusion")
         md <- session$getImageByType("MD", "diffusion")
         
@@ -59,6 +63,7 @@ runExperiment <- function ()
         uniqueVoxels     <- numeric(0)                      # Number of unique voxels visited
         voxelVisits      <- numeric(0)                      # Number of voxel visits across all streamlines
     	
+		report(OL$Info, Sys.time() )
         for (i in seq_len(nRegions))
         {
             for (j in seq_len(ifelse(selfConnections,i,i-1)))
@@ -85,7 +90,8 @@ runExperiment <- function ()
                 voxelVisits <- c(voxelVisits, sum(visitationMap[visitedLocations],na.rm=TRUE))
             }
         }
-        
+        report(OL$Info, Sys.time() )
+		
         report(OL$Info, "Creating and writing graph")
         graph <- asGraph(edgeList, edgeList=TRUE, directed=FALSE, selfConnections=selfConnections, allVertexNames=targetMatches)
         graph$setVertexAttributes(voxelCount=voxelCount, volume=volume)
