@@ -76,7 +76,7 @@ Neighbourhood Array<DataType>::getNeighbourhood (const std::vector<int> &widths)
 template <typename DataType>
 void Array<DataType>::flattenIndex (const std::vector<int> &loc, long &result) const
 {
-    // Dimensionalities 1-3 are most common so treat them as special cases for speed
+    // Dimensionalities 1-4 are most common so treat them as special cases for speed
     switch (nDims)
     {
         case 1:
@@ -84,12 +84,15 @@ void Array<DataType>::flattenIndex (const std::vector<int> &loc, long &result) c
         break;
         
         case 2:
-        result = loc[0] + loc[1] * dims[0];
+        result = loc[0] + dims[0] * loc[1];
         break;
         
         case 3:
-        result = loc[0] + loc[1] * dims[0] + loc[2] * dims[0] * dims[1];
+        result = loc[0] + dims[0] * (loc[1] + dims[1] * loc[2]);
         break;
+        
+        case 4:
+        result = loc[0] + dims[0] * (loc[1] + dims[1] * (loc[2] + dims[2] * loc[3]));
         
         default:
         {
