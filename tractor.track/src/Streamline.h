@@ -1,7 +1,7 @@
 #ifndef _STREAMLINE_H_
 #define _STREAMLINE_H_
 
-typedef arma::fvec::fixed<3> Point;
+#include "Space.h"
 
 class Streamline
 {
@@ -12,7 +12,7 @@ private:
     // A list of points along the streamline; the path is considered
     // piecewise linear in between. Not a matrix since size isn't known
     // in advance. 
-    std::vector<Point> points;
+    std::vector<Space<3>::Point> points;
     
     // The index (row number) of the seed point for the streamline
     int seed;
@@ -30,7 +30,7 @@ private:
     
 public:
     Streamline () {}
-    Streamline (const std::vector<Point> &points, const int seed, const Streamline::PointType pointType, const bool fixedSpacing)
+    Streamline (const std::vector<Space<3>::Point> &points, const int seed, const Streamline::PointType pointType, const bool fixedSpacing)
         : points(points), seed(seed), pointType(pointType), fixedSpacing(fixedSpacing) {}
     
     int nPoints () const { return static_cast<int>(points.size()); }
