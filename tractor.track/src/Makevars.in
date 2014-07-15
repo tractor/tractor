@@ -4,6 +4,5 @@ OLD_OBJECTS = r_utils.o vector.o track.o waypoint.o
 
 OBJECTS = $(LIB_OBJECTS) $(OLD_OBJECTS) main.o Array.o NiftiImage.o DiffusionDataSource.o
 
-PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
-PKG_CPPFLAGS = @CPPFLAGS@ -Iniftilib -Iznzlib
-PKG_LIBS = @LIBS@
+PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) @LIBS@
+PKG_CPPFLAGS = -Iniftilib -Iznzlib @CPPFLAGS@
