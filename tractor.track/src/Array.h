@@ -13,7 +13,7 @@ struct Neighbourhood
 
 template <typename DataType> class Array
 {
-private:
+protected:
     std::vector<DataType> data;
     std::vector<int> dims;
     int nDims;
@@ -27,13 +27,22 @@ public:
         nDims = dims.size();
     }
     
-    const DataType & at (long n) const { return data[n]; }
+    const bool empty () const { return (data.size() == 0); }
+    
+    const DataType & at (const long n) const { return data[n]; }
+    
+    const DataType & at (const std::vector<int> &loc) const
+    {
+        long n;
+        flattenIndex(loc, n);
+        return at(n);
+    }
     
     long size () const { return data.size(); }
     
-    const std::vector<int> & getDims () const { return dims; }
+    const std::vector<int> & getDimensions () const { return dims; }
     
-    int getNDims () const { return nDims; }
+    int getDimensionality () const { return nDims; }
     
     Neighbourhood getNeighbourhood () const;
     
