@@ -2,6 +2,10 @@
 
 #include "Array.h"
 
+// Tell the compiler that we're going to need this specialisation (otherwise
+// it won't generate the relevant code and we'll get a linker error)
+template class Array<float>;
+
 template <typename DataType>
 Neighbourhood Array<DataType>::getNeighbourhood () const
 {
