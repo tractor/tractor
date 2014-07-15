@@ -46,7 +46,7 @@ install-nt:
 	@$(INSTALL) tractor.nt
 
 install-track:
-	@$(INSTALL) tractor.track
+	@$(INSTALL) lib/Rcpp lib/RcppArmadillo tractor.track
 
 install-graph:
 	@$(INSTALL) -k lib/igraph
@@ -69,7 +69,7 @@ uninstall-local:
 	@rm -rf lib/R
 
 uninstall-all: uninstall
-	$(R) CMD REMOVE RNiftyReg oro.nifti bitops multicore mmand reportr
+	$(R) CMD REMOVE Rcpp RcppArmadillo RNiftyReg oro.nifti bitops multicore mmand reportr
 
 clean:
 	@cd tests && $(MAKE) clean
