@@ -4,7 +4,7 @@
 #include "NiftiImage.h"
 
 template <typename DataType>
-template <typename StorageType> void NiftiImage<DataType>::copyData ()
+template <typename StorageType> void NiftiImage<DataType>::moveData ()
 {
     if (info == NULL)
         return;
@@ -13,11 +13,8 @@ template <typename StorageType> void NiftiImage<DataType>::copyData ()
     std::vector<DataType> values(info->nvox);
     std::transform(original, original + info->nvox, values.begin(), convertValue<StorageType>);
     
-    std::vector<int> dims(info->ndim);
-    for (int i=0; i<info->ndim; i++)
-        dims[i] = info->dim[i+1];
-    
     data = Array<DataType>(values, dims);
+    nifti_image_unload(info);
 }
 
 template <typename DataType>
@@ -29,43 +26,43 @@ void NiftiImage<DataType>::convertData ()
     switch (info->datatype)
     {
         case NIFTI_TYPE_UINT8:
-        copyData<uint8_t>();
+        moveData<uint8_t>();
         break;
         
         case NIFTI_TYPE_INT16:
-        copyData<int16_t>();
+        moveData<int16_t>();
         break;
         
         case NIFTI_TYPE_INT32:
-        copyData<int32_t>();
+        moveData<int32_t>();
         break;
         
         case NIFTI_TYPE_FLOAT32:
-        copyData<float>();
+        moveData<float>();
         break;
         
         case NIFTI_TYPE_FLOAT64:
-        copyData<double>();
+        moveData<double>();
         break;
         
         case NIFTI_TYPE_INT8:
-        copyData<int8_t>();
+        moveData<int8_t>();
         break;
         
         case NIFTI_TYPE_UINT16:
-        copyData<uint16_t>();
+        moveData<uint16_t>();
         break;
         
         case NIFTI_TYPE_UINT32:
-        copyData<uint32_t>();
+        moveData<uint32_t>();
         break;
         
         case NIFTI_TYPE_INT64:
-        copyData<int64_t>();
+        moveData<int64_t>();
         break;
         
         case NIFTI_TYPE_UINT64:
-        copyData<uint64_t>();
+        moveData<uint64_t>();
         break;
         
         default:
