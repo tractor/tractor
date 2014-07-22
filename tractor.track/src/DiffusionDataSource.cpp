@@ -24,7 +24,7 @@ void BedpostDataSource::sampleDirection (const Space<3>::Point &point, const Spa
     }
     
     // Randomly choose a sample number
-    newPoint[3] = (int) roundf(R::unif_rand() * (imageDims[3]-1));
+    newPoint[3] = (int) roundf(R::unif_rand() * (nSamples-1));
     
     // NB: Currently assuming always at least one anisotropic compartment
     int closestIndex = 0;
