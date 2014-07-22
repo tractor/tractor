@@ -1,4 +1,4 @@
-#include "RcppArmadillo.h"
+#include <RcppArmadillo.h>
 
 #include "Space.h"
 #include "DiffusionDataSource.h"

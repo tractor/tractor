@@ -1,7 +1,7 @@
 #ifndef _SPACE_H_
 #define _SPACE_H_
 
-#include "RcppArmadillo.h"
+#include <RcppArmadillo.h>
 
 template <int Dimensionality, typename DataType = float> class Space
 {

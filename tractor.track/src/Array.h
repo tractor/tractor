@@ -1,7 +1,7 @@
 #ifndef _ARRAY_H_
 #define _ARRAY_H_
 
-#include "RcppArmadillo.h"
+#include <RcppArmadillo.h>
 
 struct Neighbourhood
 {

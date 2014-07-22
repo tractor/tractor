@@ -1,4 +1,4 @@
-#include "RcppArmadillo.h"
+#include <RcppArmadillo.h>
 #include "nifti1.h"
 
 #include "NiftiImage.h"
