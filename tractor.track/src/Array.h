@@ -5,10 +5,10 @@
 
 struct Neighbourhood
 {
-    long size;
+    size_t size;
     std::vector<int> widths;
     arma::Mat<int> locs;
-    std::vector<long> offsets;
+    std::vector<ptrdiff_t> offsets;
 };
 
 template <typename DataType> class Array
@@ -29,16 +29,16 @@ public:
     
     const bool empty () const { return (data.size() == 0); }
     
-    const DataType & at (const long n) const { return data[n]; }
+    const DataType & at (const size_t n) const { return data[n]; }
     
     const DataType & at (const std::vector<int> &loc) const
     {
-        long n;
+        size_t n;
         flattenIndex(loc, n);
         return at(n);
     }
     
-    long size () const { return data.size(); }
+    size_t size () const { return data.size(); }
     
     const std::vector<int> & getDimensions () const { return dims; }
     
@@ -50,9 +50,9 @@ public:
     
     Neighbourhood getNeighbourhood (const std::vector<int> &widths) const;
     
-    void flattenIndex (const std::vector<int> &loc, long &result) const;
+    void flattenIndex (const std::vector<int> &loc, size_t &result) const;
     
-    void expandIndex (const long &loc, std::vector<int> &result) const;
+    void expandIndex (const size_t &loc, std::vector<int> &result) const;
 };
 
 #endif

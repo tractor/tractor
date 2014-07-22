@@ -36,7 +36,7 @@ Neighbourhood Array<DataType>::getNeighbourhood (const std::vector<int> &widths)
     }
     
     neighbourhood.size = 1;
-    std::vector<long> steps(nDims+1);
+    std::vector<size_t> steps(nDims+1);
     steps[0] = 1;
     for (int i=0; i<nDims; i++)
     {
@@ -45,7 +45,7 @@ Neighbourhood Array<DataType>::getNeighbourhood (const std::vector<int> &widths)
     }
     
     neighbourhood.locs = arma::Mat<int>(neighbourhood.size, nDims);
-    neighbourhood.offsets = std::vector<long>(neighbourhood.size);
+    neighbourhood.offsets = std::vector<ptrdiff_t>(neighbourhood.size);
     
     for (int j=0; j<neighbourhood.size; j++)
     {
@@ -78,7 +78,7 @@ Neighbourhood Array<DataType>::getNeighbourhood (const std::vector<int> &widths)
 }
 
 template <typename DataType>
-void Array<DataType>::flattenIndex (const std::vector<int> &loc, long &result) const
+void Array<DataType>::flattenIndex (const std::vector<int> &loc, size_t &result) const
 {
     // Dimensionalities 1-4 are most common so treat them as special cases for speed
     switch (nDims)
@@ -100,7 +100,7 @@ void Array<DataType>::flattenIndex (const std::vector<int> &loc, long &result) c
         
         default:
         {
-            long temp;
+            size_t temp;
             result = loc[0];
             
             for (int i=1; i<nDims; i++)
@@ -115,9 +115,9 @@ void Array<DataType>::flattenIndex (const std::vector<int> &loc, long &result) c
 }
 
 template <typename DataType>
-void Array<DataType>::expandIndex (const long &loc, std::vector<int> &result) const
+void Array<DataType>::expandIndex (const size_t &loc, std::vector<int> &result) const
 {
-    long temp;
+    size_t temp;
     result[0] = loc % dims[0];
     
     for (int i=1; i<nDims; i++)
