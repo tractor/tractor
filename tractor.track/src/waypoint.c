@@ -27,7 +27,7 @@ SEXP find_waypoint_hits (SEXP points, SEXP n_points, SEXP start_indices, SEXP le
     {
         // Find streamlines that pass through the current mask
         current_mask_points = VECTOR_ELT(mask_points, i);
-		if( INTEGER(flag_matchEndPnts) )
+		if( *INTEGER(flag_matchEndPnts) )
 			match_end_points(INTEGER(points), *INTEGER(n_points), zero_based_start_indices, INTEGER(lengths), *INTEGER(n_starts), INTEGER(current_mask_points), INTEGER(n_mask_points)[i], INTEGER(exclusion)[i], 3, match);			
 		else
 			match_points(INTEGER(points), *INTEGER(n_points), zero_based_start_indices, INTEGER(lengths), *INTEGER(n_starts), INTEGER(current_mask_points), INTEGER(n_mask_points)[i], INTEGER(exclusion)[i], 3, match);
