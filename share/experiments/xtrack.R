@@ -76,14 +76,13 @@ runExperiment <- function ()
     #maskFileName <- threadSafeTempFile()
 	maskFileName <- file.path(session$getDirectory("Diffusion"),"track_mask")
     writeImageFile(mask, maskFileName)
+    
     result <- trackWithSession(session, seedImage, maskName=maskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE, jitter=jitter)
-    gc()
-	
+    
     report(OL$Info, "Removing streamlines which do not reach targets")
     waypointMask <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% targetMatches, 1, 0))
     result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, list(waypointMask))
-	gc()
-	
+    
     report(OL$Info, "Writing outputs")
     if (storeStreamlines)
         result$streamlines$serialise(paste(tractName,"streamlines",sep="_"))
