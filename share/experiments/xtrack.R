@@ -22,6 +22,7 @@ runExperiment <- function ()
     createVolumes <- getConfigVariable("CreateVolumes", FALSE)
     createImages <- getConfigVariable("CreateImages", FALSE)
     storeStreamlines <- getConfigVariable("StoreStreamlines", TRUE)
+    storeTrackingMask <- getConfigVariable("StoreTrackingMask", FALSE)
     vizThreshold <- getConfigVariable("VisualisationThreshold", 0.01)
     
     if (!createVolumes && !createImages && !storeStreamlines)
@@ -68,20 +69,20 @@ runExperiment <- function ()
     
     targetMatches <- matchRegions(targetRegions, parcellation)
     report(OL$Info, "Using #{length(targetMatches)} matched target regions")
-
- 	seedImage <- newMriImageWithBinaryFunction(seedImage, parcellation$image, function(x,y) ifelse(y %in% targetMatches, 0, x))
     
     report(OL$Info, "Creating tracking mask")
-	mask <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% targetMatches, 0, 1))
-    #maskFileName <- threadSafeTempFile()
-	maskFileName <- file.path(session$getDirectory("Diffusion"),"track_mask")
+    mask <- session$getImageByType("mask", "diffusion")
+    mask <- newMriImageWithBinaryFunction(mask, parcellation$image, function(x,y) ifelse(y %in% targetMatches, 0, x))
+    if (storeTrackingMask)
+        maskFileName <- paste(tractName, "tracking_mask", sep="_")
+    else
+        maskFileName <- threadSafeTempFile()
     writeImageFile(mask, maskFileName)
     
-    result <- trackWithSession(session, seedImage, maskName=maskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE, jitter=jitter)
+    # There's no point in seeding outside the tracking mask
+    seedImage <- seedImage * mask
     
-    report(OL$Info, "Removing streamlines which do not reach targets")
-    waypointMask <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% targetMatches, 1, 0))
-    result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, list(waypointMask))
+    result <- trackWithSession(session, seedImage, maskName=maskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE, mustLeaveMask=TRUE, jitter=jitter)
     
     report(OL$Info, "Writing outputs")
     if (storeStreamlines)
