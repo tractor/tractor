@@ -38,7 +38,7 @@ runExperiment <- function ()
     	    report(OL$Verbose, "Matching region \"#{targetMatches[i]}\"")
             index <- parcellation$regions$index[which(parcellation$regions$label == targetMatches[i])]
             regionImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x==index,1,0))
-            matchingIndices[[i]] <- findWaypointHits(streamlines, list(regionImage), flag_matchEndPnts=TRUE )
+            matchingIndices[[i]] <- findWaypointHits(streamlines, list(regionImage), endPointsOnly=TRUE)
     		regionLocations[i,] <- apply(regionImage$getNonzeroIndices(array=TRUE), 2, median)
     		regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
             voxelCount[i] <- length(regionImage$getNonzeroIndices(array=FALSE))
