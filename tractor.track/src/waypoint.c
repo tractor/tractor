@@ -135,6 +135,9 @@ int end_points_intersect (const int *points, const int n_points, const int start
             if (match)
                 return 1;
         }
+        
+        if (length <= 1)
+            break;
     }
     
     return 0;
