@@ -52,6 +52,7 @@ runExperiment <- function ()
         sumOfTargetMasks <- Reduce("+", targetMasks)
         brainMask <- session$getImageByType("mask", "diffusion")
         trackingMask <- newMriImageWithBinaryFunction(brainMask, sumOfTargetMasks, function(x,y) ifelse(x>0 & y==0, 1, 0))
+        trackingMask <- newMriImageWithBinaryFunction(trackingMask, seedMask, function(x,y) ifelse(y>0, 0, x))
         trackingMaskFileName <- threadSafeTempFile()
         writeImageFile(trackingMask, trackingMaskFileName)
     }
@@ -60,7 +61,7 @@ runExperiment <- function ()
     for (i in 1:nrow(seeds))
     {
         if (terminateAtTarget)
-            result <- trackWithSession(session, seeds[i,], maskName=trackingMaskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE)
+            result <- trackWithSession(session, seeds[i,], maskName=trackingMaskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE, mustLeaveMask=TRUE)
         else
             result <- trackWithSession(session, seeds[i,], nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE)
         for (j in 1:length(targetNames))
