@@ -36,7 +36,7 @@ void clean_up_streamlines ()
         Free(right_points);
 }
 
-SEXP track_with_seeds (SEXP seeds, SEXP n_seeds, SEXP mode, SEXP mask_image_name, SEXP parameter_image_names, SEXP n_compartments, SEXP n_samples, SEXP max_steps, SEXP step_length, SEXP volfrac_threshold, SEXP curvature_threshold, SEXP use_loopcheck, SEXP rightwards_vector, SEXP require_visitation_map, SEXP require_streamlines, SEXP terminate_outside_mask)
+SEXP track_with_seeds (SEXP seeds, SEXP n_seeds, SEXP mode, SEXP mask_image_name, SEXP parameter_image_names, SEXP n_compartments, SEXP n_samples, SEXP max_steps, SEXP step_length, SEXP volfrac_threshold, SEXP curvature_threshold, SEXP use_loopcheck, SEXP rightwards_vector, SEXP require_visitation_map, SEXP require_streamlines, SEXP terminate_outside_mask, SEXP must_leave_mask)
 {
     unsigned char *mask = NULL;
     int image_dims[4];
@@ -107,7 +107,7 @@ SEXP track_with_seeds (SEXP seeds, SEXP n_seeds, SEXP mode, SEXP mask_image_name
                 for (i=0; i<3; i++)
                     zero_based_seed[i] = REAL(seeds)[j+nd*i] - 1.0;
                 
-                track_fdt(zero_based_seed, image_dims, voxel_dims, mask, (const float **) avf, (const float **) theta, (const float **) phi, nc, ns, *INTEGER(max_steps), *REAL(step_length), *REAL(volfrac_threshold), *REAL(curvature_threshold), (int) *LOGICAL(use_loopcheck), rv, (int) *LOGICAL(require_visitation_map), (int) *LOGICAL(require_streamlines), (int) *LOGICAL(terminate_outside_mask), visitation_counts);
+                track_fdt(zero_based_seed, image_dims, voxel_dims, mask, (const float **) avf, (const float **) theta, (const float **) phi, nc, ns, *INTEGER(max_steps), *REAL(step_length), *REAL(volfrac_threshold), *REAL(curvature_threshold), (int) *LOGICAL(use_loopcheck), rv, (int) *LOGICAL(require_visitation_map), (int) *LOGICAL(require_streamlines), (int) *LOGICAL(terminate_outside_mask), *LOGICAL(must_leave_mask), visitation_counts);
             }
             
             PROTECT(return_value = NEW_LIST((R_len_t) elements_to_return));
@@ -133,15 +133,15 @@ SEXP track_with_seeds (SEXP seeds, SEXP n_seeds, SEXP mode, SEXP mask_image_name
                 }
                 SET_ELEMENT(return_value, 1, streamline_points);
                 
-                PROTECT(streamline_starts = NEW_INTEGER((R_len_t) nd*ns));
+                PROTECT(streamline_starts = NEW_INTEGER((R_len_t) current_index));
                 int_ptr = INTEGER(streamline_starts);
-                for (j=0; j<(nd*ns); j++)
+                for (j=0; j<(current_index); j++)
                     int_ptr[j] = start_indices[j] + 1;
                 SET_ELEMENT(return_value, 2, streamline_starts);
                 
-                PROTECT(streamline_seeds = NEW_INTEGER((R_len_t) nd*ns));
+                PROTECT(streamline_seeds = NEW_INTEGER((R_len_t) current_index));
                 int_ptr = INTEGER(streamline_seeds);
-                for (j=0; j<(nd*ns); j++)
+                for (j=0; j<(current_index); j++)
                     int_ptr[j] = seed_indices[j] + 1;
                 SET_ELEMENT(return_value, 3, streamline_seeds);
                 
@@ -228,9 +228,9 @@ float * read_parameter_image (const char *parameter_image_name, size_t *len)
     return buffer;
 }
 
-void track_fdt (const double *seed, const int *image_dims, const double *voxel_dims, const unsigned char *mask, const float **avf, const float **theta, const float **phi, const int n_compartments, const int n_samples, const int max_steps, const double step_length, const double avf_threshold, const double curvature_threshold, const int use_loopcheck, const double *rightwards_vector, const int require_visitation_map, const int require_streamlines, const int terminate_outside_mask, int *visitation_counts)
+void track_fdt (const double *seed, const int *image_dims, const double *voxel_dims, const unsigned char *mask, const float **avf, const float **theta, const float **phi, const int n_compartments, const int n_samples, const int max_steps, const double step_length, const double avf_threshold, const double curvature_threshold, const int use_loopcheck, const double *rightwards_vector, const int require_visitation_map, const int require_streamlines, const int terminate_outside_mask, const int must_leave_mask, int *visitation_counts)
 {
-    int i, j, starting, dir, sample, step, left_steps, right_steps, max_steps_per_dir, this_point, terminate_on_next_step;
+    int i, j, starting, dir, sample, step, left_steps, right_steps, max_steps_per_dir, this_point, terminate_on_next_step, times_left_mask, left_mask, previously_inside_mask;
     int loopcheck_dims[4], points_dims[2], rounded_loc[3], loopcheck_loc[4], points_loc[2];
     size_t k, dim_prod, loopcheck_dim_prod, vector_loc;
     float theta_sample, phi_sample;
@@ -313,6 +313,8 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
         for (k=0; k<dim_prod; k++)
             visited[k] = 0;
         
+        times_left_mask = 0;
+        
         // We go right first (dir=0), then left (dir=1)
         for (dir=0; dir<2; dir++)
         {
@@ -339,6 +341,8 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                     loopcheck[k] = 0.0;
             }
             
+            left_mask = 0;
+            previously_inside_mask = -1;
             terminate_on_next_step = 0;
             
             // Run the tracking
@@ -356,14 +360,21 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                 // Index for current location
                 vector_loc = get_vector_loc(rounded_loc, image_dims, 3);
                 
-                // Stop if outside the mask, possibly deferring termination by one step if required
-                if (mask[vector_loc] != 1)
+                if (starting && mask[vector_loc] == 0)
+                    times_left_mask++;
+                
+                // Stop if we've stepped outside the mask, possibly deferring termination if required
+                if (mask[vector_loc] == 0 && previously_inside_mask == 1)
                 {
+                    left_mask = 1;
+                    times_left_mask++;
+                    
                     if (terminate_outside_mask)
                         terminate_on_next_step = 1;
                     else
                         break;
                 }
+                previously_inside_mask = (mask[vector_loc] == 0 ? 0 : 1);
                 
                 // Mark visit
                 if (!visited[vector_loc])
@@ -453,13 +464,13 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
             if (require_streamlines)
             {
                 if (dir == 1)
-                    left_steps = step;
+                    left_steps = (must_leave_mask && !left_mask) ? 0 : step;
                 else
-                    right_steps = step;
+                    right_steps = (must_leave_mask && !left_mask) ? 0 : step;
             }
         }
         
-        if (require_streamlines)
+        if (require_streamlines && (left_steps > 0 || right_steps > 0) && (!must_leave_mask || times_left_mask > 1))
         {
             // The seed will be trimmed from the left points, and must always be present in the right points
             if (left_steps > 0)

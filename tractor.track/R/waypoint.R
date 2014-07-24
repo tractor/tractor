@@ -15,7 +15,7 @@ newStreamlineCollectionTractWithWaypointConstraints <- function (tract, waypoint
         invisible(NULL)
 }
 
-findWaypointHits <- function (tract, waypoints, exclusion = FALSE)
+findWaypointHits <- function (tract, waypoints, exclusion = FALSE, endPointsOnly = FALSE)
 {
     if (!is(tract, "StreamlineCollectionTract"))
         report(OL$Error, "The specified tract is not a StreamlineCollectionTract object")
@@ -34,7 +34,7 @@ findWaypointHits <- function (tract, waypoints, exclusion = FALSE)
     nMaskPoints <- sapply(maskPoints, nrow)
     
     lengths <- tract$getEndIndices() - tract$getStartIndices() + 1
-    matchingIndices <- .Call("find_waypoint_hits", as.integer(round(tract$getPoints())), as.integer(tract$nPoints()), as.integer(tract$getStartIndices()), as.integer(lengths), as.integer(tract$nStreamlines()), maskPoints, as.integer(length(maskPoints)), as.integer(nMaskPoints), as.integer(exclusion), PACKAGE="tractor.track")
+    matchingIndices <- .Call("find_waypoint_hits", as.integer(round(tract$getPoints())), as.integer(tract$nPoints()), as.integer(tract$getStartIndices()), as.integer(lengths), as.integer(tract$nStreamlines()), maskPoints, as.integer(length(maskPoints)), as.integer(nMaskPoints), as.integer(exclusion), as.integer(endPointsOnly), PACKAGE="tractor.track")
     
     return (matchingIndices)
 }

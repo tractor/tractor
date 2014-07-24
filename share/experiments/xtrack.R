@@ -22,6 +22,7 @@ runExperiment <- function ()
     createVolumes <- getConfigVariable("CreateVolumes", FALSE)
     createImages <- getConfigVariable("CreateImages", FALSE)
     storeStreamlines <- getConfigVariable("StoreStreamlines", TRUE)
+    storeTrackingMask <- getConfigVariable("StoreTrackingMask", FALSE)
     vizThreshold <- getConfigVariable("VisualisationThreshold", 0.01)
     
     if (!createVolumes && !createImages && !storeStreamlines)
@@ -72,14 +73,13 @@ runExperiment <- function ()
     report(OL$Info, "Creating tracking mask")
     mask <- session$getImageByType("mask", "diffusion")
     mask <- newMriImageWithBinaryFunction(mask, parcellation$image, function(x,y) ifelse(y %in% targetMatches, 0, x))
-    maskFileName <- threadSafeTempFile()
+    if (storeTrackingMask)
+        maskFileName <- paste(tractName, "tracking_mask", sep="_")
+    else
+        maskFileName <- threadSafeTempFile()
     writeImageFile(mask, maskFileName)
     
-    result <- trackWithSession(session, seedImage, maskName=maskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE, jitter=jitter)
-    
-    report(OL$Info, "Removing streamlines which do not reach targets")
-    waypointMask <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% targetMatches, 1, 0))
-    result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, list(waypointMask))
+    result <- trackWithSession(session, seedImage, maskName=maskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE, mustLeaveMask=TRUE, jitter=jitter)
     
     report(OL$Info, "Writing outputs")
     if (storeStreamlines)
