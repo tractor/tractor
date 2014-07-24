@@ -230,7 +230,7 @@ float * read_parameter_image (const char *parameter_image_name, size_t *len)
 
 void track_fdt (const double *seed, const int *image_dims, const double *voxel_dims, const unsigned char *mask, const float **avf, const float **theta, const float **phi, const int n_compartments, const int n_samples, const int max_steps, const double step_length, const double avf_threshold, const double curvature_threshold, const int use_loopcheck, const double *rightwards_vector, const int require_visitation_map, const int require_streamlines, const int terminate_outside_mask, const int must_leave_mask, int *visitation_counts)
 {
-    int i, j, starting, dir, sample, step, left_steps, right_steps, max_steps_per_dir, this_point, terminate_on_next_step, terminatedBeforeTarget;
+    int i, j, starting, dir, sample, step, left_steps, right_steps, max_steps_per_dir, this_point, terminate_on_next_step, times_left_mask, left_mask, previously_inside_mask;
     int loopcheck_dims[4], points_dims[2], rounded_loc[3], loopcheck_loc[4], points_loc[2];
     size_t k, dim_prod, loopcheck_dim_prod, vector_loc;
     float theta_sample, phi_sample;
@@ -313,8 +313,9 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
         for (k=0; k<dim_prod; k++)
             visited[k] = 0;
         
+        times_left_mask = 0;
+        
         // We go right first (dir=0), then left (dir=1)
-		terminatedBeforeTarget = 0;
         for (dir=0; dir<2; dir++)
         {
             // Initialise streamline front
@@ -340,6 +341,8 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                     loopcheck[k] = 0.0;
             }
             
+            left_mask = 0;
+            previously_inside_mask = -1;
             terminate_on_next_step = 0;
             
             // Run the tracking
@@ -351,26 +354,27 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                 // Check that the current step location is in bounds
                 for (i=0; i<3; i++)
                     rounded_loc[i] = (int) round(loc[i]);
-                if (loc_in_bounds(rounded_loc, image_dims, 3) == 0){
-                	if( must_leave_mask )
-						terminatedBeforeTarget = 1;
-					break;
-                }
+                if (loc_in_bounds(rounded_loc, image_dims, 3) == 0)
+                    break;
                 
                 // Index for current location
                 vector_loc = get_vector_loc(rounded_loc, image_dims, 3);
                 
-                // Stop if outside the mask, possibly deferring termination by one step if required
-                if (mask[vector_loc] != 1)
+                if (starting && mask[vector_loc] == 0)
+                    times_left_mask++;
+                
+                // Stop if we've stepped outside the mask, possibly deferring termination if required
+                if (mask[vector_loc] == 0 && previously_inside_mask == 1)
                 {
-                    if (terminate_outside_mask){
+                    left_mask = 1;
+                    times_left_mask++;
+                    
+                    if (terminate_outside_mask)
                         terminate_on_next_step = 1;
-						if(step==0 && must_leave_mask) //the seed point is outside tracking mask
-							terminatedBeforeTarget = 1;
-                    }
                     else
                         break;
                 }
+                previously_inside_mask = (mask[vector_loc] == 0 ? 0 : 1);
                 
                 // Mark visit
                 if (!visited[vector_loc])
@@ -415,11 +419,8 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                         old_step[i] = index_double_array(loopcheck, loopcheck_loc, loopcheck_dims, 4);
                     }
                     
-                    if (inner_product(old_step, prev_step, 3) < 0){
-	                	if( must_leave_mask )
-							terminatedBeforeTarget = 1;
+                    if (inner_product(old_step, prev_step, 3) < 0)
                         break;
-                    }
                     
                     for (i=0; i<3; i++)
                     {
@@ -438,11 +439,8 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
                 else
                 {
                     inner_prod = inner_product(prev_step, current_step, 3);
-                    if (fabs(inner_prod) < curvature_threshold){
-	                	if( must_leave_mask )
-							terminatedBeforeTarget = 1;
+                    if (fabs(inner_prod) < curvature_threshold)
                         break;
-                    }
                     sign = (inner_prod > 0) ? 1.0 : -1.0;
                 }
                 
@@ -466,13 +464,13 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
             if (require_streamlines)
             {
                 if (dir == 1)
-                    left_steps = step;
+                    left_steps = (must_leave_mask && !left_mask) ? 0 : step;
                 else
-                    right_steps = step;
+                    right_steps = (must_leave_mask && !left_mask) ? 0 : step;
             }
         }
         
-        if (require_streamlines && !terminatedBeforeTarget ) //& (left_steps+right_steps>2)
+        if (require_streamlines && (left_steps > 0 || right_steps > 0) && (!must_leave_mask || times_left_mask > 1))
         {
             // The seed will be trimmed from the left points, and must always be present in the right points
             if (left_steps > 0)
