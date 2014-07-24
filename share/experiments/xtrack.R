@@ -79,9 +79,6 @@ runExperiment <- function ()
         maskFileName <- threadSafeTempFile()
     writeImageFile(mask, maskFileName)
     
-    # There's no point in seeding outside the tracking mask
-    seedImage <- seedImage * mask
-    
     result <- trackWithSession(session, seedImage, maskName=maskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE, mustLeaveMask=TRUE, jitter=jitter)
     
     report(OL$Info, "Writing outputs")
