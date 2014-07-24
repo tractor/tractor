@@ -137,6 +137,9 @@ StreamlineCollectionTract <- setRefClass("StreamlineCollectionTract", contains="
     getStepLength = function ()
     {
         lengths <- .self$getEndIndices() - .self$getStartIndices()
+        if (all(lengths <= 1))
+            return (NA)
+        
         index <- which(lengths > 1)[1]
         step <- diff(.self$getPoints(index))[1,]
         if (.self$getCoordinateUnit() == "mm")
