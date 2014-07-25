@@ -18,6 +18,7 @@ runExperiment <- function ()
     exclusionMasksInStandardSpace <- getConfigVariable("ExclusionMasksInStandardSpace", FALSE)
     terminationMaskFiles <- getConfigVariable("TerminationMaskFiles", NULL, "character", errorIfInvalid=TRUE)
     terminationMasksInStandardSpace <- getConfigVariable("TerminationMasksInStandardSpace", FALSE)
+    truncateUnterminated <- getConfigVariable("TruncateUnterminated", FALSE)
     tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL)
@@ -93,6 +94,8 @@ runExperiment <- function ()
             if (terminationMasksInStandardSpace)
                 terminationMask <- transformImageToSpace(terminationMask, session, "diffusion", oldSpace="mni")
             trackingMask <- newMriImageWithBinaryFunction(trackingMask, terminationMask, function(x,y) ifelse(x>0 & y==0, 1, 0))
+            if (truncateUnterminated)
+                trackingMask <- newMriImageWithBinaryFunction(trackingMask, seedMask, function(x,y) ifelse(y>0, 0, x))
         }
         
         trackingMaskFileName <- threadSafeTempFile()
@@ -111,7 +114,7 @@ runExperiment <- function ()
     else
     {
         require(tractor.track)
-        result <- trackWithSession(session, seedMask, maskName=trackingMaskFileName, requireImage=is.null(waypointMasks), requireStreamlines=(storeStreamlines || !is.null(waypointMasks)), nSamples=nSamples, terminateOutsideMask=terminateOutsideMask, jitter=jitter)
+        result <- trackWithSession(session, seedMask, maskName=trackingMaskFileName, requireImage=is.null(waypointMasks), requireStreamlines=(storeStreamlines || !is.null(waypointMasks)), nSamples=nSamples, terminateOutsideMask=terminateOutsideMask, mustLeaveMask=truncateUnterminated, jitter=jitter)
         if (!is.null(waypointMasks))
         {
             result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks, exclusion)
