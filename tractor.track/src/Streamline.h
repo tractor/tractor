@@ -12,7 +12,8 @@ private:
     // A list of points along the streamline; the path is considered
     // piecewise linear in between. Not a matrix since size isn't known
     // in advance. 
-    std::vector<Space<3>::Point> points;
+    std::vector<Space<3>::Point> leftPoints;
+    std::vector<Space<3>::Point> rightPoints;
     
     // The index (row number) of the seed point for the streamline
     int seed;
@@ -30,10 +31,10 @@ private:
     
 public:
     Streamline () {}
-    Streamline (const std::vector<Space<3>::Point> &points, const int seed, const Streamline::PointType pointType, const bool fixedSpacing)
-        : points(points), seed(seed), pointType(pointType), fixedSpacing(fixedSpacing) {}
+    Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const int seed, const Streamline::PointType pointType, const bool fixedSpacing)
+        : leftPoints(leftPoints), rightPoints(rightPoints), seed(seed), pointType(pointType), fixedSpacing(fixedSpacing) {}
     
-    int nPoints () const { return static_cast<int>(points.size()); }
+    int nPoints () const { return static_cast<int>(leftPoints.size() + rightPoints.size()); }
     int getSeed () const { return seed; }
     
     int nLabels () const                { return static_cast<int>(labels.size()); }
