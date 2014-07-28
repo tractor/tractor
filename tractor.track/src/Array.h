@@ -19,9 +19,21 @@ protected:
     int nDims;
 
 public:
-    Array () {}
+    Array () { nDims = 0; }
     
-    Array (const std::vector<DataType> &data, const std::vector<int> &dims)
+    Array (const std::vector<int> &dims, const DataType value)
+        : dims(dims)
+    {
+        nDims = dims.size();
+        
+        size_t length = 1;
+        for (int i=0; i<nDims; i++)
+            length *= dims[i];
+        
+        data = std::vector<DataType>(length, value);
+    }
+    
+    Array (const std::vector<int> &dims, const std::vector<DataType> &data)
         : data(data), dims(dims)
     {
         nDims = dims.size();
@@ -38,20 +50,18 @@ public:
         return at(n);
     }
     
+    void fill (const DataType value) { data->assign(data->size(), value); }
+    
     size_t size () const { return data.size(); }
     
     const std::vector<int> & getDimensions () const { return dims; }
-    
     int getDimensionality () const { return nDims; }
     
     Neighbourhood getNeighbourhood () const;
-    
     Neighbourhood getNeighbourhood (const int width) const;
-    
     Neighbourhood getNeighbourhood (const std::vector<int> &widths) const;
     
     void flattenIndex (const std::vector<int> &loc, size_t &result) const;
-    
     void expandIndex (const size_t &loc, std::vector<int> &result) const;
 };
 
