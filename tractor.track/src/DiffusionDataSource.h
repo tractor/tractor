@@ -7,10 +7,9 @@
 class DiffusionDataSource
 {
 public:
-    virtual void sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection, float &thetaSample, float &phiSample)
+    virtual Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector *referenceDirection)
     {
-        thetaSample = 0.0;
-        phiSample = 0.0;
+        return Space<3>::zeroVector();
     }
 };
 
@@ -47,13 +46,13 @@ public:
         nSamples = imageDims[3];
     }
     
-    int getNCompartments () const { return nCompartments; }
-    int getNSamples () const { return nSamples; }
-    float getAvfThreshold () const { return avfThreshold; }
+    const int getNCompartments () const { return nCompartments; }
+    const int getNSamples () const { return nSamples; }
+    const float getAvfThreshold () const { return avfThreshold; }
     
     void setAvfThreshold (const float avfThreshold) { this->avfThreshold = avfThreshold; }
     
-    void sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection, float &thetaSample, float &phiSample);
+    Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector *referenceDirection);
 };
 
 #endif

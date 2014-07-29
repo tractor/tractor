@@ -46,7 +46,7 @@ Space<3>::Vector BedpostDataSource::sampleDirection (const Space<3>::Point &poin
             if (referenceDirection == NULL)
                 innerProd = currentAvfSample;
             else
-                innerProd = static_cast<float>(fabs(dot(stepVector, referenceDirection)));
+                innerProd = static_cast<float>(fabs(arma::dot(stepVector, *referenceDirection)));
             
             // If this direction is closer to the reference direction, choose it
             if (innerProd > highestInnerProd)
