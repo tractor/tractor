@@ -1,6 +1,8 @@
 #ifndef _TRACKER_H_
 #define _TRACKER_H_
 
+#include <RcppArmadillo.h>
+
 #include "Space.h"
 #include "NiftiImage.h"
 #include "DiffusionDataSource.h"
@@ -9,17 +11,19 @@
 class Tracker
 {
 private:
+    const float loopcheckRatio = 5.0;
+    
     DiffusionDataSource *dataSource;
     NiftiImage<short> *mask;
     
-    Array<short> *loopcheck;
-    Array<short> *visited;
+    arma::field<Space<3>::Vector> *loopcheck;
+    Array<bool> *visited;
     NiftiImage<int> *visitationMap;
     
     std::map<std::string,bool> flags;
     
     Space<3>::Point seed;
-    Space<3>::Vector rightwardsVector;
+    Space<3>::Vector *rightwardsVector;
     bool rightwardsVectorValid;
     float stepLength;
     

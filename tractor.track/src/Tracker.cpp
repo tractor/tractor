@@ -13,9 +13,6 @@ Streamline Tracker::run (const int maxSteps)
     
     const std::vector<int> &spaceDims = mask->getDimensions();
     
-    const std::vector<int> loopcheckDims = spaceDims;
-    loopcheckDims.push_back(3);
-    
     if (visited == NULL)
         visited = new Array<bool>(spaceDims, false);
     else
@@ -24,7 +21,14 @@ Streamline Tracker::run (const int maxSteps)
     if (flags["loopcheck"])
     {
         if (loopcheck == NULL)
+        {
+            std::vector<int> loopcheckDims(4);
+            for (int i=0; i<3; i++)
+                loopcheckDims[i] = static_cast<int>(R::round(spaceDims[i] / loopcheckRatio)) + 1
+            loopcheckDims[3] = 3;
+            
             loopcheck = new Array<float>(loopcheckDims, 0.0);
+        }
         else
             loopcheck->fill(0.0);
     }
@@ -32,15 +36,19 @@ Streamline Tracker::run (const int maxSteps)
     bool starting = true;
     int timesLeftMask = 0;
     Space<3>::Point loc;
-    Space<3>::Vector firstStep, previousStep;
-    std::vector<int> roundedLoc;
+    std::vector<int> roundedLoc(3), loopcheckLoc(3);
+    size_t vectorLoc;
+    Space<3>::Vector firstStep;
+    Space<3>::Vector *previousStep = NULL;
+    
+    std::vector<Space<3>::Point> leftPoints, rightPoints;
     
     // We go right first (dir=0), then left (dir=1)
     for (int dir=0; dir<2; dir++)
     {
         loc = seed;
-        if (rightwardsVectorValid)
-            previousStep = rightwardsVector * (dir==0 ? 1 : -1);
+        if (rightwardsVector != NULL)
+            *previousStep = (*rightwardsVector) * (dir==0 ? 1 : -1);
         
         bool leftMask = false;
         int previouslyInsideMask = -1;
@@ -67,60 +75,47 @@ Streamline Tracker::run (const int maxSteps)
                 break;
             
             // Index for current location
-            vector_loc = get_vector_loc(rounded_loc, image_dims, 3);
+            visited->flattenIndex(roundedLoc, vectorLoc);
             
-            if (starting && mask[vector_loc] == 0)
-                times_left_mask++;
+            if (starting && mask[vectorLoc] == 0)
+                timesLeftMask++;
             
             // Stop if we've stepped outside the mask, possibly deferring termination if required
-            if (mask[vector_loc] == 0 && previously_inside_mask == 1)
+            if (mask[vectorLoc] == 0 && previouslyInsideMask == 1)
             {
-                left_mask = 1;
-                times_left_mask++;
+                leftMask = 1;
+                timesLeftMask++;
                 
-                if (terminate_outside_mask)
-                    terminate_on_next_step = 1;
+                if (flags["terminate-outside"])
+                    terminateOnNextStep = 1;
                 else
                     break;
             }
-            previously_inside_mask = (mask[vector_loc] == 0 ? 0 : 1);
+            previouslyInsideMask = (mask[vectorLoc] == 0 ? 0 : 1);
             
             // Mark visit
-            if (!visited[vector_loc])
+            if (!visited[vectorLoc])
             {
-                visited[vector_loc] = 1;
-                if (require_visitation_map)
-                    visitation_counts[vector_loc]++;
+                visited[vectorLoc] = true;
+                if (flags["visitation-map"])
+                    visitationCounts[vectorLoc]++;
             }
             
             // Store current (unrounded) location if required
             // NB: This part of the code must always be reached at the seed point
-            if (require_streamlines)
-            {
-                points_loc[0] = step;
-                
-                for (i=0; i<3; i++)
-                {
-                    points_loc[1] = i;
-                    if (dir == 1)
-                        left_points[get_vector_loc(points_loc,points_dims,2)] = loc[i];
-                    else
-                        right_points[get_vector_loc(points_loc,points_dims,2)] = loc[i];
-                }
-            }
-            
-            // Sample a direction (represented by theta and phi) and convert it to a Cartesian vector
-            if (starting)
-                sample_direction(loc, NULL, avf, theta, phi, image_dims, n_compartments, avf_threshold, &theta_sample, &phi_sample);
+            if (dir == 0)
+                rightPoints.push_back(loc);
             else
-                sample_direction(loc, prev_step, avf, theta, phi, image_dims, n_compartments, avf_threshold, &theta_sample, &phi_sample);
-            spherical_to_cartesian((double) theta_sample, (double) phi_sample, current_step);
+                leftPoints.push_back(loc);
+            
+            // Sample a direction for the current step
+            currentStep = sampleDirection(loc, previousStep);
             
             // Perform loopcheck if requested: within the current 5x5x5 voxel block, has the streamline been going in the opposite direction?
-            if (use_loopcheck)
+            if (flags["loopcheck"])
             {
                 for (i=0; i<3; i++)
-                    loopcheck_loc[i] = (int) round(loc[i]/loopcheck_ratio);
+                    loopcheckLoc[i] = static_cast<int>(R::round(loc[i]/loopcheckRatio));
                 
                 for (i=0; i<3; i++)
                 {
