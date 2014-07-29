@@ -40,9 +40,8 @@ public:
         delete data;
     }
     
-    const DataType & operator[] (size_t n) const { return data->at(n); }
-    
-    const DataType & operator[] (const std::vector<int> &loc) const { return data->at(loc); }
+    const DataType & operator[] (size_t n) const { return (*data)[n]; }
+    const DataType & operator[] (const std::vector<int> &loc) const { return (*data)[loc]; }
     
     Array<DataType> * getData () const { return data; }
     
