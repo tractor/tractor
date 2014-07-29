@@ -13,8 +13,13 @@ public:
     static const Vector zeroVector ()
     {
         Vector zero;
-        zero.fill(static_cast<DataType>(0));
+        zero.zeros();
         return zero;
+    }
+    
+    static const bool zeroVector (const Vector &vector)
+    {
+        return (arma::norm(vector,2) == 0.0);
     }
     
     static const Vector sphericalToCartesian (const Vector &spherical)
