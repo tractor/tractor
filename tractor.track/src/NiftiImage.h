@@ -11,6 +11,7 @@ private:
     nifti_image *info;
     Array<DataType> *data;
     std::vector<int> dims;
+    std::vector<float> voxelDims;
     
     template <typename StorageType> DataType convertValue (StorageType value) { return static_cast<DataType>(value); }
     template <typename StorageType> void moveData ();
@@ -24,8 +25,12 @@ public:
         if (info != NULL)
         {
             dims.resize(info->ndim);
+            voxelDims.resize(info->ndim);
             for (int i=0; i<info->ndim; i++)
+            {
                 dims[i] = info->dim[i+1];
+                voxelDims[i] = fabs(info->pixdim[i+1]);
+            }
             
             if (readData)
                 convertData();
@@ -46,6 +51,7 @@ public:
     Array<DataType> * getData () const { return data; }
     
     const std::vector<int> & getDimensions () const { return dims; }
+    const std::vector<float> & getVoxelDimensions () const { return voxelDims; }
 };
 
 #endif
