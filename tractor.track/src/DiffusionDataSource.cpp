@@ -3,7 +3,7 @@
 #include "Space.h"
 #include "DiffusionDataSource.h"
 
-void BedpostDataSource::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection, float &thetaSample, float &phiSample)
+Space<3>::Vector BedpostDataSource::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector *referenceDirection)
 {
     const std::vector<int> &imageDims = avf[0]->getDimensions();
     std::vector<int> newPoint(4);
@@ -24,7 +24,7 @@ void BedpostDataSource::sampleDirection (const Space<3>::Point &point, const Spa
     }
     
     // Randomly choose a sample number
-    newPoint[3] = (int) roundf(R::unif_rand() * (nSamples-1));
+    newPoint[3] = static_cast<int>(roundf(R::unif_rand() * (nSamples-1)));
     
     // NB: Currently assuming always at least one anisotropic compartment
     int closestIndex = 0;
@@ -43,10 +43,10 @@ void BedpostDataSource::sampleDirection (const Space<3>::Point &point, const Spa
             
             // Use AVF to choose population on first step
             float innerProd;
-            if (norm(referenceDirection,2) == 0.0)
+            if (referenceDirection == NULL)
                 innerProd = currentAvfSample;
             else
-                innerProd = (float) fabs(dot(stepVector, referenceDirection));
+                innerProd = static_cast<float>(fabs(dot(stepVector, referenceDirection)));
             
             // If this direction is closer to the reference direction, choose it
             if (innerProd > highestInnerProd)
@@ -57,7 +57,10 @@ void BedpostDataSource::sampleDirection (const Space<3>::Point &point, const Spa
         }
     }
     
-    // Set final theta and phi values
-    thetaSample = (*theta[closestIndex])[newPoint];
-    phiSample = (*phi[closestIndex])[newPoint];
+    Space<3>::Vector sphericalCoordsStep;
+    sphericalCoordsStep[0] = 0.0;
+    sphericalCoordsStep[1] = (*theta[closestIndex])[newPoint];
+    sphericalCoordsStep[2] = (*phi[closestIndex])[newPoint];
+    Space<3>::Vector stepVector = Space<3>::sphericalToCartesian(sphericalCoordsStep);
+    return stepVector;
 }
