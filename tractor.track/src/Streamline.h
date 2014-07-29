@@ -16,7 +16,7 @@ private:
     std::vector<Space<3>::Point> rightPoints;
     
     // The index (row number) of the seed point for the streamline
-    int seed;
+    // int seed;
     
     // Are points stored in voxel or world (typically mm) terms?
     Streamline::PointType pointType;
@@ -31,11 +31,11 @@ private:
     
 public:
     Streamline () {}
-    Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const int seed, const Streamline::PointType pointType, const bool fixedSpacing)
-        : leftPoints(leftPoints), rightPoints(rightPoints), seed(seed), pointType(pointType), fixedSpacing(fixedSpacing) {}
+    Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const Streamline::PointType pointType, const bool fixedSpacing)
+        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), fixedSpacing(fixedSpacing) {}
     
     int nPoints () const { return static_cast<int>(leftPoints.size() + rightPoints.size()); }
-    int getSeed () const { return seed; }
+    // int getSeed () const { return seed; }
     
     int nLabels () const                { return static_cast<int>(labels.size()); }
     bool addLabel (const int label)     { return labels.insert(label).second; }
