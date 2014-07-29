@@ -79,6 +79,9 @@ runExperiment <- function ()
         maskFileName <- threadSafeTempFile()
     writeImageFile(mask, maskFileName)
     
+    if (is.null(seedRegions))
+        seedImage <- seedImage * mask
+    
     result <- trackWithSession(session, seedImage, maskName=maskFileName, nSamples=nSamples, requireImage=FALSE, requireStreamlines=TRUE, terminateOutsideMask=TRUE, mustLeaveMask=TRUE, jitter=jitter)
     
     report(OL$Info, "Writing outputs")
