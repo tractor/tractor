@@ -8,11 +8,11 @@
 #include "DiffusionDataSource.h"
 #include "Streamline.h"
 
+#define LOOPCHECK_RATIO 5.0
+
 class Tracker
 {
 private:
-    const float loopcheckRatio = 5.0;
-    
     DiffusionDataSource *dataSource;
     NiftiImage<short> *mask;
     
@@ -23,8 +23,8 @@ private:
     std::map<std::string,bool> flags;
     
     Space<3>::Point seed;
-    Space<3>::Vector *rightwardsVector;
-    bool rightwardsVectorValid;
+    Space<3>::Vector rightwardsVector;
+    float innerProductThreshold;
     float stepLength;
     
 public:
@@ -45,7 +45,7 @@ public:
     float getStepLength () const { return stepLength; }
     
     void setSeed (const Space<3>::Point &seed) { this->seed = seed; }
-    void setRightwardsVector (const Space<3>::Vector &rightwardsVector) { this->rightwardsVector = rightwardsVector; this->rightwardsVectorValid = true; }
+    void setRightwardsVector (const Space<3>::Vector &rightwardsVector) { this->rightwardsVector = rightwardsVector; }
     void setStepLength (const float stepLength) { this->stepLength = stepLength; }
     
     void setFlag (const std::string key, const bool value = true) { this->flags[key] = value; }
@@ -53,11 +53,9 @@ public:
     void setMask (NiftiImage<short> * const mask)
     {
         this->mask = mask;
-        if (visited == NULL)
-            
     }
     
-    Streamline run ();
+    Streamline run (const int maxSteps);
 };
 
 #endif

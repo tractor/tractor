@@ -7,7 +7,7 @@
 class DiffusionDataSource
 {
 public:
-    virtual Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector *referenceDirection)
+    virtual Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection)
     {
         return Space<3>::zeroVector();
     }
@@ -52,7 +52,7 @@ public:
     
     void setAvfThreshold (const float avfThreshold) { this->avfThreshold = avfThreshold; }
     
-    Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector *referenceDirection);
+    Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection);
 };
 
 #endif

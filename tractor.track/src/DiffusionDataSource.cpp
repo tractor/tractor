@@ -3,7 +3,7 @@
 #include "Space.h"
 #include "DiffusionDataSource.h"
 
-Space<3>::Vector BedpostDataSource::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector *referenceDirection)
+Space<3>::Vector BedpostDataSource::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection)
 {
     const std::vector<int> &imageDims = avf[0]->getDimensions();
     std::vector<int> newPoint(4);
@@ -43,10 +43,10 @@ Space<3>::Vector BedpostDataSource::sampleDirection (const Space<3>::Point &poin
             
             // Use AVF to choose population on first step
             float innerProd;
-            if (referenceDirection == NULL)
+            if (Space<3>::zeroVector(referenceDirection))
                 innerProd = currentAvfSample;
             else
-                innerProd = static_cast<float>(fabs(arma::dot(stepVector, *referenceDirection)));
+                innerProd = static_cast<float>(fabs(arma::dot(stepVector, referenceDirection)));
             
             // If this direction is closer to the reference direction, choose it
             if (innerProd > highestInnerProd)
