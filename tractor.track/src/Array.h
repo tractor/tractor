@@ -39,20 +39,34 @@ public:
         nDims = dims.size();
     }
     
+    size_t size () const { return data.size(); }
     const bool empty () const { return (data.size() == 0); }
     
-    const DataType & at (const size_t n) const { return data[n]; }
+    void fill (const DataType value) { data.assign(data.size(), value); }
     
+    const DataType & at (const size_t n) const { return data.at(n); }
     const DataType & at (const std::vector<int> &loc) const
     {
         size_t n;
         flattenIndex(loc, n);
-        return at(n);
+        return data.at(n);
     }
     
-    void fill (const DataType value) { data->assign(data->size(), value); }
+    DataType & operator[] (const size_t n) { return data[n]; }
+    DataType & operator[] (const std::vector<int> &loc)
+    {
+        size_t n;
+        flattenIndex(loc, n);
+        return data[n];
+    }
     
-    size_t size () const { return data.size(); }
+    const DataType & operator[] (const size_t n) const { return data[n]; }
+    const DataType & operator[] (const std::vector<int> &loc) const
+    {
+        size_t n;
+        flattenIndex(loc, n);
+        return data[n];
+    }
     
     const std::vector<int> & getDimensions () const { return dims; }
     int getDimensionality () const { return nDims; }
