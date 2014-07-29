@@ -10,6 +10,13 @@ public:
     typedef typename arma::Col<DataType>::template fixed<Dimensionality> Point;
     typedef typename arma::Col<DataType>::template fixed<Dimensionality> Vector;
     
+    static const Vector zeroVector ()
+    {
+        Vector zero;
+        zero.fill(static_cast<DataType>(0));
+        return zero;
+    }
+    
     static const Vector sphericalToCartesian (const Vector &spherical)
     {
         if (Dimensionality != 3)
