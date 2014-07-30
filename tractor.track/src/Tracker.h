@@ -16,7 +16,7 @@ private:
     DiffusionDataSource *dataSource;
     NiftiImage<short> *mask;
     
-    arma::field<Space<3>::Vector> *loopcheck;
+    Array<Space<3>::Vector> *loopcheck;
     Array<bool> *visited;
     NiftiImage<int> *visitationMap;
     

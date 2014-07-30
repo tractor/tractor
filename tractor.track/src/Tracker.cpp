@@ -71,11 +71,11 @@ Streamline Tracker::run (const int maxSteps)
             // Index for current location
             visited->flattenIndex(roundedLoc, vectorLoc);
             
-            if (starting && mask[vectorLoc] == 0)
+            if (starting && (*mask)[vectorLoc] == 0)
                 timesLeftMask++;
             
             // Stop if we've stepped outside the mask, possibly deferring termination if required
-            if (mask[vectorLoc] == 0 && previouslyInsideMask == 1)
+            if ((*mask)[vectorLoc] == 0 && previouslyInsideMask == 1)
             {
                 leftMask = true;
                 timesLeftMask++;
@@ -85,14 +85,14 @@ Streamline Tracker::run (const int maxSteps)
                 else
                     break;
             }
-            previouslyInsideMask = (mask[vectorLoc] == 0 ? 0 : 1);
+            previouslyInsideMask = ((*mask)[vectorLoc] == 0 ? 0 : 1);
             
             // Mark visit
-            if (!visited[vectorLoc])
+            if (!(*visited)[vectorLoc])
             {
-                visited[vectorLoc] = true;
-                if (flags["visitation-map"])
-                    visitationCounts[vectorLoc]++;
+                (*visited)[vectorLoc] = true;
+                // if (flags["visitation-map"])
+                //     visitationCounts[vectorLoc]++;
             }
             
             // Store current (unrounded) location if required
@@ -103,7 +103,7 @@ Streamline Tracker::run (const int maxSteps)
                 leftPoints.push_back(loc);
             
             // Sample a direction for the current step
-            currentStep = sampleDirection(loc, previousStep);
+            Space<3>::Vector currentStep = dataSource->sampleDirection(loc, previousStep);
             
             // Perform loopcheck if requested: within the current 5x5x5 voxel block, has the streamline been going in the opposite direction?
             if (flags["loopcheck"])
@@ -111,10 +111,10 @@ Streamline Tracker::run (const int maxSteps)
                 for (int i=0; i<3; i++)
                     loopcheckLoc[i] = static_cast<int>(round(loc[i]/LOOPCHECK_RATIO));
                 
-                if (arma::dot(loopcheck[loopcheckLoc], previousStep) < 0.0)
+                if (arma::dot((*loopcheck)[loopcheckLoc], previousStep) < 0.0)
                     break;
                 
-                loopcheck[loopcheckLoc] = previousStep;
+                (*loopcheck)[loopcheckLoc] = previousStep;
             }
             
             // Reverse the sampled direction if its inner product with the previous step is negative
@@ -133,14 +133,14 @@ Streamline Tracker::run (const int maxSteps)
             }
             
             // Update streamline front and previous step
-            loc += (currentStep % sign * stepLength / voxelDims);
-            previousStep = currentStep % sign;
+            loc += (currentStep / arma::conv_to<arma::fvec>::from(voxelDims)) * sign * stepLength;
+            previousStep = currentStep * sign;
             
             // Store the first step to ensure that subsequent samples go the same way
             if (starting)
             {
-                for (i=0; i<3; i++)
-                    first_step[i] = prev_step[i];
+                if (!rightwardsVectorValid)
+                    rightwardsVector = previousStep;
                 starting = false;
             }
         }
@@ -149,9 +149,9 @@ Streamline Tracker::run (const int maxSteps)
         if (flags["must-leave"] && !leftMask)
         {
             if (dir == 0)
-                rightSteps.clear();
+                rightPoints.clear();
             else
-                leftSteps.clear();
+                leftPoints.clear();
         }
     }
     

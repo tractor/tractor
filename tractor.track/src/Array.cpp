@@ -1,10 +1,13 @@
 #include <RcppArmadillo.h>
 
+#include "Space.h"
 #include "Array.h"
 
-// Tell the compiler that we're going to need this specialisation (otherwise
+// Tell the compiler that we're going to need these specialisations (otherwise
 // it won't generate the relevant code and we'll get a linker error)
+template class Array<bool>;
 template class Array<float>;
+template class Array<Space<3>::Vector>;
 
 template <typename DataType>
 Neighbourhood Array<DataType>::getNeighbourhood () const

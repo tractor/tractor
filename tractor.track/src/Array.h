@@ -19,6 +19,9 @@ protected:
     int nDims;
 
 public:
+    typedef typename std::vector<DataType>::const_reference const_reference;
+    typedef typename std::vector<DataType>::reference reference;
+    
     Array () { nDims = 0; }
     
     Array (const std::vector<int> &dims, const DataType value)
@@ -44,24 +47,24 @@ public:
     
     void fill (const DataType value) { data.assign(data.size(), value); }
     
-    const DataType & at (const size_t n) const { return data.at(n); }
-    const DataType & at (const std::vector<int> &loc) const
+    const_reference at (const size_t n) const { return data.at(n); }
+    const_reference at (const std::vector<int> &loc) const
     {
         size_t n;
         flattenIndex(loc, n);
         return data.at(n);
     }
     
-    DataType & operator[] (const size_t n) { return data[n]; }
-    DataType & operator[] (const std::vector<int> &loc)
+    reference operator[] (const size_t n) { return data[n]; }
+    reference operator[] (const std::vector<int> &loc)
     {
         size_t n;
         flattenIndex(loc, n);
         return data[n];
     }
     
-    const DataType & operator[] (const size_t n) const { return data[n]; }
-    const DataType & operator[] (const std::vector<int> &loc) const
+    const_reference operator[] (const size_t n) const { return data[n]; }
+    const_reference operator[] (const std::vector<int> &loc) const
     {
         size_t n;
         flattenIndex(loc, n);
