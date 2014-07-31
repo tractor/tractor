@@ -48,7 +48,8 @@ public:
     void setRightwardsVector (const Space<3>::Vector &rightwardsVector) { this->rightwardsVector = rightwardsVector; }
     void setStepLength (const float stepLength) { this->stepLength = stepLength; }
     
-    void setFlag (const std::string key, const bool value = true) { this->flags[key] = value; }
+    void setFlag (const std::string &key, const bool value = true) { this->flags[key] = value; }
+    void setFlags (const std::map<std::string,bool> &flags) { this->flags = flags; }
     
     void setMask (NiftiImage<short> * const mask)
     {

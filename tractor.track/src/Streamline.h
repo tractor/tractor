@@ -26,7 +26,7 @@ private:
     bool fixedSpacing;
     
     // A set of integer labels associated with the streamline, indicating, for
-    // example, the anatomical regions that the streamline terminates in
+    // example, the anatomical regions that the streamline passes through
     std::set<int> labels;
     
 public:
