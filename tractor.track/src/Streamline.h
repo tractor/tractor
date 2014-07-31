@@ -44,11 +44,14 @@ public:
     bool removeLabel (const int label)  { return (labels.erase(label) == 1); }
     void clearLabels ()                 { labels.clear(); }
     
-    void concatenatePoints (arma::fmat &points)
+    size_t concatenatePoints (arma::fmat &points)
     {
-        int nPoints = nPoints();
+        int nPoints = this->nPoints();
         if (nPoints < 1)
+        {
             points.reset();
+            return 0;
+        }
         else
             points.set_size(nPoints, 3);
         
@@ -61,6 +64,7 @@ public:
                 index++;
             }
         }
+        
         if (rightPoints.size() > 0)
         {
             for (std::vector<Space<3>::Point>::iterator it=rightPoints.begin(); it!=rightPoints.end(); it++)
@@ -69,6 +73,13 @@ public:
                 index++;
             }
         }
+        else
+        {
+            // The left side can't also have length zero, so grab the seed from there
+            points.row(index) = leftPoints[0];
+        }
+        
+        return leftPoints.size();
     }
 };
 
