@@ -13,7 +13,7 @@ private:
     std::vector<int> dims;
     std::vector<float> voxelDims;
     
-    template <typename StorageType> DataType convertValue (StorageType value) { return static_cast<DataType>(value); }
+    template <typename StorageType> static DataType convertValue (StorageType value) { return static_cast<DataType>(value); }
     template <typename StorageType> void moveData ();
     void convertData ();
     

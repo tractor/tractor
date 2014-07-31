@@ -3,6 +3,11 @@
 
 #include "NiftiImage.h"
 
+// Tell the compiler that we're going to need these specialisations (otherwise
+// it won't generate the relevant code and we'll get a linker error)
+template class NiftiImage<short>;
+template class NiftiImage<float>;
+
 template <typename DataType>
 template <typename StorageType> void NiftiImage<DataType>::moveData ()
 {
@@ -11,9 +16,9 @@ template <typename StorageType> void NiftiImage<DataType>::moveData ()
     
     StorageType *original = static_cast<StorageType *>(info->data);
     std::vector<DataType> values(info->nvox);
-    std::transform(original, original + info->nvox, values.begin(), convertValue<StorageType>);
+    std::transform(original, original + info->nvox, values.begin(), NiftiImage<DataType>::convertValue<StorageType>);
     
-    data = Array<DataType>(values, dims);
+    data = new Array<DataType>(dims, values);
     nifti_image_unload(info);
 }
 
