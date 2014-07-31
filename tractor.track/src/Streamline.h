@@ -1,6 +1,8 @@
 #ifndef _STREAMLINE_H_
 #define _STREAMLINE_H_
 
+#include <RcppArmadillo.h>
+
 #include "Space.h"
 
 class Streamline
@@ -34,13 +36,40 @@ public:
     Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const Streamline::PointType pointType, const bool fixedSpacing)
         : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), fixedSpacing(fixedSpacing) {}
     
-    int nPoints () const { return static_cast<int>(leftPoints.size() + rightPoints.size()); }
+    int nPoints () const { return static_cast<int>(leftPoints.size() + rightPoints.size() - 1); }
     // int getSeed () const { return seed; }
     
     int nLabels () const                { return static_cast<int>(labels.size()); }
     bool addLabel (const int label)     { return labels.insert(label).second; }
     bool removeLabel (const int label)  { return (labels.erase(label) == 1); }
     void clearLabels ()                 { labels.clear(); }
+    
+    void concatenatePoints (arma::fmat &points)
+    {
+        int nPoints = nPoints();
+        if (nPoints < 1)
+            points.reset();
+        else
+            points.set_size(nPoints, 3);
+        
+        size_t index = 0;
+        if (leftPoints.size() > 1)
+        {
+            for (std::vector<Space<3>::Point>::reverse_iterator it=leftPoints.rbegin(); it!=leftPoints.rend()-1; it++)
+            {
+                points.row(index) = *it;
+                index++;
+            }
+        }
+        if (rightPoints.size() > 0)
+        {
+            for (std::vector<Space<3>::Point>::iterator it=rightPoints.begin(); it!=rightPoints.end(); it++)
+            {
+                points.row(index) = *it;
+                index++;
+            }
+        }
+    }
 };
 
 #endif
