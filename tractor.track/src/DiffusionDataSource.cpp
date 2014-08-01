@@ -36,7 +36,7 @@ Space<3>::Vector BedpostDataSource::sampleDirection (const Space<3>::Point &poin
         if (i == 0 || currentAvfSample >= avfThreshold)
         {
             Space<3>::Vector sphericalCoordsStep;
-            sphericalCoordsStep[0] = 0.0;
+            sphericalCoordsStep[0] = 1.0;
             sphericalCoordsStep[1] = (*theta[i])[newPoint];
             sphericalCoordsStep[2] = (*phi[i])[newPoint];
             Space<3>::Vector stepVector = Space<3>::sphericalToCartesian(sphericalCoordsStep);
@@ -58,7 +58,7 @@ Space<3>::Vector BedpostDataSource::sampleDirection (const Space<3>::Point &poin
     }
     
     Space<3>::Vector sphericalCoordsStep;
-    sphericalCoordsStep[0] = 0.0;
+    sphericalCoordsStep[0] = 1.0;
     sphericalCoordsStep[1] = (*theta[closestIndex])[newPoint];
     sphericalCoordsStep[2] = (*phi[closestIndex])[newPoint];
     Space<3>::Vector stepVector = Space<3>::sphericalToCartesian(sphericalCoordsStep);
