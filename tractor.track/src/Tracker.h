@@ -30,11 +30,10 @@ private:
 public:
     Tracker () {}
     Tracker (DiffusionDataSource * const dataSource, NiftiImage<short> * const mask)
-        : dataSource(dataSource), mask(mask) {}
+        : dataSource(dataSource), mask(mask), loopcheck(NULL), visited(NULL), visitationMap(NULL) {}
     
     ~Tracker ()
     {
-        delete mask;
         delete loopcheck;
         delete visited;
         delete visitationMap;

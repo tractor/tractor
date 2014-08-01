@@ -24,7 +24,7 @@ public:
     
     Array () { nDims = 0; }
     
-    Array (const std::vector<int> &dims, const DataType value)
+    Array (const std::vector<int> &dims, const DataType &value)
         : dims(dims)
     {
         nDims = dims.size();
@@ -45,7 +45,7 @@ public:
     size_t size () const { return data.size(); }
     const bool empty () const { return (data.size() == 0); }
     
-    void fill (const DataType value) { data.assign(data.size(), value); }
+    void fill (const DataType &value) { data.assign(data.size(), value); }
     
     const_reference at (const size_t n) const { return data.at(n); }
     const_reference at (const std::vector<int> &loc) const

@@ -60,7 +60,7 @@ public:
         {
             for (std::vector<Space<3>::Point>::reverse_iterator it=leftPoints.rbegin(); it!=leftPoints.rend()-1; it++)
             {
-                points.row(index) = *it;
+                points.row(index) = it->t();
                 index++;
             }
         }
@@ -69,14 +69,14 @@ public:
         {
             for (std::vector<Space<3>::Point>::iterator it=rightPoints.begin(); it!=rightPoints.end(); it++)
             {
-                points.row(index) = *it;
+                points.row(index) = it->t();
                 index++;
             }
         }
         else
         {
             // The left side can't also have length zero, so grab the seed from there
-            points.row(index) = leftPoints[0];
+            points.row(index) = leftPoints[0].t();
         }
         
         return leftPoints.size();
