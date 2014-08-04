@@ -44,10 +44,12 @@ public:
     
     Space<3>::Point getSeed () const { return seed; }
     Space<3>::Vector getRightwardsVector () const { return rightwardsVector; }
+    float getInnerProductThreshold () const { return innerProductThreshold; }
     float getStepLength () const { return stepLength; }
     
     void setSeed (const Space<3>::Point &seed) { this->seed = seed; }
     void setRightwardsVector (const Space<3>::Vector &rightwardsVector) { this->rightwardsVector = rightwardsVector; }
+    void setInnerProductThreshold (const float innerProductThreshold) { this->innerProductThreshold = innerProductThreshold; }
     void setStepLength (const float stepLength) { this->stepLength = stepLength; }
     
     void setFlag (const std::string &key, const bool value = true) { this->flags[key] = value; }

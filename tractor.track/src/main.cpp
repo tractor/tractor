@@ -10,7 +10,7 @@ using namespace Rcpp;
 typedef std::vector<int> int_vector;
 typedef std::vector<std::string> str_vector;
 
-RcppExport SEXP track_bedpost (SEXP seeds_, SEXP mask_path_, SEXP parameter_map_paths_, SEXP n_samples_, SEXP max_steps_, SEXP step_length_, SEXP volfrac_threshold_, SEXP curvature_threshold_, SEXP use_loopcheck_, SEXP rightwards_vector_, SEXP terminate_outside_mask_, SEXP must_leave_mask_)
+RcppExport SEXP track_bedpost (SEXP seeds_, SEXP mask_path_, SEXP parameter_map_paths_, SEXP n_samples_, SEXP max_steps_, SEXP step_length_, SEXP volfrac_threshold_, SEXP curvature_threshold_, SEXP use_loopcheck_, SEXP rightwards_vector_, SEXP terminate_outside_mask_, SEXP must_leave_mask_, SEXP debug_level_)
 {
 BEGIN_RCPP
     List parameterMapPaths(parameter_map_paths_);
@@ -20,6 +20,7 @@ BEGIN_RCPP
     NiftiImage<short> *mask = new NiftiImage<short>(as<std::string>(mask_path_));
     
     Tracker tracker(dataSource, mask);
+    tracker.setDebugLevel(as<int>(debug_level_));
     
     std::map<std::string,bool> flags;
     flags["loopcheck"] = as<bool>(use_loopcheck_);
@@ -34,6 +35,7 @@ BEGIN_RCPP
     
     tracker.setFlags(flags);
     tracker.setRightwardsVector(rightwardsVector);
+    tracker.setInnerProductThreshold(as<float>(curvature_threshold_));
     tracker.setStepLength(as<float>(step_length_));
     
     RNGScope scope;
@@ -42,7 +44,7 @@ BEGIN_RCPP
     int maxSteps = as<int>(max_steps_);
     arma::fmat seeds = as<arma::fmat>(seeds_);
     std::vector<Streamline> streamlines;
-    for (int i=0; i<seeds.n_rows; i++)
+    for (size_t i=0; i<seeds.n_rows; i++)
     {
         // Vectors are columns to Armadillo, so we have to transpose
         tracker.setSeed(seeds.row(i).t());

@@ -17,7 +17,7 @@ public:
         return zero;
     }
     
-    static const bool zeroVector (const Vector &vector)
+    static bool zeroVector (const Vector &vector)
     {
         return (arma::norm(vector,2) == 0.0);
     }

@@ -7,6 +7,8 @@
 class DiffusionDataSource
 {
 public:
+    virtual ~DiffusionDataSource () {}
+    
     virtual Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection)
     {
         return Space<3>::zeroVector();
@@ -46,9 +48,9 @@ public:
         nSamples = imageDims[3];
     }
     
-    const int getNCompartments () const { return nCompartments; }
-    const int getNSamples () const { return nSamples; }
-    const float getAvfThreshold () const { return avfThreshold; }
+    int getNCompartments () const { return nCompartments; }
+    int getNSamples () const { return nSamples; }
+    float getAvfThreshold () const { return avfThreshold; }
     
     void setAvfThreshold (const float avfThreshold) { this->avfThreshold = avfThreshold; }
     

@@ -79,7 +79,7 @@ public:
             points.row(index) = leftPoints[0].t();
         }
         
-        return leftPoints.size();
+        return std::max(static_cast<int>(leftPoints.size())-1, 0);
     }
 };
 

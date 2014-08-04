@@ -14,7 +14,7 @@ private:
     
 public:
     LoggerStream(int * const outputLevel, const int myLevel)
-        : outputLevel(outputLevel), myLevel(myLevel) {}
+        : myLevel(myLevel), outputLevel(outputLevel) {}
     
     LoggerStream & indent ()
     {

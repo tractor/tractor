@@ -9,6 +9,7 @@ Streamline Tracker::run (const int maxSteps)
     const std::vector<int> &spaceDims = mask->getDimensions();
     const std::vector<float> &voxelDims = mask->getVoxelDimensions();
     
+    Rcpp::Rcout << std::fixed;
     Rcpp::Rcout.precision(3);
     logger.debug1.indent() << "Tracking from seed point " << seed << endl;
     
@@ -35,11 +36,9 @@ Streamline Tracker::run (const int maxSteps)
     bool starting = true;
     bool rightwardsVectorValid = !Space<3>::zeroVector(rightwardsVector);
     int timesLeftMask = 0;
-    float sign;
     Space<3>::Point loc;
     std::vector<int> roundedLoc(3), loopcheckLoc(3);
     size_t vectorLoc;
-    Space<3>::Vector firstStep;
     Space<3>::Vector previousStep = Space<3>::zeroVector();
     
     std::vector<Space<3>::Point> leftPoints, rightPoints;
@@ -47,14 +46,14 @@ Streamline Tracker::run (const int maxSteps)
     // We go right first (dir=0), then left (dir=1)
     for (int dir=0; dir<2; dir++)
     {
-        logger.debug1.indent() << "Tracking " << (dir==0 ? "\"right\"" : "\"left\"") << endl;
+        logger.debug2.indent() << "Tracking " << (dir==0 ? "\"right\"" : "\"left\"") << endl;
         
         if (flags["loopcheck"])
             loopcheck->fill(Space<3>::zeroVector());
         
         loc = seed;
         if (rightwardsVectorValid)
-            previousStep = rightwardsVector * (dir==0 ? 1 : -1);
+            previousStep = rightwardsVector * (dir==0 ? 1.0 : -1.0);
         
         int step;
         bool leftMask = false;
@@ -66,7 +65,7 @@ Streamline Tracker::run (const int maxSteps)
         {
             if (terminateOnNextStep)
             {
-                logger.debug1.indent() << "Terminating: deferred termination" << endl;
+                logger.debug2.indent() << "Terminating: deferred termination" << endl;
                 break;
             }
             
@@ -83,7 +82,7 @@ Streamline Tracker::run (const int maxSteps)
             }
             if (!inBounds)
             {
-                logger.debug1.indent() << "Terminating: stepped out of bounds" << endl;
+                logger.debug2.indent() << "Terminating: stepped out of bounds" << endl;
                 break;
             }
             
@@ -103,7 +102,7 @@ Streamline Tracker::run (const int maxSteps)
                     terminateOnNextStep = true;
                 else
                 {
-                    logger.debug1.indent() << "Terminating: stepped outside tracking mask" << endl;
+                    logger.debug2.indent() << "Terminating: stepped outside tracking mask" << endl;
                     break;
                 }
             }
@@ -111,11 +110,7 @@ Streamline Tracker::run (const int maxSteps)
             
             // Mark visit
             if (!(*visited)[vectorLoc])
-            {
                 (*visited)[vectorLoc] = true;
-                // if (flags["visitation-map"])
-                //     visitationCounts[vectorLoc]++;
-            }
             
             // Store current (unrounded) location if required
             // NB: This part of the code must always be reached at the seed point
@@ -134,31 +129,30 @@ Streamline Tracker::run (const int maxSteps)
                 for (int i=0; i<3; i++)
                     loopcheckLoc[i] = static_cast<int>(round(loc[i]/LOOPCHECK_RATIO));
                 
-                if (arma::dot((*loopcheck)[loopcheckLoc], previousStep) < 0.0)
+                float loopcheckInnerProduct = arma::dot((*loopcheck)[loopcheckLoc], previousStep);
+                if (loopcheckInnerProduct < 0.0)
                 {
-                    logger.debug1.indent() << "Terminating: loop detected" << endl;
+                    logger.debug2.indent() << "Terminating: loop detected" << endl;
                     break;
                 }
-                
-                (*loopcheck)[loopcheckLoc] = previousStep;
+                else if (loopcheckInnerProduct == 0.0)
+                    (*loopcheck)[loopcheckLoc] = previousStep;
             }
             
             // Reverse the sampled direction if its inner product with the previous step is negative
-            // If there is no previous step (or rightwards vector), the sign is random
+            // If there is no previous step (or rightwards vector), we're heading right so the sign is positive
+            float sign;
             if (starting && !rightwardsVectorValid)
-            {
-                double uniformSample = R::unif_rand();
-                sign = (uniformSample > 0.5) ? 1.0 : -1.0;
-            }
+                sign = 1.0;
             else
             {
-                float innerProd = arma::dot(previousStep, currentStep);
-                if (fabs(innerProd) < innerProductThreshold)
+                float innerProduct = arma::dot(previousStep, currentStep);
+                if (fabs(innerProduct) < innerProductThreshold)
                 {
-                    logger.debug1.indent() << "Terminating: curvature too high" << endl;
+                    logger.debug2.indent() << "Terminating: curvature too high" << endl;
                     break;
                 }
-                sign = (innerProd > 0.0) ? 1.0 : -1.0;
+                sign = (innerProduct > 0.0) ? 1.0 : -1.0;
             }
             
             // Update streamline front and previous step
@@ -170,7 +164,11 @@ Streamline Tracker::run (const int maxSteps)
             if (starting)
             {
                 if (!rightwardsVectorValid)
+                {
+                    // The choice of sign above makes this always towards the right
                     rightwardsVector = previousStep;
+                    rightwardsVectorValid = true;
+                }
                 starting = false;
             }
         }
@@ -178,14 +176,14 @@ Streamline Tracker::run (const int maxSteps)
         // Store the number of steps taken in each direction, if required
         if (flags["must-leave"] && !leftMask)
         {
-            logger.debug1.indent() << "Streamline piece did not leave mask; discarding it" << endl;
+            logger.debug2.indent() << "Streamline piece did not leave mask; discarding it" << endl;
             if (dir == 0)
                 rightPoints.clear();
             else
                 leftPoints.clear();
         }
         else
-            logger.debug1.indent() << "Completed " << step << " steps" << endl;
+            logger.debug2.indent() << "Completed " << step << " steps" << endl;
     }
     
     logger.debug1.indent() << "Tracking finished" << endl;

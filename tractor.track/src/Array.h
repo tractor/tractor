@@ -43,7 +43,7 @@ public:
     }
     
     size_t size () const { return data.size(); }
-    const bool empty () const { return (data.size() == 0); }
+    bool empty () const { return (data.size() == 0); }
     
     void fill (const DataType &value) { data.assign(data.size(), value); }
     
