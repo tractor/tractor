@@ -12,17 +12,12 @@ Streamline Tracker::run (const int maxSteps)
     else
         visited->fill(false);
     
-    if (flags["loopcheck"])
+    if (flags["loopcheck"] && loopcheck == NULL)
     {
-        if (loopcheck == NULL)
-        {
-            std::vector<int> loopcheckDims(3);
-            for (int i=0; i<3; i++)
-                loopcheckDims[i] = static_cast<int>(round(spaceDims[i] / LOOPCHECK_RATIO)) + 1;
-            loopcheck = new Array<Space<3>::Vector>(loopcheckDims, Space<3>::zeroVector());
-        }
-        else
-            loopcheck->fill(Space<3>::zeroVector());
+        std::vector<int> loopcheckDims(3);
+        for (int i=0; i<3; i++)
+            loopcheckDims[i] = static_cast<int>(round(spaceDims[i] / LOOPCHECK_RATIO)) + 1;
+        loopcheck = new Array<Space<3>::Vector>(loopcheckDims, Space<3>::zeroVector());
     }
     
     bool starting = true;
@@ -40,6 +35,9 @@ Streamline Tracker::run (const int maxSteps)
     // We go right first (dir=0), then left (dir=1)
     for (int dir=0; dir<2; dir++)
     {
+        if (flags["loopcheck"])
+            loopcheck->fill(Space<3>::zeroVector());
+        
         loc = seed;
         if (rightwardsVectorValid)
             previousStep = rightwardsVector * (dir==0 ? 1 : -1);
