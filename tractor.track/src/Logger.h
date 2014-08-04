@@ -71,6 +71,14 @@ public:
         return *this;
     }
     
+    LoggerStream & operator<< (const int &arg)
+    {
+        if (*outputLevel >= myLevel)
+            Rcpp::Rcout << "\x1b[33m" << arg << "\x1b[0m";
+        
+        return *this;
+    }
+    
     LoggerStream & operator<< (const std::string &arg)
     {
         if (*outputLevel >= myLevel)

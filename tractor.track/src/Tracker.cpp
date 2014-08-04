@@ -56,12 +56,13 @@ Streamline Tracker::run (const int maxSteps)
         if (rightwardsVectorValid)
             previousStep = rightwardsVector * (dir==0 ? 1 : -1);
         
+        int step;
         bool leftMask = false;
         int previouslyInsideMask = -1;
         bool terminateOnNextStep = false;
         
         // Run the tracking
-        for (int step=0; step<(maxSteps/2); step++)
+        for (step=0; step<(maxSteps/2); step++)
         {
             if (terminateOnNextStep)
             {
@@ -183,6 +184,8 @@ Streamline Tracker::run (const int maxSteps)
             else
                 leftPoints.clear();
         }
+        else
+            logger.debug1.indent() << "Completed " << step << " steps" << endl;
     }
     
     logger.debug1.indent() << "Tracking finished" << endl;
