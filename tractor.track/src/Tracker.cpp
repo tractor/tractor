@@ -2,18 +2,30 @@
 
 #include "Tracker.h"
 
+using namespace std;
+
 Streamline Tracker::run (const int maxSteps)
 {
     const std::vector<int> &spaceDims = mask->getDimensions();
     const std::vector<float> &voxelDims = mask->getVoxelDimensions();
     
+    Rcpp::Rcout.precision(3);
+    logger.debug1.indent() << "Tracking from seed point " << seed << endl;
+    
     if (visited == NULL)
+    {
+        logger.debug2.indent() << "Creating visitation map" << endl;
         visited = new Array<bool>(spaceDims, false);
+    }
     else
+    {
+        logger.debug2.indent() << "Resetting visitation map" << endl;
         visited->fill(false);
+    }
     
     if (flags["loopcheck"] && loopcheck == NULL)
     {
+        logger.debug2.indent() << "Creating loopcheck vector field" << endl;
         std::vector<int> loopcheckDims(3);
         for (int i=0; i<3; i++)
             loopcheckDims[i] = static_cast<int>(round(spaceDims[i] / LOOPCHECK_RATIO)) + 1;
@@ -35,6 +47,8 @@ Streamline Tracker::run (const int maxSteps)
     // We go right first (dir=0), then left (dir=1)
     for (int dir=0; dir<2; dir++)
     {
+        logger.debug1.indent() << "Tracking " << (dir==0 ? "\"right\"" : "\"left\"") << endl;
+        
         if (flags["loopcheck"])
             loopcheck->fill(Space<3>::zeroVector());
         
@@ -50,7 +64,10 @@ Streamline Tracker::run (const int maxSteps)
         for (int step=0; step<(maxSteps/2); step++)
         {
             if (terminateOnNextStep)
+            {
+                logger.debug1.indent() << "Terminating: deferred termination" << endl;
                 break;
+            }
             
             // Check that the current step location is in bounds
             bool inBounds = true;
@@ -64,7 +81,10 @@ Streamline Tracker::run (const int maxSteps)
                 }
             }
             if (!inBounds)
+            {
+                logger.debug1.indent() << "Terminating: stepped out of bounds" << endl;
                 break;
+            }
             
             // Index for current location
             visited->flattenIndex(roundedLoc, vectorLoc);
@@ -81,7 +101,10 @@ Streamline Tracker::run (const int maxSteps)
                 if (flags["terminate-outside"])
                     terminateOnNextStep = true;
                 else
+                {
+                    logger.debug1.indent() << "Terminating: stepped outside tracking mask" << endl;
                     break;
+                }
             }
             previouslyInsideMask = ((*mask)[vectorLoc] == 0 ? 0 : 1);
             
@@ -102,6 +125,7 @@ Streamline Tracker::run (const int maxSteps)
             
             // Sample a direction for the current step
             Space<3>::Vector currentStep = dataSource->sampleDirection(loc, previousStep);
+            logger.debug3.indent() << "Sampled step direction is " << currentStep << endl;
             
             // Perform loopcheck if requested: within the current 5x5x5 voxel block, has the streamline been going in the opposite direction?
             if (flags["loopcheck"])
@@ -110,7 +134,10 @@ Streamline Tracker::run (const int maxSteps)
                     loopcheckLoc[i] = static_cast<int>(round(loc[i]/LOOPCHECK_RATIO));
                 
                 if (arma::dot((*loopcheck)[loopcheckLoc], previousStep) < 0.0)
+                {
+                    logger.debug1.indent() << "Terminating: loop detected" << endl;
                     break;
+                }
                 
                 (*loopcheck)[loopcheckLoc] = previousStep;
             }
@@ -126,13 +153,17 @@ Streamline Tracker::run (const int maxSteps)
             {
                 float innerProd = arma::dot(previousStep, currentStep);
                 if (fabs(innerProd) < innerProductThreshold)
+                {
+                    logger.debug1.indent() << "Terminating: curvature too high" << endl;
                     break;
+                }
                 sign = (innerProd > 0.0) ? 1.0 : -1.0;
             }
             
             // Update streamline front and previous step
             loc += (currentStep / arma::conv_to<arma::fvec>::from(voxelDims)) * sign * stepLength;
             previousStep = currentStep * sign;
+            logger.debug3.indent() << "New location is " << loc << endl;
             
             // Store the first step to ensure that subsequent samples go the same way
             if (starting)
@@ -146,12 +177,15 @@ Streamline Tracker::run (const int maxSteps)
         // Store the number of steps taken in each direction, if required
         if (flags["must-leave"] && !leftMask)
         {
+            logger.debug1.indent() << "Streamline piece did not leave mask; discarding it" << endl;
             if (dir == 0)
                 rightPoints.clear();
             else
                 leftPoints.clear();
         }
     }
+    
+    logger.debug1.indent() << "Tracking finished" << endl;
     
     Streamline streamline(leftPoints, rightPoints, Streamline::VoxelPointType, true);
     return streamline;

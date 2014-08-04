@@ -7,6 +7,7 @@
 #include "NiftiImage.h"
 #include "DiffusionDataSource.h"
 #include "Streamline.h"
+#include "Logger.h"
 
 #define LOOPCHECK_RATIO 5.0
 
@@ -26,6 +27,8 @@ private:
     Space<3>::Vector rightwardsVector;
     float innerProductThreshold;
     float stepLength;
+    
+    Logger logger;
     
 public:
     Tracker () {}
@@ -50,10 +53,7 @@ public:
     void setFlag (const std::string &key, const bool value = true) { this->flags[key] = value; }
     void setFlags (const std::map<std::string,bool> &flags) { this->flags = flags; }
     
-    void setMask (NiftiImage<short> * const mask)
-    {
-        this->mask = mask;
-    }
+    void setDebugLevel (const int &level) { this->logger.setOutputLevel(level); }
     
     Streamline run (const int maxSteps);
 };
