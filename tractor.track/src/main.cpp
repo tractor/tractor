@@ -47,7 +47,7 @@ BEGIN_RCPP
     for (size_t i=0; i<seeds.n_rows; i++)
     {
         // Vectors are columns to Armadillo, so we have to transpose
-        tracker.setSeed(seeds.row(i).t());
+        tracker.setSeed(seeds.row(i).t() - 1.0);
         for (int j=0; j<streamlinesPerSeed; j++)
             streamlines.push_back(tracker.run(maxSteps));
     }
@@ -62,7 +62,7 @@ BEGIN_RCPP
             // These indices are 1-based for R's benefit
             startIndices.push_back(allPoints.n_rows + 1);
             seedIndices.push_back(allPoints.n_rows + seedIndex + 1);
-            allPoints = join_cols(allPoints, currentPoints);
+            allPoints = join_cols(allPoints, currentPoints + 1.0);
         }
     }
     
