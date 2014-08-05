@@ -53,16 +53,23 @@ BEGIN_RCPP
     }
     
     int_vector startIndices, seedIndices;
-    arma::fmat allPoints, currentPoints;
+    size_t nTotalPoints = 0;
+    for (size_t i=0; i<(seeds.n_rows*streamlinesPerSeed); i++)
+        nTotalPoints += streamlines[i].nPoints();
+    
+    size_t currentStart = 0;
+    arma::fmat allPoints(nTotalPoints, 3);
+    arma::fmat currentPoints;
     for (size_t i=0; i<(seeds.n_rows*streamlinesPerSeed); i++)
     {
         size_t seedIndex = streamlines[i].concatenatePoints(currentPoints);
         if (!currentPoints.empty())
         {
             // These indices are 1-based for R's benefit
-            startIndices.push_back(allPoints.n_rows + 1);
-            seedIndices.push_back(allPoints.n_rows + seedIndex + 1);
-            allPoints = join_cols(allPoints, currentPoints + 1.0);
+            startIndices.push_back(currentStart + 1);
+            seedIndices.push_back(currentStart + seedIndex + 1);
+            allPoints(arma::span(currentStart, currentStart+currentPoints.n_rows-1), arma::span::all) = currentPoints + 1.0;
+            currentStart += currentPoints.n_rows;
         }
     }
     

@@ -36,7 +36,7 @@ public:
     Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const Streamline::PointType pointType, const bool fixedSpacing)
         : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), fixedSpacing(fixedSpacing) {}
     
-    int nPoints () const { return static_cast<int>(leftPoints.size() + rightPoints.size() - 1); }
+    int nPoints () const { return std::max(static_cast<int>(leftPoints.size()+rightPoints.size())-1, 0); }
     // int getSeed () const { return seed; }
     
     int nLabels () const                { return static_cast<int>(labels.size()); }
