@@ -11,20 +11,20 @@ Space<3>::Vector BedpostDataSource::sampleDirection (const Space<3>::Point &poin
     // Probabilistic trilinear interpolation: select the sample location with probability in proportion to proximity
     for (int i=0; i<3; i++)
     {
-        float pointCeiling = ceilf(point[i]);
-        float pointFloor = floorf(point[i]);
+        float pointCeiling = ceil(point[i]);
+        float pointFloor = floor(point[i]);
         
         float distance = point[i] - pointFloor;
         
         float uniformSample = static_cast<float>(R::unif_rand());
-        if ((uniformSample > distance && pointFloor >= 0) || pointCeiling >= imageDims[i])
-            newPoint[i] = pointFloor;
+        if ((uniformSample > distance && pointFloor >= 0.0) || pointCeiling >= static_cast<float>(imageDims[i]))
+            newPoint[i] = static_cast<int>(pointFloor);
         else
-            newPoint[i] = pointCeiling;
+            newPoint[i] = static_cast<int>(pointCeiling);
     }
     
     // Randomly choose a sample number
-    newPoint[3] = static_cast<int>(roundf(R::unif_rand() * (nSamples-1)));
+    newPoint[3] = static_cast<int>(round(R::unif_rand() * (nSamples-1)));
     
     // NB: Currently assuming always at least one anisotropic compartment
     int closestIndex = 0;
