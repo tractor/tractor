@@ -5,8 +5,8 @@
 template <class ElementType> class DataSource
 {    
 public:
-    virtual bool more () const { return false; }
-    virtual void get (ElementType &data) const {}
+    virtual bool more () { return false; }
+    virtual void get (ElementType &data) {}
 };
 
 // Data sink: responsible for exporting or writing data elements

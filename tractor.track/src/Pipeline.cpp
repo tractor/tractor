@@ -19,8 +19,8 @@ void Pipeline<ElementType>::run ()
         source->get(element);
         workingSet.push_back(element);
         
-        // When the working set is full, process it
-        if (workingSet.size() == blockSize)
+        // Process the data when the working set is full or there's nothing more incoming
+        if (workingSet.size() == blockSize || !source->more())
         {
             // Apply the manipulator(s), if there are any
             for (int i=0; i<manipulators.size(); i++)
