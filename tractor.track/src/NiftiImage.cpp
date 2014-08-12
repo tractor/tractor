@@ -71,6 +71,6 @@ void NiftiImage<DataType>::convertData ()
         break;
         
         default:
-        throw new std::runtime_error("Unsupported data type (" + std::string(nifti_datatype_string(info->datatype)) + ") in file " + std::string(info->fname));
+        throw std::runtime_error("Unsupported data type (" + std::string(nifti_datatype_string(info->datatype)) + ") in file " + std::string(info->fname));
     }
 }

@@ -18,7 +18,7 @@ private:
     void convertData ();
     
 public:
-    NiftiImage () {};
+    NiftiImage () {}
     NiftiImage (const std::string &fileName, const bool readData = true)
     {
         info = nifti_image_read(fileName.c_str(), static_cast<int>(readData));

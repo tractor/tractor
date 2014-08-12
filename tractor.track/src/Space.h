@@ -25,7 +25,7 @@ public:
     static const Vector sphericalToCartesian (const Vector &spherical)
     {
         if (Dimensionality != 3)
-            throw new std::domain_error("Spherical coordinates are only defined in 3D spaces");
+            throw std::domain_error("Spherical coordinates are only defined in 3D spaces");
         
         Vector cartesian;
         cartesian[0] = spherical[0] * sin(spherical[1]) * cos(spherical[2]);
