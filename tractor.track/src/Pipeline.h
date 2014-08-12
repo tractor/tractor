@@ -10,16 +10,11 @@ public:
 };
 
 // Data sink: responsible for exporting or writing data elements
-// The value of "isBlockwise" determines whether "put" is by element or block
 template <class ElementType> class DataSink
 {
-protected:
-    bool isBlockwise;
-    
 public:
-    bool blockwise () const { return isBlockwise; }
+    virtual void notify (const size_t &dataSize) {}
     virtual void put (const ElementType &data) {}
-    virtual void put (const std::list<ElementType> &data) {}
 };
 
 // Data manipulator: responsible for transforming or removing data elements

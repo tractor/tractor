@@ -36,13 +36,11 @@ void Pipeline<ElementType>::run ()
             // Pass the remaining data to the sink(s)
             for (int i=0; i<sinks.size(); i++)
             {
-                if (sinks[i]->blockwise())
-                    sinks[i]->put(workingSet);
-                else
-                {
-                    for (typename std::list<ElementType>::const_iterator it=workingSet.begin(); it!=workingSet.end(); it++)
-                        sinks[i]->put(*it);
-                }
+                // Tell the sink how many elements are incoming
+                sinks[i]->notify(workingSet.size());
+                
+                for (typename std::list<ElementType>::const_iterator it=workingSet.begin(); it!=workingSet.end(); it++)
+                    sinks[i]->put(*it);
             }
             
             // Empty the working set again
