@@ -10,11 +10,14 @@ public:
 };
 
 // Data sink: responsible for exporting or writing data elements
-// The Blockwise template parameter determines whether "put" is by element or block
-template <class ElementType, bool Blockwise> class DataSink
+// The value of "isBlockwise" determines whether "put" is by element or block
+template <class ElementType> class DataSink
 {
+protected:
+    bool isBlockwise;
+    
 public:
-    bool blockwise () const { return Blockwise; }
+    bool blockwise () const { return isBlockwise; }
     virtual void put (const ElementType &data) {}
     virtual void put (const std::list<ElementType> &data) {}
 };
@@ -28,24 +31,26 @@ public:
 };
 
 // Pipeline: a general blockwise processing structure
+// If there are multiple manipulators then they are applied in sequence
+// If there are multiple sinks then data are sent to all of them
 template <class ElementType> class Pipeline
 {
 private:
     DataSource<ElementType> *source;
-    DataSink<ElementType> *sink;
-    DataManipulator<ElementType> *manipulator;
+    std::vector<DataManipulator<ElementType>*> manipulators;
+    std::vector<DataSink<ElementType>*> sinks;
     
     size_t blockSize;
     std::list<ElementType> workingSet;
     
 public:
     Pipeline ()
-        : source(NULL), sink(NULL), manipulator(NULL), blockSize(10000) {}
+        : source(NULL), blockSize(10000) {}
     
     void setBlockSize (const size_t blockSize) { this->blockSize = blockSize; }
     void setSource (DataSource<ElementType> const *source) { this->source = source; }
-    void setSink (DataSink<ElementType> const *sink) { this->sink = sink; }
-    void setManipulator (DataManipulator<ElementType> const *manipulator) { this->manipulator = manipulator; }
+    void addManipulator (DataManipulator<ElementType> const *manipulator) { manipulators.push_back(manipulator); }
+    void addSink (DataSink<ElementType> const *sink) { sinks.push_back(sink); }
     
     void run ();
 };

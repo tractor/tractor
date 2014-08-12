@@ -22,26 +22,26 @@ void Pipeline<ElementType>::run ()
         // When the working set is full, process it
         if (workingSet.size() == blockSize)
         {
-            // Apply the manipulator if there is one
-            if (manipulator != NULL)
+            // Apply the manipulator(s), if there are any
+            for (int i=0; i<manipulators.size(); i++)
             {
-                for (std::list<ElementType>::iterator it=workingSet.begin(); it!=workingSet.end(); it++)
+                for (typename std::list<ElementType>::iterator it=workingSet.begin(); it!=workingSet.end(); it++)
                 {
-                    bool keep = manipulator->process(*it);
+                    bool keep = manipulators[i]->process(*it);
                     if (!keep)
                         workingSet.erase(it);
                 }
             }
             
-            // Pass the remaining data to the sink
-            if (sink != NULL)
+            // Pass the remaining data to the sink(s)
+            for (int i=0; i<sinks.size(); i++)
             {
-                if (sink->blockwise())
-                    sink->put(workingSet);
+                if (sinks[i]->blockwise())
+                    sinks[i]->put(workingSet);
                 else
                 {
-                    for (std::list<ElementType>::const_iterator it=workingSet.begin(); it!=workingSet.end(); it++)
-                        sink->put(*it);
+                    for (typename std::list<ElementType>::const_iterator it=workingSet.begin(); it!=workingSet.end(); it++)
+                        sinks[i]->put(*it);
                 }
             }
             
