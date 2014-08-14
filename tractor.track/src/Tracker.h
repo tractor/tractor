@@ -7,7 +7,7 @@
 #include "NiftiImage.h"
 #include "DiffusionDataSource.h"
 #include "Streamline.h"
-#include "Pipeline.h"
+#include "DataSource.h"
 #include "Logger.h"
 
 #define LOOPCHECK_RATIO 5.0

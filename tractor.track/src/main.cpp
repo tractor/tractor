@@ -4,6 +4,7 @@
 #include "NiftiImage.h"
 #include "Streamline.h"
 #include "Tracker.h"
+#include "Pipeline.h"
 
 using namespace Rcpp;
 

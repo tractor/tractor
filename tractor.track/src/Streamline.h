@@ -4,7 +4,7 @@
 #include <RcppArmadillo.h>
 
 #include "Space.h"
-#include "Pipeline.h"
+#include "DataSource.h"
 
 class Streamline
 {

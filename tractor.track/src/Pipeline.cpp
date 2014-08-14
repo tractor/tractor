@@ -3,8 +3,6 @@
 #include "Streamline.h"
 #include "Pipeline.h"
 
-template class Pipeline<Streamline>;
-
 template <class ElementType>
 void Pipeline<ElementType>::run ()
 {
@@ -51,3 +49,5 @@ void Pipeline<ElementType>::run ()
         }
     }
 }
+
+template class Pipeline<Streamline>;
