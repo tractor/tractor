@@ -62,6 +62,8 @@ public:
         nTotalPoints = 0;
         for (const_iterator it=begin; it!=end; it++)
             nTotalPoints += it->nPoints();
+        
+        points.set_size(nTotalPoints, 3);
         startIndices.set_size(count);
         seedIndices.set_size(count);
     }

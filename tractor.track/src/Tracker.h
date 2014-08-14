@@ -84,10 +84,12 @@ public:
             return;
         
         // We're moving on to the next seed
-        if (currentStreamline > 0 && currentStreamline % streamlinesPerSeed == 0)
+        if (currentStreamline % streamlinesPerSeed == 0)
         {
+            if (currentStreamline > 0)
+                currentSeed++;
+            
             // Vectors are columns to Armadillo, so we have to transpose
-            currentSeed++;
             tracker->setSeed(seeds.row(currentSeed).t());
         }
         
