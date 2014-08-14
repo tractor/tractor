@@ -14,12 +14,12 @@ RcppExport SEXP track_bedpost (SEXP seeds_, SEXP mask_path_, SEXP parameter_map_
 {
 BEGIN_RCPP
     List parameterMapPaths(parameter_map_paths_);
-    BedpostDataSource *dataSource = new BedpostDataSource(as<str_vector>(parameterMapPaths["avf"]), as<str_vector>(parameterMapPaths["theta"]), as<str_vector>(parameterMapPaths["phi"]));
-    dataSource->setAvfThreshold(as<float>(volfrac_threshold_));
+    BedpostDataSource *bedpost = new BedpostDataSource(as<str_vector>(parameterMapPaths["avf"]), as<str_vector>(parameterMapPaths["theta"]), as<str_vector>(parameterMapPaths["phi"]));
+    bedpost->setAvfThreshold(as<float>(volfrac_threshold_));
     
     NiftiImage<short> *mask = new NiftiImage<short>(as<std::string>(mask_path_));
     
-    Tracker tracker(dataSource, mask);
+    Tracker tracker(bedpost, mask);
     tracker.setDebugLevel(as<int>(debug_level_));
     
     std::map<std::string,bool> flags;
@@ -37,45 +37,19 @@ BEGIN_RCPP
     tracker.setRightwardsVector(rightwardsVector);
     tracker.setInnerProductThreshold(as<float>(curvature_threshold_));
     tracker.setStepLength(as<float>(step_length_));
+    tracker.setMaxSteps(as<int>(max_steps_));
     
     RNGScope scope;
     
-    int streamlinesPerSeed = as<int>(n_samples_);
-    int maxSteps = as<int>(max_steps_);
-    arma::fmat seeds = as<arma::fmat>(seeds_);
-    std::vector<Streamline> streamlines;
-    for (size_t i=0; i<seeds.n_rows; i++)
-    {
-        // Vectors are columns to Armadillo, so we have to transpose
-        tracker.setSeed(seeds.row(i).t() - 1.0);
-        for (int j=0; j<streamlinesPerSeed; j++)
-            streamlines.push_back(tracker.run(maxSteps));
-    }
-    
-    int_vector startIndices, seedIndices;
-    size_t nTotalPoints = 0;
-    for (size_t i=0; i<(seeds.n_rows*streamlinesPerSeed); i++)
-        nTotalPoints += streamlines[i].nPoints();
-    
-    size_t currentStart = 0;
-    arma::fmat allPoints(nTotalPoints, 3);
-    arma::fmat currentPoints;
-    for (size_t i=0; i<(seeds.n_rows*streamlinesPerSeed); i++)
-    {
-        size_t seedIndex = streamlines[i].concatenatePoints(currentPoints);
-        if (!currentPoints.empty())
-        {
-            // These indices are 1-based for R's benefit
-            startIndices.push_back(currentStart + 1);
-            seedIndices.push_back(currentStart + seedIndex + 1);
-            allPoints(arma::span(currentStart, currentStart+currentPoints.n_rows-1), arma::span::all) = currentPoints + 1.0;
-            currentStart += currentPoints.n_rows;
-        }
-    }
+    TractographyDataSource dataSource(&tracker, as<arma::fmat>(seeds_) - 1.0, as<size_t>(n_samples_));
+    StreamlineMatrixDataSink dataSink;
+    Pipeline<Streamline> pipeline(&dataSource, 0);
+    pipeline.addSink(&dataSink);
+    pipeline.run();
     
     delete mask;
-    delete dataSource;
+    delete bedpost;
     
-    return List::create(Named("points")=allPoints, Named("startIndices")=startIndices, Named("seedIndices")=seedIndices);
+    return List::create(Named("points")=dataSink.getPoints()+1.0, Named("startIndices")=dataSink.getStartIndices()+1, Named("seedIndices")=dataSink.getSeedIndices()+1);
 END_RCPP
 }
