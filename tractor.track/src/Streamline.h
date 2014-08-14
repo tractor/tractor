@@ -4,6 +4,7 @@
 #include <RcppArmadillo.h>
 
 #include "Space.h"
+#include "Pipeline.h"
 
 class Streamline
 {
@@ -37,50 +38,51 @@ public:
         : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), fixedSpacing(fixedSpacing) {}
     
     int nPoints () const { return std::max(static_cast<int>(leftPoints.size()+rightPoints.size())-1, 0); }
-    // int getSeed () const { return seed; }
     
     int nLabels () const                { return static_cast<int>(labels.size()); }
     bool addLabel (const int label)     { return labels.insert(label).second; }
     bool removeLabel (const int label)  { return (labels.erase(label) == 1); }
     void clearLabels ()                 { labels.clear(); }
     
-    size_t concatenatePoints (arma::fmat &points)
+    size_t concatenatePoints (arma::fmat &points) const;
+};
+
+class StreamlineMatrixDataSink : public DataSink<Streamline>
+{
+private:
+    arma::fmat points;
+    arma::uvec startIndices, seedIndices;
+    size_t currentIndex, currentStart, nTotalPoints;
+    
+public:
+    void setup (const size_type &count, const_iterator begin, const_iterator end)
     {
-        int nPoints = this->nPoints();
-        if (nPoints < 1)
-        {
-            points.reset();
-            return 0;
-        }
-        else
-            points.set_size(nPoints, 3);
-        
-        size_t index = 0;
-        if (leftPoints.size() > 1)
-        {
-            for (std::vector<Space<3>::Point>::reverse_iterator it=leftPoints.rbegin(); it!=leftPoints.rend()-1; it++)
-            {
-                points.row(index) = it->t();
-                index++;
-            }
-        }
-        
-        if (rightPoints.size() > 0)
-        {
-            for (std::vector<Space<3>::Point>::iterator it=rightPoints.begin(); it!=rightPoints.end(); it++)
-            {
-                points.row(index) = it->t();
-                index++;
-            }
-        }
-        else
-        {
-            // The left side can't also have length zero, so grab the seed from there
-            points.row(index) = leftPoints[0].t();
-        }
-        
-        return std::max(static_cast<int>(leftPoints.size())-1, 0);
+        currentIndex = 0;
+        currentStart = 0;
+        nTotalPoints = 0;
+        for (const_iterator it=begin; it!=end; it++)
+            nTotalPoints += it->nPoints();
+        startIndices.set_size(count);
+        seedIndices.set_size(count);
     }
+    
+    void put (const Streamline &data)
+    {
+        arma::fmat currentPoints;
+        size_t seedIndex = data.concatenatePoints(currentPoints);
+        if (!currentPoints.empty())
+        {
+            startIndices(currentIndex) = currentStart;
+            seedIndices(currentIndex) = currentStart + seedIndex;
+            points(arma::span(currentStart,currentStart+currentPoints.n_rows-1), arma::span::all) = currentPoints;
+            currentIndex++;
+            currentStart += currentPoints.n_rows;
+        }
+    }
+    
+    const arma::fmat & getPoints () { return points; }
+    const arma::uvec & getStartIndices () { return startIndices; }
+    const arma::uvec & getSeedIndices () { return seedIndices; }
 };
 
 #endif
