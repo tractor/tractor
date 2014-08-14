@@ -1,6 +1,9 @@
 #include <RcppArmadillo.h>
 
+#include "Streamline.h"
 #include "Pipeline.h"
+
+template class Pipeline<Streamline>;
 
 template <class ElementType>
 void Pipeline<ElementType>::run ()
@@ -36,8 +39,8 @@ void Pipeline<ElementType>::run ()
             // Pass the remaining data to the sink(s)
             for (int i=0; i<sinks.size(); i++)
             {
-                // Tell the sink how many elements are incoming
-                sinks[i]->notify(workingSet.size());
+                // Tell the sink how many elements are incoming and provide an iterator
+                sinks[i]->setup(workingSet.size(), workingSet.begin(), workingSet.end());
                 
                 for (typename std::list<ElementType>::const_iterator it=workingSet.begin(); it!=workingSet.end(); it++)
                     sinks[i]->put(*it);

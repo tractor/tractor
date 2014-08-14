@@ -12,8 +12,12 @@ public:
 // Data sink: responsible for exporting or writing data elements
 template <class ElementType> class DataSink
 {
+protected:
+    typedef typename std::list<ElementType>::size_type size_type;
+    typedef typename std::list<ElementType>::const_iterator const_iterator;
+    
 public:
-    virtual void notify (const size_t &dataSize) {}
+    virtual void setup (const size_type &count, const_iterator begin, const_iterator end) {}
     virtual void put (const ElementType &data) {}
 };
 
@@ -38,14 +42,17 @@ private:
     size_t blockSize;
     std::list<ElementType> workingSet;
     
+    // Hide default constructor
+    Pipeline () {}
+    
 public:
-    Pipeline ()
-        : source(NULL), blockSize(10000) {}
+    Pipeline (DataSource<ElementType> * const source = NULL, const size_t blockSize = 10000)
+        : source(source), blockSize(blockSize) {}
     
     void setBlockSize (const size_t blockSize) { this->blockSize = blockSize; }
-    void setSource (DataSource<ElementType> const *source) { this->source = source; }
-    void addManipulator (DataManipulator<ElementType> const *manipulator) { manipulators.push_back(manipulator); }
-    void addSink (DataSink<ElementType> const *sink) { sinks.push_back(sink); }
+    void setSource (DataSource<ElementType> * const source) { this->source = source; }
+    void addManipulator (DataManipulator<ElementType> * const manipulator) { manipulators.push_back(manipulator); }
+    void addSink (DataSink<ElementType> * const sink) { sinks.push_back(sink); }
     
     void run ();
 };
