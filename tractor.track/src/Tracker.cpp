@@ -4,7 +4,7 @@
 
 using namespace std;
 
-Streamline Tracker::run (const int maxSteps)
+Streamline Tracker::run ()
 {
     const std::vector<int> &spaceDims = mask->getDimensions();
     const std::vector<float> &voxelDims = mask->getVoxelDimensions();

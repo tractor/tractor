@@ -7,6 +7,7 @@
 #include "NiftiImage.h"
 #include "DiffusionDataSource.h"
 #include "Streamline.h"
+#include "Pipeline.h"
 #include "Logger.h"
 
 #define LOOPCHECK_RATIO 5.0
@@ -19,7 +20,6 @@ private:
     
     Array<Space<3>::Vector> *loopcheck;
     Array<bool> *visited;
-    NiftiImage<int> *visitationMap;
     
     std::map<std::string,bool> flags;
     
@@ -27,19 +27,19 @@ private:
     Space<3>::Vector rightwardsVector;
     float innerProductThreshold;
     float stepLength;
+    int maxSteps;
     
     Logger logger;
     
 public:
     Tracker () {}
     Tracker (DiffusionDataSource * const dataSource, NiftiImage<short> * const mask)
-        : dataSource(dataSource), mask(mask), loopcheck(NULL), visited(NULL), visitationMap(NULL) {}
+        : dataSource(dataSource), mask(mask), loopcheck(NULL), visited(NULL) {}
     
     ~Tracker ()
     {
         delete loopcheck;
         delete visited;
-        delete visitationMap;
     }
     
     Space<3>::Point getSeed () const { return seed; }
@@ -51,13 +51,52 @@ public:
     void setRightwardsVector (const Space<3>::Vector &rightwardsVector) { this->rightwardsVector = rightwardsVector; }
     void setInnerProductThreshold (const float innerProductThreshold) { this->innerProductThreshold = innerProductThreshold; }
     void setStepLength (const float stepLength) { this->stepLength = stepLength; }
+    void setMaxSteps (const int maxSteps) { this->maxSteps = maxSteps; }
     
     void setFlag (const std::string &key, const bool value = true) { this->flags[key] = value; }
     void setFlags (const std::map<std::string,bool> &flags) { this->flags = flags; }
     
     void setDebugLevel (const int &level) { this->logger.setOutputLevel(level); }
     
-    Streamline run (const int maxSteps);
+    Streamline run ();
+};
+
+class TractographyDataSource : public DataSource<Streamline>
+{
+private:
+    Tracker *tracker;
+    arma::fmat seeds;
+    size_t streamlinesPerSeed, totalStreamlines, currentStreamline, currentSeed;
+    
+public:
+    TractographyDataSource (Tracker * const tracker, const arma::fmat &seeds, const size_t streamlinesPerSeed)
+        : tracker(tracker), seeds(seeds), streamlinesPerSeed(streamlinesPerSeed), currentStreamline(0), currentSeed(0)
+    {
+        this->totalStreamlines = seeds.n_rows * streamlinesPerSeed;
+    }
+    
+    bool more () { return (currentStreamline < totalStreamlines); }
+    
+    void get (Streamline &data)
+    {
+        // We're not generating any more streamlines
+        if (currentStreamline >= totalStreamlines)
+            return;
+        
+        // We're moving on to the next seed
+        if (currentStreamline > 0 && currentStreamline % streamlinesPerSeed == 0)
+        {
+            // Vectors are columns to Armadillo, so we have to transpose
+            currentSeed++;
+            tracker->setSeed(seeds.row(currentSeed).t());
+        }
+        
+        // Generate the streamline
+        data = tracker->run();
+        
+        // Increment the main counter
+        currentStreamline++;
+    }
 };
 
 #endif
