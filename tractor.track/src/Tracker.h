@@ -16,7 +16,9 @@ class Tracker
 {
 private:
     DiffusionDataSource *dataSource;
-    NiftiImage<short> *mask;
+    
+    NiftiImage *mask;
+    Array<short> *maskData;
     
     Array<Space<3>::Vector> *loopcheck;
     Array<bool> *visited;
@@ -33,11 +35,16 @@ private:
     
 public:
     Tracker () {}
-    Tracker (DiffusionDataSource * const dataSource, NiftiImage<short> * const mask)
-        : dataSource(dataSource), mask(mask), loopcheck(NULL), visited(NULL) {}
+    Tracker (DiffusionDataSource * const dataSource, NiftiImage * const mask)
+        : dataSource(dataSource), mask(mask), loopcheck(NULL), visited(NULL)
+    {
+        maskData = mask->getData<short>();
+        mask->dropData();
+    }
     
     ~Tracker ()
     {
+        delete maskData;
         delete loopcheck;
         delete visited;
     }

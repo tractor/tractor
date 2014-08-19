@@ -89,11 +89,11 @@ Streamline Tracker::run ()
             // Index for current location
             visited->flattenIndex(roundedLoc, vectorLoc);
             
-            if (starting && (*mask)[vectorLoc] == 0)
+            if (starting && (*maskData)[vectorLoc] == 0)
                 timesLeftMask++;
             
             // Stop if we've stepped outside the mask, possibly deferring termination if required
-            if ((*mask)[vectorLoc] == 0 && previouslyInsideMask == 1)
+            if ((*maskData)[vectorLoc] == 0 && previouslyInsideMask == 1)
             {
                 leftMask = true;
                 timesLeftMask++;
@@ -106,7 +106,7 @@ Streamline Tracker::run ()
                     break;
                 }
             }
-            previouslyInsideMask = ((*mask)[vectorLoc] == 0 ? 0 : 1);
+            previouslyInsideMask = ((*maskData)[vectorLoc] == 0 ? 0 : 1);
             
             // Mark visit
             if (!(*visited)[vectorLoc])

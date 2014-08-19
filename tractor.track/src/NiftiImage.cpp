@@ -3,71 +3,66 @@
 
 #include "NiftiImage.h"
 
-// Tell the compiler that we're going to need these specialisations (otherwise
-// it won't generate the relevant code and we'll get a linker error)
-template class NiftiImage<short>;
-template class NiftiImage<float>;
-
-template <typename DataType>
-template <typename StorageType> void NiftiImage<DataType>::moveData ()
+template <typename SourceType, typename TargetType>
+Array<TargetType> * NiftiImage::convertToArray ()
 {
     if (info == NULL)
-        return;
+        return NULL;
     
-    StorageType *original = static_cast<StorageType *>(info->data);
-    std::vector<DataType> values(info->nvox);
-    std::transform(original, original + info->nvox, values.begin(), NiftiImage<DataType>::convertValue<StorageType>);
+    SourceType *original = static_cast<SourceType *>(info->data);
+    std::vector<TargetType> values(info->nvox);
+    std::transform(original, original + info->nvox, values.begin(), NiftiImage::convertValue<SourceType,TargetType>);
     
-    data = new Array<DataType>(dims, values);
-    nifti_image_unload(info);
+    Array<TargetType> * data = new Array<TargetType>(dims, values);
+    return data;
 }
 
 template <typename DataType>
-void NiftiImage<DataType>::convertData ()
+Array<DataType> * NiftiImage::getData () const
 {
     if (info == NULL)
-        return;
+        return NULL;
     
     switch (info->datatype)
     {
         case NIFTI_TYPE_UINT8:
-        moveData<uint8_t>();
+        return convertToArray<uint8_t,DataType>();
         break;
         
         case NIFTI_TYPE_INT16:
-        moveData<int16_t>();
+        return convertToArray<int16_t,DataType>();
         break;
         
         case NIFTI_TYPE_INT32:
-        moveData<int32_t>();
+        return convertToArray<int32_t,DataType>();
         break;
         
         case NIFTI_TYPE_FLOAT32:
-        moveData<float>();
+        return convertToArray<float,DataType>();
         break;
         
         case NIFTI_TYPE_FLOAT64:
-        moveData<double>();
+        return convertToArray<double,DataType>();
         break;
         
         case NIFTI_TYPE_INT8:
-        moveData<int8_t>();
+        return convertToArray<int8_t,DataType>();
         break;
         
         case NIFTI_TYPE_UINT16:
-        moveData<uint16_t>();
+        return convertToArray<uint16_t,DataType>();
         break;
         
         case NIFTI_TYPE_UINT32:
-        moveData<uint32_t>();
+        return convertToArray<uint32_t,DataType>();
         break;
         
         case NIFTI_TYPE_INT64:
-        moveData<int64_t>();
+        return convertToArray<int64_t,DataType>();
         break;
         
         case NIFTI_TYPE_UINT64:
-        moveData<uint64_t>();
+        return convertToArray<uint64_t,DataType>();
         break;
         
         default:

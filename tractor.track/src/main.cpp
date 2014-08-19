@@ -18,7 +18,7 @@ BEGIN_RCPP
     BedpostDataSource *bedpost = new BedpostDataSource(as<str_vector>(parameterMapPaths["avf"]), as<str_vector>(parameterMapPaths["theta"]), as<str_vector>(parameterMapPaths["phi"]));
     bedpost->setAvfThreshold(as<float>(volfrac_threshold_));
     
-    NiftiImage<short> *mask = new NiftiImage<short>(as<std::string>(mask_path_));
+    NiftiImage *mask = new NiftiImage(as<std::string>(mask_path_));
     
     Tracker tracker(bedpost, mask);
     tracker.setDebugLevel(as<int>(debug_level_));

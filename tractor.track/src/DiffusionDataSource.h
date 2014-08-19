@@ -18,7 +18,8 @@ public:
 class BedpostDataSource : public DiffusionDataSource
 {
 private:
-    std::vector<NiftiImage<float>*> avf, theta, phi;
+    std::vector<Array<float>*> avf, theta, phi;
+    std::vector<int> imageDims;
     int nCompartments;
     int nSamples;
     float avfThreshold;
@@ -37,15 +38,27 @@ public:
         theta.resize(nCompartments);
         phi.resize(nCompartments);
         
+        imageDims = NiftiImage(avfFiles[0],false).getDimensions();
+        
         for (int i=0; i<nCompartments; i++)
         {
-            avf[i] = new NiftiImage<float>(avfFiles[i]);
-            theta[i] = new NiftiImage<float>(thetaFiles[i]);
-            phi[i] = new NiftiImage<float>(phiFiles[i]);
+            avf[i] = NiftiImage(avfFiles[i]).getData<float>();
+            theta[i] = NiftiImage(thetaFiles[i]).getData<float>();
+            phi[i] = NiftiImage(phiFiles[i]).getData<float>();
         }
         
         const std::vector<int> &imageDims = avf[0]->getDimensions();
         nSamples = imageDims[3];
+    }
+    
+    ~BedpostDataSource ()
+    {
+        for (int i=0; i<nCompartments; i++)
+        {
+            delete avf[i];
+            delete theta[i];
+            delete phi[i];
+        }
     }
     
     int getNCompartments () const { return nCompartments; }

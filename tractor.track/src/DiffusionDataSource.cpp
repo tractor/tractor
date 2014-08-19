@@ -5,7 +5,6 @@
 
 Space<3>::Vector BedpostDataSource::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection)
 {
-    const std::vector<int> &imageDims = avf[0]->getDimensions();
     std::vector<int> newPoint(4);
     
     // Probabilistic trilinear interpolation: select the sample location with probability in proportion to proximity
