@@ -18,6 +18,13 @@ public:
         binaryStream.attach(&fileStream);
     }
     
+    ~TrackvisDataSource ()
+    {
+        binaryStream.detach();
+        if (fileStream.is_open())
+            fileStream.close();
+    }
+    
     void setup (const std::string &fileName);
     bool more ();
     void get (Streamline &data);

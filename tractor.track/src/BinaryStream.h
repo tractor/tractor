@@ -20,11 +20,13 @@ private:
     std::ifstream *stream;
     
 public:
-    BinaryInputStream () {}
+    BinaryInputStream ()
+        : stream(NULL) {}
     BinaryInputStream (std::ifstream *stream)
         : stream(stream) {}
     
     void attach (std::ifstream *stream) { this->stream = stream; }
+    void detach () { this->stream = NULL; }
     
     template <typename SourceType> SourceType readValue ();
     template <typename SourceType, typename FinalType> void readValues (std::vector<FinalType> &values, size_t n);
