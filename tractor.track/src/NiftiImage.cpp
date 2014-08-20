@@ -4,7 +4,7 @@
 #include "NiftiImage.h"
 
 template <typename SourceType, typename TargetType>
-Array<TargetType> * NiftiImage::convertToArray ()
+Array<TargetType> * NiftiImage::convertToArray () const
 {
     if (info == NULL)
         return NULL;
@@ -69,3 +69,6 @@ Array<DataType> * NiftiImage::getData () const
         throw std::runtime_error("Unsupported data type (" + std::string(nifti_datatype_string(info->datatype)) + ") in file " + std::string(info->fname));
     }
 }
+
+template Array<float> * NiftiImage::getData<float> () const;
+template Array<short> * NiftiImage::getData<short> () const;
