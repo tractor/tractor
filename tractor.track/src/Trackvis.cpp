@@ -1,10 +1,15 @@
 #include <RcppArmadillo.h>
 
+#include "nifti1_io.h"
+
+#include "NiftiImage.h"
 #include "Streamline.h"
 #include "BinaryStream.h"
 #include "Trackvis.h"
 
 using namespace std;
+
+std::map<int,char> TrackvisDataSink::orientationCodeMap = TrackvisDataSink::createOrientationCodeMap();
 
 // Name.........................Data type........Bytes....Comment..........................................................
 // 
@@ -16,7 +21,7 @@ using namespace std;
 // scalar_name[10][20]          char             200      Name of each scalar. Can not be longer than 20 characters each. Can only store up to 10 names.
 // n_properties                 short int        2        Number of properties saved at each track.
 // property_name[10][20]        char             200      Name of each property. Can not be longer than 20 characters each. Can only store up to 10 names.
-// vox_to_ras[4][4]             float            64        4x4 matrix for voxel to RAS (crs to xyz) transformation. If vox_to_ras[3][3] is 0, it means the matrix is not recorded. This field is added from version 2.
+// vox_to_ras[4][4]             float            64       4x4 matrix for voxel to RAS (crs to xyz) transformation. If vox_to_ras[3][3] is 0, it means the matrix is not recorded. This field is added from version 2.
 // reserved[444]                char             444      Reserved space for future version.
 // voxel_order[4]               char             4        Storing order of the original image data. Explained here.
 // pad2[4]                      char             4        Paddings.
@@ -34,7 +39,7 @@ using namespace std;
 // 
 // Source: Trackvis documentation (http://www.trackvis.org/docs/?subsect=fileformat)
 
-void TrackvisDataSource::setup (const std::string &fileName)
+void TrackvisDataSource::attach (const std::string &fileName)
 {
     if (fileStream.is_open())
         fileStream.close();
@@ -56,9 +61,9 @@ void TrackvisDataSource::setup (const std::string &fileName)
         throw runtime_error("Trackvis file does not seem to have a valid magic number");
     
     vector<int> imageDims;
-    binaryStream.readValues<int16_t>(imageDims, 3);
+    binaryStream.readVector<int16_t>(imageDims, 3);
     vector<float> voxelDims;
-    binaryStream.readValues<float>(voxelDims, 3);
+    binaryStream.readVector<float>(voxelDims, 3);
     
     fileStream.seekg(12, ios::cur);
     nScalars = binaryStream.readValue<int16_t>();
@@ -83,7 +88,7 @@ void TrackvisDataSource::get (Streamline &data)
     for (int32_t i=0; i<nPoints; i++)
     {
         Space<3>::Point point;
-        binaryStream.readValues<float>(point, 3);
+        binaryStream.readVector<float>(point, 3);
         leftPoints.push_back(point);
         if (nScalars > 0)
             fileStream.seekg(4 * nScalars, ios::cur);
@@ -94,4 +99,82 @@ void TrackvisDataSource::get (Streamline &data)
     if (nProperties > 0)
         fileStream.seekg(4 * nProperties, ios::cur);
     currentStreamline++;
+}
+
+void TrackvisDataSink::attach (const std::string &fileName, const NiftiImage &image)
+{
+    if (image.getDimensionality() < 3)
+        throw std::invalid_argument("Specified image has less than three dimensions");
+    
+    if (fileStream.is_open())
+        fileStream.close();
+    
+    fileStream.open(fileName.c_str(), ios::binary);
+    
+    char magicNumber[6] = { 'T','R','A','C','K','\0' };
+    fileStream.seekp(0);
+    fileStream.write(magicNumber, 6);
+    
+    binaryStream.writeVector<int16_t>(image.getDimensions(), 3);
+    binaryStream.writeVector<float>(image.getVoxelDimensions(), 3);
+    binaryStream.writeValues<float>(0.0, 3);
+    
+    binaryStream.writeValue<int16_t>(0);
+    binaryStream.writeValues<char>(0, 200);
+    binaryStream.writeValue<int16_t>(0);
+    binaryStream.writeValues<char>(0, 200);
+    
+    ::mat44 xform = image.getXformStruct();
+    binaryStream.writeValues<float>(xform.m[0], 16);
+    
+    int icode, jcode, kcode;
+    nifti_mat44_to_orientation(xform, &icode, &jcode, &kcode);
+    char orientation[4];
+    orientation[0] = TrackvisDataSink::orientationCodeMap[icode];
+    orientation[1] = TrackvisDataSink::orientationCodeMap[jcode];
+    orientation[2] = TrackvisDataSink::orientationCodeMap[kcode];
+    orientation[3] = '\0';
+    fileStream.write(orientation, 4);
+    binaryStream.writeValues<char>(0, 4);
+    
+    float qb, qc, qd, qfac;
+    nifti_mat44_to_quatern(xform, &qb, &qc, &qd, NULL, NULL, NULL, NULL, NULL, NULL, &qfac);
+    ::mat44 rotationMatrix = nifti_quatern_to_mat44(qb, qc, qd, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, qfac);
+    binaryStream.writeValues<float>(rotationMatrix.m[0], 3);
+    binaryStream.writeValues<float>(rotationMatrix.m[1], 3);
+    binaryStream.writeValues<char>(0, 8);
+    
+    binaryStream.writeValue<int32_t>(0);
+    binaryStream.writeValue<int32_t>(2);
+    binaryStream.writeValue<int32_t>(1000);
+    
+    totalStreamlines = 0;
+}
+
+void TrackvisDataSink::setup (const size_type &count, const_iterator begin, const_iterator end)
+{
+    totalStreamlines += count;
+    if (totalStreamlines > std::numeric_limits<int32_t>::max())
+        throw std::runtime_error("Total streamline count exceeds the storage capacity of the Trackvis format");
+}
+
+void TrackvisDataSink::put (const Streamline &data)
+{
+    int nPoints = data.nPoints();
+    arma::fmat points;
+    
+    data.concatenatePoints(points);
+    
+    binaryStream.writeValue<int32_t>(nPoints);
+    for (int i=0; i<nPoints; i++)
+    {
+        arma::fvec row = points.row(i).t();
+        binaryStream.writeVector<float>(row);
+    }
+}
+
+void TrackvisDataSink::done ()
+{
+    fileStream.seekp(988);
+    binaryStream.writeValue<int32_t>(totalStreamlines);
 }

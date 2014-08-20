@@ -3,6 +3,7 @@
 
 #include "Streamline.h"
 #include "DataSource.h"
+#include "BinaryStream.h"
 
 class TrackvisDataSource : public DataSource<Streamline>
 {
@@ -18,6 +19,12 @@ public:
         binaryStream.attach(&fileStream);
     }
     
+    TrackvisDataSource (const std::string &fileName)
+    {
+        attach(fileName);
+        binaryStream.attach(&fileStream);
+    }
+    
     ~TrackvisDataSource ()
     {
         binaryStream.detach();
@@ -25,13 +32,57 @@ public:
             fileStream.close();
     }
     
-    void setup (const std::string &fileName);
+    void attach (const std::string &fileName);
     bool more ();
     void get (Streamline &data);
 };
 
 class TrackvisDataSink : public DataSink<Streamline>
 {
+private:
+    std::ofstream fileStream;
+    BinaryOutputStream binaryStream;
+    size_t totalStreamlines;
+    
+public:
+    static std::map<int,char> orientationCodeMap;
+    
+    static std::map<int,char> createOrientationCodeMap ()
+    {
+        std::map<int,char> map;
+        map[NIFTI_L2R] = 'R';
+        map[NIFTI_R2L] = 'L';
+        map[NIFTI_P2A] = 'A';
+        map[NIFTI_A2P] = 'P';
+        map[NIFTI_I2S] = 'S';
+        map[NIFTI_S2I] = 'I';
+        return map;
+    }
+    
+    TrackvisDataSink ()
+    {
+        binaryStream.attach(&fileStream);
+        binaryStream.swapEndianness(false);
+    }
+    
+    TrackvisDataSink (const std::string &fileName, const NiftiImage &image)
+    {
+        attach(fileName, image);
+        binaryStream.attach(&fileStream);
+        binaryStream.swapEndianness(false);
+    }
+    
+    ~TrackvisDataSink ()
+    {
+        binaryStream.detach();
+        if (fileStream.is_open())
+            fileStream.close();
+    }
+    
+    void attach (const std::string &fileName, const NiftiImage &image);
+    void setup (const size_type &count, const_iterator begin, const_iterator end);
+    void put (const Streamline &data);
+    void done ();
 };
 
 #endif
