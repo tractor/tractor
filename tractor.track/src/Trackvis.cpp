@@ -125,7 +125,8 @@ void TrackvisDataSink::attach (const std::string &fileName, const NiftiImage &im
     binaryStream.writeValues<char>(0, 200);
     
     ::mat44 xform = image.getXformStruct();
-    binaryStream.writeValues<float>(xform.m[0], 16);
+    binaryStream.writeArray<float>(xform.m[0], 16);
+    binaryStream.writeValues<char>(0, 444);
     
     int icode, jcode, kcode;
     nifti_mat44_to_orientation(xform, &icode, &jcode, &kcode);
@@ -140,8 +141,8 @@ void TrackvisDataSink::attach (const std::string &fileName, const NiftiImage &im
     float qb, qc, qd, qfac;
     nifti_mat44_to_quatern(xform, &qb, &qc, &qd, NULL, NULL, NULL, NULL, NULL, NULL, &qfac);
     ::mat44 rotationMatrix = nifti_quatern_to_mat44(qb, qc, qd, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, qfac);
-    binaryStream.writeValues<float>(rotationMatrix.m[0], 3);
-    binaryStream.writeValues<float>(rotationMatrix.m[1], 3);
+    binaryStream.writeArray<float>(rotationMatrix.m[0], 3);
+    binaryStream.writeArray<float>(rotationMatrix.m[1], 3);
     binaryStream.writeValues<char>(0, 8);
     
     binaryStream.writeValue<int32_t>(0);
@@ -149,6 +150,7 @@ void TrackvisDataSink::attach (const std::string &fileName, const NiftiImage &im
     binaryStream.writeValue<int32_t>(1000);
     
     totalStreamlines = 0;
+    voxelDims = arma::conv_to<arma::fvec>::from(image.getVoxelDimensions());
 }
 
 void TrackvisDataSink::setup (const size_type &count, const_iterator begin, const_iterator end)
@@ -168,7 +170,7 @@ void TrackvisDataSink::put (const Streamline &data)
     binaryStream.writeValue<int32_t>(nPoints);
     for (int i=0; i<nPoints; i++)
     {
-        arma::fvec row = points.row(i).t();
+        arma::fvec row = points.row(i).t() % voxelDims;
         binaryStream.writeVector<float>(row);
     }
 }

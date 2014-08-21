@@ -1,6 +1,8 @@
 #ifndef _TRACKVIS_H_
 #define _TRACKVIS_H_
 
+#include <RcppArmadillo.h>
+
 #include "Streamline.h"
 #include "DataSource.h"
 #include "BinaryStream.h"
@@ -21,8 +23,8 @@ public:
     
     TrackvisDataSource (const std::string &fileName)
     {
-        attach(fileName);
         binaryStream.attach(&fileStream);
+        attach(fileName);
     }
     
     ~TrackvisDataSource ()
@@ -43,6 +45,7 @@ private:
     std::ofstream fileStream;
     BinaryOutputStream binaryStream;
     size_t totalStreamlines;
+    arma::fvec voxelDims;
     
 public:
     static std::map<int,char> orientationCodeMap;
@@ -67,9 +70,9 @@ public:
     
     TrackvisDataSink (const std::string &fileName, const NiftiImage &image)
     {
-        attach(fileName, image);
         binaryStream.attach(&fileStream);
         binaryStream.swapEndianness(false);
+        attach(fileName, image);
     }
     
     ~TrackvisDataSink ()

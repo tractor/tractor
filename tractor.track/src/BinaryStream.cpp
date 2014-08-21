@@ -91,7 +91,7 @@ void BinaryOutputStream::writeValues (const TargetType value, size_t n)
 }
 
 template <typename TargetType>
-void BinaryOutputStream::writeValues (TargetType * const pointer, size_t n)
+void BinaryOutputStream::writeArray (TargetType * const pointer, size_t n)
 {
     for (TargetType *movingPointer=pointer; movingPointer<(pointer+n); movingPointer++)
     {
@@ -150,10 +150,10 @@ template void BinaryInputStream::readVector<float,float> (arma::Col<float> &valu
 template void BinaryOutputStream::writeValue<int16_t> (int16_t value);
 template void BinaryOutputStream::writeValue<int32_t> (int32_t value);
 
-template void BinaryOutputStream::writeValues<char> (char * const pointer, size_t n);
-template void BinaryOutputStream::writeValues<float> (float * const pointer, size_t n);
-
+template void BinaryOutputStream::writeValues<char> (char value, size_t n);
 template void BinaryOutputStream::writeValues<float> (float value, size_t n);
+
+template void BinaryOutputStream::writeArray<float> (float * const pointer, size_t n);
 
 template void BinaryOutputStream::writeVector<float,float>(arma::Col<float> const &values, size_t n);
 template void BinaryOutputStream::writeVector<float,float>(std::vector<float> const &values, size_t n);

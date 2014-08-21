@@ -50,7 +50,7 @@ public:
     
     template <typename TargetType> void writeValue (const TargetType value);
     template <typename TargetType> void writeValues (const TargetType value, size_t n);
-    template <typename TargetType> void writeValues (TargetType * const pointer, size_t n);
+    template <typename TargetType> void writeArray (TargetType * const pointer, size_t n);
     template <typename TargetType, typename OriginalType> void writeVector (const std::vector<OriginalType> &values, size_t n = 0);
     template <typename TargetType, typename OriginalType> void writeVector (const arma::Col<OriginalType> &values, size_t n = 0);
     void writeString (const std::string &value);

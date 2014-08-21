@@ -20,7 +20,7 @@ private:
     Pipeline () {}
     
 public:
-    Pipeline (DataSource<ElementType> * const source = NULL, const size_t blockSize = 10000)
+    Pipeline (DataSource<ElementType> * const source = NULL, const size_t blockSize = 1000)
         : source(source), blockSize(blockSize) {}
     
     void setBlockSize (const size_t blockSize) { this->blockSize = blockSize; }

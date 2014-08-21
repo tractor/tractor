@@ -48,6 +48,9 @@ void Pipeline<ElementType>::run ()
             workingSet.clear();
         }
     }
+    
+    for (int i=0; i<sinks.size(); i++)
+        sinks[i]->done();
 }
 
 template class Pipeline<Streamline>;
