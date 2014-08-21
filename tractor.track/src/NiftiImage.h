@@ -35,7 +35,6 @@ public:
                 voxelDims[i] = fabs(info->pixdim[i+1]);
             }
             
-            // This assumes that a C 2D array is row-major. TODO: Check!
             if (info->qform_code > 0)
                 xform = arma::fmat44(*(info->qto_xyz.m)).t();
             else
