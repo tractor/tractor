@@ -19,6 +19,8 @@ protected:
     int nDims;
 
 public:
+    typedef typename std::vector<DataType>::const_iterator const_iterator;
+    typedef typename std::vector<DataType>::iterator iterator;
     typedef typename std::vector<DataType>::const_reference const_reference;
     typedef typename std::vector<DataType>::reference reference;
     
@@ -46,6 +48,11 @@ public:
     bool empty () const { return (data.size() == 0); }
     
     void fill (const DataType &value) { data.assign(data.size(), value); }
+    
+    const_iterator begin () const { return data.begin(); }
+    iterator begin () { return data.begin(); }
+    const_iterator end () const { return data.end(); }
+    iterator end () { return data.end(); }
     
     const_reference at (const size_t n) const { return data.at(n); }
     const_reference at (const std::vector<int> &loc) const
