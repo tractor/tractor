@@ -3,6 +3,22 @@
 
 #include "NiftiImage.h"
 
+void NiftiImage::extractMetadata ()
+{
+    dims.resize(info->ndim);
+    voxelDims.resize(info->ndim);
+    for (int i=0; i<info->ndim; i++)
+    {
+        dims[i] = info->dim[i+1];
+        voxelDims[i] = fabs(info->pixdim[i+1]);
+    }
+    
+    if (info->qform_code > 0)
+        xform = arma::fmat44(*(info->qto_xyz.m)).t();
+    else
+        xform = arma::fmat44(*(info->sto_xyz.m)).t();
+}
+
 template <typename SourceType, typename TargetType>
 Array<TargetType> * NiftiImage::convertToArray () const
 {
@@ -70,5 +86,83 @@ Array<DataType> * NiftiImage::getData () const
     }
 }
 
+template <typename DataType> int NiftiImage::chooseDatatype (const Array<DataType> &data)
+{
+    DataType minValue = std::min_element(data.begin(), data.end());
+    DataType maxValue = std::max_element(data.begin(), data.end());
+    
+    if (minValue >= std::numeric_limits<uint8_t>::min() && maxValue <= std::numeric_limits<uint8_t>::max())
+        return NIFTI_TYPE_UINT8;
+    else if (minValue >= std::numeric_limits<int16_t>::min() && maxValue <= std::numeric_limits<int16_t>::max())
+        return NIFTI_TYPE_INT16;
+    else if (minValue >= std::numeric_limits<int32_t>::min() && maxValue <= std::numeric_limits<int32_t>::max())
+        return NIFTI_TYPE_INT32;
+    else
+        throw std::runtime_error("No supported data type is appropriate for the specified array");
+}
+
+template <> int NiftiImage::chooseDatatype (const Array<float> &data)
+{
+    return NIFTI_TYPE_FLOAT32;
+}
+
+template <> int NiftiImage::chooseDatatype (const Array<double> &data)
+{
+    return NIFTI_TYPE_FLOAT64;
+}
+
+template <typename SourceType, typename TargetType>
+void NiftiImage::convertFromArray (const Array<SourceType> &data)
+{
+    // Free existing memory
+    nifti_image_unload(info);
+    
+    // Allocate new memory
+    size_t dataSize = nifti_get_volsize(info);
+    info->data = (void *) calloc(1, dataSize);
+    
+    TargetType *final = static_cast<TargetType *>(info->data);
+    std::transform(data.begin(), data.end(), final, NiftiImage::convertValue<SourceType,TargetType>);
+}
+
+template <typename DataType> void NiftiImage::setData (const Array<DataType> &data)
+{
+    if (!std::equal(dims.begin(), dims.end(), data.getDimensions().begin()))
+        throw std::runtime_error("Data and metadata dimensions do not match");
+    
+    int niftiDatatype = chooseDatatype(data);
+    
+    switch(niftiDatatype)
+    {
+        case NIFTI_TYPE_UINT8:
+        return convertFromArray<DataType,uint8_t>(data);
+        break;
+        
+        case NIFTI_TYPE_INT16:
+        return convertFromArray<DataType,int16_t>(data);
+        break;
+        
+        case NIFTI_TYPE_INT32:
+        return convertFromArray<DataType,int32_t>(data);
+        break;
+        
+        case NIFTI_TYPE_FLOAT32:
+        return convertFromArray<DataType,float>(data);
+        break;
+        
+        case NIFTI_TYPE_FLOAT64:
+        return convertFromArray<DataType,double>(data);
+        break;
+    }
+    
+    int bytesPerVoxel, swapSize;
+    nifti_datatype_sizes(niftiDatatype, &bytesPerVoxel, &swapSize);
+    info->datatype = niftiDatatype;
+    info->nbyper = bytesPerVoxel;
+    info->swapsize = swapSize;
+}
+
 template Array<float> * NiftiImage::getData<float> () const;
 template Array<short> * NiftiImage::getData<short> () const;
+
+template void NiftiImage::setData<double> (Array<double> const &);

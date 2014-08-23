@@ -15,7 +15,12 @@ private:
     std::vector<float> voxelDims;
     arma::fmat44 xform;
     
+    void extractMetadata ();
+    
+    template <typename DataType> int chooseDatatype (const Array<DataType> &data);
+    
     template <typename SourceType, typename TargetType> static TargetType convertValue (SourceType value) { return static_cast<TargetType>(value); }
+    template <typename SourceType, typename TargetType> void convertFromArray (const Array<SourceType> &data);
     template <typename SourceType, typename TargetType> Array<TargetType> * convertToArray () const;
     
 public:
@@ -26,20 +31,12 @@ public:
         if (info == NULL)
             throw std::runtime_error("Cannot read NIfTI file " + fileName);
         else
-        {
-            dims.resize(info->ndim);
-            voxelDims.resize(info->ndim);
-            for (int i=0; i<info->ndim; i++)
-            {
-                dims[i] = info->dim[i+1];
-                voxelDims[i] = fabs(info->pixdim[i+1]);
-            }
-            
-            if (info->qform_code > 0)
-                xform = arma::fmat44(*(info->qto_xyz.m)).t();
-            else
-                xform = arma::fmat44(*(info->sto_xyz.m)).t();
-        }
+            extractMetadata();
+    }
+    NiftiImage (const NiftiImage &source)
+    {
+        info = nifti_copy_nim_info(source.info);
+        extractMetadata();
     }
     
     ~NiftiImage ()
@@ -60,8 +57,17 @@ public:
     }
     
     template <typename DataType> Array<DataType> * getData () const;
+    template <typename DataType> void setData (const Array<DataType> &data);
     
     void dropData () { nifti_image_unload(info); }
+    
+    void writeToFile (const std::string &fileName)
+    {
+        char *prefix = nifti_makebasename(fileName.c_str());
+        nifti_set_filenames(info, prefix, 0, 0);
+        free(prefix);
+        nifti_image_write(info);
+    }
 };
 
 #endif
