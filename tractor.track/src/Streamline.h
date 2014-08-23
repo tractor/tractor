@@ -39,6 +39,9 @@ public:
     
     int nPoints () const { return std::max(static_cast<int>(leftPoints.size()+rightPoints.size())-1, 0); }
     
+    const std::vector<Space<3>::Point> & getLeftPoints() const { return leftPoints; }
+    const std::vector<Space<3>::Point> & getRightPoints() const { return rightPoints; }
+    
     int nLabels () const                { return static_cast<int>(labels.size()); }
     bool addLabel (const int label)     { return labels.insert(label).second; }
     bool removeLabel (const int label)  { return (labels.erase(label) == 1); }
