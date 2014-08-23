@@ -4,6 +4,8 @@
 #include "NiftiImage.h"
 #include "Streamline.h"
 #include "Tracker.h"
+#include "Trackvis.h"
+#include "VisitationMap.h"
 #include "Pipeline.h"
 
 using namespace Rcpp;
@@ -43,14 +45,21 @@ BEGIN_RCPP
     RNGScope scope;
     
     TractographyDataSource dataSource(&tracker, as<arma::fmat>(seeds_) - 1.0, as<size_t>(n_samples_));
-    StreamlineMatrixDataSink dataSink;
-    Pipeline<Streamline> pipeline(&dataSource, 0);
-    pipeline.addSink(&dataSink);
+    // StreamlineMatrixDataSink dataSink1;
+    TrackvisDataSink dataSink2("test.trk", *mask);
+    VisitationMapDataSink dataSink3(mask->getDimensions());
+    Pipeline<Streamline> pipeline(&dataSource);
+    // pipeline.addSink(&dataSink1);
+    pipeline.addSink(&dataSink2);
+    pipeline.addSink(&dataSink3);
     pipeline.run();
+    
+    dataSink3.writeToNifti(*mask, "test.nii.gz");
     
     delete mask;
     delete bedpost;
     
-    return List::create(Named("points")=dataSink.getPoints()+1.0, Named("startIndices")=dataSink.getStartIndices()+1, Named("seedIndices")=dataSink.getSeedIndices()+1);
+    // return List::create(Named("points")=dataSink1.getPoints()+1.0, Named("startIndices")=dataSink1.getStartIndices()+1, Named("seedIndices")=dataSink1.getSeedIndices()+1);
+    return R_NilValue;
 END_RCPP
 }
