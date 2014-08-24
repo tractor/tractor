@@ -118,8 +118,7 @@ void NiftiImage::convertFromArray (const Array<SourceType> &data)
     nifti_image_unload(info);
     
     // Allocate new memory
-    size_t dataSize = nifti_get_volsize(info);
-    info->data = (void *) calloc(1, dataSize);
+    info->data = (void *) calloc(info->nvox, sizeof(TargetType));
     
     TargetType *final = static_cast<TargetType *>(info->data);
     std::transform(data.begin(), data.end(), final, NiftiImage::convertValue<SourceType,TargetType>);
@@ -135,23 +134,23 @@ template <typename DataType> void NiftiImage::setData (const Array<DataType> &da
     switch(niftiDatatype)
     {
         case NIFTI_TYPE_UINT8:
-        return convertFromArray<DataType,uint8_t>(data);
+        convertFromArray<DataType,uint8_t>(data);
         break;
         
         case NIFTI_TYPE_INT16:
-        return convertFromArray<DataType,int16_t>(data);
+        convertFromArray<DataType,int16_t>(data);
         break;
         
         case NIFTI_TYPE_INT32:
-        return convertFromArray<DataType,int32_t>(data);
+        convertFromArray<DataType,int32_t>(data);
         break;
         
         case NIFTI_TYPE_FLOAT32:
-        return convertFromArray<DataType,float>(data);
+        convertFromArray<DataType,float>(data);
         break;
         
         case NIFTI_TYPE_FLOAT64:
-        return convertFromArray<DataType,double>(data);
+        convertFromArray<DataType,double>(data);
         break;
     }
     
