@@ -4,7 +4,6 @@
 #include <RcppArmadillo.h>
 
 #include "Space.h"
-#include "Array.h"
 #include "DataSource.h"
 
 class Streamline
@@ -33,19 +32,15 @@ private:
     // example, the anatomical regions that the streamline passes through
     std::set<int> labels;
     
-    Array<bool> *visitationMap;
-    
 public:
     Streamline () {}
-    Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const Streamline::PointType pointType, const bool fixedSpacing, Array<bool> * const visitationMap = NULL)
-        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), fixedSpacing(fixedSpacing), visitationMap(visitationMap) {}
+    Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const Streamline::PointType pointType, const bool fixedSpacing)
+        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), fixedSpacing(fixedSpacing) {}
     
     int nPoints () const { return std::max(static_cast<int>(leftPoints.size()+rightPoints.size())-1, 0); }
     
-    const std::vector<Space<3>::Point> & getLeftPoints () const { return leftPoints; }
-    const std::vector<Space<3>::Point> & getRightPoints () const { return rightPoints; }
-    bool hasVisitationMap () const { return (visitationMap != NULL); }
-    Array<bool> * getVisitationMap () const { return visitationMap; }
+    const std::vector<Space<3>::Point> & getLeftPoints() const { return leftPoints; }
+    const std::vector<Space<3>::Point> & getRightPoints() const { return rightPoints; }
     
     int nLabels () const                { return static_cast<int>(labels.size()); }
     bool addLabel (const int label)     { return labels.insert(label).second; }
