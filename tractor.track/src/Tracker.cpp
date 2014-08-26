@@ -188,6 +188,6 @@ Streamline Tracker::run ()
     
     logger.debug1.indent() << "Tracking finished" << endl;
     
-    Streamline streamline(leftPoints, rightPoints, Streamline::VoxelPointType, true);
+    Streamline streamline(leftPoints, rightPoints, Streamline::VoxelPointType, true, visited);
     return streamline;
 }

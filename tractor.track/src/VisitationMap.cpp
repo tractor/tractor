@@ -21,33 +21,41 @@ void VisitationMapDataSink::setup (const size_type &count, const_iterator begin,
 
 void VisitationMapDataSink::put (const Streamline &data)
 {
-    Array<char> visited(values.getDimensions(), 0);
-    
-    const std::vector<Space<3>::Point> &leftPoints = data.getLeftPoints();
-    const std::vector<Space<3>::Point> &rightPoints = data.getRightPoints();
-    
-    std::vector<int> currentLoc(3);
-    for (size_t i=0; i<leftPoints.size(); i++)
+    if (data.hasVisitationMap())
     {
-        for (int j=0; j<3; j++)
-            currentLoc[j] = static_cast<int>(round(leftPoints[i][j]));
-        size_t index;
-        values.flattenIndex(currentLoc, index);
-        if (visited[index] == 0)
-            visited[index]++;
+        Array<bool> *visited = data.getVisitationMap();
+        std::transform(values.begin(), values.end(), visited->begin(), values.begin(), std::plus<double>());
     }
-    for (size_t i=0; i<rightPoints.size(); i++)
+    else
     {
-        for (int j=0; j<3; j++)
-            currentLoc[j] = static_cast<int>(round(rightPoints[i][j]));
-        size_t index;
-        values.flattenIndex(currentLoc, index);
-        if (visited[index] == 0)
-            visited[index]++;
-    }
+        Array<bool> visited(values.getDimensions(), 0);
     
-    // Step through the two arrays, adding them elementwise
-    std::transform(values.begin(), values.end(), visited.begin(), values.begin(), std::plus<double>());
+        const std::vector<Space<3>::Point> &leftPoints = data.getLeftPoints();
+        const std::vector<Space<3>::Point> &rightPoints = data.getRightPoints();
+    
+        std::vector<int> currentLoc(3);
+        for (size_t i=0; i<leftPoints.size(); i++)
+        {
+            for (int j=0; j<3; j++)
+                currentLoc[j] = static_cast<int>(round(leftPoints[i][j]));
+            size_t index;
+            values.flattenIndex(currentLoc, index);
+            if (!visited[index])
+                visited[index] = true;
+        }
+        for (size_t i=0; i<rightPoints.size(); i++)
+        {
+            for (int j=0; j<3; j++)
+                currentLoc[j] = static_cast<int>(round(rightPoints[i][j]));
+            size_t index;
+            values.flattenIndex(currentLoc, index);
+            if (!visited[index])
+                visited[index] = true;
+        }
+    
+        // Step through the two arrays, adding them elementwise
+        std::transform(values.begin(), values.end(), visited.begin(), values.begin(), std::plus<double>());
+    }
 }
 
 void VisitationMapDataSink::done ()
