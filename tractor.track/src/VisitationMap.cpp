@@ -14,6 +14,11 @@ struct divider
     double operator() (double x) { return x/divisor; }
 };
 
+struct conditionalIncrementer
+{
+    double operator() (const double x, const bool y) { return (y ? x+1.0 : x); }
+};
+
 void VisitationMapDataSink::setup (const size_type &count, const_iterator begin, const_iterator end)
 {
     totalStreamlines += count;
@@ -24,7 +29,7 @@ void VisitationMapDataSink::put (const Streamline &data)
     if (data.hasVisitationMap())
     {
         Array<bool> *visited = data.getVisitationMap();
-        std::transform(values.begin(), values.end(), visited->begin(), values.begin(), std::plus<double>());
+        std::transform(values.begin(), values.end(), visited->begin(), values.begin(), conditionalIncrementer());
     }
     else
     {
@@ -54,7 +59,7 @@ void VisitationMapDataSink::put (const Streamline &data)
         }
     
         // Step through the two arrays, adding them elementwise
-        std::transform(values.begin(), values.end(), visited.begin(), values.begin(), std::plus<double>());
+        std::transform(values.begin(), values.end(), visited.begin(), values.begin(), conditionalIncrementer());
     }
 }
 
