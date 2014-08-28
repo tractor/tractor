@@ -6,6 +6,7 @@
 #include "Tracker.h"
 #include "Trackvis.h"
 #include "VisitationMap.h"
+#include "RCallback.h"
 #include "Pipeline.h"
 
 using namespace Rcpp;
@@ -13,7 +14,7 @@ using namespace Rcpp;
 typedef std::vector<int> int_vector;
 typedef std::vector<std::string> str_vector;
 
-RcppExport SEXP track_bedpost (SEXP seeds_, SEXP mask_path_, SEXP parameter_map_paths_, SEXP n_samples_, SEXP max_steps_, SEXP step_length_, SEXP volfrac_threshold_, SEXP curvature_threshold_, SEXP use_loopcheck_, SEXP rightwards_vector_, SEXP terminate_outside_mask_, SEXP must_leave_mask_, SEXP debug_level_)
+RcppExport SEXP track_bedpost (SEXP seeds_, SEXP mask_path_, SEXP parameter_map_paths_, SEXP n_samples_, SEXP max_steps_, SEXP step_length_, SEXP volfrac_threshold_, SEXP curvature_threshold_, SEXP use_loopcheck_, SEXP rightwards_vector_, SEXP terminate_outside_mask_, SEXP must_leave_mask_, SEXP function_, SEXP debug_level_)
 {
 BEGIN_RCPP
     List parameterMapPaths(parameter_map_paths_);
@@ -48,10 +49,13 @@ BEGIN_RCPP
     // StreamlineMatrixDataSink dataSink1;
     TrackvisDataSink dataSink2("test.trk", *mask);
     VisitationMapDataSink dataSink3(mask->getDimensions());
+    Function function(function_);
+    RCallbackDataSink dataSink4(function);
     Pipeline<Streamline> pipeline(&dataSource);
     // pipeline.addSink(&dataSink1);
     pipeline.addSink(&dataSink2);
     pipeline.addSink(&dataSink3);
+    pipeline.addSink(&dataSink4);
     pipeline.run();
     
     dataSink3.writeToNifti(*mask, "test.nii.gz");
