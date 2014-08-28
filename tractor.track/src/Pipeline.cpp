@@ -42,6 +42,8 @@ void Pipeline<ElementType>::run ()
                 
                 for (typename std::list<ElementType>::const_iterator it=workingSet.begin(); it!=workingSet.end(); it++)
                     sinks[i]->put(*it);
+                
+                sinks[i]->finish();
             }
             
             // Empty the working set again

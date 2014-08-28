@@ -19,6 +19,7 @@ protected:
 public:
     virtual void setup (const size_type &count, const_iterator begin, const_iterator end) {}
     virtual void put (const ElementType &data) {}
+    virtual void finish () {}
     virtual void done () {}
 };
 
