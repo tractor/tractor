@@ -2,7 +2,7 @@ LIB_OBJECTS = niftilib/nifti1_io.o znzlib/znzlib.o
 
 OLD_OBJECTS = r_utils.o vector.o track.o waypoint.o
 
-OBJECTS = $(LIB_OBJECTS) $(OLD_OBJECTS) main.o Array.o NiftiImage.o DiffusionDataSource.o Pipeline.o Streamline.o Tracker.o BinaryStream.o Trackvis.o VisitationMap.o
+OBJECTS = $(LIB_OBJECTS) $(OLD_OBJECTS) main.o Array.o NiftiImage.o DiffusionDataSource.o Pipeline.o Streamline.o Tracker.o BinaryStream.o Trackvis.o VisitationMap.o RCallback.o
 
 PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) @LIBS@
 PKG_CPPFLAGS = -Iniftilib -Iznzlib @CPPFLAGS@
