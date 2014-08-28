@@ -159,6 +159,12 @@ template <typename DataType> void NiftiImage::setData (const Array<DataType> &da
     info->datatype = niftiDatatype;
     info->nbyper = bytesPerVoxel;
     info->swapsize = swapSize;
+    
+    // Set slope, intercept, max and min
+    info->scl_slope = 1.0;
+    info->scl_inter = 0.0;
+    info->cal_min = static_cast<float>(*std::min_element(data.begin(), data.end()));
+    info->cal_max = static_cast<float>(*std::max_element(data.begin(), data.end()));
 }
 
 template Array<float> * NiftiImage::getData<float> () const;

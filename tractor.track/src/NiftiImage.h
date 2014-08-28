@@ -63,9 +63,7 @@ public:
     
     void writeToFile (const std::string &fileName)
     {
-        char *prefix = nifti_makebasename(fileName.c_str());
-        nifti_set_filenames(info, prefix, 0, 0);
-        free(prefix);
+        nifti_set_filenames(info, fileName.c_str(), 0, 0);
         nifti_image_write(info);
     }
 };
