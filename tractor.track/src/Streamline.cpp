@@ -37,5 +37,5 @@ size_t Streamline::concatenatePoints (arma::fmat &points) const
         points.row(index) = leftPoints[0].t();
     }
     
-    return std::max(static_cast<int>(leftPoints.size())-1, 0);
+    return std::max(static_cast<size_t>(leftPoints.size())-1, size_t(0));
 }
