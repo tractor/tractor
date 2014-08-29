@@ -88,14 +88,12 @@ Array<DataType> * NiftiImage::getData () const
 
 template <typename DataType> int NiftiImage::chooseDatatype (const Array<DataType> &data)
 {
-    DataType minValue = std::min_element(data.begin(), data.end());
-    DataType maxValue = std::max_element(data.begin(), data.end());
-    
-    if (minValue >= std::numeric_limits<uint8_t>::min() && maxValue <= std::numeric_limits<uint8_t>::max())
+    // This function assumes that cal_min and cal_max have already been set correctly
+    if (info->cal_min >= std::numeric_limits<uint8_t>::min() && info->cal_max <= std::numeric_limits<uint8_t>::max())
         return NIFTI_TYPE_UINT8;
-    else if (minValue >= std::numeric_limits<int16_t>::min() && maxValue <= std::numeric_limits<int16_t>::max())
+    else if (info->cal_min >= std::numeric_limits<int16_t>::min() && info->cal_max <= std::numeric_limits<int16_t>::max())
         return NIFTI_TYPE_INT16;
-    else if (minValue >= std::numeric_limits<int32_t>::min() && maxValue <= std::numeric_limits<int32_t>::max())
+    else if (info->cal_min >= std::numeric_limits<int32_t>::min() && info->cal_max <= std::numeric_limits<int32_t>::max())
         return NIFTI_TYPE_INT32;
     else
         throw std::runtime_error("No supported data type is appropriate for the specified array");
@@ -129,6 +127,12 @@ template <typename DataType> void NiftiImage::setData (const Array<DataType> &da
     if (!std::equal(dims.begin(), dims.end(), data.getDimensions().begin()))
         throw std::runtime_error("Data and metadata dimensions do not match");
     
+    // Set slope, intercept, max and min
+    info->scl_slope = 1.0;
+    info->scl_inter = 0.0;
+    info->cal_min = static_cast<float>(*std::min_element(data.begin(), data.end()));
+    info->cal_max = static_cast<float>(*std::max_element(data.begin(), data.end()));
+    
     int niftiDatatype = chooseDatatype(data);
     
     switch(niftiDatatype)
@@ -159,12 +163,6 @@ template <typename DataType> void NiftiImage::setData (const Array<DataType> &da
     info->datatype = niftiDatatype;
     info->nbyper = bytesPerVoxel;
     info->swapsize = swapSize;
-    
-    // Set slope, intercept, max and min
-    info->scl_slope = 1.0;
-    info->scl_inter = 0.0;
-    info->cal_min = static_cast<float>(*std::min_element(data.begin(), data.end()));
-    info->cal_max = static_cast<float>(*std::max_element(data.begin(), data.end()));
 }
 
 template Array<float> * NiftiImage::getData<float> () const;
