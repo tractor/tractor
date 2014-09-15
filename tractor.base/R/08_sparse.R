@@ -72,7 +72,16 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
     }
 ))
 
-setMethod("[", "SparseArray", function (x, i, j, ..., dotsEnvironment = NULL, drop = TRUE) {
+.evaluateIndices <- function (i, j, ...)
+{
+    # Find missing arguments and replace with NULL (code borrowed from the "slam" package)
+    args <- substitute(list(i, j, ...), parent.frame())
+    argsEmpty <- sapply(args, function(a) identical(as.character(a), ""))
+    args[argsEmpty] <- list(NULL)
+    return (eval(args, envir=parent.frame(2)))
+}
+
+setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
     # This implementation owes a lot to the equivalent in the "slam" package (credit: Kurt Hornik, David Meyer and Christian Buchta)
     nArgs <- nargs() - as.integer(!missing(dotsEnvironment)) - as.integer(!missing(drop))
     
@@ -85,81 +94,74 @@ setMethod("[", "SparseArray", function (x, i, j, ..., dotsEnvironment = NULL, dr
         return (data)
     else if (nArgs == 2)
     {
-        index <- i
-        if (is.logical(index) || is.character(index))
-            report(OL$Error, "Logical and character indexing are not yet supported")
-        else if (is.matrix(index))
+        if (is.list(i))
+            args <- i
+        else
         {
-            # Matrix indexing, one row per point: convert to vector and drop through
-            if (ncol(index) != nDims)
-                report(OL$Error, "Number of dimensions given does not match image")
-            index <- matrixToVectorLocs(index, dims)
+            index <- i
+            if (is.logical(index) || is.character(index))
+                report(OL$Error, "Logical and character indexing are not yet supported")
+            else if (is.matrix(index))
+            {
+                # Matrix indexing, one row per point: convert to vector and drop through
+                if (ncol(index) != nDims)
+                    report(OL$Error, "Number of dimensions given does not match image")
+                index <- matrixToVectorLocs(index, dims)
+            }
+        
+            # Vector indexing, one number per point
+            if (any(index <= 0))
+                report(OL$Error, "Zero and negative indices are not yet supported")
+        
+            returnValue <- vector(mode=storage.mode(data), length=length(index))
+            dataLocs <- match(index, matrixToVectorLocs(coords,dims), 0L)
+            returnValue[dataLocs > 0] <- data[dataLocs]
+        
+            return (returnValue)
         }
-        
-        # Vector indexing, one number per point
-        if (any(index <= 0))
-            report(OL$Error, "Zero and negative indices are not yet supported")
-        
-        returnValue <- vector(mode=storage.mode(data), length=length(index))
-        dataLocs <- match(index, matrixToVectorLocs(coords,dims), 0L)
-        returnValue[dataLocs > 0] <- data[dataLocs]
     }
     else if (nArgs != (nDims + 1))
         report(OL$Error, "Number of dimensions given does not match image")
     else
+        args <- .evaluateIndices(i, j, ...)
+    
+    dataToKeep <- rep.int(TRUE, length(data))
+    finalDims <- dims
+    finalCoords <- coords
+    
+    for (currentDim in 1:nDims)
     {
-        browser()
-        # Find missing arguments and replace with NULL (code adapted from the "slam" package)
-        args <- vector("list", nArgs-1)
-        if (!missing(i))
-            args[[1]] <- i
-        if (!missing(j))
-            args[[2]] <- j
-        if (nArgs > 3)
-        {
-            dotsArgs <- substitute(list(...))
-            dotsArgs[as.character(dotsArgs) == ""] <- list(NULL)
-            args[3:(nArgs-1)] <- eval(dotsArgs, envir=dotsEnvironment)
-        }
-        
-        dataToKeep <- rep.int(TRUE, length(data))
-        finalDims <- dims
-        finalCoords <- coords
-        
-        for (currentDim in 1:nDims)
-        {
-            currentDimIndex <- args[[currentDim]]
-            if (is.null(currentDimIndex))
-                next
-            else if (!is.numeric(currentDimIndex))
-                report(OL$Error, "Only numeric indices are currently supported")
-            else if (any(currentDimIndex <= 0))
-                report(OL$Error, "Zero and negative indices are not yet supported")
-            else
-            {
-                finalDims[currentDim] <- length(currentDimIndex)
-                dataLocs <- match(coords[,currentDim], currentDimIndex, 0L)
-                finalCoords[dataLocs > 0, currentDim] <- seq_along(currentDimIndex)[dataLocs]
-                dataToKeep <- dataToKeep & (dataLocs > 0)
-            }
-        }
-        
-        if (drop)
-            dimsToKeep <- which(finalDims > 1)
+        currentDimIndex <- args[[currentDim]]
+        if (is.null(currentDimIndex))
+            next
+        else if (!is.numeric(currentDimIndex))
+            report(OL$Error, "Only numeric indices are currently supported")
+        else if (any(currentDimIndex <= 0))
+            report(OL$Error, "Zero and negative indices are not yet supported")
         else
-            dimsToKeep <- 1:nDims
-        
-        if (length(dimsToKeep) < 2)
         {
-            # Only one dimension is nonunitary, so the index into the final
-            # vector is the maximum of the indices into each dimension for
-            # each nonzero data value - the other indices will all be 1
-            returnValue <- vector(mode=storage.mode(data), length=prod(finalDims))
-            returnValue[apply(finalCoords[dataToKeep,,drop=FALSE],1,max)] <- data[dataToKeep]
+            finalDims[currentDim] <- length(currentDimIndex)
+            dataLocs <- match(coords[,currentDim], currentDimIndex, 0L)
+            finalCoords[dataLocs > 0, currentDim] <- seq_along(currentDimIndex)[dataLocs]
+            dataToKeep <- dataToKeep & (dataLocs > 0)
         }
-        else
-            returnValue <- SparseArray$new(data=data[dataToKeep], coords=finalCoords[dataToKeep,dimsToKeep,drop=FALSE], dims=finalDims[dimsToKeep])
     }
+    
+    if (drop)
+        dimsToKeep <- which(finalDims > 1)
+    else
+        dimsToKeep <- 1:nDims
+    
+    if (length(dimsToKeep) < 2)
+    {
+        # Only one dimension is nonunitary, so the index into the final
+        # vector is the maximum of the indices into each dimension for
+        # each nonzero data value - the other indices will all be 1
+        returnValue <- vector(mode=storage.mode(data), length=prod(finalDims))
+        returnValue[apply(finalCoords[dataToKeep,,drop=FALSE],1,max)] <- data[dataToKeep]
+    }
+    else
+        returnValue <- SparseArray$new(data=data[dataToKeep], coords=finalCoords[dataToKeep,dimsToKeep,drop=FALSE], dims=finalDims[dimsToKeep])
     
     return (returnValue)
 })
@@ -173,8 +175,8 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., dotsEnvironment = p
     coords <- x$getCoordinates()
     
     if (nArgs < 2)
-        return (data)
-    else if (nArgs == 2)
+        index <- matrixToVectorLocs(coords, dims)
+    else if (nArgs == 2 && !is.list(i))
     {
         index <- i
         if (is.logical(index) || is.character(index))
@@ -191,21 +193,14 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., dotsEnvironment = p
         if (any(index <= 0))
             report(OL$Error, "Zero and negative indices are not yet supported")
     }
-    else if (nArgs != (nDims + 1))
+    else if (!is.list(i) && nArgs != (nDims + 1))
         report(OL$Error, "Number of dimensions given does not match image")
     else
     {
-        args <- vector("list", nArgs-1)
-        if (!missing(i))
-            args[[1]] <- i
-        if (!missing(j))
-            args[[2]] <- j
-        if (nArgs > 3)
-        {
-            dotsArgs <- substitute(list(...))
-            dotsArgs[as.character(dotsArgs) == ""] <- list(NULL)
-            args[3:(nArgs-1)] <- eval(dotsArgs, envir=dotsEnvironment)
-        }
+        if (is.list(i))
+            args <- i
+        else
+            args <- .evaluateIndices(i, j, ...)
         
         args <- lapply(seq_len(nDims), function(i) {
             if (is.null(args[i]))
@@ -228,7 +223,7 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., dotsEnvironment = p
     present <- (dataLocs > 0)
     zero <- (value == 0)
     
-    data[present & !zero] <- value[present & !zero]
+    data[which(present & !zero)] <- value[which(present & !zero)]
     if (any(present & zero))
     {
         coords <- coords[-which(present & zero),]
@@ -236,8 +231,8 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., dotsEnvironment = p
     }
     if (any(!present & !zero))
     {
-        coords <- rbind(coords, arrayInd(index[!present & !zero],dims))
-        data <- c(data, value[!present & !zero])
+        coords <- rbind(coords, arrayInd(index[which(!present & !zero)],dims))
+        data <- c(data, value[which(!present & !zero)])
     }
     
     x$setCoordinatesAndData(coords, data)
