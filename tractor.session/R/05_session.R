@@ -57,7 +57,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getMap = function (place) { return (mapCache.[[place]]) },
     
-    getParcellation = function (place, ...)
+    getParcellation = function (place = "structural", ...)
     {
         require("tractor.reg")
         
