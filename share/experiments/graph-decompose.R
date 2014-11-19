@@ -1,5 +1,7 @@
 #@desc Decompose a graph into parts by factoring or partitioning it. Available algorithms for this include "principal networks" (Clayden et al., PLoS ONE, 2013) and modularity maximisation (Newman, PNAS, 2006). An edge weight threshold can be applied beforehand if required. Eigenvalue and loading thresholds apply to the principal networks approach only.
 
+library(tractor.graph)
+
 runExperiment <- function ()
 {
     graphName <- getConfigVariable("GraphName", NULL, "character", errorIfMissing=TRUE)
