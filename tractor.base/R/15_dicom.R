@@ -99,7 +99,7 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
     explicitTypes <- TRUE
     deferredTransferSyntax <- NULL
     tagOffset <- 0
-    dataOffset <- NULL
+    dataOffset <- dataLength <- NA
     
     if (is.null(dictionary))
         data("dictionary", package="tractor.base", envir=environment(NULL))
@@ -278,23 +278,14 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
             }
             
             if (!is.null(stopTag) && currentGroup == stopTag[1] && currentElement == stopTag[2])
-            {
-                dataOffset <- NA
-                dataLength <- NA
                 break
-            }
         }
         
-        if (is.null(dataOffset))
-            invisible (NULL)
-        else
-        {
-            if (duplicateTags)
-                flag(OL$Warning, "Duplicated DICOM tags detected - only the first value will be kept")
-            
-            tags <- data.frame(groups=groups, elements=elements, types=types, values=values, stringsAsFactors=FALSE)
-            invisible (DicomMetadata$new(source=fileName, tags=tags, tagOffset=as.integer(tagOffset), dataOffset=as.integer(dataOffset), dataLength=as.integer(dataLength), explicitTypes=explicitTypes, endian=endian))
-        }
+        if (duplicateTags)
+            flag(OL$Warning, "Duplicated DICOM tags detected - only the first value will be kept")
+        
+        tags <- data.frame(groups=groups, elements=elements, types=types, values=values, stringsAsFactors=FALSE)
+        invisible (DicomMetadata$new(source=fileName, tags=tags, tagOffset=as.integer(tagOffset), dataOffset=as.integer(dataOffset), dataLength=as.integer(dataLength), explicitTypes=explicitTypes, endian=endian))
     }
     else
         invisible (NULL)
