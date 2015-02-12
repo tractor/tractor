@@ -20,3 +20,11 @@ structural2diffusion: [ nonlinear, symmetric ]
 
 structural2mni: [ nonlinear, symmetric ]
 mni2structural: [ nonlinear, symmetric ]
+
+functional2mni: [ nonlinear, symmetric ]
+mni2functional: [ nonlinear, symmetric, reverse ]
+
+# Within-subject functional transforms are linear by default, to avoid problems
+# with susceptibility artefacts
+functional2structural: affine
+structural2functional: [ affine, reverse ]
