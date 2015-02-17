@@ -1,5 +1,5 @@
 #@args session directory, image files or DICOM directories
-#@desc Import images from DICOM, Analyze, NIfTI or MGH files, copying them into the appropriate places in a session directory. If any of the specified paths point to a directory they will be assumed to contain DICOM files. Images may be T1, T2, proton density or diffusion weighted. In the latter case this is an alternative to stage 1 of the "dpreproc" script, but without the ability to read gradient directions. Multiple T1-weighted images (only) will be coregistered together and a median reference image created, unless Coregister:false is given.
+#@desc Import images from DICOM, Analyze, NIfTI or MGH files, copying them into the appropriate places in a session directory. If any of the specified paths point to a directory they will be assumed to contain DICOM files. Images may be T1, T2, proton density or diffusion weighted, or functional. For diffusion data this is an alternative to stage 1 of the "dpreproc" script, but without the ability to read gradient directions. TractoR does not currently provide facilities for preprocessing functional data, so such images must already be fully preprocessed. Multiple T1-weighted images (only) will be coregistered together and a median reference image created, unless Coregister:false is given.
 
 library(tractor.session)
 
@@ -10,15 +10,15 @@ runExperiment <- function ()
     session <- newSessionFromDirectory(Arguments[1])
     nImages <- nArguments() - 1
     
-    weighting <- getConfigVariable("ImageWeighting", "t1", validValues=c("t1","t2","pd","diffusion"))
+    weighting <- getConfigVariable("ImageWeighting", "t1", validValues=c("t1","t2","pd","diffusion","functional"))
     coregister <- getConfigVariable("Coregister", TRUE)
     
-    if (weighting == "diffusion")
+    if (weighting %in% c("diffusion","functional"))
     {
         if (nImages > 1)
-            report(OL$Error, "Only one image may be specified in the case of diffusion data")
+            report(OL$Error, "Only one image may be specified in the case of #{weighting} data")
         
-        session$getDirectory("diffusion", createIfMissing=TRUE)
+        session$getDirectory(weighting, createIfMissing=TRUE)
         
         if (isTRUE(file.info(Arguments[2])$isdir))
             image <- readDicomDirectory(Arguments[2])$image
@@ -26,9 +26,18 @@ runExperiment <- function ()
             image <- readImageFile(Arguments[2])
         
         if (image$getDimensionality() != 4)
-            report(OL$Error, "A diffusion dataset must be four-dimensional")
+            report(OL$Error, "A #{weighting} dataset must be four-dimensional")
         
-        writeImageFile(image, session$getImageFileNameByType("rawdata","diffusion"))
+        if (weighting == "diffusion")
+            writeImageFile(image, session$getImageFileNameByType("rawdata","diffusion"))
+        else
+        {
+            writeImageFile(image, session$getImageFileNameByType("data","functional"))
+            
+            report(OL$Info, "Calculating mean volume")
+            meanVolume <- newMriImageWithData(image$apply(1:3,mean), image)
+            writeImageFile(meanVolume, session$getImageFileNameByType("mean","functional"))
+        }
     }
     else
     {
