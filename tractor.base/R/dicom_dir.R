@@ -134,7 +134,9 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
         else if (!seenValidFile)
         {
             # Read slice dimensions and orientation once - these are assumed not to vary across files
-            sliceDim <- metadata$getTagValue(0x0018,0x0050)
+            sliceDim <- metadata$getTagValue(0x0018,0x0088)
+            if (is.na(sliceDim))
+                sliceDim <- metadata$getTagValue(0x0018,0x0050)
             sliceOrientation <- metadata$getTagValue(0x0020,0x0037)
             
             # Calculate through-slice orientation (in LPS convention)
@@ -423,7 +425,10 @@ readImageParametersFromMetadata <- function (metadata, untileMosaics = TRUE, met
     else
     {
         nDims <- 3
-        voxelDims <- c(voxelDims, metadata$getTagValue(0x0018, 0x0050))
+        if (!is.na(metadata$getTagValue(0x0018,0x0088)))
+            voxelDims <- c(voxelDims, metadata$getTagValue(0x0018,0x0088))
+        else
+            voxelDims <- c(voxelDims, metadata$getTagValue(0x0018,0x0050))
     }
     
     dims <- c(columns, rows, slices)
