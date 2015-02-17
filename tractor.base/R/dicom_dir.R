@@ -231,6 +231,11 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
         nSlices <- images[[1]]$imageDims[3]
         nVolumes <- nDicomFiles
         imageDims <- c(images[[1]]$imageDims, nVolumes)
+        
+        # Some mosaic files store the per-slice TR, but we want the per-volume TR
+        # Assume that a TR below 500 ms must be per-slice
+        if (mosaic && repetitionTime < 0.5)
+            repetitionTime <- repetitionTime * nSlices
         voxelDims <- c(images[[1]]$voxelDims, repetitionTime)
     }
     else
