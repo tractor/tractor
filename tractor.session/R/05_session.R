@@ -102,6 +102,10 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             
             options <- list(sourceImageFile, targetImageFile, targetMask=targetMask, estimateOnly=TRUE, cache="ignore", file=transformFile)
             options$types <- "affine"
+            if ("fsl" %in% strategy)
+                options$method <- "fsl"
+            else if ("niftyreg" %in% strategy)
+                options$method <- "niftyreg"
             if ("nonlinear" %in% strategy)
             {
                 options$types <- c(options$types, "nonlinear")

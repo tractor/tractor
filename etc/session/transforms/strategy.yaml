@@ -1,14 +1,16 @@
-# Default strategy file for establishing transformations between spaces.
-# Any or all of the elements of this file can be overridden by an equiva-
-# lent file within a session directory, at session/transforms/strategy.yaml.
-# Options have the following meanings:
-#   affine: use affine registration
+# Default strategy file for establishing transformations between spaces. Any
+# or all of the elements of this file can be overridden by an equivalent
+# file within a session directory, at session/transforms/strategy.yaml.
+# Options have the following meanings.
+#      affine: use affine registration
 #   nonlinear: use nonlinear registration
 #   symmetric: use symmetric nonlinear registration to allow for inverse
 #              transformations (affine is implicitly symmetric)
-#   reverse: use the reference image from the source space as the target
-#            image, rather than the equivalent from the target space
-#            (requires a symmetric registration)
+#     reverse: use the reference image from the source space as the target
+#              image, rather than the equivalent from the target space
+#              (requires a symmetric registration)
+#         fsl: prefer to use FSL-FLIRT for linear registration
+#    niftyreg: prefer to use NiftyReg for linear registration
 
 # Diffusion to MNI space transforms are affine by default for backwards
 # compatibility; this is liable to change in a future release
@@ -26,5 +28,5 @@ mni2functional: [ nonlinear, symmetric, reverse ]
 
 # Within-subject functional transforms are linear by default, to avoid problems
 # with susceptibility artefacts
-functional2structural: affine
-structural2functional: [ affine, reverse ]
+functional2structural: [ affine, niftyreg, reverse ]
+structural2functional: [ affine, niftyreg ]
