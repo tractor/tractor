@@ -1,6 +1,8 @@
 #@args [session directory]
 #@desc Build a graph representing interregional connectivity from the specified data source. At present only diffusion tractography data may be used, and the source is specified using the TractName option. (A corresponding streamline file generated with "xtrack" or "mtrack" must exist.) Target regions may be specified individually or by type, using names from the parcellation's lookup table. The ParcellationConfidence variable controls the inclusiveness of the transformed parcellation: the closer to 0, the more inclusive. Self-connections are included by default.
 
+library(tractor.reg)
+library(tractor.session)
 library(tractor.graph)
 
 runExperiment <- function ()
@@ -9,24 +11,26 @@ runExperiment <- function ()
     parcellationConfidence <- getConfigVariable("ParcellationConfidence", 0.2)
     graphName <- getConfigVariable("GraphName", "graph")
     selfConnections <- getConfigVariable("SelfConnections", TRUE)
+    type <- getConfigVariable("Type", "diffusion", validValues=c("diffusion","functional"))
     tractName <- getConfigVariable("TractName", NULL, "character")
+    regionTimeSeries <- getConfigVariable("RegionTimeSeries", "mean", validValues=c("mean","pc"))
+    useShrinkage <- getConfigVariable("UseShrinkage", TRUE)
     
     targetRegions <- splitAndConvertString(targetRegions, ",", fixed=TRUE)
     
-    if (!is.null(tractName))
+    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
+    parcellation <- session$getParcellation(type, threshold=parcellationConfidence)
+    
+    targetMatches <- matchRegions(targetRegions, parcellation, labels=TRUE)
+    nRegions <- length(targetMatches)
+    report(OL$Info, "Using #{nRegions} matched target regions")
+    
+    if (type == "diffusion")
     {
-        library(tractor.reg)
-        library(tractor.session)
         library(tractor.nt)
         library(tractor.track)
         
-        session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
-        parcellation <- session$getParcellation("diffusion", threshold=parcellationConfidence)
         streamlines <- deserialiseReferenceObject(paste(tractName,"streamlines",sep="_"))
-        
-        targetMatches <- matchRegions(targetRegions, parcellation, labels=TRUE)
-        nRegions <- length(targetMatches)
-        report(OL$Info, "Using #{nRegions} matched target regions")
         
         report(OL$Info, "Finding streamlines passing through each region")
         matchingIndices <- vector("list", nRegions)             # Indices of streamlines passing through each region
@@ -91,6 +95,73 @@ runExperiment <- function ()
         graph$setVertexAttributes(voxelCount=voxelCount, volume=volume)
         graph$setVertexLocations(regionLocations, "mm", paste(session$getDirectory(),"diffusion",sep=":"))
         graph$setEdgeAttributes(nStreamlines=nStreamlines, binaryFA=binaryFA, weightedFA=weightedFA, binaryMD=binaryMD, weightedMD=weightedMD, streamlineLength=streamlineLength, uniqueVoxels=uniqueVoxels, voxelVisits=voxelVisits)
+        graph$serialise(graphName)
+    }
+    else if (type == "functional")
+    {
+        library(corpcor)
+        
+        report(OL$Info, "Reading data")
+        data <- session$getImageByType("data", "functional")
+        nVolumes <- dim(data)[4]
+        
+        report(OL$Info, "Calculating representative time series for each region")
+        timeSeries      <- matrix(NA, nrow=nVolumes, ncol=nRegions)
+        regionLocations <- matrix(NA, nrow=nRegions, ncol=3)    # Physical location of each region's spatial median, in mm
+        voxelCount      <- integer(nRegions)                    # Number of voxels
+        volume          <- numeric(nRegions)                    # Volume in mm^3
+        for (i in seq_len(nRegions))
+        {
+    	    report(OL$Verbose, "Extracting region \"#{targetMatches[i]}\"")
+            index <- parcellation$regions$index[which(parcellation$regions$label == targetMatches[i])]
+            regionImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x==index,1,0))
+            allLocations <- regionImage$getNonzeroIndices(array=TRUE)
+            regionLocations[i,] <- apply(allLocations, 2, median)
+    		regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
+            voxelCount[i] <- length(regionImage$getNonzeroIndices(array=FALSE))
+            volume[i] <- voxelCount[i] * abs(prod(regionImage$getVoxelDimensions()))
+            
+            allTimeSeries <- t(data$apply(4, "[", allLocations))
+            if (regionTimeSeries == "mean")
+            {
+                allTimeSeries <- scale(allTimeSeries)
+                timeSeries[,i] <- rowMeans(allTimeSeries)
+                report(OL$Verbose, "The mean time series captures #{var(timeSeries[,i])/sum(diag(var(allTimeSeries)))*100}% of the variance", round=2)
+            }
+            else if (regionTimeSeries == "pc")
+            {
+                pca <- prcomp(allTimeSeries, scale.=TRUE)
+                timeSeries[,i] <- pca$x[,1]
+                variances <- pca$sdev^2
+                report(OL$Verbose, "The first PC captures #{variances[1]/sum(variances)*100}% of the variance", round=2)
+            }
+        }
+        
+        report(OL$Info, "Calculating interregional correlations")
+        if (useShrinkage)
+        {
+            covariance <- cov.shrink(timeSeries, verbose=FALSE)
+            correlation <- cor.shrink(timeSeries, verbose=FALSE)
+            precision <- invcov.shrink(timeSeries, verbose=FALSE)
+            partialCorrelation <- pcor.shrink(timeSeries, verbose=FALSE)
+        }
+        else
+        {
+            covariance <- cov(timeSeries)
+            correlation <- cor(timeSeries)
+            precision <- pseudoinverse(covariance)
+            partialCorrelation <- cor2pcor(correlation)
+        }
+        
+        adjacencyMatrix <- as.integer(is.finite(covariance) & is.finite(correlation) & is.finite(precision) & is.finite(partialCorrelation))
+        dim(adjacencyMatrix) <- rep(nRegions, 2)
+        valid <- as.logical(adjacencyMatrix == 1L & upper.tri(adjacencyMatrix,diag=selfConnections))
+        
+        report(OL$Info, "Creating and writing graph")
+        graph <- asGraph(adjacencyMatrix, directed=FALSE, selfConnections=selfConnections, allVertexNames=targetMatches)
+        graph$setVertexAttributes(voxelCount=voxelCount, volume=volume)
+        graph$setVertexLocations(regionLocations, "mm", paste(session$getDirectory(),"functional",sep=":"))
+        graph$setEdgeAttributes(covariance=covariance[valid], correlation=correlation[valid], precision=precision[valid], partialCorrelation=partialCorrelation[valid])
         graph$serialise(graphName)
     }
 }
