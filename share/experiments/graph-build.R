@@ -153,15 +153,17 @@ runExperiment <- function ()
             partialCorrelation <- cor2pcor(correlation)
         }
         
-        adjacencyMatrix <- as.integer(is.finite(covariance) & is.finite(correlation) & is.finite(precision) & is.finite(partialCorrelation))
+        isFiniteAndNonzero <- function(x) is.finite(x) & (x != 0)
+        adjacencyMatrix <- as.integer(isFiniteAndNonzero(covariance) & isFiniteAndNonzero(correlation) & isFiniteAndNonzero(precision) & isFiniteAndNonzero(partialCorrelation))
         dim(adjacencyMatrix) <- rep(nRegions, 2)
-        valid <- as.logical(adjacencyMatrix == 1L & upper.tri(adjacencyMatrix,diag=selfConnections))
+        dimnames(adjacencyMatrix) <- list(targetMatches, targetMatches)
         
         report(OL$Info, "Creating and writing graph")
         graph <- asGraph(adjacencyMatrix, directed=FALSE, selfConnections=selfConnections, allVertexNames=targetMatches)
+        edges <- graph$getEdges()
         graph$setVertexAttributes(voxelCount=voxelCount, volume=volume)
         graph$setVertexLocations(regionLocations, "mm", paste(session$getDirectory(),"functional",sep=":"))
-        graph$setEdgeAttributes(covariance=covariance[valid], correlation=correlation[valid], precision=precision[valid], partialCorrelation=partialCorrelation[valid])
+        graph$setEdgeAttributes(covariance=covariance[edges], correlation=correlation[edges], precision=precision[edges], partialCorrelation=partialCorrelation[edges])
         graph$serialise(graphName)
     }
 }
