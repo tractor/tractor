@@ -302,6 +302,9 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radiu
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
     
+    # Ignore self-connection weights, as they won't be visible
+    weights[edges[,1] == edges[,2]] <- NA
+    
     if (all(is.na(weights)))
         weights <- rep(1, length(weights))
     
