@@ -45,6 +45,34 @@ runExperiment <- function ()
         printLabelledValues(labels, values, leftJustify=TRUE)
     }
     
+    if (file.exists(session$getDirectory("functional")))
+    {
+        report(OL$Info, "\nFUNCTIONAL:", prefixFormat="")
+        labels <- c("Data dimensions", "Voxel dimensions", "Sampling frequency", "Total time")
+        
+        if (session$imageExists("data","functional"))
+        {
+            metadata <- session$getImageByType("data", "functional", metadataOnly=TRUE)
+            metadataSummary <- metadata$summarise()
+            dims <- metadataSummary$values[2]
+            voxelDims <- metadataSummary$values[3]
+            frequency <- s("#{1/metadata$getVoxelDimensions()[4]} Hz", signif=3)
+            
+            timeSeconds <- metadata$getVoxelDimensions()[4] * metadata$getDimensions()[4]
+            if (!is.finite(timeSeconds))
+                time <- NA
+            else if (timeSeconds > 60)
+                time <- s("#{timeSeconds/60} min", signif=3)
+            else
+                time <- s("#{timeSeconds} s", signif=3)
+        }
+        else
+            dims <- voxelDims <- frequency <- time <- NA
+        
+        values <- c(dims, voxelDims, frequency, time)
+        printLabelledValues(labels, values, leftJustify=TRUE)
+    }
+    
     if (file.exists(session$getDirectory("structural")))
     {
         report(OL$Info, "\nSTRUCTURAL:", prefixFormat="")
