@@ -80,6 +80,33 @@
 
 <p>will average the two vertex attributes for each edge, and then use the number of streamlines divided by the average voxel count in the two target regions as the weight.</p>
 
+<h2 id="creating-a-graph-bold-fmri">Creating a graph (BOLD fMRI)</h2>
+
+<p>Resting-state fMRI data may be used to establish functional connectivity, or the degree of temporal coincidence between spatially separated cortical areas. Although TractoR does not currently provide scripts for preprocessing functional data (<a href="http://www.fil.ion.ucl.ac.uk/spm/">SPM</a> and <a href="http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT">FSL-FEAT</a> are two well-known software tools that could be used for this purpose), but it does allow already preprocessed data to be imported and used to create functional connectivity graphs.</p>
+
+<p>To get the data into a session directory, the <code>import</code> script can be used:</p>
+
+<pre><code>tractor import /data/subject1 fmri.nii.gz ImageWeighting:functional
+</code></pre>
+
+<p>Creating a functional connectivity graph then requires three stages, namely</p>
+
+<ol>
+<li>propagating a cortical parcellation from structural to functional space;</li>
+<li>identifying a representative signal trace for each parcellated region of interest; and</li>
+<li>calculating covariance measures between each pair of regional traces.</li>
+</ol>
+
+<p>The <code>graph-build</code> script can be used to perform these tasks. Stage 1, the transformation, is performed implicitly. Stage 2 is controlled by the <code>RegionTimeSeries</code> option, which may be &ldquo;mean&rdquo; for the mean of the voxelwise time series, or &ldquo;pc&rdquo; for the first principal component, which will capture more of the variance within the region but is less standard. At the third stage, several measures of association are calculated, but if the number of time points is modest it can be useful to employ a &ldquo;shrinkage&rdquo; approach that TractoR offers (via the <a href="http://strimmerlab.org/software/corpcor/"><code>corpcor</code> R package</a>), which regularises the estimates. For example,</p>
+
+<pre><code>tractor graph-build /data/subject1 Type:functional UseShrinkage:true GraphName:functional_graph
+</code></pre>
+
+<p>The resulting binary graph than then be weighted by correlation, say, by using the command</p>
+
+<pre><code>tractor graph-reweight correlation GraphName:functional_graph
+</code></pre>
+
 <h2 id="graph-properties">Graph properties</h2>
 
 <p>The basic properties of a graph object can be obtained using the generic <code>peek</code> script, viz.</p>

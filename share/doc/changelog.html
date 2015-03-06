@@ -47,6 +47,26 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="260-2015-03-06">2.6.0 (2015-03-06)</h2>
+
+<ul>
+<li>TractoR now requires R version 3.0.0 (released April 2013) or later.</li>
+<li>TractoR now has support for handling functional (BOLD) data, including functional connectivity analysis. However, fMRI preprocessing must currently be performed using other tools.</li>
+<li>The <code>graph-build</code> script gains the ability to create functional connectivity graphs. Regionwise time courses may be obtained by simple averaging or principal components analysis, and connectivity is quantified in terms of correlation, partial correlation, covariance or precision. An optional shrinkage approach is available to regularise these measures when the number of time points is limited.</li>
+<li>Streamlines can now be ignored before they are stored if they do not reach targets of interest. This is used by the <code>xtrack</code> and <code>ptrack</code> scripts, and will also be used by <code>mtrack</code> if <code>TruncateUnterminated:true</code> is given. Streamline files can be much smaller, and memory usage less, as a result.</li>
+<li>Further DICOM improvements. A missing &ldquo;pixel data&rdquo; tag (0x7fe0, 0x0010) will no longer result in a DICOM file being treated as invalid. Slice gaps are now included in the through-plane voxel dimension. And the code tries to guess when a &ldquo;mosaic&rdquo; DICOM file contains the per-slice rather than per-volume TR (as some do), and correct to the latter.</li>
+<li>The new <code>graph-extract</code> script can be used to extract a subgraph containing some of the vertices from a larger graph.</li>
+<li>TractoR is now more cautious about overwriting existing directories, and in particular, a directory mapped outside the session directory should never be deleted.</li>
+<li>The <code>view</code> script gains a <code>TimeSeries</code> option, which can be used to visualise time series in 4D images.</li>
+<li>The <code>graph2csv</code> script now writes vertex attributes into the CSV file, as comments.</li>
+<li>The <code>graph-props</code> script gains an <code>IgnoreSign</code> option.</li>
+<li>Registration strategy files can now specify the use of FSL or NiftyReg for affine registration.</li>
+<li>Switching the <code>EddyCorrectionMethod</code> in <code>dpreproc</code> will now appropriately overwrite the result of a previous correction.</li>
+<li>Self-connection weights are no longer included in the default weight limits when plotting graphs with <code>graph-viz</code> and <code>MatrixView:false</code>. They are often large relative to other connections, but are not visible in these plots.</li>
+<li>A test for reading NIfTI-2 format files has been added (the code already passed it).</li>
+<li>Indexing into sparse arrays is now more reliable.</li>
+</ul>
+
 <h2 id="252-2014-05-20">2.5.2 (2014-05-20)</h2>
 
 <ul>

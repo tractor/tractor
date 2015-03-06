@@ -61,6 +61,7 @@
     /camino..................images and other files used by the Camino toolkit
     /structural..............structural (e.g. T1-weighted) images
     /freesurfer..............output from the Freesurfer pipeline
+    /functional..............functional (generally T2*-weighted BOLD) images
   [other subdirectories].....unmanaged files, such as DICOM-format files
 </code></pre>
 
@@ -97,7 +98,7 @@ sse: dti_SSE
 <pre><code>diffusion: /data/subject1_2fibres/tractor/diffusion
 </code></pre>
 
-<p>It should, however, be bourne in mind that this will make the session less portable. The full default map, as of TractoR v2.5.0, is</p>
+<p>It should, however, be bourne in mind that this will make the session less portable. The full default map, as of TractoR v2.6.0, is</p>
 
 <pre><code>transforms: transforms
 diffusion: diffusion
@@ -107,6 +108,7 @@ probtrack: fdt.track
 camino: camino
 structural: structural
 freesurfer: freesurfer
+functional: functional
 </code></pre>
 
 <h2 id="point-types">Point types</h2>
