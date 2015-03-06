@@ -14,7 +14,9 @@ runExperiment <- function ()
     type <- getConfigVariable("Type", "diffusion", validValues=c("diffusion","functional"))
     tractName <- getConfigVariable("TractName", NULL, "character")
     regionTimeSeries <- getConfigVariable("RegionTimeSeries", "mean", validValues=c("mean","pc"))
-    useShrinkage <- getConfigVariable("UseShrinkage", TRUE)
+    useShrinkage <- getConfigVariable("UseShrinkage", FALSE)
+    varianceLambda <- getConfigVariable("VarianceShrinkageIntensity", NULL, "numeric")
+    correlationLambda <- getConfigVariable("CorrelationShrinkageIntensity", NULL, "numeric")
     
     targetRegions <- splitAndConvertString(targetRegions, ",", fixed=TRUE)
     
@@ -140,10 +142,11 @@ runExperiment <- function ()
         report(OL$Info, "Calculating interregional correlations")
         if (useShrinkage)
         {
-            covariance <- cov.shrink(timeSeries, verbose=FALSE)
-            correlation <- cor.shrink(timeSeries, verbose=FALSE)
-            precision <- invcov.shrink(timeSeries, verbose=FALSE)
-            partialCorrelation <- pcor.shrink(timeSeries, verbose=FALSE)
+            dropNull(x) <- Filter(Negate(is.null), x)
+            covariance <- do.call("cov.shrink", dropNull(list(timeSeries,verbose=FALSE,lambda=correlationLambda,lambda.var=varianceLambda)))
+            correlation <- do.call("cor.shrink", dropNull(list(timeSeries,verbose=FALSE,lambda=correlationLambda)))
+            precision <- do.call("invcov.shrink", dropNull(list(timeSeries,verbose=FALSE,lambda=correlationLambda,lambda.var=varianceLambda)))
+            partialCorrelation <- do.call("pcor.shrink", dropNull(list(timeSeries,verbose=FALSE,lambda=correlationLambda)))
         }
         else
         {
