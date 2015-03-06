@@ -21,9 +21,9 @@ createMaskImageForSession <- function (session, method = c("kmeans","fill"), nCl
         if (require("mmand"))
         {
             report(OL$Info, "Applying morphological operations to remove gaps in the mask")
-            kernel <- shapeKernel(width=5, dim=2, type="diamond", brush=TRUE)
+            kernel <- shapeKernel(width=5, dim=2, type="diamond")
             maskData <- closing(maskData, kernel)
-            kernel <- shapeKernel(width=3, dim=2, type="diamond", brush=TRUE)
+            kernel <- shapeKernel(width=3, dim=2, type="diamond")
             maskData <- dilate(maskData, kernel)
         }
         

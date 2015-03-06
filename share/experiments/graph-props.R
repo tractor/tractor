@@ -23,8 +23,8 @@ runExperiment <- function ()
         report(OL$Error, "The specified file does not contain a valid graph object")
     
     if (is.null(ignoreSign))
-        ignoreSign <- (edgeWeightThreshold > 0)
-    if (edgeWeightThreshold != 0 || binarise)
+        ignoreSign <- (edgeWeightThreshold >= 0)
+    if (edgeWeightThreshold != 0 || !ignoreSign || binarise)
         graph <- thresholdEdges(graph, edgeWeightThreshold, ignoreSign=ignoreSign, binarise=binarise)
     
     meanAbsEdgeWeight <- mean(abs(graph$getEdgeWeights()), na.rm=TRUE)

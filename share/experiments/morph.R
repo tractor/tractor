@@ -1,5 +1,5 @@
 #@args image file, kernel width
-#@desc Apply a mathematical morphology operation to an image using a shaped kernel. This is generally only useful for binary images. Note that the opening operation is an erosion followed by a dilation (using the same kernel), and will tend to remove small objects from the image; while the closing operation is a dilation followed by an erosion, and will tend to close small "holes" in the image. If only one width value is specified then the kernel will be isotropic and have dimensionality equal to that of the image (unless the image has more than three dimensions, in which case it will be 3D). Otherwise the dimensionality of the kernel will be given by the number of values specified. Values can be unequal for an anisotropic kernel. Note that this script requires the native package "mmand", which can be installed from the main TractoR directory using "make install-native".
+#@desc Apply a mathematical morphology operation to an image using a shaped kernel. This is generally only useful for binary images. Note that the opening operation is an erosion followed by a dilation (using the same kernel), and will tend to remove small objects from the image; while the closing operation is a dilation followed by an erosion, and will tend to close small "holes" in the image. If only one width value is specified then the kernel will be isotropic and have dimensionality equal to that of the image (unless the image has more than three dimensions, in which case it will be 3D). Otherwise the dimensionality of the kernel will be given by the number of values specified. Values can be unequal for an anisotropic kernel.
 
 library(mmand)
 
@@ -27,7 +27,7 @@ runExperiment <- function ()
     
     report(OL$Info, "Applying ", operation, " operation with ", kernelShape, " kernel of size ", implode(round(width)," x "), " voxels")
     
-    kernel <- shapeKernel(width, type=kernelShape, brush=TRUE)
+    kernel <- shapeKernel(width, type=kernelShape)
     newImage <- newMriImageWithSimpleFunction(image, get(operation), kernel=kernel)
     fileName <- paste(Arguments[1], "morphed", sep="_")
     writeImageFile(newImage, fileName)

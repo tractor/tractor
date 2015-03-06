@@ -142,7 +142,7 @@ runExperiment <- function ()
         report(OL$Info, "Calculating interregional correlations")
         if (useShrinkage)
         {
-            dropNull(x) <- Filter(Negate(is.null), x)
+            dropNull <- function(x) Filter(Negate(is.null), x)
             covariance <- do.call("cov.shrink", dropNull(list(timeSeries,verbose=FALSE,lambda=correlationLambda,lambda.var=varianceLambda)))
             correlation <- do.call("cor.shrink", dropNull(list(timeSeries,verbose=FALSE,lambda=correlationLambda)))
             precision <- do.call("invcov.shrink", dropNull(list(timeSeries,verbose=FALSE,lambda=correlationLambda,lambda.var=varianceLambda)))
