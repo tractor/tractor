@@ -10,3 +10,6 @@
 [submodule "lib/RNiftyReg"]
 	path = lib/RNiftyReg
 	url = git://github.com/jonclayden/RNiftyReg.git
+[submodule "lib/corpcor"]
+	path = lib/corpcor
+	url = git://github.com/jonclayden/corpcor.git
