@@ -28,7 +28,7 @@ post-install-info:
 	@$(ECHO) "The ~/.bashrc file can be created if it does not already exist."
 
 install-libs:
-	@$(INSTALL) lib/reportr lib/multicore lib/corpcor
+	@$(INSTALL) lib/reportr lib/corpcor lib/Rcpp lib/RcppArmadillo
 
 install-base:
 	@$(INSTALL) tractor.base
@@ -69,7 +69,7 @@ uninstall-local:
 	@rm -rf lib/R
 
 uninstall-all: uninstall
-	$(R) CMD REMOVE RNiftyReg oro.nifti bitops multicore mmand reportr
+	$(R) CMD REMOVE RNiftyReg oro.nifti bitops mmand RcppArmadillo Rcpp corpcor reportr
 
 clean:
 	@cd tests && $(MAKE) clean

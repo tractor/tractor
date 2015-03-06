@@ -24,13 +24,8 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), reportF
             library(parallel)
             options(mc.cores=as.integer(parallelisationFactor))
         }
-        else if (system.file(package="multicore") != "")
-        {
-            library(multicore)
-            options(cores=as.integer(parallelisationFactor))
-        }
         else
-            report(OL$Warning, "The \"multicore\" package is not installed - code will not be parallelised")
+            report(OL$Warning, "The \"parallel\" package is not installed - code will not be parallelised")
     }
     
     results <- withReportrHandlers({
