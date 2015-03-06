@@ -28,7 +28,7 @@ post-install-info:
 	@$(ECHO) "The ~/.bashrc file can be created if it does not already exist."
 
 install-libs:
-	@$(INSTALL) lib/reportr lib/multicore
+	@$(INSTALL) lib/reportr lib/multicore lib/corpcor
 
 install-base:
 	@$(INSTALL) tractor.base
