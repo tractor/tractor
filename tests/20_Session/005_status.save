@@ -11,6 +11,12 @@ DIFFUSION:
   FSL BEDPOST run               : TRUE (1 fibre(s) per voxel)
   Camino files created          : FALSE
 
+FUNCTIONAL:
+  Data dimensions    : 64 x 64 x 30 x 15 voxels
+  Voxel dimensions   : 3.28125 x 3.28125 x 3.99 mm x 2.16 s
+  Sampling frequency : 0.463 Hz
+  Total time         : 32.4 s
+
 STRUCTURAL:
   Number of T1w volumes : 1
   T1w space dimensions  : 176 x 232 x 256 voxels
