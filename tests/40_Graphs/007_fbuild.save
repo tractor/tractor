@@ -1,0 +1,16 @@
+An object of class "Graph"
+---
+  Graph properties : undirected, unweighted
+Number of vertices : 68
+   Number of edges : 2346
+      Edge density : 100%
+ Vertex attributes : voxelCount, volume, name
+   Edge attributes : covariance, correlation, precision, partialCorrelation
+An object of class "Graph"
+---
+  Graph properties : undirected, unweighted
+Number of vertices : 68
+   Number of edges : 2346
+      Edge density : 100%
+ Vertex attributes : voxelCount, volume, name
+   Edge attributes : covariance, correlation, precision, partialCorrelation
