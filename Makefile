@@ -28,7 +28,8 @@ post-install-info:
 	@$(ECHO) "The ~/.bashrc file can be created if it does not already exist."
 
 install-libs:
-	@$(INSTALL) lib/reportr lib/corpcor lib/Rcpp lib/RcppArmadillo
+	@$(INSTALL) lib/reportr lib/corpcor lib/Rcpp
+	@$(INSTALL) -k lib/RcppArmadillo
 
 install-base:
 	@$(INSTALL) tractor.base
@@ -40,7 +41,8 @@ install-reg:
 	@$(INSTALL) lib/bitops lib/oro.nifti lib/RNiftyReg tractor.reg
 
 install-session:
-	@$(INSTALL) lib/mmand tractor.session
+	@$(INSTALL) -k lib/mmand
+	@$(INSTALL) tractor.session
 
 install-nt:
 	@$(INSTALL) tractor.nt
