@@ -470,7 +470,7 @@ void track_fdt (const double *seed, const int *image_dims, const double *voxel_d
             }
         }
         
-        if (require_streamlines && (left_steps > 0 || right_steps > 0) && (!must_leave_mask || times_left_mask > 1))
+        if (require_streamlines && (!must_leave_mask || left_steps > 0 || right_steps > 0) && (!must_leave_mask || times_left_mask > 1))
         {
             // The seed will be trimmed from the left points, and must always be present in the right points
             if (left_steps > 0)
