@@ -136,7 +136,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         if (!file.exists(dirToRemove))
             return (NULL)
         
-        if (regexpr(fullRoot, dirToRemove, fixed=TRUE) != 1)
+        if (regexpr(rootDir, dirToRemove, fixed=TRUE) != 1)
             report(OL$Error, "Existing externally-mapped directory #{dirToRemove} will not be overwritten")
         else
         {
