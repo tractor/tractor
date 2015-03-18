@@ -49,8 +49,8 @@ readNifti <- function (fileNames)
     size <- readBin(connection, "integer", n=1, size=4)
     
     nonNativeEndian <- setdiff(c("big","little"), .Platform$endian)
-    endian <- switch(as.character(size), "348"=.Platform$endian, "540"=.Platform$endian, "23553"=nonNativeEndian, "7170"=nonNativeEndian)
-    niftiVersion <- switch(as.character(size), "348"=1, "540"=2, "23553"=1, "7170"=2)
+    endian <- switch(as.character(size), "348"=.Platform$endian, "540"=.Platform$endian, "1543569408"=nonNativeEndian, "469893120"=nonNativeEndian)
+    niftiVersion <- switch(as.character(size), "348"=1, "540"=2, "1543569408"=1, "469893120"=2)
 
     if (niftiVersion == 1)
     {
