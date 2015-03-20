@@ -1,18 +1,18 @@
 [submodule "lib/reportr"]
 	path = lib/reportr
-	url = git://github.com/jonclayden/reportr.git
+	url = https://github.com/jonclayden/reportr.git
 [submodule "lib/mmand"]
 	path = lib/mmand
-	url = git://github.com/jonclayden/mmand.git
+	url = https://github.com/jonclayden/mmand.git
 [submodule "lib/RNiftyReg"]
 	path = lib/RNiftyReg
-	url = git://github.com/jonclayden/RNiftyReg.git
+	url = https://github.com/jonclayden/RNiftyReg.git
 [submodule "lib/corpcor"]
 	path = lib/corpcor
-	url = git://github.com/jonclayden/corpcor.git
+	url = https://github.com/jonclayden/corpcor.git
 [submodule "lib/Rcpp"]
 	path = lib/Rcpp
-	url = https://github.com/RcppCore/Rcpp.git
+	url = https://github.com/jonclayden/Rcpp.git
 [submodule "lib/RcppArmadillo"]
 	path = lib/RcppArmadillo
-	url = https://github.com/RcppCore/RcppArmadillo.git
+	url = https://github.com/jonclayden/RcppArmadillo.git
