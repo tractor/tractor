@@ -127,7 +127,7 @@ runExperiment <- function ()
             if (regionTimeSeries == "mean")
             {
                 allTimeSeries <- scale(allTimeSeries)
-                timeSeries[,i] <- rowMeans(allTimeSeries)
+                timeSeries[,i] <- rowMeans(allTimeSeries, na.rm=TRUE)
                 report(OL$Verbose, "The mean time series captures #{var(timeSeries[,i])/sum(diag(var(allTimeSeries)))*100}% of the variance", round=2)
             }
             else if (regionTimeSeries == "pc")
