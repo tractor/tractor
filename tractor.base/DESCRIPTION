@@ -1,6 +1,6 @@
 Package: tractor.base
-Version: 2.6.0
-Date: 2015-03-04
+Version: 2.6.2
+Date: 2015-03-20
 Title: A package for reading, manipulating and visualising magnetic resonance images
 Author: Jon Clayden
 Maintainer: Jon Clayden <code@clayden.org>

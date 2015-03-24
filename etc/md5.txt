@@ -2,7 +2,7 @@
 34db5bbdec11d49778cef3280b0211d8 INSTALL.md
 f25eef6b149bd98c94042aa2445d1348 Makefile
 d68d92be46916fb15ef84d003ef12886 README.md
-6dcc9dbc3a79dfc90e9f4d36d8023b5c VERSION
+c7effa968a54136ea3959ac0a51377da VERSION
 8156fa443b1200ba0eff0bb94e92bc21 bin/tractor
 4f9b42ebc86e56ff7e013ca707c56259 bin/tractor_Rinstall
 41bbdb495cafa8777a74812c63bee5c0 etc/parcellations/desikan-killiany.lut
@@ -16,12 +16,12 @@ d68d92be46916fb15ef84d003ef12886 README.md
 f2a0688a67e316b8ec2339764ea0196f share/doc/TractoR-for-R-users.html
 5e82bf5f2a8e65a9fbefa89a9765c2d0 share/doc/box_bottom.gif
 e05a1252b51781ffd6e8a24c7266fcdc share/doc/box_top.gif
-1dab5a4212c44af509428dceecaaa16e share/doc/changelog.html
+80d32ef958565c1acab5c46b4a4b8aa7 share/doc/changelog.html
 1920aa23f0066ec091f0a133e93b9770 share/doc/connectivity-graphs.html
 bcdf9f017ea7419f99ce9f09a3fb3917 share/doc/conventions.html
 700c960ae93ba39a9bf27550d8c0ddc2 share/doc/diffusion-processing.html
 0d66d29aa7dcadd51f330f04bfe8f919 share/doc/download.png
-02d5df0d95405bcf43416528a6a90dc1 share/doc/downloads.html
+5f3e0e1480d5d2d5b2b8ac0b374e3c38 share/doc/downloads.html
 fe6cd3a90e2ecf534ec95be9a25762a8 share/doc/genu-point.png
 6884e3c15bfd689bde4e249c3a46e6b0 share/doc/getting-started.html
 cd8cec91833ffa792d4ad33729f8acbf share/doc/graph-brain.png
@@ -63,7 +63,7 @@ c2bf0b9e064e4f41e6804d975cafa7e6 share/experiments/gmap.R
 e97d3ec3e890b65cbd3cee6e83f39482 share/experiments/gradcheck.R
 10f8665b3857d3bd78ae367c0fc7cd33 share/experiments/gradread.R
 092b7a10b3003a3853e3f260c7509012 share/experiments/gradrotate.R
-e8b9e30c6d975f56e88432205b6119b7 share/experiments/graph-build.R
+4987238979087cefa27bde48b71cf452 share/experiments/graph-build.R
 5f891f6e07c52b8e28197e49c09a8761 share/experiments/graph-decompose.R
 1c76c99fb6f5f7665edf855d076a7da7 share/experiments/graph-extract.R
 e83977aff98b924d8060ae5fbf245f79 share/experiments/graph-props.R
@@ -316,7 +316,7 @@ ea710301bda7777fc785e7bd130ee0f8 tests/scripts/hello-interactive.R
 a853ebf2574020fbd777559eefccdc34 tests/scripts/hello.R
 c508de30be8719c0998bc2eff3fe4f03 tests/scripts/value.R
 55fb21bef3972d7d88d8345ede6802ab tests/scripts/which.R
-6b3c34e9e73d7226095fd200dc28ba82 tractor.base/DESCRIPTION
+81b7520ba360dbc724a99dfdfcfe62e3 tractor.base/DESCRIPTION
 d6a01d2202af3c49cab2531c2f8d1955 tractor.base/NAMESPACE
 ab278e833aee8838c686ed9f15a20ba2 tractor.base/R/00_constants.R
 2a509e3cb708c06950cbd7d1884fbe4c tractor.base/R/05_serialise.R
@@ -331,7 +331,7 @@ cc9d0404fdabe6a7bea39756937dcc3a tractor.base/R/internal.R
 8df740236bde7d0e193d770e646840f1 tractor.base/R/mgh.R
 c11af664fa8bdd64da41f7cd07eb3f7c tractor.base/R/misc.R
 e619097df072a6eb289488b2d0e21893 tractor.base/R/neighbourhood.R
-f67363b57ba6b84ba76f2f7e0e200830 tractor.base/R/nifti.R
+87d10922296dd9a23d8f0bd1aa2ca892 tractor.base/R/nifti.R
 384ac43821b632fa4234683c0780d848 tractor.base/R/png.R
 32ffa235d3b8d31c9cc1ce30e14c720b tractor.base/R/vector.R
 4f7ec64bd2e7cc71f018c1e6855e3e5c tractor.base/R/viewer.R

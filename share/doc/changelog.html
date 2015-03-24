@@ -47,6 +47,13 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="262-2015-03-24">2.6.2 (2015-03-24)</h2>
+
+<ul>
+<li>NIfTI format files which are endian-swapped, relative to the platform being used to read them, will now be handled correctly. Previously these would lead to a rather cryptic error.</li>
+<li>The <code>graph-build</code> script (with <code>Type:functional</code>) will now ignore voxels with totally flat time courses, rather than producing an error. These could arise as a result of masking during preprocessing.</li>
+</ul>
+
 <h2 id="261-2015-03-10">2.6.1 (2015-03-10)</h2>
 
 <ul>
