@@ -7,7 +7,7 @@ keep_going=0
 
 usage()
 {
-    echo "tractor_Rinstall (program v2.5.1)"
+    echo "tractor_Rinstall (program v3.0.0)"
     echo "TractoR-specific wrapper for installing R packages"
     echo
     echo "Usage: tractor_Rinstall [-k] pkg_path [pkg_path ...]"
@@ -19,14 +19,14 @@ usage()
     shift
 }
 
-[ $# -lt 1 -o ! -d "$1" ] && {
+[ $# -lt 1 ] && {
     usage 1>&2
     exit
 }
 
 while [ $# -gt 0 ]; do
     name=`basename "$1"`
-    echo -n "Installing R package \"${name}\"... "
+    echo -n "Installing R package \"${name%_*}\"... "
     
     # Use tractor.base to check if we're in a TractoR directory
     if [ -d tractor.base -a -d lib/R ]; then
