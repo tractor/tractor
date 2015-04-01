@@ -7,7 +7,7 @@
 
 FILE *log_file = NULL;
 char *bootstrap_string = NULL;
-char *script_file = NULL, *working_dir = NULL, *report_file = NULL, *output_level = NULL, *config_file = NULL, *script_args = NULL;
+char *script_file = NULL, *working_dir = NULL, *output_level = NULL, *config_file = NULL, *script_args = NULL;
 int parallelisation_factor = 1, profile_performance = 0;
 
 char * allocate_and_copy_string (const char *from)
@@ -46,11 +46,6 @@ void parse_arguments (int argc, const char **argv)
         else if (strcmp(argv[current_arg], "-w") == 0)
         {
             working_dir = allocate_and_copy_string(argv[current_arg+1]);
-            to_drop = 2;
-        }
-        else if (strcmp(argv[current_arg], "-r") == 0)
-        {
-            report_file = allocate_and_copy_string(argv[current_arg+1]);
             to_drop = 2;
         }
         else if (strcmp(argv[current_arg], "-l") == 0)
@@ -172,8 +167,6 @@ void build_bootstrap_string ()
     // Two added to each length for quotes (where needed)
     if (working_dir != NULL)
         len += strlen(working_dir) + strlen(", workingDirectory=") + 2;
-    if (report_file != NULL)
-        len += strlen(report_file) + strlen(", reportFile=") + 2;
     if (output_level != NULL)
         len += strlen(output_level) + strlen(", outputLevel=OL$");
     if (config_file != NULL)
@@ -193,8 +186,6 @@ void build_bootstrap_string ()
     
     if (working_dir != NULL)
         offset += sprintf(bootstrap_string + offset, ", workingDirectory='%s'", working_dir);
-    if (report_file != NULL)
-        offset += sprintf(bootstrap_string + offset, ", reportFile='%s'", report_file);
     if (output_level != NULL)
         offset += sprintf(bootstrap_string + offset, ", outputLevel=OL$%s", output_level);
     if (config_file != NULL)
@@ -328,8 +319,6 @@ void tidy_up ()
         free(script_file);
     if (working_dir != NULL)
         free(working_dir);
-    if (report_file != NULL)
-        free(report_file);
     if (output_level != NULL)
         free(output_level);
     if (config_file != NULL)

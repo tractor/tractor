@@ -1,4 +1,4 @@
-bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), reportFile = NULL, outputLevel = OL$Warning, configFiles = NULL, configText = NULL, parallelisationFactor = 1, profile = FALSE, standalone = TRUE, debug = FALSE)
+bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputLevel = OL$Warning, configFiles = NULL, configText = NULL, parallelisationFactor = 1, profile = FALSE, standalone = TRUE, debug = FALSE)
 {
     profile <- as.logical(profile)
     
@@ -66,8 +66,6 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), reportF
     
     if (!standalone)
         return (results)
-    else if (!is.null(reportFile) && is.list(results))
-        writeYaml(results, fileName=reportFile)
 }
 
 describeExperiment <- function (scriptFile, fill = FALSE)
