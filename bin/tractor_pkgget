@@ -52,7 +52,7 @@ r_version="3.0"
 if [ $all_builds -eq 1 ]; then
     cd "$target_dir" && mkdir -p src/contrib bin/macosx/contrib bin/macosx/mavericks/contrib || exit
     curl -f -o "src/contrib/${name}_${version}.tar.gz" "${url}/src/contrib/${name}_${version}.tar.gz"
-    Rscript -e "tools::write_PACKAGES('src/contrib')"
+    Rscript -e "tools::write_PACKAGES('src/contrib')" || exit
     
     for r_version in 3.0 3.1 3.2; do
         mkdir -p bin/macosx/contrib/${r_version} bin/macosx/mavericks/contrib/${r_version}
@@ -67,7 +67,7 @@ else
     if [ $force_source -eq 1 ]; then
         pkg_type="source"
     else
-        pkg_type=`Rscript -e 'cat(getOption("pkgType"))'`
+        pkg_type=`Rscript -e 'cat(getOption("pkgType"))'` || fail
         [ $pkg_type != "source" ] && {
             script='v<-R.Version(); cat(sub("^(\\\\d+\\\\.\\\\d+)(?:\\\\..+)?$","\\\\1",paste(v$major,v$minor,sep="."),perl=TRUE))'
             r_version=`Rscript -e "$script"`

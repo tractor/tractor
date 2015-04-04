@@ -43,7 +43,7 @@ do-install-libs:
 install-libs:
 	@current_version=`cat VERSION`; \
 	[ -f lib/.VERSION ] && installed_version=`cat lib/.VERSION` || installed_version=0; \
-	[ $${current_version} != $${installed_version} ] && ( $(MAKE) do-install-libs && cp VERSION lib/.VERSION ) || true
+	[ $${current_version} = $${installed_version} ] || ( $(MAKE) do-install-libs && cp VERSION lib/.VERSION )
 
 install-base:
 	@$(INSTALL) lib/reportr tractor.base
