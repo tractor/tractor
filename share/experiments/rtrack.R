@@ -3,6 +3,7 @@
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
+suppressPackageStartupMessages(require(tractor.track))
 
 runExperiment <- function ()
 {
@@ -13,7 +14,6 @@ runExperiment <- function ()
     seedMaskInStandardSpace <- getConfigVariable("SeedMaskInStandardSpace", FALSE)
     thresholdType <- getConfigVariable("SeedThresholdType", "FA", validValues=c("FA","MD","axialdiff","radialdiff"), deprecated=TRUE)
     thresholdLevel <- getConfigVariable("SeedThresholdLevel", NULL, "numeric", errorIfInvalid=TRUE, deprecated=TRUE)
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     groupSize <- getConfigVariable("SeedGroupSize", 100)
     newThresholdLevel <- getConfigVariable("AnisotropyThreshold", NULL)
@@ -49,45 +49,27 @@ runExperiment <- function ()
             report(OL$Info, "Rejecting ", nrow(seeds)-length(validSeeds), " seed points as below threshold")
         }
         
-        if (tracker == "fsl")
+        nGroups <- (length(validSeeds) - 1) %/% groupSize + 1
+        for (i in 1:nGroups)
         {
-            runProbtrackWithSession(session, seeds[validSeeds,], requireFile=TRUE, nSamples=nSamples)
-            for (d in validSeeds)
+            firstSeed <- groupSize * (i-1) + 1
+            lastSeed <- min(i*groupSize, length(validSeeds))
+            currentSeeds <- seeds[validSeeds[firstSeed:lastSeed],,drop=FALSE]
+            result <- trackWithSession(session, currentSeeds, requireImage=FALSE, requireStreamlines=TRUE, nSamples=nSamples)
+            for (j in 1:nrow(currentSeeds))
             {
-                prefix <- paste(tractName, implode(seeds[d,],sep="_"), sep="_")
-                ptResult <- runProbtrackWithSession(session, seeds[d,], requireImage=TRUE, nSamples=nSamples, expectExists=TRUE)
-            
+                firstStreamline <- nSamples * (j-1) + 1
+                lastStreamline <- j * nSamples
+                streamlinesForSeed <- newStreamlineCollectionTractBySubsetting(result$streamlines, firstStreamline:lastStreamline)
+                imageForSeed <- newMriImageAsVisitationMap(streamlinesForSeed)
+                
+                prefix <- paste(tractName, implode(currentSeeds[j,],sep="_"), sep="_")
                 if (createVolumes)
-                    writeImageFile(ptResult$image, prefix)
+                    writeImageFile(imageForSeed, prefix)
                 if (createImages)
-                    writePngsForResult(ptResult, prefix=prefix, threshold=vizThreshold, showSeed=showSeed)
-            }
-        }
-        else
-        {
-            require(tractor.track)
-            nGroups <- (length(validSeeds) - 1) %/% groupSize + 1
-            for (i in 1:nGroups)
-            {
-                firstSeed <- groupSize * (i-1) + 1
-                lastSeed <- min(i*groupSize, length(validSeeds))
-                currentSeeds <- seeds[validSeeds[firstSeed:lastSeed],,drop=FALSE]
-                result <- trackWithSession(session, currentSeeds, requireImage=FALSE, requireStreamlines=TRUE, nSamples=nSamples)
-                for (j in 1:nrow(currentSeeds))
                 {
-                    firstStreamline <- nSamples * (j-1) + 1
-                    lastStreamline <- j * nSamples
-                    streamlinesForSeed <- newStreamlineCollectionTractBySubsetting(result$streamlines, firstStreamline:lastStreamline)
-                    imageForSeed <- newMriImageAsVisitationMap(streamlinesForSeed)
-                    
-                    prefix <- paste(tractName, implode(currentSeeds[j,],sep="_"), sep="_")
-                    if (createVolumes)
-                        writeImageFile(imageForSeed, prefix)
-                    if (createImages)
-                    {
-                        fakeResult <- list(image=imageForSeed, nSamples=nSamples, session=session, seeds=currentSeeds[j,,drop=FALSE])
-                        writePngsForResult(fakeResult, prefix=prefix, threshold=vizThreshold, showSeed=showSeed)
-                    }
+                    fakeResult <- list(image=imageForSeed, nSamples=nSamples, session=session, seeds=currentSeeds[j,,drop=FALSE])
+                    writePngsForResult(fakeResult, prefix=prefix, threshold=vizThreshold, showSeed=showSeed)
                 }
             }
         }

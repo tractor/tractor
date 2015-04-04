@@ -33,7 +33,7 @@ newMriImageAsVisitationMap <- function (tract, metadata = NULL)
             currentPoints <- transformWorldToVoxel(currentPoints, metadata, simple=TRUE)
         currentPoints <- round(currentPoints)
         
-        # ProbTrack allows tracking to voxel positions in [0.5, dims+0.5]
+        # Tracking is to voxel positions in [0.5, dims+0.5]
         # Rounding points that fall exactly on these extrema can lead to
         # out-of-bounds indices, since e.g. round(0.5)==0
         # We therefore have to find and remove points at zero and dims+1

@@ -32,7 +32,7 @@ runExperiment <- function ()
         currentSession <- newSessionFromDirectory(sessionList[i])
         currentSeed <- results$getResult(i)$bestSeed
         
-        ptResult <- runProbtrackWithSession(currentSession, currentSeed, mode="simple", requireImage=TRUE)
+        ptResult <- trackWithSession(currentSession, currentSeed, requireImage=TRUE)
         
         currentTractName <- paste(tractName, "_session", i, sep="")
         if (createVolumes)

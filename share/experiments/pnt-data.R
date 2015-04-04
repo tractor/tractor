@@ -7,7 +7,6 @@ runExperiment <- function ()
 {
     tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
     sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     seedPoint <- getConfigVariable("SeedPoint", NULL, "character")
     seedList <- getConfigVariable("SeedPointList", NULL, "integer")
     pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
@@ -68,7 +67,7 @@ runExperiment <- function ()
                 currentSeed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), currentSession, "diffusion", oldSpace="mni", pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
             
             neighbourhood <- createNeighbourhoodInfo(centre=currentSeed, width=searchWidth)
-            splines <- calculateSplinesForNeighbourhood(currentSession, neighbourhood, reference, faThreshold, nSamples, tracker=tracker)
+            splines <- calculateSplinesForNeighbourhood(currentSession, neighbourhood, reference, faThreshold, nSamples)
             data <- createDataTableForSplines(splines, reference$getTract(), "knot", subjectId=i, neighbourhood=neighbourhood)
             write.table(data, file=sessionDatasetName)
         }

@@ -2,6 +2,7 @@
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
+library(tractor.track)
 library(tractor.reg)
 
 runExperiment <- function ()
@@ -12,7 +13,6 @@ runExperiment <- function ()
     sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
     modelName <- getConfigVariable("ModelName", NULL, "character")
     sessionNumbers <- getConfigVariable("SessionNumbers", NULL, "character")
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     
     nSamples <- getConfigVariable("NumberOfSamples", 1000)
     subgroupSize <- getConfigVariable("SubgroupSize", 500)
@@ -91,14 +91,8 @@ runExperiment <- function ()
         bestSeed <- neighbourhood$vectors[,bestSeedIndex]
         report(OL$Info, "Seed point is (", implode(bestSeed,","), ")")
         
-        if (tracker == "tractor")
-        {
-            require("tractor.track")
-            result <- trackWithSession(currentSession, bestSeed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlines=TRUE)
-            streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
-        }
-        else
-            streamSet <- newStreamlineSetTractFromProbtrack(currentSession, bestSeed, nSamples=nSamples, rightwardsVector=rightwardsVector)
+        result <- trackWithSession(currentSession, bestSeed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlines=TRUE)
+        streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
         
         medianLine <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
         if (options$registerToReference)

@@ -3,6 +3,7 @@
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
+suppressPackageStartupMessages(require(tractor.track))
 
 runExperiment <- function ()
 {
@@ -19,7 +20,6 @@ runExperiment <- function ()
     terminationMaskFiles <- getConfigVariable("TerminationMaskFiles", NULL, "character", errorIfInvalid=TRUE)
     terminationMasksInStandardSpace <- getConfigVariable("TerminationMasksInStandardSpace", FALSE)
     truncateUnterminated <- getConfigVariable("TruncateUnterminated", FALSE)
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     nSamples <- getConfigVariable("NumberOfSamples", 5000)
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL)
     
@@ -32,8 +32,6 @@ runExperiment <- function ()
     
     if (!createVolumes && !createImages)
         report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
-    if (storeStreamlines && tracker == "fsl")
-        report(OL$Error, "Streamlines may only be stored when using the internal tracker")
     
     if (is.null(seedMaskFile))
     {
@@ -103,36 +101,24 @@ runExperiment <- function ()
         terminateOutsideMask <- TRUE
     }
     
-    if (tracker == "fsl")
+    result <- trackWithSession(session, seedMask, maskName=trackingMaskFileName, requireImage=is.null(waypointMasks), requireStreamlines=(storeStreamlines || !is.null(waypointMasks)), nSamples=nSamples, terminateOutsideMask=terminateOutsideMask, mustLeaveMask=truncateUnterminated, jitter=jitter)
+    if (!is.null(waypointMasks))
     {
-        if (!is.null(exclusionMaskFiles))
-            report(OL$Error, "Exclusion masks are not currently supported with the FSL tracker")
-        if (!is.null(terminationMaskFiles))
-            report(OL$Error, "Termination masks are not currently supported with the FSL tracker")
-        result <- runProbtrackWithSession(session, mode="seedmask", seedMask=seedMask, waypointMasks=waypointMasks, requireImage=TRUE, nSamples=nSamples)
-    }
-    else
-    {
-        require(tractor.track)
-        result <- trackWithSession(session, seedMask, maskName=trackingMaskFileName, requireImage=is.null(waypointMasks), requireStreamlines=(storeStreamlines || !is.null(waypointMasks)), nSamples=nSamples, terminateOutsideMask=terminateOutsideMask, mustLeaveMask=truncateUnterminated, jitter=jitter)
-        if (!is.null(waypointMasks))
+        result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks, exclusion)
+        if (is.null(result$streamlines))
         {
-            result$streamlines <- newStreamlineCollectionTractWithWaypointConstraints(result$streamlines, waypointMasks, exclusion)
-            if (is.null(result$streamlines))
-            {
-                metadata <- session$getImageByType("mask", "diffusion", metadataOnly=TRUE)
-                result$image <- newMriImageWithData(array(0,dim=metadata$getDimensions()), metadata)
-                result$nSamples <- 0
-            }
-            else
-            {
-                result$image <- newMriImageAsVisitationMap(result$streamlines)
-                result$nSamples <- result$streamlines$nStreamlines()
-            }
+            metadata <- session$getImageByType("mask", "diffusion", metadataOnly=TRUE)
+            result$image <- newMriImageWithData(array(0,dim=metadata$getDimensions()), metadata)
+            result$nSamples <- 0
         }
-        if (storeStreamlines)
-            result$streamlines$serialise(paste(tractName,"streamlines",sep="_"))
+        else
+        {
+            result$image <- newMriImageAsVisitationMap(result$streamlines)
+            result$nSamples <- result$streamlines$nStreamlines()
+        }
     }
+    if (storeStreamlines)
+        result$streamlines$serialise(paste(tractName,"streamlines",sep="_"))
     
     report(OL$Info, "Creating tract images")
     if (createVolumes)

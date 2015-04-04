@@ -5,16 +5,10 @@ createTractOptionList <- function (pointType = "knot", lengthQuantile = 0.99, re
     invisible (options)
 }
 
-streamlineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL, tracker = "fsl")
+streamlineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)
 {
-    if (tracker == "tractor")
-    {
-        require("tractor.track")
-        result <- trackWithSession(session, seed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlines=TRUE)
-        streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
-    }
-    else
-        streamSet <- newStreamlineSetTractFromProbtrack(session, seed, nSamples=nSamples, maxPathLength=options$maxPathLength, rightwardsVector=rightwardsVector)
+    result <- trackWithSession(session, seed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlines=TRUE)
+    streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
     streamline <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
     
     if (options$registerToReference)
@@ -30,18 +24,18 @@ streamlineTractWithOptions <- function (options, session, seed, refSession = NUL
     invisible (streamline)
 }
 
-splineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL, tracker = "fsl")
+splineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)
 {
-    streamline <- streamlineTractWithOptions(options, session, seed, refSession, nSamples, rightwardsVector, tracker=tracker)
+    streamline <- streamlineTractWithOptions(options, session, seed, refSession, nSamples, rightwardsVector)
     spline <- newBSplineTractFromStreamline(streamline, knotSpacing=options$knotSpacing)
     
     invisible (spline)
 }
 
-referenceSplineTractWithOptions <- function (options, refSession, refSeed, nSamples = 5000, maxAngle = NULL, tracker = "fsl")
+referenceSplineTractWithOptions <- function (options, refSession, refSeed, nSamples = 5000, maxAngle = NULL)
 {
     refOptions <- createTractOptionList(options$pointType, options$lengthQuantile, FALSE, NULL, options$maxPathLength)
-    streamline <- streamlineTractWithOptions(refOptions, refSession, refSeed, nSamples=nSamples, tracker=tracker)
+    streamline <- streamlineTractWithOptions(refOptions, refSession, refSeed, nSamples=nSamples)
     refSpline <- newBSplineTractFromStreamlineWithConstraints(streamline, maxAngle=maxAngle)
     
     options$knotSpacing <- refSpline$getKnotSpacing()
@@ -49,7 +43,7 @@ referenceSplineTractWithOptions <- function (options, refSession, refSeed, nSamp
     invisible (list(spline=refSpline, options=options))
 }
 
-calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference, faThreshold = 0.2, nSamples = 5000, tracker = "fsl")
+calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference, faThreshold = 0.2, nSamples = 5000)
 {
     if (!is(reference,"ReferenceTract") || !is(reference$getTract(),"BSplineTract"))
         report(OL$Error, "The specified reference tract is not valid")
@@ -86,7 +80,7 @@ calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference,
         }
         else
         {
-            spline <- splineTractWithOptions(reference$getTractOptions(), session, seed, reference$getSourceSession(), nSamples, rightwardsVector, tracker=tracker)
+            spline <- splineTractWithOptions(reference$getTractOptions(), session, seed, reference$getSourceSession(), nSamples, rightwardsVector)
             splines <- c(splines, list(spline))
         }
     }

@@ -9,7 +9,7 @@
     isSigned=c(  TRUE,       FALSE,      TRUE,       TRUE,       TRUE,       TRUE,       TRUE)
 )
 
-.DefaultSessionDirectories <- list(diffusion="diffusion", camino="camino", fdt="fdt", bedpost="fdt.bedpostX", probtrack="fdt.track", transforms="transforms", structural="structural", freesurfer="freesurfer", functional="functional")
+.DefaultSessionDirectories <- list(diffusion="diffusion", camino="camino", fdt="fdt", bedpost="fdt.bedpostX", transforms="transforms", structural="structural", freesurfer="freesurfer", functional="functional")
 
 .PrimarySessionDirectories <- c("diffusion", "structural", "functional")
 

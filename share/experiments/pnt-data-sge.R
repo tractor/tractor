@@ -7,7 +7,6 @@ runExperiment <- function ()
 {
     tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
     sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     seedList <- getConfigVariable("SeedPointList", NULL, "integer")
     pointType <- getConfigVariable("PointType", NULL, "character")
     searchWidth <- getConfigVariable("SearchWidth", 1)
@@ -53,7 +52,7 @@ runExperiment <- function ()
     
     verbosityFlag <- ifelse(isValidAs(Sys.getenv("verbose_level"),"integer"), paste("-v",Sys.getenv("verbose_level")), "")
     
-    carryOverOptions <- paste("TractName:", tractName, " Tracker:", tracker, " AnisotropyThreshold:", faThreshold, " NumberOfSamples:", nSamples, " SearchWidth:", searchWidth, " DatasetName:", file.path(tempDir,"output",datasetName), sep="")
+    carryOverOptions <- paste("TractName:", tractName, " AnisotropyThreshold:", faThreshold, " NumberOfSamples:", nSamples, " SearchWidth:", searchWidth, " DatasetName:", file.path(tempDir,"output",datasetName), sep="")
     script <- c("#!/bin/sh",
                 "#$ -S /bin/bash",
                 paste("SESSION=`sed \"${SGE_TASK_ID}q;d\" ",sessionFile,"`",sep=""),
