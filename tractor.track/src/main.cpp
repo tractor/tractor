@@ -14,6 +14,27 @@ using namespace Rcpp;
 typedef std::vector<int> int_vector;
 typedef std::vector<std::string> str_vector;
 
+RcppExport SEXP createBedpostTracker (SEXP _parameterMapPaths, SEXP _avfThreshold, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _maxSteps, SEXP _stepLength)
+{
+BEGIN_RCPP
+    List parameterMapPaths(_parameterMapPaths);
+    BedpostDataSource *bedpost = new BedpostDataSource(as<str_vector>(parameterMapPaths["avf"]), as<str_vector>(parameterMapPaths["theta"]), as<str_vector>(parameterMapPaths["phi"]));
+    bedpost->setAvfThreshold(as<float>(_avfThreshold));
+    
+    std::map<std::string,bool> flags;
+    flags["loopcheck"] = as<bool>(_useLoopcheck);
+    
+    Tracker tracker(bedpost);
+    tracker.setFlags(flags);
+    tracker.setInnerProductThreshold(as<float>(_curvatureThreshold));
+    tracker.setStepLength(as<float>(_stepLength));
+    tracker.setMaxSteps(as<int>(_maxSteps));
+    
+    XPtr<Tracker> trackerPtr(&tracker);
+    return trackerPtr;
+END_RCPP
+}
+
 RcppExport SEXP track_bedpost (SEXP seeds_, SEXP mask_path_, SEXP parameter_map_paths_, SEXP n_samples_, SEXP max_steps_, SEXP step_length_, SEXP volfrac_threshold_, SEXP curvature_threshold_, SEXP use_loopcheck_, SEXP rightwards_vector_, SEXP terminate_outside_mask_, SEXP must_leave_mask_, SEXP function_, SEXP debug_level_)
 {
 BEGIN_RCPP
@@ -23,7 +44,8 @@ BEGIN_RCPP
     
     NiftiImage *mask = new NiftiImage(as<std::string>(mask_path_));
     
-    Tracker tracker(bedpost, mask);
+    Tracker tracker(bedpost);
+    tracker.setMask(mask);
     tracker.setDebugLevel(as<int>(debug_level_));
     
     std::map<std::string,bool> flags;

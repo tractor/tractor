@@ -35,12 +35,8 @@ private:
     
 public:
     Tracker () {}
-    Tracker (DiffusionDataSource * const dataSource, NiftiImage * const mask)
-        : dataSource(dataSource), mask(mask), loopcheck(NULL), visited(NULL)
-    {
-        maskData = mask->getData<short>();
-        mask->dropData();
-    }
+    Tracker (DiffusionDataSource * const dataSource)
+        : dataSource(dataSource), mask(NULL), loopcheck(NULL), visited(NULL) {}
     
     ~Tracker ()
     {
@@ -53,6 +49,12 @@ public:
     Space<3>::Vector getRightwardsVector () const { return rightwardsVector; }
     float getInnerProductThreshold () const { return innerProductThreshold; }
     float getStepLength () const { return stepLength; }
+    
+    void setMask (NiftiImage * const mask)
+    {
+        maskData = mask->getData<short>();
+        mask->dropData();
+    }
     
     void setSeed (const Space<3>::Point &seed) { this->seed = seed; }
     void setRightwardsVector (const Space<3>::Vector &rightwardsVector) { this->rightwardsVector = rightwardsVector; }
