@@ -1,5 +1,7 @@
 #@args session directory, [seed region(s)]
+#@example tractor track /data/subject1
 
+library(ore)
 library(tractor.track)
 library(tractor.session)
 
@@ -8,12 +10,20 @@ runExperiment <- function ()
     requireArguments("session directory")
     session <- newSessionFromDirectory(Arguments[1])
     
-    nStreamlines <- getConfigVariable("Streamlines", 5000L, "integer")
-    blockType <- getConfigVariable("BlockType", "image", validValues=c("image","region","seed"))
+    strategy <- getConfigVariable("Strategy", validValues=c("sequential","random","regionwise","voxelwise"))
+    jitter <- getConfigVariable("JitterSeeds", FALSE)
+    nStreamlines <- getConfigVariable("Streamlines", "100x")
     boundaryManipulation <- getConfigVariable("BoundaryManipulation", "none", validValues=c("none","erode","dilate","inner","outer"))
     kernelShape <- getConfigVariable("KernelShape", "diamond", "character", validValues=c("box","disc","diamond"))
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL, "numeric")
-    jitter <- getConfigVariable("JitterSeeds", FALSE)
+    
+    if (!(nStreamlines %~% "^(\\d+)(x?)$"))
+        report(OL$Error, "Number of streamlines should be an integer, optionally followed by \"x\"")
+    else
+    {
+        multiplyStreamlineCount <- !is.na(ore.lastmatch()[1,2])
+        nStreamlines <- as.integer(ore.lastmatch()[1,1])
+    }
     
     seedRegions <- splitAndConvertString(Arguments[-1], ",", fixed=TRUE)
     wholeBrainSeeding <- (length(seedRegions) == 0)
