@@ -10,54 +10,76 @@ runExperiment <- function ()
     requireArguments("session directory")
     session <- newSessionFromDirectory(Arguments[1])
     
-    strategy <- getConfigVariable("Strategy", validValues=c("sequential","random","regionwise","voxelwise"))
-    jitter <- getConfigVariable("JitterSeeds", FALSE)
+    strategy <- getConfigVariable("Strategy", "global", validValues=c("global","regionwise","voxelwise"))
     nStreamlines <- getConfigVariable("Streamlines", "100x")
+    anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL, "numeric")
     boundaryManipulation <- getConfigVariable("BoundaryManipulation", "none", validValues=c("none","erode","dilate","inner","outer"))
     kernelShape <- getConfigVariable("KernelShape", "diamond", "character", validValues=c("box","disc","diamond"))
-    anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL, "numeric")
+    jitter <- getConfigVariable("JitterSeeds", FALSE)
+    requirePaths <- getConfigVariable("RequirePaths", FALSE)
+    requireMap <- getConfigVariable("RequireMap", TRUE)
     
     if (!(nStreamlines %~% "^(\\d+)(x?)$"))
-        report(OL$Error, "Number of streamlines should be an integer, optionally followed by \"x\"")
+        report(OL$Error, "Number of streamlines should be a positive integer, optionally followed by \"x\"")
     else
     {
-        multiplyStreamlineCount <- !is.na(ore.lastmatch()[1,2])
+        randomSeeds <- is.na(ore.lastmatch()[1,2])
         nStreamlines <- as.integer(ore.lastmatch()[1,1])
     }
     
     seedRegions <- splitAndConvertString(Arguments[-1], ",", fixed=TRUE)
+    targetRegions <- splitAndConvertString()
     wholeBrainSeeding <- (length(seedRegions) == 0)
-    sequentialSeeding <- (blockType == "seed")
     
     mask <- session$getImageByType("mask", "diffusion", metadataOnly=!wholeBrainSeeding)
-    seedImage <- mask$copy()
     
-    if (wholeBrainSeeding)
-        indices <- 1L
-    else
+    applyBoundaryManipulation <- function (image)
     {
-        indices <- NULL
-        seedImage$fill(0L)
-        areFiles <- imageFileExists(seedRegions)
+        if (boundaryManipulation != "none")
+        {
+            kernel <- mmand::shapeKernel(c(3,3,3), type=kernelShape)
+            if (boundaryManipulation == "erode")
+                image <- newMriImageWithSimpleFunction(image, mmand::erode, kernel=kernel)
+            else if (boundaryManipulation == "dilate")
+                image <- newMriImageWithSimpleFunction(image, mmand::dilate, kernel=kernel)
+            else if (boundaryManipulation == "inner")
+                image <- newMriImageWithSimpleFunction(image, function(x) x - mmand::erode(x,kernel=kernel))
+            else if (boundaryManipulation == "outer")
+                image <- newMriImageWithSimpleFunction(image, function(x) mmand::dilate(x,kernel=kernel) - x)
+        }
+        
+        return (image)
+    }
+    
+    mergeRegions <- function (regionNames)
+    {
+        indices <- labels <- NULL
+        image <- mask$copy()$fill(0L)
+        areFiles <- imageFileExists(regionNames)
         
         if (any(!areFiles))
         {
             parcellation <- session$getParcellation("diffusion")
-            indices <- matchRegions(seedRegions[!areFiles], parcellation)
+            indices <- sort(matchRegions(seedRegions[!areFiles], parcellation))
+            labels <- parcellation$regions$label[parcellation$regions$index %in% indices]
             locs <- which(parcellation$image$getData() %in% indices, arr.ind=TRUE)
-            seedImage[locs] <- parcellation$image[locs]
+            image[locs] <- parcellation$image[locs]
         }
         
         for (region in seedRegions[areFiles])
         {
             # This makes "data" a SparseArray object
-            data <- readImageFile(region,sparse=TRUE)$getData()
+            currentImage <- readImageFile(region, sparse=TRUE)
+            data <- currentImage$getData()
             positive <- (data$getData() > 0)
             locs <- data$getCoordinates()[positive,]
-            currentIndices <- unique(data$getData()[positive])
+            currentIndices <- sort(unique(data$getData()[positive]))
+            
+            if (length(currentIndices) == 0)
+                next
             
             if (!all(currentIndices == round(currentIndices)))
-                report(OL$Error, "Seed image must be integer-valued")
+                report(OL$Error, "ROI image must be integer-valued")
             
             if (any(currentIndices %in% indices))
                 delta <- max(indices)
@@ -66,19 +88,53 @@ runExperiment <- function ()
             
             seedImage[locs] <- data[locs] + delta
             indices <- c(indices, as.integer(currentIndices + delta))
+            
+            if (length(currentIndices) == 1)
+                labels <- c(labels, basename(currentImage$getSource()))
+            else
+                labels <- c(labels, paste(basename(currentImage$getSource()),currentIndices,sep="_"))
         }
+        
+        return (list(image=image, indices=indices, labels=labels))
     }
     
-    if (!is.null(anisotropyThreshold))
+    if (wholeBrainSeeding)
+        seedInfo <- list(image=mask$copy(), indices=1L, labels="brain")
+    else if (length(seedRegions) %% 3 == 0 && isValidAs(seedRegions,"integer"))
+    {
+        seedMatrix <- matrix(as.integer(seedRegions), ncol=3, byrow=TRUE)
+        seedImage <- mask$copy()$fill(0L)
+        seedImage[seedMatrix] <- 1L
+        seedInfo <- list(image=seedImage, indices=1L, labels="points")
+    }
+    else
+        seedInfo <- mergeRegions(seedRegions)
+    
+    if (is.null(anisotropyThreshold))
+        seedInfo$image <- seedInfo$image * mask
+    else
     {
         fa <- session$getImageByType("FA")
         subthreshold <- which(fa$getData() < anisotropyThreshold, arr.ind=TRUE)
-        seedImage[subthreshold] <- 0L
+        seedInfo$image[subthreshold] <- 0L
     }
     
-    if (blockType == "image")
+    if (strategy == "global")
     {
-        indices <- 1L
-        seedImage[seedImage$getNonzeroIndices()] <- 1L
+        seedImage <- applyBoundaryManipulation(newMriImageWithSimpleFunction(seedInfo$image, function(x) ifelse(x>0,1L,0L)))
+        seeds <- seedImage$getNonzeroIndices(array=TRUE)
+        if (randomSeeds)
+        {
+            report(OL$Info, "Performing global tractography to generate #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds")
+            seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
+            streamlineManager <- StreamlineManager$new(seeds=seeds, count=1L)
+        }
+        else
+        {
+            report(OL$Info, "Performing sequential global tractography with #{nrow(seeds)} seeds, #{nStreamlines} per seed")
+            streamlineManager$new(seeds=seeds, count=nStreamlines)
+        }
+        
+        streamlineManager$track()
     }
 }
