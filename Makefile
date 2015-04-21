@@ -90,6 +90,7 @@ clean:
 	@cd tests && $(MAKE) clean
 
 distclean: clean
+	@rm -f lib/.VERSION
 	@rm -f bin/exec/tractor src/build.log install.log
 	@rm -f tractor.track/config.log tractor.track/config.status tractor.track/src/Makevars tractor.track/src/config.h
 
