@@ -6,9 +6,6 @@ using namespace std;
 
 Streamline Tracker::run ()
 {
-    const std::vector<int> &spaceDims = mask->getDimensions();
-    const std::vector<float> &voxelDims = mask->getVoxelDimensions();
-    
     Rcpp::Rcout << std::fixed;
     Rcpp::Rcout.precision(3);
     logger.debug1.indent() << "Tracking from seed point " << seed << endl;

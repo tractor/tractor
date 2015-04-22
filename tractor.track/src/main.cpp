@@ -24,14 +24,27 @@ BEGIN_RCPP
     std::map<std::string,bool> flags;
     flags["loopcheck"] = as<bool>(_useLoopcheck);
     
-    Tracker tracker(bedpost);
-    tracker.setFlags(flags);
-    tracker.setInnerProductThreshold(as<float>(_curvatureThreshold));
-    tracker.setStepLength(as<float>(_stepLength));
-    tracker.setMaxSteps(as<int>(_maxSteps));
+    Tracker *tracker = new Tracker(bedpost);
+    tracker->setFlags(flags);
+    tracker->setInnerProductThreshold(as<float>(_curvatureThreshold));
+    tracker->setStepLength(as<float>(_stepLength));
+    tracker->setMaxSteps(as<int>(_maxSteps));
     
-    XPtr<Tracker> trackerPtr(&tracker);
+    XPtr<Tracker> trackerPtr(tracker);
     return trackerPtr;
+END_RCPP
+}
+
+RcppExport SEXP setTrackerMask (SEXP _tracker, SEXP _maskPath)
+{
+BEGIN_RCPP
+    XPtr<Tracker> trackerPtr(_tracker);
+    Tracker *tracker = trackerPtr;
+    
+    NiftiImage *mask = new NiftiImage(as<std::string>(_maskPath));
+    tracker->setMask(mask);
+    
+    return R_NilValue;
 END_RCPP
 }
 

@@ -1,7 +1,24 @@
 Tracker <- setRefClass("Tracker", fields=list(pointer="externalptr",type="character"), methods=list(
     getPointer = function () { return (pointer) },
     
-    getType = function () { return (type) }
+    getType = function () { return (type) },
+    
+    setMask = function (image)
+    {
+        if (is.character(image) && length(image) == 1)
+        {
+            info <- identifyImageFileNames(image)
+            .Call("setTrackerMask", pointer, info$fileStem, PACKAGE="tractor.track")
+        }
+        else if (is(image, "MriImage"))
+        {
+            fileName <- threadSafeTempFile("image")
+            writeImageFile(image, fileName)
+            .Call("setTrackerMask", pointer, fileName, PACKAGE="tractor.track")
+        }
+        else
+            report(OL$Error, "Mask should be specified as a file name or MriImage object")
+    }
 ))
 
 getBedpostNumberOfFibres <- function (bedpostDir)

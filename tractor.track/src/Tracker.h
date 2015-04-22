@@ -17,8 +17,9 @@ class Tracker
 private:
     DiffusionDataSource *dataSource;
     
-    NiftiImage *mask;
     Array<short> *maskData;
+    std::vector<int> spaceDims;
+    std::vector<float> voxelDims;
     
     Array<Space<3>::Vector> *loopcheck;
     Array<bool> *visited;
@@ -36,7 +37,7 @@ private:
 public:
     Tracker () {}
     Tracker (DiffusionDataSource * const dataSource)
-        : dataSource(dataSource), mask(NULL), loopcheck(NULL), visited(NULL) {}
+        : dataSource(dataSource), maskData(NULL), loopcheck(NULL), visited(NULL) {}
     
     ~Tracker ()
     {
@@ -52,8 +53,10 @@ public:
     
     void setMask (NiftiImage * const mask)
     {
+        delete maskData;
         maskData = mask->getData<short>();
-        mask->dropData();
+        spaceDims = mask->getDimensions();
+        voxelDims = mask->getVoxelDimensions();
     }
     
     void setSeed (const Space<3>::Point &seed) { this->seed = seed; }

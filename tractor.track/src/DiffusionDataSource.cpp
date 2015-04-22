@@ -3,7 +3,7 @@
 #include "Space.h"
 #include "DiffusionDataSource.h"
 
-Space<3>::Vector BedpostDataSource::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection)
+Space<3>::Vector BedpostDataSource::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
 {
     std::vector<int> newPoint(4);
     

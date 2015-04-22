@@ -16,8 +16,9 @@ runExperiment <- function ()
     boundaryManipulation <- getConfigVariable("BoundaryManipulation", "none", validValues=c("none","erode","dilate","inner","outer"))
     kernelShape <- getConfigVariable("KernelShape", "diamond", "character", validValues=c("box","disc","diamond"))
     jitter <- getConfigVariable("JitterSeeds", FALSE)
-    requirePaths <- getConfigVariable("RequirePaths", FALSE)
     requireMap <- getConfigVariable("RequireMap", TRUE)
+    requirePaths <- getConfigVariable("RequirePaths", FALSE)
+    requireProfile <- getConfigVariable("RequireProfiles", FALSE)
     
     if (!(nStreamlines %~% "^(\\d+)(x?)$"))
         report(OL$Error, "Number of streamlines should be a positive integer, optionally followed by \"x\"")
@@ -118,6 +119,8 @@ runExperiment <- function ()
         subthreshold <- which(fa$getData() < anisotropyThreshold, arr.ind=TRUE)
         seedInfo$image[subthreshold] <- 0L
     }
+    
+    tracker <- createBedpostTracker(session$getDirectory("bedpost"))
     
     if (strategy == "global")
     {
