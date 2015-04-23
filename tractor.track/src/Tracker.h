@@ -5,7 +5,7 @@
 
 #include "Space.h"
 #include "NiftiImage.h"
-#include "DiffusionDataSource.h"
+#include "DiffusionModel.h"
 #include "Streamline.h"
 #include "DataSource.h"
 #include "Logger.h"
@@ -15,7 +15,7 @@
 class Tracker
 {
 private:
-    DiffusionDataSource *dataSource;
+    DiffusionModel *dataSource;
     
     Array<short> *maskData;
     std::vector<int> spaceDims;
@@ -36,7 +36,7 @@ private:
     
 public:
     Tracker () {}
-    Tracker (DiffusionDataSource * const dataSource)
+    Tracker (DiffusionModel * const dataSource)
         : dataSource(dataSource), maskData(NULL), loopcheck(NULL), visited(NULL) {}
     
     ~Tracker ()

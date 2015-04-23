@@ -1,13 +1,13 @@
-#ifndef _DIFFUSION_DATA_SOURCE_H_
-#define _DIFFUSION_DATA_SOURCE_H_
+#ifndef _DIFFUSION_MODEL_H_
+#define _DIFFUSION_MODEL_H_
 
 #include "Space.h"
 #include "NiftiImage.h"
 
-class DiffusionDataSource
+class DiffusionModel
 {
 public:
-    virtual ~DiffusionDataSource () {}
+    virtual ~DiffusionModel () {}
     
     virtual Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
     {
@@ -15,7 +15,7 @@ public:
     }
 };
 
-class BedpostDataSource : public DiffusionDataSource
+class BedpostModel : public DiffusionModel
 {
 private:
     std::vector<Array<float>*> avf, theta, phi;
@@ -25,8 +25,8 @@ private:
     float avfThreshold;
     
 public:
-    BedpostDataSource () { nCompartments = 0; nSamples = 0; }
-    BedpostDataSource (const std::vector<std::string> &avfFiles, const std::vector<std::string> &thetaFiles, const std::vector<std::string> &phiFiles)
+    BedpostModel () { nCompartments = 0; nSamples = 0; }
+    BedpostModel (const std::vector<std::string> &avfFiles, const std::vector<std::string> &thetaFiles, const std::vector<std::string> &phiFiles)
     {
         if (avfFiles.size() == 0)
             throw std::invalid_argument("Vectors of BEDPOSTX filenames should not have length zero");
@@ -51,7 +51,7 @@ public:
         nSamples = imageDims[3];
     }
     
-    ~BedpostDataSource ()
+    ~BedpostModel ()
     {
         for (int i=0; i<nCompartments; i++)
         {

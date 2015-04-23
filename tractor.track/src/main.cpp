@@ -18,7 +18,7 @@ RcppExport SEXP createBedpostTracker (SEXP _parameterMapPaths, SEXP _avfThreshol
 {
 BEGIN_RCPP
     List parameterMapPaths(_parameterMapPaths);
-    BedpostDataSource *bedpost = new BedpostDataSource(as<str_vector>(parameterMapPaths["avf"]), as<str_vector>(parameterMapPaths["theta"]), as<str_vector>(parameterMapPaths["phi"]));
+    BedpostModel *bedpost = new BedpostModel(as<str_vector>(parameterMapPaths["avf"]), as<str_vector>(parameterMapPaths["theta"]), as<str_vector>(parameterMapPaths["phi"]));
     bedpost->setAvfThreshold(as<float>(_avfThreshold));
     
     std::map<std::string,bool> flags;

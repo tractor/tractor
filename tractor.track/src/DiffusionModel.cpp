@@ -1,9 +1,9 @@
 #include <RcppArmadillo.h>
 
 #include "Space.h"
-#include "DiffusionDataSource.h"
+#include "DiffusionModel.h"
 
-Space<3>::Vector BedpostDataSource::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
+Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
 {
     std::vector<int> newPoint(4);
     
