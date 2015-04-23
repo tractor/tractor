@@ -52,3 +52,8 @@ createBedpostTracker <- function (bedpostDir, avfThreshold = 0.05, curvatureThre
     
     return (Tracker$new(pointer=pointer, type="bedpost"))
 }
+
+track <- function (tracker, seeds, count, basename, rightwardsVector = NULL, requireMap = TRUE, requirePaths = FALSE, requireProfile = FALSE)
+{
+    .Call("track", tracker, promote(seeds,byrow=TRUE), as.integer(count), rightwardsVector)
+}
