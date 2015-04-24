@@ -16,8 +16,10 @@ runExperiment <- function ()
     boundaryManipulation <- getConfigVariable("BoundaryManipulation", "none", validValues=c("none","erode","dilate","inner","outer"))
     kernelShape <- getConfigVariable("KernelShape", "diamond", "character", validValues=c("box","disc","diamond"))
     jitter <- getConfigVariable("JitterSeeds", FALSE)
+    targetRegions <- getConfigVariable("TargetRegions", NULL, "character")
+    tractName <- getConfigVariable("TractName", "tract")
     requireMap <- getConfigVariable("RequireMap", TRUE)
-    requirePaths <- getConfigVariable("RequirePaths", FALSE)
+    requireStreamlines <- getConfigVariable("RequirePaths", FALSE)
     requireProfile <- getConfigVariable("RequireProfiles", FALSE)
     
     if (!(nStreamlines %~% "^(\\d+)(x?)$"))
@@ -29,10 +31,11 @@ runExperiment <- function ()
     }
     
     seedRegions <- splitAndConvertString(Arguments[-1], ",", fixed=TRUE)
-    targetRegions <- splitAndConvertString()
     wholeBrainSeeding <- (length(seedRegions) == 0)
+    if (!is.null(targetRegions))
+        targetRegions <- splitAndConvertString(targetRegions, ",", fixed=TRUE)
     
-    mask <- session$getImageByType("mask", "diffusion", metadataOnly=!wholeBrainSeeding)
+    mask <- session$getImageByType("mask", "diffusion")
     
     applyBoundaryManipulation <- function (image)
     {
@@ -120,7 +123,7 @@ runExperiment <- function ()
         seedInfo$image[subthreshold] <- 0L
     }
     
-    tracker <- createBedpostTracker(session$getDirectory("bedpost"))
+    diffusionModel <- bedpostDiffusionModel(session$getDirectory("bedpost"))
     
     if (strategy == "global")
     {
@@ -130,14 +133,12 @@ runExperiment <- function ()
         {
             report(OL$Info, "Performing global tractography to generate #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds")
             seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
-            streamlineManager <- StreamlineManager$new(seeds=seeds, count=1L)
+            diffusionModel$track(seeds, count=1L, mask, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
         }
         else
         {
-            report(OL$Info, "Performing sequential global tractography with #{nrow(seeds)} seeds, #{nStreamlines} per seed")
-            streamlineManager$new(seeds=seeds, count=nStreamlines)
+            report(OL$Info, "Performing sequential global tractography with #{nrow(seeds)} seeds, #{nStreamlines} streamlines per seed")
+            diffusionModel$track(seeds, count=nStreamlines, mask, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
         }
-        
-        streamlineManager$track()
     }
 }

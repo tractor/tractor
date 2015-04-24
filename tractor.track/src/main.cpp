@@ -14,76 +14,75 @@ using namespace Rcpp;
 typedef std::vector<int> int_vector;
 typedef std::vector<std::string> str_vector;
 
-RcppExport SEXP createBedpostTracker (SEXP _parameterMapPaths, SEXP _avfThreshold, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _maxSteps, SEXP _stepLength)
+RcppExport SEXP createBedpostModel (SEXP _parameterMapPaths, SEXP _avfThreshold)
 {
 BEGIN_RCPP
     List parameterMapPaths(_parameterMapPaths);
-    BedpostModel *bedpost = new BedpostModel(as<str_vector>(parameterMapPaths["avf"]), as<str_vector>(parameterMapPaths["theta"]), as<str_vector>(parameterMapPaths["phi"]));
-    bedpost->setAvfThreshold(as<float>(_avfThreshold));
+    BedpostModel *model = new BedpostModel(as<str_vector>(parameterMapPaths["avf"]), as<str_vector>(parameterMapPaths["theta"]), as<str_vector>(parameterMapPaths["phi"]));
+    model->setAvfThreshold(as<float>(_avfThreshold));
+    
+    XPtr<DiffusionModel> modelPtr(model);
+    return modelPtr;
+END_RCPP
+}
+
+RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _mapPath, SEXP _trkPath, SEXP _profilePath, SEXP _debugLevel)
+{
+BEGIN_RCPP
+    XPtr<DiffusionModel> modelPtr(_model);
+    DiffusionModel *model = modelPtr;
+    
+    Tracker tracker(model);
+    
+    NiftiImage *mask = new NiftiImage(as<std::string>(_maskPath));
+    tracker.setMask(mask);
+    tracker.setDebugLevel(as<int>(_debugLevel));
     
     std::map<std::string,bool> flags;
     flags["loopcheck"] = as<bool>(_useLoopcheck);
-    
-    Tracker *tracker = new Tracker(bedpost);
-    tracker->setFlags(flags);
-    tracker->setInnerProductThreshold(as<float>(_curvatureThreshold));
-    tracker->setStepLength(as<float>(_stepLength));
-    tracker->setMaxSteps(as<int>(_maxSteps));
-    
-    XPtr<Tracker> trackerPtr(tracker);
-    return trackerPtr;
-END_RCPP
-}
-
-RcppExport SEXP setTrackerMask (SEXP _tracker, SEXP _maskPath)
-{
-BEGIN_RCPP
-    XPtr<Tracker> trackerPtr(_tracker);
-    Tracker *tracker = trackerPtr;
-    
-    NiftiImage *mask = new NiftiImage(as<std::string>(_maskPath));
-    tracker->setMask(mask);
-    
-    return R_NilValue;
-END_RCPP
-}
-
-RcppExport SEXP track (SEXP _tracker, SEXP _seeds, SEXP _count, SEXP _rightwardsVector, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _mapPath, SEXP _trkPath, SEXP _profilePath, SEXP _debugLevel)
-{
-BEGIN_RCPP
-    XPtr<Tracker> trackerPtr(_tracker);
-    Tracker *tracker = trackerPtr;
-    
-    tracker->setFlag("terminate-outside", as<bool>(_terminateOutsideMask));
-    tracker->setFlag("must-leave", as<bool>(_mustLeaveMask));
+    flags["terminate-outside"] = as<bool>(_terminateOutsideMask);
+    flags["must-leave"] = as<bool>(_mustLeaveMask);
+    tracker.setFlags(flags);
     
     Space<3>::Vector rightwardsVector;
-    if (isNull(_rightwardsVector))
+    if (Rf_isNull(_rightwardsVector))
         rightwardsVector = Space<3>::zeroVector();
     else
         rightwardsVector = as<arma::fvec>(_rightwardsVector);
-    tracker->setRightwardsVector(rightwardsVector);
+    tracker.setRightwardsVector(rightwardsVector);
+    
+    tracker.setInnerProductThreshold(as<float>(_curvatureThreshold));
+    tracker.setStepLength(as<float>(_stepLength));
+    tracker.setMaxSteps(as<int>(_maxSteps));
     
     RNGScope scope;
     
-    TractographyDataSource dataSource(tracker, as<arma::fmat>(_seeds) - 1.0, as<size_t>(_count));
+    TractographyDataSource dataSource(&tracker, as<arma::fmat>(_seeds) - 1.0, as<size_t>(_count));
     Pipeline<Streamline> pipeline(&dataSource);
     
-    if (!isNull(_mapPath))
+    VisitationMapDataSink *visitationMap = NULL;
+    TrackvisDataSink *trkFile = NULL;
+    if (!Rf_isNull(_mapPath))
     {
-        VisitationMapDataSink visitationMap(mask->getDimensions());
-        pipeline.addSink(&visitationMap);
+        visitationMap = new VisitationMapDataSink(mask->getDimensions());
+        pipeline.addSink(visitationMap);
     }
-    if (!isNull(_trkPath))
+    if (!Rf_isNull(_trkPath))
     {
-        TrackvisDataSink trkFile(as<std::string>(_trkPath), *mask);
-        pipeline.addSink(&trkFile);
+        trkFile = new TrackvisDataSink(as<std::string>(_trkPath), *mask);
+        pipeline.addSink(trkFile);
     }
     
     pipeline.run();
     
-    if (!isNull(_mapPath))
-        visitationMap.writeToNifti(*mask, as<std::string>(_mapPath));
+    if (visitationMap != NULL)
+    {
+        visitationMap->writeToNifti(*mask, as<std::string>(_mapPath));
+        delete visitationMap;
+    }
+    
+    delete trkFile;
+    delete mask;
     
     return R_NilValue;
 END_RCPP
