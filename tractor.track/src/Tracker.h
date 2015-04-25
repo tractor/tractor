@@ -59,7 +59,13 @@ public:
         voxelDims = mask->getVoxelDimensions();
     }
     
-    void setSeed (const Space<3>::Point &seed) { this->seed = seed; }
+    void setSeed (const Space<3>::Point &seed)
+    {
+        // An existing rightwards vector needs to be discarded when a new seed is used
+        this->seed = seed;
+        this->rightwardsVector = Space<3>::zeroVector();
+    }
+    
     void setRightwardsVector (const Space<3>::Vector &rightwardsVector) { this->rightwardsVector = rightwardsVector; }
     void setInnerProductThreshold (const float innerProductThreshold) { this->innerProductThreshold = innerProductThreshold; }
     void setStepLength (const float stepLength) { this->stepLength = stepLength; }
