@@ -26,7 +26,7 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _mapPath, SEXP _trkPath, SEXP _profilePath, SEXP _debugLevel)
+RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _profilePath, SEXP _debugLevel)
 {
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
@@ -57,7 +57,7 @@ BEGIN_RCPP
     
     RNGScope scope;
     
-    TractographyDataSource dataSource(&tracker, as<arma::fmat>(_seeds) - 1.0, as<size_t>(_count));
+    TractographyDataSource dataSource(&tracker, as<arma::fmat>(_seeds) - 1.0, as<size_t>(_count), as<bool>(_jitter));
     Pipeline<Streamline> pipeline(&dataSource);
     
     VisitationMapDataSink *visitationMap = NULL;

@@ -31,6 +31,7 @@ private:
     float innerProductThreshold;
     float stepLength;
     int maxSteps;
+    bool jitter;
     
     Logger logger;
     
@@ -59,11 +60,12 @@ public:
         voxelDims = mask->getVoxelDimensions();
     }
     
-    void setSeed (const Space<3>::Point &seed)
+    void setSeed (const Space<3>::Point &seed, const bool jitter)
     {
         // An existing rightwards vector needs to be discarded when a new seed is used
         this->seed = seed;
         this->rightwardsVector = Space<3>::zeroVector();
+        this->jitter = jitter;
     }
     
     void setRightwardsVector (const Space<3>::Vector &rightwardsVector) { this->rightwardsVector = rightwardsVector; }
@@ -84,11 +86,12 @@ class TractographyDataSource : public DataSource<Streamline>
 private:
     Tracker *tracker;
     arma::fmat seeds;
+    bool jitter;
     size_t streamlinesPerSeed, totalStreamlines, currentStreamline, currentSeed;
     
 public:
-    TractographyDataSource (Tracker * const tracker, const arma::fmat &seeds, const size_t streamlinesPerSeed)
-        : tracker(tracker), seeds(seeds), streamlinesPerSeed(streamlinesPerSeed), currentStreamline(0), currentSeed(0)
+    TractographyDataSource (Tracker * const tracker, const arma::fmat &seeds, const size_t streamlinesPerSeed, const bool jitter)
+        : tracker(tracker), seeds(seeds), streamlinesPerSeed(streamlinesPerSeed), jitter(jitter), currentStreamline(0), currentSeed(0)
     {
         this->totalStreamlines = seeds.n_rows * streamlinesPerSeed;
     }
@@ -108,7 +111,7 @@ public:
                 currentSeed++;
             
             // Vectors are columns to Armadillo, so we have to transpose
-            tracker->setSeed(seeds.row(currentSeed).t());
+            tracker->setSeed(seeds.row(currentSeed).t(), jitter);
         }
         
         // Generate the streamline

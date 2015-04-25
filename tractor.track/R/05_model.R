@@ -23,7 +23,7 @@ DiffusionModel <- setRefClass("DiffusionModel", fields=list(pointer="externalptr
         if (requireProfile)
             profilePath <- ensureFileSuffix(basename, "txt")
         
-        .Call("track", pointer, promote(seeds,byrow=TRUE), as.integer(count), maskPath, rightwardsVector, as.integer(maxSteps), as.double(stepLength), as.double(curvatureThreshold), isTRUE(useLoopcheck), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), mapPath, streamlinePath, profilePath, 0L, PACKAGE="tractor.track")
+        .Call("track", pointer, promote(seeds,byrow=TRUE), as.integer(count), maskPath, rightwardsVector, as.integer(maxSteps), as.double(stepLength), as.double(curvatureThreshold), isTRUE(useLoopcheck), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), isTRUE(jitter), mapPath, streamlinePath, profilePath, 0L, PACKAGE="tractor.track")
     }
 ))
 

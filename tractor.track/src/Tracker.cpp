@@ -40,6 +40,13 @@ Streamline Tracker::run ()
     
     std::vector<Space<3>::Point> leftPoints, rightPoints;
     
+    Space<3>::Point currentSeed = seed;
+    if (jitter)
+    {
+        for (int i=0; i<3; i++)
+            currentSeed[i] += R::unif_rand() - 0.5;
+    }
+    
     // We go right first (dir=0), then left (dir=1)
     for (int dir=0; dir<2; dir++)
     {
@@ -48,7 +55,7 @@ Streamline Tracker::run ()
         if (flags["loopcheck"])
             loopcheck->fill(Space<3>::zeroVector());
         
-        loc = seed;
+        loc = currentSeed;
         if (rightwardsVectorValid)
             previousStep = rightwardsVector * (dir==0 ? 1.0 : -1.0);
         
