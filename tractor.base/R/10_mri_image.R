@@ -64,6 +64,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             .self$data <- array(value, dim=imageDims)
         
         .self$setSource(NULL)
+        invisible(.self)
     },
     
     getData = function () { return (data) },

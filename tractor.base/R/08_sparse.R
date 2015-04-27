@@ -239,12 +239,33 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
     return (x)
 })
 
-setMethod("Arith", signature(e1="SparseArray",e2="numeric"), function (e1, e2) {
+setMethod("Ops", signature(e1="SparseArray",e2="ANY"), function (e1, e2) {
+    report(OL$Error, "No operator method is defined for a \"SparseArray\" and \"#{class(e2)[1]}\"")
+})
+
+setMethod("Ops", signature(e1="SparseArray",e2="array"), function (e1, e2) {
+    if (!all(callGeneric(0, unique(e2)) == 0))
+        return (callGeneric(as(e1,"array"), e2))
+    else
+    {
+        if (!equivalent(e1$getDimensions(), dim(e2)))
+            report(OL$Error, "Sparse and dense array dimensions don't match")
+    
+        newData <- callGeneric(e1$getData(), e2[e1$getCoordinates()])
+        zero <- (newData == 0)
+        return (newSparseArrayWithData(newData[!zero], e1$getCoordinates()[!zero,,drop=FALSE], e1$getDimensions()))
+    }
+})
+
+setMethod("Ops", signature(e1="SparseArray",e2="numeric"), function (e1, e2) {
     if (callGeneric(0, e2) != 0)
-        report(OL$Error, "Attempting to perform arithmetic on a sparse array which would not leave it sparse")
-    newData <- callGeneric(e1$getData(), e2)
-    zero <- (newData == 0)
-    return (newSparseArrayWithData(newData[!zero], e1$getCoordinates()[!zero,], e1$getDimensions()))
+        return (callGeneric(as(e1,"array"), e2))
+    else
+    {        
+        newData <- callGeneric(e1$getData(), e2)
+        zero <- (newData == 0)
+        return (newSparseArrayWithData(newData[!zero], e1$getCoordinates()[!zero,,drop=FALSE], e1$getDimensions()))
+    }
 })
 
 setAs("array", "SparseArray", function (from) {
@@ -257,6 +278,12 @@ setAs("SparseArray", "array", function (from) {
     data <- array(vector(mode=storage.mode(from$getData()),length=1), dim=from$getDimensions())
     data[from$getCoordinates()] <- from$getData()
     return (data)
+})
+
+setAs("SparseArray", "logical", function (from) {
+    data <- array(FALSE, dim=from$getDimensions())
+    data[from$getCoordinates()] <- TRUE
+    return (as.vector(data))
 })
 
 as.array.SparseArray <- function (x, ...)
