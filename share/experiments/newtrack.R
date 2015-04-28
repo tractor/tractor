@@ -129,7 +129,7 @@ runExperiment <- function ()
     {
         seedImage <- applyBoundaryManipulation(newMriImageWithSimpleFunction(seedInfo$image, function(x) ifelse(x>0,1L,0L)))
         seeds <- seedImage$getNonzeroIndices(array=TRUE)
-        if (randomSeeds)
+        if (randomSeeds && nrow(seeds) > 1)
         {
             report(OL$Info, "Performing global tractography to generate #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds")
             seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
@@ -137,8 +137,42 @@ runExperiment <- function ()
         }
         else
         {
-            report(OL$Info, "Performing sequential global tractography with #{nrow(seeds)} seeds, #{nStreamlines} streamlines per seed")
+            report(OL$Info, "Performing sequential global tractography with #{nrow(seeds)} seed(s), #{nStreamlines} streamlines per seed")
             diffusionModel$track(seeds, count=nStreamlines, mask, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+        }
+    }
+    else if (strategy == "regionwise")
+    {
+        report(OL$Info, "Performing regionwise tractography for #{length(seedInfo$indices)} distinct regions")
+        for (index in seedInfo$indices)
+        {
+            label <- seedInfo$labels[which(seedInfo$indices == index)]
+            seedImage <- applyBoundaryManipulation(newMriImageWithSimpleFunction(seedInfo$image, function(x) ifelse(x==index,1L,0L)))
+            seeds <- seedImage$getNonzeroIndices(array=TRUE)
+            if (randomSeeds && nrow(seeds) > 1)
+            {
+                report(OL$Verbose, "Generating #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds in region #{label}")
+                seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
+                diffusionModel$track(seeds, count=1L, mask, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+            }
+            else
+            {
+                report(OL$Verbose, "Tracking in region #{seedInfo$labels[loc]} with #{nrow(seeds)} seed(s), #{nStreamlines} streamlines per seed")
+                diffusionModel$track(seeds, count=nStreamlines, mask, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+            }
+        }
+    }
+    else if (strategy == "voxelwise")
+    {
+        seedImage <- applyBoundaryManipulation(newMriImageWithSimpleFunction(seedInfo$image, function(x) ifelse(x>0,1L,0L)))
+        seeds <- seedImage$getNonzeroIndices(array=TRUE)
+        
+        report(OL$Info, "Performing voxelwise tractography for #{nrow(seeds)} distinct seed points")
+        for (i in seq_len(nrow(seeds)))
+        {
+            label <- implode(seeds[i,], sep="_")
+            report(OL$Verbose, "Generating #{nStreamlines} streamlines from seed point (#{implode(seeds[i,],', ')})")
+            diffusionModel$track(seeds[i,], count=nStreamlines, mask, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
         }
     }
 }
