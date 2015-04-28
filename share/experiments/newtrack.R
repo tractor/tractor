@@ -90,7 +90,7 @@ runExperiment <- function ()
             else
                 delta <- 0L
             
-            seedImage[locs] <- data[locs] + delta
+            image[locs] <- data[locs] + delta
             indices <- c(indices, as.integer(currentIndices + delta))
             
             if (length(currentIndices) == 1)
