@@ -2,6 +2,35 @@
 
 #include "Streamline.h"
 
+double Streamline::getLength (const std::vector<Space<3>::Point> &points) const
+{
+    const size_t nPoints = points.size();
+    
+    if (points.size() < 2)
+        return 0.0;
+    else if (fixedSpacing)
+    {
+        if (pointType == VoxelPointType)
+            return arma::norm((points[1] - points[0]) % voxelDims, 2) * (nPoints - 1);
+        else
+            return arma::norm(points[1] - points[0], 2) * (nPoints - 1);
+    else
+    {
+        double length = 0.0;
+        if (pointType == VoxelPointType)
+        {
+            for (size_t i=1; i<nPoints; i++)
+                length += arma::norm((points[i] - points[i-1]) % voxelDims, 2);
+        }
+        else
+        {
+            for (size_t i=1; i<nPoints; i++)
+                length += arma::norm(points[i] - points[i-1], 2);
+        }
+        return length;
+    }
+}
+
 size_t Streamline::concatenatePoints (arma::fmat &points) const
 {
     int nPoints = this->nPoints();

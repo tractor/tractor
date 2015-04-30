@@ -160,7 +160,7 @@ Streamline Tracker::run ()
             }
             
             // Update streamline front and previous step
-            loc += (currentStep / arma::conv_to<arma::fvec>::from(voxelDims)) * sign * stepLength;
+            loc += (currentStep / voxelDims) * sign * stepLength;
             previousStep = currentStep * sign;
             logger.debug3.indent() << "New location is " << loc << endl;
             
@@ -192,6 +192,6 @@ Streamline Tracker::run ()
     
     logger.debug1.indent() << "Tracking finished" << endl;
     
-    Streamline streamline(leftPoints, rightPoints, Streamline::VoxelPointType, true);
+    Streamline streamline(leftPoints, rightPoints, Streamline::VoxelPointType, voxelDims, true);
     return streamline;
 }

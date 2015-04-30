@@ -18,29 +18,35 @@ private:
     std::vector<Space<3>::Point> leftPoints;
     std::vector<Space<3>::Point> rightPoints;
     
-    // The index (row number) of the seed point for the streamline
-    // int seed;
-    
     // Are points stored in voxel or world (typically mm) terms?
     Streamline::PointType pointType;
     
-    // A boolean value indicating whether or not the points are equally spaced
-    // (in real-world terms)
-    bool fixedSpacing;
+    // Voxel dimensions, needed for converting between voxel and world point types
+    arma::fvec voxelDims
     
     // A set of integer labels associated with the streamline, indicating, for
     // example, the anatomical regions that the streamline passes through
     std::set<int> labels;
     
+protected:
+    // A boolean value indicating whether or not the points are equally spaced
+    // (in real-world terms)
+    bool fixedSpacing;
+    
+    double getLength (const std::vector<Space<3>::Point> &points) const;
+    
 public:
     Streamline () {}
-    Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const Streamline::PointType pointType, const bool fixedSpacing)
-        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), fixedSpacing(fixedSpacing) {}
+    Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const Streamline::PointType pointType, const arma::fvec &voxelDims, const bool fixedSpacing)
+        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), voxelDims(voxelDims), fixedSpacing(fixedSpacing) {}
     
     size_t nPoints () const { return std::max(static_cast<size_t>(leftPoints.size()+rightPoints.size())-1, size_t(0)); }
     
     const std::vector<Space<3>::Point> & getLeftPoints() const { return leftPoints; }
     const std::vector<Space<3>::Point> & getRightPoints() const { return rightPoints; }
+    
+    double getLeftLength () const { return getLength(leftPoints); }
+    double getRightLength () const { return getLength(rightPoints); }
     
     int nLabels () const                { return static_cast<int>(labels.size()); }
     bool addLabel (const int label)     { return labels.insert(label).second; }
