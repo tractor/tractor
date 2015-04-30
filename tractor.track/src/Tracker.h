@@ -19,7 +19,7 @@ private:
     
     Array<short> *maskData;
     std::vector<int> spaceDims;
-    std::vector<float> voxelDims;
+    arma::fvec voxelDims;
     
     Array<Space<3>::Vector> *loopcheck;
     Array<bool> *visited;
@@ -57,7 +57,7 @@ public:
         delete maskData;
         maskData = mask->getData<short>();
         spaceDims = mask->getDimensions();
-        voxelDims = mask->getVoxelDimensions();
+        voxelDims = arma::conv_to<arma::fvec>::from(mask->getVoxelDimensions());
     }
     
     void setSeed (const Space<3>::Point &seed, const bool jitter)
