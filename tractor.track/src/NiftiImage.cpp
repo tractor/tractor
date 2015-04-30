@@ -167,5 +167,6 @@ template <typename DataType> void NiftiImage::setData (const Array<DataType> &da
 
 template Array<float> * NiftiImage::getData<float> () const;
 template Array<short> * NiftiImage::getData<short> () const;
+template Array<int> * NiftiImage::getData<int> () const;
 
 template void NiftiImage::setData<double> (Array<double> const &);

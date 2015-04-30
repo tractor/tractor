@@ -4,6 +4,7 @@
 #include "NiftiImage.h"
 #include "Streamline.h"
 #include "Tracker.h"
+#include "Filter.h"
 #include "Trackvis.h"
 #include "VisitationMap.h"
 #include "RCallback.h"
@@ -26,7 +27,7 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _profilePath, SEXP _debugLevel)
+RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetPath, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _profilePath, SEXP _debugLevel)
 {
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
@@ -54,6 +55,12 @@ BEGIN_RCPP
     tracker.setInnerProductThreshold(as<float>(_curvatureThreshold));
     tracker.setStepLength(as<float>(_stepLength));
     tracker.setMaxSteps(as<int>(_maxSteps));
+    
+    if (!Rf_isNull(_targetPath))
+    {
+        NiftiImage targets(as<std::string>(_targetPath));
+        tracker.setTargets(&targets);
+    }
     
     RNGScope scope;
     

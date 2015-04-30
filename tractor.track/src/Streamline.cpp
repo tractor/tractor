@@ -14,6 +14,7 @@ double Streamline::getLength (const std::vector<Space<3>::Point> &points) const
             return arma::norm((points[1] - points[0]) % voxelDims, 2) * (nPoints - 1);
         else
             return arma::norm(points[1] - points[0], 2) * (nPoints - 1);
+    }
     else
     {
         double length = 0.0;

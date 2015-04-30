@@ -62,7 +62,6 @@ void TrackvisDataSource::attach (const std::string &fileName)
     
     vector<int> imageDims;
     binaryStream.readVector<int16_t>(imageDims, 3);
-    vector<float> voxelDims;
     binaryStream.readVector<float>(voxelDims, 3);
     
     fileStream.seekg(12, ios::cur);
@@ -94,7 +93,7 @@ void TrackvisDataSource::get (Streamline &data)
             fileStream.seekg(4 * nScalars, ios::cur);
     }
     
-    data = Streamline(leftPoints, rightPoints, Streamline::WorldPointType, false);
+    data = Streamline(leftPoints, rightPoints, Streamline::WorldPointType, voxelDims, false);
     
     if (nProperties > 0)
         fileStream.seekg(4 * nProperties, ios::cur);

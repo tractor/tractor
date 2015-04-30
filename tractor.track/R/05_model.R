@@ -3,7 +3,7 @@ DiffusionModel <- setRefClass("DiffusionModel", fields=list(pointer="externalptr
     
     getType = function () { return (type) },
     
-    track = function (seeds, count, mask, basename, curvatureThreshold = 0.2, useLoopcheck = TRUE, maxSteps = 2000, stepLength = 0.5, rightwardsVector = NULL, requireMap = TRUE, requireStreamlines = FALSE, requireProfile = FALSE, terminateOutsideMask = FALSE, mustLeaveMask = FALSE, jitter = FALSE)
+    track = function (seeds, count, mask, targets, basename, curvatureThreshold = 0.2, useLoopcheck = TRUE, maxSteps = 2000, stepLength = 0.5, rightwardsVector = NULL, requireMap = TRUE, requireStreamlines = FALSE, requireProfile = FALSE, terminateOutsideMask = FALSE, mustLeaveMask = FALSE, jitter = FALSE)
     {
         if (is.character(mask) && length(mask) == 1)
             maskPath <- identifyImageFileNames(mask)$fileStem
@@ -15,6 +15,18 @@ DiffusionModel <- setRefClass("DiffusionModel", fields=list(pointer="externalptr
         else
             report(OL$Error, "Mask should be specified as a file name or MriImage object")
         
+        if (is.null(targets))
+            targetPath <- NULL
+        else if (is.character(targets) && length(targets) == 1)
+            targetPath <- identifyImageFileNames(targets)$fileStem
+        else if (is(targets, "MriImage"))
+        {
+            targetPath <- threadSafeTempFile("targets")
+            writeImageFile(targets, targetPath)
+        }
+        else
+            report(OL$Error, "Targets should be specified as a file name or MriImage object")
+        
         mapPath <- streamlinePath <- profilePath <- NULL
         if (requireMap)
             mapPath <- basename
@@ -23,7 +35,7 @@ DiffusionModel <- setRefClass("DiffusionModel", fields=list(pointer="externalptr
         if (requireProfile)
             profilePath <- ensureFileSuffix(basename, "txt")
         
-        .Call("track", pointer, promote(seeds,byrow=TRUE), as.integer(count), maskPath, rightwardsVector, as.integer(maxSteps), as.double(stepLength), as.double(curvatureThreshold), isTRUE(useLoopcheck), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), isTRUE(jitter), mapPath, streamlinePath, profilePath, 0L, PACKAGE="tractor.track")
+        .Call("track", pointer, promote(seeds,byrow=TRUE), as.integer(count), maskPath, targetPath, rightwardsVector, as.integer(maxSteps), as.double(stepLength), as.double(curvatureThreshold), isTRUE(useLoopcheck), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), isTRUE(jitter), mapPath, streamlinePath, profilePath, 0L, PACKAGE="tractor.track")
     }
 ))
 

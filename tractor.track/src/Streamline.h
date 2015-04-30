@@ -22,7 +22,7 @@ private:
     Streamline::PointType pointType;
     
     // Voxel dimensions, needed for converting between voxel and world point types
-    arma::fvec voxelDims
+    arma::fvec voxelDims;
     
     // A set of integer labels associated with the streamline, indicating, for
     // example, the anatomical regions that the streamline passes through
@@ -45,13 +45,14 @@ public:
     const std::vector<Space<3>::Point> & getLeftPoints() const { return leftPoints; }
     const std::vector<Space<3>::Point> & getRightPoints() const { return rightPoints; }
     
-    double getLeftLength () const { return getLength(leftPoints); }
+    double getLeftLength () const  { return getLength(leftPoints); }
     double getRightLength () const { return getLength(rightPoints); }
     
-    int nLabels () const                { return static_cast<int>(labels.size()); }
-    bool addLabel (const int label)     { return labels.insert(label).second; }
-    bool removeLabel (const int label)  { return (labels.erase(label) == 1); }
-    void clearLabels ()                 { labels.clear(); }
+    int nLabels () const                            { return static_cast<int>(labels.size()); }
+    bool addLabel (const int label)                 { return labels.insert(label).second; }
+    bool removeLabel (const int label)              { return (labels.erase(label) == 1); }
+    void setLabels (const std::set<int> &labels)    { this->labels = labels; }
+    void clearLabels ()                             { labels.clear(); }
     
     size_t concatenatePoints (arma::fmat &points) const;
 };

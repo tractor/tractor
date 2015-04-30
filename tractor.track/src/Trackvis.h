@@ -14,6 +14,7 @@ private:
     BinaryInputStream binaryStream;
     int nScalars, nProperties;
     size_t totalStreamlines, currentStreamline;
+    arma::fvec voxelDims;
     
 public:
     TrackvisDataSource ()

@@ -20,6 +20,7 @@ private:
     Array<short> *maskData;
     std::vector<int> spaceDims;
     arma::fvec voxelDims;
+    Array<int> *targetData;
     
     Array<Space<3>::Vector> *loopcheck;
     Array<bool> *visited;
@@ -38,11 +39,12 @@ private:
 public:
     Tracker () {}
     Tracker (DiffusionModel * const dataSource)
-        : dataSource(dataSource), maskData(NULL), loopcheck(NULL), visited(NULL) {}
+        : dataSource(dataSource), maskData(NULL), targetData(NULL), loopcheck(NULL), visited(NULL) {}
     
     ~Tracker ()
     {
         delete maskData;
+        delete targetData;
         delete loopcheck;
         delete visited;
     }
@@ -66,6 +68,12 @@ public:
         this->seed = seed;
         this->rightwardsVector = Space<3>::zeroVector();
         this->jitter = jitter;
+    }
+    
+    void setTargets (NiftiImage * const targets)
+    {
+        delete targetData;
+        targetData = targets->getData<int>();
     }
     
     void setRightwardsVector (const Space<3>::Vector &rightwardsVector) { this->rightwardsVector = rightwardsVector; }

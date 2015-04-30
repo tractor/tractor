@@ -39,6 +39,7 @@ Streamline Tracker::run ()
     Space<3>::Vector previousStep = Space<3>::zeroVector();
     
     std::vector<Space<3>::Point> leftPoints, rightPoints;
+    std::set<int> labels;
     
     Space<3>::Point currentSeed = seed;
     if (jitter)
@@ -115,6 +116,10 @@ Streamline Tracker::run ()
             // Mark visit
             if (!(*visited)[vectorLoc])
                 (*visited)[vectorLoc] = true;
+            
+            // Add label if we're in a target area
+            if (targetData != NULL && (*targetData)[vectorLoc] > 0)
+                labels.insert((*targetData)[vectorLoc]);
             
             // Store current (unrounded) location if required
             // NB: This part of the code must always be reached at the seed point
@@ -193,5 +198,6 @@ Streamline Tracker::run ()
     logger.debug1.indent() << "Tracking finished" << endl;
     
     Streamline streamline(leftPoints, rightPoints, Streamline::VoxelPointType, voxelDims, true);
+    streamline.setLabels(labels);
     return streamline;
 }
