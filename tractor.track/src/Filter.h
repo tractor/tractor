@@ -24,4 +24,24 @@ public:
     }
 };
 
+class LabelCountFilter : public DataManipulator<Streamline>
+{
+private:
+    int minCount, maxCount;
+    
+public:
+    LabelCountFilter (const int minCount, const int maxCount = 0)
+        : minCount(minCount), maxCount(maxCount) {}
+    
+    bool process (Streamline &data)
+    {
+        const int count = data.nLabels();
+        if (minCount > 0 && count < minCount)
+            return false;
+        if (maxCount > 0 && count > maxCount)
+            return false;
+        return true;
+    }
+};
+
 #endif
