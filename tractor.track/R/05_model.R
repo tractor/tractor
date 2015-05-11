@@ -1,43 +1,20 @@
 DiffusionModel <- setRefClass("DiffusionModel", fields=list(pointer="externalptr",type="character"), methods=list(
     getPointer = function () { return (pointer) },
     
-    getType = function () { return (type) },
-    
-    track = function (seeds, count, mask, targets, basename, curvatureThreshold = 0.2, useLoopcheck = TRUE, maxSteps = 2000, stepLength = 0.5, rightwardsVector = NULL, requireMap = TRUE, requireStreamlines = FALSE, requireProfile = FALSE, terminateOutsideMask = FALSE, mustLeaveMask = FALSE, jitter = FALSE)
-    {
-        if (is.character(mask) && length(mask) == 1)
-            maskPath <- identifyImageFileNames(mask)$fileStem
-        else if (is(mask, "MriImage"))
-        {
-            maskPath <- threadSafeTempFile("mask")
-            writeImageFile(mask, maskPath)
-        }
-        else
-            report(OL$Error, "Mask should be specified as a file name or MriImage object")
-        
-        if (is.null(targets))
-            targetPath <- NULL
-        else if (is.character(targets) && length(targets) == 1)
-            targetPath <- identifyImageFileNames(targets)$fileStem
-        else if (is(targets, "MriImage"))
-        {
-            targetPath <- threadSafeTempFile("targets")
-            writeImageFile(targets, targetPath)
-        }
-        else
-            report(OL$Error, "Targets should be specified as a file name or MriImage object")
-        
-        mapPath <- streamlinePath <- profilePath <- NULL
-        if (requireMap)
-            mapPath <- basename
-        if (requireStreamlines)
-            streamlinePath <- ensureFileSuffix(basename, "trk")
-        if (requireProfile)
-            profilePath <- ensureFileSuffix(basename, "txt")
-        
-        .Call("track", pointer, promote(seeds,byrow=TRUE), as.integer(count), maskPath, targetPath, rightwardsVector, as.integer(maxSteps), as.double(stepLength), as.double(curvatureThreshold), isTRUE(useLoopcheck), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), isTRUE(jitter), mapPath, streamlinePath, profilePath, 0L, PACKAGE="tractor.track")
-    }
+    getType = function () { return (type) }
 ))
+
+.NilModel <- DiffusionModel$new()
+
+nilModel <- function ()
+{
+    return (.NilModel)
+}
+
+is.nilModel <- function (object)
+{
+    return (identical(object, .NilModel))
+}
 
 getBedpostNumberOfFibres <- function (bedpostDir)
 {

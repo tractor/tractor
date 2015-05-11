@@ -1,0 +1,71 @@
+# NB: The underlying C++ class is not thread-safe, so a Tracker object should not be run multiple times concurrently
+Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="character",targetPath="character",options="list"), methods=list(
+    initialize = function (model = nilModel(), maskPath = character(0), targetPath = character(0), curvatureThreshold = 0.2, useLoopcheck = TRUE, maxSteps = 2000, stepLength = 0.5, rightwardsVector = NULL, ...)
+    {
+        object <- initFields(model=model, options=list(curvatureThreshold=curvatureThreshold, useLoopcheck=useLoopcheck, maxSteps=maxSteps, stepLength=stepLength, rightwardsVector=rightwardsVector))
+        
+        object$setMask(maskPath)
+        object$setTargets(targetPath)
+        
+        invisible(object)
+    },
+    
+    setMask = function (image)
+    {
+        if (is.null(image) || length(image) == 0)
+            .self$maskPath <- character(0)
+        else if (is.character(image) && length(image) == 1)
+            .self$maskPath <- identifyImageFileNames(image)$fileStem
+        else if (is(image, "MriImage"))
+        {
+            .self$maskPath <- threadSafeTempFile("mask")
+            writeImageFile(image, .self$maskPath)
+        }
+        else
+            report(OL$Error, "Mask should be specified as a file name or MriImage object")
+    },
+    
+    setOptions = function (...)
+    {
+        args <- list(...)
+        indices <- which(names(args) != "")
+        if (length(indices) > 0)
+            .self$options[names(args)[indices]] <- args[indices]
+        invisible(options)
+    },
+    
+    setTargets = function (image)
+    {
+        if (is.null(image) || length(image) == 0)
+            .self$targetPath <- character(0)
+        else if (is.character(image) && length(image) == 1)
+            .self$targetPath <- identifyImageFileNames(image)$fileStem
+        else if (is(image, "MriImage"))
+        {
+            .self$targetPath <- threadSafeTempFile("target")
+            writeImageFile(image, .self$targetPath)
+        }
+        else
+            report(OL$Error, "Targets should be specified as a file name or MriImage object")
+    },
+    
+    run = function (seeds, count, basename, requireMap = TRUE, requireStreamlines = FALSE, requireProfile = FALSE, terminateOutsideMask = FALSE, mustLeaveMask = FALSE, jitter = FALSE)
+    {
+        if (is.nilModel(model))
+            report(OL$Error, "No diffusion model has been specified")
+        if (length(maskPath) == 0)
+            report(OL$Error, "No tracking mask has been specfied")
+        
+        targetsPath <- mapPath <- streamlinePath <- profilePath <- NULL
+        if (length(.self$targetPath) == 1)
+            targetsPath <- .self$targetPath
+        if (requireMap)
+            mapPath <- basename
+        if (requireStreamlines)
+            streamlinePath <- ensureFileSuffix(basename, "trk")
+        if (requireProfile)
+            profilePath <- ensureFileSuffix(basename, "txt")
+        
+        .Call("track", model$getPointer(), promote(seeds,byrow=TRUE), as.integer(count), maskPath, targetsPath, options$rightwardsVector, as.integer(options$maxSteps), as.double(options$stepLength), as.double(options$curvatureThreshold), isTRUE(options$useLoopcheck), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), isTRUE(jitter), mapPath, streamlinePath, profilePath, 0L, PACKAGE="tractor.track")
+    }
+))

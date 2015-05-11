@@ -129,6 +129,7 @@ runExperiment <- function ()
         targetInfo <- list(image=NULL)
     
     diffusionModel <- bedpostDiffusionModel(session$getDirectory("bedpost"))
+    tracker <- Tracker$new(diffusionModel, mask, targetInfo$image)
     
     if (strategy == "global")
     {
@@ -138,12 +139,12 @@ runExperiment <- function ()
         {
             report(OL$Info, "Performing global tractography to generate #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds")
             seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
-            diffusionModel$track(seeds, count=1L, mask, targetInfo$image, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+            tracker$run(seeds, count=1L, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
         }
         else
         {
             report(OL$Info, "Performing sequential global tractography with #{nrow(seeds)} seed(s), #{nStreamlines} streamlines per seed")
-            diffusionModel$track(seeds, count=nStreamlines, mask, targetInfo$image, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+            tracker$run(seeds, count=nStreamlines, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
         }
     }
     else if (strategy == "regionwise")
@@ -158,12 +159,12 @@ runExperiment <- function ()
             {
                 report(OL$Verbose, "Generating #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds in region #{label}")
                 seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
-                diffusionModel$track(seeds, count=1L, mask, targetInfo$image, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+                tracker$run(seeds, count=1L, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
             }
             else
             {
                 report(OL$Verbose, "Tracking in region #{seedInfo$labels[loc]} with #{nrow(seeds)} seed(s), #{nStreamlines} streamlines per seed")
-                diffusionModel$track(seeds, count=nStreamlines, mask, targetInfo$image, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+                tracker$run(seeds, count=nStreamlines, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
             }
         }
     }
@@ -177,7 +178,7 @@ runExperiment <- function ()
         {
             label <- implode(seeds[i,], sep="_")
             report(OL$Verbose, "Generating #{nStreamlines} streamlines from seed point (#{implode(seeds[i,],', ')})")
-            diffusionModel$track(seeds[i,], count=nStreamlines, mask, targetInfo$image, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+            tracker$run(seeds[i,], count=nStreamlines, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
         }
     }
 }
