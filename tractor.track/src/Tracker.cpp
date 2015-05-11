@@ -48,6 +48,10 @@ Streamline Tracker::run ()
             currentSeed[i] += R::unif_rand() - 0.5;
     }
     
+    int startTarget = 0;
+    if (targetData != NULL && (*targetData)[currentSeed] > 0)
+        startTarget = (*targetData)[currentSeed];
+    
     // We go right first (dir=0), then left (dir=1)
     for (int dir=0; dir<2; dir++)
     {
@@ -119,7 +123,12 @@ Streamline Tracker::run ()
             
             // Add label if we're in a target area
             if (targetData != NULL && (*targetData)[vectorLoc] > 0)
+            {
                 labels.insert((*targetData)[vectorLoc]);
+                
+                if ((*targetData)[vectorLoc] != startTarget)
+                    terminateOnNextStep = true;
+            }
             
             // Store current (unrounded) location if required
             // NB: This part of the code must always be reached at the seed point

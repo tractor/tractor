@@ -17,6 +17,9 @@ runExperiment <- function ()
     kernelShape <- getConfigVariable("KernelShape", "diamond", "character", validValues=c("box","disc","diamond"))
     jitter <- getConfigVariable("JitterSeeds", FALSE)
     targetRegions <- getConfigVariable("TargetRegions", NULL, "character")
+    terminateAtTargets <- getConfigVariable("TerminateAtTargets", FALSE)
+    minTargetHits <- getConfigVariable("MinTargetHits", "0", "character")
+    minLength <- getConfigVariable("MinLength", 0)
     tractName <- getConfigVariable("TractName", "tract")
     requireMap <- getConfigVariable("RequireMap", TRUE)
     requireStreamlines <- getConfigVariable("RequirePaths", FALSE)
@@ -126,10 +129,18 @@ runExperiment <- function ()
     if (!is.null(targetRegions))
         targetInfo <- mergeRegions(targetRegions)
     else
-        targetInfo <- list(image=NULL)
+        targetInfo <- list(image=NULL, indices=integer(0), labels=character(0))
+    
+    if (minTargetHits == "all")
+        minTargetHits <- length(targetInfo$indices)
+    else if (!isValidAs(minTargetHits, "integer"))
+        report(OL$Error, "MinTargetHits must be an integer or \"all\"")
+    else
+        minTargetHits <- as.integer(minTargetHits)
     
     diffusionModel <- bedpostDiffusionModel(session$getDirectory("bedpost"))
     tracker <- Tracker$new(diffusionModel, mask, targetInfo$image)
+    tracker$setFilters(minLength=minLength, minTargetHits=minTargetHits)
     
     if (strategy == "global")
     {
@@ -139,12 +150,12 @@ runExperiment <- function ()
         {
             report(OL$Info, "Performing global tractography to generate #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds")
             seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
-            tracker$run(seeds, count=1L, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+            tracker$run(seeds, count=1L, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, terminateAtTargets=terminateAtTargets, jitter=jitter)
         }
         else
         {
             report(OL$Info, "Performing sequential global tractography with #{nrow(seeds)} seed(s), #{nStreamlines} streamlines per seed")
-            tracker$run(seeds, count=nStreamlines, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+            tracker$run(seeds, count=nStreamlines, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, terminateAtTargets=terminateAtTargets, jitter=jitter)
         }
     }
     else if (strategy == "regionwise")
@@ -159,12 +170,12 @@ runExperiment <- function ()
             {
                 report(OL$Verbose, "Generating #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds in region #{label}")
                 seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
-                tracker$run(seeds, count=1L, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+                tracker$run(seeds, count=1L, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, terminateAtTargets=terminateAtTargets, jitter=jitter)
             }
             else
             {
                 report(OL$Verbose, "Tracking in region #{seedInfo$labels[loc]} with #{nrow(seeds)} seed(s), #{nStreamlines} streamlines per seed")
-                tracker$run(seeds, count=nStreamlines, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+                tracker$run(seeds, count=nStreamlines, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, terminateAtTargets=terminateAtTargets, jitter=jitter)
             }
         }
     }
@@ -178,7 +189,7 @@ runExperiment <- function ()
         {
             label <- implode(seeds[i,], sep="_")
             report(OL$Verbose, "Generating #{nStreamlines} streamlines from seed point (#{implode(seeds[i,],', ')})")
-            tracker$run(seeds[i,], count=nStreamlines, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, jitter=jitter)
+            tracker$run(seeds[i,], count=nStreamlines, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, terminateAtTargets=terminateAtTargets, jitter=jitter)
         }
     }
 }

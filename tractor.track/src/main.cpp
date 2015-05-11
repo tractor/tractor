@@ -27,7 +27,7 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetPath, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _profilePath, SEXP _debugLevel)
+RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetPath, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _profilePath, SEXP _debugLevel)
 {
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
@@ -41,6 +41,7 @@ BEGIN_RCPP
     
     std::map<std::string,bool> flags;
     flags["loopcheck"] = as<bool>(_useLoopcheck);
+    flags["terminate-targets"] = as<bool>(_terminateAtTargets);
     flags["terminate-outside"] = as<bool>(_terminateOutsideMask);
     flags["must-leave"] = as<bool>(_mustLeaveMask);
     tracker.setFlags(flags);
@@ -67,6 +68,23 @@ BEGIN_RCPP
     TractographyDataSource dataSource(&tracker, as<arma::fmat>(_seeds) - 1.0, as<size_t>(_count), as<bool>(_jitter));
     Pipeline<Streamline> pipeline(&dataSource);
     
+    LabelCountFilter *hitFilter = NULL;
+    LengthFilter *lengthFilter = NULL;
+    
+    const int minTargetHits = as<int>(_minTargetHits);
+    if (minTargetHits > 0)
+    {
+        hitFilter = new LabelCountFilter(minTargetHits);
+        pipeline.addManipulator(hitFilter);
+    }
+    
+    const double minLength = as<double>(_minLength);
+    if (minLength > 0.0)
+    {
+        lengthFilter = new LengthFilter(minLength);
+        pipeline.addManipulator(lengthFilter);
+    }
+    
     VisitationMapDataSink *visitationMap = NULL;
     TrackvisDataSink *trkFile = NULL;
     if (!Rf_isNull(_mapPath))
@@ -88,6 +106,8 @@ BEGIN_RCPP
         delete visitationMap;
     }
     
+    delete hitFilter;
+    delete lengthFilter;
     delete trkFile;
     delete mask;
     
