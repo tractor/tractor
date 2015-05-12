@@ -67,13 +67,13 @@ runExperiment <- function ()
         if (any(!areFiles))
         {
             parcellation <- session$getParcellation("diffusion")
-            indices <- sort(matchRegions(seedRegions[!areFiles], parcellation))
+            indices <- sort(matchRegions(regionNames[!areFiles], parcellation))
             labels <- parcellation$regions$label[parcellation$regions$index %in% indices]
             locs <- which(parcellation$image$getData() %in% indices, arr.ind=TRUE)
             image[locs] <- parcellation$image[locs]
         }
         
-        for (region in seedRegions[areFiles])
+        for (region in regionNames[areFiles])
         {
             # This makes "data" a SparseArray object
             currentImage <- readImageFile(region, sparse=TRUE)

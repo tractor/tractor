@@ -268,6 +268,10 @@ setMethod("Ops", signature(e1="SparseArray",e2="numeric"), function (e1, e2) {
     }
 })
 
+setMethod("Summary", signature(x="SparseArray"), function(x, ..., na.rm = FALSE) {
+    callGeneric(0, x$getData(), ..., na.rm=na.rm)
+})
+
 setAs("array", "SparseArray", function (from) {
     coordinates <- which(!is.na(from) & from != 0, arr.ind=TRUE)
     object <- SparseArray$new(data=from[coordinates], coords=coordinates, dims=dim(from))

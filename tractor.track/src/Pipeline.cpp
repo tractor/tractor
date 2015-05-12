@@ -26,11 +26,14 @@ void Pipeline<ElementType>::run ()
             // Apply the manipulator(s), if there are any
             for (int i=0; i<manipulators.size(); i++)
             {
-                for (typename std::list<ElementType>::iterator it=workingSet.begin(); it!=workingSet.end(); it++)
+                typename std::list<ElementType>::iterator it = workingSet.begin();
+                while (it != workingSet.end())
                 {
                     bool keep = manipulators[i]->process(*it);
-                    if (!keep)
-                        workingSet.erase(it);
+                    if (keep)
+                        it++;
+                    else
+                        it = workingSet.erase(it);
                 }
             }
             

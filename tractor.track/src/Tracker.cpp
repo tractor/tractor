@@ -49,8 +49,14 @@ Streamline Tracker::run ()
     }
     
     int startTarget = 0;
-    if (targetData != NULL && (*targetData)[currentSeed] > 0)
-        startTarget = (*targetData)[currentSeed];
+    if (targetData != NULL)
+    {
+        for (int i=0; i<3; i++)
+            roundedLoc[i] = static_cast<int>(round(currentSeed[i]));
+        startTarget = targetData->at(roundedLoc);
+        if (startTarget < 0)
+            startTarget = 0;
+    }
     
     // We go right first (dir=0), then left (dir=1)
     for (int dir=0; dir<2; dir++)
