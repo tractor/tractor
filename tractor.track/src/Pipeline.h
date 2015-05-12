@@ -28,7 +28,7 @@ public:
     void addManipulator (DataManipulator<ElementType> * const manipulator) { manipulators.push_back(manipulator); }
     void addSink (DataSink<ElementType> * const sink) { sinks.push_back(sink); }
     
-    void run ();
+    size_t run ();
 };
 
 #endif

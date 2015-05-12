@@ -98,7 +98,7 @@ BEGIN_RCPP
         pipeline.addSink(trkFile);
     }
     
-    pipeline.run();
+    size_t nRetained = pipeline.run();
     
     if (visitationMap != NULL)
     {
@@ -111,6 +111,6 @@ BEGIN_RCPP
     delete trkFile;
     delete mask;
     
-    return R_NilValue;
+    return wrap(nRetained);
 END_RCPP
 }

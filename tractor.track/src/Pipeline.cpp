@@ -4,11 +4,13 @@
 #include "Pipeline.h"
 
 template <class ElementType>
-void Pipeline<ElementType>::run ()
+size_t Pipeline<ElementType>::run ()
 {
     // If there's no data source there's nothing to do
     if (source == NULL)
-        return;
+        return 0;
+    
+    size_t total = 0;
     
     // Empty the working set
     workingSet.clear();
@@ -23,6 +25,8 @@ void Pipeline<ElementType>::run ()
         // Process the data when the working set is full or there's nothing more incoming
         if (workingSet.size() == blockSize || !source->more())
         {
+            total += workingSet.size();
+            
             // Apply the manipulator(s), if there are any
             for (int i=0; i<manipulators.size(); i++)
             {
@@ -33,7 +37,10 @@ void Pipeline<ElementType>::run ()
                     if (keep)
                         it++;
                     else
+                    {
                         it = workingSet.erase(it);
+                        total--;
+                    }
                 }
             }
             
@@ -56,6 +63,8 @@ void Pipeline<ElementType>::run ()
     
     for (int i=0; i<sinks.size(); i++)
         sinks[i]->done();
+    
+    return total;
 }
 
 template class Pipeline<Streamline>;

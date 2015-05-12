@@ -75,6 +75,9 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         if (requireProfile)
             profilePath <- ensureFileSuffix(basename, "txt")
         
-        .Call("track", model$getPointer(), promote(seeds,byrow=TRUE), as.integer(count), maskPath, targetsPath, options$rightwardsVector, as.integer(options$maxSteps), as.double(options$stepLength), as.double(options$curvatureThreshold), isTRUE(options$useLoopcheck), isTRUE(terminateAtTargets), as.integer(filters$minTargetHits), as.numeric(filters$minLength), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), isTRUE(jitter), mapPath, streamlinePath, profilePath, 0L, PACKAGE="tractor.track")
+        nRetained <- .Call("track", model$getPointer(), promote(seeds,byrow=TRUE), as.integer(count), maskPath, targetsPath, options$rightwardsVector, as.integer(options$maxSteps), as.double(options$stepLength), as.double(options$curvatureThreshold), isTRUE(options$useLoopcheck), isTRUE(terminateAtTargets), as.integer(filters$minTargetHits), as.numeric(filters$minLength), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), isTRUE(jitter), mapPath, streamlinePath, profilePath, 0L, PACKAGE="tractor.track")
+        
+        if (nRetained < nrow(seeds) * count)
+            report(OL$Info, "#{nRetained} streamlines (#{nRetained/(nrow(seeds)*count)*100}%) were retained after filtering", signif=3)
     }
 ))
