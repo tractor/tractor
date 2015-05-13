@@ -23,4 +23,18 @@ public:
     void finish ();
 };
 
+class ProfileMatrixDataSink : public DataSink<Streamline>
+{
+private:
+    Rcpp::Function function;
+    std::map<int,size_t> counts;
+    
+public:
+    ProfileMatrixDataSink (const Rcpp::Function &function)
+        : function(function) {}
+    
+    void put (const Streamline &data);
+    void done ();
+};
+
 #endif

@@ -131,6 +131,19 @@ runExperiment <- function ()
     else
         targetInfo <- list(image=NULL, indices=integer(0), labels=character(0))
     
+    if (requireProfile && length(targetInfo$indices) > 0)
+    {
+        profile <- matrix(NA, nrow=0, ncol=length(targetInfo$indices), dimnames=list(NULL,targetInfo$labels))
+        profileFun <- function (indices, counts)
+        {
+            line <- rep(NA, length(targetInfo$indices))
+            line[match(indices,targetInfo$indices)] <- counts
+            profile <<- rbind(profile, line)
+        }
+    }
+    else
+        profileFun <- NULL
+    
     if (minTargetHits == "all")
         minTargetHits <- length(targetInfo$indices)
     else if (!isValidAs(minTargetHits, "integer"))
@@ -150,13 +163,16 @@ runExperiment <- function ()
         {
             report(OL$Info, "Performing global tractography to generate #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds")
             seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
-            tracker$run(seeds, count=1L, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, terminateAtTargets=terminateAtTargets, jitter=jitter)
+            tracker$run(seeds, count=1L, tractName, profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, terminateAtTargets=terminateAtTargets, jitter=jitter)
         }
         else
         {
             report(OL$Info, "Performing sequential global tractography with #{nrow(seeds)} seed(s), #{nStreamlines} streamlines per seed")
-            tracker$run(seeds, count=nStreamlines, tractName, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, terminateAtTargets=terminateAtTargets, jitter=jitter)
+            tracker$run(seeds, count=nStreamlines, tractName, profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, terminateAtTargets=terminateAtTargets, jitter=jitter)
         }
+        
+        if (!is.null(profileFun))
+            rownames(profile) <- tractName
     }
     else if (strategy == "regionwise")
     {
@@ -170,14 +186,17 @@ runExperiment <- function ()
             {
                 report(OL$Verbose, "Generating #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds in region #{label}")
                 seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
-                tracker$run(seeds, count=1L, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, terminateAtTargets=terminateAtTargets, jitter=jitter)
+                tracker$run(seeds, count=1L, paste(tractName,label,sep="_"), profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, terminateAtTargets=terminateAtTargets, jitter=jitter)
             }
             else
             {
                 report(OL$Verbose, "Tracking in region #{seedInfo$labels[loc]} with #{nrow(seeds)} seed(s), #{nStreamlines} streamlines per seed")
-                tracker$run(seeds, count=nStreamlines, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, terminateAtTargets=terminateAtTargets, jitter=jitter)
+                tracker$run(seeds, count=nStreamlines, paste(tractName,label,sep="_"), profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, terminateAtTargets=terminateAtTargets, jitter=jitter)
             }
         }
+        
+        if (!is.null(profileFun))
+            rownames(profile) <- seedInfo$labels
     }
     else if (strategy == "voxelwise")
     {
@@ -185,11 +204,17 @@ runExperiment <- function ()
         seeds <- seedImage$getNonzeroIndices(array=TRUE)
         
         report(OL$Info, "Performing voxelwise tractography for #{nrow(seeds)} distinct seed points")
+        labels <- apply(seeds, 1, implode, sep="_")
         for (i in seq_len(nrow(seeds)))
         {
-            label <- implode(seeds[i,], sep="_")
-            report(OL$Verbose, "Generating #{nStreamlines} streamlines from seed point (#{implode(seeds[i,],', ')})")
-            tracker$run(seeds[i,], count=nStreamlines, paste(tractName,label,sep="_"), requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, terminateAtTargets=terminateAtTargets, jitter=jitter)
+            report(OL$Verbose, "Generating #{nStreamlines} streamlines from seed point (#{implode(seeds[i,],',')})")
+            tracker$run(seeds[i,], count=nStreamlines, paste(tractName,labels[i],sep="_"), profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, terminateAtTargets=terminateAtTargets, jitter=jitter)
         }
+        
+        if (!is.null(profileFun))
+            rownames(profile) <- labels
     }
+    
+    if (!is.null(profileFun))
+        write.csv(profile, ensureFileSuffix(paste(tractName,"profile",sep="_"),"csv"))
 }

@@ -58,24 +58,24 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
             report(OL$Error, "Targets should be specified as a file name or MriImage object")
     },
     
-    run = function (seeds, count, basename, requireMap = TRUE, requireStreamlines = FALSE, requireProfile = FALSE, terminateAtTargets = FALSE, terminateOutsideMask = FALSE, mustLeaveMask = FALSE, jitter = FALSE)
+    run = function (seeds, count, basename, profileFun = NULL, requireMap = TRUE, requireStreamlines = FALSE, terminateAtTargets = FALSE, terminateOutsideMask = FALSE, mustLeaveMask = FALSE, jitter = FALSE)
     {
         if (is.nilModel(model))
             report(OL$Error, "No diffusion model has been specified")
         if (length(maskPath) == 0)
             report(OL$Error, "No tracking mask has been specfied")
         
-        targetsPath <- mapPath <- streamlinePath <- profilePath <- NULL
+        targetsPath <- mapPath <- streamlinePath <- NULL
         if (length(.self$targetPath) == 1)
             targetsPath <- .self$targetPath
         if (requireMap)
             mapPath <- basename
         if (requireStreamlines)
             streamlinePath <- ensureFileSuffix(basename, "trk")
-        if (requireProfile)
-            profilePath <- ensureFileSuffix(basename, "txt")
         
-        nRetained <- .Call("track", model$getPointer(), promote(seeds,byrow=TRUE), as.integer(count), maskPath, targetsPath, options$rightwardsVector, as.integer(options$maxSteps), as.double(options$stepLength), as.double(options$curvatureThreshold), isTRUE(options$useLoopcheck), isTRUE(terminateAtTargets), as.integer(filters$minTargetHits), as.numeric(filters$minLength), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), isTRUE(jitter), mapPath, streamlinePath, profilePath, 0L, PACKAGE="tractor.track")
+        seeds <- promote(seeds, byrow=TRUE)
+        
+        nRetained <- .Call("track", model$getPointer(), seeds, as.integer(count), maskPath, targetsPath, options$rightwardsVector, as.integer(options$maxSteps), as.double(options$stepLength), as.double(options$curvatureThreshold), isTRUE(options$useLoopcheck), isTRUE(terminateAtTargets), as.integer(filters$minTargetHits), as.numeric(filters$minLength), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), isTRUE(jitter), mapPath, streamlinePath, profileFun, 0L, PACKAGE="tractor.track")
         
         if (nRetained < nrow(seeds) * count)
             report(OL$Info, "#{nRetained} streamlines (#{nRetained/(nrow(seeds)*count)*100}%) were retained after filtering", signif=3)

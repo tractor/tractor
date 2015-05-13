@@ -51,6 +51,7 @@ public:
     int nLabels () const                            { return static_cast<int>(labels.size()); }
     bool addLabel (const int label)                 { return labels.insert(label).second; }
     bool removeLabel (const int label)              { return (labels.erase(label) == 1); }
+    const std::set<int> & getLabels () const        { return labels; }
     void setLabels (const std::set<int> &labels)    { this->labels = labels; }
     void clearLabels ()                             { labels.clear(); }
     

@@ -27,7 +27,7 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetPath, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _profilePath, SEXP _debugLevel)
+RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetPath, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _profileFunction, SEXP _debugLevel)
 {
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
@@ -87,6 +87,8 @@ BEGIN_RCPP
     
     VisitationMapDataSink *visitationMap = NULL;
     TrackvisDataSink *trkFile = NULL;
+    ProfileMatrixDataSink *profile = NULL;
+    Rcpp::Function *function = NULL;
     if (!Rf_isNull(_mapPath))
     {
         visitationMap = new VisitationMapDataSink(mask->getDimensions());
@@ -96,6 +98,12 @@ BEGIN_RCPP
     {
         trkFile = new TrackvisDataSink(as<std::string>(_trkPath), *mask);
         pipeline.addSink(trkFile);
+    }
+    if (!Rf_isNull(_profileFunction))
+    {
+        function = new Rcpp::Function(_profileFunction);
+        profile = new ProfileMatrixDataSink(*function);
+        pipeline.addSink(profile);
     }
     
     size_t nRetained = pipeline.run();
@@ -109,6 +117,8 @@ BEGIN_RCPP
     delete hitFilter;
     delete lengthFilter;
     delete trkFile;
+    delete function;
+    delete profile;
     delete mask;
     
     return wrap(nRetained);

@@ -36,3 +36,32 @@ void RCallbackDataSink::finish ()
     SEXP seedIndicesR = Rcpp::wrap(seedIndices + 1);
     function(pointsR, startIndicesR, seedIndicesR);
 }
+
+void ProfileMatrixDataSink::put (const Streamline &data)
+{
+    const std::set<int> &labels = data.getLabels();
+    for (std::set<int>::iterator it=labels.begin(); it!=labels.end(); it++)
+    {
+        if (counts.count(*it) == 0)
+            counts[*it] = 1;
+        else
+            counts[*it]++;
+    }
+}
+
+void ProfileMatrixDataSink::done ()
+{
+    std::vector<int> labels;
+    std::vector<size_t> labelCounts;
+    
+    for (std::map<int,size_t>::const_iterator it=counts.begin(); it!=counts.end(); it++)
+    {
+        labels.push_back(it->first);
+        labelCounts.push_back(it->second);
+    }
+    
+    SEXP labelsR = Rcpp::wrap(labels);
+    SEXP labelCountsR = Rcpp::wrap(labelCounts);
+    
+    function(labelsR, labelCountsR);
+}
