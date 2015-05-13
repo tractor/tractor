@@ -186,11 +186,11 @@ runExperiment <- function ()
             {
                 report(OL$Verbose, "Generating #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds in region #{label}")
                 seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
-                tracker$run(seeds, count=1L, paste(tractName,label,sep="_"), profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, requireProfile=requireProfile, terminateAtTargets=terminateAtTargets, jitter=jitter)
+                tracker$run(seeds, count=1L, paste(tractName,label,sep="_"), profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, terminateAtTargets=terminateAtTargets, jitter=jitter)
             }
             else
             {
-                report(OL$Verbose, "Tracking in region #{seedInfo$labels[loc]} with #{nrow(seeds)} seed(s), #{nStreamlines} streamlines per seed")
+                report(OL$Verbose, "Tracking in region #{label} with #{nrow(seeds)} seed(s), #{nStreamlines} streamlines per seed")
                 tracker$run(seeds, count=nStreamlines, paste(tractName,label,sep="_"), profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, terminateAtTargets=terminateAtTargets, jitter=jitter)
             }
         }
