@@ -98,10 +98,8 @@ rotateGradientVectorsForSession <- function (session)
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    require("tractor.reg")
-    
     transform <- getVolumeTransformationForSession(session, "diffusion")
-    decompositions <- decomposeTransformation(transform)
+    decompositions <- tractor.reg::decomposeTransformation(transform)
     
     unrotatedScheme <- newSimpleDiffusionSchemeFromSession(session, unrotated=TRUE)
     schemeComponents <- unrotatedScheme$expandComponents()

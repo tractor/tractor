@@ -59,8 +59,6 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getParcellation = function (place = "structural", ...)
     {
-        require("tractor.reg")
-        
         fileName <- .self$getImageFileNameByType("parcellation", place)
         if (!imageFileExists(fileName))
         {
@@ -68,12 +66,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
                 report(OL$Error, "T1w image parcellation has not yet been performed")
             else
             {
-                parcellation <- transformParcellationToSpace(.self$getParcellation("structural"), .self, place, ...)
-                writeParcellation(parcellation, fileName)
+                parcellation <- tractor.reg::transformParcellationToSpace(.self$getParcellation("structural"), .self, place, ...)
+                tractor.reg::writeParcellation(parcellation, fileName)
             }
         }
         else
-            parcellation <- readParcellation(fileName)
+            parcellation <- tractor.reg::readParcellation(fileName)
         
         return (parcellation)
     },
@@ -87,7 +85,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         if (!("diffusionModel" %in% names(objectCache.)))
         {
             if (.self$imageExists("avf", "bedpost"))
-                objectCache.$diffusionModel <- bedpostDiffusionModel(.self$getDirectory("bedpost"))
+                objectCache.$diffusionModel <- tractor.track::bedpostDiffusionModel(.self$getDirectory("bedpost"))
             else
                 report(OL$Error, "No diffusion model is available for the session with root directory #{.self$getDirectory()}")
         }
@@ -95,16 +93,14 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         if (is.null(mask))
             mask <- getImageFileNameByType("mask", "diffusion")
         
-        return (Tracker$new(objectCache.$diffusionModel, mask, targets))
+        return (tractor.track::Tracker$new(objectCache.$diffusionModel, mask, targets))
     },
     
     getTransformation = function (sourceSpace, targetSpace)
     {
-        require("tractor.reg")
-        
         strategy <- transformStrategyCache.[[s("#{sourceSpace}2#{targetSpace}")]]
         if ("reverse" %in% strategy)
-            return (invertTransformation(.self$getTransformation(targetSpace, sourceSpace)))
+            return (tractor.reg::invertTransformation(.self$getTransformation(targetSpace, sourceSpace)))
         else
         {
             sourceImageFile <- .self$getRegistrationTargetFileName(sourceSpace)
@@ -129,12 +125,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             }
             if (all(c("nonlinear","symmetric") %in% strategy))
                 options$types <- c(options$types, "reverse-nonlinear")
-            result <- do.call(registerImages, options)
+            result <- do.call(tractor.reg::registerImages, options)
             
             reverseTransformFile <- file.path(.self$getDirectory("transforms"), ensureFileSuffix(paste(targetSpace,"2",sourceSpace,sep=""),"Rdata"))
             if (!file.exists(reverseTransformFile))
             {
-                inverseTransform <- invertTransformation(result$transform, quiet=TRUE)
+                inverseTransform <- tractor.reg::invertTransformation(result$transform, quiet=TRUE)
                 inverseTransform$serialise(reverseTransformFile)
             }
             
