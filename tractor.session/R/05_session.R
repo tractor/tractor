@@ -1,4 +1,4 @@
-MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",subdirectoryCache.="list",mapCache.="list",transformStrategyCache.="list"), methods=list(
+MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",subdirectoryCache.="list",mapCache.="list",transformStrategyCache.="list",objectCache.="list"), methods=list(
     initialize = function (directory = NULL, ...)
     {
         if (is.null(directory))
@@ -9,7 +9,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             report(OL$Error, "Session directory does not exist")
         else
         {
-            object <- initFields(directory=expandFileName(directory), subdirectoryCache.=list(), mapCache.=list())
+            object <- initFields(directory=expandFileName(directory), subdirectoryCache.=list(), mapCache.=list(), objectCache.=list())
             object$updateCaches()
             object$getDirectory("root", createIfMissing=TRUE)
             updateSessionHierarchy(object)
@@ -81,6 +81,22 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     getRegistrationTarget = function (space, ...)  { return (.self$getImageByType(.RegistrationTargets[[space]], space, ...)) },
     
     getRegistrationTargetFileName = function (space) { return (.self$getImageFileNameByType(.RegistrationTargets[[space]], space)) },
+    
+    getTracker = function (mask = NULL, targets = NULL)
+    {
+        if (!("diffusionModel" %in% names(objectCache.)))
+        {
+            if (.self$imageExists("avf", "bedpost"))
+                objectCache.$diffusionModel <- bedpostDiffusionModel(.self$getDirectory("bedpost"))
+            else
+                report(OL$Error, "No diffusion model is available for the session with root directory #{.self$getDirectory()}")
+        }
+        
+        if (is.null(mask))
+            mask <- getImageFileNameByType("mask", "diffusion")
+        
+        return (Tracker$new(objectCache.$diffusionModel, mask, targets))
+    },
     
     getTransformation = function (sourceSpace, targetSpace)
     {

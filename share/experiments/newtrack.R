@@ -151,8 +151,7 @@ runExperiment <- function ()
     else
         minTargetHits <- as.integer(minTargetHits)
     
-    diffusionModel <- bedpostDiffusionModel(session$getDirectory("bedpost"))
-    tracker <- Tracker$new(diffusionModel, mask, targetInfo$image)
+    tracker <- session$getTracker(mask, targetInfo$image)
     tracker$setFilters(minLength=minLength, minTargetHits=minTargetHits)
     
     if (strategy == "global")
