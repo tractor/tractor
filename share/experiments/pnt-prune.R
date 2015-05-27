@@ -91,7 +91,10 @@ runExperiment <- function ()
         bestSeed <- neighbourhood$vectors[,bestSeedIndex]
         report(OL$Info, "Seed point is (", implode(bestSeed,","), ")")
         
-        result <- trackWithSession(currentSession, bestSeed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlines=TRUE)
+        tracker <- currentSession$getTracker()
+        tracker$setOptions(rightwardsVector=rightwardsVector)
+        trackerPath <- tracker$run(bestSeed, nSamples, requireMap=FALSE, requireStreamlines=TRUE)
+        # FIXME: need to retrieve the streamlines
         streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
         
         medianLine <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
@@ -156,7 +159,5 @@ runExperiment <- function ()
         currentTractName <- paste(tractName, "_session", i, sep="")
         if (createVolumes)
             writeImageFile(visitationMap, currentTractName)
-        if (createImages)
-            writePngsForResult(fakeResult, prefix=currentTractName, threshold=1/(streamSet$nStreamlines()+1), showSeed=showSeed)
     })
 }

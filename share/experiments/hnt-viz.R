@@ -32,12 +32,11 @@ runExperiment <- function ()
         currentSession <- newSessionFromDirectory(sessionList[i])
         currentSeed <- results$getResult(i)$bestSeed
         
-        ptResult <- trackWithSession(currentSession, currentSeed, requireImage=TRUE)
+        # FIXME: doesn't seem necessary to hard-code the number of streamlines
+        trackerPath <- currentSession$getTracker()$run(currentSeed, 5000, requireMap=TRUE)
         
         currentTractName <- paste(tractName, "_session", i, sep="")
         if (createVolumes)
-            writeImageFile(ptResult$image, currentTractName)
-        if (createImages)
-            writePngsForResult(ptResult, prefix=currentTractName, threshold=vizThreshold, showSeed=showSeed)
+            copyImageFiles(trackerPath, currentTractName)
     })
 }

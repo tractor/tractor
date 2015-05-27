@@ -93,7 +93,5 @@ runExperiment <- function ()
         currentTractName <- paste(tractName, "_session", i, sep="")
         if (createVolumes)
             writeImageFile(trackingResult$image, currentTractName)
-        if (createImages)
-            writePngsForResult(trackingResult, prefix=currentTractName, threshold=vizThreshold, showSeed=showSeed)
     })
 }

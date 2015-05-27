@@ -7,7 +7,10 @@ createTractOptionList <- function (pointType = "knot", lengthQuantile = 0.99, re
 
 streamlineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)
 {
-    result <- trackWithSession(session, seed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlines=TRUE)
+    tracker <- session$getTracker()
+    tracker$setOptions(rightwardsVector=rightwardsVector)
+    trackerPath <- tracker$run(seed, nSamples, requireMap=FALSE, requireStreamlines=TRUE)
+    # FIXME: streamlines not obtained
     streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
     streamline <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
     

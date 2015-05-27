@@ -25,8 +25,8 @@ runExperiment <- function ()
     else
         seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
     
-    trackingResult <- trackWithSession(session, seed, nSamples=nSamples, requireImage=TRUE)
-    image <- newMriImageByThresholding(trackingResult$image, 0.01*nSamples)
+    trackerPath <- session$getTracker()$run(seed, nSamples, requireMap=TRUE)
+    image <- newMriImageByThresholding(readImageFile(trackerPath), 0.01*nSamples)
     tract <- newFieldTractFromMriImage(image, seed)
     reference <- newReferenceTractWithTract(tract, session=session, nativeSeed=seed)
     

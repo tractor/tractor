@@ -58,7 +58,7 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
             report(OL$Error, "Targets should be specified as a file name or MriImage object")
     },
     
-    run = function (seeds, count, basename, profileFun = NULL, requireMap = TRUE, requireStreamlines = FALSE, terminateAtTargets = FALSE, terminateOutsideMask = FALSE, mustLeaveMask = FALSE, jitter = FALSE)
+    run = function (seeds, count, basename = threadSafeTempFile(), profileFun = NULL, requireMap = TRUE, requireStreamlines = FALSE, terminateAtTargets = FALSE, terminateOutsideMask = FALSE, mustLeaveMask = FALSE, jitter = FALSE)
     {
         if (is.nilModel(model))
             report(OL$Error, "No diffusion model has been specified")
@@ -79,5 +79,7 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         
         if (nRetained < nrow(seeds) * count)
             report(OL$Info, "#{nRetained} streamlines (#{nRetained/(nrow(seeds)*count)*100}%) were retained after filtering", signif=3)
+        
+        return (basename)
     }
 ))

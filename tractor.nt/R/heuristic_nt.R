@@ -35,7 +35,8 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     reducedRefTract <- createReducedTractInfo(refTract)
     report(OL$Info, "Reference tract contains ", reducedRefTract$nVoxels, " nonzero voxels; length is ", reducedRefTract$length)
     
-    result <- trackWithSession(session, candidateSeeds[validSeeds,], requireImage=FALSE, requireStreamlines=TRUE, nSamples=nSamples)
+    trackerPath <- session$getTracker()$run(candidateSeeds[validSeeds,], nSamples, requireMap=FALSE, requireStreamlines=TRUE)
+    # FIXME: streamlines not returned
     for (i in seq_along(validSeeds))
     {
         firstStreamline <- nSamples * (i-1) + 1
