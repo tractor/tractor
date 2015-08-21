@@ -338,7 +338,7 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radiu
         else if (weightLimits[1] >= 0 && weightLimits[2] > 0)
             col <- 5
         else if (weightLimits[1] < 0 && weightLimits[2] <= 0)
-            col <- 6
+            col <- -6
     }
     if (is.numeric(col))
         col <- getColourScale(col)$colours
@@ -459,7 +459,7 @@ levelplot.Graph <- function (x, data = NULL, col = NULL, cex = NULL, order = NUL
         else if (weightLimits[1] >= 0 && weightLimits[2] > 0)
             col <- 5
         else if (weightLimits[1] < 0 && weightLimits[2] <= 0)
-            col <- 6
+            col <- -6
     }
     if (is.numeric(col))
         col <- getColourScale(col)$colours
