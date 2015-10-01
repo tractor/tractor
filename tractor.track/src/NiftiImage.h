@@ -1,7 +1,7 @@
 #ifndef _NIFTI_IMAGE_H_
 #define _NIFTI_IMAGE_H_
 
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 #include "nifti1_io.h"
 
@@ -13,7 +13,7 @@ private:
     nifti_image *info;
     std::vector<int> dims;
     std::vector<float> voxelDims;
-    arma::fmat44 xform;
+    Eigen::Matrix4f xform;
     
     void extractMetadata ();
     
@@ -47,7 +47,7 @@ public:
     int getDimensionality () const { return dims.size(); }
     const std::vector<int> & getDimensions () const { return dims; }
     const std::vector<float> & getVoxelDimensions () const { return voxelDims; }
-    const arma::fmat44 & getXformMatrix () const { return xform; }
+    const Eigen::Matrix4f & getXformMatrix () const { return xform; }
     const ::mat44 & getXformStruct () const
     {
         if (info->qform_code > 0)

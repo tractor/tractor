@@ -1,13 +1,13 @@
 #ifndef _ARRAY_H_
 #define _ARRAY_H_
 
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 struct Neighbourhood
 {
     size_t size;
     std::vector<int> widths;
-    arma::Mat<int> locs;
+    Eigen::MatrixXi locs;
     std::vector<ptrdiff_t> offsets;
 };
 

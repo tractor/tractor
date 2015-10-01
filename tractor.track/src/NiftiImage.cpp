@@ -1,4 +1,4 @@
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 #include "nifti1.h"
 
 #include "NiftiImage.h"
@@ -14,9 +14,9 @@ void NiftiImage::extractMetadata ()
     }
     
     if (info->qform_code > 0)
-        xform = arma::fmat44(*(info->qto_xyz.m)).t();
+        xform = Eigen::Map<Eigen::Matrix4f>(*(info->qto_xyz.m)).transpose();
     else
-        xform = arma::fmat44(*(info->sto_xyz.m)).t();
+        xform = Eigen::Map<Eigen::Matrix4f>(*(info->sto_xyz.m)).transpose();
 }
 
 template <typename SourceType, typename TargetType>

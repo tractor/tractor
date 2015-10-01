@@ -1,7 +1,7 @@
 #ifndef _R_CALLBACK_H_
 #define _R_CALLBACK_H_
 
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 #include "DataSource.h"
 #include "Streamline.h"
@@ -10,8 +10,8 @@ class RCallbackDataSink : public DataSink<Streamline>
 {
 private:
     Rcpp::Function function;
-    arma::fmat points;
-    arma::uvec startIndices, seedIndices;
+    Eigen::MatrixX3f points;
+    Eigen::Matrix<unsigned int,Eigen::Dynamic,1> startIndices, seedIndices;
     size_t currentIndex, currentStart, nTotalPoints;
     
 public:

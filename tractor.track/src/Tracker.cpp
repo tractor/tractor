@@ -1,4 +1,4 @@
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 #include "Tracker.h"
 
@@ -153,7 +153,7 @@ Streamline Tracker::run ()
                 for (int i=0; i<3; i++)
                     loopcheckLoc[i] = static_cast<int>(round(loc[i]/LOOPCHECK_RATIO));
                 
-                float loopcheckInnerProduct = arma::dot((*loopcheck)[loopcheckLoc], previousStep);
+                float loopcheckInnerProduct = (*loopcheck)[loopcheckLoc].dot(previousStep);
                 if (loopcheckInnerProduct < 0.0)
                 {
                     logger.debug2.indent() << "Terminating: loop detected" << endl;
@@ -170,7 +170,7 @@ Streamline Tracker::run ()
                 sign = 1.0;
             else
             {
-                float innerProduct = arma::dot(previousStep, currentStep);
+                float innerProduct = previousStep.dot(currentStep);
                 if (fabs(innerProduct) < innerProductThreshold)
                 {
                     logger.debug2.indent() << "Terminating: curvature too high" << endl;
@@ -180,7 +180,7 @@ Streamline Tracker::run ()
             }
             
             // Update streamline front and previous step
-            loc += (currentStep / voxelDims) * sign * stepLength;
+            loc += currentStep.cwiseQuotient(voxelDims) * sign * stepLength;
             previousStep = currentStep * sign;
             logger.debug3.indent() << "New location is " << loc << endl;
             

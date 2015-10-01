@@ -1,4 +1,4 @@
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 #include "RCallback.h"
 
@@ -10,30 +10,38 @@ void RCallbackDataSink::setup (const size_type &count, const_iterator begin, con
     for (const_iterator it=begin; it!=end; it++)
         nTotalPoints += it->nPoints();
     
-    points.set_size(nTotalPoints, 3);
-    startIndices.set_size(count);
-    seedIndices.set_size(count);
+    points.resize(nTotalPoints, Eigen::NoChange);
+    startIndices.resize(count);
+    seedIndices.resize(count);
 }
 
 void RCallbackDataSink::put (const Streamline &data)
 {
-    arma::fmat currentPoints;
+    Eigen::MatrixX3f currentPoints;
     size_t seedIndex = data.concatenatePoints(currentPoints);
-    if (!currentPoints.is_empty())
+    if (currentPoints.rows() != 0)
     {
         startIndices(currentIndex) = currentStart;
         seedIndices(currentIndex) = currentStart + seedIndex;
-        points(arma::span(currentStart,currentStart+currentPoints.n_rows-1), arma::span::all) = currentPoints;
+        points.block(currentStart,0,currentPoints.rows(),3) = currentPoints;
         currentIndex++;
-        currentStart += currentPoints.n_rows;
+        currentStart += currentPoints.rows();
     }
 }
 
 void RCallbackDataSink::finish ()
 {
-    SEXP pointsR = Rcpp::wrap(points + 1.0);
-    SEXP startIndicesR = Rcpp::wrap(startIndices + 1);
-    SEXP seedIndicesR = Rcpp::wrap(seedIndices + 1);
+    Rcpp::NumericMatrix pointsR(points.rows(), 3);
+    Rcpp::IntegerVector startIndicesR(startIndices.size());
+    Rcpp::IntegerVector seedIndicesR(seedIndices.size());
+    for (size_t i=0; i<points.rows(); i++)
+    {
+        pointsR(i,0) = points(i,0) + 1.0;
+        pointsR(i,1) = points(i,1) + 1.0;
+        pointsR(i,2) = points(i,2) + 1.0;
+        startIndicesR[i] = static_cast<int>(startIndices[i]) + 1;
+        seedIndicesR[i] = static_cast<int>(seedIndices[i]) + 1;
+    }
     function(pointsR, startIndicesR, seedIndicesR);
 }
 

@@ -1,7 +1,7 @@
 #ifndef _LOGGER_H_
 #define _LOGGER_H_
 
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 // Function pointer typedef for stream manipulators like "endl"
 typedef std::ostream& (*streamManipulator)(std::ostream&);
@@ -41,8 +41,8 @@ public:
         return *this;
     }
     
-    template<typename DataType>
-    LoggerStream & operator<< (const arma::Col<DataType> &arg)
+    template<typename DataType, int Rows>
+    LoggerStream & operator<< (const Eigen::Matrix<DataType,Rows,1> &arg)
     {
         if (*outputLevel >= myLevel)
         {

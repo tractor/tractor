@@ -1,25 +1,22 @@
 #ifndef _SPACE_H_
 #define _SPACE_H_
 
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 template <int Dimensionality, typename DataType = float> class Space
 {
 public:
-    // This syntax boggles my mind, but seems to be correct...
-    typedef typename arma::Col<DataType>::template fixed<Dimensionality> Point;
-    typedef typename arma::Col<DataType>::template fixed<Dimensionality> Vector;
+    typedef typename Eigen::Matrix<DataType,Dimensionality,1> Point;
+    typedef typename Eigen::Matrix<DataType,Dimensionality,1> Vector;
     
     static const Vector zeroVector ()
     {
-        Vector zero;
-        zero.zeros();
-        return zero;
+        return Vector::Zero();
     }
     
     static bool zeroVector (const Vector &vector)
     {
-        return (arma::norm(vector,2) == 0.0);
+        return (vector.norm() == 0.0);
     }
     
     static const Vector sphericalToCartesian (const Vector &spherical)

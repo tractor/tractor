@@ -1,7 +1,7 @@
 #ifndef _TRACKVIS_H_
 #define _TRACKVIS_H_
 
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 #include "Streamline.h"
 #include "DataSource.h"
@@ -14,7 +14,7 @@ private:
     BinaryInputStream binaryStream;
     int nScalars, nProperties;
     size_t totalStreamlines, currentStreamline;
-    arma::fvec voxelDims;
+    Eigen::Vector3f voxelDims;
     
 public:
     TrackvisDataSource ()
@@ -46,7 +46,7 @@ private:
     std::ofstream fileStream;
     BinaryOutputStream binaryStream;
     size_t totalStreamlines;
-    arma::fvec voxelDims;
+    Eigen::Vector3f voxelDims;
     
 public:
     static std::map<int,char> orientationCodeMap;

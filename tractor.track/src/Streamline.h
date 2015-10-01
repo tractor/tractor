@@ -1,7 +1,7 @@
 #ifndef _STREAMLINE_H_
 #define _STREAMLINE_H_
 
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 #include "Space.h"
 #include "DataSource.h"
@@ -22,7 +22,7 @@ private:
     Streamline::PointType pointType;
     
     // Voxel dimensions, needed for converting between voxel and world point types
-    arma::fvec voxelDims;
+    Eigen::VectorXf voxelDims;
     
     // A set of integer labels associated with the streamline, indicating, for
     // example, the anatomical regions that the streamline passes through
@@ -37,7 +37,7 @@ protected:
     
 public:
     Streamline () {}
-    Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const Streamline::PointType pointType, const arma::fvec &voxelDims, const bool fixedSpacing)
+    Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const Streamline::PointType pointType, const Eigen::VectorXf &voxelDims, const bool fixedSpacing)
         : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), voxelDims(voxelDims), fixedSpacing(fixedSpacing) {}
     
     size_t nPoints () const { return std::max(static_cast<size_t>(leftPoints.size()+rightPoints.size())-1, size_t(0)); }
@@ -55,14 +55,14 @@ public:
     void setLabels (const std::set<int> &labels)    { this->labels = labels; }
     void clearLabels ()                             { labels.clear(); }
     
-    size_t concatenatePoints (arma::fmat &points) const;
+    size_t concatenatePoints (Eigen::MatrixX3f &points) const;
 };
 
 class StreamlineMatrixDataSink : public DataSink<Streamline>
 {
 private:
-    arma::fmat points;
-    arma::uvec startIndices, seedIndices;
+    Eigen::MatrixX3f points;
+    Eigen::Matrix<unsigned int,Eigen::Dynamic,1> startIndices, seedIndices;
     size_t currentIndex, currentStart, nTotalPoints;
     
 public:
@@ -74,28 +74,28 @@ public:
         for (const_iterator it=begin; it!=end; it++)
             nTotalPoints += it->nPoints();
         
-        points.set_size(nTotalPoints, 3);
-        startIndices.set_size(count);
-        seedIndices.set_size(count);
+        points.resize(nTotalPoints, 3);
+        startIndices.resize(count);
+        seedIndices.resize(count);
     }
     
     void put (const Streamline &data)
     {
-        arma::fmat currentPoints;
+        Eigen::MatrixX3f currentPoints;
         size_t seedIndex = data.concatenatePoints(currentPoints);
-        if (!currentPoints.empty())
+        if (currentPoints.rows() != 0)
         {
             startIndices(currentIndex) = currentStart;
             seedIndices(currentIndex) = currentStart + seedIndex;
-            points(arma::span(currentStart,currentStart+currentPoints.n_rows-1), arma::span::all) = currentPoints;
+            points.block(currentStart,0,currentPoints.rows(),3) = currentPoints;
             currentIndex++;
-            currentStart += currentPoints.n_rows;
+            currentStart += currentPoints.rows();
         }
     }
     
-    const arma::fmat & getPoints () { return points; }
-    const arma::uvec & getStartIndices () { return startIndices; }
-    const arma::uvec & getSeedIndices () { return seedIndices; }
+    const Eigen::MatrixX3f & getPoints () { return points; }
+    const Eigen::Matrix<unsigned int,Eigen::Dynamic,1> & getStartIndices () { return startIndices; }
+    const Eigen::Matrix<unsigned int,Eigen::Dynamic,1> & getSeedIndices () { return seedIndices; }
 };
 
 #endif

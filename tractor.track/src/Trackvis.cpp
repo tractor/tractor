@@ -1,4 +1,4 @@
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 #include "nifti1_io.h"
 
@@ -149,7 +149,7 @@ void TrackvisDataSink::attach (const std::string &fileName, const NiftiImage &im
     binaryStream.writeValue<int32_t>(1000);
     
     totalStreamlines = 0;
-    voxelDims = arma::conv_to<arma::fvec>::from(image.getVoxelDimensions());
+    std::copy(image.getVoxelDimensions().begin(), image.getVoxelDimensions().begin()+3, voxelDims.data());
 }
 
 void TrackvisDataSink::setup (const size_type &count, const_iterator begin, const_iterator end)
@@ -162,14 +162,14 @@ void TrackvisDataSink::setup (const size_type &count, const_iterator begin, cons
 void TrackvisDataSink::put (const Streamline &data)
 {
     int nPoints = data.nPoints();
-    arma::fmat points;
+    Eigen::MatrixX3f points;
     
     data.concatenatePoints(points);
     
     binaryStream.writeValue<int32_t>(nPoints);
     for (int i=0; i<nPoints; i++)
     {
-        arma::fvec row = points.row(i).t() % voxelDims;
+        Eigen::Vector3f row = points.row(i).cwiseProduct(voxelDims.transpose());
         binaryStream.writeVector<float>(row);
     }
 }

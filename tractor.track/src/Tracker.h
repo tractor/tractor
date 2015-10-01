@@ -1,7 +1,7 @@
 #ifndef _TRACKER_H_
 #define _TRACKER_H_
 
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 #include "Space.h"
 #include "NiftiImage.h"
@@ -19,7 +19,7 @@ private:
     
     Array<short> *maskData;
     std::vector<int> spaceDims;
-    arma::fvec voxelDims;
+    Eigen::Vector3f voxelDims;
     Array<int> *targetData;
     
     Array<Space<3>::Vector> *loopcheck;
@@ -59,7 +59,7 @@ public:
         delete maskData;
         maskData = mask->getData<short>();
         spaceDims = mask->getDimensions();
-        voxelDims = arma::conv_to<arma::fvec>::from(mask->getVoxelDimensions());
+        std::copy(mask->getVoxelDimensions().begin(), mask->getVoxelDimensions().begin()+3, voxelDims.data());
     }
     
     void setSeed (const Space<3>::Point &seed, const bool jitter)
@@ -93,15 +93,15 @@ class TractographyDataSource : public DataSource<Streamline>
 {
 private:
     Tracker *tracker;
-    arma::fmat seeds;
+    Eigen::MatrixX3f seeds;
     bool jitter;
     size_t streamlinesPerSeed, totalStreamlines, currentStreamline, currentSeed;
     
 public:
-    TractographyDataSource (Tracker * const tracker, const arma::fmat &seeds, const size_t streamlinesPerSeed, const bool jitter)
+    TractographyDataSource (Tracker * const tracker, const Eigen::MatrixX3f &seeds, const size_t streamlinesPerSeed, const bool jitter)
         : tracker(tracker), seeds(seeds), streamlinesPerSeed(streamlinesPerSeed), jitter(jitter), currentStreamline(0), currentSeed(0)
     {
-        this->totalStreamlines = seeds.n_rows * streamlinesPerSeed;
+        this->totalStreamlines = seeds.rows() * streamlinesPerSeed;
     }
     
     bool more () { return (currentStreamline < totalStreamlines); }
@@ -118,8 +118,7 @@ public:
             if (currentStreamline > 0)
                 currentSeed++;
             
-            // Vectors are columns to Armadillo, so we have to transpose
-            tracker->setSeed(seeds.row(currentSeed).t(), jitter);
+            tracker->setSeed(seeds.row(currentSeed), jitter);
         }
         
         // Generate the streamline

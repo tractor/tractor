@@ -1,4 +1,4 @@
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 #include "Space.h"
 #include "DiffusionModel.h"
@@ -45,7 +45,7 @@ Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, co
             if (Space<3>::zeroVector(referenceDirection))
                 innerProd = currentAvfSample;
             else
-                innerProd = static_cast<float>(fabs(arma::dot(stepVector, referenceDirection)));
+                innerProd = static_cast<float>(fabs(stepVector.dot(referenceDirection)));
             
             // If this direction is closer to the reference direction, choose it
             if (innerProd > highestInnerProd)

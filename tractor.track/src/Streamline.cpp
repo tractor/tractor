@@ -1,4 +1,4 @@
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 #include "Streamline.h"
 
@@ -11,9 +11,9 @@ double Streamline::getLength (const std::vector<Space<3>::Point> &points) const
     else if (fixedSpacing)
     {
         if (pointType == VoxelPointType)
-            return arma::norm((points[1] - points[0]) % voxelDims, 2) * (nPoints - 1);
+            return (points[1] - points[0]).cwiseProduct(voxelDims).norm() * (nPoints - 1);
         else
-            return arma::norm(points[1] - points[0], 2) * (nPoints - 1);
+            return (points[1] - points[0]).norm() * (nPoints - 1);
     }
     else
     {
@@ -21,34 +21,34 @@ double Streamline::getLength (const std::vector<Space<3>::Point> &points) const
         if (pointType == VoxelPointType)
         {
             for (size_t i=1; i<nPoints; i++)
-                length += arma::norm((points[i] - points[i-1]) % voxelDims, 2);
+                length += (points[i] - points[i-1]).cwiseProduct(voxelDims).norm();
         }
         else
         {
             for (size_t i=1; i<nPoints; i++)
-                length += arma::norm(points[i] - points[i-1], 2);
+                length += (points[i] - points[i-1]).norm();
         }
         return length;
     }
 }
 
-size_t Streamline::concatenatePoints (arma::fmat &points) const
+size_t Streamline::concatenatePoints (Eigen::MatrixX3f &points) const
 {
     int nPoints = this->nPoints();
     if (nPoints < 1)
     {
-        points.reset();
+        points.resize(0, 0);
         return 0;
     }
     else
-        points.set_size(nPoints, 3);
+        points.resize(nPoints, 3);
     
     size_t index = 0;
     if (leftPoints.size() > 1)
     {
         for (std::vector<Space<3>::Point>::const_reverse_iterator it=leftPoints.rbegin(); it!=leftPoints.rend()-1; it++)
         {
-            points.row(index) = it->t();
+            points.row(index) = *it;
             index++;
         }
     }
@@ -57,14 +57,14 @@ size_t Streamline::concatenatePoints (arma::fmat &points) const
     {
         for (std::vector<Space<3>::Point>::const_iterator it=rightPoints.begin(); it!=rightPoints.end(); it++)
         {
-            points.row(index) = it->t();
+            points.row(index) = *it;
             index++;
         }
     }
     else
     {
         // The left side can't also have length zero, so grab the seed from there
-        points.row(index) = leftPoints[0].t();
+        points.row(index) = leftPoints[0];
     }
     
     return std::max(static_cast<size_t>(leftPoints.size())-1, size_t(0));

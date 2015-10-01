@@ -1,7 +1,7 @@
 #ifndef _BINARY_STREAM_H_
 #define _BINARY_STREAM_H_
 
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 class BinaryStream
 {
@@ -30,7 +30,7 @@ public:
     
     template <typename SourceType> SourceType readValue ();
     template <typename SourceType, typename FinalType> void readVector (std::vector<FinalType> &values, size_t n);
-    template <typename SourceType, typename FinalType> void readVector (arma::Col<FinalType> &values, size_t n);
+    template <typename SourceType, typename FinalType, int Rows> void readVector (Eigen::Matrix<FinalType,Rows,1> &values, size_t n);
     std::string readString (size_t n);
 };
 
@@ -52,7 +52,7 @@ public:
     template <typename TargetType> void writeValues (const TargetType value, size_t n);
     template <typename TargetType> void writeArray (TargetType * const pointer, size_t n);
     template <typename TargetType, typename OriginalType> void writeVector (const std::vector<OriginalType> &values, size_t n = 0);
-    template <typename TargetType, typename OriginalType> void writeVector (const arma::Col<OriginalType> &values, size_t n = 0);
+    template <typename TargetType, typename OriginalType, int Rows> void writeVector (const Eigen::Matrix<OriginalType,Rows,1> &values, size_t n = 0);
     void writeString (const std::string &value);
 };
 

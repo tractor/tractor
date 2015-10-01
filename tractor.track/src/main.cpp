@@ -1,4 +1,4 @@
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 #include "Space.h"
 #include "NiftiImage.h"
@@ -27,6 +27,11 @@ BEGIN_RCPP
 END_RCPP
 }
 
+float decrement (double x)
+{
+    return static_cast<float>(x - 1.0);
+}
+
 RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetPath, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _profileFunction, SEXP _debugLevel)
 {
 BEGIN_RCPP
@@ -50,7 +55,7 @@ BEGIN_RCPP
     if (Rf_isNull(_rightwardsVector))
         rightwardsVector = Space<3>::zeroVector();
     else
-        rightwardsVector = as<arma::fvec>(_rightwardsVector);
+        rightwardsVector = as<Eigen::VectorXf>(_rightwardsVector);
     tracker.setRightwardsVector(rightwardsVector);
     
     tracker.setInnerProductThreshold(as<float>(_curvatureThreshold));
@@ -65,7 +70,10 @@ BEGIN_RCPP
     
     RNGScope scope;
     
-    TractographyDataSource dataSource(&tracker, as<arma::fmat>(_seeds) - 1.0, as<size_t>(_count), as<bool>(_jitter));
+    NumericMatrix seedsR(_seeds);
+    Eigen::MatrixXf seeds(seedsR.rows(), seedsR.cols());
+    std::transform(seedsR.begin(), seedsR.end(), seeds.data(), decrement);
+    TractographyDataSource dataSource(&tracker, seeds, as<size_t>(_count), as<bool>(_jitter));
     Pipeline<Streamline> pipeline(&dataSource);
     
     LabelCountFilter *hitFilter = NULL;
