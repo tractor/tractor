@@ -3,6 +3,7 @@
 
 library(ore)
 library(tractor.track)
+library(tractor.reg)
 library(tractor.session)
 
 runExperiment <- function ()

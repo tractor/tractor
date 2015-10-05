@@ -78,7 +78,7 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         nRetained <- .Call("track", model$getPointer(), seeds, as.integer(count), maskPath, targetsPath, options$rightwardsVector, as.integer(options$maxSteps), as.double(options$stepLength), as.double(options$curvatureThreshold), isTRUE(options$useLoopcheck), isTRUE(terminateAtTargets), as.integer(filters$minTargetHits), as.numeric(filters$minLength), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), isTRUE(jitter), mapPath, streamlinePath, profileFun, 0L, PACKAGE="tractor.track")
         
         if (nRetained < nrow(seeds) * count)
-            report(OL$Info, "#{nRetained} streamlines (#{nRetained/(nrow(seeds)*count)*100}%) were retained after filtering", signif=3)
+            report(OL$Info, "#{nRetained} streamlines (#{signif(nRetained/(nrow(seeds)*count)*100,3)}%) were retained after filtering")
         
         return (basename)
     }
