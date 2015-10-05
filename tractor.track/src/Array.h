@@ -7,7 +7,7 @@ struct Neighbourhood
 {
     size_t size;
     std::vector<int> widths;
-    Eigen::MatrixXi locs;
+    Eigen::ArrayXi locs;
     std::vector<ptrdiff_t> offsets;
 };
 

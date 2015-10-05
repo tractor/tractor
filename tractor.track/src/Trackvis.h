@@ -14,7 +14,7 @@ private:
     BinaryInputStream binaryStream;
     int nScalars, nProperties;
     size_t totalStreamlines, currentStreamline;
-    Eigen::Vector3f voxelDims;
+    Eigen::Array3f voxelDims;
     
 public:
     TrackvisDataSource ()
@@ -46,7 +46,7 @@ private:
     std::ofstream fileStream;
     BinaryOutputStream binaryStream;
     size_t totalStreamlines;
-    Eigen::Vector3f voxelDims;
+    Eigen::Array3f voxelDims;
     
 public:
     static std::map<int,char> orientationCodeMap;

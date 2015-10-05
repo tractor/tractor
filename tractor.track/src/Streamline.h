@@ -22,7 +22,7 @@ private:
     Streamline::PointType pointType;
     
     // Voxel dimensions, needed for converting between voxel and world point types
-    Eigen::VectorXf voxelDims;
+    Eigen::ArrayXf voxelDims;
     
     // A set of integer labels associated with the streamline, indicating, for
     // example, the anatomical regions that the streamline passes through
@@ -55,14 +55,14 @@ public:
     void setLabels (const std::set<int> &labels)    { this->labels = labels; }
     void clearLabels ()                             { labels.clear(); }
     
-    size_t concatenatePoints (Eigen::MatrixX3f &points) const;
+    size_t concatenatePoints (Eigen::ArrayX3f &points) const;
 };
 
 class StreamlineMatrixDataSink : public DataSink<Streamline>
 {
 private:
-    Eigen::MatrixX3f points;
-    Eigen::Matrix<unsigned int,Eigen::Dynamic,1> startIndices, seedIndices;
+    Eigen::ArrayX3f points;
+    Eigen::Array<unsigned int,Eigen::Dynamic,1> startIndices, seedIndices;
     size_t currentIndex, currentStart, nTotalPoints;
     
 public:
@@ -81,7 +81,7 @@ public:
     
     void put (const Streamline &data)
     {
-        Eigen::MatrixX3f currentPoints;
+        Eigen::ArrayX3f currentPoints;
         size_t seedIndex = data.concatenatePoints(currentPoints);
         if (currentPoints.rows() != 0)
         {
@@ -93,9 +93,9 @@ public:
         }
     }
     
-    const Eigen::MatrixX3f & getPoints () { return points; }
-    const Eigen::Matrix<unsigned int,Eigen::Dynamic,1> & getStartIndices () { return startIndices; }
-    const Eigen::Matrix<unsigned int,Eigen::Dynamic,1> & getSeedIndices () { return seedIndices; }
+    const Eigen::ArrayX3f & getPoints () { return points; }
+    const Eigen::Array<unsigned int,Eigen::Dynamic,1> & getStartIndices () { return startIndices; }
+    const Eigen::Array<unsigned int,Eigen::Dynamic,1> & getSeedIndices () { return seedIndices; }
 };
 
 #endif

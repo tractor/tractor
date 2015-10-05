@@ -180,7 +180,7 @@ Streamline Tracker::run ()
             }
             
             // Update streamline front and previous step
-            loc += currentStep.cwiseQuotient(voxelDims) * sign * stepLength;
+            loc += currentStep.array() / voxelDims * sign * stepLength;
             previousStep = currentStep * sign;
             logger.debug3.indent() << "New location is " << loc << endl;
             

@@ -64,6 +64,20 @@ void BinaryInputStream::readVector (Eigen::Matrix<FinalType,Rows,1> &values, siz
     }
 }
 
+template <typename SourceType, typename FinalType, int Rows>
+void BinaryInputStream::readVector (Eigen::Array<FinalType,Rows,1> &values, size_t n)
+{
+    values.resize(n);
+    SourceType value;
+    for (size_t i=0; i<n; i++)
+    {
+        stream->read((char *) &value, sizeof(SourceType));
+        if (swapEndian)
+            swap(&value);
+        values[i] = static_cast<FinalType>(value);
+    }
+}
+
 std::string BinaryInputStream::readString (size_t n)
 {
     char *value = new char[n];
@@ -133,6 +147,22 @@ void BinaryOutputStream::writeVector (const Eigen::Matrix<OriginalType,Rows,1> &
     }
 }
 
+template <typename TargetType, typename OriginalType, int Rows>
+void BinaryOutputStream::writeVector (const Eigen::Array<OriginalType,Rows,1> &values, size_t n)
+{
+    if (n == 0)
+        n = values.size();
+    
+    TargetType value;
+    for (size_t i=0; i<n; i++)
+    {
+        value = static_cast<TargetType>(values[i]);
+        if (swapEndian)
+            swap(&value);
+        stream->write((const char *) &value, sizeof(TargetType));
+    }
+}
+
 void BinaryOutputStream::writeString (const std::string &value)
 {
     stream->write(value.c_str(), value.length());
@@ -146,6 +176,7 @@ template void BinaryInputStream::readVector<float,float> (std::vector<float> &va
 template void BinaryInputStream::readVector<int16_t,int> (std::vector<int> &values, size_t n);
 
 template void BinaryInputStream::readVector<float> (Eigen::Vector3f &values, size_t n);
+template void BinaryInputStream::readVector<float> (Eigen::Array3f &values, size_t n);
 
 template void BinaryOutputStream::writeValue<int16_t> (int16_t value);
 template void BinaryOutputStream::writeValue<int32_t> (int32_t value);
@@ -155,6 +186,8 @@ template void BinaryOutputStream::writeValues<float> (float value, size_t n);
 
 template void BinaryOutputStream::writeArray<float> (float * const pointer, size_t n);
 
-template void BinaryOutputStream::writeVector<float>(Eigen::Vector3f const &values, size_t n);
-template void BinaryOutputStream::writeVector<float,float>(std::vector<float> const &values, size_t n);
-template void BinaryOutputStream::writeVector<int16_t,int>(std::vector<int> const &values, size_t n);
+template void BinaryOutputStream::writeVector<float,float>(const std::vector<float> &values, size_t n);
+template void BinaryOutputStream::writeVector<int16_t,int>(const std::vector<int> &values, size_t n);
+
+template void BinaryOutputStream::writeVector<float>(const Eigen::Vector3f &values, size_t n);
+template void BinaryOutputStream::writeVector<float>(const Eigen::Array3f &values, size_t n);

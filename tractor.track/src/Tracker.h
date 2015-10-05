@@ -19,7 +19,7 @@ private:
     
     Array<short> *maskData;
     std::vector<int> spaceDims;
-    Eigen::Vector3f voxelDims;
+    Eigen::Array3f voxelDims;
     Array<int> *targetData;
     
     Array<Space<3>::Vector> *loopcheck;
@@ -93,12 +93,12 @@ class TractographyDataSource : public DataSource<Streamline>
 {
 private:
     Tracker *tracker;
-    Eigen::MatrixX3f seeds;
+    Eigen::ArrayX3f seeds;
     bool jitter;
     size_t streamlinesPerSeed, totalStreamlines, currentStreamline, currentSeed;
     
 public:
-    TractographyDataSource (Tracker * const tracker, const Eigen::MatrixX3f &seeds, const size_t streamlinesPerSeed, const bool jitter)
+    TractographyDataSource (Tracker * const tracker, const Eigen::ArrayX3f &seeds, const size_t streamlinesPerSeed, const bool jitter)
         : tracker(tracker), seeds(seeds), streamlinesPerSeed(streamlinesPerSeed), jitter(jitter), currentStreamline(0), currentSeed(0)
     {
         this->totalStreamlines = seeds.rows() * streamlinesPerSeed;

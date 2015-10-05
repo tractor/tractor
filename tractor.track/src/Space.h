@@ -6,7 +6,7 @@
 template <int Dimensionality, typename DataType = float> class Space
 {
 public:
-    typedef typename Eigen::Matrix<DataType,Dimensionality,1> Point;
+    typedef typename Eigen::Array<DataType,Dimensionality,1> Point;
     typedef typename Eigen::Matrix<DataType,Dimensionality,1> Vector;
     
     static const Vector zeroVector ()

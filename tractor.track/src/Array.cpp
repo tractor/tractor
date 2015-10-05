@@ -50,7 +50,7 @@ Neighbourhood Array<DataType>::getNeighbourhood (const std::vector<int> &widths)
         steps[i+1] = steps[i] * dims[i];
     }
     
-    neighbourhood.locs = Eigen::MatrixXi(neighbourhood.size, nDims);
+    neighbourhood.locs = Eigen::ArrayXi(neighbourhood.size, nDims);
     neighbourhood.offsets = std::vector<ptrdiff_t>(neighbourhood.size);
     
     for (int j=0; j<neighbourhood.size; j++)

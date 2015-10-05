@@ -17,7 +17,7 @@ void RCallbackDataSink::setup (const size_type &count, const_iterator begin, con
 
 void RCallbackDataSink::put (const Streamline &data)
 {
-    Eigen::MatrixX3f currentPoints;
+    Eigen::ArrayX3f currentPoints;
     size_t seedIndex = data.concatenatePoints(currentPoints);
     if (currentPoints.rows() != 0)
     {

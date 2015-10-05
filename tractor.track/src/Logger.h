@@ -55,6 +55,20 @@ public:
         return *this;
     }
     
+    template<typename DataType, int Rows>
+    LoggerStream & operator<< (const Eigen::Array<DataType,Rows,1> &arg)
+    {
+        if (*outputLevel >= myLevel)
+        {
+            Rcpp::Rcout << "(";
+            for (int i=0; i<arg.size(); i++)
+                Rcpp::Rcout << "\x1b[36m" << arg[i] << "\x1b[0m, ";
+            Rcpp::Rcout << "\b\b)";
+        }
+        
+        return *this;
+    }
+    
     LoggerStream & operator<< (const double &arg)
     {
         if (*outputLevel >= myLevel)

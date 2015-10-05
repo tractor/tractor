@@ -88,12 +88,13 @@ void TrackvisDataSource::get (Streamline &data)
     {
         Space<3>::Point point;
         binaryStream.readVector<float>(point, 3);
-        leftPoints.push_back(point);
+        // TrackVis indexes from the left edge of each voxel
+        leftPoints.push_back(point / voxelDims - 0.5);
         if (nScalars > 0)
             fileStream.seekg(4 * nScalars, ios::cur);
     }
     
-    data = Streamline(leftPoints, rightPoints, Streamline::WorldPointType, voxelDims, false);
+    data = Streamline(leftPoints, rightPoints, Streamline::VoxelPointType, voxelDims, false);
     
     if (nProperties > 0)
         fileStream.seekg(4 * nProperties, ios::cur);
@@ -162,14 +163,15 @@ void TrackvisDataSink::setup (const size_type &count, const_iterator begin, cons
 void TrackvisDataSink::put (const Streamline &data)
 {
     int nPoints = data.nPoints();
-    Eigen::MatrixX3f points;
+    Eigen::ArrayX3f points;
     
     data.concatenatePoints(points);
     
     binaryStream.writeValue<int32_t>(nPoints);
     for (int i=0; i<nPoints; i++)
     {
-        Eigen::Vector3f row = points.row(i).cwiseProduct(voxelDims.transpose());
+        // TrackVis indexes from the left edge of each voxel
+        Eigen::Array3f row = (points.row(i) + 0.5) * voxelDims.transpose();
         binaryStream.writeVector<float>(row);
     }
 }

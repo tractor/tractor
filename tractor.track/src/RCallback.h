@@ -10,8 +10,8 @@ class RCallbackDataSink : public DataSink<Streamline>
 {
 private:
     Rcpp::Function function;
-    Eigen::MatrixX3f points;
-    Eigen::Matrix<unsigned int,Eigen::Dynamic,1> startIndices, seedIndices;
+    Eigen::ArrayX3f points;
+    Eigen::Array<unsigned int,Eigen::Dynamic,1> startIndices, seedIndices;
     size_t currentIndex, currentStart, nTotalPoints;
     
 public:

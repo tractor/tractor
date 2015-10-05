@@ -11,9 +11,9 @@ double Streamline::getLength (const std::vector<Space<3>::Point> &points) const
     else if (fixedSpacing)
     {
         if (pointType == VoxelPointType)
-            return (points[1] - points[0]).cwiseProduct(voxelDims).norm() * (nPoints - 1);
+            return ((points[1] - points[0]) * voxelDims).matrix().norm() * (nPoints - 1);
         else
-            return (points[1] - points[0]).norm() * (nPoints - 1);
+            return (points[1] - points[0]).matrix().norm() * (nPoints - 1);
     }
     else
     {
@@ -21,18 +21,18 @@ double Streamline::getLength (const std::vector<Space<3>::Point> &points) const
         if (pointType == VoxelPointType)
         {
             for (size_t i=1; i<nPoints; i++)
-                length += (points[i] - points[i-1]).cwiseProduct(voxelDims).norm();
+                length += ((points[i] - points[i-1]) * voxelDims).matrix().norm();
         }
         else
         {
             for (size_t i=1; i<nPoints; i++)
-                length += (points[i] - points[i-1]).norm();
+                length += (points[i] - points[i-1]).matrix().norm();
         }
         return length;
     }
 }
 
-size_t Streamline::concatenatePoints (Eigen::MatrixX3f &points) const
+size_t Streamline::concatenatePoints (Eigen::ArrayX3f &points) const
 {
     int nPoints = this->nPoints();
     if (nPoints < 1)

@@ -73,7 +73,7 @@ BEGIN_RCPP
     NumericMatrix seedsR(_seeds);
     Eigen::MatrixXf seeds(seedsR.rows(), seedsR.cols());
     std::transform(seedsR.begin(), seedsR.end(), seeds.data(), decrement);
-    TractographyDataSource dataSource(&tracker, seeds, as<size_t>(_count), as<bool>(_jitter));
+    TractographyDataSource dataSource(&tracker, seeds.array(), as<size_t>(_count), as<bool>(_jitter));
     Pipeline<Streamline> pipeline(&dataSource);
     
     LabelCountFilter *hitFilter = NULL;
