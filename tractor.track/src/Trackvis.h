@@ -9,7 +9,7 @@
 
 class TrackvisDataSource : public DataSource<Streamline>
 {
-private:
+protected:
     std::ifstream fileStream;
     BinaryInputStream binaryStream;
     int nScalars, nProperties;
@@ -22,10 +22,10 @@ public:
         binaryStream.attach(&fileStream);
     }
     
-    TrackvisDataSource (const std::string &fileName)
+    TrackvisDataSource (const std::string &fileStem)
     {
         binaryStream.attach(&fileStream);
-        attach(fileName);
+        attach(fileStem);
     }
     
     ~TrackvisDataSource ()
@@ -35,14 +35,44 @@ public:
             fileStream.close();
     }
     
-    void attach (const std::string &fileName);
+    virtual void attach (const std::string &fileStem);
+    bool more ();
+    void get (Streamline &data);
+};
+
+class AugmentedTrackvisDataSource : public TrackvisDataSource
+{
+protected:
+    std::ifstream auxFileStream;
+    BinaryInputStream auxBinaryStream;
+    
+public:
+    AugmentedTrackvisDataSource ()
+    {
+        auxBinaryStream.attach(&auxFileStream);
+    }
+    
+    AugmentedTrackvisDataSource (const std::string &fileStem)
+    {
+        auxBinaryStream.attach(&auxFileStream);
+        attach(fileStem);
+    }
+    
+    ~AugmentedTrackvisDataSource ()
+    {
+        auxBinaryStream.detach();
+        if (auxFileStream.is_open())
+            auxFileStream.close();
+    }
+    
+    void attach (const std::string &fileStem);
     bool more ();
     void get (Streamline &data);
 };
 
 class TrackvisDataSink : public DataSink<Streamline>
 {
-private:
+protected:
     std::ofstream fileStream;
     BinaryOutputStream binaryStream;
     size_t totalStreamlines;
@@ -69,11 +99,11 @@ public:
         binaryStream.swapEndianness(false);
     }
     
-    TrackvisDataSink (const std::string &fileName, const NiftiImage &image)
+    TrackvisDataSink (const std::string &fileStem, const NiftiImage &image)
     {
         binaryStream.attach(&fileStream);
         binaryStream.swapEndianness(false);
-        attach(fileName, image);
+        attach(fileStem, image);
     }
     
     ~TrackvisDataSink ()
@@ -83,10 +113,41 @@ public:
             fileStream.close();
     }
     
-    void attach (const std::string &fileName, const NiftiImage &image);
+    virtual void attach (const std::string &fileStem, const NiftiImage &image);
     void setup (const size_type &count, const_iterator begin, const_iterator end);
     void put (const Streamline &data);
     void done ();
+};
+
+class AugmentedTrackvisDataSink : public TrackvisDataSink
+{
+protected:
+    std::ofstream auxFileStream;
+    BinaryOutputStream auxBinaryStream;
+    std::map<int,std::string> labelDictionary;
+    
+public:
+    AugmentedTrackvisDataSink ()
+    {
+        auxBinaryStream.attach(&auxFileStream);
+        auxBinaryStream.swapEndianness(false);
+    }
+    
+    AugmentedTrackvisDataSink (const std::string &fileStem, const NiftiImage &image)
+    {
+        auxBinaryStream.attach(&auxFileStream);
+        auxBinaryStream.swapEndianness(false);
+        attach(fileStem, image);
+    }
+    
+    ~AugmentedTrackvisDataSink ()
+    {
+        auxBinaryStream.detach();
+        if (auxFileStream.is_open())
+            auxFileStream.close();
+    }
+    
+    void attach (const std::string &fileStem, const NiftiImage &image);
 };
 
 #endif

@@ -71,7 +71,7 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         if (requireMap)
             mapPath <- basename
         if (requireStreamlines)
-            streamlinePath <- ensureFileSuffix(basename, "trk")
+            streamlinePath <- basename
         
         seeds <- promote(seeds, byrow=TRUE)
         

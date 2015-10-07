@@ -39,12 +39,12 @@ std::map<int,char> TrackvisDataSink::orientationCodeMap = TrackvisDataSink::crea
 // 
 // Source: Trackvis documentation (http://www.trackvis.org/docs/?subsect=fileformat)
 
-void TrackvisDataSource::attach (const std::string &fileName)
+void TrackvisDataSource::attach (const std::string &fileStem)
 {
     if (fileStream.is_open())
         fileStream.close();
     
-    fileStream.open(fileName.c_str(), ios::binary);
+    fileStream.open(fileStem + ".trk", ios::binary);
     
     int32_t headerSize;
     fileStream.seekg(996);
@@ -75,6 +75,16 @@ void TrackvisDataSource::attach (const std::string &fileName)
     currentStreamline = 0;
 }
 
+void AugmentedTrackvisDataSource::attach (const std::string &fileStem)
+{
+    TrackvisDataSource::attach(fileStem);
+    
+    if (auxFileStream.is_open())
+        auxFileStream.close();
+    
+    auxFileStream.open(fileStem + ".trka", ios::binary);
+}
+
 bool TrackvisDataSource::more ()
 {
     return (currentStreamline < totalStreamlines);
@@ -101,7 +111,7 @@ void TrackvisDataSource::get (Streamline &data)
     currentStreamline++;
 }
 
-void TrackvisDataSink::attach (const std::string &fileName, const NiftiImage &image)
+void TrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &image)
 {
     if (image.getDimensionality() < 3)
         throw std::invalid_argument("Specified image has less than three dimensions");
@@ -109,7 +119,7 @@ void TrackvisDataSink::attach (const std::string &fileName, const NiftiImage &im
     if (fileStream.is_open())
         fileStream.close();
     
-    fileStream.open(fileName.c_str(), ios::binary);
+    fileStream.open(fileStem + ".trk", ios::binary);
     
     char magicNumber[6] = { 'T','R','A','C','K','\0' };
     fileStream.seekp(0);
@@ -151,6 +161,17 @@ void TrackvisDataSink::attach (const std::string &fileName, const NiftiImage &im
     
     totalStreamlines = 0;
     std::copy(image.getVoxelDimensions().begin(), image.getVoxelDimensions().begin()+3, voxelDims.data());
+}
+
+void AugmentedTrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &image)
+{
+    if (auxFileStream.is_open())
+        auxFileStream.close();
+    
+    auxFileStream.open(fileStem + ".trka", ios::binary);
+    
+    // File version number
+    auxBinaryStream.writeValue<int32_t>(1);
 }
 
 void TrackvisDataSink::setup (const size_type &count, const_iterator begin, const_iterator end)
