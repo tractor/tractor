@@ -48,7 +48,7 @@ void RCallbackDataSink::finish ()
 void ProfileMatrixDataSink::put (const Streamline &data)
 {
     const std::set<int> &labels = data.getLabels();
-    for (std::set<int>::iterator it=labels.begin(); it!=labels.end(); it++)
+    for (std::set<int>::const_iterator it=labels.begin(); it!=labels.end(); it++)
     {
         if (counts.count(*it) == 0)
             counts[*it] = 1;

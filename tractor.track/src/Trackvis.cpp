@@ -165,6 +165,8 @@ void TrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &im
 
 void AugmentedTrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &image)
 {
+    TrackvisDataSink::attach(fileStem, image);
+    
     if (auxFileStream.is_open())
         auxFileStream.close();
     
@@ -172,6 +174,24 @@ void AugmentedTrackvisDataSink::attach (const std::string &fileStem, const Nifti
     
     // File version number
     auxBinaryStream.writeValue<int32_t>(1);
+    
+    // Number of streamlines, unknown at this point
+    auxBinaryStream.writeValue<int32_t>(0);
+    
+    // Number of labels
+    auxBinaryStream.writeValue<int32_t>(labelDictionary.size());
+    
+    // 20 bytes' padding for future versions
+    auxBinaryStream.writeValues<int32_t>(0, 5);
+    
+    // Write out label dictionary
+    for (std::map<int,std::string>::const_iterator it=labelDictionary.begin(); it!=labelDictionary.end(); it++)
+    {
+        const std::pair<int,std::string> &element = *it;
+        auxBinaryStream.writeValue<int32_t>(element.first);
+        auxBinaryStream.writeString(element.second);
+        auxBinaryStream.writeValue<char>(0);
+    }
 }
 
 void TrackvisDataSink::setup (const size_type &count, const_iterator begin, const_iterator end)
@@ -197,8 +217,29 @@ void TrackvisDataSink::put (const Streamline &data)
     }
 }
 
+void AugmentedTrackvisDataSink::put (const Streamline &data)
+{
+    TrackvisDataSink::put(data);
+    
+    auxBinaryStream.writeValue<int32_t>(data.nPoints());
+    auxBinaryStream.writeValue<int32_t>(data.getSeedIndex());
+    
+    const std::set<int> &labels = data.getLabels();
+    auxBinaryStream.writeValue<int32_t>(labels.size());
+    for (std::set<int>::const_iterator it=labels.begin(); it!=labels.end(); it++)
+        auxBinaryStream.writeValue<int32_t>(*it);
+}
+
 void TrackvisDataSink::done ()
 {
     fileStream.seekp(988);
+    binaryStream.writeValue<int32_t>(totalStreamlines);
+}
+
+void AugmentedTrackvisDataSink::done ()
+{
+    TrackvisDataSink::done();
+    
+    fileStream.seekp(4);
     binaryStream.writeValue<int32_t>(totalStreamlines);
 }

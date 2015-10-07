@@ -67,5 +67,5 @@ size_t Streamline::concatenatePoints (Eigen::ArrayX3f &points) const
         points.row(index) = leftPoints[0];
     }
     
-    return std::max(static_cast<size_t>(leftPoints.size())-1, size_t(0));
+    return getSeedIndex();
 }

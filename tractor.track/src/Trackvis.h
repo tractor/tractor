@@ -66,8 +66,6 @@ public:
     }
     
     void attach (const std::string &fileStem);
-    bool more ();
-    void get (Streamline &data);
 };
 
 class TrackvisDataSink : public DataSink<Streamline>
@@ -133,7 +131,8 @@ public:
         auxBinaryStream.swapEndianness(false);
     }
     
-    AugmentedTrackvisDataSink (const std::string &fileStem, const NiftiImage &image)
+    AugmentedTrackvisDataSink (const std::string &fileStem, const NiftiImage &image, const std::map<int,std::string> labelDictionary)
+        : labelDictionary(labelDictionary)
     {
         auxBinaryStream.attach(&auxFileStream);
         auxBinaryStream.swapEndianness(false);
@@ -148,6 +147,8 @@ public:
     }
     
     void attach (const std::string &fileStem, const NiftiImage &image);
+    void put (const Streamline &data);
+    void done ();
 };
 
 #endif

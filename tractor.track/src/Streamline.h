@@ -41,6 +41,7 @@ public:
         : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), voxelDims(voxelDims), fixedSpacing(fixedSpacing) {}
     
     size_t nPoints () const { return std::max(static_cast<size_t>(leftPoints.size()+rightPoints.size())-1, size_t(0)); }
+    size_t getSeedIndex () const { return std::max(static_cast<size_t>(leftPoints.size())-1, size_t(0)); }
     
     const std::vector<Space<3>::Point> & getLeftPoints() const { return leftPoints; }
     const std::vector<Space<3>::Point> & getRightPoints() const { return rightPoints; }

@@ -165,7 +165,7 @@ void BinaryOutputStream::writeVector (const Eigen::Array<OriginalType,Rows,1> &v
 
 void BinaryOutputStream::writeString (const std::string &value)
 {
-    stream->write(value.c_str(), value.length());
+    stream->write(value.data(), value.length());
 }
 
 // Explicit declarations to ensure code is generated
@@ -178,11 +178,13 @@ template void BinaryInputStream::readVector<int16_t,int> (std::vector<int> &valu
 template void BinaryInputStream::readVector<float> (Eigen::Vector3f &values, size_t n);
 template void BinaryInputStream::readVector<float> (Eigen::Array3f &values, size_t n);
 
+template void BinaryOutputStream::writeValue<char> (char value);
 template void BinaryOutputStream::writeValue<int16_t> (int16_t value);
 template void BinaryOutputStream::writeValue<int32_t> (int32_t value);
 
 template void BinaryOutputStream::writeValues<char> (char value, size_t n);
 template void BinaryOutputStream::writeValues<float> (float value, size_t n);
+template void BinaryOutputStream::writeValues<int32_t> (int32_t value, size_t n);
 
 template void BinaryOutputStream::writeArray<float> (float * const pointer, size_t n);
 
