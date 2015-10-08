@@ -240,6 +240,6 @@ void AugmentedTrackvisDataSink::done ()
 {
     TrackvisDataSink::done();
     
-    fileStream.seekp(4);
-    binaryStream.writeValue<int32_t>(totalStreamlines);
+    auxFileStream.seekp(4);
+    auxBinaryStream.writeValue<int32_t>(totalStreamlines);
 }

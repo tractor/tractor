@@ -130,7 +130,7 @@ runExperiment <- function ()
     if (!is.null(targetRegions))
         targetInfo <- mergeRegions(targetRegions)
     else
-        targetInfo <- list(image=NULL, indices=integer(0), labels=character(0))
+        targetInfo <- list(image=NULL, indices=NULL, labels=NULL)
     
     if (requireProfile && length(targetInfo$indices) > 0)
     {
@@ -152,7 +152,8 @@ runExperiment <- function ()
     else
         minTargetHits <- as.integer(minTargetHits)
     
-    tracker <- session$getTracker(mask, targetInfo$image)
+    tracker <- session$getTracker(mask)
+    tracker$setTargets(targetInfo)
     tracker$setFilters(minLength=minLength, minTargetHits=minTargetHits)
     
     if (strategy == "global")

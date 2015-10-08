@@ -104,7 +104,7 @@ public:
         attach(fileStem, image);
     }
     
-    ~TrackvisDataSink ()
+    virtual ~TrackvisDataSink ()
     {
         binaryStream.detach();
         if (fileStream.is_open())

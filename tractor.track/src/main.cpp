@@ -32,7 +32,7 @@ float decrement (double x)
     return static_cast<float>(x - 1.0);
 }
 
-RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetPath, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _profileFunction, SEXP _debugLevel)
+RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetInfo, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _profileFunction, SEXP _debugLevel)
 {
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
@@ -62,9 +62,10 @@ BEGIN_RCPP
     tracker.setStepLength(as<float>(_stepLength));
     tracker.setMaxSteps(as<int>(_maxSteps));
     
-    if (!Rf_isNull(_targetPath))
+    List targetInfo(_targetInfo);
+    if (!Rf_isNull(targetInfo["path"]))
     {
-        NiftiImage targets(as<std::string>(_targetPath));
+        NiftiImage targets(as<std::string>(targetInfo["path"]));
         tracker.setTargets(&targets);
     }
     
@@ -104,7 +105,18 @@ BEGIN_RCPP
     }
     if (!Rf_isNull(_trkPath))
     {
-        trkFile = new TrackvisDataSink(as<std::string>(_trkPath), *mask);
+        if (!Rf_isNull(targetInfo["indices"]) && !Rf_isNull(targetInfo["labels"]))
+        {
+            IntegerVector indices = targetInfo["indices"];
+            CharacterVector labels = targetInfo["labels"];
+            std::map<int,std::string> labelDictionary;
+            for (int i=0; i<std::min(indices.size(),labels.size()); i++)
+                labelDictionary[indices[i]] = labels[i];
+            trkFile = new AugmentedTrackvisDataSink(as<std::string>(_trkPath), *mask, labelDictionary);
+        }
+        else
+            trkFile = new TrackvisDataSink(as<std::string>(_trkPath), *mask);
+        
         pipeline.addSink(trkFile);
     }
     if (!Rf_isNull(_profileFunction))

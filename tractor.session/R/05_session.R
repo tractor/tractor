@@ -80,7 +80,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getRegistrationTargetFileName = function (space) { return (.self$getImageFileNameByType(.RegistrationTargets[[space]], space)) },
     
-    getTracker = function (mask = NULL, targets = NULL)
+    getTracker = function (mask = NULL)
     {
         if (!("diffusionModel" %in% names(objectCache.)))
         {
@@ -93,7 +93,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         if (is.null(mask))
             mask <- getImageFileNameByType("mask", "diffusion")
         
-        return (tractor.track::Tracker$new(objectCache.$diffusionModel, mask, targets))
+        return (tractor.track::Tracker$new(objectCache.$diffusionModel, mask))
     },
     
     getTransformation = function (sourceSpace, targetSpace)
