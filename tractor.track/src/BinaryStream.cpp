@@ -179,6 +179,7 @@ template void BinaryInputStream::readVector<float> (Eigen::Vector3f &values, siz
 template void BinaryInputStream::readVector<float> (Eigen::Array3f &values, size_t n);
 
 template void BinaryOutputStream::writeValue<char> (char value);
+template void BinaryOutputStream::writeValue<float> (float value);
 template void BinaryOutputStream::writeValue<int16_t> (int16_t value);
 template void BinaryOutputStream::writeValue<int32_t> (int32_t value);
 

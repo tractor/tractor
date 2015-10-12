@@ -131,8 +131,9 @@ void TrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &im
     
     binaryStream.writeValue<int16_t>(0);
     binaryStream.writeValues<char>(0, 200);
-    binaryStream.writeValue<int16_t>(0);
-    binaryStream.writeValues<char>(0, 200);
+    binaryStream.writeValue<int16_t>(1);
+    fileStream.write("seed", 4);
+    binaryStream.writeValues<char>(0, 196);
     
     ::mat44 xform = image.getXformStruct();
     binaryStream.writeArray<float>(xform.m[0], 16);
@@ -215,6 +216,12 @@ void TrackvisDataSink::put (const Streamline &data)
         Eigen::Array3f row = (points.row(i) + 0.5) * voxelDims.transpose();
         binaryStream.writeVector<float>(row);
     }
+    
+    // In practice, we should be able to squeeze the seed index into a float, but check
+    const size_t seedIndex = data.getSeedIndex();
+    if (seedIndex > 16777216)
+        Rf_warning("Seed index %lu is not representable exactly as a 32-bit floating point value\n", seedIndex);
+    binaryStream.writeValue<float>(seedIndex);
 }
 
 void AugmentedTrackvisDataSink::put (const Streamline &data)
