@@ -46,6 +46,9 @@ void TrackvisDataSource::attach (const std::string &fileStem)
     
     fileStream.open(fileStem + ".trk", ios::binary);
     
+    // Must be -1 if there is no seed property, for get()
+    seedProperty = -1;
+    
     int32_t headerSize;
     fileStream.seekg(996);
     fileStream.read((char *) &headerSize, sizeof(int32_t));
@@ -68,6 +71,14 @@ void TrackvisDataSource::attach (const std::string &fileStem)
     nScalars = binaryStream.readValue<int16_t>();
     fileStream.seekg(200, ios::cur);
     nProperties = binaryStream.readValue<int16_t>();
+    for (int i=0; i<nProperties; i++)
+    {
+        if (binaryStream.readString(20) == "seed")
+        {
+            seedProperty = i;
+            break;
+        }
+    }
     fileStream.seekg(988, ios::beg);
     totalStreamlines = binaryStream.readValue<int32_t>();
     
@@ -93,18 +104,32 @@ bool TrackvisDataSource::more ()
 void TrackvisDataSource::get (Streamline &data)
 {
     int32_t nPoints = binaryStream.readValue<int32_t>();
-    vector<Space<3>::Point> leftPoints, rightPoints;
+    if (nPoints == 0)
+        return;
+    
+    vector<Space<3>::Point> points;
+    int seed = 0;
     for (int32_t i=0; i<nPoints; i++)
     {
         Space<3>::Point point;
         binaryStream.readVector<float>(point, 3);
         // TrackVis indexes from the left edge of each voxel
-        leftPoints.push_back(point / voxelDims - 0.5);
+        points.push_back(point / voxelDims - 0.5);
+        
+        if (seedProperty >= 0)
+        {
+            fileStream.seekg(4 * seedProperty, ios::cur);
+            seed = static_cast<int>(binaryStream.readValue<float>());
+        }
         if (nScalars > 0)
-            fileStream.seekg(4 * nScalars, ios::cur);
+            fileStream.seekg(4 * (nScalars-seedProperty-1), ios::cur);
     }
     
-    data = Streamline(leftPoints, rightPoints, Streamline::VoxelPointType, voxelDims, false);
+    data = Streamline(vector<Space<3>::Point>(points.rend()-seed-1, points.rend()),
+                      vector<Space<3>::Point>(points.begin()+seed, points.end()),
+                      Streamline::VoxelPointType,
+                      voxelDims,
+                      false);
     
     if (nProperties > 0)
         fileStream.seekg(4 * nProperties, ios::cur);

@@ -12,7 +12,7 @@ class TrackvisDataSource : public DataSource<Streamline>
 protected:
     std::ifstream fileStream;
     BinaryInputStream binaryStream;
-    int nScalars, nProperties;
+    int nScalars, nProperties, seedProperty;
     size_t totalStreamlines, currentStreamline;
     Eigen::Array3f voxelDims;
     

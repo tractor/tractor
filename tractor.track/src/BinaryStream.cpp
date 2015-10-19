@@ -169,6 +169,7 @@ void BinaryOutputStream::writeString (const std::string &value)
 }
 
 // Explicit declarations to ensure code is generated
+template float BinaryInputStream::readValue<float> ();
 template int16_t BinaryInputStream::readValue<int16_t> ();
 template int32_t BinaryInputStream::readValue<int32_t> ();
 
