@@ -32,16 +32,21 @@ void RCallbackDataSink::put (const Streamline &data)
 void RCallbackDataSink::finish ()
 {
     Rcpp::NumericMatrix pointsR(points.rows(), 3);
-    Rcpp::IntegerVector startIndicesR(startIndices.size());
-    Rcpp::IntegerVector seedIndicesR(seedIndices.size());
+    Rcpp::IntegerVector startIndicesR(startIndices.rows());
+    Rcpp::IntegerVector seedIndicesR(seedIndices.rows());
     for (size_t i=0; i<points.rows(); i++)
     {
         pointsR(i,0) = points(i,0) + 1.0;
         pointsR(i,1) = points(i,1) + 1.0;
         pointsR(i,2) = points(i,2) + 1.0;
-        startIndicesR[i] = static_cast<int>(startIndices[i]) + 1;
-        seedIndicesR[i] = static_cast<int>(seedIndices[i]) + 1;
     }
+    
+    for (size_t j=0; j<startIndices.rows(); j++)
+    {
+        startIndicesR[j] = static_cast<int>(startIndices(j,0)) + 1;
+        seedIndicesR[j] = static_cast<int>(seedIndices(j,0)) + 1;
+    }
+    
     function(pointsR, startIndicesR, seedIndicesR);
 }
 
