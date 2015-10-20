@@ -68,6 +68,23 @@ public:
     void attach (const std::string &fileStem);
 };
 
+class TrackvisMedianDataSource : public TrackvisDataSource
+{
+protected:
+    bool read;
+    double quantile;
+    
+public:
+    TrackvisMedianDataSource ()
+        : read(false) {}
+    
+    TrackvisMedianDataSource (const std::string &fileStem, const double quantile = 0.99)
+        : TrackvisDataSource(fileStem), quantile(quantile), read(false) {}
+    
+    bool more ();
+    void get (Streamline &data);
+};
+
 class TrackvisDataSink : public DataSink<Streamline>
 {
 protected:

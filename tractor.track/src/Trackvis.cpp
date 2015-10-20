@@ -60,7 +60,7 @@ void TrackvisDataSource::attach (const std::string &fileStem)
         throw runtime_error("Trackvis file does not declare the expected header size");
     
     fileStream.seekg(0);
-    if (binaryStream.readString(5) != "TRACK")
+    if (binaryStream.readString(6).compare(0,5,"TRACK") != 0)
         throw runtime_error("Trackvis file does not seem to have a valid magic number");
     
     vector<int> imageDims;
@@ -71,9 +71,9 @@ void TrackvisDataSource::attach (const std::string &fileStem)
     nScalars = binaryStream.readValue<int16_t>();
     fileStream.seekg(200, ios::cur);
     nProperties = binaryStream.readValue<int16_t>();
-    for (int i=0; i<nProperties; i++)
+    for (int i=0; i<std::min(nProperties,10); i++)
     {
-        if (binaryStream.readString(20) == "seed")
+        if (binaryStream.readString(20).compare(0,4,"seed") == 0)
         {
             seedProperty = i;
             break;
@@ -101,39 +101,139 @@ bool TrackvisDataSource::more ()
     return (currentStreamline < totalStreamlines);
 }
 
+bool TrackvisMedianDataSource::more ()
+{
+    return (!read);
+}
+
 void TrackvisDataSource::get (Streamline &data)
 {
     int32_t nPoints = binaryStream.readValue<int32_t>();
-    if (nPoints == 0)
-        return;
-    
-    vector<Space<3>::Point> points;
-    int seed = 0;
-    for (int32_t i=0; i<nPoints; i++)
+    if (nPoints > 0)
     {
-        Space<3>::Point point;
-        binaryStream.readVector<float>(point, 3);
-        // TrackVis indexes from the left edge of each voxel
-        points.push_back(point / voxelDims - 0.5);
+        vector<Space<3>::Point> points;
+        int seed = 0;
+        for (int32_t i=0; i<nPoints; i++)
+        {
+            Space<3>::Point point;
+            binaryStream.readVector<float>(point, 3);
+            // TrackVis indexes from the left edge of each voxel
+            points.push_back(point / voxelDims - 0.5);
+        
+            if (nScalars > 0)
+                fileStream.seekg(4 * nScalars, ios::cur);
+        }
         
         if (seedProperty >= 0)
         {
             fileStream.seekg(4 * seedProperty, ios::cur);
             seed = static_cast<int>(binaryStream.readValue<float>());
         }
-        if (nScalars > 0)
-            fileStream.seekg(4 * (nScalars-seedProperty-1), ios::cur);
+        if (nProperties > 0)
+            fileStream.seekg(4 * (nProperties-seedProperty-1), ios::cur);
+        
+        data = Streamline(vector<Space<3>::Point>(points.rend()-seed-1, points.rend()),
+                          vector<Space<3>::Point>(points.begin()+seed, points.end()),
+                          Streamline::VoxelPointType,
+                          voxelDims,
+                          false);
+    }
+    else
+    {
+        if (nProperties > 0)
+            fileStream.seekg(4 * nProperties, ios::cur);
     }
     
-    data = Streamline(vector<Space<3>::Point>(points.rend()-seed-1, points.rend()),
-                      vector<Space<3>::Point>(points.begin()+seed, points.end()),
-                      Streamline::VoxelPointType,
-                      voxelDims,
-                      false);
-    
-    if (nProperties > 0)
-        fileStream.seekg(4 * nProperties, ios::cur);
     currentStreamline++;
+}
+
+template <typename ElementType>
+ElementType getNthElement (std::vector<ElementType> vec, size_t n)
+{
+    std::nth_element(vec.begin(), vec.begin()+n, vec.end());
+    return *(vec.begin()+n);
+}
+
+void TrackvisMedianDataSource::get (Streamline &data)
+{
+    if (seedProperty < 0)
+        throw runtime_error("A meaningful median can't be recovered without knowing seed indices");
+    
+    vector<int> leftLengths(totalStreamlines), rightLengths(totalStreamlines);
+    
+    // First pass: find lengths
+    for (size_t i=0; i<totalStreamlines; i++)
+    {
+        const int32_t nPoints = binaryStream.readValue<int32_t>();
+        fileStream.seekg(4 * (nPoints*(3+nScalars) + seedProperty), ios::cur);
+        leftLengths[i] = static_cast<int>(binaryStream.readValue<float>()) + 1;
+        rightLengths[i] = nPoints - leftLengths[i] + 1;
+        fileStream.seekg(4 * (nProperties-seedProperty-1), ios::cur);
+    }
+    
+    const int lengthIndex = static_cast<int>(round((totalStreamlines-1) * quantile));
+    const int leftLength = getNthElement(leftLengths, lengthIndex);
+    const int rightLength = getNthElement(rightLengths, lengthIndex);
+    
+    // Second pass: left points
+    vector<Space<3>::Point> leftPoints(leftLength);
+    for (int j=0; j<leftLength; j++)
+    {
+        vector<float> x, y, z;
+        fileStream.seekg(1000);
+        
+        for (size_t i=0; i<totalStreamlines; i++)
+        {
+            // Skip over this streamline if it is too short
+            if (leftLengths[i] <= j)
+                fileStream.seekg(4 * (1 + (leftLengths[i]+rightLengths[i]-1)*(3+nScalars) + nProperties), ios::cur);
+            else
+            {
+                fileStream.seekg(4 * (1 + (leftLengths[i]-1-j)*(3+nScalars)), ios::cur);
+                x.push_back(binaryStream.readValue<float>());
+                y.push_back(binaryStream.readValue<float>());
+                z.push_back(binaryStream.readValue<float>());
+                fileStream.seekg(4 * (nScalars + (j+rightLengths[i]-1)*(3+nScalars) + nProperties), ios::cur);
+            }
+        }
+        
+        const int medianIndex = static_cast<int>(round(x.size()/2.0));
+        leftPoints[j][0] = getNthElement(x, medianIndex) / voxelDims[0] - 0.5;
+        leftPoints[j][1] = getNthElement(y, medianIndex) / voxelDims[1] - 0.5;
+        leftPoints[j][2] = getNthElement(z, medianIndex) / voxelDims[2] - 0.5;
+    }
+    
+    // Third pass: right points
+    vector<Space<3>::Point> rightPoints(rightLength);
+    for (int j=0; j<rightLength; j++)
+    {
+        vector<float> x, y, z;
+        fileStream.seekg(1000);
+        
+        for (size_t i=0; i<totalStreamlines; i++)
+        {
+            // Skip over this streamline if it is too short
+            if (rightLengths[i] <= j)
+                fileStream.seekg(4 * (1 + (leftLengths[i]+rightLengths[i]-1)*(3+nScalars) + nProperties), ios::cur);
+            else
+            {
+                fileStream.seekg(4 * (1 + (leftLengths[i]+j-1)*(3+nScalars)), ios::cur);
+                x.push_back(binaryStream.readValue<float>());
+                y.push_back(binaryStream.readValue<float>());
+                z.push_back(binaryStream.readValue<float>());
+                fileStream.seekg(4 * (nScalars + (rightLengths[i]-j-1)*(3+nScalars) + nProperties), ios::cur);
+            }
+        }
+        
+        const int medianIndex = static_cast<int>(round(x.size()/2.0));
+        rightPoints[j][0] = getNthElement(x, medianIndex) / voxelDims[0] - 0.5;
+        rightPoints[j][1] = getNthElement(y, medianIndex) / voxelDims[1] - 0.5;
+        rightPoints[j][2] = getNthElement(z, medianIndex) / voxelDims[2] - 0.5;
+    }
+    
+    data = Streamline(leftPoints, rightPoints, Streamline::VoxelPointType, voxelDims, false);
+    
+    read = true;
 }
 
 void TrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &image)
