@@ -93,6 +93,8 @@ protected:
     size_t totalStreamlines;
     Eigen::Array3f voxelDims;
     
+    void writeStreamline (const Streamline &data);
+    
 public:
     static std::map<int,char> orientationCodeMap;
     
@@ -164,6 +166,24 @@ public:
     }
     
     void attach (const std::string &fileStem, const NiftiImage &image);
+    void put (const Streamline &data);
+    void done ();
+};
+
+class TrackvisMedianDataSink : public TrackvisDataSink
+{
+protected:
+    double quantile;
+    Streamline median;
+    
+public:
+    TrackvisMedianDataSink ()
+        : TrackvisDataSink() {}
+    
+    TrackvisMedianDataSink (const std::string &fileStem, const NiftiImage &image, const double quantile = 0.99)
+        : TrackvisDataSink(fileStem,image), quantile(quantile) {}
+    
+    void setup (const size_type &count, const_iterator begin, const_iterator end);
     void put (const Streamline &data);
     void done ();
 };

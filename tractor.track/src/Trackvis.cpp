@@ -327,7 +327,76 @@ void TrackvisDataSink::setup (const size_type &count, const_iterator begin, cons
         throw std::runtime_error("Total streamline count exceeds the storage capacity of the Trackvis format");
 }
 
-void TrackvisDataSink::put (const Streamline &data)
+void TrackvisMedianDataSink::setup (const size_type &count, const_iterator begin, const_iterator end)
+{
+    size_t i;
+    const_iterator it;
+    vector<int> leftLengths(count), rightLengths(count);
+    
+    // First pass: find lengths
+    for (it=begin, i=0; it!=end; it++, i++)
+    {
+        leftLengths[i] = it->getLeftPoints().size();
+        rightLengths[i] = it->getRightPoints().size();
+    }
+    
+    const int lengthIndex = static_cast<int>(round((count-1) * quantile));
+    const int leftLength = getNthElement(leftLengths, lengthIndex);
+    const int rightLength = getNthElement(rightLengths, lengthIndex);
+    
+    // Second pass: left points
+    vector<Space<3>::Point> leftPoints(leftLength);
+    for (int j=0; j<leftLength; j++)
+    {
+        vector<float> x, y, z;
+        
+        for (it=begin, i=0; it!=end; it++, i++)
+        {
+            // Skip over this streamline if it is too short
+            if (leftLengths[i] > j)
+            {
+                const Space<3>::Point point = it->getLeftPoints()[j];
+                x.push_back(point[0]);
+                y.push_back(point[1]);
+                z.push_back(point[2]);
+            }
+        }
+        
+        const int medianIndex = static_cast<int>(round(x.size()/2.0));
+        leftPoints[j][0] = getNthElement(x, medianIndex);
+        leftPoints[j][1] = getNthElement(y, medianIndex);
+        leftPoints[j][2] = getNthElement(z, medianIndex);
+    }
+    
+    // Third pass: right points
+    vector<Space<3>::Point> rightPoints(rightLength);
+    for (int j=0; j<rightLength; j++)
+    {
+        vector<float> x, y, z;
+        
+        for (it=begin, i=0; it!=end; it++, i++)
+        {
+            // Skip over this streamline if it is too short
+            if (rightLengths[i] > j)
+            {
+                const Space<3>::Point point = it->getRightPoints()[j];
+                x.push_back(point[0]);
+                y.push_back(point[1]);
+                z.push_back(point[2]);
+            }
+        }
+        
+        const int medianIndex = static_cast<int>(round(x.size()/2.0));
+        rightPoints[j][0] = getNthElement(x, medianIndex);
+        rightPoints[j][1] = getNthElement(y, medianIndex);
+        rightPoints[j][2] = getNthElement(z, medianIndex);
+    }
+    
+    // Assume the first streamline is representative re point type and spacing
+    median = Streamline(leftPoints, rightPoints, begin->getPointType(), voxelDims, begin->usesFixedSpacing());
+}
+
+void TrackvisDataSink::writeStreamline (const Streamline &data)
 {
     int nPoints = data.nPoints();
     Eigen::ArrayX3f points;
@@ -338,7 +407,11 @@ void TrackvisDataSink::put (const Streamline &data)
     for (int i=0; i<nPoints; i++)
     {
         // TrackVis indexes from the left edge of each voxel
-        Eigen::Array3f row = (points.row(i) + 0.5) * voxelDims.transpose();
+        Eigen::Array3f row;
+        if (data.getPointType() == Streamline::VoxelPointType)
+            row = (points.row(i) + 0.5) * voxelDims.transpose();
+        else
+            row = points.row(i) + (0.5 * voxelDims.transpose());
         binaryStream.writeVector<float>(row);
     }
     
@@ -347,6 +420,11 @@ void TrackvisDataSink::put (const Streamline &data)
     if (seedIndex > 16777216)
         Rf_warning("Seed index %lu is not representable exactly as a 32-bit floating point value\n", seedIndex);
     binaryStream.writeValue<float>(seedIndex);
+}
+
+void TrackvisDataSink::put (const Streamline &data)
+{
+    writeStreamline(data);
 }
 
 void AugmentedTrackvisDataSink::put (const Streamline &data)
@@ -362,6 +440,10 @@ void AugmentedTrackvisDataSink::put (const Streamline &data)
         auxBinaryStream.writeValue<int32_t>(*it);
 }
 
+void TrackvisMedianDataSink::put (const Streamline &data)
+{
+}
+
 void TrackvisDataSink::done ()
 {
     fileStream.seekp(988);
@@ -374,4 +456,13 @@ void AugmentedTrackvisDataSink::done ()
     
     auxFileStream.seekp(4);
     auxBinaryStream.writeValue<int32_t>(totalStreamlines);
+}
+
+void TrackvisMedianDataSink::done ()
+{
+    fileStream.seekp(988);
+    binaryStream.writeValue<int32_t>(1);
+    
+    fileStream.seekp(1000);
+    writeStreamline(median);
 }

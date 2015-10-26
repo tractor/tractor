@@ -45,6 +45,8 @@ public:
     
     const std::vector<Space<3>::Point> & getLeftPoints() const { return leftPoints; }
     const std::vector<Space<3>::Point> & getRightPoints() const { return rightPoints; }
+    Streamline::PointType getPointType() const { return pointType; }
+    bool usesFixedSpacing() const { return fixedSpacing; }
     
     double getLeftLength () const  { return getLength(leftPoints); }
     double getRightLength () const { return getLength(rightPoints); }
