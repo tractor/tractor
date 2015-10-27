@@ -7,6 +7,7 @@
 #include "DataSource.h"
 #include "BinaryStream.h"
 
+// Base class for Trackvis readers: provides common functionality
 class TrackvisDataSource : public DataSource<Streamline>
 {
 protected:
@@ -15,6 +16,8 @@ protected:
     int nScalars, nProperties, seedProperty;
     size_t totalStreamlines, currentStreamline;
     Eigen::Array3f voxelDims;
+    
+    void readStreamline (Streamline &data);
     
 public:
     TrackvisDataSource ()
@@ -28,7 +31,7 @@ public:
         attach(fileStem);
     }
     
-    ~TrackvisDataSource ()
+    virtual ~TrackvisDataSource ()
     {
         binaryStream.detach();
         if (fileStream.is_open())
@@ -36,29 +39,37 @@ public:
     }
     
     virtual void attach (const std::string &fileStem);
-    bool more ();
-    void get (Streamline &data);
 };
 
-class AugmentedTrackvisDataSource : public TrackvisDataSource
+// Basic Trackvis reader: read all streamlines, including seed property
+class BasicTrackvisDataSource : public TrackvisDataSource
+{
+public:
+    bool more () const { return (currentStreamline < totalStreamlines); }
+    void get (Streamline &data) { readStreamline(data); }
+};
+
+// Labelled Trackvis reader: also read auxiliary file containing label info
+class LabelledTrackvisDataSource : public TrackvisDataSource
 {
 protected:
     std::ifstream auxFileStream;
     BinaryInputStream auxBinaryStream;
+    std::map<int,std::string> labelDictionary;
     
 public:
-    AugmentedTrackvisDataSource ()
+    LabelledTrackvisDataSource ()
     {
         auxBinaryStream.attach(&auxFileStream);
     }
     
-    AugmentedTrackvisDataSource (const std::string &fileStem)
+    LabelledTrackvisDataSource (const std::string &fileStem)
     {
         auxBinaryStream.attach(&auxFileStream);
         attach(fileStem);
     }
     
-    ~AugmentedTrackvisDataSource ()
+    ~LabelledTrackvisDataSource ()
     {
         auxBinaryStream.detach();
         if (auxFileStream.is_open())
@@ -66,22 +77,25 @@ public:
     }
     
     void attach (const std::string &fileStem);
+    bool more () const { return (currentStreamline < totalStreamlines); }
+    void get (Streamline &data);
 };
 
-class TrackvisMedianDataSource : public TrackvisDataSource
+// Median Trackvis reader: construct and return median streamline only
+class MedianTrackvisDataSource : public TrackvisDataSource
 {
 protected:
     bool read;
     double quantile;
     
 public:
-    TrackvisMedianDataSource ()
+    MedianTrackvisDataSource ()
         : read(false) {}
     
-    TrackvisMedianDataSource (const std::string &fileStem, const double quantile = 0.99)
+    MedianTrackvisDataSource (const std::string &fileStem, const double quantile = 0.99)
         : TrackvisDataSource(fileStem), quantile(quantile), read(false) {}
     
-    bool more ();
+    bool more () { return (!read); }
     void get (Streamline &data);
 };
 
@@ -132,11 +146,16 @@ public:
     
     virtual void attach (const std::string &fileStem, const NiftiImage &image);
     void setup (const size_type &count, const_iterator begin, const_iterator end);
-    void put (const Streamline &data);
     void done ();
 };
 
-class AugmentedTrackvisDataSink : public TrackvisDataSink
+class BasicTrackvisDataSink : public TrackvisDataSink
+{
+public:
+    void put (const Streamline &data) { writeStreamline(data); }
+};
+
+class LabelledTrackvisDataSink : public TrackvisDataSink
 {
 protected:
     std::ofstream auxFileStream;
@@ -144,13 +163,13 @@ protected:
     std::map<int,std::string> labelDictionary;
     
 public:
-    AugmentedTrackvisDataSink ()
+    LabelledTrackvisDataSink ()
     {
         auxBinaryStream.attach(&auxFileStream);
         auxBinaryStream.swapEndianness(false);
     }
     
-    AugmentedTrackvisDataSink (const std::string &fileStem, const NiftiImage &image, const std::map<int,std::string> labelDictionary)
+    LabelledTrackvisDataSink (const std::string &fileStem, const NiftiImage &image, const std::map<int,std::string> labelDictionary)
         : labelDictionary(labelDictionary)
     {
         auxBinaryStream.attach(&auxFileStream);
@@ -158,7 +177,7 @@ public:
         attach(fileStem, image);
     }
     
-    ~AugmentedTrackvisDataSink ()
+    ~LabelledTrackvisDataSink ()
     {
         auxBinaryStream.detach();
         if (auxFileStream.is_open())
@@ -170,21 +189,20 @@ public:
     void done ();
 };
 
-class TrackvisMedianDataSink : public TrackvisDataSink
+class MedianTrackvisDataSink : public TrackvisDataSink
 {
 protected:
     double quantile;
     Streamline median;
     
 public:
-    TrackvisMedianDataSink ()
+    MedianTrackvisDataSink ()
         : TrackvisDataSink() {}
     
-    TrackvisMedianDataSink (const std::string &fileStem, const NiftiImage &image, const double quantile = 0.99)
+    MedianTrackvisDataSink (const std::string &fileStem, const NiftiImage &image, const double quantile = 0.99)
         : TrackvisDataSink(fileStem,image), quantile(quantile) {}
     
     void setup (const size_type &count, const_iterator begin, const_iterator end);
-    void put (const Streamline &data);
     void done ();
 };
 

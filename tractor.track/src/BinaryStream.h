@@ -32,7 +32,7 @@ public:
     template <typename SourceType, typename FinalType> void readVector (std::vector<FinalType> &values, size_t n);
     template <typename SourceType, typename FinalType, int Rows> void readVector (Eigen::Matrix<FinalType,Rows,1> &values, size_t n);
     template <typename SourceType, typename FinalType, int Rows> void readVector (Eigen::Array<FinalType,Rows,1> &values, size_t n);
-    std::string readString (size_t n);
+    std::string readString (size_t n = 0);
 };
 
 class BinaryOutputStream : public BinaryStream

@@ -80,11 +80,20 @@ void BinaryInputStream::readVector (Eigen::Array<FinalType,Rows,1> &values, size
 
 std::string BinaryInputStream::readString (size_t n)
 {
-    char *value = new char[n];
-    stream->read(value, n);
-    std::string finalValue(value, n);
-    delete[] value;
-    return finalValue;
+    if (n == 0)
+    {
+        std::string finalValue;
+        std::getline(*stream, finalValue, '\0');
+        return finalValue;
+    }
+    else
+    {
+        char *value = new char[n];
+        stream->read(value, n);
+        std::string finalValue(value, n);
+        delete[] value;
+        return finalValue;
+    }
 }
 
 template <typename TargetType>

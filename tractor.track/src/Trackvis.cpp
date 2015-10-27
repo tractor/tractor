@@ -39,6 +39,54 @@ std::map<int,char> TrackvisDataSink::orientationCodeMap = TrackvisDataSink::crea
 // 
 // Source: Trackvis documentation (http://www.trackvis.org/docs/?subsect=fileformat)
 
+template <typename ElementType>
+ElementType getNthElement (std::vector<ElementType> vec, size_t n)
+{
+    std::nth_element(vec.begin(), vec.begin()+n, vec.end());
+    return *(vec.begin()+n);
+}
+
+void TrackvisDataSource::readStreamline (Streamline &data)
+{
+    int32_t nPoints = binaryStream.readValue<int32_t>();
+    if (nPoints > 0)
+    {
+        vector<Space<3>::Point> points;
+        int seed = 0;
+        for (int32_t i=0; i<nPoints; i++)
+        {
+            Space<3>::Point point;
+            binaryStream.readVector<float>(point, 3);
+            // TrackVis indexes from the left edge of each voxel
+            points.push_back(point / voxelDims - 0.5);
+        
+            if (nScalars > 0)
+                fileStream.seekg(4 * nScalars, ios::cur);
+        }
+        
+        if (seedProperty >= 0)
+        {
+            fileStream.seekg(4 * seedProperty, ios::cur);
+            seed = static_cast<int>(binaryStream.readValue<float>());
+        }
+        if (nProperties > 0)
+            fileStream.seekg(4 * (nProperties-seedProperty-1), ios::cur);
+        
+        data = Streamline(vector<Space<3>::Point>(points.rend()-seed-1, points.rend()),
+                          vector<Space<3>::Point>(points.begin()+seed, points.end()),
+                          Streamline::VoxelPointType,
+                          voxelDims,
+                          false);
+    }
+    else
+    {
+        if (nProperties > 0)
+            fileStream.seekg(4 * nProperties, ios::cur);
+    }
+    
+    currentStreamline++;
+}
+
 void TrackvisDataSource::attach (const std::string &fileStem)
 {
     if (fileStream.is_open())
@@ -86,75 +134,37 @@ void TrackvisDataSource::attach (const std::string &fileStem)
     currentStreamline = 0;
 }
 
-void AugmentedTrackvisDataSource::attach (const std::string &fileStem)
+void LabelledTrackvisDataSource::attach (const std::string &fileStem)
 {
     TrackvisDataSource::attach(fileStem);
     
     if (auxFileStream.is_open())
         auxFileStream.close();
     
-    auxFileStream.open(fileStem + ".trka", ios::binary);
-}
-
-bool TrackvisDataSource::more ()
-{
-    return (currentStreamline < totalStreamlines);
-}
-
-bool TrackvisMedianDataSource::more ()
-{
-    return (!read);
-}
-
-void TrackvisDataSource::get (Streamline &data)
-{
-    int32_t nPoints = binaryStream.readValue<int32_t>();
-    if (nPoints > 0)
-    {
-        vector<Space<3>::Point> points;
-        int seed = 0;
-        for (int32_t i=0; i<nPoints; i++)
-        {
-            Space<3>::Point point;
-            binaryStream.readVector<float>(point, 3);
-            // TrackVis indexes from the left edge of each voxel
-            points.push_back(point / voxelDims - 0.5);
-        
-            if (nScalars > 0)
-                fileStream.seekg(4 * nScalars, ios::cur);
-        }
-        
-        if (seedProperty >= 0)
-        {
-            fileStream.seekg(4 * seedProperty, ios::cur);
-            seed = static_cast<int>(binaryStream.readValue<float>());
-        }
-        if (nProperties > 0)
-            fileStream.seekg(4 * (nProperties-seedProperty-1), ios::cur);
-        
-        data = Streamline(vector<Space<3>::Point>(points.rend()-seed-1, points.rend()),
-                          vector<Space<3>::Point>(points.begin()+seed, points.end()),
-                          Streamline::VoxelPointType,
-                          voxelDims,
-                          false);
-    }
-    else
-    {
-        if (nProperties > 0)
-            fileStream.seekg(4 * nProperties, ios::cur);
-    }
+    auxFileStream.open(fileStem + ".trkl", ios::binary);
     
-    currentStreamline++;
+    auxFileStream.seekg(8);
+    const int nLabels = auxBinaryStream.readValue<int32_t>();
+    auxFileStream.seekg(32);
+    
+    for (int i=0; i<nLabels; i++)
+    {
+        const int index = auxBinaryStream.readValue<int32_t>();
+        const string name = auxBinaryStream.readString();
+        labelDictionary[index] = name;
+    }
 }
 
-template <typename ElementType>
-ElementType getNthElement (std::vector<ElementType> vec, size_t n)
+void LabelledTrackvisDataSource::get (Streamline &data)
 {
-    std::nth_element(vec.begin(), vec.begin()+n, vec.end());
-    return *(vec.begin()+n);
+    TrackvisDataSource::get(data);
+    
+    const int nLabels = auxBinaryStream.readValue<int32_t>();
+    for (int i=0; i<nLabels; i++)
+        data.addLabel(auxBinaryStream.readValue<int32_t>());
 }
 
-void TrackvisMedianDataSource::get (Streamline &data)
+void MedianTrackvisDataSource::get (Streamline &data)
 {
     if (seedProperty < 0)
         throw runtime_error("A meaningful median can't be recovered without knowing seed indices");
@@ -236,6 +246,32 @@ void TrackvisMedianDataSource::get (Streamline &data)
     read = true;
 }
 
+void TrackvisDataSink::writeStreamline (const Streamline &data)
+{
+    int nPoints = data.nPoints();
+    Eigen::ArrayX3f points;
+    
+    data.concatenatePoints(points);
+    
+    binaryStream.writeValue<int32_t>(nPoints);
+    for (int i=0; i<nPoints; i++)
+    {
+        // TrackVis indexes from the left edge of each voxel
+        Eigen::Array3f row;
+        if (data.getPointType() == Streamline::VoxelPointType)
+            row = (points.row(i) + 0.5) * voxelDims.transpose();
+        else
+            row = points.row(i) + (0.5 * voxelDims.transpose());
+        binaryStream.writeVector<float>(row);
+    }
+    
+    // In practice, we should be able to squeeze the seed index into a float, but check
+    const size_t seedIndex = data.getSeedIndex();
+    if (seedIndex > 16777216)
+        Rf_warning("Seed index %lu is not representable exactly as a 32-bit floating point value\n", seedIndex);
+    binaryStream.writeValue<float>(seedIndex);
+}
+
 void TrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &image)
 {
     if (image.getDimensionality() < 3)
@@ -289,14 +325,14 @@ void TrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &im
     std::copy(image.getVoxelDimensions().begin(), image.getVoxelDimensions().begin()+3, voxelDims.data());
 }
 
-void AugmentedTrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &image)
+void LabelledTrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &image)
 {
     TrackvisDataSink::attach(fileStem, image);
     
     if (auxFileStream.is_open())
         auxFileStream.close();
     
-    auxFileStream.open(fileStem + ".trka", ios::binary);
+    auxFileStream.open(fileStem + ".trkl", ios::binary);
     
     // File version number
     auxBinaryStream.writeValue<int32_t>(1);
@@ -327,7 +363,7 @@ void TrackvisDataSink::setup (const size_type &count, const_iterator begin, cons
         throw std::runtime_error("Total streamline count exceeds the storage capacity of the Trackvis format");
 }
 
-void TrackvisMedianDataSink::setup (const size_type &count, const_iterator begin, const_iterator end)
+void MedianTrackvisDataSink::setup (const size_type &count, const_iterator begin, const_iterator end)
 {
     size_t i;
     const_iterator it;
@@ -396,52 +432,14 @@ void TrackvisMedianDataSink::setup (const size_type &count, const_iterator begin
     median = Streamline(leftPoints, rightPoints, begin->getPointType(), voxelDims, begin->usesFixedSpacing());
 }
 
-void TrackvisDataSink::writeStreamline (const Streamline &data)
-{
-    int nPoints = data.nPoints();
-    Eigen::ArrayX3f points;
-    
-    data.concatenatePoints(points);
-    
-    binaryStream.writeValue<int32_t>(nPoints);
-    for (int i=0; i<nPoints; i++)
-    {
-        // TrackVis indexes from the left edge of each voxel
-        Eigen::Array3f row;
-        if (data.getPointType() == Streamline::VoxelPointType)
-            row = (points.row(i) + 0.5) * voxelDims.transpose();
-        else
-            row = points.row(i) + (0.5 * voxelDims.transpose());
-        binaryStream.writeVector<float>(row);
-    }
-    
-    // In practice, we should be able to squeeze the seed index into a float, but check
-    const size_t seedIndex = data.getSeedIndex();
-    if (seedIndex > 16777216)
-        Rf_warning("Seed index %lu is not representable exactly as a 32-bit floating point value\n", seedIndex);
-    binaryStream.writeValue<float>(seedIndex);
-}
-
-void TrackvisDataSink::put (const Streamline &data)
+void LabelledTrackvisDataSink::put (const Streamline &data)
 {
     writeStreamline(data);
-}
-
-void AugmentedTrackvisDataSink::put (const Streamline &data)
-{
-    TrackvisDataSink::put(data);
-    
-    auxBinaryStream.writeValue<int32_t>(data.nPoints());
-    auxBinaryStream.writeValue<int32_t>(data.getSeedIndex());
     
     const std::set<int> &labels = data.getLabels();
     auxBinaryStream.writeValue<int32_t>(labels.size());
     for (std::set<int>::const_iterator it=labels.begin(); it!=labels.end(); it++)
         auxBinaryStream.writeValue<int32_t>(*it);
-}
-
-void TrackvisMedianDataSink::put (const Streamline &data)
-{
 }
 
 void TrackvisDataSink::done ()
@@ -450,7 +448,7 @@ void TrackvisDataSink::done ()
     binaryStream.writeValue<int32_t>(totalStreamlines);
 }
 
-void AugmentedTrackvisDataSink::done ()
+void LabelledTrackvisDataSink::done ()
 {
     TrackvisDataSink::done();
     
@@ -458,7 +456,7 @@ void AugmentedTrackvisDataSink::done ()
     auxBinaryStream.writeValue<int32_t>(totalStreamlines);
 }
 
-void TrackvisMedianDataSink::done ()
+void MedianTrackvisDataSink::done ()
 {
     fileStream.seekp(988);
     binaryStream.writeValue<int32_t>(1);
