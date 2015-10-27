@@ -32,7 +32,7 @@ float decrement (double x)
     return static_cast<float>(x - 1.0);
 }
 
-RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetInfo, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _profileFunction, SEXP _debugLevel)
+RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetInfo, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _medianPath, SEXP _profileFunction, SEXP _debugLevel)
 {
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
@@ -96,6 +96,7 @@ BEGIN_RCPP
     
     VisitationMapDataSink *visitationMap = NULL;
     TrackvisDataSink *trkFile = NULL;
+    MedianTrackvisDataSink *medianFile = NULL;
     ProfileMatrixDataSink *profile = NULL;
     Rcpp::Function *function = NULL;
     if (!Rf_isNull(_mapPath))
@@ -112,12 +113,20 @@ BEGIN_RCPP
             std::map<int,std::string> labelDictionary;
             for (int i=0; i<std::min(indices.size(),labels.size()); i++)
                 labelDictionary[indices[i]] = labels[i];
-            trkFile = new AugmentedTrackvisDataSink(as<std::string>(_trkPath), *mask, labelDictionary);
+            trkFile = new LabelledTrackvisDataSink(as<std::string>(_trkPath), *mask, labelDictionary);
         }
         else
-            trkFile = new TrackvisDataSink(as<std::string>(_trkPath), *mask);
+            trkFile = new BasicTrackvisDataSink(as<std::string>(_trkPath), *mask);
         
         pipeline.addSink(trkFile);
+    }
+    if (!Rf_isNull(_medianPath))
+    {
+        medianFile = new MedianTrackvisDataSink(as<std::string>(_medianPath), *mask);
+        pipeline.addSink(medianFile);
+        
+        // Pipeline must contain all streamlines at once for calculating median
+        pipeline.setBlockSize(as<size_t>(_count));
     }
     if (!Rf_isNull(_profileFunction))
     {
@@ -137,6 +146,7 @@ BEGIN_RCPP
     delete hitFilter;
     delete lengthFilter;
     delete trkFile;
+    delete medianFile;
     delete function;
     delete profile;
     delete mask;

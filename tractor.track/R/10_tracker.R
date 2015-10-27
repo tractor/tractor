@@ -71,22 +71,24 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         .self$targetInfo <- list(path=path, indices=indices, labels=labels)
     },
     
-    run = function (seeds, count, basename = threadSafeTempFile(), profileFun = NULL, requireMap = TRUE, requireStreamlines = FALSE, terminateAtTargets = FALSE, terminateOutsideMask = FALSE, mustLeaveMask = FALSE, jitter = FALSE)
+    run = function (seeds, count, basename = threadSafeTempFile(), profileFun = NULL, requireMap = TRUE, requireStreamlines = FALSE, requireMedian = FALSE, terminateAtTargets = FALSE, terminateOutsideMask = FALSE, mustLeaveMask = FALSE, jitter = FALSE)
     {
         if (is.nilModel(model))
             report(OL$Error, "No diffusion model has been specified")
         if (length(maskPath) == 0)
             report(OL$Error, "No tracking mask has been specfied")
         
-        mapPath <- streamlinePath <- NULL
+        mapPath <- streamlinePath <- medianPath <- NULL
         if (requireMap)
             mapPath <- basename
         if (requireStreamlines)
             streamlinePath <- basename
+        if (requireMedian)
+            medianPath <- paste(basename, "median", sep="_")
         
         seeds <- promote(seeds, byrow=TRUE)
         
-        nRetained <- .Call("track", model$getPointer(), seeds, as.integer(count), maskPath, .self$targetInfo, options$rightwardsVector, as.integer(options$maxSteps), as.double(options$stepLength), as.double(options$curvatureThreshold), isTRUE(options$useLoopcheck), isTRUE(terminateAtTargets), as.integer(filters$minTargetHits), as.numeric(filters$minLength), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), isTRUE(jitter), mapPath, streamlinePath, profileFun, 0L, PACKAGE="tractor.track")
+        nRetained <- .Call("track", model$getPointer(), seeds, as.integer(count), maskPath, .self$targetInfo, options$rightwardsVector, as.integer(options$maxSteps), as.double(options$stepLength), as.double(options$curvatureThreshold), isTRUE(options$useLoopcheck), isTRUE(terminateAtTargets), as.integer(filters$minTargetHits), as.numeric(filters$minLength), isTRUE(terminateOutsideMask), isTRUE(mustLeaveMask), isTRUE(jitter), mapPath, streamlinePath, medianPath, profileFun, 0L, PACKAGE="tractor.track")
         
         if (nRetained < nrow(seeds) * count)
             report(OL$Info, "#{nRetained} streamlines (#{signif(nRetained/(nrow(seeds)*count)*100,3)}%) were retained after filtering")
