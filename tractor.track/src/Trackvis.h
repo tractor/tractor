@@ -17,9 +17,6 @@ protected:
     size_t totalStreamlines, currentStreamline;
     Eigen::Array3f voxelDims;
     
-    void readStreamline (Streamline &data);
-    
-public:
     TrackvisDataSource ()
     {
         binaryStream.attach(&fileStream);
@@ -31,6 +28,9 @@ public:
         attach(fileStem);
     }
     
+    void readStreamline (Streamline &data);
+    
+public:
     virtual ~TrackvisDataSource ()
     {
         binaryStream.detach();
@@ -45,6 +45,9 @@ public:
 class BasicTrackvisDataSource : public TrackvisDataSource
 {
 public:
+    BasicTrackvisDataSource (const std::string &fileStem)
+        : TrackvisDataSource(fileStem) {}
+    
     bool more () const { return (currentStreamline < totalStreamlines); }
     void get (Streamline &data) { readStreamline(data); }
 };
@@ -64,6 +67,7 @@ public:
     }
     
     LabelledTrackvisDataSource (const std::string &fileStem)
+        : TrackvisDataSource(fileStem)
     {
         auxBinaryStream.attach(&auxFileStream);
         attach(fileStem);
@@ -107,6 +111,19 @@ protected:
     size_t totalStreamlines;
     Eigen::Array3f voxelDims;
     
+    TrackvisDataSink ()
+    {
+        binaryStream.attach(&fileStream);
+        binaryStream.swapEndianness(false);
+    }
+    
+    TrackvisDataSink (const std::string &fileStem, const NiftiImage &image)
+    {
+        binaryStream.attach(&fileStream);
+        binaryStream.swapEndianness(false);
+        attach(fileStem, image);
+    }
+    
     void writeStreamline (const Streamline &data);
     
 public:
@@ -124,19 +141,6 @@ public:
         return map;
     }
     
-    TrackvisDataSink ()
-    {
-        binaryStream.attach(&fileStream);
-        binaryStream.swapEndianness(false);
-    }
-    
-    TrackvisDataSink (const std::string &fileStem, const NiftiImage &image)
-    {
-        binaryStream.attach(&fileStream);
-        binaryStream.swapEndianness(false);
-        attach(fileStem, image);
-    }
-    
     virtual ~TrackvisDataSink ()
     {
         binaryStream.detach();
@@ -152,6 +156,9 @@ public:
 class BasicTrackvisDataSink : public TrackvisDataSink
 {
 public:
+    BasicTrackvisDataSink (const std::string &fileStem, const NiftiImage &image)
+        : TrackvisDataSink(fileStem,image) {}
+    
     void put (const Streamline &data) { writeStreamline(data); }
 };
 
@@ -169,6 +176,7 @@ public:
         auxBinaryStream.swapEndianness(false);
     }
     
+    // Don't call base class constructor explicitly here
     LabelledTrackvisDataSink (const std::string &fileStem, const NiftiImage &image, const std::map<int,std::string> labelDictionary)
         : labelDictionary(labelDictionary)
     {
@@ -196,9 +204,6 @@ protected:
     Streamline median;
     
 public:
-    MedianTrackvisDataSink ()
-        : TrackvisDataSink() {}
-    
     MedianTrackvisDataSink (const std::string &fileStem, const NiftiImage &image, const double quantile = 0.99)
         : TrackvisDataSink(fileStem,image), quantile(quantile) {}
     
