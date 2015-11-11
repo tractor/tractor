@@ -39,7 +39,11 @@ SourceType BinaryInputStream::readValue ()
 template <typename SourceType, typename FinalType>
 void BinaryInputStream::readVector (std::vector<FinalType> &values, size_t n)
 {
-    values.resize(n);
+    if (n == 0)
+        n = values.size();
+    else
+        values.resize(n);
+    
     SourceType value;
     for (size_t i=0; i<n; i++)
     {
@@ -75,6 +79,23 @@ void BinaryInputStream::readVector (Eigen::Array<FinalType,Rows,1> &values, size
         if (swapEndian)
             swap(&value);
         values[i] = static_cast<FinalType>(value);
+    }
+}
+
+template <typename SourceType, typename FinalType, int Rows, int Cols>
+void BinaryInputStream::readMatrix (Eigen::Matrix<FinalType,Rows,Cols> &values, size_t n, size_t m)
+{
+    values.resize(n, m);
+    SourceType value;
+    for (size_t i=0; i<n; i++)
+    {
+        for (size_t j=0; j<m; j++)
+        {
+            stream->read((char *) &value, sizeof(SourceType));
+            if (swapEndian)
+                swap(&value);
+            values(i, j) = static_cast<FinalType>(value);
+        }
     }
 }
 
@@ -143,9 +164,6 @@ void BinaryOutputStream::writeVector (const std::vector<OriginalType> &values, s
 template <typename TargetType, typename OriginalType, int Rows>
 void BinaryOutputStream::writeVector (const Eigen::Matrix<OriginalType,Rows,1> &values, size_t n)
 {
-    if (n == 0)
-        n = values.size();
-    
     TargetType value;
     for (size_t i=0; i<n; i++)
     {
@@ -159,9 +177,6 @@ void BinaryOutputStream::writeVector (const Eigen::Matrix<OriginalType,Rows,1> &
 template <typename TargetType, typename OriginalType, int Rows>
 void BinaryOutputStream::writeVector (const Eigen::Array<OriginalType,Rows,1> &values, size_t n)
 {
-    if (n == 0)
-        n = values.size();
-    
     TargetType value;
     for (size_t i=0; i<n; i++)
     {
@@ -169,6 +184,22 @@ void BinaryOutputStream::writeVector (const Eigen::Array<OriginalType,Rows,1> &v
         if (swapEndian)
             swap(&value);
         stream->write((const char *) &value, sizeof(TargetType));
+    }
+}
+
+template <typename TargetType, typename OriginalType, int Rows, int Cols>
+void BinaryOutputStream::writeMatrix (const Eigen::Matrix<OriginalType,Rows,Cols> &values, size_t n, size_t m)
+{
+    TargetType value;
+    for (size_t i=0; i<n; i++)
+    {
+        for (size_t j=0; j<m; j++)
+        {
+            value = static_cast<TargetType>(values(i, j));
+            if (swapEndian)
+                swap(&value);
+            stream->write((const char *) &value, sizeof(TargetType));
+        }
     }
 }
 
@@ -187,6 +218,9 @@ template void BinaryInputStream::readVector<int16_t,int> (std::vector<int> &valu
 
 template void BinaryInputStream::readVector<float> (Eigen::Vector3f &values, size_t n);
 template void BinaryInputStream::readVector<float> (Eigen::Array3f &values, size_t n);
+template void BinaryInputStream::readVector<short> (Eigen::Array3i &values, size_t n);
+
+template void BinaryInputStream::readMatrix<float> (Eigen::Matrix4f &values, size_t n, size_t m);
 
 template void BinaryOutputStream::writeValue<char> (char value);
 template void BinaryOutputStream::writeValue<float> (float value);
@@ -204,3 +238,6 @@ template void BinaryOutputStream::writeVector<int16_t,int>(const std::vector<int
 
 template void BinaryOutputStream::writeVector<float>(const Eigen::Vector3f &values, size_t n);
 template void BinaryOutputStream::writeVector<float>(const Eigen::Array3f &values, size_t n);
+template void BinaryOutputStream::writeVector<short> (const Eigen::Array3i &values, size_t n);
+
+template void BinaryOutputStream::writeMatrix<float> (const Eigen::Matrix4f &values, size_t n, size_t m);
