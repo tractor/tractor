@@ -6,8 +6,9 @@
 #include "nifti1_io.h"
 
 #include "Array.h"
+#include "Grid.h"
 
-class NiftiImage
+class NiftiImage : public Griddable3D
 {
 private:
     nifti_image *info;
@@ -54,6 +55,18 @@ public:
             return info->qto_xyz;
         else
             return info->sto_xyz;
+    }
+    
+    Grid<3> getGrid3D () const
+    {
+        Eigen::Array3i fixedDims = Eigen::Array3i::Ones();
+        Eigen::Array3f spacings = Eigen::Array3f::Zero();
+        for (int i=0; i<dims.size(); i++)
+        {
+            fixedDims[i] = dims[i];
+            spacings[i] = voxelDims[i];
+        }
+        return Grid<3>(fixedDims, spacings, xform);
     }
     
     template <typename DataType> Array<DataType> * getData () const;

@@ -2,10 +2,14 @@
 #define _DIFFUSION_MODEL_H_
 
 #include "Space.h"
+#include "Grid.h"
 #include "NiftiImage.h"
 
-class DiffusionModel
+class DiffusionModel : public Griddable3D
 {
+protected:
+    Grid<3> grid;
+    
 public:
     virtual ~DiffusionModel () {}
     
@@ -13,13 +17,14 @@ public:
     {
         return Space<3>::zeroVector();
     }
+    
+    Grid<3> getGrid3D () const { return grid; }
 };
 
 class BedpostModel : public DiffusionModel
 {
 private:
     std::vector<Array<float>*> avf, theta, phi;
-    std::vector<int> imageDims;
     int nCompartments;
     int nSamples;
     float avfThreshold;
@@ -38,7 +43,7 @@ public:
         theta.resize(nCompartments);
         phi.resize(nCompartments);
         
-        imageDims = NiftiImage(avfFiles[0],false).getDimensions();
+        grid = NiftiImage(avfFiles[0],false).getGrid3D();
         
         for (int i=0; i<nCompartments; i++)
         {
@@ -47,8 +52,8 @@ public:
             phi[i] = NiftiImage(phiFiles[i]).getData<float>();
         }
         
-        const std::vector<int> &imageDims = avf[0]->getDimensions();
-        nSamples = imageDims[3];
+        const std::vector<int> &avfDims = avf[0]->getDimensions();
+        nSamples = avfDims[3];
     }
     
     ~BedpostModel ()

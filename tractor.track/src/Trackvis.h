@@ -8,14 +8,14 @@
 #include "BinaryStream.h"
 
 // Base class for Trackvis readers: provides common functionality
-class TrackvisDataSource : public DataSource<Streamline>
+class TrackvisDataSource : public Griddable3D, public DataSource<Streamline>
 {
 protected:
     std::ifstream fileStream;
     BinaryInputStream binaryStream;
     int nScalars, nProperties, seedProperty;
     size_t totalStreamlines, currentStreamline;
-    Eigen::Array3f voxelDims;
+    Grid<3> grid;
     
     TrackvisDataSource ()
     {
@@ -39,6 +39,8 @@ public:
     }
     
     virtual void attach (const std::string &fileStem);
+    
+    Grid<3> getGrid3D () const { return grid; }
 };
 
 // Basic Trackvis reader: read all streamlines, including seed property
@@ -47,6 +49,8 @@ class BasicTrackvisDataSource : public TrackvisDataSource
 public:
     BasicTrackvisDataSource (const std::string &fileStem)
         : TrackvisDataSource(fileStem) {}
+    
+    size_t nStreamlines () const { return totalStreamlines; }
     
     bool more () const { return (currentStreamline < totalStreamlines); }
     void get (Streamline &data) { readStreamline(data); }
@@ -109,7 +113,7 @@ protected:
     std::ofstream fileStream;
     BinaryOutputStream binaryStream;
     size_t totalStreamlines;
-    Eigen::Array3f voxelDims;
+    Grid<3> grid;
     
     TrackvisDataSink ()
     {
@@ -117,11 +121,12 @@ protected:
         binaryStream.swapEndianness(false);
     }
     
-    TrackvisDataSink (const std::string &fileStem, const NiftiImage &image)
+    TrackvisDataSink (const std::string &fileStem, const Grid<3> &grid)
+        : grid(grid)
     {
         binaryStream.attach(&fileStream);
         binaryStream.swapEndianness(false);
-        attach(fileStem, image);
+        attach(fileStem);
     }
     
     void writeStreamline (const Streamline &data);
@@ -148,7 +153,7 @@ public:
             fileStream.close();
     }
     
-    virtual void attach (const std::string &fileStem, const NiftiImage &image);
+    virtual void attach (const std::string &fileStem);
     void setup (const size_type &count, const_iterator begin, const_iterator end);
     void done ();
 };
@@ -156,8 +161,8 @@ public:
 class BasicTrackvisDataSink : public TrackvisDataSink
 {
 public:
-    BasicTrackvisDataSink (const std::string &fileStem, const NiftiImage &image)
-        : TrackvisDataSink(fileStem,image) {}
+    BasicTrackvisDataSink (const std::string &fileStem, const Grid<3> &grid)
+        : TrackvisDataSink(fileStem,grid) {}
     
     void put (const Streamline &data) { writeStreamline(data); }
 };
@@ -177,12 +182,13 @@ public:
     }
     
     // Don't call base class constructor explicitly here
-    LabelledTrackvisDataSink (const std::string &fileStem, const NiftiImage &image, const std::map<int,std::string> labelDictionary)
+    LabelledTrackvisDataSink (const std::string &fileStem, const Grid<3> &grid, const std::map<int,std::string> labelDictionary)
         : labelDictionary(labelDictionary)
     {
+        this->grid = grid;
         auxBinaryStream.attach(&auxFileStream);
         auxBinaryStream.swapEndianness(false);
-        attach(fileStem, image);
+        attach(fileStem);
     }
     
     ~LabelledTrackvisDataSink ()
@@ -192,7 +198,7 @@ public:
             auxFileStream.close();
     }
     
-    void attach (const std::string &fileStem, const NiftiImage &image);
+    void attach (const std::string &fileStem);
     void put (const Streamline &data);
     void done ();
 };
@@ -204,8 +210,8 @@ protected:
     Streamline median;
     
 public:
-    MedianTrackvisDataSink (const std::string &fileStem, const NiftiImage &image, const double quantile = 0.99)
-        : TrackvisDataSink(fileStem,image), quantile(quantile) {}
+    MedianTrackvisDataSink (const std::string &fileStem, const Grid<3> &grid, const double quantile = 0.99)
+        : TrackvisDataSink(fileStem,grid), quantile(quantile) {}
     
     void setup (const size_type &count, const_iterator begin, const_iterator end);
     void done ();

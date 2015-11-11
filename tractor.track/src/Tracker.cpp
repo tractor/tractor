@@ -6,6 +6,15 @@ using namespace std;
 
 Streamline Tracker::run ()
 {
+    if (dataSource == NULL)
+        throw std::runtime_error("No diffusion data source has been specified");
+    
+    const Eigen::Array3i &imageDims = dataSource->getGrid3D().dimensions();
+    std::vector<int> spaceDims(3);
+    for (int i=0; i<3; i++)
+        spaceDims[i] = imageDims[i];
+    const Eigen::Array3f &voxelDims = dataSource->getGrid3D().spacings();
+    
     Rcpp::Rcout << std::fixed;
     Rcpp::Rcout.precision(3);
     logger.debug1.indent() << "Tracking from seed point " << seed << endl;

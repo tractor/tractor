@@ -18,8 +18,6 @@ private:
     DiffusionModel *dataSource;
     
     Array<short> *maskData;
-    std::vector<int> spaceDims;
-    Eigen::Array3f voxelDims;
     Array<int> *targetData;
     
     Array<Space<3>::Vector> *loopcheck;
@@ -58,8 +56,6 @@ public:
     {
         delete maskData;
         maskData = mask->getData<short>();
-        spaceDims = mask->getDimensions();
-        std::copy(mask->getVoxelDimensions().begin(), mask->getVoxelDimensions().begin()+3, voxelDims.data());
     }
     
     void setSeed (const Space<3>::Point &seed, const bool jitter)

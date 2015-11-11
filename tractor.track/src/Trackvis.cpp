@@ -58,7 +58,7 @@ void TrackvisDataSource::readStreamline (Streamline &data)
             Space<3>::Point point;
             binaryStream.readVector<float>(point, 3);
             // TrackVis indexes from the left edge of each voxel
-            points.push_back(point / voxelDims - 0.5);
+            points.push_back(point / grid.spacings() - 0.5);
         
             if (nScalars > 0)
                 fileStream.seekg(4 * nScalars, ios::cur);
@@ -75,7 +75,7 @@ void TrackvisDataSource::readStreamline (Streamline &data)
         data = Streamline(vector<Space<3>::Point>(points.rend()-seed-1, points.rend()),
                           vector<Space<3>::Point>(points.begin()+seed, points.end()),
                           Streamline::VoxelPointType,
-                          voxelDims,
+                          grid.spacings(),
                           false);
     }
     else
@@ -111,9 +111,8 @@ void TrackvisDataSource::attach (const std::string &fileStem)
     if (binaryStream.readString(6).compare(0,5,"TRACK") != 0)
         throw runtime_error("Trackvis file does not seem to have a valid magic number");
     
-    vector<int> imageDims;
-    binaryStream.readVector<int16_t>(imageDims, 3);
-    binaryStream.readVector<float>(voxelDims, 3);
+    binaryStream.readVector<int16_t>(grid.dimensions());
+    binaryStream.readVector<float>(grid.spacings());
     
     fileStream.seekg(12, ios::cur);
     nScalars = binaryStream.readValue<int16_t>();
@@ -127,6 +126,8 @@ void TrackvisDataSource::attach (const std::string &fileStem)
             break;
         }
     }
+    fileStream.seekg(440, ios::beg);
+    binaryStream.readMatrix<float>(grid.transform());
     fileStream.seekg(988, ios::beg);
     totalStreamlines = binaryStream.readValue<int32_t>();
     
@@ -169,6 +170,7 @@ void MedianTrackvisDataSource::get (Streamline &data)
     if (seedProperty < 0)
         throw runtime_error("A meaningful median can't be recovered without knowing seed indices");
     
+    const Eigen::Array3f &voxelDims = grid.spacings();
     vector<int> leftLengths(totalStreamlines), rightLengths(totalStreamlines);
     
     // First pass: find lengths
@@ -259,9 +261,9 @@ void TrackvisDataSink::writeStreamline (const Streamline &data)
         // TrackVis indexes from the left edge of each voxel
         Eigen::Array3f row;
         if (data.getPointType() == Streamline::VoxelPointType)
-            row = (points.row(i) + 0.5) * voxelDims.transpose();
+            row = (points.row(i) + 0.5) * grid.spacings().transpose();
         else
-            row = points.row(i) + (0.5 * voxelDims.transpose());
+            row = points.row(i) + (0.5 * grid.spacings().transpose());
         binaryStream.writeVector<float>(row);
     }
     
@@ -272,11 +274,8 @@ void TrackvisDataSink::writeStreamline (const Streamline &data)
     binaryStream.writeValue<float>(seedIndex);
 }
 
-void TrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &image)
+void TrackvisDataSink::attach (const std::string &fileStem)
 {
-    if (image.getDimensionality() < 3)
-        throw std::invalid_argument("Specified image has less than three dimensions");
-    
     if (fileStream.is_open())
         fileStream.close();
     
@@ -286,8 +285,8 @@ void TrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &im
     fileStream.seekp(0);
     fileStream.write(magicNumber, 6);
     
-    binaryStream.writeVector<int16_t>(image.getDimensions(), 3);
-    binaryStream.writeVector<float>(image.getVoxelDimensions(), 3);
+    binaryStream.writeVector<int16_t>(grid.dimensions(), 3);
+    binaryStream.writeVector<float>(grid.spacings(), 3);
     binaryStream.writeValues<float>(0.0, 3);
     
     binaryStream.writeValue<int16_t>(0);
@@ -296,12 +295,19 @@ void TrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &im
     fileStream.write("seed", 4);
     binaryStream.writeValues<char>(0, 196);
     
-    ::mat44 xform = image.getXformStruct();
-    binaryStream.writeArray<float>(xform.m[0], 16);
+    const Eigen::Matrix4f xform = grid.transform();
+    binaryStream.writeMatrix<float>(xform);
     binaryStream.writeValues<char>(0, 444);
     
+    ::mat44 xformStruct;
+    for (int i=0; i<4; i++)
+    {
+        for (int j=0; j<4; j++)
+            xformStruct.m[i][j] = xform(i, j);
+    }
+    
     int icode, jcode, kcode;
-    nifti_mat44_to_orientation(xform, &icode, &jcode, &kcode);
+    nifti_mat44_to_orientation(xformStruct, &icode, &jcode, &kcode);
     char orientation[4];
     orientation[0] = TrackvisDataSink::orientationCodeMap[icode];
     orientation[1] = TrackvisDataSink::orientationCodeMap[jcode];
@@ -311,7 +317,7 @@ void TrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &im
     binaryStream.writeValues<char>(0, 4);
     
     float qb, qc, qd, qfac;
-    nifti_mat44_to_quatern(xform, &qb, &qc, &qd, NULL, NULL, NULL, NULL, NULL, NULL, &qfac);
+    nifti_mat44_to_quatern(xformStruct, &qb, &qc, &qd, NULL, NULL, NULL, NULL, NULL, NULL, &qfac);
     ::mat44 rotationMatrix = nifti_quatern_to_mat44(qb, qc, qd, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, qfac);
     binaryStream.writeArray<float>(rotationMatrix.m[0], 3);
     binaryStream.writeArray<float>(rotationMatrix.m[1], 3);
@@ -322,12 +328,11 @@ void TrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &im
     binaryStream.writeValue<int32_t>(1000);
     
     totalStreamlines = 0;
-    std::copy(image.getVoxelDimensions().begin(), image.getVoxelDimensions().begin()+3, voxelDims.data());
 }
 
-void LabelledTrackvisDataSink::attach (const std::string &fileStem, const NiftiImage &image)
+void LabelledTrackvisDataSink::attach (const std::string &fileStem)
 {
-    TrackvisDataSink::attach(fileStem, image);
+    TrackvisDataSink::attach(fileStem);
     
     if (auxFileStream.is_open())
         auxFileStream.close();
@@ -429,7 +434,7 @@ void MedianTrackvisDataSink::setup (const size_type &count, const_iterator begin
     }
     
     // Assume the first streamline is representative re point type and spacing
-    median = Streamline(leftPoints, rightPoints, begin->getPointType(), voxelDims, begin->usesFixedSpacing());
+    median = Streamline(leftPoints, rightPoints, begin->getPointType(), grid.spacings(), begin->usesFixedSpacing());
 }
 
 void LabelledTrackvisDataSink::put (const Streamline &data)

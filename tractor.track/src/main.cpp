@@ -113,16 +113,16 @@ BEGIN_RCPP
             std::map<int,std::string> labelDictionary;
             for (int i=0; i<std::min(indices.size(),labels.size()); i++)
                 labelDictionary[indices[i]] = labels[i];
-            trkFile = new LabelledTrackvisDataSink(as<std::string>(_trkPath), *mask, labelDictionary);
+            trkFile = new LabelledTrackvisDataSink(as<std::string>(_trkPath), mask->getGrid3D(), labelDictionary);
         }
         else
-            trkFile = new BasicTrackvisDataSink(as<std::string>(_trkPath), *mask);
+            trkFile = new BasicTrackvisDataSink(as<std::string>(_trkPath), mask->getGrid3D());
         
         pipeline.addSink(trkFile);
     }
     if (!Rf_isNull(_medianPath))
     {
-        medianFile = new MedianTrackvisDataSink(as<std::string>(_medianPath), *mask);
+        medianFile = new MedianTrackvisDataSink(as<std::string>(_medianPath), mask->getGrid3D());
         pipeline.addSink(medianFile);
         
         // Pipeline must contain all streamlines at once for calculating median
@@ -152,5 +152,26 @@ BEGIN_RCPP
     delete mask;
     
     return wrap(nRetained);
+END_RCPP
+}
+
+RcppExport SEXP trkCount (SEXP _trkPath)
+{
+BEGIN_RCPP
+    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
+    return wrap(trkFile.nStreamlines());
+END_RCPP
+}
+
+RcppExport SEXP trkMedian (SEXP _trkPath, SEXP _resultPath, SEXP _quantile)
+{
+BEGIN_RCPP
+    // Block size must match number of streamlines, as a running median can't be calculated
+    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
+    Pipeline<Streamline> pipeline(&trkFile, trkFile.nStreamlines());
+    MedianTrackvisDataSink medianFile(as<std::string>(_resultPath), trkFile.getGrid3D(), as<double>(_quantile));
+    pipeline.run();
+    
+    return R_NilValue;
 END_RCPP
 }

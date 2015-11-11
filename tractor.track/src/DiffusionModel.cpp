@@ -1,11 +1,13 @@
 #include <RcppEigen.h>
 
 #include "Space.h"
+#include "Grid.h"
 #include "DiffusionModel.h"
 
 Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
 {
     std::vector<int> newPoint(4);
+    const Eigen::Array3i &imageDims = grid.dimensions();
     
     // Probabilistic trilinear interpolation: select the sample location with probability in proportion to proximity
     for (int i=0; i<3; i++)
