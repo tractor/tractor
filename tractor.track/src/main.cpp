@@ -28,10 +28,10 @@ BEGIN_RCPP
 END_RCPP
 }
 
-template <typename FinalType>
-FinalType decrement (double x)
+template <typename OriginalType, typename FinalType>
+FinalType decrement (OriginalType x)
 {
-    return static_cast<FinalType>(x - 1.0);
+    return static_cast<FinalType>(x - OriginalType(1));
 }
 
 RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetInfo, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _terminateOutsideMask, SEXP _mustLeaveMask, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _medianPath, SEXP _profileFunction, SEXP _debugLevel)
@@ -75,7 +75,7 @@ BEGIN_RCPP
     
     NumericMatrix seedsR(_seeds);
     Eigen::MatrixXf seeds(seedsR.rows(), seedsR.cols());
-    std::transform(seedsR.begin(), seedsR.end(), seeds.data(), decrement<float>);
+    std::transform(seedsR.begin(), seedsR.end(), seeds.data(), decrement<double,float>);
     TractographyDataSource dataSource(&tracker, seeds.array(), as<size_t>(_count), as<bool>(_jitter));
     Pipeline<Streamline> pipeline(&dataSource);
     
@@ -157,6 +157,26 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP trkApply (SEXP _trkPath, SEXP _indices, SEXP _function)
+{
+BEGIN_RCPP
+    int_vector indices = as<int_vector>(_indices);
+    std:transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
+    
+    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
+    Pipeline<Streamline> pipeline(&trkFile);
+    IndexFilter filter(indices);
+    pipeline.addManipulator(&filter);
+    Function function(_function);
+    RCallbackDataSink sink(function);
+    pipeline.addSink(&sink);
+    
+    pipeline.run();
+    
+    return R_NilValue;
+END_RCPP
+}
+
 RcppExport SEXP trkCount (SEXP _trkPath)
 {
 BEGIN_RCPP
@@ -172,6 +192,8 @@ BEGIN_RCPP
     BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
     Pipeline<Streamline> pipeline(&trkFile, trkFile.nStreamlines());
     MedianTrackvisDataSink medianFile(as<std::string>(_resultPath), trkFile.getGrid3D(), as<double>(_quantile));
+    pipeline.addSink(&medianFile);
+    
     pipeline.run();
     
     return R_NilValue;
