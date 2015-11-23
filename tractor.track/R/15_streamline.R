@@ -1,15 +1,19 @@
-Streamline <- setRefClass("Streamline", fields=list(line="matrix",seedIndex="integer",originalSeedPoint="numeric",coordUnit="character",pointSpacings="numeric"), methods=list(
-    initialize = function (line = matrix(), seedIndex = NULL, originalSeedPoint = NULL, coordUnit = c("vox","mm"), ...)
+Streamline <- setRefClass("Streamline", fields=list(line="matrix",seedIndex="integer",seedLoc="numeric",coordUnit="character",pointSpacings="numeric"), methods=list(
+    initialize = function (line = matrix(), seedIndex = NULL, seedLoc = NULL, coordUnit = c("vox","mm"), pointSpacings = NULL, fixedSpacing = NULL, ...)
     {
         coordUnit <- match.arg(coordUnit)
         
-        object <- initFields(line=promote(line,byrow=TRUE), seedIndex=as.integer(seedIndex), originalSeedPoint=as.numeric(originalSeedPoint), coordUnit=coordUnit)
+        object <- initFields(line=promote(line,byrow=TRUE), seedIndex=as.integer(seedIndex), seedLoc=as.numeric(seedLoc), coordUnit=coordUnit)
 
         if (ncol(object$line) != 3)
             report(OL$Error, "Streamline must be specified as a matrix with 3 columns")
         
-        if (nrow(object$line) == 1)
+        if (!is.null(pointSpacings))
+            object$pointSpacings <- rep(as.numeric(pointSpacings), length.out=nrow(object$line)-1)
+        else if (nrow(object$line) == 1)
             object$pointSpacings <- numeric(0)
+        else if (isTRUE(fixedSpacing))
+            object$pointSpacings <- rep(vectorLength(object$line[2,]-object$line[1,]), nrow(object$line)-1)
         else
             object$pointSpacings <- apply(diff(object$line), 1, vectorLength)
         
@@ -51,14 +55,39 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         if (!file.exists(ensureFileSuffix(file, "trk")))
             report(OL$Error, "Specified streamline source file does not exist")
         
-        count <- as.integer(.Call("trkCount", ensureFileSuffix(file,NULL,strip="trk"), PACKAGE="tractor.track"))
+        file <- ensureFileSuffix(file, NULL, strip="trk")
+        count <- as.integer(.Call("trkCount", file, PACKAGE="tractor.track"))
         
         return (initFields(file=file, count.=count))
     },
     
     getMedian = function (quantile = 0.99)
     {
+        tempFile <- threadSafeTempFile()
+        .Call("trkMedian", file, tempFile, quantile, PACKAGE="tractor.track")
+        return (StreamlineSource$new(tempFile)$getStreamlines(1L))
+    },
+    
+    getStreamlines = function (indices = NULL, simplify = TRUE)
+    {
+        if (is.null(indices))
+            indices <- seq_len(count.)
         
+        streamlines <- vector("list", length(indices))
+        i <- 1
+        
+        .addStreamline <- function (points, seedIndex, seedLoc, coordUnit, fixedSpacing)
+        {
+            streamlines[[i]] <<- Streamline$new(points, seedIndex, seedLoc, coordUnit, fixedSpacing=fixedSpacing)
+            i <<- i + 1
+        }
+        
+        .Call("trkApply", file, indices, .addStreamline, PACKAGE="tractor.track")
+        
+        if (simplify && length(indices) == 1)
+            return (streamlines[[1]])
+        else
+            return (streamlines)
     },
     
     nStreamlines = function () { return (count.) }
