@@ -44,4 +44,30 @@ public:
     }
 };
 
+class IndexFilter : public DataManipulator<Streamline>
+{
+private:
+    std::vector<int> indices;
+    int loc, counter;
+    
+public:
+    IndexFilter (const std::vector<int> &indices)
+        : indices(indices), loc(0), counter(0)
+    {
+        std::sort(this->indices.begin(), this->indices.end());
+    }
+    
+    bool process (Streamline &data)
+    {
+        bool result = false;
+        if (loc < indices.size() && counter == indices[loc])
+        {
+            result = true;
+            loc++;
+        }
+        counter++;
+        return result;
+    }
+};
+
 #endif
