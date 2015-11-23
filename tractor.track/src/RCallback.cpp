@@ -2,38 +2,14 @@
 
 #include "RCallback.h"
 
-void RCallbackDataSink::setup (const size_type &count, const_iterator begin, const_iterator end)
-{
-    currentIndex = 0;
-    currentStart = 0;
-    nTotalPoints = 0;
-    for (const_iterator it=begin; it!=end; it++)
-        nTotalPoints += it->nPoints();
-    
-    points.resize(nTotalPoints, Eigen::NoChange);
-    startIndices.resize(count);
-    seedIndices.resize(count);
-}
-
 void RCallbackDataSink::put (const Streamline &data)
 {
-    Eigen::ArrayX3f currentPoints;
-    size_t seedIndex = data.concatenatePoints(currentPoints);
-    if (currentPoints.rows() != 0)
-    {
-        startIndices(currentIndex) = currentStart;
-        seedIndices(currentIndex) = currentStart + seedIndex;
-        points.block(currentStart,0,currentPoints.rows(),3) = currentPoints;
-        currentIndex++;
-        currentStart += currentPoints.rows();
-    }
-}
-
-void RCallbackDataSink::finish ()
-{
+    Eigen::ArrayX3f points;
+    size_t seedIndex = data.concatenatePoints(points);
+    
     Rcpp::NumericMatrix pointsR(points.rows(), 3);
-    Rcpp::IntegerVector startIndicesR(startIndices.rows());
-    Rcpp::IntegerVector seedIndicesR(seedIndices.rows());
+    int seedIndexR = static_cast<int>(seedIndex) + 1;
+    
     for (size_t i=0; i<points.rows(); i++)
     {
         pointsR(i,0) = points(i,0) + 1.0;
@@ -41,13 +17,14 @@ void RCallbackDataSink::finish ()
         pointsR(i,2) = points(i,2) + 1.0;
     }
     
-    for (size_t j=0; j<startIndices.rows(); j++)
-    {
-        startIndicesR[j] = static_cast<int>(startIndices(j,0)) + 1;
-        seedIndicesR[j] = static_cast<int>(seedIndices(j,0)) + 1;
-    }
+    Rcpp::NumericVector seedLocR(3);
+    seedLocR(0) = points(seedIndex, 0) + 1.0;
+    seedLocR(1) = points(seedIndex, 1) + 1.0;
+    seedLocR(2) = points(seedIndex, 2) + 1.0;
     
-    function(pointsR, startIndicesR, seedIndicesR);
+    const std::string unit = (data.getPointType() == Streamline::VoxelPointType ? "vox" : "mm");
+    
+    function(pointsR, seedIndexR, seedLocR, unit, data.usesFixedSpacing());
 }
 
 void ProfileMatrixDataSink::put (const Streamline &data)
