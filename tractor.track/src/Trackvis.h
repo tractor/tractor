@@ -52,7 +52,7 @@ public:
     
     size_t nStreamlines () const { return totalStreamlines; }
     
-    bool more () const { return (currentStreamline < totalStreamlines); }
+    bool more () { return (currentStreamline < totalStreamlines); }
     void get (Streamline &data) { readStreamline(data); }
 };
 
@@ -85,7 +85,7 @@ public:
     }
     
     void attach (const std::string &fileStem);
-    bool more () const { return (currentStreamline < totalStreamlines); }
+    bool more () { return (currentStreamline < totalStreamlines); }
     void get (Streamline &data);
 };
 

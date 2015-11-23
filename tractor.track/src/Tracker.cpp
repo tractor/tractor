@@ -12,7 +12,7 @@ Streamline Tracker::run ()
     const Eigen::Array3i &imageDims = dataSource->getGrid3D().dimensions();
     std::vector<int> spaceDims(3);
     for (int i=0; i<3; i++)
-        spaceDims[i] = imageDims[i];
+        spaceDims[i] = imageDims(i,0);
     const Eigen::Array3f &voxelDims = dataSource->getGrid3D().spacings();
     
     Rcpp::Rcout << std::fixed;

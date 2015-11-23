@@ -4,6 +4,34 @@
 #include "Grid.h"
 #include "DiffusionModel.h"
 
+BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std::vector<std::string> &thetaFiles, const std::vector<std::string> &phiFiles)
+    : avfThreshold(0.05)
+{
+    if (avfFiles.size() == 0)
+        throw std::invalid_argument("Vectors of BEDPOSTX filenames should not have length zero");
+    if (avfFiles.size() != thetaFiles.size() || thetaFiles.size() != phiFiles.size())
+        throw std::invalid_argument("Vectors of BEDPOSTX filenames should all have equal length");
+    
+    nCompartments = avfFiles.size();
+    avf.resize(nCompartments);
+    theta.resize(nCompartments);
+    phi.resize(nCompartments);
+    
+    grid = NiftiImage(avfFiles[0]).getGrid3D();
+    
+    for (int i=0; i<nCompartments; i++)
+    {
+        avf[i] = NiftiImage(avfFiles[i]).getData<float>();
+        theta[i] = NiftiImage(thetaFiles[i]).getData<float>();
+        phi[i] = NiftiImage(phiFiles[i]).getData<float>();
+    }
+    
+    const std::vector<int> &avfDims = avf[0]->getDimensions();
+    if (avfDims.size() != 4)
+        throw std::runtime_error("AVF sample image does not seem to be 4D");
+    nSamples = avfDims[3];
+}
+
 Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
 {
     std::vector<int> newPoint(4);
@@ -18,7 +46,7 @@ Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, co
         float distance = point[i] - pointFloor;
         
         float uniformSample = static_cast<float>(R::unif_rand());
-        if ((uniformSample > distance && pointFloor >= 0.0) || pointCeiling >= static_cast<float>(imageDims[i]))
+        if ((uniformSample > distance && pointFloor >= 0.0) || pointCeiling >= static_cast<float>(imageDims(i,0)))
             newPoint[i] = static_cast<int>(pointFloor);
         else
             newPoint[i] = static_cast<int>(pointCeiling);

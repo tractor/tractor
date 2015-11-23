@@ -20,7 +20,12 @@ private:
     
     template <typename DataType> int chooseDatatype (const Array<DataType> &data);
     
-    template <typename SourceType, typename TargetType> static TargetType convertValue (SourceType value) { return static_cast<TargetType>(value); }
+    template <typename SourceType, typename TargetType>
+    static TargetType convertValue (SourceType value)
+    {
+        return static_cast<TargetType>(value);
+    }
+    
     template <typename SourceType, typename TargetType> void convertFromArray (const Array<SourceType> &data);
     template <typename SourceType, typename TargetType> Array<TargetType> * convertToArray () const;
     
@@ -40,7 +45,7 @@ public:
         extractMetadata();
     }
     
-    ~NiftiImage ()
+    virtual ~NiftiImage ()
     {
         nifti_image_free(info);
     }
@@ -63,8 +68,8 @@ public:
         Eigen::Array3f spacings = Eigen::Array3f::Zero();
         for (int i=0; i<dims.size(); i++)
         {
-            fixedDims[i] = dims[i];
-            spacings[i] = voxelDims[i];
+            fixedDims(i,0) = dims[i];
+            spacings(i,0) = voxelDims[i];
         }
         return Grid<3>(fixedDims, spacings, xform);
     }

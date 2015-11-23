@@ -30,31 +30,10 @@ private:
     float avfThreshold;
     
 public:
-    BedpostModel () { nCompartments = 0; nSamples = 0; }
-    BedpostModel (const std::vector<std::string> &avfFiles, const std::vector<std::string> &thetaFiles, const std::vector<std::string> &phiFiles)
-    {
-        if (avfFiles.size() == 0)
-            throw std::invalid_argument("Vectors of BEDPOSTX filenames should not have length zero");
-        if (avfFiles.size() != thetaFiles.size() || thetaFiles.size() != phiFiles.size())
-            throw std::invalid_argument("Vectors of BEDPOSTX filenames should all have equal length");
-        
-        nCompartments = avfFiles.size();
-        avf.resize(nCompartments);
-        theta.resize(nCompartments);
-        phi.resize(nCompartments);
-        
-        grid = NiftiImage(avfFiles[0],false).getGrid3D();
-        
-        for (int i=0; i<nCompartments; i++)
-        {
-            avf[i] = NiftiImage(avfFiles[i]).getData<float>();
-            theta[i] = NiftiImage(thetaFiles[i]).getData<float>();
-            phi[i] = NiftiImage(phiFiles[i]).getData<float>();
-        }
-        
-        const std::vector<int> &avfDims = avf[0]->getDimensions();
-        nSamples = avfDims[3];
-    }
+    BedpostModel ()
+        : nCompartments(0), nSamples(0) {}
+    
+    BedpostModel (const std::vector<std::string> &avfFiles, const std::vector<std::string> &thetaFiles, const std::vector<std::string> &phiFiles);
     
     ~BedpostModel ()
     {
