@@ -92,7 +92,7 @@ void TrackvisDataSource::attach (const std::string &fileStem)
     if (fileStream.is_open())
         fileStream.close();
     
-    fileStream.open(fileStem + ".trk", ios::binary);
+    fileStream.open((fileStem + ".trk").c_str(), ios::binary);
     
     // Must be -1 if there is no seed property, for get()
     seedProperty = -1;
@@ -142,7 +142,7 @@ void LabelledTrackvisDataSource::attach (const std::string &fileStem)
     if (auxFileStream.is_open())
         auxFileStream.close();
     
-    auxFileStream.open(fileStem + ".trkl", ios::binary);
+    auxFileStream.open((fileStem + ".trkl").c_str(), ios::binary);
     
     auxFileStream.seekg(8);
     const int nLabels = auxBinaryStream.readValue<int32_t>();
@@ -279,7 +279,7 @@ void TrackvisDataSink::attach (const std::string &fileStem)
     if (fileStream.is_open())
         fileStream.close();
     
-    fileStream.open(fileStem + ".trk", ios::binary);
+    fileStream.open((fileStem + ".trk").c_str(), ios::binary);
     
     char magicNumber[6] = { 'T','R','A','C','K','\0' };
     fileStream.seekp(0);
@@ -337,7 +337,7 @@ void LabelledTrackvisDataSink::attach (const std::string &fileStem)
     if (auxFileStream.is_open())
         auxFileStream.close();
     
-    auxFileStream.open(fileStem + ".trkl", ios::binary);
+    auxFileStream.open((fileStem + ".trkl").c_str(), ios::binary);
     
     // File version number
     auxBinaryStream.writeValue<int32_t>(1);
