@@ -66,7 +66,7 @@ public:
     {
         Eigen::Array3i fixedDims = Eigen::Array3i::Ones();
         Eigen::Array3f spacings = Eigen::Array3f::Zero();
-        for (int i=0; i<dims.size(); i++)
+        for (int i=0; i<std::min(3,static_cast<int>(dims.size())); i++)
         {
             fixedDims(i,0) = dims[i];
             spacings(i,0) = voxelDims[i];

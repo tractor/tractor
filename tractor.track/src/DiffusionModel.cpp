@@ -17,7 +17,7 @@ BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std:
     theta.resize(nCompartments);
     phi.resize(nCompartments);
     
-    grid = NiftiImage(avfFiles[0]).getGrid3D();
+    grid = NiftiImage(avfFiles[0],false).getGrid3D();
     
     for (int i=0; i<nCompartments; i++)
     {
