@@ -90,5 +90,30 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
             return (streamlines)
     },
     
+    getVisitationMap = function (indices = NULL, reference = NULL)
+    {
+        if (is.null(indices))
+            indices <- seq_len(count.)
+        
+        if (is(reference, "MriImage"))
+        {
+            if (reference$isInternal())
+            {
+                fileName <- threadSafeTempFile()
+                writeImageFile(reference, fileName)
+                reference <- fileName
+            }
+            else
+                reference <- reference$getSource()
+        }
+        else if (!is.character(reference))
+            report(OL$Error, "A reference image or path must be provided")
+        
+        resultFile <- threadSafeTempFile()
+        .Call("trkMap", file, indices, reference, resultFile, PACKAGE="tractor.track")
+        
+        return (readImageFile(resultFile))
+    },
+    
     nStreamlines = function () { return (count.) }
 ))

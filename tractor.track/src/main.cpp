@@ -185,6 +185,32 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP trkMap (SEXP _trkPath, SEXP _indices, SEXP _imagePath, SEXP _resultPath)
+{
+BEGIN_RCPP
+    int_vector indices = as<int_vector>(_indices);
+    std:transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
+    
+    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
+    Pipeline<Streamline> pipeline(&trkFile);
+    IndexFilter filter(indices);
+    pipeline.addManipulator(&filter);
+    
+    int_vector dims(3);
+    const Grid<3> &grid = trkFile.getGrid3D();
+    std::copy(grid.dimensions().data(), grid.dimensions().data()+3, dims.begin());
+    VisitationMapDataSink map(dims);
+    pipeline.addSink(&map);
+    
+    pipeline.run();
+    
+    NiftiImage reference(as<std::string>(_imagePath), false);
+    map.writeToNifti(reference, as<std::string>(_resultPath));
+    
+    return R_NilValue;
+END_RCPP
+}
+
 RcppExport SEXP trkMedian (SEXP _trkPath, SEXP _resultPath, SEXP _quantile)
 {
 BEGIN_RCPP
