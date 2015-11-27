@@ -43,10 +43,12 @@ public:
     size_t nPoints () const { return std::max(static_cast<size_t>(leftPoints.size()+rightPoints.size())-1, size_t(0)); }
     size_t getSeedIndex () const { return std::max(static_cast<size_t>(leftPoints.size())-1, size_t(0)); }
     
-    const std::vector<Space<3>::Point> & getLeftPoints() const { return leftPoints; }
-    const std::vector<Space<3>::Point> & getRightPoints() const { return rightPoints; }
-    Streamline::PointType getPointType() const { return pointType; }
-    bool usesFixedSpacing() const { return fixedSpacing; }
+    const std::vector<Space<3>::Point> & getLeftPoints () const { return leftPoints; }
+    const std::vector<Space<3>::Point> & getRightPoints () const { return rightPoints; }
+    Streamline::PointType getPointType () const { return pointType; }
+    bool usesFixedSpacing () const { return fixedSpacing; }
+    
+    const Eigen::ArrayXf & getVoxelDimensions () const { return voxelDims; }
     
     double getLeftLength () const  { return getLength(leftPoints); }
     double getRightLength () const { return getLength(rightPoints); }
