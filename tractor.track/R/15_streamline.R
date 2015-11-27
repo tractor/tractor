@@ -1,9 +1,7 @@
-Streamline <- setRefClass("Streamline", fields=list(line="matrix",seedIndex="integer",seedLoc="numeric",coordUnit="character",pointSpacings="numeric"), methods=list(
-    initialize = function (line = matrix(), seedIndex = NULL, seedLoc = NULL, coordUnit = c("vox","mm"), pointSpacings = NULL, fixedSpacing = NULL, ...)
+Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=list(line="matrix",seedIndex="integer",voxelDims="numeric",coordUnit="character",pointSpacings="numeric"), methods=list(
+    initialize = function (line = matrix(), seedIndex = NULL, voxelDims = NULL, coordUnit = c("vox","mm"), pointSpacings = NULL, ...)
     {
-        coordUnit <- match.arg(coordUnit)
-        
-        object <- initFields(line=promote(line,byrow=TRUE), seedIndex=as.integer(seedIndex), seedLoc=as.numeric(seedLoc), coordUnit=coordUnit)
+        object <- initFields(line=promote(line,byrow=TRUE), seedIndex=as.integer(seedIndex), voxelDims=as.numeric(voxelDims)[1:3], coordUnit=match.arg(coordUnit))
 
         if (ncol(object$line) != 3)
             report(OL$Error, "Streamline must be specified as a matrix with 3 columns")
@@ -12,8 +10,6 @@ Streamline <- setRefClass("Streamline", fields=list(line="matrix",seedIndex="int
             object$pointSpacings <- rep(as.numeric(pointSpacings), length.out=nrow(object$line)-1)
         else if (nrow(object$line) == 1)
             object$pointSpacings <- numeric(0)
-        else if (isTRUE(fixedSpacing))
-            object$pointSpacings <- rep(vectorLength(object$line[2,]-object$line[1,]), nrow(object$line)-1)
         else
             object$pointSpacings <- apply(diff(object$line), 1, vectorLength)
         
@@ -26,25 +22,51 @@ Streamline <- setRefClass("Streamline", fields=list(line="matrix",seedIndex="int
     
     getLineLength = function () { return (sum(pointSpacings)) },
     
-    getMetadata = function () { return (export("StreamlineTractMetadata")) },
-    
     getPointSpacings = function () { return (pointSpacings) },
     
     getSeedIndex = function () { return (seedIndex) },
     
-    getOriginalSeedPoint = function () { return (originalSeedPoint) },
+    getSeedPoint = function () { return (line[seedIndex,]) },
     
-    getSeedPoint = function () { return (originalSeedPoint) },
+    getVoxelDimensions = function () { return (voxelDims) },
     
-    getSpatialRange = function ()
+    nPoints = function () { return (nrow(line)) },
+    
+    setCoordinateUnit = function (newUnit = c("vox","mm"))
     {
-        fullRange <- apply(line, 2, range, na.rm=TRUE)
-        return (list(mins=fullRange[1,], maxes=fullRange[2,]))
+        newUnit <- match.arg(newUnit)
+        if (newUnit == "vox" && .self$coordUnit == "mm")
+            .self$line <- t(apply(line-1, 1, "*", abs(voxelDims)))
+        else if (newUnit == "mm" && .self$coordUnit == "vox")
+            .self$line <- t(apply(line, 1, "/", abs(voxelDims))) + 1
+        
+        if (newUnit != .self$coordUnit)
+        {
+            .self$updatePointSpacings()
+            .self$coordUnit <- newUnit
+        }
+        
+        invisible(.self)
     },
     
-    isOriginAtSeed = function () { return (equivalent(line[seedIndex,], c(0,0,0), tolerance=1e-4)) },
+    transform = function (xfm, reverse = FALSE, ...)
+    {
+        .self$line <- transformPoints(xfm, .self$line, voxel=(.self$coordUnit=="vox"), reverse=reverse, ...)
+        .self$updatePointSpacings()
+        
+        if (reverse)
+            .self$voxelDims <- xfm$getSourceImage()$getVoxelDimensions()[1:3]
+        else
+            .self$voxelDims <- xfm$getTargetImage()$getVoxelDimensions()[1:3]
+        
+        invisible(.self)
+    },
     
-    nPoints = function () { return (nrow(line)) }
+    updatePointSpacings = function ()
+    {
+        .self$pointSpacings <- apply(diff(.self$line), 1, vectorLength)
+        invisible(.self)
+    }
 ))
 
 StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character",count.="integer"), methods=list(
@@ -76,9 +98,9 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         streamlines <- vector("list", length(indices))
         i <- 1
         
-        .addStreamline <- function (points, seedIndex, seedLoc, coordUnit, fixedSpacing)
+        .addStreamline <- function (points, seedIndex, voxelDims, coordUnit)
         {
-            streamlines[[i]] <<- Streamline$new(points, seedIndex, seedLoc, coordUnit, fixedSpacing=fixedSpacing)
+            streamlines[[i]] <<- Streamline$new(points, seedIndex, voxelDims, coordUnit)
             i <<- i + 1
         }
         

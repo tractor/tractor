@@ -10,21 +10,18 @@ void RCallbackDataSink::put (const Streamline &data)
     Rcpp::NumericMatrix pointsR(points.rows(), 3);
     int seedIndexR = static_cast<int>(seedIndex) + 1;
     
+    const Streamline::PointType pointType = data.getPointType();
+    
     for (size_t i=0; i<points.rows(); i++)
     {
-        pointsR(i,0) = points(i,0) + 1.0;
-        pointsR(i,1) = points(i,1) + 1.0;
-        pointsR(i,2) = points(i,2) + 1.0;
+        pointsR(i,0) = points(i,0) + (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        pointsR(i,1) = points(i,1) + (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        pointsR(i,2) = points(i,2) + (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
     }
     
-    Rcpp::NumericVector seedLocR(3);
-    seedLocR(0) = points(seedIndex, 0) + 1.0;
-    seedLocR(1) = points(seedIndex, 1) + 1.0;
-    seedLocR(2) = points(seedIndex, 2) + 1.0;
+    const std::string unit = (pointType == Streamline::VoxelPointType ? "vox" : "mm");
     
-    const std::string unit = (data.getPointType() == Streamline::VoxelPointType ? "vox" : "mm");
-    
-    function(pointsR, seedIndexR, seedLocR, unit, data.usesFixedSpacing());
+    function(pointsR, seedIndexR, data.getVoxelDimensions(), unit);
 }
 
 void ProfileMatrixDataSink::put (const Streamline &data)
