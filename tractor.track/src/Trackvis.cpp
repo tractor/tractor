@@ -373,12 +373,16 @@ void MedianTrackvisDataSink::setup (const size_type &count, const_iterator begin
     size_t i;
     const_iterator it;
     vector<int> leftLengths(count), rightLengths(count);
+    const Streamline::PointType pointType = begin->getPointType();
     
     // First pass: find lengths
     for (it=begin, i=0; it!=end; it++, i++)
     {
         leftLengths[i] = it->getLeftPoints().size();
         rightLengths[i] = it->getRightPoints().size();
+        
+        if (it->getPointType() != pointType)
+            throw std::runtime_error("Point types do not match across streamlines, so median will make no sense");
     }
     
     const int lengthIndex = static_cast<int>(round((count-1) * quantile));
@@ -433,8 +437,8 @@ void MedianTrackvisDataSink::setup (const size_type &count, const_iterator begin
         rightPoints[j][2] = getNthElement(z, medianIndex);
     }
     
-    // Assume the first streamline is representative re point type and spacing
-    median = Streamline(leftPoints, rightPoints, begin->getPointType(), grid.spacings(), begin->usesFixedSpacing());
+    // Fixed spacing won't be preserved in the median
+    median = Streamline(leftPoints, rightPoints, pointType, grid.spacings(), false);
 }
 
 void LabelledTrackvisDataSink::put (const Streamline &data)
