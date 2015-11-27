@@ -10,9 +10,8 @@ streamlineTractWithOptions <- function (options, session, seed, refSession = NUL
     tracker <- session$getTracker()
     tracker$setOptions(rightwardsVector=rightwardsVector)
     trackerPath <- tracker$run(seed, nSamples, requireMap=FALSE, requireStreamlines=TRUE)
-    # FIXME: streamlines not obtained
-    streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
-    streamline <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
+    streamSource <- StreamlineSource$new(trackerPath)
+    streamline <- streamSource$getMedian(options$lengthQuantile)
     
     if (options$registerToReference)
     {
@@ -21,7 +20,7 @@ streamlineTractWithOptions <- function (options, session, seed, refSession = NUL
         else
             transform <- registerImages(session$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
         
-        streamline <- newStreamlineTractByTransformation(streamline, transform)
+        streamline$transform(transform)
     }
     
     invisible (streamline)
