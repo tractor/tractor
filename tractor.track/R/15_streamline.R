@@ -49,6 +49,24 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
         invisible(.self)
     },
     
+    setMaximumSpacing = function (maxSeparation)
+    {
+        if (length(.self$pointSpacings) > 0)
+        {
+            wide <- which(.self$pointSpacings > maxSeparation)
+            leftWide <- wide[which(wide < seedIndex)]
+            rightWide <- wide[which(wide > seedIndex)]
+            
+            # NB: pointSpacings[1] is the distance *from* the first point on the line
+            leftStop <- ifelse(length(leftWide) > 0, max(leftWide)+1, 1)
+            rightStop <- ifelse(length(rightWide) > 0, min(rightWide), nPoints)
+            
+            .self$trim(leftStop, rightStop)
+        }
+        
+        invisible(.self)
+    },
+    
     transform = function (xfm, reverse = FALSE, ...)
     {
         .self$line <- transformPoints(xfm, .self$line, voxel=(.self$coordUnit=="vox"), reverse=reverse, ...)
@@ -60,6 +78,21 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
             .self$voxelDims <- xfm$getTargetImage()$getVoxelDimensions()[1:3]
         
         invisible(.self)
+    },
+    
+    trim = function (start = NULL, end = NULL)
+    {
+        if (is.null(start))
+            start <- 1
+        if (is.null(end))
+            end <- nrow(line)
+        
+        if (start != 1 || end != nrow(line))
+        {
+            .self$line <- line[start:end,]
+            .self$seedIndex <- seedIndex - start + 1
+            .self$pointSpacings <- .self$pointSpacings[start:(end-1)]
+        }
     },
     
     updatePointSpacings = function ()
