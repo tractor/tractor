@@ -97,7 +97,11 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     
     updatePointSpacings = function ()
     {
-        .self$pointSpacings <- apply(diff(.self$line), 1, vectorLength)
+        if (nrow(.self$line) == 1)
+            .self$pointSpacings <- numeric(0)
+        else
+            .self$pointSpacings <- apply(diff(.self$line), 1, vectorLength)
+        
         invisible(.self)
     }
 ))
