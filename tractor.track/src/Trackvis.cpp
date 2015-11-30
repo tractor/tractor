@@ -158,7 +158,7 @@ void LabelledTrackvisDataSource::attach (const std::string &fileStem)
 
 void LabelledTrackvisDataSource::get (Streamline &data)
 {
-    TrackvisDataSource::get(data);
+    readStreamline(data);
     
     const int nLabels = auxBinaryStream.readValue<int32_t>();
     for (int i=0; i<nLabels; i++)
