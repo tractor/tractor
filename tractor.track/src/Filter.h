@@ -24,6 +24,26 @@ public:
     }
 };
 
+class LabelFilter : public DataManipulator<Streamline>
+{
+private:
+    std::vector<int> labels;
+    
+public:
+    LabelFilter (const std::vector<int> &labels)
+        : labels(labels) {}
+    
+    bool process (Streamline &data)
+    {
+        for (std::vector<int>::const_iterator it=labels.begin(); it!=labels.end(); it++)
+        {
+            if (!data.hasLabel(*it))
+                return false;
+        }
+        return true;
+    }
+};
+
 class LabelCountFilter : public DataManipulator<Streamline>
 {
 private:
