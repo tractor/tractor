@@ -4,16 +4,16 @@
 #include "Pipeline.h"
 
 template <class ElementType>
-std::vector<size_t> Pipeline<ElementType>::run ()
+size_t Pipeline<ElementType>::run ()
 {
-    size_t counter = 0, subsetIndex = 0;
+    size_t total = 0, subsetIndex = 0;
     const bool usingSubset = (subset.size() > 0);
     bool subsetFinished = false;
     std::vector<size_t> keepList;
     
     // If there's no data source there's nothing to do
     if (source == NULL)
-        return keepList;
+        return 0;
     
     // Empty the working set
     workingSet.clear();
@@ -39,32 +39,22 @@ std::vector<size_t> Pipeline<ElementType>::run ()
         // Process the data when the working set is full or there's nothing more incoming
         if (workingSet.size() == blockSize || !source->more() || subsetFinished)
         {
-            counter += workingSet.size();
+            total += workingSet.size();
             
             // Apply the manipulator(s), if there are any
             for (int i=0; i<manipulators.size(); i++)
             {
-                // Go back to the start of the working set
-                counter -= workingSet.size();
-                
                 typename std::list<ElementType>::iterator it = workingSet.begin();
                 while (it != workingSet.end())
                 {
                     bool keep = manipulators[i]->process(*it);
                     if (keep)
-                    {
-                        // Move on to the next element
                         it++;
-                        
-                        // If this is the last manipulator, add the index to the keep list
-                        if (i == (manipulators.size() - 1))
-                            keepList.push_back(counter);
-                    }
                     else
+                    {
                         it = workingSet.erase(it);
-                    
-                    // Increment the counter again
-                    counter++;
+                        total--;
+                    }
                 }
             }
             
@@ -93,7 +83,7 @@ std::vector<size_t> Pipeline<ElementType>::run ()
     for (int i=0; i<sinks.size(); i++)
         sinks[i]->done();
     
-    return keepList;
+    return total;
 }
 
 template class Pipeline<Streamline>;

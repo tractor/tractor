@@ -48,7 +48,7 @@ public:
             sinks.push_back(sink);
     }
     
-    std::vector<size_t> run ();
+    size_t run ();
 };
 
 #endif

@@ -143,7 +143,7 @@ BEGIN_RCPP
         pipeline.addSink(profile);
     }
     
-    size_t nRetained = pipeline.run().size();
+    size_t nRetained = pipeline.run();
     
     if (visitationMap != NULL)
     {
