@@ -64,44 +64,18 @@ public:
     size_t concatenatePoints (Eigen::ArrayX3f &points) const;
 };
 
-class StreamlineMatrixDataSink : public DataSink<Streamline>
+class StreamlineLengthsDataSink : public DataSink<Streamline>
 {
 private:
-    Eigen::ArrayX3f points;
-    Eigen::Array<unsigned int,Eigen::Dynamic,1> startIndices, seedIndices;
-    size_t currentIndex, currentStart, nTotalPoints;
+    std::vector<double> lengths;
     
 public:
-    void setup (const size_type &count, const_iterator begin, const_iterator end)
-    {
-        currentIndex = 0;
-        currentStart = 0;
-        nTotalPoints = 0;
-        for (const_iterator it=begin; it!=end; it++)
-            nTotalPoints += it->nPoints();
-        
-        points.resize(nTotalPoints, 3);
-        startIndices.resize(count);
-        seedIndices.resize(count);
-    }
-    
     void put (const Streamline &data)
     {
-        Eigen::ArrayX3f currentPoints;
-        size_t seedIndex = data.concatenatePoints(currentPoints);
-        if (currentPoints.rows() != 0)
-        {
-            startIndices(currentIndex) = currentStart;
-            seedIndices(currentIndex) = currentStart + seedIndex;
-            points.block(currentStart,0,currentPoints.rows(),3) = currentPoints;
-            currentIndex++;
-            currentStart += currentPoints.rows();
-        }
+        lengths.push_back(data.getLeftLength() + data.getRightLength());
     }
     
-    const Eigen::ArrayX3f & getPoints () { return points; }
-    const Eigen::Array<unsigned int,Eigen::Dynamic,1> & getStartIndices () { return startIndices; }
-    const Eigen::Array<unsigned int,Eigen::Dynamic,1> & getSeedIndices () { return seedIndices; }
+    const std::vector<double> & getLengths () { return lengths; }
 };
 
 #endif
