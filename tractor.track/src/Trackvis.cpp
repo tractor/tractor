@@ -143,8 +143,14 @@ void LabelledTrackvisDataSource::attach (const std::string &fileStem)
         auxFileStream.close();
     
     auxFileStream.open((fileStem + ".trkl").c_str(), ios::binary);
+    auxFileStream.seekg(0);
+    if (auxBinaryStream.readString(8).compare("TRKLABEL") != 0)
+        throw runtime_error("Track label file does not seem to have a valid magic number");
     
-    auxFileStream.seekg(8);
+    const int version = auxBinaryStream.readValue<int32_t>();
+    auxBinaryStream.swapEndianness(version > 0xffff);
+    
+    auxFileStream.seekg(16);
     const int nLabels = auxBinaryStream.readValue<int32_t>();
     auxFileStream.seekg(32);
     
@@ -339,6 +345,10 @@ void LabelledTrackvisDataSink::attach (const std::string &fileStem)
     
     auxFileStream.open((fileStem + ".trkl").c_str(), ios::binary);
     
+    char magicNumber[8] = { 'T', 'R', 'K', 'L', 'A', 'B', 'E', 'L' };
+    auxFileStream.seekp(0);
+    auxFileStream.write(magicNumber, 8);
+    
     // File version number
     auxBinaryStream.writeValue<int32_t>(1);
     
@@ -348,8 +358,8 @@ void LabelledTrackvisDataSink::attach (const std::string &fileStem)
     // Number of labels
     auxBinaryStream.writeValue<int32_t>(labelDictionary.size());
     
-    // 20 bytes' padding for future versions
-    auxBinaryStream.writeValues<int32_t>(0, 5);
+    // 12 bytes' padding for future versions
+    auxBinaryStream.writeValues<int32_t>(0, 3);
     
     // Write out label dictionary
     for (std::map<int,std::string>::const_iterator it=labelDictionary.begin(); it!=labelDictionary.end(); it++)
@@ -461,7 +471,7 @@ void LabelledTrackvisDataSink::done ()
 {
     TrackvisDataSink::done();
     
-    auxFileStream.seekp(4);
+    auxFileStream.seekp(12);
     auxBinaryStream.writeValue<int32_t>(totalStreamlines);
 }
 

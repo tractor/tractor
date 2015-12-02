@@ -71,7 +71,6 @@ public:
     }
     
     LabelledTrackvisDataSource (const std::string &fileStem)
-        : TrackvisDataSource(fileStem)
     {
         auxBinaryStream.attach(&auxFileStream);
         attach(fileStem);
