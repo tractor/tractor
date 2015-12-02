@@ -24,26 +24,6 @@ public:
     }
 };
 
-class LabelFilter : public DataManipulator<Streamline>
-{
-private:
-    std::vector<int> labels;
-    
-public:
-    LabelFilter (const std::vector<int> &labels)
-        : labels(labels) {}
-    
-    bool process (Streamline &data)
-    {
-        for (std::vector<int>::const_iterator it=labels.begin(); it!=labels.end(); it++)
-        {
-            if (!data.hasLabel(*it))
-                return false;
-        }
-        return true;
-    }
-};
-
 class LabelCountFilter : public DataManipulator<Streamline>
 {
 private:
@@ -61,34 +41,6 @@ public:
         if (maxCount > 0 && count > maxCount)
             return false;
         return true;
-    }
-};
-
-class IndexFilter : public DataManipulator<Streamline>
-{
-private:
-    std::vector<int> indices;
-    int loc, counter;
-    
-public:
-    IndexFilter (const std::vector<int> &indices)
-        : indices(indices), loc(0), counter(0)
-    {
-        std::sort(this->indices.begin(), this->indices.end());
-    }
-    
-    size_t nIndices () { return indices.size(); }
-    
-    bool process (Streamline &data)
-    {
-        bool result = false;
-        if (loc < indices.size() && counter == indices[loc])
-        {
-            result = true;
-            loc++;
-        }
-        counter++;
-        return result;
     }
 };
 
