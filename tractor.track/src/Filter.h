@@ -77,6 +77,8 @@ public:
         std::sort(this->indices.begin(), this->indices.end());
     }
     
+    size_t nIndices () { return indices.size(); }
+    
     bool process (Streamline &data)
     {
         bool result = false;

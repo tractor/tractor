@@ -106,33 +106,40 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     }
 ))
 
-StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character",count.="integer"), methods=list(
+StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character",selection="integer",count.="integer"), methods=list(
     initialize = function (file = NULL, ...)
     {
         if (is.null(file))
             report(OL$Error, "Streamline source file must be specified")
-        if (!file.exists(ensureFileSuffix(file, "trk")))
+        if (!file.exists(ensureFileSuffix(file, "trk", strip=c("trk","trkl"))))
             report(OL$Error, "Specified streamline source file does not exist")
         
-        file <- ensureFileSuffix(file, NULL, strip="trk")
+        file <- ensureFileSuffix(file, NULL, strip=c("trk","trkl"))
         count <- as.integer(.Call("trkCount", file, PACKAGE="tractor.track"))
         
         return (initFields(file=file, count.=count))
     },
     
+    getFileStem = function () { return (file) },
+    
+    getLengths = function ()
+    {
+        return (.Call("trkLengths", file, selection, PACKAGE="tractor.track"))
+    },
+    
     getMedian = function (quantile = 0.99)
     {
         tempFile <- threadSafeTempFile()
-        .Call("trkMedian", file, tempFile, quantile, PACKAGE="tractor.track")
+        .Call("trkMedian", file, selection, tempFile, quantile, PACKAGE="tractor.track")
         return (StreamlineSource$new(tempFile)$getStreamlines(1L))
     },
     
-    getStreamlines = function (indices = NULL, simplify = TRUE)
+    getSelection = function () { return (selection) },
+    
+    getStreamlines = function (simplify = TRUE)
     {
-        if (is.null(indices))
-            indices <- seq_len(count.)
-        
-        streamlines <- vector("list", length(indices))
+        n <- ifelse(length(selection) == 0, count., length(selection))
+        streamlines <- vector("list", n)
         i <- 1
         
         .addStreamline <- function (points, seedIndex, voxelDims, coordUnit)
@@ -141,19 +148,16 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
             i <<- i + 1
         }
         
-        .Call("trkApply", file, indices, .addStreamline, PACKAGE="tractor.track")
+        .Call("trkApply", file, selection, .addStreamline, PACKAGE="tractor.track")
         
-        if (simplify && length(indices) == 1)
+        if (simplify && n == 1)
             return (streamlines[[1]])
         else
             return (streamlines)
     },
     
-    getVisitationMap = function (indices = NULL, reference = NULL)
+    getVisitationMap = function (reference = NULL)
     {
-        if (is.null(indices))
-            indices <- seq_len(count.)
-        
         if (is(reference, "MriImage"))
         {
             if (reference$isInternal())
@@ -169,10 +173,24 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
             report(OL$Error, "A reference image or path must be provided")
         
         resultFile <- threadSafeTempFile()
-        .Call("trkMap", file, indices, reference, resultFile, PACKAGE="tractor.track")
+        .Call("trkMap", file, selection, reference, resultFile, PACKAGE="tractor.track")
         
         return (readImageFile(resultFile))
     },
     
-    nStreamlines = function () { return (count.) }
+    nStreamlines = function () { return (count.) },
+    
+    select = function (indices = NULL, labels = NULL)
+    {
+        if (is.null(indices) && is.null(labels))
+            .self$selection <- integer(0)
+        else
+        {
+            if (is.null(indices))
+                indices <- .Call("trkFind", file, as.integer(labels), PACKAGE="tractor.track")
+            .self$selection <- as.integer(indices)
+        }
+        
+        invisible(.self)
+    }
 ))

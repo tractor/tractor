@@ -137,7 +137,7 @@ BEGIN_RCPP
         pipeline.addSink(profile);
     }
     
-    size_t nRetained = pipeline.run();
+    size_t nRetained = pipeline.run().size();
     
     if (visitationMap != NULL)
     {
@@ -157,21 +157,31 @@ BEGIN_RCPP
 END_RCPP
 }
 
+IndexFilter * getIndexFilter (SEXP _indices)
+{
+    IndexFilter *filter = NULL;
+    if (!Rf_isNull(_indices) && Rf_length(_indices) > 0)
+    {
+        int_vector indices = as<int_vector>(_indices);
+        std:transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
+        filter = new IndexFilter(indices);
+    }
+    return filter;
+}
+
 RcppExport SEXP trkApply (SEXP _trkPath, SEXP _indices, SEXP _function)
 {
 BEGIN_RCPP
-    int_vector indices = as<int_vector>(_indices);
-    std:transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
-    
     BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
     Pipeline<Streamline> pipeline(&trkFile);
-    IndexFilter filter(indices);
-    pipeline.addManipulator(&filter);
+    IndexFilter *filter = getIndexFilter(_indices);
+    pipeline.addManipulator(filter);
     Function function(_function);
     RCallbackDataSink sink(function);
     pipeline.addSink(&sink);
     
     pipeline.run();
+    delete filter;
     
     return R_NilValue;
 END_RCPP
@@ -185,16 +195,47 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP trkFind (SEXP _trkPath, SEXP _labels)
+{
+BEGIN_RCPP
+    LabelledTrackvisDataSource trkFile(as<std::string>(_trkPath));
+    Pipeline<Streamline> pipeline(&trkFile);
+    LabelFilter filter(as<int_vector>(_labels));
+    pipeline.addManipulator(&filter);
+    
+    const std::vector<size_t> indices = pipeline.run();
+    IntegerVector result(indices.size());
+    for (int i=0; i<indices.size(); i++)
+        result[i] = static_cast<int>(indices[i]) + 1;
+    
+    return result;
+END_RCPP
+}
+
+RcppExport SEXP trkLengths (SEXP _trkPath, SEXP _indices)
+{
+BEGIN_RCPP
+    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
+    Pipeline<Streamline> pipeline(&trkFile);
+    IndexFilter *filter = getIndexFilter(_indices);
+    pipeline.addManipulator(filter);
+    StreamlineLengthsDataSink sink;
+    pipeline.addSink(&sink);
+    
+    pipeline.run();
+    delete filter;
+    
+    return wrap(sink.getLengths());
+END_RCPP
+}
+
 RcppExport SEXP trkMap (SEXP _trkPath, SEXP _indices, SEXP _imagePath, SEXP _resultPath)
 {
 BEGIN_RCPP
-    int_vector indices = as<int_vector>(_indices);
-    std:transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
-    
     BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
     Pipeline<Streamline> pipeline(&trkFile);
-    IndexFilter filter(indices);
-    pipeline.addManipulator(&filter);
+    IndexFilter *filter = getIndexFilter(_indices);
+    pipeline.addManipulator(filter);
     
     int_vector dims(3);
     const Grid<3> &grid = trkFile.getGrid3D();
@@ -203,6 +244,7 @@ BEGIN_RCPP
     pipeline.addSink(&map);
     
     pipeline.run();
+    delete filter;
     
     NiftiImage reference(as<std::string>(_imagePath), false);
     map.writeToNifti(reference, as<std::string>(_resultPath));
@@ -211,16 +253,23 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP trkMedian (SEXP _trkPath, SEXP _resultPath, SEXP _quantile)
+RcppExport SEXP trkMedian (SEXP _trkPath, SEXP _indices, SEXP _resultPath, SEXP _quantile)
 {
 BEGIN_RCPP
     // Block size must match number of streamlines, as a running median can't be calculated
     BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
-    Pipeline<Streamline> pipeline(&trkFile, trkFile.nStreamlines());
+    Pipeline<Streamline> pipeline;
+    IndexFilter *filter = getIndexFilter(_indices);
+    if (filter == NULL)
+        pipeline = Pipeline<Streamline>(&trkFile, trkFile.nStreamlines());
+    else
+        pipeline = Pipeline<Streamline>(&trkFile, filter->nIndices());
+    pipeline.addManipulator(filter);
     MedianTrackvisDataSink medianFile(as<std::string>(_resultPath), trkFile.getGrid3D(), as<double>(_quantile));
     pipeline.addSink(&medianFile);
     
     pipeline.run();
+    delete filter;
     
     return R_NilValue;
 END_RCPP
