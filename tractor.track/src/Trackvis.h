@@ -39,7 +39,6 @@ public:
     }
     
     virtual void attach (const std::string &fileStem);
-    void skip ();
     Grid<3> getGrid3D () const { return grid; }
 };
 
@@ -54,6 +53,34 @@ public:
     
     bool more () { return (currentStreamline < totalStreamlines); }
     void get (Streamline &data) { readStreamline(data); }
+    void seek (const int n);
+    bool seekable () { return true; }
+};
+
+class StreamlineLabelList
+{
+private:
+    std::ifstream fileStream;
+    BinaryInputStream binaryStream;
+    std::vector< std::set<int> > labelList;
+    std::vector<size_t> offsetList;
+    
+public:
+    StreamlineLabelList ()
+    {
+        binaryStream.attach(&fileStream);
+    }
+    
+    StreamlineLabelList (const std::string &fileStem)
+    {
+        binaryStream.attach(&fileStream);
+        read(fileStem);
+    }
+    
+    void read (const std::string &fileStem);
+    const std::vector<int> find (const std::vector<int> &labels);
+    const std::set<int> & getLabels (const int n) { return labelList[n]; }
+    size_t getOffset (const int n) { return offsetList[n]; }
 };
 
 // Labelled Trackvis reader: also read auxiliary file containing label info
@@ -62,7 +89,8 @@ class LabelledTrackvisDataSource : public TrackvisDataSource
 protected:
     std::ifstream auxFileStream;
     BinaryInputStream auxBinaryStream;
-    std::map<int,std::string> labelDictionary;
+    StreamlineLabelList labelList;
+    // std::map<int,std::string> labelDictionary;
     
 public:
     LabelledTrackvisDataSource ()
@@ -86,7 +114,8 @@ public:
     void attach (const std::string &fileStem);
     bool more () { return (currentStreamline < totalStreamlines); }
     void get (Streamline &data);
-    void skip ();
+    void seek (const int n);
+    bool seekable () { return true; }
 };
 
 // Median Trackvis reader: construct and return median streamline only
@@ -105,7 +134,6 @@ public:
     
     bool more () { return (!read); }
     void get (Streamline &data);
-    void skip () {}
 };
 
 class TrackvisDataSink : public DataSink<Streamline>
@@ -216,29 +244,6 @@ public:
     
     void setup (const size_type &count, const_iterator begin, const_iterator end);
     void done ();
-};
-
-class StreamlineLabelList
-{
-private:
-    std::ifstream fileStream;
-    BinaryInputStream binaryStream;
-    std::vector< std::set<int> > labelList;
-    
-public:
-    StreamlineLabelList ()
-    {
-        binaryStream.attach(&fileStream);
-    }
-    
-    StreamlineLabelList (const std::string &fileStem)
-    {
-        binaryStream.attach(&fileStream);
-        attach(fileStem);
-    }
-    
-    void attach (const std::string &fileStem);
-    std::vector<int> find (const std::vector<int> &labels);
 };
 
 #endif

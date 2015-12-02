@@ -212,6 +212,7 @@ void BinaryOutputStream::writeString (const std::string &value)
 template float BinaryInputStream::readValue<float> ();
 template int16_t BinaryInputStream::readValue<int16_t> ();
 template int32_t BinaryInputStream::readValue<int32_t> ();
+template uint64_t BinaryInputStream::readValue<uint64_t> ();
 
 template void BinaryInputStream::readVector<float,float> (std::vector<float> &values, size_t n);
 template void BinaryInputStream::readVector<int16_t,int> (std::vector<int> &values, size_t n);
@@ -226,6 +227,7 @@ template void BinaryOutputStream::writeValue<char> (char value);
 template void BinaryOutputStream::writeValue<float> (float value);
 template void BinaryOutputStream::writeValue<int16_t> (int16_t value);
 template void BinaryOutputStream::writeValue<int32_t> (int32_t value);
+template void BinaryOutputStream::writeValue<uint64_t> (uint64_t value);
 
 template void BinaryOutputStream::writeValues<char> (char value, size_t n);
 template void BinaryOutputStream::writeValues<float> (float value, size_t n);

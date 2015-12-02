@@ -138,37 +138,14 @@ void TrackvisDataSource::attach (const std::string &fileStem)
 void LabelledTrackvisDataSource::attach (const std::string &fileStem)
 {
     TrackvisDataSource::attach(fileStem);
-    
-    if (auxFileStream.is_open())
-        auxFileStream.close();
-    
-    auxFileStream.open((fileStem + ".trkl").c_str(), ios::binary);
-    auxFileStream.seekg(0);
-    if (auxBinaryStream.readString(8).compare("TRKLABEL") != 0)
-        throw runtime_error("Track label file does not seem to have a valid magic number");
-    
-    const int version = auxBinaryStream.readValue<int32_t>();
-    auxBinaryStream.swapEndianness(version > 0xffff);
-    
-    auxFileStream.seekg(16);
-    const int nLabels = auxBinaryStream.readValue<int32_t>();
-    auxFileStream.seekg(32);
-    
-    for (int i=0; i<nLabels; i++)
-    {
-        const int index = auxBinaryStream.readValue<int32_t>();
-        const string name = auxBinaryStream.readString();
-        labelDictionary[index] = name;
-    }
+    labelList.read(fileStem);
 }
 
 void LabelledTrackvisDataSource::get (Streamline &data)
 {
+    // This increments currentStreamline, so we subtract 1 below
     readStreamline(data);
-    
-    const int nLabels = auxBinaryStream.readValue<int32_t>();
-    for (int i=0; i<nLabels; i++)
-        data.addLabel(auxBinaryStream.readValue<int32_t>());
+    data.setLabels(labelList.getLabels(currentStreamline-1));
 }
 
 void MedianTrackvisDataSource::get (Streamline &data)
@@ -254,19 +231,23 @@ void MedianTrackvisDataSource::get (Streamline &data)
     read = true;
 }
 
-void TrackvisDataSource::skip ()
+void BasicTrackvisDataSource::seek (const int n)
 {
-    const int nPoints = binaryStream.readValue<int32_t>();
-    fileStream.seekg(4 * ((3+nScalars) * nPoints + nProperties), ios::cur);
-    currentStreamline++;
+    if (n < currentStreamline)
+        throw std::runtime_error("Cannot seek backwards");
+    
+    while (currentStreamline < n)
+    {
+        const int nPoints = binaryStream.readValue<int32_t>();
+        fileStream.seekg(4 * ((3+nScalars) * nPoints + nProperties), ios::cur);
+        currentStreamline++;
+    }
 }
 
-void LabelledTrackvisDataSource::skip ()
+void LabelledTrackvisDataSource::seek (const int n)
 {
-    TrackvisDataSource::skip();
-    
-    const int nLabels = auxBinaryStream.readValue<int32_t>();
-    auxFileStream.seekg(4 * nLabels, ios::cur);
+    fileStream.seekg(labelList.getOffset(n));
+    currentStreamline = n;
 }
 
 void TrackvisDataSink::writeStreamline (const Streamline &data)
@@ -468,6 +449,9 @@ void MedianTrackvisDataSink::setup (const size_type &count, const_iterator begin
 
 void LabelledTrackvisDataSink::put (const Streamline &data)
 {
+    // Write the offset of this streamline into the file
+    auxBinaryStream.writeValue<uint64_t>(fileStream.tellp());
+    
     writeStreamline(data);
     
     const std::set<int> &labels = data.getLabels();
@@ -499,7 +483,7 @@ void MedianTrackvisDataSink::done ()
     writeStreamline(median);
 }
 
-void StreamlineLabelList::attach (const std::string &fileStem)
+void StreamlineLabelList::read (const std::string &fileStem)
 {
     if (fileStream.is_open())
         fileStream.close();
@@ -525,6 +509,7 @@ void StreamlineLabelList::attach (const std::string &fileStem)
     labelList.clear();
     for (int j=0; j<nStreamlines; j++)
     {
+        offsetList.push_back(static_cast<size_t>(binaryStream.readValue<uint64_t>()));
         const int currentCount = binaryStream.readValue<int32_t>();
         std::set<int> currentLabels;
         for (int i=0; i<currentCount; i++)
@@ -533,7 +518,7 @@ void StreamlineLabelList::attach (const std::string &fileStem)
     }
 }
 
-std::vector<int> StreamlineLabelList::find (const std::vector<int> &labels)
+const std::vector<int> StreamlineLabelList::find (const std::vector<int> &labels)
 {
     std::vector<int> indices;
     for (int i=0; i<labelList.size(); i++)

@@ -190,7 +190,8 @@ END_RCPP
 RcppExport SEXP trkFastMapAndLengths (SEXP _trkPath, SEXP _indices)
 {
 BEGIN_RCPP
-    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
+    // A labelled source is used for speed, since it stores the streamline offsets for seeking
+    LabelledTrackvisDataSource trkFile(as<std::string>(_trkPath));
     Pipeline<Streamline> pipeline(&trkFile);
     pipeline.setSubset(as<int_vector>(_indices));
     

@@ -6,7 +6,7 @@
 template <class ElementType>
 std::vector<size_t> Pipeline<ElementType>::run ()
 {
-    size_t fastCounter = 0, slowCounter = 0, subsetIndex = 0;
+    size_t counter = 0, subsetIndex = 0;
     const bool usingSubset = (subset.size() > 0);
     bool subsetFinished = false;
     std::vector<size_t> keepList;
@@ -20,22 +20,15 @@ std::vector<size_t> Pipeline<ElementType>::run ()
     
     while (source->more() && !subsetFinished)
     {
-        // Don't bother even reading the element if the index is not in the subset
-        if (usingSubset)
+        // Skip forward to the next element in the subset if necessary
+        if (usingSubset && source->seekable())
         {
             if (subsetIndex >= subset.size())
                 subsetFinished = true;
-            else if (fastCounter == subset[subsetIndex])
-            {
-                fastCounter++;
-                subsetIndex++;
-            }
             else
-            {
-                fastCounter++;
-                source->skip();
-                continue;
-            }
+                source->seek(subset[subsetIndex]);
+            
+            subsetIndex++;
         }
         
         // Get the next element and insert it into the working set
@@ -46,13 +39,13 @@ std::vector<size_t> Pipeline<ElementType>::run ()
         // Process the data when the working set is full or there's nothing more incoming
         if (workingSet.size() == blockSize || !source->more() || subsetFinished)
         {
-            slowCounter += workingSet.size();
+            counter += workingSet.size();
             
             // Apply the manipulator(s), if there are any
             for (int i=0; i<manipulators.size(); i++)
             {
                 // Go back to the start of the working set
-                slowCounter -= workingSet.size();
+                counter -= workingSet.size();
                 
                 typename std::list<ElementType>::iterator it = workingSet.begin();
                 while (it != workingSet.end())
@@ -65,13 +58,13 @@ std::vector<size_t> Pipeline<ElementType>::run ()
                         
                         // If this is the last manipulator, add the index to the keep list
                         if (i == (manipulators.size() - 1))
-                            keepList.push_back(slowCounter);
+                            keepList.push_back(counter);
                     }
                     else
                         it = workingSet.erase(it);
                     
-                    // Increment the slowCounter again
-                    slowCounter++;
+                    // Increment the counter again
+                    counter++;
                 }
             }
             
