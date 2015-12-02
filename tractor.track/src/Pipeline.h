@@ -16,19 +16,24 @@ private:
     size_t blockSize;
     std::list<ElementType> workingSet;
     
-    // Hide default constructor
-    Pipeline () {}
-    
 public:
     Pipeline (DataSource<ElementType> * const source = NULL, const size_t blockSize = 1000)
         : source(source), blockSize(blockSize) {}
     
     void setBlockSize (const size_t blockSize) { this->blockSize = blockSize; }
     void setSource (DataSource<ElementType> * const source) { this->source = source; }
-    void addManipulator (DataManipulator<ElementType> * const manipulator) { manipulators.push_back(manipulator); }
-    void addSink (DataSink<ElementType> * const sink) { sinks.push_back(sink); }
+    void addManipulator (DataManipulator<ElementType> * const manipulator)
+    {
+        if (manipulator != NULL)
+            manipulators.push_back(manipulator);
+    }
+    void addSink (DataSink<ElementType> * const sink)
+    {
+        if (sink != NULL)
+            sinks.push_back(sink);
+    }
     
-    size_t run ();
+    std::vector<size_t> run ();
 };
 
 #endif
