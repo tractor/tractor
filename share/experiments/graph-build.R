@@ -78,17 +78,16 @@ runExperiment <- function ()
                 edgeList <- rbind(edgeList, c(j,i))
                 nStreamlines <- c(nStreamlines, nCurrentStreamlines)
                 
-                streamSource$select(currentStreamlineIndices)
-                visitationMap <- streamSource$getVisitationMap(fa)
-                visitedLocations <- visitationMap$getNonzeroIndices(positiveOnly=TRUE)
+                info <- streamSource$select(currentStreamlineIndices)$getMapAndLengthData()
+                visitedLocations <- which(info$map > 0, arr.ind=TRUE)
                 
                 binaryFA <- c(binaryFA, mean(fa[visitedLocations],na.rm=TRUE))
-                weightedFA <- c(weightedFA, weighted.mean(fa[visitedLocations],visitationMap[visitedLocations],na.rm=TRUE))
+                weightedFA <- c(weightedFA, weighted.mean(fa[visitedLocations],info$map[visitedLocations],na.rm=TRUE))
                 binaryMD <- c(binaryMD, mean(md[visitedLocations],na.rm=TRUE))
-                weightedMD <- c(weightedMD, weighted.mean(md[visitedLocations],visitationMap[visitedLocations],na.rm=TRUE))
-                streamlineLength <- c(streamlineLength, mean(streamSource$getLengths()))
+                weightedMD <- c(weightedMD, weighted.mean(md[visitedLocations],info$map[visitedLocations],na.rm=TRUE))
+                streamlineLength <- c(streamlineLength, mean(info$lengths))
                 uniqueVoxels <- c(uniqueVoxels, nrow(visitedLocations))
-                voxelVisits <- c(voxelVisits, sum(visitationMap[visitedLocations],na.rm=TRUE))
+                voxelVisits <- c(voxelVisits, sum(info$map[visitedLocations],na.rm=TRUE))
             }
         }
         

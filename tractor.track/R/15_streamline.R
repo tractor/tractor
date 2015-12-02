@@ -127,6 +127,11 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         return (.Call("trkLengths", file, selection, PACKAGE="tractor.track"))
     },
     
+    getMapAndLengthData = function ()
+    {
+        return (.Call("trkFastMapAndLengths", file, selection, PACKAGE="tractor.track"))
+    },
+    
     getMedian = function (quantile = 0.99)
     {
         tempFile <- threadSafeTempFile()

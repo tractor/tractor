@@ -78,6 +78,7 @@ public:
         return data[n];
     }
     
+    const std::vector<DataType> & getData () const { return data; }
     const std::vector<int> & getDimensions () const { return dims; }
     int getDimensionality () const { return nDims; }
     

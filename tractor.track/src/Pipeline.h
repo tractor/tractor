@@ -14,6 +14,7 @@ private:
     std::vector<DataSink<ElementType>*> sinks;
     
     size_t blockSize;
+    std::vector<size_t> subset;
     std::list<ElementType> workingSet;
     
 public:
@@ -22,11 +23,25 @@ public:
     
     void setBlockSize (const size_t blockSize) { this->blockSize = blockSize; }
     void setSource (DataSource<ElementType> * const source) { this->source = source; }
+    
+    template <typename VectorElementType>
+    void setSubset (const std::vector<VectorElementType> &elements)
+    {
+        if (elements.size() == 0)
+            subset.clear();
+        else
+        {
+            subset = std::vector<size_t>(elements.begin(), elements.end());
+            std::sort(subset.begin(), subset.end());
+        }
+    }
+    
     void addManipulator (DataManipulator<ElementType> * const manipulator)
     {
         if (manipulator != NULL)
             manipulators.push_back(manipulator);
     }
+    
     void addSink (DataSink<ElementType> * const sink)
     {
         if (sink != NULL)

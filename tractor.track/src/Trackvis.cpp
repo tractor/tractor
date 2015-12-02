@@ -254,6 +254,21 @@ void MedianTrackvisDataSource::get (Streamline &data)
     read = true;
 }
 
+void TrackvisDataSource::skip ()
+{
+    const int nPoints = binaryStream.readValue<int32_t>();
+    fileStream.seekg(4 * ((3+nScalars) * nPoints + nProperties), ios::cur);
+    currentStreamline++;
+}
+
+void LabelledTrackvisDataSource::skip ()
+{
+    TrackvisDataSource::skip();
+    
+    const int nLabels = auxBinaryStream.readValue<int32_t>();
+    auxFileStream.seekg(4 * nLabels, ios::cur);
+}
+
 void TrackvisDataSink::writeStreamline (const Streamline &data)
 {
     int nPoints = data.nPoints();
@@ -482,4 +497,57 @@ void MedianTrackvisDataSink::done ()
     
     fileStream.seekp(1000);
     writeStreamline(median);
+}
+
+void StreamlineLabelList::attach (const std::string &fileStem)
+{
+    if (fileStream.is_open())
+        fileStream.close();
+    
+    fileStream.open((fileStem + ".trkl").c_str(), ios::binary);
+    fileStream.seekg(0);
+    if (binaryStream.readString(8).compare("TRKLABEL") != 0)
+        throw runtime_error("Track label file does not seem to have a valid magic number");
+    
+    const int version = binaryStream.readValue<int32_t>();
+    binaryStream.swapEndianness(version > 0xffff);
+    
+    const int nStreamlines = binaryStream.readValue<int32_t>();
+    const int nLabels = binaryStream.readValue<int32_t>();
+    fileStream.seekg(32);
+    
+    for (int i=0; i<nLabels; i++)
+    {
+        binaryStream.readValue<int32_t>();
+        binaryStream.readString();
+    }
+    
+    labelList.clear();
+    for (int j=0; j<nStreamlines; j++)
+    {
+        const int currentCount = binaryStream.readValue<int32_t>();
+        std::set<int> currentLabels;
+        for (int i=0; i<currentCount; i++)
+            currentLabels.insert(binaryStream.readValue<int32_t>());
+        labelList.push_back(currentLabels);
+    }
+}
+
+std::vector<int> StreamlineLabelList::find (const std::vector<int> &labels)
+{
+    std::vector<int> indices;
+    for (int i=0; i<labelList.size(); i++)
+    {
+        bool allPresent = true;
+        for (std::vector<int>::const_iterator it=labels.begin(); it!=labels.end(); it++)
+        {
+            if (labelList[i].count(*it) == 0)
+                allPresent = false;
+        }
+        
+        if (allPresent)
+            indices.push_back(i);
+    }
+    
+    return indices;
 }

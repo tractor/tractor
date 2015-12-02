@@ -7,6 +7,7 @@ template <class ElementType> class DataSource
 public:
     virtual bool more () { return false; }
     virtual void get (ElementType &data) {}
+    virtual void skip () {}
 };
 
 // Data sink: responsible for exporting or writing data elements
