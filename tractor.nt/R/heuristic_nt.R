@@ -41,7 +41,7 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     {
         firstStreamline <- nSamples * (i-1) + 1
         lastStreamline <- i * nSamples
-        imageForSeed <- streamSource$getVisitationMap(firstStreamline:lastStreamline, faImage)
+        imageForSeed <- streamSource$select(firstStreamline:lastStreamline)$getVisitationMap(faImage)
         candidateTract <- newFieldTractFromMriImage(imageForSeed, candidateSeeds[validSeeds[i],])
         similarities[validSeeds[i]] <- calculateSimilarity(reducedRefTract, candidateTract)
     }

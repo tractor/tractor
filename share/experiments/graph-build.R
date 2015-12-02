@@ -32,7 +32,7 @@ runExperiment <- function ()
         library(tractor.nt)
         library(tractor.track)
         
-        streamlines <- deserialiseReferenceObject(paste(tractName,"streamlines",sep="_"))
+        streamSource <- StreamlineSource$new(tractName)
         
         report(OL$Info, "Finding streamlines passing through each region")
         matchingIndices <- vector("list", nRegions)             # Indices of streamlines passing through each region
@@ -41,12 +41,12 @@ runExperiment <- function ()
         volume          <- numeric(nRegions)                    # Volume in mm^3
         for (i in seq_len(nRegions))
         {
-    	    report(OL$Verbose, "Matching region \"#{targetMatches[i]}\"")
+            report(OL$Verbose, "Matching region \"#{targetMatches[i]}\"")
             index <- parcellation$regions$index[which(parcellation$regions$label == targetMatches[i])]
+            matchingIndices[[i]] <- streamSource$select(labels=index)$getSelection()
             regionImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x==index,1,0))
-            matchingIndices[[i]] <- findWaypointHits(streamlines, list(regionImage), endPointsOnly=TRUE)
-    		regionLocations[i,] <- apply(regionImage$getNonzeroIndices(array=TRUE), 2, median)
-    		regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
+            regionLocations[i,] <- apply(regionImage$getNonzeroIndices(array=TRUE), 2, median)
+            regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
             voxelCount[i] <- length(regionImage$getNonzeroIndices(array=FALSE))
             volume[i] <- voxelCount[i] * abs(prod(regionImage$getVoxelDimensions()))
         }
@@ -64,29 +64,29 @@ runExperiment <- function ()
         streamlineLength <- numeric(0)                      # Average length of streamlines connecting each pair of regions
         uniqueVoxels     <- numeric(0)                      # Number of unique voxels visited
         voxelVisits      <- numeric(0)                      # Number of voxel visits across all streamlines
-    	
+        
         for (i in seq_len(nRegions))
         {
             for (j in seq_len(ifelse(selfConnections,i,i-1)))
             {
                 # The subset of streamline indices connecting these two regions
-    			currentStreamlineIndices <- intersect(matchingIndices[[i]], matchingIndices[[j]])
-    			nCurrentStreamlines <- length(currentStreamlineIndices)
-    			if (nCurrentStreamlines == 0)
-    				next
+                currentStreamlineIndices <- intersect(matchingIndices[[i]], matchingIndices[[j]])
+                nCurrentStreamlines <- length(currentStreamlineIndices)
+                if (nCurrentStreamlines == 0)
+                    next
                 
                 edgeList <- rbind(edgeList, c(j,i))
                 nStreamlines <- c(nStreamlines, nCurrentStreamlines)
                 
-                currentStreamlines <- newStreamlineCollectionTractBySubsetting(streamlines, currentStreamlineIndices)
-                visitationMap <- newMriImageAsVisitationMap(currentStreamlines)
+                streamSource$select(currentStreamlineIndices)
+                visitationMap <- streamSource$getVisitationMap(fa)
                 visitedLocations <- visitationMap$getNonzeroIndices(positiveOnly=TRUE)
                 
                 binaryFA <- c(binaryFA, mean(fa[visitedLocations],na.rm=TRUE))
                 weightedFA <- c(weightedFA, weighted.mean(fa[visitedLocations],visitationMap[visitedLocations],na.rm=TRUE))
                 binaryMD <- c(binaryMD, mean(md[visitedLocations],na.rm=TRUE))
                 weightedMD <- c(weightedMD, weighted.mean(md[visitedLocations],visitationMap[visitedLocations],na.rm=TRUE))
-                streamlineLength <- c(streamlineLength, mean(currentStreamlines$getStreamlineLengths()))
+                streamlineLength <- c(streamlineLength, mean(streamSource$getLengths()))
                 uniqueVoxels <- c(uniqueVoxels, nrow(visitedLocations))
                 voxelVisits <- c(voxelVisits, sum(visitationMap[visitedLocations],na.rm=TRUE))
             }
@@ -114,12 +114,12 @@ runExperiment <- function ()
         volume          <- numeric(nRegions)                    # Volume in mm^3
         for (i in seq_len(nRegions))
         {
-    	    report(OL$Verbose, "Extracting region \"#{targetMatches[i]}\"")
+            report(OL$Verbose, "Extracting region \"#{targetMatches[i]}\"")
             index <- parcellation$regions$index[which(parcellation$regions$label == targetMatches[i])]
             regionImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x==index,1,0))
             allLocations <- regionImage$getNonzeroIndices(array=TRUE)
             regionLocations[i,] <- apply(allLocations, 2, median)
-    		regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
+            regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
             voxelCount[i] <- length(regionImage$getNonzeroIndices(array=FALSE))
             volume[i] <- voxelCount[i] * abs(prod(regionImage$getVoxelDimensions()))
             
