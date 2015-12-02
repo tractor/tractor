@@ -11,7 +11,10 @@ protected:
     template <typename Type> void swap (Type *value);
     
 public:
-    void swapEndianness (bool value) { swapEndian = value; }
+    BinaryStream ()
+        : swapEndian(false) {}
+    
+    void swapEndianness (const bool value) { swapEndian = value; }
 };
 
 class BinaryInputStream : public BinaryStream
