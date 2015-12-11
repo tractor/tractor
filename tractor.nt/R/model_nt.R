@@ -5,14 +5,8 @@ createTractOptionList <- function (pointType = "knot", lengthQuantile = 0.99, re
     invisible (options)
 }
 
-streamlineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)
+transformStreamlineWithOptions <- function (options, streamline, session, refSession = NULL)
 {
-    tracker <- session$getTracker()
-    tracker$setOptions(rightwardsVector=rightwardsVector)
-    trackerPath <- tracker$run(seed, nSamples, requireMap=FALSE, requireStreamlines=TRUE)
-    streamSource <- StreamlineSource$new(trackerPath)
-    streamline <- streamSource$getMedian(options$lengthQuantile)
-    
     if (options$registerToReference)
     {
         if (is.null(refSession))
@@ -24,6 +18,17 @@ streamlineTractWithOptions <- function (options, session, seed, refSession = NUL
     }
     
     invisible (streamline)
+}
+
+streamlineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)
+{
+    tracker <- session$getTracker()
+    tracker$setOptions(rightwardsVector=rightwardsVector)
+    trackerPath <- tracker$run(seed, nSamples, requireMap=FALSE, requireStreamlines=TRUE)
+    streamSource <- StreamlineSource$new(trackerPath)
+    streamline <- streamSource$getMedian(options$lengthQuantile)
+    
+    invisible (transformStreamlineWithOptions(options, streamline, session, refSession))
 }
 
 splineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)

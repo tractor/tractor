@@ -64,7 +64,7 @@ runExperiment <- function ()
     subjectsInData <- ("subject" %in% colnames(data)) && (is.integer(data$subject))
     
     parallelApply(sessionNumbers, function (i) {
-        report(OL$Info, "Generating tract for session ", i)
+        report(OL$Info, "Generating tract for session #{i}")
         
         currentSession <- newSessionFromDirectory(sessionList[i])
         if (seedsInData)
@@ -89,28 +89,19 @@ runExperiment <- function ()
         
         neighbourhood <- createNeighbourhoodInfo(searchWidth, centre=currentSeed)
         bestSeed <- neighbourhood$vectors[,bestSeedIndex]
-        report(OL$Info, "Seed point is (", implode(bestSeed,","), ")")
+        report(OL$Info, "Seed point is (#{implode(bestSeed,",")})")
         
         tracker <- currentSession$getTracker()
         tracker$setOptions(rightwardsVector=rightwardsVector)
         trackerPath <- tracker$run(bestSeed, nSamples, requireMap=FALSE, requireStreamlines=TRUE)
-        # FIXME: need to retrieve the streamlines
-        streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
+        streamSource <- StreamlineSource$new(trackerPath)
         
-        medianLine <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
-        if (options$registerToReference)
-        {
-            if (is.null(refSession))
-                transform <- currentSession$getTransformation("diffusion", "mni")
-            else
-                transform <- registerImages(currentSession$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
-
-            transformedMedianLine <- newStreamlineTractByTransformation(medianLine, transform)
-        }
-        medianSpline <- newBSplineTractFromStreamline(transformedMedianLine, knotSpacing=options$knotSpacing)
+        originalMedianLine <- streamSource$getMedian(options$lengthQuantile)
+        medianLine <- transformStreamlineWithOptions(options, originalMedianLine$copy(), currentSession, refSession)
+        medianSpline <- newBSplineTractFromStreamline(medianLine, knotSpacing=options$knotSpacing)
         medianData <- createDataTableForSplines(list(medianSpline), reference$getTract(), "knot")
         medianLogLikelihood <- calculateMatchedLogLikelihoodsForDataTable(medianData, model)
-        report(OL$Info, "Median line log-likelihood is ", round(medianLogLikelihood,3))
+        report(OL$Info, "Median line log-likelihood is #{medianLogLikelihood}", round=3)
 
         sessionData <- NULL
         nGroups <- (nSamples - 1) %/% subgroupSize + 1
@@ -120,8 +111,17 @@ runExperiment <- function ()
         {
             firstStreamline <- subgroupSize * (j-1) + 1
             lastStreamline <- min(j*subgroupSize, nSamples)
-            streamSubset <- newStreamlineSetTractBySubsetting(streamSet, firstStreamline:lastStreamline)
-            splines <- calculateSplinesForStreamlineSetTract(streamSubset, currentSession, refSession, options)
+            
+            splines <- vector("list", lastStreamline-firstStreamline+1)
+            for (k in firstStreamline:lastStreamline)
+            {
+                streamline <- transformStreamlineWithOptions(options, streamSource$select(k)$getStreamlines(), currentSession, refSession)
+                splines[[k-firstStreamline+1]] <- newBSplineTractFromStreamline(streamline, knotSpacing=options$knotSpacing)
+                
+                if (k %% 50 == 0)
+                    report(OL$Verbose, "Done #{k}")
+            }
+            
             sessionData <- rbind(sessionData, createDataTableForSplines(splines,reference$getTract(),"knot"))
             rm(splines)
         }
@@ -134,27 +134,42 @@ runExperiment <- function ()
         
         if (length(toAccept) == 0)
         {
-            report(OL$Warning, "All streamlines rejected for session ", i, " - using median line")
-            lineMetadata <- newStreamlineTractMetadataFromImageMetadata(medianLine$getImageMetadata(), FALSE, "vox")
-            medianLine <- newStreamlineTractWithMetadata(medianLine, lineMetadata)
-            streamSet <- newStreamlineSetTractFromStreamline(medianLine)
+            report(OL$Warning, "All streamlines rejected for session #{i} - using median line")
+            streamSource <- StreamlineSource$new(streamSource$getMedian(options$lengthQuantile, pathOnly=TRUE))
         }
         else
         {
-            report(OL$Info, "Rejecting ", length(toReject), " streamlines, of which ", sum(is.na(keepProbabilities)), " are missing")
-            streamSet <- newStreamlineSetTractBySubsetting(streamSet, toAccept)
+            report(OL$Info, "Rejecting #{length(toReject)} streamlines, of which #{sum(is.na(keepProbabilities))} are missing")
+            streamSource$select(toAccept)
         }
         
         if (truncate)
         {
+            # Transform the reference tract into native space, find its length
+            # in this space, and use that to truncate the streamline set
             report(OL$Info, "Truncating streamlines to the length of the reference tract")
-            streamSet <- newStreamlineSetTractByTruncationToReference(streamSet, reference, currentSession)
+            refPoints <- getPointsForTract(reference$getTract(), reference$getTractOptions()$pointType)
+            
+            if (reference$getTractOptions()$registerToReference)
+            {
+                if (is.null(refSession))
+                    transform <- currentSession$getTransformation("diffusion", "mni")
+                else
+                    transform <- registerImages(currentSession$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
+    
+                refPoints$points <- transformPoints(transform, refPoints$points, voxel=FALSE, reverse=TRUE)
+            }
+            
+            refSteps <- calculateStepVectors(refPoints$points, refPoints$seedPoint)
+            refLeftLength <- sum(apply(refSteps$left,1,vectorLength), na.rm=TRUE)
+            refRightLength <- sum(apply(refSteps$right,1,vectorLength), na.rm=TRUE)
+            
+            streamSource <- streamSource$extractAndTruncate(refLeftLength, refRightLength)
         }
         
         report(OL$Info, "Creating visitation map")
-        metadata <- currentSession$getImageByType("fa", "diffusion", metadataOnly=TRUE)
-        visitationMap <- newMriImageAsVisitationMap(streamSet, metadata)
-        fakeResult <- list(image=visitationMap, nSamples=streamSet$nStreamlines(), session=currentSession, seeds=promote(bestSeed,byrow=TRUE))
+        faPath <- currentSession$getImageFileNameByType("FA", "diffusion")
+        visitationMap <- streamSource$getVisitationMap(faPath)
         
         currentTractName <- paste(tractName, "_session", i, sep="")
         if (createVolumes)
