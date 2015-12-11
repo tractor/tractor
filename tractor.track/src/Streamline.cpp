@@ -32,6 +32,41 @@ double Streamline::getLength (const std::vector<Space<3>::Point> &points) const
     }
 }
 
+void Streamline::trim (std::vector<Space<3>::Point> &points, const double maxLength)
+{
+    const size_t nPoints = points.size();
+    
+    if (fixedSpacing)
+    {
+        double step;
+        if (pointType == VoxelPointType)
+            step = ((points[1] - points[0]) * voxelDims).matrix().norm();
+        else
+            step = (points[1] - points[0]).matrix().norm();
+        
+        const int maxSteps = static_cast<int>(floor(maxLength / step));
+        if (nPoints > (maxSteps + 1))
+            points.erase(points.begin() + maxSteps + 1, points.end());
+    }
+    else
+    {
+        double length = 0.0;
+        for (size_t i=1; i<nPoints; i++)
+        {
+            if (pointType == VoxelPointType)
+                length += ((points[i] - points[i-1]) * voxelDims).matrix().norm();
+            else
+                length += (points[i] - points[i-1]).matrix().norm();
+            
+            if (length > maxLength)
+            {
+                points.erase(points.begin() + i, points.end());
+                break;
+            }
+        }
+    }
+}
+
 size_t Streamline::concatenatePoints (Eigen::ArrayX3f &points) const
 {
     int nPoints = this->nPoints();

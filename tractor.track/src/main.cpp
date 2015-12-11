@@ -276,3 +276,21 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+
+RcppExport SEXP trkTruncate (SEXP _trkPath, SEXP _indices, SEXP _resultPath, SEXP _leftLength, SEXP _rightLength)
+{
+BEGIN_RCPP
+    // BasicTrackvisDataSource does not read labels, but when truncating they may not be preserved anyway
+    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
+    Pipeline<Streamline> pipeline(&trkFile);
+    pipeline.setSubset(as<int_vector>(_indices));
+    StreamlineTruncator truncator(as<double>(_leftLength), as<double>(_rightLength));
+    pipeline.addManipulator(&truncator);
+    BasicTrackvisDataSink resultFile(as<std::string>(_resultPath), trkFile.getGrid3D());
+    pipeline.addSink(&resultFile);
+    
+    pipeline.run();
+    
+    return R_NilValue;
+END_RCPP
+}
