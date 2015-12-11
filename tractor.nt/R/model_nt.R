@@ -95,37 +95,6 @@ calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference,
     invisible (splines)
 }
 
-calculateSplinesForStreamlineSetTract <- function (tract, testSession, refSession, options)
-{
-    if (!is(tract, "StreamlineSetTract"))
-        report(OL$Error, "The specified tract is not a StreamlineSetTract object")
-    
-    nSamples <- tract$nStreamlines()
-    
-    splines <- list()
-    for (i in 1:nSamples)
-    {
-        streamline <- newStreamlineTractFromSet(tract, method="single", index=i, originAtSeed=TRUE)
-        if (options$registerToReference)
-        {
-            if (is.null(refSession))
-                transform <- testSession$getTransformation("diffusion", "mni")
-            else
-                transform <- registerImages(testSession$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
-
-            streamline <- newStreamlineTractByTransformation(streamline, transform)
-        }
-        
-        spline <- newBSplineTractFromStreamline(streamline, knotSpacing=options$knotSpacing)
-        splines <- c(splines, list(spline))
-        
-        if (i %% 50 == 0)
-            report(OL$Verbose, "Done ", i)
-    }
-    
-    invisible (splines)
-}
-
 calculatePosteriorsForDataTable <- function (data, matchingModel)
 {
     if (is.null(data$subject))
