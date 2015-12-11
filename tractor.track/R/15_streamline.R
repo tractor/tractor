@@ -117,7 +117,14 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         file <- ensureFileSuffix(file, NULL, strip=c("trk","trkl"))
         count <- as.integer(.Call("trkCount", file, PACKAGE="tractor.track"))
         
-        return (initFields(file=file, count.=count))
+        return (initFields(file=file, selection=integer(0), count.=count))
+    },
+    
+    extractAndTruncate = function (leftLength, rightLength)
+    {
+        tempFile <- threadSafeTempFile()
+        .Call("trkTruncate", file, selection, tempFile, leftLength, rightLength, PACKAGE="tractor.track")
+        return (StreamlineSource$new(tempFile))
     },
     
     getFileStem = function () { return (file) },
@@ -132,11 +139,15 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         return (.Call("trkFastMapAndLengths", file, selection, PACKAGE="tractor.track"))
     },
     
-    getMedian = function (quantile = 0.99)
+    getMedian = function (quantile = 0.99, pathOnly = FALSE)
     {
         tempFile <- threadSafeTempFile()
         .Call("trkMedian", file, selection, tempFile, quantile, PACKAGE="tractor.track")
-        return (StreamlineSource$new(tempFile)$getStreamlines(1L))
+        
+        if (pathOnly)
+            return (tempFile)
+        else
+            return (StreamlineSource$new(tempFile)$getStreamlines(1L))
     },
     
     getSelection = function () { return (selection) },
