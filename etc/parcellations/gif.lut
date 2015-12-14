@@ -27,8 +27,8 @@
     51  inferior_lateral_ventricle_left                 Left_Inf_Lat_Vent                                          "#C43AFA"  cerebrospinal_fluid  left        NA
     52  lateral_ventricle_right                         Right_Lateral_Ventricle                                    "#781286"  cerebrospinal_fluid  right       NA
     53  lateral_ventricle_left                          Left_Lateral_Ventricle                                     "#781286"  cerebrospinal_fluid  left        NA
-    54  NA                                              Right_Lesion                                               "#FF940A"  other                right       NA
-    55  NA                                              Left_Lesion                                                "#FF940A"  other                left        NA
+    54  NA                                              Right_Lesion                                               "#A52A2A"  other                right       NA
+    55  NA                                              Left_Lesion                                                "#A52A2A"  other                left        NA
     56  pallidum_right                                  Right_Pallidum                                             "#0D30FF"  deep_grey_matter     right       NA
     57  pallidum_left                                   Left_Pallidum                                              "#0C30FF"  deep_grey_matter     left        NA
     58  putamen_right                                   Right_Putamen                                              "#EC0DB0"  deep_grey_matter     right       NA
@@ -37,8 +37,8 @@
     61  thalamus_left                                   Left_Thalamus_Proper                                       "#00760E"  deep_grey_matter     left        NA
     62  NA                                              Right_Ventral_DC                                           "#A52A2A"  other                right       NA
     63  NA                                              Left_Ventral_DC                                            "#A52A2A"  other                left        NA
-    64  NA                                              Right_vessel                                               "#A020F0"  other                right       NA
-    65  NA                                              Left_vessel                                                "#A020F0"  other                left        NA
+    64  NA                                              Right_vessel                                               "#A52A2A"  other                right       NA
+    65  NA                                              Left_vessel                                                "#A52A2A"  other                left        NA
     70  optic_chiasm                                    Optic_Chiasm                                               "#EAA91E"  other                NA          NA
     72  cerebellar_vermis                               Cerebellar_Vermal_Lobules_I-V                              "#E69422"  cerebellar_cortex    NA          NA
     73  cerebellar_vermis                               Cerebellar_Vermal_Lobules_VI-VII                           "#E69422"  cerebellar_cortex    NA          NA
@@ -57,24 +57,24 @@
    110  calcarine_cortex_left                           Left_Calc_calcarine_cortex                                 "#78643C"  cerebral_cortex      left        occipital
    113  central_operculum_right                         Right_CO_central_operculum                                 "#000000"  cerebral_cortex      right       temporal
    114  central_operculum_left                          Left_CO_central_operculum                                  "#000000"  cerebral_cortex      left        temporal
-   115  cuneus_right                                    Right_Cun_cuneus                                           "#B41414"  cerebral_cortex      right       occipital
-   116  cuneus_left                                     Left_Cun_cuneus                                            "#B41414"  cerebral_cortex      left        occipital
+   115  cuneus_right                                    Right_Cun_cuneus                                           "#DC1464"  cerebral_cortex      right       occipital
+   116  cuneus_left                                     Left_Cun_cuneus                                            "#DC1464"  cerebral_cortex      left        occipital
    117  entorhinal_cortex_right                         Right_Ent_entorhinal_area                                  "#DC140A"  cerebral_cortex      right       limbic
    118  entorhinal_cortex_left                          Left_Ent_entorhinal_area                                   "#DC140A"  cerebral_cortex      left        limbic
    119  frontal_operculum_right                         Right_FO_frontal_operculum                                 "#000000"  cerebral_cortex      right       frontal
    120  frontal_operculum_left                          Left_FO_frontal_operculum                                  "#000000"  cerebral_cortex      left        frontal
    121  frontal_pole_right                              Right_FRP_frontal_pole                                     "#640064"  cerebral_cortex      right       frontal
    122  frontal_pole_left                               Left_FRP_frontal_pole                                      "#640064"  cerebral_cortex      left        frontal
-   123  fusiform_gyrus_right                            Right_FuG_fusiform_gyrus                                   "#3C148C"  cerebral_cortex      right       temporal
-   124  fusiform_gyrus_left                             Left_FuG_fusiform_gyrus                                    "#3C148C"  cerebral_cortex      left        temporal
+   123  fusiform_gyrus_right                            Right_FuG_fusiform_gyrus                                   "#B4DC8C"  cerebral_cortex      right       temporal
+   124  fusiform_gyrus_left                             Left_FuG_fusiform_gyrus                                    "#B4DC8C"  cerebral_cortex      left        temporal
    125  gyrus_rectus_right                              Right_GRe_gyrus_rectus                                     "#143C64"  cerebral_cortex      right       frontal
    126  gyrus_rectus_left                               Left_GRe_gyrus_rectus                                      "#143C64"  cerebral_cortex      left        frontal
    129  inferior_occipital_gyrus_right                  Right_IOG_inferior_occipital_gyrus                         "#173CB4"  cerebral_cortex      right       occipital
    130  inferior_occipital_gyrus_left                   Left_IOG_inferior_occipital_gyrus                          "#173CB4"  cerebral_cortex      left        occipital
-   133  inferior_temporal_gyrus_right                   Right_ITG_inferior_temporal_gyrus                          "#DCDC64"  cerebral_cortex      right       temporal
-   134  inferior_temporal_gyrus_left                    Left_ITG_inferior_temporal_gyrus                           "#DCDC64"  cerebral_cortex      left        temporal
-   135  lingual_gyrus_right                             Right_LiG_lingual_gyrus                                    "#DCB48C"  cerebral_cortex      right       occipital
-   136  lingual_gyrus_left                              Left_LiG_lingual_gyrus                                     "#DCB48C"  cerebral_cortex      left        occipital
+   133  inferior_temporal_gyrus_right                   Right_ITG_inferior_temporal_gyrus                          "#B42878"  cerebral_cortex      right       temporal
+   134  inferior_temporal_gyrus_left                    Left_ITG_inferior_temporal_gyrus                           "#B42878"  cerebral_cortex      left        temporal
+   135  lingual_gyrus_right                             Right_LiG_lingual_gyrus                                    "#E18C8C"  cerebral_cortex      right       occipital
+   136  lingual_gyrus_left                              Left_LiG_lingual_gyrus                                     "#E18C8C"  cerebral_cortex      left        occipital
    137  lateral_orbitofrontal_cortex_right              Right_LOrG_lateral_orbital_gyrus                           "#234B32"  cerebral_cortex      right       frontal
    138  lateral_orbitofrontal_cortex_left               Left_LOrG_lateral_orbital_gyrus                            "#234B32"  cerebral_cortex      left        frontal
    139  middle_cingulate_gyrus_right                    Right_MCgG_middle_cingulate_gyrus                          "#1A3C70"  cerebral_cortex      right       limbic
@@ -93,53 +93,53 @@
    152  medial_precentral_gyrus_left                    Left_MPrG_precentral_gyrus_medial_segment                  "#3C8CB4"  cerebral_cortex      left        frontal
    153  medial_superior_frontal_gyrus_right             Right_MSFG_superior_frontal_gyrus_medial_segment           "#B4148C"  cerebral_cortex      right       frontal
    154  medial_superior_frontal_gyrus_left              Left_MSFG_superior_frontal_gyrus_medial_segment            "#B4148C"  cerebral_cortex      left        frontal
-   155  middle_temporal_gyrus_right                     Right_MTG_middle_temporal_gyrus                            "#B43C3C"  cerebral_cortex      right       temporal
-   156  middle_temporal_gyrus_left                      Left_MTG_middle_temporal_gyrus                             "#B43C3C"  cerebral_cortex      left        temporal
+   155  middle_temporal_gyrus_right                     Right_MTG_middle_temporal_gyrus                            "#A06432"  cerebral_cortex      right       temporal
+   156  middle_temporal_gyrus_left                      Left_MTG_middle_temporal_gyrus                             "#A06432"  cerebral_cortex      left        temporal
    157  occipital_pole_right                            Right_OCP_occipital_pole                                   "#8C143C"  cerebral_cortex      right       occipital
    158  occipital_pole_left                             Left_OCP_occipital_pole                                    "#8C143C"  cerebral_cortex      left        occipital
    161  occipital_fusiform_gyrus_right                  Right_OFuG_occipital_fusiform_gyrus                        "#3C148C"  cerebral_cortex      right       occipital
    162  occipital_fusiform_gyrus_left                   Left_OFuG_occipital_fusiform_gyrus                         "#3C148C"  cerebral_cortex      left        occipital
-   163  inferior_frontal_gyrus_pars_opercularis_right   Right_OpIFG_opercular_part_of_the_inferior_frontal_gyrus   "#DC1464"  cerebral_cortex      right       frontal
-   164  inferior_frontal_gyrus_pars_opercularis_left    Left_OpIFG_opercular_part_of_the_inferior_frontal_gyrus    "#DC1464"  cerebral_cortex      left        frontal
-   165  inferior_frontal_gyrus_pars_orbitalis_right     Right_OrIFG_orbital_part_of_the_inferior_frontal_gyrus     "#8C3C3C"  cerebral_cortex      right       frontal
-   166  inferior_frontal_gyrus_pars_orbitalis_left      Left_OrIFG_orbital_part_of_the_inferior_frontal_gyrus      "#8C3C3C"  cerebral_cortex      left        frontal
+   163  inferior_frontal_gyrus_pars_opercularis_right   Right_OpIFG_opercular_part_of_the_inferior_frontal_gyrus   "#DCB48C"  cerebral_cortex      right       frontal
+   164  inferior_frontal_gyrus_pars_opercularis_left    Left_OpIFG_opercular_part_of_the_inferior_frontal_gyrus    "#DCB48C"  cerebral_cortex      left        frontal
+   165  inferior_frontal_gyrus_pars_orbitalis_right     Right_OrIFG_orbital_part_of_the_inferior_frontal_gyrus     "#146432"  cerebral_cortex      right       frontal
+   166  inferior_frontal_gyrus_pars_orbitalis_left      Left_OrIFG_orbital_part_of_the_inferior_frontal_gyrus      "#146432"  cerebral_cortex      left        frontal
    167  posterior_cingulate_gyrus_right                 Right_PCgG_posterior_cingulate_gyrus                       "#DCB4DC"  cerebral_cortex      right       limbic
    168  posterior_cingulate_gyrus_left                  Left_PCgG_posterior_cingulate_gyrus                        "#DCB4DC"  cerebral_cortex      left        limbic
-   169  precuneus_right                                 Right_PCu_precuneus                                        "#19148C"  cerebral_cortex      right       parietal
-   170  precuneus_left                                  Left_PCu_precuneus                                         "#19148C"  cerebral_cortex      left        parietal
-   171  parahippocampal_gyrus_right                     Right_PHG_parahippocampal_gyrus                            "#416414"  cerebral_cortex      right       limbic
-   172  parahippocampal_gyrus_left                      Left_PHG_parahippocampal_gyrus                             "#416414"  cerebral_cortex      left        limbic
+   169  precuneus_right                                 Right_PCu_precuneus                                        "#A08CB4"  cerebral_cortex      right       parietal
+   170  precuneus_left                                  Left_PCu_precuneus                                         "#A08CB4"  cerebral_cortex      left        parietal
+   171  parahippocampal_gyrus_right                     Right_PHG_parahippocampal_gyrus                            "#14DC3C"  cerebral_cortex      right       limbic
+   172  parahippocampal_gyrus_left                      Left_PHG_parahippocampal_gyrus                             "#14DC3C"  cerebral_cortex      left        limbic
    173  posterior_insula_right                          Right_PIns_posterior_insula                                "#FFC020"  cerebral_cortex      right       insular
    174  posterior_insula_left                           Left_PIns_posterior_insula                                 "#FFC020"  cerebral_cortex      left        insular
    175  parietal_operculum_right                        Right_PO_parietal_operculum                                "#000000"  cerebral_cortex      right       parietal
    176  parietal_operculum_left                         Left_PO_parietal_operculum                                 "#000000"  cerebral_cortex      left        parietal
-   177  postcentral_gyrus_right                         Right_PoG_postcentral_gyrus                                "#14B48C"  cerebral_cortex      right       parietal
-   178  postcentral_gyrus_left                          Left_PoG_postcentral_gyrus                                 "#14B48C"  cerebral_cortex      left        parietal
+   177  postcentral_gyrus_right                         Right_PoG_postcentral_gyrus                                "#DC1414"  cerebral_cortex      right       parietal
+   178  postcentral_gyrus_left                          Left_PoG_postcentral_gyrus                                 "#DC1414"  cerebral_cortex      left        parietal
    179  posterior_orbitofrontal_cortex_right            Right_POrG_posterior_orbital_gyrus                         "#DC3C14"  cerebral_cortex      right       frontal
    180  posterior_orbitofrontal_cortex_left             Left_POrG_posterior_orbital_gyrus                          "#DC3C14"  cerebral_cortex      left        frontal
-   181  planum_polare_right                             Right_PP_planum_polare                                     "#000000"  cerebral_cortex      right       temporal
-   182  planum_polare_left                              Left_PP_planum_polare                                      "#000000"  cerebral_cortex      left        temporal
-   183  precentral_gyrus_right                          Right_PrG_precentral_gyrus                                 "#3C8CB4"  cerebral_cortex      right       frontal
-   184  precentral_gyrus_left                           Left_PrG_precentral_gyrus                                  "#3C8CB4"  cerebral_cortex      left        frontal
-   185  planum_temporale_right                          Right_PT_planum_temporale                                  "#000000"  cerebral_cortex      right       temporal
-   186  planum_temporale_left                           Left_PT_planum_temporale                                   "#000000"  cerebral_cortex      left        temporal
-   187  subcallosal_area_right                          Right_SCA_subcallosal_area                                 "#000000"  cerebral_cortex      right       limbic
-   188  subcallosal_area_left                           Left_SCA_subcallosal_area                                  "#000000"  cerebral_cortex      left        limbic
-   191  superior_frontal_gyrus_right                    Right_SFG_superior_frontal_gyrus                           "#B4148C"  cerebral_cortex      right       frontal
-   192  superior_frontal_gyrus_left                     Left_SFG_superior_frontal_gyrus                            "#B4148C"  cerebral_cortex      left        frontal
-   193  supplementary_motor_cortex_right                Right_SMC_supplementary_motor_cortex                       "#000000"  cerebral_cortex      right       frontal
-   194  supplementary_motor_cortex_left                 Left_SMC_supplementary_motor_cortex                        "#000000"  cerebral_cortex      left        frontal
-   195  supramarginal_gyrus_right                       Right_SMG_supramarginal_gyrus                              "#64643C"  cerebral_cortex      right       parietal
-   196  supramarginal_gyrus_left                        Left_SMG_supramarginal_gyrus                               "#64643C"  cerebral_cortex      left        parietal
+   181  planum_polare_right                             Right_PP_planum_polare                                     "#41DC3C"  cerebral_cortex      right       temporal
+   182  planum_polare_left                              Left_PP_planum_polare                                      "#41DC3C"  cerebral_cortex      left        temporal
+   183  precentral_gyrus_right                          Right_PrG_precentral_gyrus                                 "#3C14DC"  cerebral_cortex      right       frontal
+   184  precentral_gyrus_left                           Left_PrG_precentral_gyrus                                  "#3C14DC"  cerebral_cortex      left        frontal
+   185  planum_temporale_right                          Right_PT_planum_temporale                                  "#198C14"  cerebral_cortex      right       temporal
+   186  planum_temporale_left                           Left_PT_planum_temporale                                   "#198C14"  cerebral_cortex      left        temporal
+   187  subcallosal_area_right                          Right_SCA_subcallosal_area                                 "#F04B73"  cerebral_cortex      right       limbic
+   188  subcallosal_area_left                           Left_SCA_subcallosal_area                                  "#F04B73"  cerebral_cortex      left        limbic
+   191  superior_frontal_gyrus_right                    Right_SFG_superior_frontal_gyrus                           "#14DCA0"  cerebral_cortex      right       frontal
+   192  superior_frontal_gyrus_left                     Left_SFG_superior_frontal_gyrus                            "#14DCA0"  cerebral_cortex      left        frontal
+   193  supplementary_motor_cortex_right                Right_SMC_supplementary_motor_cortex                       "#00C88C"  cerebral_cortex      right       frontal
+   194  supplementary_motor_cortex_left                 Left_SMC_supplementary_motor_cortex                        "#00C88C"  cerebral_cortex      left        frontal
+   195  supramarginal_gyrus_right                       Right_SMG_supramarginal_gyrus                              "#50A014"  cerebral_cortex      right       parietal
+   196  supramarginal_gyrus_left                        Left_SMG_supramarginal_gyrus                               "#50A014"  cerebral_cortex      left        parietal
    197  superior_occipital_gyrus_right                  Right_SOG_superior_occipital_gyrus                         "#14DC3C"  cerebral_cortex      right       occipital
    198  superior_occipital_gyrus_left                   Left_SOG_superior_occipital_gyrus                          "#14DC3C"  cerebral_cortex      left        occipital
-   199  superior_parietal_lobule_right                  Right_SPL_superior_parietal_lobule                         "#000000"  cerebral_cortex      right       parietal
-   200  superior_parietal_lobule_left                   Left_SPL_superior_parietal_lobule                          "#000000"  cerebral_cortex      left        parietal
+   199  superior_parietal_gyrus_right                   Right_SPL_superior_parietal_lobule                         "#14B48C"  cerebral_cortex      right       parietal
+   200  superior_parietal_gyrus_left                    Left_SPL_superior_parietal_lobule                          "#14B48C"  cerebral_cortex      left        parietal
    201  superior_temporal_gyrus_right                   Right_STG_superior_temporal_gyrus                          "#8CDCDC"  cerebral_cortex      right       temporal
    202  superior_temporal_gyrus_left                    Left_STG_superior_temporal_gyrus                           "#8CDCDC"  cerebral_cortex      left        temporal
-   203  temporal_pole_right                             Right_TMP_temporal_pole                                    "#DCB414"  cerebral_cortex      right       temporal
-   204  temporal_pole_left                              Left_TMP_temporal_pole                                     "#DCB414"  cerebral_cortex      left        temporal
-   205  inferior_frontal_gyrus_pars_triangularis_right  Right_TrIFG_triangular_part_of_the_inferior_frontal_gyrus  "#B4DC8C"  cerebral_cortex      right       frontal
-   206  inferior_frontal_gyrus_pars_triangularis_left   Left_TrIFG_triangular_part_of_the_inferior_frontal_gyrus   "#B4DC8C"  cerebral_cortex      left        frontal
-   207  transverse_temporal_gyrus_right                 Right_TTG_transverse_temporal_gyrus                        "#3C3CDC"  cerebral_cortex      right       temporal
-   208  transverse_temporal_gyrus_left                  Left_TTG_transverse_temporal_gyrus                         "#3C3CDC"  cerebral_cortex      left        temporal
+   203  temporal_pole_right                             Right_TMP_temporal_pole                                    "#464646"  cerebral_cortex      right       temporal
+   204  temporal_pole_left                              Left_TMP_temporal_pole                                     "#464646"  cerebral_cortex      left        temporal
+   205  inferior_frontal_gyrus_pars_triangularis_right  Right_TrIFG_triangular_part_of_the_inferior_frontal_gyrus  "#DC3C14"  cerebral_cortex      right       frontal
+   206  inferior_frontal_gyrus_pars_triangularis_left   Left_TrIFG_triangular_part_of_the_inferior_frontal_gyrus   "#DC3C14"  cerebral_cortex      left        frontal
+   207  transverse_temporal_gyrus_right                 Right_TTG_transverse_temporal_gyrus                        "#9696C8"  cerebral_cortex      right       temporal
+   208  transverse_temporal_gyrus_left                  Left_TTG_transverse_temporal_gyrus                         "#9696C8"  cerebral_cortex      left        temporal
