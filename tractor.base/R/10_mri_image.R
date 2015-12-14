@@ -56,6 +56,17 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             return (base::apply(data, ...))
     },
     
+    fill = function (value)
+    {
+        if (value == 0)
+            .self$data <- newSparseArrayWithData(vector(class(value),0), matrix(NA,0,length(imageDims)), imageDims)
+        else
+            .self$data <- array(value, dim=imageDims)
+        
+        .self$setSource(NULL)
+        invisible(.self)
+    },
+    
     getData = function () { return (data) },
     
     getDataAtPoint = function (...)

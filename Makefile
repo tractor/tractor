@@ -2,12 +2,13 @@ SHELL=/bin/bash
 export SHELL
 
 R=R
+ENV=/usr/bin/env
 ECHO=/bin/echo
 ECHO_N=/bin/echo -n
 GIT=git
 MD5=md5
 FETCH=bin/tractor_pkgget -m
-INSTALL=bin/tractor_Rinstall
+INSTALL=$(ENV) R=$(R) bin/tractor_Rinstall
 
 default: build post-build-info
 
@@ -28,9 +29,8 @@ post-install-info:
 	@$(ECHO)
 	@$(ECHO) "The ~/.bashrc file can be created if it does not already exist."
 
-do-install-libs:
-	@mkdir -p tmp
-	@rm -f tmp/*
+install-libs:
+	@mkdir -p tmp; rm -f tmp/*
 	@$(FETCH) Rcpp 0.11.5
 	@$(FETCH) RcppArmadillo 0.4.650.1.1
 	@$(FETCH) bitops 1.0-6
@@ -40,10 +40,10 @@ do-install-libs:
 	@$(INSTALL) tmp/Rcpp_* tmp/RcppArmadillo_* tmp/bitops_* tmp/oro.nifti_* tmp/corpcor_* tmp/igraph_*
 	@rm -f tmp/*
 
-install-libs:
+check-and-install-libs:
 	@current_version=`cat VERSION`; \
 	[ -f lib/.VERSION ] && installed_version=`cat lib/.VERSION` || installed_version=0; \
-	[ $${current_version} = $${installed_version} ] || ( $(MAKE) do-install-libs && cp VERSION lib/.VERSION )
+	[ $${current_version} = $${installed_version} ] || ( $(MAKE) install-libs && cp VERSION lib/.VERSION )
 
 install-base:
 	@$(INSTALL) lib/reportr tractor.base
@@ -69,7 +69,7 @@ install-graph:
 
 install: build
 	@rm -f install.log
-	@$(MAKE) install-libs install-base install-utils install-reg install-session install-nt install-track install-graph post-install-info
+	@$(MAKE) check-and-install-libs install-base install-utils install-reg install-session install-nt install-track install-graph post-install-info
 
 install-local: install
 
@@ -90,14 +90,15 @@ clean:
 	@cd tests && $(MAKE) clean
 
 distclean: clean
+	@rm -f lib/.VERSION
 	@rm -f bin/exec/tractor src/build.log install.log
 	@rm -f tractor.track/config.log tractor.track/config.status tractor.track/src/Makevars tractor.track/src/config.h
 
 test:
-	@cd tests && $(MAKE) run-tests
+	@cd tests && $(MAKE) run-tests R=$(R)
 
 dtest:
-	@cd tests && $(MAKE) debug-tests
+	@cd tests && $(MAKE) debug-tests R=$(R)
 
 create-md5:
 	@$(GIT) ls-files | grep -v -e '^lib/' -e '^etc/md5.txt' -e '\.git' | xargs $(MD5) -r >etc/md5.txt

@@ -35,13 +35,13 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     reducedRefTract <- createReducedTractInfo(refTract)
     report(OL$Info, "Reference tract contains ", reducedRefTract$nVoxels, " nonzero voxels; length is ", reducedRefTract$length)
     
-    result <- trackWithSession(session, candidateSeeds[validSeeds,], requireImage=FALSE, requireStreamlines=TRUE, nSamples=nSamples)
+    trackerPath <- session$getTracker()$run(candidateSeeds[validSeeds,], nSamples, requireMap=FALSE, requireStreamlines=TRUE)
+    streamSource <- StreamlineSource$new(trackerPath)
     for (i in seq_along(validSeeds))
     {
         firstStreamline <- nSamples * (i-1) + 1
         lastStreamline <- i * nSamples
-        streamlinesForSeed <- newStreamlineCollectionTractBySubsetting(result$streamlines, firstStreamline:lastStreamline)
-        imageForSeed <- newMriImageAsVisitationMap(streamlinesForSeed)
+        imageForSeed <- streamSource$select(firstStreamline:lastStreamline)$getVisitationMap(faImage)
         candidateTract <- newFieldTractFromMriImage(imageForSeed, candidateSeeds[validSeeds[i],])
         similarities[validSeeds[i]] <- calculateSimilarity(reducedRefTract, candidateTract)
     }

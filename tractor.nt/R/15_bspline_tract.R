@@ -114,7 +114,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
             return (NULL)
         }
 
-        line <- streamlineTract$getLine()
+        line <- translatePoints(streamlineTract$getLine(), -streamlineTract$getSeedPoint())
         data <- data.frame(t=pointLocs, x=line[,1], y=line[,2], z=line[,3])
         
         # Copy the relevant info into a clean environment to avoid baggage in "lm" objects
@@ -136,13 +136,15 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         return (list(basis=basis, models=models, knotLocs=knotLocs, seedKnot=seedKnot))
     }
     
+    streamlineTract$setCoordinateUnit("mm")
+    
     if (is.null(knotSpacing))
     {
         report(OL$Info, "Fitting B-spline model for accuracy")
         for (nKnots in 1:100)
         {
             knotSpacing <- streamlineTract$getLineLength() / nKnots
-            currentStreamline <- newStreamlineTractWithSpacingThreshold(streamlineTract, knotSpacing)
+            currentStreamline <- streamlineTract$copy()$setMaximumSpacing(knotSpacing)
             bSpline <- fitBSplineModels(currentStreamline, nKnots)
             if (is.null(bSpline))
                 next
@@ -168,7 +170,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
     else
     {
         flag(OL$Info, "Fitting B-spline model with fixed knot spacing of ", signif(knotSpacing,3))
-        streamlineTract <- newStreamlineTractWithSpacingThreshold(streamlineTract, knotSpacing)
+        streamlineTract <- streamlineTract$copy()$setMaximumSpacing(knotSpacing)
         nKnots <- floor(streamlineTract$getLineLength() / knotSpacing)
         bSpline <- fitBSplineModels(streamlineTract, nKnots)
     }
@@ -212,8 +214,18 @@ newBSplineTractFromStreamlineWithConstraints <- function (streamlineTract, ..., 
         else
         {
             report(OL$Info, "Trimming ", leftCount, " left side and ", rightCount, " right side knots")
-            streamlineTract <- newStreamlineTractByTrimming(streamlineTract, leftCount*bSplineTract$getKnotSpacing(), rightCount*bSplineTract$getKnotSpacing())
-            bSplineTract <- newBSplineTractFromStreamline(streamlineTract, ...)
+            
+            spacings <- streamlineTract$getPointSpacings()
+            leftSum <- cumsum(spacings)
+            rightSum <- cumsum(rev(spacings))
+            
+            trimLeft <- leftCount * bSplineTract$getKnotSpacing()
+            trimRight <- rightCount * bSplineTract$getKnotSpacing()
+            leftStop <- ifelse(max(leftSum) > trimLeft, min(which(leftSum > trimLeft))+1, 1)
+            rightStop <- streamlineTract$nPoints() - ifelse(max(rightSum) > trimRight, min(which(rightSum > trimRight)), 0)
+            
+            currentStreamline <- streamlineTract$copy()$trim(leftStop, rightStop)
+            bSplineTract <- newBSplineTractFromStreamline(currentStreamline, ...)
         }
     }
     

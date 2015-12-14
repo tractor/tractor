@@ -5,12 +5,8 @@ createTractOptionList <- function (pointType = "knot", lengthQuantile = 0.99, re
     invisible (options)
 }
 
-streamlineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)
+transformStreamlineWithOptions <- function (options, streamline, session, refSession = NULL)
 {
-    result <- trackWithSession(session, seed, nSamples=nSamples, rightwardsVector=rightwardsVector, requireImage=FALSE, requireStreamlines=TRUE)
-    streamSet <- newStreamlineSetTractFromCollection(result$streamlines)
-    streamline <- newStreamlineTractFromSet(streamSet, method="median", lengthQuantile=options$lengthQuantile, originAtSeed=TRUE)
-    
     if (options$registerToReference)
     {
         if (is.null(refSession))
@@ -18,10 +14,21 @@ streamlineTractWithOptions <- function (options, session, seed, refSession = NUL
         else
             transform <- registerImages(session$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
         
-        streamline <- newStreamlineTractByTransformation(streamline, transform)
+        streamline$transform(transform)
     }
     
     invisible (streamline)
+}
+
+streamlineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)
+{
+    tracker <- session$getTracker()
+    tracker$setOptions(rightwardsVector=rightwardsVector)
+    trackerPath <- tracker$run(seed, nSamples, requireMap=FALSE, requireStreamlines=TRUE)
+    streamSource <- StreamlineSource$new(trackerPath)
+    streamline <- streamSource$getMedian(options$lengthQuantile)
+    
+    invisible (transformStreamlineWithOptions(options, streamline, session, refSession))
 }
 
 splineTractWithOptions <- function (options, session, seed, refSession = NULL, nSamples = 5000, rightwardsVector = NULL)
@@ -83,37 +90,6 @@ calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference,
             spline <- splineTractWithOptions(reference$getTractOptions(), session, seed, reference$getSourceSession(), nSamples, rightwardsVector)
             splines <- c(splines, list(spline))
         }
-    }
-    
-    invisible (splines)
-}
-
-calculateSplinesForStreamlineSetTract <- function (tract, testSession, refSession, options)
-{
-    if (!is(tract, "StreamlineSetTract"))
-        report(OL$Error, "The specified tract is not a StreamlineSetTract object")
-    
-    nSamples <- tract$nStreamlines()
-    
-    splines <- list()
-    for (i in 1:nSamples)
-    {
-        streamline <- newStreamlineTractFromSet(tract, method="single", index=i, originAtSeed=TRUE)
-        if (options$registerToReference)
-        {
-            if (is.null(refSession))
-                transform <- testSession$getTransformation("diffusion", "mni")
-            else
-                transform <- registerImages(testSession$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
-
-            streamline <- newStreamlineTractByTransformation(streamline, transform)
-        }
-        
-        spline <- newBSplineTractFromStreamline(streamline, knotSpacing=options$knotSpacing)
-        splines <- c(splines, list(spline))
-        
-        if (i %% 50 == 0)
-            report(OL$Verbose, "Done ", i)
     }
     
     invisible (splines)

@@ -56,8 +56,6 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    require("tractor.reg")
-    
     logFile <- file.path(session$getDirectory("fdt"), "data.ecclog")
     if (!file.exists(logFile))
         report(OL$Error, "Eddy current correction log not found")
@@ -75,7 +73,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     
     sourceImage <- session$getImageByType("rawdata", "diffusion", metadataOnly=TRUE)
     targetImage <- session$getImageByType("refb0", "diffusion", metadataOnly=TRUE)
-    transform <- Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="fsl")
+    transform <- tractor.reg::Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="fsl")
     
     invisible (transform)
 }

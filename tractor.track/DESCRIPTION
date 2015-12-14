@@ -1,11 +1,12 @@
 Package: tractor.track
-Version: 2.6.1
+Version: 3.0.0
 Date: 2015-03-10
 Title: Diffusion tractography in TractoR
 Author: Jon Clayden and Fani Deligianni
 Maintainer: Jon Clayden <code@clayden.org>
 Depends: R (>= 2.12.1), methods
-Imports: reportr, tractor.base, tractor.session, tractor.nt
+Imports: reportr, tractor.base, tractor.session, tractor.nt, Rcpp
+LinkingTo: Rcpp, RcppEigen
 Description: The tractor.track package provides functions for performing tractography using diffusion MRI data
 Encoding: UTF-8
 LazyLoad: yes

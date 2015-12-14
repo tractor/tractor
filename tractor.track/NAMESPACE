@@ -4,9 +4,9 @@ import(reportr)
 import(tractor.base)
 importFrom(tractor.session, getBedpostNumberOfFibresForSession)
 importFrom(tractor.nt, newStreamlineTractMetadataFromImageMetadata, newStreamlineCollectionTractBySubsetting, StreamlineCollectionTract)
+importFrom(Rcpp, evalCpp)
 
 importClassesFrom(tractor.session, MriSession)
 importClassesFrom(tractor.nt, StreamlineTractMetadata, StreamlineSetTract, StreamlineCollectionTract)
 
-export(trackWithSession, trackWithImages, trackInNeighbourhood)
-export(findWaypointHits, newStreamlineCollectionTractWithWaypointConstraints)
+exportPattern("^[^\\.]")
