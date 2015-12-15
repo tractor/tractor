@@ -1,3 +1,5 @@
+useDynLib(tractor.graph)
+
 import(reportr)
 import(tractor.base)
 
