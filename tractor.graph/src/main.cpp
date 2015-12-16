@@ -24,22 +24,6 @@ struct RGraph
         : indices(graph), weights(graph), directed(false), weighted(false), negativeWeights(false) {}
 };
 
-template <class Algorithm>
-void searchPaths (const RGraph &g, Algorithm &algorithm, NumericMatrix &result)
-{
-    for (SmartDigraph::NodeIt source(g.graph); source != INVALID; ++source)
-    {
-        algorithm.run(source);
-        for (SmartDigraph::NodeIt target(g.graph); target != INVALID; ++target)
-        {
-            if (!algorithm.reached(target))
-                result(g.indices[source], g.indices[target]) = R_PosInf;
-            else
-                result(g.indices[source], g.indices[target]) = algorithm.dist(target);
-        }
-    }
-}
-
 void createGraph (const int nVertices, const IntegerMatrix &edges, const NumericVector &weights, const bool directed, RGraph &g)
 {
     g.directed = directed;
@@ -92,10 +76,27 @@ void createGraph (const int nVertices, const IntegerMatrix &edges, const Numeric
     }
 }
 
+template <class Algorithm>
+void searchPaths (const RGraph &g, Algorithm &algorithm, NumericMatrix &result)
+{
+    for (SmartDigraph::NodeIt source(g.graph); source != INVALID; ++source)
+    {
+        algorithm.run(source);
+        for (SmartDigraph::NodeIt target(g.graph); target != INVALID; ++target)
+        {
+            if (!algorithm.reached(target))
+                result(g.indices[source], g.indices[target]) = R_PosInf;
+            else
+                result(g.indices[source], g.indices[target]) = algorithm.dist(target);
+        }
+    }
+}
+
 RcppExport SEXP shortestPaths (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed)
 {
 BEGIN_RCPP
     const int nVertices = as<int>(_nVertices);
+    
     RGraph g;
     createGraph(nVertices, IntegerMatrix(_edges), NumericVector(_weights), as<bool>(_directed), g);
     
@@ -114,6 +115,38 @@ BEGIN_RCPP
     {
         BellmanFord<SmartDigraph,WeightMap> bellmanFord(g.graph, g.weights);
         searchPaths(g, bellmanFord, result);
+    }
+    
+    return result;
+END_RCPP
+}
+
+RcppExport SEXP neighbourhood (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed, SEXP _vertex, SEXP _type)
+{
+BEGIN_RCPP
+    const int vertex = as<int>(_vertex);
+    const std::string type = as<std::string>(_type);
+    
+    RGraph g;
+    createGraph(as<int>(_nVertices), IntegerMatrix(_edges), NumericVector(_weights), as<bool>(_directed), g);
+    
+    SmartDigraph::Node node;
+    for (SmartDigraph::NodeIt nit(g.graph); nit != INVALID; ++nit)
+    {
+        if (g.indices[nit] == vertex - 1)
+            node = nit;
+    }
+    
+    IntegerVector result;
+    if (type == "all" || type == "in")
+    {
+        for (SmartDigraph::InArcIt ait(g.graph,node); ait != INVALID; ++ait)
+            result.push_back(g.indices[g.graph.source(ait)] + 1);
+    }
+    if (type == "all" || type == "out")
+    {
+        for (SmartDigraph::OutArcIt ait(g.graph,node); ait != INVALID; ++ait)
+            result.push_back(g.indices[g.graph.target(ait)] + 1);
     }
     
     return result;
