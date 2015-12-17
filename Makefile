@@ -69,7 +69,7 @@ install-graph:
 
 install: build
 	@rm -f install.log
-	@$(MAKE) check-and-install-libs install-base install-utils install-reg install-session install-nt install-track install-graph post-install-info
+	@$(MAKE) check-and-install-libs install-base install-utils install-reg install-session install-track install-nt install-graph post-install-info
 
 install-local: install
 
