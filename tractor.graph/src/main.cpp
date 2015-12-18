@@ -121,38 +121,43 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP neighbourhood (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed, SEXP _vertex, SEXP _type)
+RcppExport SEXP neighbourhood (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed, SEXP _vertices, SEXP _type)
 {
 BEGIN_RCPP
-    const int vertex = as<int>(_vertex) - 1;
+    IntegerVector vertices(_vertices);
     const std::string type = as<std::string>(_type);
     
     RGraph g;
     createGraph(as<int>(_nVertices), IntegerMatrix(_edges), NumericVector(_weights), as<bool>(_directed), g);
     
-    SmartDigraph::Node targetNode;
-    for (SmartDigraph::NodeIt node(g.graph); node != INVALID; ++node)
+    List result(vertices.length());
+    for (int i=0; i<vertices.length(); i++)
     {
-        if (g.indices[node] == vertex)
-            targetNode = node;
+        SmartDigraph::Node targetNode;
+        for (SmartDigraph::NodeIt node(g.graph); node != INVALID; ++node)
+        {
+            if (g.indices[node] == vertices[i] - 1)
+                targetNode = node;
+        }
+        
+        std::set<int> neighbours;
+        if (type == "all" || type == "in")
+        {
+            for (SmartDigraph::InArcIt arc(g.graph,targetNode); arc != INVALID; ++arc)
+                neighbours.insert(g.indices[g.graph.source(arc)] + 1);
+        }
+        if (type == "all" || type == "out")
+        {
+            for (SmartDigraph::OutArcIt arc(g.graph,targetNode); arc != INVALID; ++arc)
+                neighbours.insert(g.indices[g.graph.target(arc)] + 1);
+        }
+        
+        // Remove the target node itself, if present (open neighbourhood)
+        neighbours.erase(vertices[i]);
+        result[i] = wrap(neighbours);
     }
     
-    std::set<int> result;
-    if (type == "all" || type == "in")
-    {
-        for (SmartDigraph::InArcIt arc(g.graph,targetNode); arc != INVALID; ++arc)
-            result.insert(g.indices[g.graph.source(arc)] + 1);
-    }
-    if (type == "all" || type == "out")
-    {
-        for (SmartDigraph::OutArcIt arc(g.graph,targetNode); arc != INVALID; ++arc)
-            result.insert(g.indices[g.graph.target(arc)] + 1);
-    }
-    
-    // Remove the target node itself, if present (open neighbourhood)
-    result.erase(vertex + 1);
-    
-    return wrap(result);
+    return result;
 END_RCPP
 }
 
