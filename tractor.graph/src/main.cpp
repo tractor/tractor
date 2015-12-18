@@ -124,29 +124,92 @@ END_RCPP
 RcppExport SEXP neighbourhood (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed, SEXP _vertex, SEXP _type)
 {
 BEGIN_RCPP
-    const int vertex = as<int>(_vertex);
+    const int vertex = as<int>(_vertex) - 1;
     const std::string type = as<std::string>(_type);
     
     RGraph g;
     createGraph(as<int>(_nVertices), IntegerMatrix(_edges), NumericVector(_weights), as<bool>(_directed), g);
     
-    SmartDigraph::Node node;
-    for (SmartDigraph::NodeIt nit(g.graph); nit != INVALID; ++nit)
+    SmartDigraph::Node targetNode;
+    for (SmartDigraph::NodeIt node(g.graph); node != INVALID; ++node)
     {
-        if (g.indices[nit] == vertex - 1)
-            node = nit;
+        if (g.indices[node] == vertex)
+            targetNode = node;
     }
     
-    IntegerVector result;
+    std::set<int> result;
     if (type == "all" || type == "in")
     {
-        for (SmartDigraph::InArcIt ait(g.graph,node); ait != INVALID; ++ait)
-            result.push_back(g.indices[g.graph.source(ait)] + 1);
+        for (SmartDigraph::InArcIt arc(g.graph,targetNode); arc != INVALID; ++arc)
+            result.insert(g.indices[g.graph.source(arc)] + 1);
     }
     if (type == "all" || type == "out")
     {
-        for (SmartDigraph::OutArcIt ait(g.graph,node); ait != INVALID; ++ait)
-            result.push_back(g.indices[g.graph.target(ait)] + 1);
+        for (SmartDigraph::OutArcIt arc(g.graph,targetNode); arc != INVALID; ++arc)
+            result.insert(g.indices[g.graph.target(arc)] + 1);
+    }
+    
+    // Remove the target node itself, if present (open neighbourhood)
+    result.erase(vertex + 1);
+    
+    return wrap(result);
+END_RCPP
+}
+
+RcppExport SEXP clusteringCoefficients (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed)
+{
+BEGIN_RCPP
+    const int nVertices = as<int>(_nVertices);
+    
+    RGraph g;
+    createGraph(nVertices, IntegerMatrix(_edges), NumericVector(_weights), as<bool>(_directed), g);
+    
+    ArcLookUp<SmartDigraph> arcs(g.graph);
+    NumericVector result(nVertices);
+    for (SmartDigraph::NodeIt node(g.graph); node != INVALID; ++node)
+    {
+        // Find all neighbours of the current node
+        std::set<SmartDigraph::Node> neighbours;
+        for (SmartDigraph::InArcIt arc(g.graph,node); arc != INVALID; ++arc)
+            neighbours.insert(g.graph.source(arc));
+        for (SmartDigraph::OutArcIt arc(g.graph,node); arc != INVALID; ++arc)
+            neighbours.insert(g.graph.target(arc));
+        neighbours.erase(node);
+        
+        int nNeighbours = neighbours.size();
+        if (nNeighbours < 2)
+        {
+            // By definition, the clustering coefficient is zero when there are no possible triangles
+            result[g.indices[node]] = 0.0;
+        }
+        else
+        {
+            // Calculate the number of triangles around the node
+            double triangles = 0.0;
+            for (std::set<SmartDigraph::Node>::const_iterator neighbour1=neighbours.begin(); neighbour1 != neighbours.end(); neighbour1++)
+            {
+                for (std::set<SmartDigraph::Node>::const_iterator neighbour2=neighbours.begin(); neighbour2 != neighbours.end(); neighbour2++)
+                {
+                    if (*neighbour1 == *neighbour2)
+                        continue;
+                    else if (!g.weighted && !g.directed)
+                        triangles += static_cast<double>(arcs(*neighbour1,*neighbour2) != INVALID);
+                    else if (!g.weighted && g.directed)
+                        triangles += static_cast<double>(arcs(*neighbour1,*neighbour2) != INVALID) + static_cast<double>(arcs(*neighbour2,*neighbour1) != INVALID);
+                    else if (g.weighted && g.directed)
+                        throw std::domain_error("Clustering coefficient is not implemented for directed, weighted graphs");
+                    else
+                    {
+                        // Weighted triangle value is the geometric mean of the weights of the edges
+                        SmartDigraph::Arc arc = arcs(*neighbour1, *neighbour2);
+                        if (arc != INVALID)
+                            triangles += R_pow(g.weights[arc] * g.weights[arcs(node,*neighbour1)] * g.weights[arcs(node,*neighbour2)], 1.0/3.0);
+                    }
+                }
+            }
+            
+            result[g.indices[node]] = (g.directed ? 0.5 : 1.0) * triangles / static_cast<double>(nNeighbours * (nNeighbours - 1));
+        }
     }
     
     return result;
