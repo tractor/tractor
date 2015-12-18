@@ -3,7 +3,6 @@
 #@nohistory TRUE
 
 library(tractor.base)
-library(igraph)
 library(tractor.graph)
 
 runExperiment <- function ()
@@ -29,10 +28,10 @@ runExperiment <- function ()
     
     meanAbsEdgeWeight <- mean(abs(graph$getEdgeWeights()), na.rm=TRUE)
     edgeWeightRange <- range(graph$getEdgeWeights(), na.rm=TRUE)
-    meanShortestPath <- meanShortestPath(graph, ignoreInfinite=!disconnectedVertices)
+    meanShortestPath <- graph$getMeanShortestPath(ignoreInfinite=!disconnectedVertices)
     globalEfficiency <- graphEfficiency(graph, type="global")
     localEfficiency <- mean(graphEfficiency(graph, type="local"), na.rm=TRUE)
-    meanClusteringCoefficient <- mean(clusteringCoefficients(graph), na.rm=TRUE)
+    meanClusteringCoefficient <- mean(graph$getClusteringCoefficients(), na.rm=TRUE)
     
     values <- c(s("#{graph$nVertices()} (#{length(graph$getConnectedVertices())} connected)"),
                 graph$nEdges(),

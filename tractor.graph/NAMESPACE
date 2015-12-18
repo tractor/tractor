@@ -2,6 +2,7 @@ useDynLib(tractor.graph)
 
 import(reportr)
 import(tractor.base)
+importFrom(Rcpp, evalCpp)
 
 exportClasses(Graph)
 

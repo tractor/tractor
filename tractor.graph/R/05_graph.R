@@ -36,6 +36,11 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
             associationMatrix[edges[,2:1]] <- edgeWeights
         return (associationMatrix)
     },
+    
+    getClusteringCoefficients = function ()
+    {
+        .Call("clusteringCoefficients", vertexCount, edges, 1/edgeWeights, directed, PACKAGE="tractor.graph")
+    },
         
     getEdge = function (i)
     {
@@ -80,6 +85,35 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         associationMatrix <- .self$getAssociationMatrix()
         degreeMatrix <- diag(colSums(associationMatrix))
         return (degreeMatrix - associationMatrix)
+    },
+    
+    getMeanShortestPath = function (ignoreInfinite = TRUE)
+    {
+        shortestPaths <- .self$getShortestPathMatrix()
+        if (ignoreInfinite)
+            shortestPaths[is.infinite(shortestPaths)] <- NA
+        return (mean(shortestPaths[!diag(vertexCount)], na.rm=TRUE))
+    },
+    
+    getNeighbourhoods = function (vertices = NULL, type = c("all","in","out"), simplify = TRUE)
+    {
+        type <- match.arg(type)
+        if (is.null(vertices))
+            vertices <- seq_len(vertexCount)
+        else if (is.character(vertices))
+            vertices <- match(vertices, vertexAttributes$name)
+        
+        neighbourhoods <- .Call("neighbourhoods", vertexCount, edges, 1/edgeWeights, directed, vertices, type, PACKAGE="tractor.graph")
+        
+        if (simplify && length(neighbourhoods) == 1)
+            return (neighbourhoods[[1]])
+        else
+            return (neighbourhoods)
+    },
+    
+    getShortestPathMatrix = function ()
+    {
+        .Call("shortestPaths", vertexCount, edges, 1/edgeWeights, directed, PACKAGE="tractor.graph")
     },
     
     getVertexAttributes = function (attributes = NULL)
@@ -183,12 +217,10 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
 setAs("Graph", "matrix", function (from) from$getAssociationMatrix())
 
 setAs("Graph", "igraph", function (from) {
-    require("igraph")
-
-    igraph <- graph.edgelist(from$getEdges(), directed=from$isDirected())
-    vertexCountDifference <- from$nVertices() - vcount(igraph)
+    igraph <- igraph::graph.edgelist(from$getEdges(), directed=from$isDirected())
+    vertexCountDifference <- from$nVertices() - igraph::vcount(igraph)
     if (vertexCountDifference > 0)
-        igraph <- add.vertices(igraph, vertexCountDifference)
+        igraph <- igraph::add.vertices(igraph, vertexCountDifference)
     
     vertexAttributes <- from$getVertexAttributes()
     edgeAttributes <- from$getEdgeAttributes()
@@ -196,19 +228,19 @@ setAs("Graph", "igraph", function (from) {
     for (i in seq_along(vertexAttributes))
     {
         indices <- which(!is.na(vertexAttributes[[i]]))
-        igraph <- set.vertex.attribute(igraph, names(vertexAttributes)[i], indices, vertexAttributes[[i]][indices])
+        igraph <- igraph::set.vertex.attribute(igraph, names(vertexAttributes)[i], indices, vertexAttributes[[i]][indices])
     }
     
     for (i in seq_along(edgeAttributes))
     {
         indices <- which(!is.na(edgeAttributes[[i]]))
-        igraph <- set.edge.attribute(igraph, names(edgeAttributes)[i], indices, edgeAttributes[[i]][indices])
+        igraph <- igraph::set.edge.attribute(igraph, names(edgeAttributes)[i], indices, edgeAttributes[[i]][indices])
     }
     
     if (from$isWeighted())
     {
         indices <- which(!is.na(from$getEdgeWeights()))
-        E(igraph)$weight[indices] <- from$getEdgeWeights()[indices]
+        igraph::E(igraph)$weight[indices] <- from$getEdgeWeights()[indices]
     }
     
     return (igraph)
@@ -285,7 +317,11 @@ asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections
         dimnames(edges) <- NULL
     }
     
-    return (Graph$new(vertexCount=nVertices, vertexAttributes=list(name=allVertexNames), edges=edges, edgeWeights=edgeWeights, directed=directed))
+    graph <- Graph$new(vertexCount=nVertices, edges=edges, edgeWeights=edgeWeights, directed=directed)
+    if (!is.null(allVertexNames))
+        graph$setVertexAttributes(name=allVertexNames)
+    
+    return (graph)
 }
 
 as.matrix.Graph <- function (x, ...)
@@ -297,7 +333,7 @@ setMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, 
 setMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,,drop=drop]))
 setMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,j,drop=drop]))
 setMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,j,drop=drop]))
-    
+
 setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useNames = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
@@ -558,7 +594,6 @@ graphEfficiency <- function (graph, type = c("global","local"))
     if (!is(graph, "Graph"))
         report(OL$Error, "Specified graph is not a valid Graph object")
     
-    require("igraph")
     type <- match.arg(type)
     
     v <- graph$getConnectedVertices()
@@ -570,66 +605,27 @@ graphEfficiency <- function (graph, type = c("global","local"))
             return (rep(0,length(v)))
     }
     
-    graph <- induced.subgraph(as(graph,"igraph"), v)
+    graph <- inducedSubgraph(graph, v)
     
     if (type == "global")
     {
-        sp <- shortestPaths(graph)
+        sp <- graph$getShortestPathMatrix()
         ge <- mean(1/sp[upper.tri(sp) | lower.tri(sp)])
         return (ge)
     }
     else
     {
-        # Find neighbourhoods and remove self-connections
-        v <- V(graph)
-        n <- neighborhood(graph, 1, v)
-        n <- lapply(seq_along(n), function(i) setdiff(n[[i]],v[i]))
-
+        n <- graph$getNeighbourhoods()
         le <- sapply(n, function (cn) {
             if (length(cn) < 2)
                 return (0)
             else
             {
-                subgraph <- induced.subgraph(graph, cn)
-                sp <- shortestPaths(subgraph)
+                subgraph <- inducedSubgraph(graph, cn)
+                sp <- subgraph$getShortestPathMatrix()
                 return (mean(1/sp[upper.tri(sp) | lower.tri(sp)]))
             }
         })
         return (le)
     }
-}
-
-meanShortestPath <- function (graph, ignoreInfinite = TRUE)
-{
-    paths <- shortestPaths(graph)
-    if (ignoreInfinite)
-        paths[is.infinite(paths)] <- NA
-    return (mean(paths[upper.tri(paths)], na.rm=TRUE))
-}
-
-shortestPaths <- function (graph)
-{
-    require("igraph")
-    
-    if (!is(graph,"Graph") && !is(graph,"igraph"))
-        report(OL$Error, "Specified graph is not a valid Graph or igraph object")
-    
-    # The shortest.paths() function treats weights as costs, so we need to invert
-    if (is(graph, "Graph") && graph$isWeighted())
-        weights <- 1 / graph$getEdgeWeights()
-    else if (is(graph,"igraph") && is.weighted(graph))
-        weights <- 1 / E(graph)$weight
-    else
-        weights <- NULL
-    
-    return (shortest.paths(as(graph,"igraph"), weights=weights))
-}
-
-clusteringCoefficients <- function (graph)
-{
-    if (!is(graph,"Graph") && !is(graph,"igraph"))
-        report(OL$Error, "Specified graph is not a valid Graph or igraph object")
-    
-    require("igraph")
-    return (transitivity(as(graph,"igraph"),"local"))
 }

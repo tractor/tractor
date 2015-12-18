@@ -121,7 +121,7 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP neighbourhood (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed, SEXP _vertices, SEXP _type)
+RcppExport SEXP neighbourhoods (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed, SEXP _vertices, SEXP _type)
 {
 BEGIN_RCPP
     IntegerVector vertices(_vertices);
@@ -133,6 +133,12 @@ BEGIN_RCPP
     List result(vertices.length());
     for (int i=0; i<vertices.length(); i++)
     {
+        if (ISNA(vertices[i]))
+        {
+            result[i] = IntegerVector();
+            continue;
+        }
+        
         SmartDigraph::Node targetNode;
         for (SmartDigraph::NodeIt node(g.graph); node != INVALID; ++node)
         {
