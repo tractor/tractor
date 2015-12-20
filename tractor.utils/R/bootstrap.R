@@ -5,7 +5,7 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputL
     if (standalone)
         on.exit(quit(save="no"))
     
-    for (packageName in c("utils","grDevices","graphics","stats","methods","reportr","tractor.base"))
+    for (packageName in c("utils","grDevices","graphics","stats","methods","ore","reportr","tractor.base"))
         library(packageName, character.only=TRUE)
     
     if (capabilities("aqua"))

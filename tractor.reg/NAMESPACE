@@ -9,5 +9,5 @@ exportClasses(Transformation)
 S3method(plot, Transformation)
 
 exportPattern("^[^\\.]")
-export(transformVoxelToWorld)
-export(transformWorldToVoxel)
+export(voxelToWorld)
+export(worldToVoxel)

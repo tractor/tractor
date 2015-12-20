@@ -46,7 +46,7 @@ check-and-install-libs:
 	[ $${current_version} = $${installed_version} ] || ( $(MAKE) install-libs && cp VERSION lib/.VERSION )
 
 install-base:
-	@$(INSTALL) lib/reportr tractor.base
+	@$(INSTALL) lib/ore lib/reportr tractor.base
 
 install-utils:
 	@$(INSTALL) tractor.utils
