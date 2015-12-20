@@ -16,3 +16,6 @@
 [submodule "lib/RcppArmadillo"]
 	path = lib/RcppArmadillo
 	url = https://github.com/jonclayden/RcppArmadillo.git
+[submodule "lib/ore"]
+	path = lib/ore
+	url = https://github.com/jonclayden/ore.git
