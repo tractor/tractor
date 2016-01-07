@@ -30,20 +30,9 @@ post-install-info:
 	@$(ECHO) "The ~/.bashrc file can be created if it does not already exist."
 
 install-libs:
-	@mkdir -p tmp; rm -f tmp/*
-	@$(FETCH) Rcpp 0.11.5
-	@$(FETCH) RcppArmadillo 0.4.650.1.1
-	@$(FETCH) bitops 1.0-6
-	@$(FETCH) oro.nifti 0.4.3
-	@$(FETCH) corpcor 1.6.7
-	@$(FETCH) igraph 0.7.1
-	@$(INSTALL) tmp/Rcpp_* tmp/RcppArmadillo_* tmp/bitops_* tmp/oro.nifti_* tmp/corpcor_* tmp/igraph_*
-	@rm -f tmp/*
+	@$(INSTALL) lib/Rcpp lib/RcppEigen lib/corpcor
 
-check-and-install-libs:
-	@current_version=`cat VERSION`; \
-	[ -f lib/.VERSION ] && installed_version=`cat lib/.VERSION` || installed_version=0; \
-	[ $${current_version} = $${installed_version} ] || ( $(MAKE) install-libs && cp VERSION lib/.VERSION )
+check-and-install-libs: install-libs
 
 install-base:
 	@$(INSTALL) lib/ore lib/reportr tractor.base
