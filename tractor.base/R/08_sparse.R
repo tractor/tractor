@@ -1,3 +1,11 @@
+#' The SparseArray class
+#' 
+#' This class represents an array with any number of dimensions, in which a
+#' significant proportion of entries are zero. The coordinates of nonzero
+#' entries are stored along with their values, with all remaining entries
+#' assumed to be zero. Methods are provided to index into the array in the
+#' standard way, using matrix or vector indices; and for coercing between
+#' \code{SparseArray} objects and standard (dense) arrays.
 SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=list(data="ANY",coords="matrix",dims="integer"), methods=list(
     initialize = function (...)
     {
@@ -8,12 +16,14 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
     
     aperm = function (perm)
     {
+        "Permute the dimensions of the array"
         .self$coords <- .self$coords[,perm]
         .self$dims <- .self$dims[perm]
     },
     
     apply = function (margin, fun, ...)
     {
+        "Apply a function to margins of the array"
         fun <- match.fun(fun)
         dimsToKeep <- .self$dims[margin]
         dimsToLose <- .self$dims[-margin]
@@ -45,6 +55,7 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
     
     flip = function (dimsToFlip)
     {
+        "Flip the array along one or more directions"
         for (i in dimsToFlip)
             .self$coords[,i] <- .self$dims[i] - .self$coords[,i] + 1
     },
@@ -59,12 +70,14 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
     
     setCoordinatesAndData = function (newCoords, newData)
     {
+        "Update the nonzero locations and data values in the array"
         .self$coords <- newCoords
         .self$data <- newData
     },
     
     setDimensions = function (newDims)
     {
+        "Change the dimensions of the image"
         if (prod(.self$dims) != prod(newDims))
             report(OL$Error, "New dimensions are incompatible with this SparseArray object")
         .self$coords <- vectorToMatrixLocs(matrixToVectorLocs(.self$coords,.self$dims), newDims)
@@ -290,33 +303,57 @@ setAs("SparseArray", "logical", function (from) {
     return (as.vector(data))
 })
 
+#' @export
 as.array.SparseArray <- function (x, ...)
 {
     as(x, "array")
 }
 
+#' @export
 as.vector.SparseArray <- function (x, mode = "any")
 {
     as.vector(as(x,"array"), mode=mode)
 }
 
+#' @export
 dim.SparseArray <- function (x)
 {
     x$getDimensions()
 }
 
+#' @export
 "dim<-.SparseArray" <- function (x, value)
 {
     x$setDimensions(value)
     return (x)
 }
 
+#' @export
 aperm.SparseArray <- function (a, perm, ...)
 {
     newObject <- a$copy()$aperm(perm)
     return (newObject)
 }
 
+#' Create a SparseArray object
+#' 
+#' This function creates a \code{\linkS4class{SparseArray}} object from its
+#' constituent parts.
+#' 
+#' @param data A vector of (nonzero) array elements.
+#' @param coordinates A matrix with as many rows as \code{data} has elements,
+#'   containing the coordinates of each nonzero element in the array.
+#' @param dims The dimensions of the array.
+#' @return A \code{\linkS4class{SparseArray}} object.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export newSparseArrayWithData
 newSparseArrayWithData <- function (data, coordinates, dims)
 {
     invisible (SparseArray$new(data=data, coords=coordinates, dims=dims))

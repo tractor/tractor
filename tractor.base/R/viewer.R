@@ -30,6 +30,54 @@ timeSeriesPanel <- function (point, data, imageNames)
     }
 }
 
+
+
+#' A simple interactive viewer for MriImage objects
+#' 
+#' The \code{viewImages} function provides a simple interactive viewer for
+#' \code{MriImage} objects. 3D and 4D images may be used.
+#' 
+#' 
+#' @aliases viewImages defaultInfoPanel timeSeriesPanel
+#' @param images An \code{MriImage} object, or list of \code{MriImage} objects.
+#' @param colourScales A list of colour scales to use for each image, which
+#' will be recycled to the length of \code{images}. See
+#' \code{\link{getColourScale}} for details. The default is to use greyscale.
+#' @param point For \code{viewImages}, a length 3 integer vector giving the
+#' initial location of the crosshairs, in voxels. For info panel functions, the
+#' current location of the crosshairs.
+#' @param interactive A single logical value. If \code{TRUE}, the plot is
+#' interactive.
+#' @param crosshairs A single logical value. If \code{TRUE}, the crosshairs are
+#' displayed.
+#' @param orientationLabels A single logical value. If \code{TRUE}, orientation
+#' labels are displayed.
+#' @param fixedWindow A single logical value. If \code{TRUE}, each image is
+#' windowed globally, rather than for each slice.
+#' @param infoPanel A function with at least three arguments, which must plot
+#' something to fill the bottom-right panel of the viewer after each change of
+#' crosshair location. The three mandatory arguments correspond to the current
+#' location in the image, the image values at that location, and the names of
+#' each image. The \code{defaultInfoPanel} and \code{timeSeriesPanel} functions
+#' are valid examples.
+#' @param \dots Additional arguments to \code{infoPanel}.
+#' @param data A list giving the data value(s) at the current crosshair
+#' location in each image displayed.
+#' @param imageNames A character vector giving a name for each image displayed.
+#' @return These functions are called for their side effects.
+#' @note The \code{defaultInfoPanel} and \code{timeSeriesPanel} functions are
+#' not intended to be called directly. They are simple examples of valid values
+#' for the \code{infoPanel} argument to \code{viewImages}.
+#' @author Jon Clayden
+#' @seealso \code{\link{getColourScale}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export viewImages
 viewImages <- function (images, colourScales = NULL, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, fixedWindow = TRUE, infoPanel = defaultInfoPanel, ...)
 {
     if (is(images, "MriImage"))

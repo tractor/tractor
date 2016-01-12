@@ -1,3 +1,7 @@
+#' The DicomMetadata class
+#' 
+#' This class represents DICOM metadata, which typically contains detailed
+#' information about the scan parameters and subject.
 DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(source="character",tags="data.frame",tagOffset="integer",dataOffset="integer",dataLength="integer",explicitTypes="logical",endian="character"), methods=list(
     getDataLength = function () { return (dataLength) },
     
@@ -13,6 +17,7 @@ DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fie
     
     getTagValue = function (group, element)
     {
+        "Retrieve the value of a given tag, using an appropriate R type. Returns NA if the tag is missing"
         valueRow <- subset(tags, (tags$groups == group & tags$elements == element))
         if (dim(valueRow)[1] == 0 || valueRow$values == "")
             return (NA)
@@ -33,6 +38,7 @@ DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fie
     nTags = function () { return (nrow(tags)) }
 ))
 
+#' @export
 print.DicomMetadata <- function (x, descriptions = FALSE, ...)
 {
     tags <- x$getTags()
@@ -86,6 +92,45 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired, dictionar
     return (description)
 }
 
+
+
+#' Read a DICOM file into a DicomMetadata object
+#' 
+#' This function reads a DICOM file into a \code{\link{DicomMetadata}} object.
+#' Only DICOM files from magnetic resonance scanners are supported.
+#' 
+#' @param fileName The name of a DICOM file.
+#' @param checkFormat If \code{TRUE}, the function will check for the magic
+#'   string \code{"DICM"} at byte offset 128. This string should be present,
+#'   but in reality not all files contain it.
+#' @param dictionary A tag dictionary to use when reading the file. If
+#'   \code{NULL} then the built-in \code{\link{dictionary}} will be loaded and
+#'   used.
+#' @param stopTag An integer vector giving the group and element numbers (in
+#'   that order) of a DICOM tag, or \code{NULL}. If not \code{NULL}, the
+#'   function will stop parsing the DICOM file if the specified tag is
+#'   encountered. This can be used to speed up the process if a specific tag is
+#'   required.
+#' @param ignoreTransferSyntax If \code{TRUE}, any transfer syntax stored in
+#'   the file will be ignored, and the code will try to deduce the transfer
+#'   syntax using heuristics. This may occasionally be necessary for awkward
+#'   DICOM files, but is not generally recommended.
+#' @return \code{newDicomMetadataFromFile} returns a
+#'   \code{\linkS4class{DicomMetadata}} object, or \code{NULL} on failure.
+#' 
+#' @author Jon Clayden
+#' @seealso The DICOM standard, found online at \url{http://dicom.nema.org/}.
+#'   (Warning: may produce headaches!) Also \code{\link{dictionary}}, and
+#'   \code{\link{newMriImageFromDicomDirectory}} for information on how to
+#'   create \code{\linkS4class{MriImage}} objects from DICOM files.
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
 newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary = NULL, stopTag = NULL, ignoreTransferSyntax = FALSE)
 {
     fileName <- expandFileName(fileName)

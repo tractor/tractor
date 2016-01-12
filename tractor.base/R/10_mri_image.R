@@ -1,10 +1,32 @@
 .EmptyMatrix <- matrix(NA, nrow=0, ncol=0)
 
+#' The empty matrix
+#' 
+#' The empty matrix is a standard matrix of dimensions 0 x 0. It is intended to
+#' be used as a placeholder where a matrix is required but no information is
+#' stored.
+#' 
+#' 
+#' @param object Any object.
+#' @return \code{emptyMatrix} returns the empty matrix, equivalent to
+#'   \code{matrix(NA,0,0)}. \code{is.emptyMatrix} returns \code{TRUE} if its
+#'   argument is identical to the empty matrix.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
 emptyMatrix <- function ()
 {
     return (.EmptyMatrix)
 }
 
+#' @rdname emptyMatrix
+#' @export
 is.emptyMatrix <- function (object)
 {
     return (identical(object, .EmptyMatrix))
@@ -12,6 +34,14 @@ is.emptyMatrix <- function (object)
 
 setClassUnion("MriImageData", c("SparseArray","array","NULL"))
 
+#' The MriImage class
+#' 
+#' This class represents an MRI image. An object of this class is made up of
+#' some voxel data, stored as a sparse or dense numeric array, and some
+#' metadata, such as the file it was read from, the voxel dimensions, and so
+#' on. The group generic functions \code{\link{Math}}, \code{\link{Ops}} and
+#' \code{\link{Summary}} are defined for this class, as are methods for
+#' coercing to and from a standard \code{\link{array}}.
 MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",storedXform="matrix",reordered="logical",tags="list",data="MriImageData"), methods=list(
     initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, storedXform = emptyMatrix(), reordered = TRUE, tags = list(), data = NULL, ...)
     {
@@ -48,6 +78,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     apply = function (...)
     {
+        "Apply a function to the margins of the image"
         if (.self$isEmpty())
             report(OL$Error, "The image contains no data")
         else if (.self$isSparse())
@@ -58,6 +89,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     fill = function (value)
     {
+        "Fill the image with a particular value"
         if (value == 0)
             .self$data <- newSparseArrayWithData(vector(class(value),0), matrix(NA,0,length(imageDims)), imageDims)
         else
@@ -71,6 +103,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getDataAtPoint = function (...)
     {
+        "Obtain the value of the image at a particular point"
         if (is.null(data))
             return (NA)
         
@@ -95,6 +128,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getMetadata = function ()
     {
+        "Obtain a version of the image with any data removed"
         if (.self$isEmpty())
             return (.self$copy())
         else
@@ -103,6 +137,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getNonzeroIndices = function (array = TRUE, positiveOnly = FALSE)
     {
+        "Find voxels whose values are not zero"
         .warnIfIndexingUnreorderedImage(.self)
         
         if (.self$isEmpty())
@@ -132,6 +167,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getSparseness = function ()
     {
+        "Obtain the proportion of zeroes in the image"
         if (.self$isEmpty())
             return (NA)
         else if (.self$isSparse())
@@ -144,6 +180,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getTag = function (key)
     {
+        "Retrieve the value of a tag with the specified name"
         if (!is.null(tags$keys) && !is.null(tags$values) && any(key == tags$keys))
         {
             rawValues <- tags$values[which(key == tags$keys)]
@@ -169,6 +206,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     setOrigin = function (newOrigin)
     {
+        "Update the origin of the image"
         if (is.numeric(newOrigin) && length(newOrigin) == .self$getDimensionality())
         {
             .self$origin <- newOrigin
@@ -178,6 +216,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     setSource = function (newSource)
     {
+        "Update the source of the image"
         if (is.null(newSource))
             .self$source <- ""
         else if (is.character(newSource) && (length(newSource) == 1))
@@ -316,22 +355,26 @@ setAs("nifti", "MriImage", function (from) {
         flag(OL$Warning, "Indexing into an image which is not reordered has no consistent meaning")
 }
 
+#' @export
 as.array.MriImage <- function (x, ...)
 {
     as(x, "array")
 }
 
+#' @export
 dim.MriImage <- function (x)
 {
     x$getDimensions()
 }
 
+#' @export
 Math.MriImage <- function (x, ...)
 {
     newImage <- newMriImageWithSimpleFunction(x, .Generic, ...)
     return (newImage)
 }
 
+#' @export
 Ops.MriImage <- function (e1, e2)
 {
     if (is(e2, "MriImage"))
@@ -341,6 +384,7 @@ Ops.MriImage <- function (e1, e2)
     return (newImage)
 }
 
+#' @export
 Summary.MriImage <- function (x, ..., na.rm = FALSE)
 {
     if (nargs() > 2)
@@ -464,10 +508,78 @@ setMethod("Ops", "MriImage", Ops.MriImage)
 
 setMethod("Summary", "MriImage", Summary.MriImage)
 
-# NB: Be careful when changing the behaviour of this function
-# Quite a bit of other code relies on various aspects of its semantics
+#' Creating MriImage objects from data
+#' 
+#' Functions for creating MriImage objects from data, including other images.
+#' All of these functions use data from arrays or \code{MriImage} objects to
+#' create a new \code{MriImage} object. \code{newMriImageWithData} is the basic
+#' function for creating an object from its constituents: an array of voxel
+#' values and some metadata (and/or a template image).
+#' 
+#' \code{newMriImageByExtraction} reduces the dimensionality of the source
+#' image by one, by extracting a single ``line'' of data along one dimension.
+#' (An array, rather than an \code{MriImage} object, is returned by
+#' \code{extractDataFromMriImage}.) \code{newMriImageByMasking} modifies the
+#' data by masking out unwanted voxels, and \code{newMriImageByThresholding} by
+#' thresholding. \code{newMriImageByTrimming} trims empty space from the edges
+#' of an image, reducing the dimensions of the image and thus avoiding the
+#' storage of lots of zeroes. \code{newMriImageByReordering} reorders the image
+#' data (and corresponding metadata) to the LAS convention, an operation which
+#' is usually performed when an image is read from file.
+#' \code{newMriImageAsShapeOverlay} creates an image which contains a simple
+#' shape. \code{newMriImageWithSimpleFunction} and
+#' \code{newMriImageWithBinaryFunction} modify the image data by applying an
+#' arbitrary function to it. Any function that can be applied to numeric
+#' arrays, and expects one or two arguments, respectively, is suitable for
+#' \code{fun}.
+#' 
+#' @param data An array of voxel data.
+#' @param templateImage An optional \code{MriImage} object, to be used as a
+#'   metadata template.
+#' @param imageDims,voxelDims,voxelDimUnits,origin,tags Metadata for the new
+#'   image object. These values override any from the metadata object or data
+#'   array.
+#' @param image,image1,image2 \code{MriImage} objects.
+#' @param dim,loc For \code{newMriImageByExtraction}, the dimension and
+#'   location along that dimension for which data should be extracted. For
+#'   \code{generateImageDataForShape}, \code{dim} is the dimensions of the
+#'   image. \code{newMriImageAsShapeOverlay} takes this from the
+#'   \code{baseImage}.
+#' @param mask An array of mode \code{logical} indicating which voxels are in
+#'   the mask. Must have the same dimensions as the image.
+#' @param level A numeric value specifying the threshold level.
+#' @param defaultValue The value of the final image in voxels which are below
+#'   threshold.
+#' @param clearance The number of voxels' clearance left around a trimmed
+#'   image.
+#' @param type The shape type to generate. A \code{"block"} is a cubic region
+#'   of the image; a \code{"cross"} is the central line of the cube in each
+#'   dimension.
+#' @param baseImage The \code{MriImage} to use as a base for the overlay.
+#' @param background The voxel value outside the shape.
+#' @param centre,width The centre and width of the shape.
+#' @param fun A function object, taking one or two numeric array parameters, as
+#'   appropriate.
+#' @param \dots For \code{newMriImageAsShapeOverlay}, further parameters to
+#'   \code{generateImageDataForShape}. And for
+#'   \code{newMriImageWithSimpleFunction} and
+#'   \code{newMriImageWithBinaryFunction}, further parameters to \code{fun}.
+#' @return An \code{MriImage} object.
+#' 
+#' @author Jon Clayden
+#' @seealso \code{\linkS4class{MriImage}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
 newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = NA, voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA)
 {
+    # NB: Be careful when changing the behaviour of this function
+    # Quite a bit of other code relies on various aspects of its semantics
     if (is.null(data))
         report(OL$Error, "Data may not be NULL")
     if (is.logical(data))
@@ -509,6 +621,29 @@ newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = 
     invisible (image)
 }
 
+#' Convert between image data storage conventions
+#' 
+#' This function returns a version of its first argument using the specified
+#' data representation.
+#' 
+#' @param image An \code{MriImage} object.
+#' @param representation A character string specifying the required data
+#'   representation.
+#' @return A version of \code{image} with using the specified data
+#'   representation, i.e. an \code{array} (with \code{representation="dense"})
+#'   or a \code{SparseArray} (with \code{representation="coordlist"}).
+#' 
+#' @author Jon Clayden
+#' @seealso \code{\linkS4class{MriImage}}, \code{\linkS4class{SparseArray}},
+#'   \code{\link{array}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
 newMriImageWithDataRepresentation <- function (image, representation = c("dense","coordlist"))
 {
     if (!is(image, "MriImage"))
@@ -528,6 +663,8 @@ newMriImageWithDataRepresentation <- function (image, representation = c("dense"
     return (newImage)
 }
 
+#' @rdname newMriImageWithData
+#' @export
 newMriImageWithSimpleFunction <- function (image, fun, ...)
 {
     if (!is(image, "MriImage"))
@@ -538,6 +675,8 @@ newMriImageWithSimpleFunction <- function (image, fun, ...)
     return (newMriImageWithData(newData, image))
 }
 
+#' @rdname newMriImageWithData
+#' @export
 newMriImageWithBinaryFunction <- function (image1, image2, fun, ...)
 {
     if (!is(image1,"MriImage") || !is(image2,"MriImage"))
@@ -548,6 +687,8 @@ newMriImageWithBinaryFunction <- function (image1, image2, fun, ...)
     return (newMriImageWithData(newData, image1))
 }
 
+#' @rdname newMriImageWithData
+#' @export
 extractDataFromMriImage <- function (image, dim, loc)
 {
     if (!is(image, "MriImage"))
@@ -580,6 +721,8 @@ extractDataFromMriImage <- function (image, dim, loc)
     invisible (newData)
 }
 
+#' @rdname newMriImageWithData
+#' @export
 newMriImageByExtraction <- function (image, dim, loc)
 {
     newData <- extractDataFromMriImage(image, dim, loc)
@@ -589,6 +732,8 @@ newMriImageByExtraction <- function (image, dim, loc)
     return (image)
 }
 
+#' @rdname newMriImageWithData
+#' @export
 newMriImageByMasking <- function (image, mask)
 {
     if (!identical(image$getDimensions(), dim(mask)))
@@ -601,6 +746,8 @@ newMriImageByMasking <- function (image, mask)
     invisible (newImage)
 }
 
+#' @rdname newMriImageWithData
+#' @export
 newMriImageByThresholding <- function (image, level, defaultValue = 0)
 {
     thresholdFunction <- function (x) { return (ifelse(x >= level, x, defaultValue)) }
@@ -608,6 +755,8 @@ newMriImageByThresholding <- function (image, level, defaultValue = 0)
     invisible (newImage)
 }
 
+#' @rdname newMriImageWithData
+#' @export
 newMriImageByTrimming <- function (image, clearance = 4)
 {
     if (!is(image, "MriImage"))
@@ -635,6 +784,8 @@ newMriImageByTrimming <- function (image, clearance = 4)
     invisible (newImage)
 }
 
+#' @rdname newMriImageWithData
+#' @export
 newMriImageByReordering <- function (image)
 {
     # Image is already reordered
