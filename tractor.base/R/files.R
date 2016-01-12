@@ -23,6 +23,8 @@ getParametersForFileType <- function (fileType = NA, format = NA, singleFile = N
     return (parameters)
 }
 
+#' @rdname files
+#' @export
 identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = TRUE)
 {
     suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)
@@ -66,6 +68,8 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     return (fileNames)
 }
 
+#' @rdname files
+#' @export
 imageFileExists <- function (fileName, fileType = NULL)
 {
     return (sapply(fileName, function (file) {
@@ -73,6 +77,8 @@ imageFileExists <- function (fileName, fileType = NULL)
     }))
 }
 
+#' @rdname files
+#' @export
 removeImageFilesWithName <- function (fileName)
 {
     fileName <- expandFileName(fileName)
@@ -81,6 +87,8 @@ removeImageFilesWithName <- function (fileName)
     unlink(files)
 }
 
+#' @rdname files
+#' @export
 symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE)
 {
     if (length(from) != length(to))
@@ -106,6 +114,8 @@ symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE)
     }
 }
 
+#' @rdname files
+#' @export
 copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE)
 {
     if (length(from) != length(to))
@@ -191,6 +201,8 @@ chooseDataTypeForImage <- function (image, format)
     return (list(code=code, type=rType, size=size, isSigned=isSigned))
 }
 
+#' @rdname files
+#' @export
 readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
 {
     fileNames <- identifyImageFileNames(fileName, fileType)
@@ -347,8 +359,6 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     invisible (image)
 }
 
-
-
 #' Working with MRI images stored in NIfTI, Analyze and MGH formats
 #' 
 #' Functions for reading, writing, locating, copying and removing MRI images
@@ -383,57 +393,58 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
 #' wrappers around the standard functions \code{\link{file.copy}} and
 #' \code{\link{file.symlink}} which handle this complexity.
 #' 
-#' @aliases readImageFile writeImageFile newMriImageFromFile
-#' writeMriImageToFile identifyImageFileNames imageFileExists
-#' removeImageFilesWithName copyImageFiles symlinkImageFiles
 #' @param fileName,from,to File names, with or without appropriate extension.
 #' @param image An \code{\linkS4class{MriImage}} object.
 #' @param fileType A character vector of length one, giving the file type
-#' required or expected. If this option is missing, the file type used for
-#' writing images will be taken from the \code{tractorFileType} option. See
-#' Details.
+#'   required or expected. If this option is missing, the file type used for
+#'   writing images will be taken from the \code{tractorFileType} option. See
+#'   Details.
 #' @param metadataOnly Logical value: if \code{TRUE}, only metadata are read
-#' into the object.
+#'   into the object.
 #' @param volumes An optional integer vector specifying a subset of volumes to
-#' read (generally to save memory). If given, only the requested volumes in the
-#' 4D file will be read.
+#'   read (generally to save memory). If given, only the requested volumes in
+#'   the 4D file will be read.
 #' @param sparse Logical value: should the image data be stored in a
-#' \code{\linkS4class{SparseArray}} object?
+#'  \code{\linkS4class{SparseArray}} object?
 #' @param mask An optional \code{\linkS4class{MriImage}} object representing a
-#' mask, outside of which the image to be read should be considered to be zero.
-#' This can be used to save memory when only a small part of a large image is
-#' of interest. Ignored if \code{sparse} is not \code{TRUE}.
+#'   mask, outside of which the image to be read should be considered to be
+#'   zero. This can be used to save memory when only a small part of a large
+#'   image is of interest. Ignored if \code{sparse} is not \code{TRUE}.
 #' @param reorder Logical value: should the image data be reordered to LAS?
-#' This is recommended in most circumstances.
+#'   This is recommended in most circumstances.
 #' @param overwrite Logical value: overwrite an existing image file? For
-#' \code{writeMriImageToFile}, an error will be raised if there is an existing
-#' file and this is set to FALSE.
+#'   \code{writeMriImageToFile}, an error will be raised if there is an
+#'   existing file and this is set to FALSE.
 #' @param errorIfMissing Logical value: raise an error if no suitable files
-#' were found?
+#'   were found?
 #' @param deleteOriginals Logical value: if \code{TRUE}, \code{copyImageFiles}
-#' performs a move rather than a copy.
+#'   performs a move rather than a copy.
 #' @param relative Logical value: if \code{TRUE}, the path stored in the
-#' symlink will be relative (e.g. \code{"../some_dir/some_image.nii"}) rather
-#' than absolute (e.g. \code{"/path/to/some_dir/some_image.nii"}).
+#'   symlink will be relative (e.g. \code{"../some_dir/some_image.nii"}) rather
+#'   than absolute (e.g. \code{"/path/to/some_dir/some_image.nii"}).
 #' @return \code{readImageFile} returns an \code{\linkS4class{MriImage}}
-#' object. \code{imageFileExists} returns \code{TRUE} if an existing file with
-#' the specified name exists (all file extensions are checked), and
-#' \code{FALSE} otherwise. \code{removeImageFilesWithName} returns the result
-#' of \code{\link{unlink}} applied to all relevant files. \code{writeImageFile}
-#' and \code{identifyImageFileNames} return a list with the following elements,
-#' describing the identified or written files: \item{fileStem}{The file name
-#' without extension.} \item{headerFile}{The full header file name.}
-#' \item{imageFile}{The full image file name.} \item{format}{The format of the
-#' files (\code{"Nifti"}, \code{"Analyze"} or \code{"Mgh"}). Not returned by
-#' \code{writeMriImageToFile}.} \code{copyImageFiles} and
-#' \code{symlinkImageFiles} are called for their side effects.
+#'   object. \code{imageFileExists} returns \code{TRUE} if an existing file
+#'   with the specified name exists (all file extensions are checked), and
+#'   \code{FALSE} otherwise. \code{removeImageFilesWithName} returns the result
+#'   of \code{\link{unlink}} applied to all relevant files. \code{writeImageFile}
+#'   and \code{identifyImageFileNames} return a list with the following elements,
+#'   describing the identified or written files:
+#'   \describe{
+#'     \item{fileStem}{The file name without extension.}
+#'     \item{headerFile}{The full header file name.}
+#'     \item{imageFile}{The full image file name.}
+#'     \item{format}{The format of the files (\code{"Nifti"}, \code{"Analyze"}
+#'       or \code{"Mgh"}). Not returned by \code{writeMriImageToFile}.}
+#'   }
+#'   \code{copyImageFiles} and \code{symlinkImageFiles} are called for their
+#'   side effects.
 #' @note The functions \code{readImageFile} and \code{writeImageFile} are
-#' equivalent to \code{newMriImageFromFile} and \code{writeMriImageToFile}, but
-#' preferred for brevity. The latter are likely to be deprecated in a future
-#' release.
+#'   equivalent to \code{newMriImageFromFile} and \code{writeMriImageToFile},
+#'   but preferred for brevity. The latter are likely to be deprecated in a
+#'   future release.
 #' @author Jon Clayden
 #' @seealso The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}) and
-#' \code{\linkS4class{MriImage}}.
+#'   \code{\linkS4class{MriImage}}.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -441,7 +452,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
-#' @export newMriImageFromFile
+#' @rdname files
+#' @export
 newMriImageFromFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
 {
     readImageFile(fileName, fileType, metadataOnly, volumes, sparse, mask, reorder)
@@ -477,6 +489,8 @@ writeImageData <- function (image, connection, type, size, endian = .Platform$en
     }
 }
 
+#' @rdname files
+#' @export
 writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE)
 {
     if (!is(image, "MriImage"))
@@ -521,6 +535,8 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
     invisible (fileNames)
 }
 
+#' @rdname files
+#' @export
 writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE)
 {
     writeImageFile(image, fileName, fileType, overwrite)

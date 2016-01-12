@@ -91,7 +91,6 @@ implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
 #' This is a simple function to print a series of labels and associated data
 #' values, or key-value pairs.
 #' 
-#' 
 #' @param labels A character vector of labels.
 #' @param values A character vector of values. Must have the same length as
 #' \code{labels}.

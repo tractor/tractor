@@ -394,6 +394,8 @@ Summary.MriImage <- function (x, ..., na.rm = FALSE)
     return (result)
 }
 
+#' @rdname index
+#' @export
 setMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - as.integer(!missing(drop))
@@ -408,6 +410,8 @@ setMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, 
         return (x$data[,,...,drop=drop])
 })
 
+#' @rdname index
+#' @export
 setMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - as.integer(!missing(drop))
@@ -422,6 +426,8 @@ setMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, i, j, .
         return (x$data[i,,...,drop=drop])
 })
 
+#' @rdname index
+#' @export
 setMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     if (x$isSparse())
@@ -433,6 +439,8 @@ setMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, .
         return (x$data[,j,...,drop=drop])
 })
 
+#' @rdname index
+#' @export
 setMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     if (x$isSparse())
@@ -444,6 +452,8 @@ setMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., 
         return (x$data[i,j,...,drop=drop])
 })
 
+#' @rdname index
+#' @export
 setReplaceMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - 1
@@ -460,6 +470,8 @@ setReplaceMethod("[", signature(x="MriImage",i="missing",j="missing"), function 
     return (x)
 })
 
+#' @rdname index
+#' @export
 setReplaceMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - 1
@@ -476,6 +488,8 @@ setReplaceMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, 
     return (x)
 })
 
+#' @rdname index
+#' @export
 setReplaceMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
     if (x$isSparse())
@@ -489,6 +503,8 @@ setReplaceMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, 
     return (x)
 })
 
+#' @rdname index
+#' @export
 setReplaceMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
     if (x$isSparse())

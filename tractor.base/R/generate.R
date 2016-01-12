@@ -1,3 +1,5 @@
+#' @rdname newMriImageWithData
+#' @export
 newMriImageAsShapeOverlay <- function (type = c("cross","block"), baseImage, ...)
 {
     type <- match.arg(type)
@@ -7,6 +9,8 @@ newMriImageAsShapeOverlay <- function (type = c("cross","block"), baseImage, ...
     invisible (image)
 }
 
+#' @rdname newMriImageWithData
+#' @export
 generateImageDataForShape <- function (type = c("cross","block"), dim, background = 0, centre = NA, width = NA)
 {
     type <- match.arg(type)

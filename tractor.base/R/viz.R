@@ -1,3 +1,5 @@
+#' @rdname colourScales
+#' @export
 interpolatePalette <- function (colours, n, ...)
 {
     rampFunction <- colorRamp(colours, ...)
@@ -57,7 +59,8 @@ interpolatePalette <- function (colours, n, ...)
 #' 
 #' interpolatePalette(c("red","yellow"), 10)
 #' 
-#' @export getColourScale
+#' @rdname colourScales
+#' @export
 getColourScale <- function (n)
 {
     if (is.list(n))

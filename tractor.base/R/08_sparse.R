@@ -94,6 +94,22 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
     return (eval(args, envir=parent.frame(2)))
 }
 
+#' Indexing methods
+#' 
+#' Indexing methods for \code{\link{SparseArray}} and \code{\link{MriImage}}
+#' objects. For the latter class, arguments are passed to the equivalents for
+#' \code{array} or \code{\link{SparseArray}}. For \code{\link{SparseArray}},
+#' indexing may be blank, or by numeric vector or matrix.
+#' 
+#' @param x An object of the appropriate type.
+#' @param i,j,\dots Indexing objects.
+#' @param drop Scalar value: should unitary dimensions be dropped?
+#' @param value New value(s) for replacement forms.
+#' @return A vector, array or \code{\link{SparseArray}}.
+#' 
+#' @author Jon Clayden
+#' @rdname index
+#' @export
 setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
     # This implementation owes a lot to the equivalent in the "slam" package (credit: Kurt Hornik, David Meyer and Christian Buchta)
     nArgs <- nargs() - as.integer(!missing(drop))
@@ -179,6 +195,8 @@ setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
     return (returnValue)
 })
 
+#' @rdname index
+#' @export
 setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
     nArgs <- nargs() - 1
     
