@@ -4,8 +4,8 @@
 \alias{newDicomMetadataFromFile}
 \title{Read a DICOM file into a DicomMetadata object}
 \usage{
-newDicomMetadataFromFile(fileName, checkFormat = TRUE, dictionary = NULL,
-  stopTag = NULL, ignoreTransferSyntax = FALSE)
+newDicomMetadataFromFile(fileName, checkFormat = TRUE, stopTag = NULL,
+  ignoreTransferSyntax = FALSE)
 }
 \arguments{
 \item{fileName}{The name of a DICOM file.}
@@ -13,9 +13,6 @@ newDicomMetadataFromFile(fileName, checkFormat = TRUE, dictionary = NULL,
 \item{checkFormat}{If \code{TRUE}, the function will check for the magic
 string \code{"DICM"} at byte offset 128. This string should be present,
 but in reality not all files contain it.}
-
-\item{dictionary}{A tag dictionary to use when reading the file. If
-\code{NULL} then the built-in dictionary will be loaded and used.}
 
 \item{stopTag}{An integer vector giving the group and element numbers (in
 that order) of a DICOM tag, or \code{NULL}. If not \code{NULL}, the

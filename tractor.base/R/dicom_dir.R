@@ -139,9 +139,6 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     files <- files[!file.info(files)$isdir]
     nFiles <- length(files)
     
-    dictionary <- NULL
-    data("dictionary", package="tractor.base", envir=environment(NULL))
-
     report(OL$Info, "Reading image information from ", nFiles, " files")
     info <- data.frame(seriesNumber=numeric(nFiles), seriesDescription=character(nFiles), acquisitionNumber=numeric(nFiles), imageNumber=numeric(nFiles), sliceLocation=numeric(nFiles), stringsAsFactors=FALSE)
     images <- vector("list", nFiles)
@@ -158,7 +155,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     count <- 0
     for (i in seq_along(files))
     {
-        metadata <- newDicomMetadataFromFile(files[i], dictionary=dictionary)
+        metadata <- newDicomMetadataFromFile(files[i])
         if (is.null(metadata))
         {
             # Not a DICOM file - skip it
