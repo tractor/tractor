@@ -18,6 +18,8 @@ coercing to and from a standard \code{\link{array}}.
 \describe{
 \item{\code{apply(...)}}{Apply a function to the margins of the image}
 
+\item{\code{binarise()}}{Binarise the image by setting nonzero values to one}
+
 \item{\code{fill(value)}}{Fill the image with a particular value}
 
 \item{\code{getDataAtPoint(...)}}{Obtain the value of the image at a particular point}
@@ -26,12 +28,20 @@ coercing to and from a standard \code{\link{array}}.
 
 \item{\code{getNonzeroIndices(array = TRUE, positiveOnly = FALSE)}}{Find voxels whose values are not zero}
 
+\item{\code{getSlice(dim, loc)}}{Extract data from a slice of the image along one dimension}
+
 \item{\code{getSparseness()}}{Obtain the proportion of zeroes in the image}
 
-\item{\code{getTag(key)}}{Retrieve the value of a tag with the specified name}
+\item{\code{getTag(key)}}{Retrieve the value of a tag with the specified key}
+
+\item{\code{map(fun, ..., sparse = NULL)}}{Replace the current data with the result of a function}
+
+\item{\code{mask(maskImage)}}{Mask the image, setting zero voxels in the mask to zero}
 
 \item{\code{setOrigin(newOrigin)}}{Update the origin of the image}
 
 \item{\code{setSource(newSource)}}{Update the source of the image}
+
+\item{\code{threshold(level, defaultValue = 0)}}{Threshold the image by setting values below the threshold level to zero}
 }}
 
