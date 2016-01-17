@@ -47,12 +47,12 @@ runExperiment <- function ()
             
             brainMask <- newSessionFromDirectory(space[1])$getImageByType("mask", space[2])
             kernel <- shapeKernel(c(3,3,3), type="box")
-            hollowedBrainMask <- newMriImageWithSimpleFunction(brainMask, function(x) x - erode(x,kernel))
+            brainMask$map(function(x) x - erode(x,kernel), sparse=TRUE)
             
-            edgePoints <- hollowedBrainMask$getNonzeroIndices()
+            edgePoints <- brainMask$getNonzeroIndices()
             if (graph$getVertexLocationUnit() == "mm")
-                edgePoints <- transformVoxelToWorld(edgePoints, hollowedBrainMask, simple=TRUE)
-            fieldOfView <- hollowedBrainMask$getFieldOfView()
+                edgePoints <- transformVoxelToWorld(edgePoints, brainMask, simple=TRUE)
+            fieldOfView <- brainMask$getFieldOfView()
         }
         
         par(mar=c(0,0,0,0))

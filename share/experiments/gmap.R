@@ -56,16 +56,14 @@ runExperiment <- function ()
         
         threshold <- baseThreshold * switch(thresholdMode, nothing=1, maximum=max(image,na.rm=TRUE), minimum=min(image,na.rm=TRUE))
         
-        transformedImage <- transformImageToSpace(image, session, "mni", oldSpace="diffusion")
+        transformedImage <- transformImageToSpace(image, session, "mni", oldSpace="diffusion")$threshold(threshold)
         if (binarise)
-            thresholdedImage <- newMriImageWithSimpleFunction(transformedImage, function(x) ifelse(x>=threshold,1,0))
-        else
-            thresholdedImage <- newMriImageByThresholding(transformedImage, threshold)
+            transformedImage$binarise()
         
         if (is.null(finalImage))
             finalImage <- thresholdedImage
         else
-            finalImage <- newMriImageWithBinaryFunction(finalImage, thresholdedImage, "+")
+            finalImage <- finalImage + thresholdedImage
     }
     
     if (is.null(finalImage))
@@ -90,9 +88,9 @@ runExperiment <- function ()
         brainImage <- getStandardImage("white")
         
         if (binarise)
-            alphaImage <- newMriImageWithSimpleFunction(finalImage, function(x) ifelse(x>0,1,0))
+            alphaImage <- finalImage$copy()$binarise()
         else
-            alphaImage <- newMriImageWithSimpleFunction(finalImage, function(x) ifelse(x>0,log(x),0))
+            alphaImage <- finalImage$copy()$map(function(x) ifelse(x>0,log(x),0))
         
         if (useReferencePlanes)
         {
@@ -109,7 +107,7 @@ runExperiment <- function ()
         
         if (showReference)
         {
-            referenceImage <- newMriImageWithSimpleFunction(reference$getImage(), function(x) ifelse(x>0,1,0))
+            referenceImage <- reference$getImage()$copy()$binarise()
             createCombinedGraphics(list(brainImage,finalImage,referenceImage), c("s","p","p"), list(1,3,"green"), sliceLoc=round(seedLoc), device="png", alphaImage=list(NULL,alphaImage,referenceImage), prefix=outputName, windowLimits=list(NULL,windowLimits,NULL))
         }
         else

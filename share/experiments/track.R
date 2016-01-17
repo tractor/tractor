@@ -47,13 +47,13 @@ runExperiment <- function ()
         {
             kernel <- mmand::shapeKernel(c(3,3,3), type=kernelShape)
             if (boundaryManipulation == "erode")
-                image <- newMriImageWithSimpleFunction(image, mmand::erode, kernel=kernel)
+                image$map(mmand::erode, kernel=kernel)
             else if (boundaryManipulation == "dilate")
-                image <- newMriImageWithSimpleFunction(image, mmand::dilate, kernel=kernel)
+                image$map(mmand::dilate, kernel=kernel)
             else if (boundaryManipulation == "inner")
-                image <- newMriImageWithSimpleFunction(image, function(x) x - mmand::erode(x,kernel=kernel))
+                image$map(function(x) x - mmand::erode(x,kernel=kernel))
             else if (boundaryManipulation == "outer")
-                image <- newMriImageWithSimpleFunction(image, function(x) mmand::dilate(x,kernel=kernel) - x)
+                image$map(function(x) mmand::dilate(x,kernel=kernel) - x)
         }
         
         return (image)
@@ -158,7 +158,7 @@ runExperiment <- function ()
     
     if (strategy == "global")
     {
-        seedImage <- applyBoundaryManipulation(newMriImageWithSimpleFunction(seedInfo$image, function(x) ifelse(x>0,1L,0L)))
+        seedImage <- applyBoundaryManipulation(seedInfo$image$copy()$binarise())
         seeds <- seedImage$getNonzeroIndices(array=TRUE)
         if (randomSeeds && nrow(seeds) > 1)
         {
@@ -181,7 +181,7 @@ runExperiment <- function ()
         for (index in seedInfo$indices)
         {
             label <- seedInfo$labels[which(seedInfo$indices == index)]
-            seedImage <- applyBoundaryManipulation(newMriImageWithSimpleFunction(seedInfo$image, function(x) ifelse(x==index,1L,0L)))
+            seedImage <- applyBoundaryManipulation(seedInfo$image$copy()$map(function(x) ifelse(x==index,1L,0L)))
             seeds <- seedImage$getNonzeroIndices(array=TRUE)
             if (randomSeeds && nrow(seeds) > 1)
             {
@@ -201,7 +201,7 @@ runExperiment <- function ()
     }
     else if (strategy == "voxelwise")
     {
-        seedImage <- applyBoundaryManipulation(newMriImageWithSimpleFunction(seedInfo$image, function(x) ifelse(x>0,1L,0L)))
+        seedImage <- applyBoundaryManipulation(seedInfo$image$copy()$binarise())
         seeds <- seedImage$getNonzeroIndices(array=TRUE)
         
         report(OL$Info, "Performing voxelwise tractography for #{nrow(seeds)} distinct seed points")

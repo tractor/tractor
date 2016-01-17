@@ -13,7 +13,7 @@ displayProbtrackResult <- function (probtrackResult, axes = 1:3, colourScale = 2
     if (!is(baseImage, "MriImage"))
         baseImage <- probtrackResult$session$getImageByType(baseImage, "diffusion")
     images <- createWeightingAndMetricImagesForResult(probtrackResult, ...)
-    finalImage <- newMriImageWithBinaryFunction(images$metric, images$weight, "*")
+    finalImage <- images$metric * images$weight
     
     seedCentre <- getSeedCentrePointForResult(probtrackResult)
     
@@ -34,11 +34,11 @@ writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zo
     imageDims <- baseImage$getDimensions()
     
     images <- createWeightingAndMetricImagesForResult(probtrackResult, ...)
-    finalImage <- newMriImageWithBinaryFunction(images$metric, images$weight, "*")
+    finalImage <- images$metric * images$weight
     if (is.null(images$threshold))
-        logFinalImage <- newMriImageWithSimpleFunction(finalImage, function (x) { ifelse(x == 0, 0, log(x)) })
+        logFinalImage <- finalImage$copy()$map(function(x) ifelse(x==0, 0, log(x)))
     else
-        logFinalImage <- newMriImageWithSimpleFunction(finalImage, function (x) { ifelse(x == 0, 0, log(x/images$threshold)) })
+        logFinalImage <- finalImage$copy()$map(function(x) ifelse(x==0, 0, log(x/images$threshold)))
     
     seedCentre <- getSeedCentrePointForResult(probtrackResult)
     
@@ -46,7 +46,7 @@ writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zo
         createCombinedGraphics(list(baseImage,finalImage), c("s","p"), list(1,colourScale), axes=axes, sliceLoc=seedCentre, device="png", alphaImages=list(NULL,logFinalImage), prefix=prefix, zoomFactor=zoomFactor, filter="Sinc")
     else
     {
-        seedImage <- newMriImageWithData(generateImageDataForShape("cross",imageDims,centre=seedCentre,width=7), baseImage$getMetadata())
+        seedImage <- asMriImage(generateImageDataForShape("cross",imageDims,centre=seedCentre,width=7), baseImage$getMetadata())
         createCombinedGraphics(list(baseImage,finalImage,seedImage), c("s","p","p"), list(1,colourScale,"green"), axes=axes, sliceLoc=seedCentre, device="png", alphaImages=list(NULL,logFinalImage,seedImage), prefix=prefix, zoomFactor=zoomFactor, filter="Sinc")
     }
 }
@@ -76,12 +76,12 @@ createWeightingAndMetricImages <- function (image, session = NULL, type = c("wei
     else if (mode == "log")
     {
         threshold <- NULL
-        weightImage <- newMriImageWithSimpleFunction(image, function (x) { ifelse(x == 0, 0, log(x)) })
+        weightImage <- image$copy()$map(function(x) ifelse(x==0, 0, log(x)))
     }
     else if (mode == "binary")
     {
         threshold <- ifelse(is.null(threshold), 1, threshold)
-        weightImage <- newMriImageWithSimpleFunction(image, function (x) { ifelse(x > threshold, 1, 0) })
+        weightImage <- image$copy()$map(function(x) ifelse(x > threshold, 1, 0))
     }
 
     invisible (list(metric=metricImage, weight=weightImage, threshold=threshold))
@@ -106,7 +106,7 @@ createWeightingAndMetricImagesForResult <- function (probtrackResult, threshold 
 calculateMetricForResult <- function (probtrackResult, ...)
 {
     images <- createWeightingAndMetricImagesForResult(probtrackResult, ...)
-    finalImage <- newMriImageWithBinaryFunction(images$metric, images$weight, "*")
+    finalImage <- images$metric * images$weight
     metric <- sum(finalImage$getData()) / sum(images$weight$getData())
     return (metric)
 }

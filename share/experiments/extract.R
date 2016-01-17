@@ -22,8 +22,7 @@ runExperiment <- function ()
         return (data)
     }
     
-    newImage <- newMriImageWithSimpleFunction(image, selectionFunction)
-    writeImageFile(newImage, regionName)
+    writeImageFile(image$map(selectionFunction), regionName)
     
     if (createImages)
     {

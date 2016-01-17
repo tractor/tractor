@@ -35,7 +35,7 @@ runExperiment <- function ()
             writeImageFile(image, session$getImageFileNameByType("data","functional"))
             
             report(OL$Info, "Calculating mean volume")
-            meanVolume <- newMriImageWithData(image$apply(1:3,mean), image)
+            meanVolume <- asMriImage(image$apply(1:3,mean), image)
             writeImageFile(meanVolume, session$getImageFileNameByType("mean","functional"))
         }
     }
@@ -87,9 +87,9 @@ runExperiment <- function ()
             # NB: For n=2, the mean and median are equivalent, but the mean is quicker to calculate
             report(OL$Info, "Calculating voxelwise median image for reference")
             if (nImages == 2)
-                finalImage <- newMriImageWithData(apply(data,1:3,mean), reference)
+                finalImage <- asMriImage(apply(data,1:3,mean), reference)
             else
-                finalImage <- newMriImageWithData(apply(data,1:3,median), reference)
+                finalImage <- asMriImage(apply(data,1:3,median), reference)
             
             report(OL$Info, "Writing median image")
             writeImageFile(finalImage, session$getImageFileNameByType("reft1","structural"))

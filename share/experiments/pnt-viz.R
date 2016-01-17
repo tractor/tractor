@@ -108,7 +108,7 @@ runExperiment <- function ()
             }
             
             normalisationFactor <- sum(currentPosteriors[sequence])
-            resultImage <- newMriImageWithData(data/normalisationFactor, metadata)
+            resultImage <- asMriImage(data/normalisationFactor, metadata)
             
             currentTractName <- paste(tractName, "_session", i, sep="")
             if (createVolumes)

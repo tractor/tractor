@@ -44,7 +44,7 @@ runExperiment <- function ()
             report(OL$Verbose, "Matching region \"#{targetMatches[i]}\"")
             index <- parcellation$regions$index[which(parcellation$regions$label == targetMatches[i])]
             matchingIndices[[i]] <- streamSource$select(labels=index)$getSelection()
-            regionImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x==index,1,0))
+            regionImage <- parcellation$image$copy()$map(function(x) ifelse(x==index,1,0), sparse=TRUE)
             regionLocations[i,] <- apply(regionImage$getNonzeroIndices(array=TRUE), 2, median)
             regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
             voxelCount[i] <- length(regionImage$getNonzeroIndices(array=FALSE))
@@ -115,7 +115,7 @@ runExperiment <- function ()
         {
             report(OL$Verbose, "Extracting region \"#{targetMatches[i]}\"")
             index <- parcellation$regions$index[which(parcellation$regions$label == targetMatches[i])]
-            regionImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x==index,1,0))
+            regionImage <- parcellation$image$copy()$map(function(x) ifelse(x==index,1,0), sparse=TRUE)
             allLocations <- regionImage$getNonzeroIndices(array=TRUE)
             regionLocations[i,] <- apply(allLocations, 2, median)
             regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)

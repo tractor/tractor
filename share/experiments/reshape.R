@@ -50,7 +50,7 @@ runExperiment <- function ()
         }
     }
     
-    newImage <- newMriImageWithData(data, image, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, origin=origin)
+    newImage <- asMriImage(data, image, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, origin=origin)
     writeImageFile(newImage, image$getSource())
     
     invisible(NULL)

@@ -318,7 +318,9 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     {
         "Threshold the image by setting values below the threshold level to zero"
         .self$map(function(x) ifelse(x >= level, x, defaultValue))
-    }
+    },
+    
+    writeToFile = function (...) { writeImageToFile(.self, ...) }
 ))
 
 # Register deserialiser for MriImageMetadata legacy class

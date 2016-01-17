@@ -140,7 +140,7 @@ maximumIntensityProjection <- function (image, axis)
 #'   colour scale, or \code{NULL} for limits matching the range of the image
 #'   data. Passed as the \code{zlim} argument to \code{\link{image}}.
 #' @param clearance Number of voxels' clearance to leave around each slice
-#'   image in the contact sheet. Passed to \code{\link{newMriImageByTrimming}}.
+#'   image in the contact sheet. Passed to \code{\link{trimMriImage}}.
 #' @param nColumns Number of slices per row in the contact sheet grid. If
 #'   \code{NULL}, the function will aim for a square grid.
 #' @param add Overlay the graphic on a previous one. Used only when
@@ -187,7 +187,7 @@ createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("inter
         if (planeLoc < 1 || planeLoc > dims[axisRelevance])
             report(OL$Error, "Specified plane (", axisShortNames[axisRelevance], " = ", planeLoc, ") is out of bounds")
 
-        slice <- extractDataFromMriImage(image, which(axisRelevance), planeLoc)
+        slice <- image$getSlice(which(axisRelevance), planeLoc)
     }
     else
         report(OL$Error, "The \"createSliceGraphic\" function only handles 2D and 3D images")
@@ -252,7 +252,7 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
             clearance <- rep(clearance, image$getDimensionality())
             clearance[axis] <- 0
         }
-        image <- newMriImageByTrimming(image, clearance)
+        image <- trimMriImage(image, clearance)
         padding <- pmax(0, clearance - (originalDims - image$getDimensions()))
     }
     else
@@ -272,7 +272,7 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
         chunkCol <- (i-1) %% nColumns + 1
         rows <- ((chunkCol-1):chunkCol) * dims[imageAxes][1] + 1:0 + (2*chunkCol-1)*padding[1]
         cols <- ((chunkRow-1):chunkRow) * dims[imageAxes][2] + 1:0 + (2*chunkRow-1)*padding[2]
-        data[rows[1]:rows[2],cols[1]:cols[2]] <- extractDataFromMriImage(image, axis, i)
+        data[rows[1]:rows[2],cols[1]:cols[2]] <- image$getSlice(axis, i)
     }
     
     if (device == "internal")

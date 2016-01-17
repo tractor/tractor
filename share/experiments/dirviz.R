@@ -58,9 +58,9 @@ runExperiment <- function ()
             thresholdImage <- faImage
         }
         
-        fullData <- extractDataFromMriImage(dyadsImage, throughPlaneAxis, point[throughPlaneAxis])
+        fullData <- dyadsImage$getSlice(throughPlaneAxis, point[throughPlaneAxis])
         data <- fullData[,,inPlaneAxes]
-        thresholdData <- extractDataFromMriImage(thresholdImage, throughPlaneAxis, point[throughPlaneAxis])
+        thresholdData <- thresholdImage$getSlice(throughPlaneAxis, point[throughPlaneAxis])
         
         if (scaleComponents)
         {
@@ -68,7 +68,7 @@ runExperiment <- function ()
             data[,,2] <- data[,,2] * thresholdData * 2
         }
 
-        maskData <- extractDataFromMriImage(maskImage, throughPlaneAxis, point[throughPlaneAxis])
+        maskData <- maskImage$getSlice(throughPlaneAxis, point[throughPlaneAxis])
         maskData <- maskData * (thresholdData >= thresholdLevel)
 
         dims <- faImage$getDimensions()[inPlaneAxes]

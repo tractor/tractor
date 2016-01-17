@@ -354,7 +354,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, origin=origin, storedXform=info$storageMetadata$xformMatrix, reordered=FALSE, tags=info$imageMetadata$tags, data=data)
     
     if (reorder)
-        image <- newMriImageByReordering(image)
+        image <- reorderMriImage(image)
     
     invisible (image)
 }

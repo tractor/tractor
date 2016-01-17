@@ -21,7 +21,7 @@ newFieldTractFromMriImage <- function (image, seed)
 
 newFieldTractByMasking <- function (tract, mask)
 {
-    newImage <- newMriImageByMasking(tract$getImage(), mask)
+    newImage <- tract$getImage()$copy()$mask(mask)
     newTract <- FieldTract$new(tract$getSeedPoint(), newImage)
     invisible (newTract)
 }

@@ -25,7 +25,7 @@ newMriImageFromCamino <- function (fileName, templateImage)
     if (length(dims) == 4)
         data <- aperm(data, c(2,3,4,1))
     
-    image <- newMriImageWithData(drop(data), templateImage)
+    image <- asMriImage(drop(data), templateImage)
     image$setSource(fileName)
     
     invisible (image)

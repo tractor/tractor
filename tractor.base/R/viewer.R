@@ -107,7 +107,7 @@ viewImages <- function (images, colourScales = NULL, point = NULL, interactive =
     
     images3D <- lapply(images, function(x) {
         if (x$getDimensionality() == 4)
-            newMriImageByExtraction(x, 4, 1)
+            extractMriImage(x, 4, 1)
         else
             x
     })

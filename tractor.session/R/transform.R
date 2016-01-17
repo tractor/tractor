@@ -179,7 +179,7 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
         }
         
         report(OL$Info, "Writing out transformed data")
-        finalImage <- newMriImageWithData(finalArray, sourceMetadata)
+        finalImage <- asMriImage(finalArray, sourceMetadata)
         writeImageFile(finalImage, session$getImageFileNameByType("data",type))
     }
     

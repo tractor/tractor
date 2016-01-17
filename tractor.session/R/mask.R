@@ -41,6 +41,6 @@ createMaskImageForSession <- function (session, method = c("kmeans","fill"), nCl
     
     writeImageFile(t2Image, session$getImageFileNameByType("maskedb0"))
     
-    mask <- newMriImageWithData(maskData, t2Image)
+    mask <- asMriImage(maskData, t2Image)
     writeImageFile(mask, session$getImageFileNameByType("mask","diffusion"))
 }

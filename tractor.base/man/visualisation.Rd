@@ -56,7 +56,7 @@ be created. 1 is left-right, 2 is anterior-posterior, 3 is
 superior-inferior.}
 
 \item{clearance}{Number of voxels' clearance to leave around each slice
-image in the contact sheet. Passed to \code{\link{newMriImageByTrimming}}.}
+image in the contact sheet. Passed to \code{\link{trimMriImage}}.}
 
 \item{nColumns}{Number of slices per row in the contact sheet grid. If
 \code{NULL}, the function will aim for a square grid.}

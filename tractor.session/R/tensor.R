@@ -140,12 +140,12 @@ createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwl
         {
             for (i in 1:3)
                 vectorData[cbind(intraMaskLocs,i)] <- values[,i]
-            image <- newMriImageWithData(vectorData, maskImage, imageDims=c(imageDims,3), voxelDims=c(maskImage$getVoxelDimensions(),1), origin=c(maskImage$getOrigin(),0))
+            image <- asMriImage(vectorData, maskImage, imageDims=c(imageDims,3), voxelDims=c(maskImage$getVoxelDimensions(),1), origin=c(maskImage$getOrigin(),0))
         }
         else
         {
             scalarData[intraMaskLocs] <- values
-            image <- newMriImageWithData(scalarData, maskImage)
+            image <- asMriImage(scalarData, maskImage)
         }
         
         writeImageFile(image, name)

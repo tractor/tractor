@@ -371,7 +371,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], imageDims[1:3]-origin[1:3]+1)
     
     # Create the final image
-    image <- newMriImageWithData(data, imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), origin=origin, tags=list())
+    image <- asMriImage(data, imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), origin=origin, tags=list())
     
     returnValue <- list(image=image, seriesDescriptions=unique(info$seriesDescription))
     if (readDiffusionParams)

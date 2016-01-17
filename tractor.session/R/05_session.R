@@ -110,7 +110,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             # Injected option for backwards compatibility
             targetMask <- NULL
             if (sourceSpace == "diffusion" && targetSpace == "mni")
-                targetMask <- newMriImageWithSimpleFunction(getStandardImage("white"), function(x) x/10 + 1)
+                targetMask <- getStandardImage("white")$map(function(x) x/10 + 1)
             
             options <- list(sourceImageFile, targetImageFile, targetMask=targetMask, estimateOnly=TRUE, cache="ignore", file=transformFile)
             options$types <- "affine"
@@ -407,7 +407,7 @@ createRadialDiffusivityMapForSession <- function (session)
     
     secondEigenvalue <- session$getImageByType("eigenvalue", "diffusion", index=2)
     thirdEigenvalue <- session$getImageByType("eigenvalue", "diffusion", index=3)
-    radialDiffusivity <- newMriImageWithBinaryFunction(secondEigenvalue, thirdEigenvalue, function(x,y) (x+y)/2)
+    radialDiffusivity <- secondEigenvalue$map(function(x,y) (x+y)/2, thirdEigenvalue)
     
     writeImageFile(radialDiffusivity, session$getImageFileNameByType("radialdiff"))
 }

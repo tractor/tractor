@@ -69,7 +69,7 @@ transformParcellation <- function (transform, parcellation, threshold = 0.5, ind
     uniqueIndices <- setdiff(unique(as.vector(parcellation$image$getData())), 0L)
     for (i in uniqueIndices)
     {
-        currentImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x==i,1,0))
+        currentImage <- parcellation$image$copy()$map(function(x) ifelse(x==i,1,0))
         transformedImage <- transformImage(transform, currentImage, index=index, preferAffine=preferAffine, reverse=reverse, finalInterpolation=1)
         toUpdate <- which(transformedImage$getData() > maxValues)
         if (length(toUpdate) > 0)
@@ -81,7 +81,7 @@ transformParcellation <- function (transform, parcellation, threshold = 0.5, ind
             report(OL$Warning, "Region with index #{i} is unrepresented in the transformed parcellation")
     }
     
-    finalImage <- newMriImageWithData(finalParcellation, targetSpace)
+    finalImage <- asMriImage(finalParcellation, targetSpace)
     return (list(image=finalImage, regions=parcellation$regions))
 }
 

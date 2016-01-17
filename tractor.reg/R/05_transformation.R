@@ -106,7 +106,7 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
             sourceImage <- readImageFile(sourceImage$getSource())
         }
         else if (!sourceImage$isReordered())
-            sourceImage <- newMriImageByReordering(sourceImage)
+            sourceImage <- reorderMriImage(sourceImage)
     }
     
     if (preferAffine && ("affine" %in% availableTypes))
@@ -130,8 +130,8 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
         deformationField <- getDeformationField(x$getTargetImage(), affine=affine, controlPointImage=controlPointImage, jacobian=TRUE)
     
     # Find the requested slice of the Jacobian map and deformation field
-    jacobian <- extractDataFromMriImage(newMriImageByReordering(as(deformationField$jacobian,"MriImage")), throughPlaneAxis, loc[throughPlaneAxis])
-    field <- extractDataFromMriImage(newMriImageByReordering(as(deformationField$deformationField,"MriImage")), throughPlaneAxis, loc[throughPlaneAxis])
+    jacobian <- extractDataFromMriImage(reorderMriImage(as(deformationField$jacobian,"MriImage")), throughPlaneAxis, loc[throughPlaneAxis])
+    field <- extractDataFromMriImage(reorderMriImage(as(deformationField$deformationField,"MriImage")), throughPlaneAxis, loc[throughPlaneAxis])
     
     # Remove the last row and column from the data, because NiftyReg seems to calculate it wrongly
     fieldDims <- dim(field)
@@ -279,7 +279,7 @@ decomposeTransformation <- function (transform)
     {
         targetImageNifti <- as(transform$getTargetImage(), "nifti")
         result <- lapply(seq_len(transform$getSourceImage()$getDimensions()[nSourceDims]), function (i) {
-            currentSourceImage <- newMriImageByExtraction(transform$getSourceImage(), nSourceDims, i)
+            currentSourceImage <- extractMriImage(transform$getSourceImage(), nSourceDims, i)
             decomposeAffine(transform$getAffineMatrix(i), currentSourceImage, targetImageNifti)
         })
         return (result)
