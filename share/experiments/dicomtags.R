@@ -22,7 +22,7 @@ runExperiment <- function ()
         allFileNames <- allFileNames[!file.info(allFileNames)$isdir]
         for (currentFileName in allFileNames)
         {
-            metadata <- newDicomMetadataFromFile(currentFileName)
+            metadata <- readDicomFile(currentFileName)
             if (!is.null(metadata))
             {
                 report(OL$Info, "Displaying tags for file \"", currentFileName, "\"")
@@ -34,7 +34,7 @@ runExperiment <- function ()
     }
     else
     {
-        metadata <- newDicomMetadataFromFile(fileName)
+        metadata <- readDicomFile(fileName)
         if (is.null(metadata))
             report(OL$Error, "The file \"", fileName, "\" appears not to be a DICOM file or is unreadable")
     }

@@ -101,14 +101,14 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired)
 #'   the file will be ignored, and the code will try to deduce the transfer
 #'   syntax using heuristics. This may occasionally be necessary for awkward
 #'   DICOM files, but is not generally recommended.
-#' @return \code{newDicomMetadataFromFile} returns a
-#'   \code{\linkS4class{DicomMetadata}} object, or \code{NULL} on failure.
+#' @return \code{readDicomFile} returns a \code{\linkS4class{DicomMetadata}}
+#'   object, or \code{NULL} on failure.
 #' 
 #' @author Jon Clayden
 #' @seealso The DICOM standard, found online at \url{http://dicom.nema.org/}.
-#'   (Warning: may produce headaches!) Also 
-#'   \code{\link{newMriImageFromDicomDirectory}} for information on how to
-#'   create \code{\linkS4class{MriImage}} objects from DICOM files.
+#'   (Warning: may produce headaches!) Also \code{\link{readDicomDirectory}}
+#'   for information on how to create \code{\linkS4class{MriImage}} objects
+#'   from DICOM files.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -117,7 +117,7 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreTransferSyntax = FALSE)
+readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreTransferSyntax = FALSE)
 {
     fileName <- expandFileName(fileName)
     

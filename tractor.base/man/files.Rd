@@ -4,19 +4,17 @@
 \alias{copyImageFiles}
 \alias{identifyImageFileNames}
 \alias{imageFileExists}
-\alias{newMriImageFromFile}
 \alias{readImageFile}
-\alias{removeImageFilesWithName}
+\alias{removeImageFiles}
 \alias{symlinkImageFiles}
 \alias{writeImageFile}
-\alias{writeMriImageToFile}
 \title{Working with MRI images stored in NIfTI, Analyze and MGH formats}
 \usage{
 identifyImageFileNames(fileName, fileType = NULL, errorIfMissing = TRUE)
 
 imageFileExists(fileName, fileType = NULL)
 
-removeImageFilesWithName(fileName)
+removeImageFiles(fileName)
 
 symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE)
 
@@ -25,13 +23,7 @@ copyImageFiles(from, to, overwrite = FALSE, deleteOriginals = FALSE)
 readImageFile(fileName, fileType = NULL, metadataOnly = FALSE,
   volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
 
-newMriImageFromFile(fileName, fileType = NULL, metadataOnly = FALSE,
-  volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
-
 writeImageFile(image, fileName = NULL, fileType = NA, overwrite = TRUE)
-
-writeMriImageToFile(image, fileName = NULL, fileType = NA,
-  overwrite = TRUE)
 }
 \arguments{
 \item{fileName, from, to}{File names, with or without appropriate extension.}
@@ -45,8 +37,8 @@ Details.}
 were found?}
 
 \item{overwrite}{Logical value: overwrite an existing image file? For
-\code{writeMriImageToFile}, an error will be raised if there is an
-existing file and this is set to FALSE.}
+\code{writeImageFile}, an error will be raised if there is an existing
+file and this is set to FALSE.}
 
 \item{relative}{Logical value: if \code{TRUE}, the path stored in the
 symlink will be relative (e.g. \code{"../some_dir/some_image.nii"}) rather
@@ -79,8 +71,8 @@ This is recommended in most circumstances.}
 \code{readImageFile} returns an \code{\linkS4class{MriImage}}
   object. \code{imageFileExists} returns \code{TRUE} if an existing file
   with the specified name exists (all file extensions are checked), and
-  \code{FALSE} otherwise. \code{removeImageFilesWithName} returns the result
-  of \code{\link{unlink}} applied to all relevant files. \code{writeImageFile}
+  \code{FALSE} otherwise. \code{removeImageFiles} returns the result of
+  \code{\link{unlink}} applied to all relevant files. \code{writeImageFile}
   and \code{identifyImageFileNames} return a list with the following elements,
   describing the identified or written files:
   \describe{
@@ -88,7 +80,7 @@ This is recommended in most circumstances.}
     \item{headerFile}{The full header file name.}
     \item{imageFile}{The full image file name.}
     \item{format}{The format of the files (\code{"Nifti"}, \code{"Analyze"}
-      or \code{"Mgh"}). Not returned by \code{writeMriImageToFile}.}
+      or \code{"Mgh"}). Not returned by \code{writeImageFile}.}
   }
   \code{copyImageFiles} and \code{symlinkImageFiles} are called for their
   side effects.
@@ -126,12 +118,6 @@ Since multiple files may be involved, copying, moving or symlinking images
 is not trivial. \code{copyImageFiles} and \code{symlinkImageFiles} are
 wrappers around the standard functions \code{\link{file.copy}} and
 \code{\link{file.symlink}} which handle this complexity.
-}
-\note{
-The functions \code{readImageFile} and \code{writeImageFile} are
-  equivalent to \code{newMriImageFromFile} and \code{writeMriImageToFile},
-  but preferred for brevity. The latter are likely to be deprecated in a
-  future release.
 }
 \author{
 Jon Clayden

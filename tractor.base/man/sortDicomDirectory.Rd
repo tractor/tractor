@@ -17,12 +17,12 @@ making the operation a move rather than a copy. Nothing will be deleted if
 the copy fails.}
 
 \item{sortOn}{The string \code{"series"}, \code{"subject"} or \code{"date"},
-or any combination in the order desired. This will be the basis of the sort,
-which will be nested if more than one type is specified.}
+or any combination in the order desired. This will be the basis of the
+sort, which will be nested if more than one type is specified.}
 
 \item{useSeriesTime}{Logical value. If \code{TRUE}, use the series time
-rather than number as the identifier. This can be more reliable if the files
-are from multiple scan sessions.}
+rather than number as the identifier. This can be more reliable if the
+files are from multiple scan sessions.}
 }
 \value{
 This function is called for its side effect.
@@ -49,7 +49,7 @@ Journal of Statistical Software 44(8):1-18.
 \url{http://www.jstatsoft.org/v44/i08/}.
 }
 \seealso{
-\code{\link{newMriImageFromDicomDirectory}} for reading DICOM files
-into an \code{MriImage} object.
+\code{\link{readDicomDirectory}} for reading DICOM files into an
+\code{MriImage} object.
 }
 

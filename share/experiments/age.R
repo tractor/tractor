@@ -17,7 +17,7 @@ runExperiment <- function ()
         
         for (file in files)
         {
-            metadata <- newDicomMetadataFromFile(file)
+            metadata <- readDicomFile(file)
             if (!is.null(metadata))
             {
                 fileName <- file
@@ -36,7 +36,7 @@ runExperiment <- function ()
         report(OL$Error, "BreakdownLevel must be between 1 and 3")
     
     report(OL$Info, "Reading date information from file \"", basename(fileName), "\"")
-    metadata <- newDicomMetadataFromFile(fileName)
+    metadata <- readDicomFile(fileName)
     
     studyDate <- as.Date(metadata$getTagValue(0x0008,0x0020), "%Y%m%d")
     dateOfBirth <- as.Date(metadata$getTagValue(0x0010,0x0030), "%Y%m%d")

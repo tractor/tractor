@@ -8,23 +8,23 @@
 #' files will be copied into that subdirectory. Duplicate file names are
 #' disambiguated if necessary.
 #' 
-#' 
 #' @param directory A length-1 character vector giving the directory to search
-#' for DICOM files. Subdirectories will also be searched.
+#'   for DICOM files. Subdirectories will also be searched.
 #' @param deleteOriginals A single logical value. If \code{TRUE}, then the
-#' source files will be deleted after being copied to their new locations,
-#' making the operation a move rather than a copy. Nothing will be deleted if
-#' the copy fails.
+#'   source files will be deleted after being copied to their new locations,
+#'   making the operation a move rather than a copy. Nothing will be deleted if
+#'   the copy fails.
 #' @param sortOn The string \code{"series"}, \code{"subject"} or \code{"date"},
-#' or any combination in the order desired. This will be the basis of the sort,
-#' which will be nested if more than one type is specified.
+#'   or any combination in the order desired. This will be the basis of the
+#'   sort, which will be nested if more than one type is specified.
 #' @param useSeriesTime Logical value. If \code{TRUE}, use the series time
-#' rather than number as the identifier. This can be more reliable if the files
-#' are from multiple scan sessions.
+#'   rather than number as the identifier. This can be more reliable if the
+#'   files are from multiple scan sessions.
 #' @return This function is called for its side effect.
+#' 
 #' @author Jon Clayden
-#' @seealso \code{\link{newMriImageFromDicomDirectory}} for reading DICOM files
-#' into an \code{MriImage} object.
+#' @seealso \code{\link{readDicomDirectory}} for reading DICOM files into an
+#' \code{MriImage} object.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -32,7 +32,7 @@
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
-#' @export sortDicomDirectory
+#' @export
 sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "series", useSeriesTime = FALSE)
 {
     if (!file.exists(directory) || !file.info(directory)$isdir)
@@ -55,7 +55,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     report(OL$Info, "Reading ", currentSort, " identifiers from ", nFiles, " files")
     for (i in 1:nFiles)
     {
-        metadata <- try(newDicomMetadataFromFile(files[i], stopTag=identifierTag), silent=TRUE)
+        metadata <- try(readDicomFile(files[i], stopTag=identifierTag), silent=TRUE)
         if (is.null(metadata) || ("try-error" %in% class(metadata)))
         {
             report(OL$Info, "Skipping ", files[i])
@@ -86,7 +86,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
         matchingFiles <- which(identifiers==id)
         if (length(matchingFiles) > 0)
         {
-            metadata <- newDicomMetadataFromFile(files[matchingFiles[1]], stopTag=descriptionTag)
+            metadata <- readDicomFile(files[matchingFiles[1]], stopTag=descriptionTag)
             description <- metadata$getTagValue(descriptionTag[1], descriptionTag[2])
             
             if (currentSort == "series")
@@ -129,6 +129,39 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     }
 }
 
+#' Read a directory of DICOM files
+#' 
+#' This function scans a directory for files in DICOM format, and converts them
+#' to a single Analyze/NIfTI-format image of the appropriate dimensionality.
+#' 
+#' @param dicomDir Character vector of length one giving the name of a
+#'   directory containing DICOM files.
+#' @param readDiffusionParams Logical value: should diffusion MRI parameters
+#'   (b-values and gradient directions) be retrieved from the files if
+#'   possible?
+#' @param untileMosaics Logical value: should Siemens mosaic images be
+#'   converted into 3D volumes? This may occasionally be performed in error,
+#'   which can be prevented by setting this value to \code{FALSE}.
+#' @return A list containing elements
+#'   \describe{
+#'     \item{image}{An \code{\linkS4class{MriImage}} object.}
+#'     \item{bValues}{Diffusion b-values, if requested. Will be \code{NA} if
+#'       the information could not be found in files.}
+#'     \item{bVectors}{Diffusion gradient vectors, if requested. Will be
+#'       \code{NA} if the information could not be found in the files.}
+#'   }
+#' 
+#' @author Jon Clayden
+#' @seealso \code{\linkS4class{DicomMetadata}}, \code{\linkS4class{MriImage}},
+#' \code{\link{sortDicomDirectory}}.
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
 readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
 {
     if (!file.exists(dicomDir) || !file.info(dicomDir)$isdir)
@@ -155,7 +188,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     count <- 0
     for (i in seq_along(files))
     {
-        metadata <- newDicomMetadataFromFile(files[i])
+        metadata <- readDicomFile(files[i])
         if (is.null(metadata))
         {
             # Not a DICOM file - skip it
@@ -380,41 +413,12 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     invisible (returnValue)
 }
 
-
-
-#' Functions for reading images from DICOM files
-#' 
-#' Functions for reading images from a directory of DICOM files.
-#' 
-#' 
-#' @aliases readDicomDirectory newMriImageFromDicomDirectory
-#' @param dicomDir Character vector of length one giving the name of a
-#' directory containing DICOM files.
-#' @param readDiffusionParams Logical value: should diffusion MRI parameters
-#' (b-values and gradient directions) be retrieved from the files if possible?
-#' @param untileMosaics Logical value: should Siemens mosaic images be
-#' converted into 3D volumes? This may occasionally be performed in error,
-#' which can be prevented by setting this value to \code{FALSE}.
-#' @return A list containing elements \item{image}{An
-#' \code{\linkS4class{MriImage}} object.} \item{bValues}{Diffusion b-values, if
-#' requested. Will be \code{NA} if the information could not be found in the
-#' files.} \item{bVectors}{Diffusion gradient vectors, if requested. Will be
-#' \code{NA} if the information could not be found in the files.}
-#' @note These two functions are equivalent, but \code{readDicomDirectory} is
-#' preferred for brevity. The \code{newMriImageFromDicomDirectory} function is
-#' likely to be deprecated in a future release.
-#' @author Jon Clayden
-#' @seealso \code{\linkS4class{DicomMetadata}}, \code{\linkS4class{MriImage}},
-#' \code{\link{sortDicomDirectory}}.
-#' @references Please cite the following reference when using TractoR in your
-#' work:
-#' 
-#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
-#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
-#' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @rdname tractor.base-deprecated
+#' @inheritParams readDicomDirectory
+#' @export
 newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
 {
+    .Deprecated("readDicomDirectory", "tractor.base")
     readDicomDirectory(dicomDir, readDiffusionParams, untileMosaics)
 }
 
