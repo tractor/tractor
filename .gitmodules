@@ -19,3 +19,6 @@
 [submodule "lib/RcppEigen"]
 	path = lib/RcppEigen
 	url = https://github.com/tractor/RcppEigen.git
+[submodule "lib/png"]
+	path = lib/png
+	url = https://github.com/tractor/png.git
