@@ -31,20 +31,21 @@ post-install-info:
 
 install-libs:
 	@$(INSTALL) lib/Rcpp lib/RcppEigen lib/corpcor
+	@$(INSTALL) lib/ore lib/reportr lib/mmand lib/RNiftyReg
+	@$(INSTALL) -k lib/png
 
 check-and-install-libs: install-libs
 
 install-base:
-	@$(INSTALL) lib/ore lib/reportr tractor.base
+	@$(INSTALL) tractor.base
 
 install-utils:
 	@$(INSTALL) tractor.utils
 
 install-reg:
-	@$(INSTALL) lib/RNiftyReg tractor.reg
+	@$(INSTALL) tractor.reg
 
 install-session:
-	@$(INSTALL) -k lib/mmand
 	@$(INSTALL) tractor.session
 
 install-nt:
