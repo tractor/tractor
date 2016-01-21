@@ -129,7 +129,18 @@ maximumIntensityProjection <- function (image, axis)
         report(OL$Error, "Specified axis is not relevant for this image")
     
     planeAxes <- setdiff(1:nDims, axis)
-    result <- image$apply(planeAxes, max)
+    
+    if (image$isSparse() && nDims == 3)
+    {
+        # 2D MriImage#apply() is expensive for sparse data; this is much faster
+        dims <- image$getDimensions()
+        coords <- image$getData()$getCoordinates()
+        data <- image$getData()$getData()
+        factors <- list(factor(coords[,planeAxes[1]],levels=seq_len(dims[planeAxes[1]])), factor(coords[,planeAxes[2]],levels=seq_len(dims[planeAxes[2]])))
+        result <- tapply(data, factors, max)
+    }
+    else
+        result <- image$apply(planeAxes, max)
     
     invisible(result)
 }
