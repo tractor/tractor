@@ -449,15 +449,6 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     invisible (image)
 }
 
-#' @rdname tractor.base-deprecated
-#' @inheritParams readImageFile
-#' @export
-newMriImageFromFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
-{
-    .Deprecated("readImageFile", "tractor.base")
-    readImageFile(fileName, fileType, metadataOnly, volumes, sparse, mask, reorder)
-}
-
 writeImageData <- function (image, connection, type, size, endian = .Platform$endian)
 {
     if (!is(image, "MriImage"))
@@ -532,13 +523,4 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
         writeMriImageToMgh(image, fileNames, gzipped=params$gzipped)
     
     invisible (fileNames)
-}
-
-#' @rdname tractor.base-deprecated
-#' @inheritParams writeImageFile
-#' @export
-writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE)
-{
-    .Deprecated("writeImageFile", "tractor.base")
-    writeImageFile(image, fileName, fileType, overwrite)
 }

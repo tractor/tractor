@@ -413,20 +413,6 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     invisible (returnValue)
 }
 
-#' Deprecated functions
-#' 
-#' These functions are deprecated, generally in favour of more succint
-#' alternatives.
-#' 
-#' @rdname tractor.base-deprecated
-#' @inheritParams readDicomDirectory
-#' @export
-newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
-{
-    .Deprecated("readDicomDirectory", "tractor.base")
-    readDicomDirectory(dicomDir, readDiffusionParams, untileMosaics)
-}
-
 readImageParametersFromMetadata <- function (metadata, untileMosaics = TRUE, metadataOnly = FALSE)
 {
     if (metadata$getTagValue(0x0008, 0x0060) != "MR")
