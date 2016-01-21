@@ -72,10 +72,14 @@ getColourScale <- function (n)
         colours <- list(gray(0:99/99),
                         heat.colors(100),
                         rainbow(100, start=0.7, end=0.1),
-                        interpolatePalette(c("#053061","#2166AC","#4393C3","#92C5DE","#D1E5F0","#F7F7F7","#FDDBC7","#F4A582","#D6604D","#B2182B","#67001F"), 100),  # ColorBrewer "RdBu" diverging palette
-                        interpolatePalette(c("#F7F7F7","#FDDBC7","#F4A582","#D6604D","#B2182B","#67001F"), 100),                                                    # Just the red part of "RdBu"
-                        interpolatePalette(c("#F7F7F7","#D1E5F0","#92C5DE","#4393C3","#2166AC","#053061"), 100),                                                    # Just the blue part of "RdBu"
-                        interpolatePalette(c("#800026","#BD0026","#E31A1C","#FC4E2A","#FD8D3C","#FEB24C","#FED976","#FFEDA0","#FFFFCC"), 100))  # ColorBrewer "YlOrRd" sequential palette
+                        # ColorBrewer "RdBu" diverging palette
+                        interpolatePalette(c("#053061", "#2166AC", "#4393C3", "#92C5DE", "#D1E5F0", "#F7F7F7", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B", "#67001F"), 100),
+                        # Just the red part of "RdBu"
+                        interpolatePalette(c("#F7F7F7", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B", "#67001F"), 100),
+                        # Just the blue part of "RdBu"
+                        interpolatePalette(c("#F7F7F7", "#D1E5F0", "#92C5DE", "#4393C3", "#2166AC", "#053061"), 100),
+                        # ColorBrewer "YlOrRd" sequential palette
+                        interpolatePalette(c("#800026", "#BD0026", "#E31A1C", "#FC4E2A", "#FD8D3C", "#FEB24C", "#FED976", "#FFEDA0", "#FFFFCC"), 100))
     
         if (n < 0)
             scale <- list(colours=rev(colours[[-n]]))
@@ -85,6 +89,34 @@ getColourScale <- function (n)
         scale$background <- scale$colours[1]
         return (scale)
     }
+}
+
+colourMap <- function (image, scale, zlim = NULL)
+{
+    if (!is.matrix(image))
+        image <- as.matrix(image)
+    if (!is.numeric(image))
+        report(OL$Error, "Image to display should be a 2D numeric matrix")
+    
+    scale <- getColourScale(scale)
+    nColours <- length(scale$colours)
+    
+    if (is.null(zlim))
+        zlim <- range(image, na.rm=TRUE)
+    else
+        zlim <- sort(zlim)
+    
+    indices <- (image - zlim[1]) / diff(zlim)
+    indices[indices < 0] <- 0
+    indices[indices > 1] <- 1
+    indices <- round(indices * (nColours-1) + 1)
+    cols <- col2rgb(scale$colours)[,indices]
+    cols[,colSums(is.na(cols)) > 0] <- col2rgb(scale$background)
+    
+    cols <- t(cols)
+    dim(cols) <- c(dim(image), 3L)
+    
+    return (cols)
 }
 
 maximumIntensityProjection <- function (image, axis)
@@ -97,7 +129,7 @@ maximumIntensityProjection <- function (image, axis)
         report(OL$Error, "Specified axis is not relevant for this image")
     
     planeAxes <- setdiff(1:nDims, axis)
-    result <- apply(image$getData(), planeAxes, max)
+    result <- image$apply(planeAxes, max)
     
     invisible(result)
 }
@@ -135,7 +167,6 @@ maximumIntensityProjection <- function (image, axis)
 #'   \code{device} is \code{"png"}.
 #' @param zoomFactor Factor by which to enlarge the image. Applies only when
 #'   \code{device} is \code{"png"}.
-#' @param filter Interpolation filter to be used by ImageMagick.
 #' @param windowLimits Numeric vector of length 2 giving the limits of the
 #'   colour scale, or \code{NULL} for limits matching the range of the image
 #'   data. Passed as the \code{zlim} argument to \code{\link{image}}.
@@ -147,8 +178,8 @@ maximumIntensityProjection <- function (image, axis)
 #'   \code{device} is \code{"internal"}.
 #' @return These functions are called for their side effects.
 #' 
-#' @note When the \code{device} option is set to \code{"png"}, ImageMagick is
-#' required by these functions.
+#' @note When the \code{device} option is set to \code{"png"}, the \code{"png"}
+#' and \code{"mmand"} packages are required by these functions.
 #' @author Jon Clayden
 #' @seealso See \code{\link{viewImages}} for an interactive alternative, and
 #' \code{\link{getColourScale}} for details of how colour scales are specified.
@@ -163,7 +194,7 @@ maximumIntensityProjection <- function (image, axis)
 #' @aliases visualisation
 #' @rdname visualisation
 #' @export
-createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
+createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, windowLimits = NULL)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
@@ -192,24 +223,19 @@ createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("inter
     else
         report(OL$Error, "The \"createSliceGraphic\" function only handles 2D and 3D images")
     
+    fieldOfView <- image$getFieldOfView()[!axisRelevance]
     if (device == "internal")
-    {
-        fieldOfView <- image$getFieldOfView()[!axisRelevance]
         displayGraphic(slice, colourScale, add=add, windowLimits=windowLimits, asp=fieldOfView[2]/fieldOfView[1])
-    }
     else if (device == "png")
     {
-        tempFile <- threadSafeTempFile()
-        pngDims <- round(abs(dims[!axisRelevance] * image$getVoxelDimensions()[!axisRelevance] * zoomFactor))
-        writePng(slice, colourScale, tempFile, windowLimits=windowLimits)
-        interpolatePng(tempFile, file, pngDims, filter=filter)
-        unlink(ensureFileSuffix(tempFile, "png"))
+        scaledSlice <- mmand::rescale(slice, image$getVoxelDimensions()[!axisRelevance] * zoomFactor, mmand::mnKernel())
+        writePng(colourMap(scaledSlice,colourScale,windowLimits)/255, file, fieldOfView[2]/fieldOfView[1])
     }
 }
 
 #' @rdname visualisation
 #' @export
-createProjectionGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL)
+createProjectionGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, windowLimits = NULL)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
@@ -218,24 +244,19 @@ createProjectionGraphic <- function (image, axis, device = c("internal","png"), 
     projection <- maximumIntensityProjection(image, axis)
     imageAxes <- !(1:3 %in% axis)
     
+    fieldOfView <- image$getFieldOfView()[imageAxes]
     if (device == "internal")
-    {
-        fieldOfView <- image$getFieldOfView()[imageAxes]
         displayGraphic(projection, colourScale, add=add, windowLimits=windowLimits, asp=fieldOfView[2]/fieldOfView[1])
-    }
     else if (device == "png")
     {
-        tempFile <- threadSafeTempFile()
-        pngDims <- round(abs(image$getDimensions()[imageAxes] * image$getVoxelDimensions()[imageAxes] * zoomFactor))
-        writePng(projection, colourScale, tempFile, windowLimits=windowLimits)
-        interpolatePng(tempFile, file, pngDims, filter=filter)
-        unlink(ensureFileSuffix(tempFile, "png"))
+        scaledProjection <- mmand::rescale(projection, image$getVoxelDimensions()[imageAxes] * zoomFactor, mmand::mnKernel())
+        writePng(colourMap(scaledProjection,colourScale,windowLimits)/255, file, fieldOfView[2]/fieldOfView[1])
     }
 }
 
 #' @rdname visualisation
 #' @export
-createContactSheetGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, filter = "Mitchell", windowLimits = NULL, clearance = NULL, nColumns = NULL)
+createContactSheetGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, windowLimits = NULL, clearance = NULL, nColumns = NULL)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
@@ -275,24 +296,19 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
         data[rows[1]:rows[2],cols[1]:cols[2]] <- image$getSlice(axis, i)
     }
     
+    fieldOfView <- image$getFieldOfView()[imageAxes]
     if (device == "internal")
-    {
-        fieldOfView <- abs(dim(data) * image$getVoxelDimensions()[imageAxes])
         displayGraphic(data, colourScale, add=add, windowLimits=windowLimits, asp=fieldOfView[2]/fieldOfView[1])
-    }
     else if (device == "png")
     {
-        tempFile <- threadSafeTempFile()
-        pngDims <- round(abs(dim(data) * image$getVoxelDimensions()[imageAxes] * zoomFactor))
-        writePng(data, colourScale, tempFile, windowLimits=windowLimits)
-        interpolatePng(tempFile, file, pngDims, filter=filter)
-        unlink(ensureFileSuffix(tempFile, "png"))
+        scaledData <- mmand::rescale(data, image$getVoxelDimensions()[imageAxes] * zoomFactor, mmand::mnKernel())
+        writePng(colourMap(scaledData,colourScale,windowLimits)/255, file, fieldOfView[2]/fieldOfView[1])
     }
 }
 
 #' @rdname visualisation
 #' @export
-createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sliceLoc = NULL, device = c("internal","png"), alphaImages = NULL, prefix = "image", zoomFactor = 1, filter = "Mitchell", windowLimits = NULL, clearance = NULL, nColumns = NULL)
+createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sliceLoc = NULL, device = c("internal","png"), alphaImages = NULL, prefix = "image", zoomFactor = 1, windowLimits = NULL)
 {
     if (!is.list(images) || !is.list(colourScales))
         report(OL$Error, "Images and colour scales must be given as lists")
@@ -303,11 +319,9 @@ createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sli
     if (!is.numeric(axes) || any(axes < 1 | axes > 3))
         report(OL$Error, "Projection axes must be specified as a combination of 1 (x), 2 (y) or 3 (z)")
     
-    modes <- match.arg(modes, c("slice","projection","contact"), several.ok=TRUE)
+    modes <- match.arg(modes, c("slice","projection"), several.ok=TRUE)
     if (any(modes == "slice") && is.null(sliceLoc))
         report(OL$Error, "Slice location must be specified")
-    if (any(modes == "contact") && !all(modes == "contact"))
-        report(OL$Error, "Contact slice mode must be used for all graphics or none")
     
     device <- match.arg(device)
     
@@ -322,55 +336,41 @@ createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sli
     if (device == "png")
     {
         projectionNames <- c("sagittal", "coronal", "axial")
-        imageFiles <- threadSafeTempFile(rep(basename(prefix), 2*nImages))
-        combinedFiles <- threadSafeTempFile(rep(basename(prefix), 2))
         
         for (axis in axes)
         {
-            if (!is.null(sliceLoc))
-            {
-                currentSliceLoc <- sliceLoc
-                currentSliceLoc[setdiff(1:3,axis)] <- NA
-            }
+            imageAxes <- setdiff(1:3, axis)
             currentFile <- paste(prefix, projectionNames[axis], sep="_")
             
             for (i in seq_along(images))
             {
                 if (modes[i] == "slice")
-                {
-                    createSliceGraphic(images[[i]], currentSliceLoc[1], currentSliceLoc[2], currentSliceLoc[3], device="png", colourScale=colourScales[[i]], file=imageFiles[2*i-1], zoomFactor=zoomFactor, filter=filter, windowLimits=windowLimits[[i]])
-                    if (!is.null(alphaImages[[i]]))
-                        createSliceGraphic(alphaImages[[i]], currentSliceLoc[1], currentSliceLoc[2], currentSliceLoc[3], device="png", colourScale=1, file=imageFiles[2*i], zoomFactor=zoomFactor, filter=filter)
-                }
+                    data <- images[[i]]$getSlice(axis, sliceLoc[axis])
                 else if (modes[i] == "projection")
-                {
-                    createProjectionGraphic(images[[i]], axis, device="png", colourScale=colourScales[[i]], file=imageFiles[2*i-1], zoomFactor=zoomFactor, filter=filter, windowLimits=windowLimits[[i]])
-                    if (!is.null(alphaImages[[i]]))
-                        createProjectionGraphic(alphaImages[[i]], axis, device="png", colourScale=1, file=imageFiles[2*i], zoomFactor=zoomFactor, filter=filter)
-                }
-                else
-                {
-                    createContactSheetGraphic(images[[i]], axis, device="png", colourScale=colourScales[[i]], file=imageFiles[2*i-1], zoomFactor=zoomFactor, filter=filter, windowLimits=windowLimits[[i]], clearance=clearance, nColumns=nColumns)
-                    if (!is.null(alphaImages[[i]]))
-                        createContactSheetGraphic(alphaImages[[i]], axis, device="png", colourScale=1, file=imageFiles[2*i], zoomFactor=zoomFactor, filter=filter, clearance=clearance, nColumns=nColumns)
-                }
+                    data <- maximumIntensityProjection(images[[i]], axis)
                 
-                if (i == 1)
-                    file.copy(ensureFileSuffix(imageFiles[1],"png"), ensureFileSuffix(combinedFiles[1],"png"), overwrite=TRUE)
+                if (i == 1 || is.null(alphaImages[[i]]))
+                    currentImage <- colourMap(data, colourScales[[i]], windowLimits[[i]]) / 255
                 else
                 {
-                    file.copy(ensureFileSuffix(combinedFiles[1],"png"), ensureFileSuffix(combinedFiles[2],"png"), overwrite=TRUE)
-                    if (is.null(alphaImages[[i]]))
-                        superimposePng(combinedFiles[2], imageFiles[2*i-1], combinedFiles[1])
-                    else
-                        superimposePng(combinedFiles[2], imageFiles[2*i-1], combinedFiles[1], imageFiles[2*i])
+                    layerImage <- colourMap(data, colourScales[[i]], windowLimits[[i]]) / 255
+                    if (modes[i] == "slice")
+                        currentAlpha <- alphaImages[[i]]$getSlice(axis, sliceLoc[axis])
+                    else if (modes[i] == "projection")
+                        currentAlpha <- maximumIntensityProjection(alphaImages[[i]], axis)
+                    currentAlpha <- currentAlpha / max(currentAlpha,na.rm=TRUE)
+                    currentAlpha[currentAlpha < 0] <- 0
+                    currentImage <- rep(1-currentAlpha,3) * currentImage + rep(currentAlpha,3) * layerImage
                 }
             }
             
-            file.copy(ensureFileSuffix(combinedFiles[1],"png"), ensureFileSuffix(currentFile,"png"), overwrite=TRUE)
-            
-            unlink(imageFiles)
-            unlink(combinedFiles)
+            fieldOfView <- images[[1]]$getFieldOfView()[imageAxes]
+            red <- mmand::rescale(currentImage[,,1], abs(images[[1]]$getVoxelDimensions()[imageAxes] * zoomFactor), mmand::mnKernel())
+            green <- mmand::rescale(currentImage[,,2], abs(images[[1]]$getVoxelDimensions()[imageAxes] * zoomFactor), mmand::mnKernel())
+            blue <- mmand::rescale(currentImage[,,3], abs(images[[1]]$getVoxelDimensions()[imageAxes] * zoomFactor), mmand::mnKernel())
+            currentImage <- c(red, green, blue)
+            dim(currentImage) <- c(dim(red), 3L)
+            writePng(currentImage, currentFile, fieldOfView[2]/fieldOfView[1])
         }
     }
     else

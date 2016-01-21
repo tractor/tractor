@@ -10,21 +10,19 @@
 \usage{
 createSliceGraphic(image, x = NA, y = NA, z = NA, device = c("internal",
   "png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1,
-  filter = "Mitchell", windowLimits = NULL)
+  windowLimits = NULL)
 
 createProjectionGraphic(image, axis, device = c("internal", "png"),
   colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1,
-  filter = "Mitchell", windowLimits = NULL)
+  windowLimits = NULL)
 
 createContactSheetGraphic(image, axis, device = c("internal", "png"),
   colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1,
-  filter = "Mitchell", windowLimits = NULL, clearance = NULL,
-  nColumns = NULL)
+  windowLimits = NULL, clearance = NULL, nColumns = NULL)
 
 createCombinedGraphics(images, modes, colourScales, axes = 1:3,
   sliceLoc = NULL, device = c("internal", "png"), alphaImages = NULL,
-  prefix = "image", zoomFactor = 1, filter = "Mitchell",
-  windowLimits = NULL, clearance = NULL, nColumns = NULL)
+  prefix = "image", zoomFactor = 1, windowLimits = NULL)
 }
 \arguments{
 \item{image}{A single \code{\link{MriImage}} object.}
@@ -44,8 +42,6 @@ in the plural case. See \code{\link{getColourScale}}.}
 
 \item{zoomFactor}{Factor by which to enlarge the image. Applies only when
 \code{device} is \code{"png"}.}
-
-\item{filter}{Interpolation filter to be used by ImageMagick.}
 
 \item{windowLimits}{Numeric vector of length 2 giving the limits of the
 colour scale, or \code{NULL} for limits matching the range of the image
@@ -89,8 +85,8 @@ functions create 2D visualisations of 3D images by slicing or maximum
 intensity projection.
 }
 \note{
-When the \code{device} option is set to \code{"png"}, ImageMagick is
-required by these functions.
+When the \code{device} option is set to \code{"png"}, the \code{"png"}
+and \code{"mmand"} packages are required by these functions.
 }
 \author{
 Jon Clayden

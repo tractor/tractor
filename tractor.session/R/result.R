@@ -43,11 +43,11 @@ writePngsForResult <- function (probtrackResult, axes = 1:3, colourScale = 2, zo
     seedCentre <- getSeedCentrePointForResult(probtrackResult)
     
     if (!showSeed)
-        createCombinedGraphics(list(baseImage,finalImage), c("s","p"), list(1,colourScale), axes=axes, sliceLoc=seedCentre, device="png", alphaImages=list(NULL,logFinalImage), prefix=prefix, zoomFactor=zoomFactor, filter="Sinc")
+        createCombinedGraphics(list(baseImage,finalImage), c("s","p"), list(1,colourScale), axes=axes, sliceLoc=seedCentre, device="png", alphaImages=list(NULL,logFinalImage), prefix=prefix, zoomFactor=zoomFactor)
     else
     {
         seedImage <- asMriImage(generateImageDataForShape("cross",imageDims,centre=seedCentre,width=7), baseImage$getMetadata())
-        createCombinedGraphics(list(baseImage,finalImage,seedImage), c("s","p","p"), list(1,colourScale,"green"), axes=axes, sliceLoc=seedCentre, device="png", alphaImages=list(NULL,logFinalImage,seedImage), prefix=prefix, zoomFactor=zoomFactor, filter="Sinc")
+        createCombinedGraphics(list(baseImage,finalImage,seedImage), c("s","p","p"), list(1,colourScale,"green"), axes=axes, sliceLoc=seedCentre, device="png", alphaImages=list(NULL,logFinalImage,seedImage), prefix=prefix, zoomFactor=zoomFactor)
     }
 }
 
