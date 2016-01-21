@@ -8,5 +8,8 @@ writePng <- function (data, fileName, aspectRatio)
     else if (length(dim(data)) == 2)
         data <- data[,dim(data)[2]:1]
     
+    data[data<0] <- 0
+    data[data>1] <- 1
+    
     png::writePNG(data, ensureFileSuffix(fileName,"png"), asp=aspectRatio)
 }

@@ -116,7 +116,7 @@ colourMap <- function (image, scale, zlim = NULL)
     cols <- t(cols)
     dim(cols) <- c(dim(image), 3L)
     
-    return (cols)
+    return (cols/255)
 }
 
 maximumIntensityProjection <- function (image, axis)
@@ -240,7 +240,7 @@ createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("inter
     else if (device == "png")
     {
         scaledSlice <- mmand::rescale(slice, image$getVoxelDimensions()[!axisRelevance] * zoomFactor, mmand::mnKernel())
-        writePng(colourMap(scaledSlice,colourScale,windowLimits)/255, file, fieldOfView[2]/fieldOfView[1])
+        writePng(colourMap(scaledSlice,colourScale,windowLimits), file, fieldOfView[2]/fieldOfView[1])
     }
 }
 
@@ -261,7 +261,7 @@ createProjectionGraphic <- function (image, axis, device = c("internal","png"), 
     else if (device == "png")
     {
         scaledProjection <- mmand::rescale(projection, image$getVoxelDimensions()[imageAxes] * zoomFactor, mmand::mnKernel())
-        writePng(colourMap(scaledProjection,colourScale,windowLimits)/255, file, fieldOfView[2]/fieldOfView[1])
+        writePng(colourMap(scaledProjection,colourScale,windowLimits), file, fieldOfView[2]/fieldOfView[1])
     }
 }
 
@@ -313,7 +313,7 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
     else if (device == "png")
     {
         scaledData <- mmand::rescale(data, image$getVoxelDimensions()[imageAxes] * zoomFactor, mmand::mnKernel())
-        writePng(colourMap(scaledData,colourScale,windowLimits)/255, file, fieldOfView[2]/fieldOfView[1])
+        writePng(colourMap(scaledData,colourScale,windowLimits), file, fieldOfView[2]/fieldOfView[1])
     }
 }
 
@@ -361,17 +361,16 @@ createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sli
                     data <- maximumIntensityProjection(images[[i]], axis)
                 
                 if (i == 1 || is.null(alphaImages[[i]]))
-                    currentImage <- colourMap(data, colourScales[[i]], windowLimits[[i]]) / 255
+                    currentImage <- colourMap(data, colourScales[[i]], windowLimits[[i]])
                 else
                 {
-                    layerImage <- colourMap(data, colourScales[[i]], windowLimits[[i]]) / 255
+                    layerImage <- colourMap(data, colourScales[[i]], windowLimits[[i]])
                     if (modes[i] == "slice")
                         currentAlpha <- alphaImages[[i]]$getSlice(axis, sliceLoc[axis])
                     else if (modes[i] == "projection")
                         currentAlpha <- maximumIntensityProjection(alphaImages[[i]], axis)
-                    currentAlpha <- currentAlpha / max(currentAlpha,na.rm=TRUE)
-                    currentAlpha[currentAlpha < 0] <- 0
-                    currentImage <- rep(1-currentAlpha,3) * currentImage + rep(currentAlpha,3) * layerImage
+                    currentAlpha <- colourMap(currentAlpha, 1)
+                    currentImage <- (1-currentAlpha) * currentImage + currentAlpha * layerImage
                 }
             }
             

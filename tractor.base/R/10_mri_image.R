@@ -6,7 +6,6 @@
 #' be used as a placeholder where a matrix is required but no information is
 #' stored.
 #' 
-#' 
 #' @param object Any object.
 #' @return \code{emptyMatrix} returns the empty matrix, equivalent to
 #'   \code{matrix(NA,0,0)}. \code{is.emptyMatrix} returns \code{TRUE} if its
