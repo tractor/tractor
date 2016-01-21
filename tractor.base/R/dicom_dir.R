@@ -413,6 +413,11 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     invisible (returnValue)
 }
 
+#' Deprecated functions
+#' 
+#' These functions are deprecated, generally in favour of more succint
+#' alternatives.
+#' 
 #' @rdname tractor.base-deprecated
 #' @inheritParams readDicomDirectory
 #' @export

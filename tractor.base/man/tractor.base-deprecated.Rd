@@ -4,6 +4,7 @@
 \alias{newMriImageFromDicomDirectory}
 \alias{newMriImageFromFile}
 \alias{writeMriImageToFile}
+\title{Deprecated functions}
 \usage{
 newMriImageFromDicomDirectory(dicomDir, readDiffusionParams = FALSE,
   untileMosaics = TRUE)
@@ -56,5 +57,9 @@ This is recommended in most circumstances.}
 \item{overwrite}{Logical value: overwrite an existing image file? For
 \code{writeImageFile}, an error will be raised if there is an existing
 file and this is set to FALSE.}
+}
+\description{
+These functions are deprecated, generally in favour of more succint
+alternatives.
 }
 
