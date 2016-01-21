@@ -13,6 +13,15 @@ assumed to be zero. Methods are provided to index into the array in the
 standard way, using matrix or vector indices; and for coercing between
 \code{SparseArray} objects and standard (dense) arrays.
 }
+\section{Fields}{
+
+\describe{
+\item{\code{data}}{Vector of nonzero data values}
+
+\item{\code{coords}}{Integer matrix of nonzero \code{data} locations, one per row}
+
+\item{\code{dims}}{Integer vector of dimensions}
+}}
 \section{Methods}{
 
 \describe{

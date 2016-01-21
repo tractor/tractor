@@ -9,6 +9,24 @@
 This class represents DICOM metadata, which typically contains detailed
 information about the scan parameters and subject.
 }
+\section{Fields}{
+
+\describe{
+\item{\code{source}}{String naming the source file}
+
+\item{\code{tags}}{Data frame of tag information}
+
+\item{\code{tagOffset}}{Starting offset for tags in the file}
+
+\item{\code{dataOffset}}{Starting offset for pixel data in the file}
+
+\item{\code{dataLength}}{Pixel data length}
+
+\item{\code{explicitTypes}}{Logical value indicating whether explicit types are
+used in the file}
+
+\item{\code{endian}}{String naming the endianness of the file}
+}}
 \section{Methods}{
 
 \describe{

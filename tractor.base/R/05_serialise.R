@@ -5,6 +5,8 @@
 #' object, and one for finding all of the methods available for an object. A
 #' serialised object may be deserialised using the
 #' \code{\link{deserialiseReferenceObject}} function.
+#' 
+#' @export
 SerialisableObject <- setRefClass("SerialisableObject", methods=list(
     fields = function ()
     {

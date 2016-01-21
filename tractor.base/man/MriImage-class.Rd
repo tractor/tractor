@@ -13,6 +13,31 @@ on. The group generic functions \code{\link{Math}}, \code{\link{Ops}} and
 \code{\link{Summary}} are defined for this class, as are methods for
 coercing to and from a standard \code{\link{array}}.
 }
+\section{Fields}{
+
+\describe{
+\item{\code{imageDims}}{Integer vector of dimensions}
+
+\item{\code{voxelDims}}{Numeric vector of pixel/voxel spacings}
+
+\item{\code{voxelDimUnits}}{Character vector of spatial and/or temporal spacing
+units. Millimetres and seconds (i.e., c("mm","s")) are typical}
+
+\item{\code{source}}{String naming the file(s) that the image was read from. This
+is reset to the empty string if the image is modified}
+
+\item{\code{origin}}{Numeric vector giving the spatial coordinate origin}
+
+\item{\code{storedXform}}{Numeric matrix giving the NIfTI xform matrix read from
+file, if any}
+
+\item{\code{reordered}}{Logical value indicating whether the image has been
+reordered. See \code{\link{reorderImage}}}
+
+\item{\code{tags}}{Named list of arbitrary DICOM-style tags}
+
+\item{\code{data}}{Sparse or dense array of data, or \code{NULL}}
+}}
 \section{Methods}{
 
 \describe{

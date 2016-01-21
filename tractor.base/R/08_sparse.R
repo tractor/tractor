@@ -6,6 +6,12 @@
 #' assumed to be zero. Methods are provided to index into the array in the
 #' standard way, using matrix or vector indices; and for coercing between
 #' \code{SparseArray} objects and standard (dense) arrays.
+#' 
+#' @field data Vector of nonzero data values
+#' @field coords Integer matrix of nonzero \code{data} locations, one per row
+#' @field dims Integer vector of dimensions
+#' 
+#' @export
 SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=list(data="ANY",coords="matrix",dims="integer"), methods=list(
     initialize = function (...)
     {

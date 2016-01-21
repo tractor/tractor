@@ -41,6 +41,22 @@ setClassUnion("MriImageData", c("SparseArray","array","NULL"))
 #' on. The group generic functions \code{\link{Math}}, \code{\link{Ops}} and
 #' \code{\link{Summary}} are defined for this class, as are methods for
 #' coercing to and from a standard \code{\link{array}}.
+#' 
+#' @field imageDims Integer vector of dimensions
+#' @field voxelDims Numeric vector of pixel/voxel spacings
+#' @field voxelDimUnits Character vector of spatial and/or temporal spacing
+#'   units. Millimetres and seconds (i.e., c("mm","s")) are typical
+#' @field source String naming the file(s) that the image was read from. This
+#'   is reset to the empty string if the image is modified
+#' @field origin Numeric vector giving the spatial coordinate origin
+#' @field storedXform Numeric matrix giving the NIfTI xform matrix read from
+#'   file, if any
+#' @field reordered Logical value indicating whether the image has been
+#'   reordered. See \code{\link{reorderImage}}
+#' @field tags Named list of arbitrary DICOM-style tags
+#' @field data Sparse or dense array of data, or \code{NULL}
+#' 
+#' @export
 MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",storedXform="matrix",reordered="logical",tags="list",data="MriImageData"), methods=list(
     initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, storedXform = emptyMatrix(), reordered = TRUE, tags = list(), data = NULL, ...)
     {

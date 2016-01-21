@@ -2,6 +2,17 @@
 #' 
 #' This class represents DICOM metadata, which typically contains detailed
 #' information about the scan parameters and subject.
+#' 
+#' @field source String naming the source file
+#' @field tags Data frame of tag information
+#' @field tagOffset Starting offset for tags in the file
+#' @field dataOffset Starting offset for pixel data in the file
+#' @field dataLength Pixel data length
+#' @field explicitTypes Logical value indicating whether explicit types are
+#'   used in the file
+#' @field endian String naming the endianness of the file
+#' 
+#' @export
 DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(source="character",tags="data.frame",tagOffset="integer",dataOffset="integer",dataLength="integer",explicitTypes="logical",endian="character"), methods=list(
     getDataLength = function () { return (dataLength) },
     
