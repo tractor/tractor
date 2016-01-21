@@ -130,13 +130,13 @@ maximumIntensityProjection <- function (image, axis)
     
     planeAxes <- setdiff(1:nDims, axis)
     
-    if (image$isSparse() && nDims == 3)
+    if (image$isSparse())
     {
         # 2D MriImage#apply() is expensive for sparse data; this is much faster
         dims <- image$getDimensions()
         coords <- image$getData()$getCoordinates()
         data <- image$getData()$getData()
-        factors <- list(factor(coords[,planeAxes[1]],levels=seq_len(dims[planeAxes[1]])), factor(coords[,planeAxes[2]],levels=seq_len(dims[planeAxes[2]])))
+        factors <- lapply(seq_len(nDims-1), function(i) factor(coords[,planeAxes[i]],levels=seq_len(dims[planeAxes[i]])))
         result <- tapply(data, factors, max)
     }
     else
