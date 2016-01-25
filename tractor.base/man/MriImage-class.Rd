@@ -42,6 +42,8 @@ coercing to and from a standard \code{\link{array}}.
 
 \item{\code{setSource(newSource)}}{Update the source of the image}
 
+\item{\code{setXform(newXform)}}{Update the xform matrix associated with the image}
+
 \item{\code{threshold(level, defaultValue = 0)}}{Threshold the image by setting values below the threshold level to zero}
 }}
 
