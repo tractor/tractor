@@ -8,7 +8,8 @@
 \title{Creating MriImage objects from data}
 \usage{
 asMriImage(data, templateImage = nilObject(), imageDims = NA,
-  voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA)
+  voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA,
+  reordered = NA)
 
 extractMriImage(image, dim, loc)
 
@@ -22,13 +23,10 @@ reorderMriImage(image)
 \item{templateImage}{An optional \code{MriImage} object, to be used as a
 metadata template.}
 
-\item{imageDims, voxelDims, voxelDimUnits, origin, tags}{Metadata for the new
-image object. These values override any from the metadata object or data
-array. \code{imageDims} is an integer vector of dimensions;
-\code{voxelDims} is a numeric vector of pixel spacings;
-\code{voxelDimUnits} is a character vector of length up to two, giving the
-spatial and temporal units of the spacings; \code{origin} is a numeric
-vector giving the coordinate origin; \code{tags} is a named list of tags.}
+\item{imageDims, voxelDims, voxelDimUnits, origin, tags, reordered}{Metadata for
+the new image object. These values override any from the metadata object
+or data array. See \code{\linkS4class{MriImage}} class documentation for
+details.}
 
 \item{image}{An \code{MriImage} object.}
 

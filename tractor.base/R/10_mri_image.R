@@ -60,14 +60,16 @@ setClassUnion("MriImageData", c("SparseArray","array","NULL"))
 MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",storedXform="matrix",reordered="logical",tags="list",data="MriImageData"), methods=list(
     initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, storedXform = emptyMatrix(), reordered = TRUE, tags = list(), data = NULL, ...)
     {
-        if (length(tags) != 0 && !all(c("keys","values") %in% names(tags)))
-            report(OL$Error, "Tag list must be empty, or else contain \"keys\" and \"values\" components")
         if (is.null(voxelDimUnits))
             voxelDimUnits <- "unknown"
         
         # For backwards compatibility
         if (source == "internal")
             source <- ""
+        
+        # For backwards compatibility
+        if (length(tags) == 2 && all(c("keys","values") %in% names(tags)))
+            tags <- structure(as.list(tags$values), names=tags$keys)
         
         if (!is.null(imageDims) && !is.null(data) && !equivalent(imageDims,dim(data)))
             dim(data) <- imageDims
@@ -228,19 +230,16 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getStoredXformMatrix = function () { return (storedXform) },
     
-    getTag = function (key)
+    getTags = function (keys = NULL)
     {
-        "Retrieve the value of a tag with the specified key"
-        if (!is.null(tags$keys) && !is.null(tags$values) && any(key == tags$keys))
-        {
-            rawValues <- tags$values[which(key == tags$keys)]
-            return (strsplit(implode(rawValues,sep=""), "\\s*\\\\\\s*", perl=TRUE))
-        }
+        "Retrieve some or all of the tags stored with the image"
+        if (is.null(keys))
+            return (tags)
+        else if (length(keys) == 1)
+            return (tags[[keys]])
         else
-            return (NA_character_)
+            return (tags[keys])
     },
-    
-    getTags = function () { return (tags) },
     
     getVoxelDimensions = function () { return (voxelDims) },
     
@@ -283,6 +282,8 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         .self$map(function(x,y) ifelse(y==0,0,x), maskImage)
     },
     
+    nTags = function () { return (length(tags)) },
+    
     setOrigin = function (newOrigin)
     {
         "Update the origin of the image"
@@ -304,6 +305,17 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         invisible(.self)
     },
     
+    setXform = function (newXform)
+    {
+        "Update the xform matrix associated with the image"
+        if (is.matrix(newXform) && equivalent(dim(newXform),c(4,4)))
+        {
+            .self$storedXform  <- newXform
+            .self$setSource(NULL)
+        }
+        invisible(.self)
+    },
+    
     summarise = function ()
     {
         spatialUnit <- voxelDimUnits["spatial"]
@@ -316,8 +328,12 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         if (all(voxelDimUnits == "unknown"))
             voxelDimString <- paste(voxelDimString, "(units unknown)", sep=" ")
         
+        tagNames <- names(tags)
+        if (length(tagNames) == 0)
+            tagNames <- "(none)"
+        
         labels <- c("Image source", "Image dimensions", "Voxel dimensions", "Coordinate origin", "Additional tags")
-        values <- c(ifelse(source=="","internal",source), paste(implode(imageDims, sep=" x "),"voxels",sep=" "), voxelDimString, paste("(",implode(round(origin,2), sep=","),")",sep=""), length(tags$keys))
+        values <- c(ifelse(source=="","internal",source), paste(implode(imageDims, sep=" x "),"voxels",sep=" "), voxelDimString, paste("(",implode(round(origin,2), sep=","),")",sep=""), implode(tagNames,sep=", "))
         
         if (!.self$isEmpty())
         {
@@ -629,13 +645,10 @@ setMethod("Summary", "MriImage", Summary.MriImage)
 #' @param data An array of pixel/voxel data.
 #' @param templateImage An optional \code{MriImage} object, to be used as a
 #'   metadata template.
-#' @param imageDims,voxelDims,voxelDimUnits,origin,tags Metadata for the new
-#'   image object. These values override any from the metadata object or data
-#'   array. \code{imageDims} is an integer vector of dimensions;
-#'   \code{voxelDims} is a numeric vector of pixel spacings;
-#'   \code{voxelDimUnits} is a character vector of length up to two, giving the
-#'   spatial and temporal units of the spacings; \code{origin} is a numeric
-#'   vector giving the coordinate origin; \code{tags} is a named list of tags.
+#' @param imageDims,voxelDims,voxelDimUnits,origin,tags,reordered Metadata for
+#'   the new image object. These values override any from the metadata object
+#'   or data array. See \code{\linkS4class{MriImage}} class documentation for
+#'   details.
 #' @param image An \code{MriImage} object.
 #' @param dim,loc The dimension and location along that dimension for which
 #'   data should be extracted.
@@ -653,7 +666,7 @@ setMethod("Summary", "MriImage", Summary.MriImage)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-asMriImage <- function (data, templateImage = nilObject(), imageDims = NA, voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA)
+asMriImage <- function (data, templateImage = nilObject(), imageDims = NA, voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA, reordered = NA)
 {
     # NB: Be careful when changing the behaviour of this function
     # Quite a bit of other code relies on various aspects of its semantics
