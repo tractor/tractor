@@ -1,8 +1,9 @@
-transformImage <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, finalInterpolation = 1)
+transformImage <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, interpolation = 1)
 {
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified transform is not a Transformation object")
     
+    init <- NULL
     options <- list(nLevels=0, verbose=FALSE)
     
     availableTypes <- transform$getTypes()
@@ -11,12 +12,12 @@ transformImage <- function (transform, newImage = NULL, index = 1, preferAffine 
     else if (reverse && ("reverse-nonlinear" %in% availableTypes))
     {
         type <- "nonlinear"
-        options$initControl <- transform$getReverseControlPointImages(index)
+        init <- transform$getReverseControlPointImages(index)
     }
     else if (!reverse && ("nonlinear" %in% availableTypes))
     {
         type <- "nonlinear"
-        options$initControl <- transform$getControlPointImages(index)
+        init <- transform$getControlPointImages(index)
     }
     else if ("affine" %in% availableTypes)
         type <- "affine"
@@ -37,15 +38,15 @@ transformImage <- function (transform, newImage = NULL, index = 1, preferAffine 
     
     if (type == "affine")
     {
-        initAffine <- transform$getAffineMatrices(index)
+        init <- transform$getAffineMatrices(index)
         if (reverse)
-            initAffine <- invertAffine(initAffine)
+            init <- invertAffine(init)
         options$scope <- "affine"
         
-        result <- registerImagesWithNiftyreg(sourceImage, targetImage, initAffine=initAffine, types="affine", estimateOnly=FALSE, finalInterpolation=finalInterpolation, linearOptions=options)
+        result <- registerImagesWithNiftyreg(sourceImage, targetImage, init=init, types="affine", estimateOnly=FALSE, interpolation=interpolation, linearOptions=options)
     }
     else
-        result <- registerImagesWithNiftyreg(sourceImage, targetImage, types="nonlinear", estimateOnly=FALSE, finalInterpolation=finalInterpolation, nonlinearOptions=options)
+        result <- registerImagesWithNiftyreg(sourceImage, targetImage, init=init, types="nonlinear", estimateOnly=FALSE, interpolation=interpolation, nonlinearOptions=options)
     
     return (result$transformedImage)
 }
@@ -70,7 +71,7 @@ transformParcellation <- function (transform, parcellation, threshold = 0.5, ind
     for (i in uniqueIndices)
     {
         currentImage <- parcellation$image$copy()$map(function(x) ifelse(x==i,1,0))
-        transformedImage <- transformImage(transform, currentImage, index=index, preferAffine=preferAffine, reverse=reverse, finalInterpolation=1)
+        transformedImage <- transformImage(transform, currentImage, index=index, preferAffine=preferAffine, reverse=reverse, interpolation=1)
         toUpdate <- which(transformedImage$getData() > maxValues)
         if (length(toUpdate) > 0)
         {
@@ -120,7 +121,7 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
     }
     
     if (!voxel)
-        points <- transformWorldToVoxel(points, sourceImage)
+        points <- worldToVoxel(points, sourceImage)
         
     if (type == "affine")
     {
@@ -128,16 +129,16 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
         if (reverse)
             affine <- invertAffine(affine)
         
-        newPoints <- transformWithAffine(points, affine, sourceImage, targetImage)
+        newPoints <- applyTransform(affine, points)
         
         if (nearest)
             newPoints <- round(newPoints)
     }
     else
-        newPoints <- transformWithControlPoints(points, controlPoints, sourceImage, targetImage, nearest=nearest)
+        newPoints <- applyTransform(controlPoints, points, nearest=nearest)
     
     if (!voxel)
-        newPoints <- transformVoxelToWorld(newPoints, targetImage)
+        newPoints <- voxelToWorld(newPoints, targetImage)
     
     return (newPoints)
 }

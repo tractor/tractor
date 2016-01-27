@@ -64,7 +64,7 @@ matchRegions <- function (regions, parcellation, labels = FALSE)
     
     findRegion <- function (name)
     {
-        if (isValidAs(name, "integer"))
+        if (name %~% ore(integer))
             return (parcellation$regions$index == as.integer(name))
         else
         {

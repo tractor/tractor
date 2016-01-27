@@ -1,6 +1,6 @@
 isTemporaryFile <- function (fileName)
 {
-    return (regexpr(tempdir(), fileName, fixed=TRUE) == 1)
+    return (fileName %~% ore(tempdir(),syntax="fixed"))
 }
 
 getImageAsFileName <- function (image, allowNull = FALSE, allowMgh = FALSE)
