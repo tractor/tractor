@@ -11,12 +11,12 @@ transformImage <- function (transform, newImage = NULL, index = 1, preferAffine 
     else if (reverse && ("reverse-nonlinear" %in% availableTypes))
     {
         type <- "nonlinear"
-        options$initControl <- transform$getReverseControlPointImage(index)
+        options$initControl <- transform$getReverseControlPointImages(index)
     }
     else if (!reverse && ("nonlinear" %in% availableTypes))
     {
         type <- "nonlinear"
-        options$initControl <- transform$getControlPointImage(index)
+        options$initControl <- transform$getControlPointImages(index)
     }
     else if ("affine" %in% availableTypes)
         type <- "affine"
@@ -37,7 +37,7 @@ transformImage <- function (transform, newImage = NULL, index = 1, preferAffine 
     
     if (type == "affine")
     {
-        initAffine <- transform$getAffineMatrix(index)
+        initAffine <- transform$getAffineMatrices(index)
         if (reverse)
             initAffine <- invertAffine(initAffine)
         options$scope <- "affine"
@@ -96,12 +96,12 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
     else if (reverse && ("reverse-nonlinear" %in% availableTypes))
     {
         type <- "nonlinear"
-        controlPoints <- transform$getReverseControlPointImage(index)
+        controlPoints <- transform$getReverseControlPointImages(index)
     }
     else if (!reverse && ("nonlinear" %in% availableTypes))
     {
         type <- "nonlinear"
-        controlPoints <- transform$getControlPointImage(index)
+        controlPoints <- transform$getControlPointImages(index)
     }
     else if ("affine" %in% availableTypes)
         type <- "affine"
@@ -124,7 +124,7 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
         
     if (type == "affine")
     {
-        affine <- transform$getAffineMatrix(index)
+        affine <- transform$getAffineMatrices(index)
         if (reverse)
             affine <- invertAffine(affine)
         

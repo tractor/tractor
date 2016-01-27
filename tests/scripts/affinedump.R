@@ -8,7 +8,7 @@ runExperiment <- function ()
     
     transform <- deserialiseReferenceObject(Arguments[1])
     
-    strings <- format(transform$getAffineMatrix(1), digits=5)
+    strings <- format(transform$getAffineMatrices(1), digits=5)
     storage.mode(strings) <- "double"
     print(strings)
     
