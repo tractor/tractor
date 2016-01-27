@@ -408,7 +408,11 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     
     returnValue <- list(image=image, seriesDescriptions=unique(info$seriesDescription))
     if (readDiffusionParams)
+    {
+        # Invert Y direction again
+        volumeBVectors[2,] <- -volumeBVectors[2,]
         returnValue <- c(returnValue, list(bValues=volumeBValues, bVectors=volumeBVectors))
+    }
     
     invisible (returnValue)
 }
