@@ -715,6 +715,9 @@ asMriImage <- function (data, templateImage = nilObject(), imageDims = NA, voxel
 #' @export
 extractMriImage <- function (image, dim, loc)
 {
+    if (!is(image, "MriImage"))
+        report(OL$Error, "The specified image is not an MriImage object")
+    
     newData <- image$getSlice(dim, loc)
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
     
@@ -755,6 +758,9 @@ trimMriImage <- function (image, clearance = 4)
 #' @export
 reorderMriImage <- function (image)
 {
+    if (!is(image, "MriImage"))
+        report(OL$Error, "The specified image is not an MriImage object")
+    
     # Image is already reordered
     if (image$isReordered())
         return (image)
