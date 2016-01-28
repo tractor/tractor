@@ -52,7 +52,7 @@ runExperiment <- function ()
             
             if (is.null(dicomDir))
                 dicomDir <- session$getDirectory()
-            else if (dicomDir %!~% "^([A-Za-z]:)?/")
+            else if (!(dicomDir %~% "^([A-Za-z]:)?/"))
                 dicomDir <- file.path(session$getDirectory(), dicomDir)
             dicomDir <- gsub("//+", "/", dicomDir, perl=TRUE)
 

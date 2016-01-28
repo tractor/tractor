@@ -15,7 +15,7 @@ SerialisableObject <- setRefClass("SerialisableObject", methods=list(
         if (is.null(allFieldNames))
             return (NULL)
         else
-            return (allFieldNames[allFieldNames %!~% "\\.$"])
+            return (allFieldNames[!(allFieldNames %~% "\\.$")])
     },
     
     methods = function () { return (.self$getRefClass()$methods()) },
