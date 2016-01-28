@@ -3,27 +3,43 @@ MriImage <- getRefClass("MriImage")
 Transformation <- setRefClass("Transformation", contains="SerialisableObject", fields=list(sourceImage="MriImage",targetImage="MriImage",affineMatrices="list",controlPointImages="list",reverseControlPointImages="list",method="character"), methods=list(
     initialize = function (sourceImage = MriImage$new(), targetImage = MriImage$new(), affineMatrices = NULL, controlPointImages = NULL, reverseControlPointImages = NULL, method = c("niftyreg","fsl"), ...)
     {
-        initFields(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=as.list(affineMatrices), controlPointImages=as.list(controlPointImages), reverseControlPointImages=as.list(reverseControlPointImages), method=match.arg(method))
+        if (!is.list(affineMatrices))
+            affineMatrices <- list(affineMatrices)
+        affineMatrices <- lapply(affineMatrices, function(x) { mostattributes(x) <- NULL; x })
+        
+        if (!is.list(controlPointImages))
+            controlPointImages <- list(controlPointImages)
+        controlPointImages <- lapply(controlPointImages, as, "MriImage")
+        
+        if (!is.list(reverseControlPointImages))
+            reverseControlPointImages <- list(reverseControlPointImages)
+        reverseControlPointImages <- lapply(reverseControlPointImages, as, "MriImage")
+        
+        initFields(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=match.arg(method))
     },
     
     getAffineMatrices = function (i = NULL)
     {
         if (is.null(i))
             return (affineMatrices)
-        else if (length(i) == 1)
+        else if (length(i) == 1 && i <= length(affineMatrices))
             return (affineMatrices[[i]])
-        else
+        else if (length(i) > 1)
             return (affineMatrices[i])
+        else
+            return (NULL)
     },
     
     getControlPointImages = function (i = NULL)
     {
         if (is.null(i))
             return (controlPointImages)
-        else if (length(i) == 1)
+        else if (length(i) == 1 && i <= length(controlPointImages))
             return (controlPointImages[[i]])
-        else
+        else if (length(i) > 1)
             return (controlPointImages[i])
+        else
+            return (NULL)
     },
     
     getMethod = function () { return (method) },
@@ -32,21 +48,73 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     {
         if (is.null(i))
             return (reverseControlPointImages)
-        else if (length(i) == 1)
+        else if (length(i) == 1 && i <= length(reverseControlPointImages))
             return (reverseControlPointImages[[i]])
-        else
+        else if (length(i) > 1)
             return (reverseControlPointImages[i])
+        else
+            return (NULL)
     },
     
-    getSourceImage = function () { return (sourceImage) },
+    getSourceImage = function (i = NULL, reverse = FALSE)
+    {
+        if (reverse)
+            return (targetImage)
+        else if (is.null(i) || .self$nRegistrations() == 1)
+            return (sourceImage)
+        else
+            return (extractMriImage(sourceImage, ndim(sourceImage), i))
+    },
     
-    getTargetImage = function () { return (targetImage) },
+    getTargetImage = function (i = NULL, reverse = FALSE)
+    {
+        if (reverse)
+            return (.self$getSourceImage(i))
+        else
+            return (sourceImage)
+    },
+    
+    getTransformObject = function (i = 1, reverse = FALSE, preferAffine = FALSE)
+    {
+        source <- as(.self$getSourceImage(i,reverse), "niftiImage")
+        target <- as(.self$getTargetImage(i,reverse), "niftiImage")
+        
+        if (reverse)
+        {
+            # NB: for the first case, we initially pass the images in reverse order
+            if (!is.null(.self$getAffineMatrices(i)) && (is.null(.self$getReverseControlPointImages(i)) || preferAffine))
+                object <- invertAffine(asAffine(.self$getAffineMatrices(i), target, source))
+            else if (!is.null(.self$getReverseControlPointImages(i)))
+                object <- structure(as(.self$getReverseControlPointImages(i),"niftiImage"), source=source, target=target)
+            else
+                report(OL$Error, "No suitable reverse transform is available for index #{i}")
+        }
+        else
+        {
+            if (!is.null(.self$getAffineMatrices(i)) && (is.null(.self$getControlPointImages(i)) || preferAffine))
+                object <- asAffine(.self$getAffineMatrices(i), source, target)
+            else if (!is.null(.self$getControlPointImages(i)))
+                object <- structure(as(.self$getControlPointImages(i),"niftiImage"), source=source, target=target)
+            else
+                report(OL$Error, "No suitable forward transform is available for index #{i}")
+        }
+        
+        return (object)
+    },
     
     getTypes = function ()
     {
         transformTypeNames <- c("affine", "nonlinear", "reverse-nonlinear")
         availability <- sapply(list(affineMatrices,controlPointImages,reverseControlPointImages), length) > 0
         return (transformTypeNames[availability])
+    },
+    
+    nRegistrations = function ()
+    {
+        if (ndim(sourceImage) == ndim(targetImage))
+            return (1L)
+        else
+            return (length(dim(targetImage)[ndim(targetImage)]))
     },
     
     summarise = function ()
@@ -91,15 +159,9 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
         report(OL$Error, "Exactly one element of the location should be specified")
     inPlaneAxes <- setdiff(1:3, throughPlaneAxis)
     
-    availableTypes <- x$getTypes()
-    affine <- controlPointImage <- NULL
-    
     if (is.null(sourceImage))
     {
-        if (reverse)
-            sourceImage <- x$getTargetImage()
-        else
-            sourceImage <- x$getSourceImage()
+        sourceImage <- x$getSourceImage(index, reverse)
         
         if (sourceImage$isEmpty())
         {
@@ -111,34 +173,17 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
             sourceImage <- reorderMriImage(sourceImage)
     }
     
-    if (preferAffine && ("affine" %in% availableTypes))
-        affine <- x$getAffineMatrices(index)
-    else if (reverse && ("reverse-nonlinear" %in% availableTypes))
-        controlPointImage <- x$getReverseControlPointImages(index)
-    else if (!reverse && ("nonlinear" %in% availableTypes))
-        controlPointImage <- x$getControlPointImages(index)
-    else if ("affine" %in% availableTypes)
-        affine <- x$getAffineMatrices(index)
-    else
-        report(OL$Error, "The specified Transformation object does not contain the necessary information")
-    
-    if (!is.null(affine) && reverse)
-        affine <- invertAffine(affine)
-    
     # Calculate the deformation field
-    if (reverse)
-        deformationField <- deformationField(x$getSourceImage(), affine=affine, controlPointImage=controlPointImage, jacobian=TRUE)
-    else
-        deformationField <- deformationField(x$getTargetImage(), affine=affine, controlPointImage=controlPointImage, jacobian=TRUE)
+    deformationField <- RNiftyReg::deformationField(x$getTransformObject(index,reverse,preferAffine), jacobian=TRUE)
     
     # Find the requested slice of the Jacobian map and deformation field
     jacobian <- reorderMriImage(as(jacobian(deformationField),"MriImage"))$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
     field <- reorderMriImage(as(deformationField,"MriImage"))$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
     
     # Remove the last row and column from the data, because NiftyReg seems to calculate it wrongly
-    fieldDims <- dim(field)
-    jacobian <- jacobian[1:(fieldDims[1]-1),1:(fieldDims[2]-1)]
-    field <- field[1:(fieldDims[1]-1),1:(fieldDims[2]-1),,]
+    # fieldDims <- dim(field)
+    # jacobian <- jacobian[1:(fieldDims[1]-1),1:(fieldDims[2]-1)]
+    # field <- field[1:(fieldDims[1]-1),1:(fieldDims[2]-1),,]
     
     # Convert the field to voxel positions and find the closest plane (on average) in source space
     fieldDims <- dim(field)
@@ -217,7 +262,7 @@ registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetM
     return (result)
 }
 
-resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, origin = NULL, interpolation = 1)
+resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, interpolation = 1)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "Specified image is not a valid MriImage object")
@@ -226,27 +271,28 @@ resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, origin = N
     
     if (is.null(voxelDims))
         voxelDims <- image$getFieldOfView() / imageDims
-    if (is.null(imageDims))
-        imageDims <- round(image$getFieldOfView() / abs(voxelDims))
+    scales <- voxelDims / image$getVoxelDimensions()
     
-    targetImage <- MriImage$new(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=image$getVoxelUnits(), origin=origin)
+    sourceNifti <- as(image, "niftiImage")
+    xfm <- buildAffine(scales=scales, source=sourceNifti)
+    result <- applyTransform(xfm, sourceNifti, interpolation=interpolation)
     
-    options <- list(nLevels=0, verbose=FALSE, scope="affine")
-    result <- registerImagesWithNiftyreg(image, targetImage, init=NULL, types="affine", estimateOnly=FALSE, interpolation=interpolation, linearOptions=options)
-    
-    return (result$transformedImage)
+    return (as(result, "MriImage"))
 }
 
 identityTransformation <- function (sourceImage, targetImage)
 {
-    result <- registerImages(sourceImage, targetImage, method="niftyreg", types="affine", estimateOnly=TRUE, linearOptions=list(nLevels=0,verbose=FALSE))
-    return (result$transform)
+    xfm <- buildAffine(source=sourceImage, target=targetImage)
+    transform <- Transformation$new(sourceImage, targetImage, affineMatrices=list(xfm), method="niftyreg")
+    return (transform)
 }
 
 invertTransformation <- function (transform, quiet = FALSE)
 {
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified transform is not a Transformation object")
+    if (transform$nRegistrations() > 1)
+        report(OL$Error, "Transformations covering more than one registration cannot be directly inverted")
     
     affineMatrices <- controlPointImages <- reverseControlPointImages <- list()
     
@@ -262,7 +308,7 @@ invertTransformation <- function (transform, quiet = FALSE)
     if ("affine" %in% availableTypes)
         affineMatrices <- lapply(transform$getAffineMatrices(), invertAffine)
     
-    newTransform <- Transformation$new(sourceImage=transform$getTargetImage(), targetImage=transform$getSourceImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=transform$getMethod())
+    newTransform <- Transformation$new(transform$getTargetImage(), transform$getSourceImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=transform$getMethod())
     return (newTransform)
 }
 
@@ -287,10 +333,18 @@ mergeTransformations <- function (transforms, newSourceImage)
     if (!all(methods == methods[1]))
         report(OL$Error, "Method must be the same for all transformations")
     
-    affineMatrices <- do.call("c", lapply(transforms, function(x) x$getAffineMatrices()))
-    controlPointImages <- do.call("c", lapply(transforms, function(x) x$getControlPointImages()))
-    reverseControlPointImages <- do.call("c", lapply(transforms, function(x) x$getReverseControlPointImages()))
+    pad <- function (x, len)
+    {
+        if (length(x) == len)
+            x
+        else
+            c(x, rep(list(NULL),len-length(x)))
+    }
     
-    transform <- Transformation$new(sourceImage=newSourceImage, targetImage=transforms[[1]]$getTargetImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=methods[1])
+    affineMatrices <- do.call("c", lapply(transforms, function(x) pad(x$getAffineMatrices(),x$nRegistrations())))
+    controlPointImages <- do.call("c", lapply(transforms, function(x) pad(x$getControlPointImages(),x$nRegistrations())))
+    reverseControlPointImages <- do.call("c", lapply(transforms, function(x) pad(x$getReverseControlPointImages(),x$nRegistrations())))
+    
+    transform <- Transformation$new(newSourceImage, transforms[[1]]$getTargetImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=methods[1])
     return (transform)
 }
