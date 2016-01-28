@@ -9,6 +9,6 @@ INFO: [x2] Data matrix is transposed relative to acquisition matrix
  Image dimensions : 2 x 224 x 256 voxels
  Voxel dimensions : 1 x 1 x 1 mm
 Coordinate origin : (19.25,95.05,134.78)
-  Additional tags : 0
+  Additional tags : (none)
        Sparseness : 0.84% (dense storage)
 Value of image "t1" at location (1,145,139) is 205
