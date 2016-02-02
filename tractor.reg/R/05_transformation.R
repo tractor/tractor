@@ -5,15 +5,21 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     {
         if (!is.list(affineMatrices))
             affineMatrices <- list(affineMatrices)
-        affineMatrices <- lapply(affineMatrices, function(x) { mostattributes(x) <- NULL; x })
+        affineMatrices <- lapply(affineMatrices, function(x) {
+            # For backwards compatibility, handle FSL-type affines
+            if (isTRUE(attr(x,"affineType") == "fsl"))
+                x <- RNiftyReg:::convertAffine(x, as(sourceImage,"niftiImage"), as(targetImage,"niftiImage"), "niftyreg")
+            mostattributes(x) <- NULL
+            return (x)
+        })
         
         if (!is.list(controlPointImages))
             controlPointImages <- list(controlPointImages)
-        controlPointImages <- lapply(controlPointImages, as, "MriImage")
+        controlPointImages <- lapply(controlPointImages, function(x) { if (is.null(x)) x else as(x,"MriImage") })
         
         if (!is.list(reverseControlPointImages))
             reverseControlPointImages <- list(reverseControlPointImages)
-        reverseControlPointImages <- lapply(reverseControlPointImages, as, "MriImage")
+        reverseControlPointImages <- lapply(reverseControlPointImages, function(x) { if (is.null(x)) x else as(x,"MriImage") })
         
         initFields(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=match.arg(method))
     },
@@ -74,10 +80,11 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
             return (sourceImage)
     },
     
-    getTransformObject = function (i = 1, reverse = FALSE, preferAffine = FALSE)
+    getTransformObject = function (i = 1, reverse = FALSE, preferAffine = FALSE, errorIfMissing = TRUE)
     {
         source <- as(.self$getSourceImage(i,reverse), "niftiImage")
         target <- as(.self$getTargetImage(i,reverse), "niftiImage")
+        object <- NULL
         
         if (reverse)
         {
@@ -86,7 +93,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
                 object <- invertAffine(asAffine(.self$getAffineMatrices(i), target, source))
             else if (!is.null(.self$getReverseControlPointImages(i)))
                 object <- structure(as(.self$getReverseControlPointImages(i),"niftiImage"), source=source, target=target)
-            else
+            else if (errorIfMissing)
                 report(OL$Error, "No suitable reverse transform is available for index #{i}")
         }
         else
@@ -95,7 +102,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
                 object <- asAffine(.self$getAffineMatrices(i), source, target)
             else if (!is.null(.self$getControlPointImages(i)))
                 object <- structure(as(.self$getControlPointImages(i),"niftiImage"), source=source, target=target)
-            else
+            else if (errorIfMissing)
                 report(OL$Error, "No suitable forward transform is available for index #{i}")
         }
         
@@ -105,7 +112,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     getTypes = function ()
     {
         transformTypeNames <- c("affine", "nonlinear", "reverse-nonlinear")
-        availability <- sapply(list(affineMatrices,controlPointImages,reverseControlPointImages), length) > 0
+        availability <- sapply(list(affineMatrices,controlPointImages,reverseControlPointImages), function(x) sum(!sapply(x,is.null))) > 0
         return (transformTypeNames[availability])
     },
     

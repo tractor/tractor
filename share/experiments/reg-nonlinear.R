@@ -8,18 +8,18 @@ runExperiment <- function ()
     interpolation <- getConfigVariable("Interpolation", "trilinear", validValues=c("nearestneighbour","trilinear","spline"))
     initAffineFile <- getConfigVariable("InitialAffineFile", NULL, "character")
     initControlFile <- getConfigVariable("InitialControlPointFile", NULL, "character")
+    sourceMaskFile <- getConfigVariable("SourceMaskFile", NULL, "character")
     targetMaskFile <- getConfigVariable("TargetMaskFile", NULL, "character")
     estimateOnly <- getConfigVariable("EstimateOnly", FALSE)
     transformName <- getConfigVariable("TransformationName", NULL, "character")
     
-    symmetric <- getConfigVariable("Symmetric", FALSE)
-    sourceMaskFile <- getConfigVariable("SourceMaskFile", NULL, "character")
+    symmetric <- getConfigVariable("Symmetric", TRUE)
     nLevels <- getConfigVariable("Levels", 3L, "integer")
     maxIterations <- getConfigVariable("MaximumIterations", 300L, "integer")
     nBins <- getConfigVariable("HistogramBins", 64L, "integer")
-    bendingEnergyWeight <- getConfigVariable("BendingEnergyWeight", 0.005)
+    bendingEnergyWeight <- getConfigVariable("BendingEnergyWeight", 0.001)
+    linearEnergyWeight <- getConfigVariable("LinearEnergyWeight", 0.01)
     jacobianWeight <- getConfigVariable("JacobianWeight", 0)
-    inverseConsistencyWeight <- getConfigVariable("InverseConsistencyWeight", 0.01)
     finalSpacing <- getConfigVariable("ControlPointSpacing", 5L, "integer")
     spacingUnit <- getConfigVariable("SpacingUnit", "vox", validValues=c("vox","mm"))
     
@@ -33,7 +33,7 @@ runExperiment <- function ()
         sourceMaskFile <- NULL
     }
     
-    initAffine <- initControl <- NULL
+    init <- NULL
     
     if (is.null(transformName))
     {
@@ -52,33 +52,26 @@ runExperiment <- function ()
         else if (!symmetric && is.null(initControlFile) && "nonlinear" %in% transform$getTypes())
         {
             report(OL$Info, "Using control point image stored in transformation for initialisation")
-            initControl <- transform$getControlPointImages()
+            init <- lapply(seq_len(transform$nRegistrations()), function(i) transform$getTransformObject(i,errorIfMissing=FALSE))
         }
         else if (is.null(initControlFile) && is.null(initAffineFile) && "affine" %in% transform$getTypes())
         {
             report(OL$Info, "Using affine matrix stored in transformation for initialisation")
-            initAffine <- transform$getAffineMatrices()
+            init <- lapply(seq_len(transform$nRegistrations()), function(i) transform$getTransformObject(i,preferAffine=TRUE,errorIfMissing=FALSE))
         }
     }
     
     if (!is.null(initControlFile) && !symmetric)
-        initControl <- readImageFile(initControlFile)
+        init <- readImageFile(initControlFile)
     else if (!is.null(initAffineFile))
-    {
-        initAffine <- RNiftyReg::readAffine(initAffineFile)
-        if (is.null(attr(initAffine,"affineType")))
-        {
-            report(OL$Warning, "Assuming that stored affine matrix uses the NiftyReg convention")
-            attr(initAffine,"affineType") <- "niftyreg"
-        }
-    }
+        init <- RNiftyReg::readAffine(initAffineFile)
     
     types <- "nonlinear"
     if (symmetric)
         types <- c("reverse-nonlinear", types)
     
     report(OL$Info, "Performing registration")
-    result <- registerImages(Arguments[1], Arguments[2], targetMask=targetMaskFile, method="niftyreg", types=types, estimateOnly=estimateOnly, finalInterpolation=interpolation, cache="ignore", initAffine=initAffine, nonlinearOptions=list(initControl=initControl,nLevels=nLevels,maxIterations=maxIterations,nBins=nBins,bendingEnergyWeight=bendingEnergyWeight,jacobianWeight=jacobianWeight,inverseConsistencyWeight=inverseConsistencyWeight,finalSpacing=rep(finalSpacing,3),spacingUnit=spacingUnit))
+    result <- registerImages(Arguments[1], Arguments[2], sourceMask=sourceMaskFile, targetMask=targetMaskFile, method="niftyreg", types=types, estimateOnly=estimateOnly, interpolation=interpolation, cache="ignore", init=init, nonlinearOptions=list(nLevels=nLevels,maxIterations=maxIterations,nBins=nBins,bendingEnergyWeight=bendingEnergyWeight,linearEnergyWeight=linearEnergyWeight,jacobianWeight=jacobianWeight,finalSpacing=rep(finalSpacing,3),spacingUnit=spacingUnit))
     
     result$transform$serialise(transformName)
     

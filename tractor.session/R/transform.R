@@ -51,10 +51,10 @@
     return (transform)
 }
 
-transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, preferAffine = FALSE, finalInterpolation = 1)
+transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, preferAffine = FALSE, interpolation = 1)
 {
     transform <- .findTransformation(image, session, newSpace, oldSpace)
-    newImage <- tractor.reg::transformImage(transform, image, preferAffine=preferAffine, finalInterpolation=finalInterpolation)
+    newImage <- tractor.reg::transformImage(transform, image, preferAffine=preferAffine, interpolation=interpolation)
     
     return (newImage)
 }

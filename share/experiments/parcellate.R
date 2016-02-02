@@ -62,7 +62,7 @@ runExperiment <- function ()
         if (types[i] %in% c("desikan-killiany","destrieux"))
         {
             report(OL$Info, "Transforming Freesurfer image back to the original T1w space")
-            currentParcellation$image <- transformImage(freesurferTransform, currentParcellation$image, finalInterpolation=0)
+            currentParcellation$image <- transformImage(freesurferTransform, currentParcellation$image, interpolation=0)
         }
         
         if (is.null(parcellation))
