@@ -3,14 +3,15 @@ MriImage <- getRefClass("MriImage")
 Transformation <- setRefClass("Transformation", contains="SerialisableObject", fields=list(sourceImage="MriImage",targetImage="MriImage",affineMatrices="list",controlPointImages="list",reverseControlPointImages="list",method="character"), methods=list(
     initialize = function (sourceImage = MriImage$new(), targetImage = MriImage$new(), affineMatrices = NULL, controlPointImages = NULL, reverseControlPointImages = NULL, method = c("niftyreg","fsl"), ...)
     {
+        method <- match.arg(method)
+        
         if (!is.list(affineMatrices))
             affineMatrices <- list(affineMatrices)
         affineMatrices <- lapply(affineMatrices, function(x) {
             # For backwards compatibility, handle FSL-type affines
-            if (isTRUE(attr(x,"affineType") == "fsl"))
+            if (method == "fsl" && !("affine" %in% class(x)))
                 x <- RNiftyReg:::convertAffine(x, as(sourceImage,"niftiImage"), as(targetImage,"niftiImage"), "niftyreg")
-            mostattributes(x) <- NULL
-            return (x)
+            return (structure(asAffine(x), source=NULL, target=NULL))
         })
         
         if (!is.list(controlPointImages))
@@ -21,7 +22,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
             reverseControlPointImages <- list(reverseControlPointImages)
         reverseControlPointImages <- lapply(reverseControlPointImages, function(x) { if (is.null(x)) x else as(x,"MriImage") })
         
-        initFields(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=match.arg(method))
+        initFields(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=method)
     },
     
     getAffineMatrices = function (i = NULL)
@@ -77,7 +78,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         if (reverse)
             return (.self$getSourceImage(i))
         else
-            return (sourceImage)
+            return (targetImage)
     },
     
     getTransformObject = function (i = 1, reverse = FALSE, preferAffine = FALSE, errorIfMissing = TRUE)
