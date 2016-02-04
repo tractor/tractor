@@ -208,7 +208,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         if (length(edgeAttribNames) == 0)
             edgeAttribNames <- "(none)"
         
-        values <- c(implode(properties,sep=", "), .self$nVertices(), .self$nEdges(), s("#{.self$getEdgeDensity()*100}%",round=2), implode(vertexAttribNames,sep=", "), implode(edgeAttribNames,sep=", "))
+        values <- c(implode(properties,sep=", "), .self$nVertices(), .self$nEdges(), es("#{.self$getEdgeDensity()*100}%",round=2), implode(vertexAttribNames,sep=", "), implode(edgeAttribNames,sep=", "))
         names(values) <- c("Graph properties", "Number of vertices", "Number of edges", "Edge density", "Vertex attributes", "Edge attributes")
         return (values)
     }
@@ -355,7 +355,7 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radiu
         else
             weightLimits[which.min(abs(weightLimits))] <- 0
         
-        report(OL$Info, s("Setting weight limits of #{weightLimits[1]} to #{weightLimits[2]}",signif=4))
+        report(OL$Info, es("Setting weight limits of #{weightLimits[1]} to #{weightLimits[2]}",signif=4))
     }
     else if (ignoreBeyondLimits)
         weights[weights < weightLimits[1] | weights > weightLimits[2]] <- NA
@@ -478,7 +478,7 @@ levelplot.Graph <- function (x, data = NULL, col = NULL, cex = NULL, order = NUL
         else
             weightLimits[which.min(abs(weightLimits))] <- 0
         
-        report(OL$Info, s("Setting weight limits of #{weightLimits[1]} to #{weightLimits[2]}",signif=4))
+        report(OL$Info, es("Setting weight limits of #{weightLimits[1]} to #{weightLimits[2]}",signif=4))
     }
     else if (ignoreBeyondLimits)
         associationMatrix[associationMatrix < weightLimits[1] | associationMatrix > weightLimits[2]] <- NA

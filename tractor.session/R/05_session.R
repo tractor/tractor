@@ -98,7 +98,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getTransformation = function (sourceSpace, targetSpace)
     {
-        strategy <- transformStrategyCache.[[s("#{sourceSpace}2#{targetSpace}")]]
+        strategy <- transformStrategyCache.[[es("#{sourceSpace}2#{targetSpace}")]]
         if ("reverse" %in% strategy)
             return (tractor.reg::invertTransformation(.self$getTransformation(targetSpace, sourceSpace)))
         else
