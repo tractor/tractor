@@ -1,2 +1,6 @@
 .DS_Store
 /install.log
+/*.Rcheck
+/*.tar.gz
+/*.zip
+
