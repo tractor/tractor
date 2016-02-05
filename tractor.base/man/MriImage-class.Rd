@@ -57,7 +57,7 @@ reordered. See \code{\link{reorderImage}}}
 
 \item{\code{getSparseness()}}{Obtain the proportion of zeroes in the image}
 
-\item{\code{getTag(key)}}{Retrieve the value of a tag with the specified key}
+\item{\code{getTags(keys = NULL)}}{Retrieve some or all of the tags stored with the image}
 
 \item{\code{map(fun, ..., sparse = NULL)}}{Replace the current data with the result of a function}
 

@@ -29,3 +29,104 @@ writeMriImageToFile <- function (image, fileName = NULL, fileType = NA, overwrit
     .Deprecated("writeImageFile", "tractor.base")
     writeImageFile(image, fileName, fileType, overwrite)
 }
+
+#' @rdname tractor.base-deprecated
+#' @inheritParams extractMriImage
+#' @export
+newMriImageByExtraction <- function (image, dim, loc)
+{
+    .Deprecated("extractMriImage", "tractor.base")
+    extractMriImage(image, dim, loc)
+}
+
+#' @rdname tractor.base-deprecated
+#' @inheritParams extractMriImage
+#' @export
+extractDataFromMriImage <- function (image, dim, loc)
+{
+    .Deprecated("MriImage#getSlice", "tractor.base")
+    image$getSlice(dim, loc)
+}
+
+#' @rdname tractor.base-deprecated
+#' @inheritParams reorderMriImage
+#' @export
+newMriImageByReordering <- function (image)
+{
+    .Deprecated("reorderMriImage", "tractor.base")
+    reorderMriImage(image)
+}
+
+#' @rdname tractor.base-deprecated
+#' @inheritParams trimMriImage
+#' @export
+newMriImageByTrimming <- function (image, clearance = 4)
+{
+    .Deprecated("trimMriImage", "tractor.base")
+    trimMriImage(image, clearance)
+}
+
+#' @rdname tractor.base-deprecated
+#' @inheritParams asMriImage
+#' @export
+newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = NA, voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA)
+{
+    .Deprecated("asMriImage", "tractor.base")
+    asMriImage(data, templateImage, imageDims, voxelDims, voxelDimUnits, origin, tags)
+}
+
+#' @rdname tractor.base-deprecated
+#' @param image,image1,image2 \code{MriImage} objects.
+#' @param fun A function, of the appropriate arity.
+#' @export
+newMriImageWithSimpleFunction <- function (image, fun, ...)
+{
+    .Deprecated("MriImage#map", "tractor.base")
+    image$copy()$map(fun, ...)
+}
+
+#' @rdname tractor.base-deprecated
+#' @export
+newMriImageWithBinaryFunction <- function (image1, image2, fun, ...)
+{
+    .Deprecated("MriImage#map", "tractor.base")
+    image1$copy()$map(fun, image2, ...)
+}
+
+#' @rdname tractor.base-deprecated
+#' @param mask An array whose nonzero voxel locations will be masked in.
+#' @export
+newMriImageByMasking <- function (image, mask)
+{
+    .Deprecated("MriImage#mask", "tractor.base")
+    image$copy()$mask(mask)
+}
+
+#' @rdname tractor.base-deprecated
+#' @param level The threshold level, below which all voxels will be reset.
+#' @param defaultValue The value to reset to.
+#' @export
+newMriImageByThresholding <- function (image, level, defaultValue = 0)
+{
+    .Deprecated("MriImage#threshold", "tractor.base")
+    image$copy()$threshold(level, defaultValue)
+}
+
+#' @rdname tractor.base-deprecated
+#' @inheritParams readDicomFile
+#' @param dictionary Ignored.
+#' @export
+newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary = NULL, stopTag = NULL, ignoreTransferSyntax = FALSE)
+{
+    .Deprecated("readDicomFile", "tractor.base")
+    readDicomFile(fileName, checkFormat, stopTag=stopTag, ignoreTransferSyntax=ignoreTransferSyntax)
+}
+
+#' @rdname tractor.base-deprecated
+#' @inheritParams removeImageFiles
+#' @export
+removeImageFilesWithName <- function (fileName)
+{
+    .Deprecated("removeImageFiles", "tractor.base")
+    removeImageFiles(fileName)
+}

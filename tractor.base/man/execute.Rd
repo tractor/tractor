@@ -7,14 +7,14 @@
 \usage{
 locateExecutable(fileName, errorIfMissing = TRUE)
 
-execute(executable, paramString = NULL, errorOnFail = TRUE,
-  silent = FALSE, ...)
+execute(executable, params = NULL, errorOnFail = TRUE, silent = FALSE,
+  ...)
 }
 \arguments{
 \item{executable, fileName}{Name of the executable to run.}
 
-\item{paramString}{A character string giving the parameters to pass to the
-executable, if any.}
+\item{params}{A character vector giving the parameters to pass to the
+executable, if any. Elements will be separated by a space.}
 
 \item{errorOnFail, errorIfMissing}{Logical value: should an error be produced
 if the executable can't be found?}

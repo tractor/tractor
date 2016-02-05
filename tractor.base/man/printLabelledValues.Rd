@@ -14,7 +14,7 @@ printLabelledValues(labels, values, outputLevel = OL$Info,
 \code{labels}.}
 
 \item{outputLevel}{The output level to print the output to. See
-\code{\link{setOutputLevel}}, in the reportr package.}
+\code{setOutputLevel}, in the reportr package.}
 
 \item{leftJustify}{Logical value: if \code{TRUE} the labels will be left
 justified; otherwise they will be right justified.}

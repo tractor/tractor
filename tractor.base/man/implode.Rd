@@ -27,7 +27,6 @@ Create a character string by concatenating the elements of a vector, using a
 separator and optional final separator.
 }
 \examples{
-
 implode(1:3, ", ")  # "1, 2, 3"
 implode(1:3, ", ", " and ")  # "1, 2 and 3"
 implode(1:2, ", ", " and ")  # "1 and 2"

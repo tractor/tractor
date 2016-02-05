@@ -3,15 +3,14 @@
 #' Create a character string by concatenating the elements of a vector, using a
 #' separator and optional final separator.
 #' 
-#' 
 #' @param strings A vector, which will be coerced to mode \code{character}.
 #' @param sep A unit length character vector giving the separator to insert
-#' between elements.
+#'   between elements.
 #' @param finalSep An optional unit length character vector giving the
-#' separator to insert between the final two elements.
+#'   separator to insert between the final two elements.
 #' @param ranges Logical value. If \code{TRUE} and \code{strings} can be
-#' interpreted as integers, collapse runs of consecutive numbers into range
-#' notation.
+#'   interpreted as integers, collapse runs of consecutive numbers into range
+#'   notation.
 #' @return A character vector of length one.
 #' @author Jon Clayden
 #' @seealso \code{\link{paste}}
@@ -23,13 +22,12 @@
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @examples
-#' 
 #' implode(1:3, ", ")  # "1, 2, 3"
 #' implode(1:3, ", ", " and ")  # "1, 2 and 3"
 #' implode(1:2, ", ", " and ")  # "1 and 2"
 #' implode(1:3, ", ", ranges=TRUE)  # "1-3"
 #' 
-#' @export implode
+#' @export
 implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
 {
     # Transform runs of integers into ranges
@@ -93,11 +91,11 @@ implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
 #' 
 #' @param labels A character vector of labels.
 #' @param values A character vector of values. Must have the same length as
-#' \code{labels}.
+#'   \code{labels}.
 #' @param outputLevel The output level to print the output to. See
-#' \code{\link{setOutputLevel}}, in the reportr package.
+#'   \code{setOutputLevel}, in the reportr package.
 #' @param leftJustify Logical value: if \code{TRUE} the labels will be left
-#' justified; otherwise they will be right justified.
+#'   justified; otherwise they will be right justified.
 #' @return This function is called for its side effect.
 #' @author Jon Clayden
 #' @seealso \code{\link{setOutputLevel}} for the reportr output level system.
@@ -108,7 +106,7 @@ implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
-#' @export printLabelledValues
+#' @export
 printLabelledValues <- function (labels, values, outputLevel = OL$Info, leftJustify = FALSE)
 {
     if (length(labels) != length(values))
@@ -174,74 +172,6 @@ relativePath <- function (path, referencePath)
     newPieces <- c(rep("..", length(refPieces)-firstDifferentPiece), mainPieces[firstDifferentPiece:length(mainPieces)])
     
     return (implode(newPieces, sep=.Platform$file.sep))
-}
-
-#' Copy a directory and its contents
-#' 
-#' This function copies a directory and its contents from one location to
-#' another. Unlike \code{\link{file.copy}}, the target directory doesn't have
-#' to exist, and the copied directory can have any name.
-#' 
-#' @param from A string giving the source directory.
-#' @param to A string giving the target directory. If it doesn't exist it will
-#'   be created and filled with the contents of the source directory. If it
-#'   does exist, a new subdirectory with the same \code{\link{basename}} as the
-#'   source directory will be created, and the files put there (as with
-#'   \code{\link{file.copy}}).
-#' @param allFiles Logical value: if \code{TRUE}, hidden files (with names
-#'   beginning with a period) will be included in the copy.
-#' @param deleteOriginal Logical value: if \code{TRUE}, the source directory
-#'   will be deleted if the copy is successful.
-#' @return \code{TRUE} if all files were copied successfully; \code{FALSE}
-#'   otherwise.
-#' 
-#' @author Jon Clayden
-#' @seealso \code{\link{file.copy}}
-#' @references Please cite the following reference when using TractoR in your
-#' work:
-#' 
-#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
-#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
-#' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
-#' @export
-copyDirectory <- function (from, to, allFiles = TRUE, deleteOriginal = FALSE)
-{
-    if (length(from) != 1 || length(to) != 1)
-        report(OL$Error, "Source and target paths must be single strings")
-    
-    from <- expandFileName(from)
-    to <- expandFileName(to)
-    
-    if (file.exists(to))
-    {
-        if (!file.info(to)$isdir)
-            report(OL$Error, "Target path already exists but isn't a directory")
-        else if (file.exists(file.path(to, basename(from))))
-            report(OL$Error, "Subdirectory of the target directory matching the source name already exists - it will not be overwritten")
-        else
-            to <- file.path(to, basename(from))
-    }
-    
-    # The "to" path should not exist at this point
-    success <- dir.create(to, recursive=TRUE)
-    
-    files <- list.files(from, all.files=allFiles, full.names=FALSE, recursive=TRUE, include.dirs=TRUE)
-    isDirectory <- file.info(file.path(from,files))$isdir
-    
-    for (dir in files[isDirectory])
-    {
-        if (!success)
-            break
-        success <- dir.create(file.path(to,dir), recursive=TRUE)
-    }
-    if (any(!isDirectory))
-        success <- file.copy(file.path(from,files[!isDirectory]), file.path(to,files[!isDirectory]))
-    
-    if (deleteOriginal && all(success))
-        unlink(from, recursive=TRUE)
-    
-    return (all(success))
 }
 
 #' @rdname paths
@@ -323,8 +253,8 @@ locateExecutable <- function (fileName, errorIfMissing = TRUE)
 #' 
 #' @aliases execute locateExecutable
 #' @param executable,fileName Name of the executable to run.
-#' @param paramString A character string giving the parameters to pass to the
-#'   executable, if any.
+#' @param params A character vector giving the parameters to pass to the
+#'   executable, if any. Elements will be separated by a space.
 #' @param errorOnFail,errorIfMissing Logical value: should an error be produced
 #'   if the executable can't be found?
 #' @param silent Logical value: should the executable be run without any
@@ -346,12 +276,14 @@ locateExecutable <- function (fileName, errorIfMissing = TRUE)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-execute <- function (executable, paramString = NULL, errorOnFail = TRUE, silent = FALSE, ...)
+execute <- function (executable, params = NULL, errorOnFail = TRUE, silent = FALSE, ...)
 {
     execLoc <- locateExecutable(executable, errorOnFail)
     if (!is.null(execLoc))
     {
-        execString <- paste(execLoc, paramString, sep=" ")
+        if (length(params) > 1)
+            params <- implode(params, sep=" ")
+        execString <- paste(execLoc, params, sep=" ")
         if (silent && getOutputLevel() > OL$Debug)
             execString <- paste(execString, ">/dev/null 2>&1", sep=" ")
         report(OL$Debug, execString)
