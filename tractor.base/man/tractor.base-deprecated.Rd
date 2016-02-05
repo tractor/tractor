@@ -131,6 +131,8 @@ details.}
 
 \item{fun}{A function, of the appropriate arity.}
 
+\item{...}{Additional argument to \code{fun}.}
+
 \item{level}{The threshold level, below which all voxels will be reset.}
 
 \item{defaultValue}{The value to reset to.}

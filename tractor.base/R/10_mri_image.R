@@ -52,7 +52,7 @@ setClassUnion("MriImageData", c("SparseArray","array","NULL"))
 #' @field storedXform Numeric matrix giving the NIfTI xform matrix read from
 #'   file, if any
 #' @field reordered Logical value indicating whether the image has been
-#'   reordered. See \code{\link{reorderImage}}
+#'   reordered. See \code{\link{reorderMriImage}}
 #' @field tags Named list of arbitrary DICOM-style tags
 #' @field data Sparse or dense array of data, or \code{NULL}
 #' 

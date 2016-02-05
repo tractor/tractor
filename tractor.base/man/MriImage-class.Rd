@@ -32,7 +32,7 @@ is reset to the empty string if the image is modified}
 file, if any}
 
 \item{\code{reordered}}{Logical value indicating whether the image has been
-reordered. See \code{\link{reorderImage}}}
+reordered. See \code{\link{reorderMriImage}}}
 
 \item{\code{tags}}{Named list of arbitrary DICOM-style tags}
 

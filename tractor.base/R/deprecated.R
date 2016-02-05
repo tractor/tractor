@@ -78,6 +78,7 @@ newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = 
 #' @rdname tractor.base-deprecated
 #' @param image,image1,image2 \code{MriImage} objects.
 #' @param fun A function, of the appropriate arity.
+#' @param ... Additional argument to \code{fun}.
 #' @export
 newMriImageWithSimpleFunction <- function (image, fun, ...)
 {
