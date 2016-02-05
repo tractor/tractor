@@ -76,16 +76,21 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         else if (is.null(imageDims))
             imageDims <- dim(data)
         
+        if (length(origin) < 3)
+            origin <- c(as.numeric(origin), rep(0,3-length(origin)))
+        else
+            origin <- as.numeric(origin)[1:3]
+        
         # For backwards compatibility
         if (is.null(voxelDims) && "voxdims" %in% names(list(...)))
         {
             oldFields <- list(...)
             if (is.null(oldFields$voxunit))
                 oldFields$voxunit <- "unknown"
-            object <- initFields(imageDims=as.integer(oldFields$imagedims), voxelDims=as.numeric(oldFields$voxdims), voxelDimUnits=oldFields$voxunit, source=source, origin=as.numeric(origin), storedXform=storedXform, reordered=reordered, tags=tags, data=data)
+            object <- initFields(imageDims=as.integer(oldFields$imagedims), voxelDims=as.numeric(oldFields$voxdims), voxelDimUnits=oldFields$voxunit, source=source, origin=origin, storedXform=storedXform, reordered=reordered, tags=tags, data=data)
         }
         else
-            object <- initFields(imageDims=as.integer(imageDims), voxelDims=as.numeric(voxelDims), voxelDimUnits=voxelDimUnits, source=source, origin=as.numeric(origin), storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
+            object <- initFields(imageDims=as.integer(imageDims), voxelDims=as.numeric(voxelDims), voxelDimUnits=voxelDimUnits, source=source, origin=origin, storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
         
         names(object$voxelDimUnits)[object$voxelDimUnits %~% "m$"] <- "spatial"
         names(object$voxelDimUnits)[object$voxelDimUnits %~% "s$"] <- "temporal"
@@ -639,8 +644,6 @@ setMethod("Summary", "MriImage", Summary.MriImage)
 #' \code{reorderMriImage} reorders the image data (and corresponding metadata)
 #' to the LAS convention, an operation which is usually performed when an
 #' image is read from file.
-#' \code{newMriImageAsShapeOverlay} creates an image which contains a simple
-#' shape.
 #' 
 #' @param data An array of pixel/voxel data.
 #' @param templateImage An optional \code{MriImage} object, to be used as a
@@ -699,15 +702,15 @@ asMriImage <- function (data, templateImage = nilObject(), imageDims = NA, voxel
     else
         report(OL$Error, "No information on image dimensions is available")
     
-    defaults <- list(voxelDims=rep(1,nDims), voxelDimUnits="unknown", origin=c(1,1,1,0,0,0,0), storedXform=emptyMatrix(), reordered=TRUE, tags=list())
+    defaults <- list(voxelDims=rep(1,nDims), voxelDimUnits="unknown", origin=c(1,1,1), storedXform=emptyMatrix(), tags=list(), reordered=TRUE)
     template <- templateImage$serialise()
-    params <- list(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, origin=origin, tags=tags)
+    params <- list(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, origin=origin, tags=tags, reordered=reordered)
     params <- params[!is.na(params)]
     
     composite <- c(params, template, defaults)
     composite <- composite[!duplicated(names(composite))]
     
-    image <- MriImage$new(imageDims=composite$imageDims[1:nDims], voxelDims=composite$voxelDims[1:nDims], voxelDimUnits=composite$voxelDimUnits, origin=composite$origin[1:nDims], storedXform=composite$storedXform, reordered=composite$reordered, tags=composite$tags, data=data)
+    image <- MriImage$new(imageDims=composite$imageDims[1:nDims], voxelDims=composite$voxelDims[1:nDims], voxelDimUnits=composite$voxelDimUnits, origin=composite$origin, storedXform=composite$storedXform, reordered=composite$reordered, tags=composite$tags, data=data)
     invisible (image)
 }
 
@@ -721,7 +724,7 @@ extractMriImage <- function (image, dim, loc)
     newData <- image$getSlice(dim, loc)
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
     
-    image <- MriImage$new(imageDims=image$getDimensions()[dimsToKeep], voxelDims=image$getVoxelDimensions()[dimsToKeep], voxelDimUnits=image$getVoxelUnits(), origin=image$getOrigin()[dimsToKeep], storedXform=image$getStoredXformMatrix(), reordered=image$isReordered(), tags=image$getTags(), data=newData)
+    image <- MriImage$new(imageDims=image$getDimensions()[dimsToKeep], voxelDims=image$getVoxelDimensions()[dimsToKeep], voxelDimUnits=image$getVoxelUnits(), origin=image$getOrigin(), storedXform=image$getStoredXformMatrix(), reordered=image$isReordered(), tags=image$getTags(), data=newData)
     return (image)
 }
 

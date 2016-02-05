@@ -397,11 +397,9 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     # Invert position for Y direction due to switch to LAS convention
     imagePosition[2] <- -imagePosition[2]
     
-    # Origin is 0 for temporal dimensions
-    # For other dimensions, use the image position (which is the centre of the first voxel stored)
-    origin <- rep(0, length(dimsToKeep))
-    origin[1:3] <- 1 - ordering[1:3] * (imagePosition / voxelDims[1:3])
-    origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], imageDims[1:3]-origin[1:3]+1)
+    # For origin, use the image position (which is the centre of the first voxel stored)
+    origin <- 1 - ordering[1:3] * (imagePosition / voxelDims[1:3])
+    origin <- ifelse(ordering[1:3] == c(1,1,1), origin, imageDims[1:3]-origin+1)
     
     # Create the final image
     image <- asMriImage(data, imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), origin=origin, tags=list())

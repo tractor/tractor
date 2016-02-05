@@ -434,11 +434,11 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     report(OL$Debug, "Image orientation is ", xformToOrientation(info$storageMetadata$xformMatrix))
     
     # The origin is world position (0,0,0); the xform is a voxel-to-world affine matrix
-    origin <- c(rep(1,min(nDims,3)), rep(0,max(0,nDims-3)))
+    origin <- rep(1,3)
     if (equivalent(dim(info$storageMetadata$xformMatrix), c(4,4)))
     {
         tempOrigin <- (solve(info$storageMetadata$xformMatrix) %*% c(0,0,0,1)) + 1
-        origin[1:min(3,nDims)] <- tempOrigin[1:min(3,nDims)]
+        origin <- tempOrigin[1:3]
     }
     
     image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, origin=origin, storedXform=info$storageMetadata$xformMatrix, reordered=FALSE, tags=info$imageMetadata$tags, data=data)

@@ -54,8 +54,6 @@ the dimensions of the image and thus avoiding the storage of lots of zeroes.
 \code{reorderMriImage} reorders the image data (and corresponding metadata)
 to the LAS convention, an operation which is usually performed when an
 image is read from file.
-\code{newMriImageAsShapeOverlay} creates an image which contains a simple
-shape.
 }
 \author{
 Jon Clayden
