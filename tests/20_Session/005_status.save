@@ -8,8 +8,7 @@ DIFFUSION:
   Diffusion b-values            : 0, 1000, 0 s/mm^2
   Number of gradient directions : 1, 10, 1
   Diffusion tensors fitted      : TRUE
-  FSL BEDPOST run               : TRUE (1 fibre(s) per voxel)
-  Camino files created          : FALSE
+  Fibre orientation model       : FSL-BEDPOSTX (1 fibre(s) per voxel)
 
 FUNCTIONAL:
   Data dimensions    : 64 x 64 x 30 x 15 voxels

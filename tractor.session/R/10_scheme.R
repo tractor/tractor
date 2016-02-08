@@ -116,7 +116,6 @@ writeSimpleDiffusionSchemeForSession <- function (session, scheme, thirdPartyOnl
     
     diffusionDir <- session$getDirectory("diffusion")
     fslDir <- session$getDirectory("fdt")
-    caminoDir <- session$getDirectory("camino")
     
     components <- scheme$expandComponents()
     gradientSet <- cbind(t(components$directions), components$bValues)
@@ -134,12 +133,5 @@ writeSimpleDiffusionSchemeForSession <- function (session, scheme, thirdPartyOnl
     {
         write.table(matrix(components$bValues,nrow=1), file.path(fslDir,"bvals"), row.names=FALSE, col.names=FALSE)
         write.table(components$directions, file.path(fslDir,"bvecs"), row.names=FALSE, col.names=FALSE)
-    }
-    
-    if (!unrotated && file.exists(caminoDir))
-    {
-        lines <- apply(format(gradientSet), 1, implode, sep=" ")
-        lines <- c("VERSION: 2", lines)
-        writeLines(lines, file.path(caminoDir,"sequence.scheme"))
     }
 }
