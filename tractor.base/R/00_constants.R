@@ -1,4 +1,6 @@
-.Deserialisers <- list()
+.Workspace <- new.env()
+.Workspace$deserialisers <- list()
+.Workspace$pathHandlers <- list()
 
 .Analyze <- list(
     datatypes=list(codes=c(     2,          4,          8,          16,         64),

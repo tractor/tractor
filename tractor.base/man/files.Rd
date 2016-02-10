@@ -5,6 +5,7 @@
 \alias{identifyImageFileNames}
 \alias{imageFileExists}
 \alias{readImageFile}
+\alias{registerPathHandler}
 \alias{removeImageFiles}
 \alias{symlinkImageFiles}
 \alias{writeImageFile}
@@ -24,6 +25,8 @@ readImageFile(fileName, fileType = NULL, metadataOnly = FALSE,
   volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
 
 writeImageFile(image, fileName = NULL, fileType = NA, overwrite = TRUE)
+
+registerPathHandler(regex, handler)
 }
 \arguments{
 \item{fileName, from, to}{File names, with or without appropriate extension.}
@@ -66,6 +69,10 @@ image is of interest. Ignored if \code{sparse} is not \code{TRUE}.}
 This is recommended in most circumstances.}
 
 \item{image}{An \code{\linkS4class{MriImage}} object.}
+
+\item{regex}{A regular expression.}
+
+\item{handler}{A function taking and returning a string.}
 }
 \value{
 \code{readImageFile} returns an \code{\linkS4class{MriImage}}
@@ -118,6 +125,9 @@ Since multiple files may be involved, copying, moving or symlinking images
 is not trivial. \code{copyImageFiles} and \code{symlinkImageFiles} are
 wrappers around the standard functions \code{\link{file.copy}} and
 \code{\link{file.symlink}} which handle this complexity.
+
+\code{registerPathHandler} allows special syntaxes to be used for image
+paths, and is for advanced use only.
 }
 \author{
 Jon Clayden

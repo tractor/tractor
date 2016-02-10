@@ -221,8 +221,8 @@ deserialiseReferenceObject <- function (file = NULL, object = NULL, raw = FALSE)
         require(packageName, character.only=TRUE, quietly=TRUE)
     
     className <- attr(object, "originalClass")
-    if (className %in% names(.Deserialisers))
-        finalObject <- .Deserialisers[[className]](fields)
+    if (className %in% names(.Workspace$deserialisers))
+        finalObject <- .Workspace$deserialisers[[className]](fields)
     else
     {
         if (!is.null(packageName))
@@ -243,7 +243,7 @@ registerDeserialiser <- function (className, deserialiser)
         report(OL$Error, "Class name should be specified as a character string")
     
     deserialiser <- match.fun(deserialiser)
-    .Deserialisers[[className]] <<- deserialiser
+    .Workspace$deserialisers[[className]] <- deserialiser
     
     invisible(NULL)
 }

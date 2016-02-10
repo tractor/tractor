@@ -36,15 +36,27 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     
     if (length(headersExist) < 1 || length(imagesExist) < 1)
     {
+        for (i in seq_along(.Workspace$pathHandlers))
+        {
+            if (fileName %~% names(.Workspace$pathHandlers)[i])
+            {
+                fileName <- .Workspace$pathHandlers[[i]](fileName)
+                if (is.null(fileName))
+                    report(OL$Error, "Custom path handler could not resolve file name: #{fileName}")
+                else
+                    return(identifyImageFileNames(fileName, fileType=fileType, errorIfMissing=errorIfMissing))
+            }
+        }
+        
         if (errorIfMissing)
-            report(OL$Error, "Complete image file does not exist: ", fileName)
+            report(OL$Error, "Complete image file does not exist: #{fileName}")
         else
             return (NULL)
     }
     if (length(headersExist) > 1 || length(imagesExist) > 1)
     {
         if (errorIfMissing)
-            report(OL$Error, "Multiple compatible image files exist: ", fileName)
+            report(OL$Error, "Multiple compatible image files exist: #{fileName}")
         else
             return (NULL)
     }
@@ -235,6 +247,9 @@ chooseDataTypeForImage <- function (image, format)
 #' wrappers around the standard functions \code{\link{file.copy}} and
 #' \code{\link{file.symlink}} which handle this complexity.
 #' 
+#' \code{registerPathHandler} allows special syntaxes to be used for image
+#' paths, and is for advanced use only.
+#' 
 #' @param fileName,from,to File names, with or without appropriate extension.
 #' @param image An \code{\linkS4class{MriImage}} object.
 #' @param fileType A character vector of length one, giving the file type
@@ -264,6 +279,8 @@ chooseDataTypeForImage <- function (image, format)
 #' @param relative Logical value: if \code{TRUE}, the path stored in the
 #'   symlink will be relative (e.g. \code{"../some_dir/some_image.nii"}) rather
 #'   than absolute (e.g. \code{"/path/to/some_dir/some_image.nii"}).
+#' @param regex A regular expression.
+#' @param handler A function taking and returning a string.
 #' @return \code{readImageFile} returns an \code{\linkS4class{MriImage}}
 #'   object. \code{imageFileExists} returns \code{TRUE} if an existing file
 #'   with the specified name exists (all file extensions are checked), and
@@ -523,4 +540,17 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
         writeMriImageToMgh(image, fileNames, gzipped=params$gzipped)
     
     invisible (fileNames)
+}
+
+#' @rdname files
+#' @export
+registerPathHandler <- function (regex, handler)
+{
+    if (!is.character(regex) || length(regex) != 1)
+        report(OL$Error, "Regular expression should be specified as a character string")
+    
+    handler <- match.fun(handler)
+    .Workspace$pathHandlers[[regex]] <- handler
+    
+    invisible(NULL)
 }
