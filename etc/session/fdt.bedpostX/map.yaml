@@ -1,0 +1,7 @@
+dyads: dyads%
+avf: mean_f%samples
+theta: mean_th%samples
+phi: mean_ph%samples
+avfsamples: merged_f%samples
+thetasamples: merged_th%samples
+phisamples: merged_ph%samples
