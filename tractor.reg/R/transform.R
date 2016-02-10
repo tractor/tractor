@@ -6,7 +6,7 @@ transformImage <- function (transform, newImage = NULL, index = 1, preferAffine 
     if (is.null(newImage))
         newImage <- transform$getSourceImage(index, reverse)
     
-    xfm <- transform$getTransformObject(index, reverse, preferAffine)
+    xfm <- transform$getTransformObjects(index, reverse, preferAffine)
     result <- applyTransform(xfm, as(newImage,"niftiImage"))
     
     return (as(result, "MriImage"))
@@ -52,7 +52,7 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
     if (!voxel)
         points <- worldToVoxel(points, transform$getSourceImage(index,reverse))
     
-    xfm <- transform$getTransformObject(index, reverse, preferAffine)
+    xfm <- transform$getTransformObjects(index, reverse, preferAffine)
     newPoints <- applyTransform(xfm, points)
     
     if (!voxel)

@@ -131,12 +131,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     {
         strategy <- caches.$transformStrategies[[es("#{sourceSpace}2#{targetSpace}")]]
         if ("reverse" %in% strategy)
-            return (tractor.reg::invertTransformation(.self$getTransformation(targetSpace, sourceSpace)))
+            return (.self$getTransformation(targetSpace, sourceSpace)$getInverse())
         else
         {
             sourceImageFile <- .self$getRegistrationTargetFileName(sourceSpace)
             targetImageFile <- .self$getRegistrationTargetFileName(targetSpace)
-            transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(sourceSpace,"2",targetSpace,sep=""),"Rdata"))
+            transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"Rdata"))
             
             # Injected option for backwards compatibility
             targetMask <- NULL
@@ -158,10 +158,10 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
                 options$types <- c(options$types, "reverse-nonlinear")
             result <- do.call(tractor.reg::registerImages, options)
             
-            reverseTransformFile <- file.path(.self$getDirectory("transforms"), ensureFileSuffix(paste(targetSpace,"2",sourceSpace,sep=""),"Rdata"))
+            reverseTransformFile <- file.path(.self$getDirectory("transforms"), ensureFileSuffix(es("#{targetSpace}2#{sourceSpace}"),"Rdata"))
             if (!file.exists(reverseTransformFile))
             {
-                inverseTransform <- tractor.reg::invertTransformation(result$transform, quiet=TRUE)
+                inverseTransform <- result$transform$getInverse(quiet=TRUE)
                 inverseTransform$serialise(reverseTransformFile)
             }
             
@@ -183,11 +183,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             report(OL$Error, "Existing externally-mapped directory #{dirToRemove} will not be overwritten")
         else
         {
-            if (ask)
-                ans <- ask("Directory #{dirToRemove} already exists. Delete it? [yn]")
-            else
-                ans <- "y"
-            
+            ans <- (if (ask) ask("Directory #{dirToRemove} already exists. Delete it? [yn]") else "y")
             if (tolower(ans) == "y")
                 unlink(dirToRemove, recursive=TRUE)
         }

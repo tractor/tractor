@@ -44,7 +44,7 @@ runExperiment <- function ()
         else if (is.null(initAffineFile) && "affine" %in% transform$getTypes())
         {
             report(OL$Info, "Using affine matrix stored in transformation for initialisation")
-            init <- transform$getAffineMatrices()
+            init <- transform$getTransformObjects(1:transform$nRegistrations(), preferAffine=TRUE, errorIfMissing=FALSE)
         }
     }
     

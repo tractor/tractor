@@ -1,5 +1,9 @@
 MriImage <- getRefClass("MriImage")
 
+.listFind <- function (list, i) { if (i > length(list)) NULL else list[[i]] }
+.listApply <- function (list, f, ...) { lapply(list, function(x) { if (is.null(x)) NULL else f(x,...) }) }
+.listPad <- function (list, len) { if (length(list) == len) list else c(list, rep(list(NULL),len-length(list))) }
+
 Transformation <- setRefClass("Transformation", contains="SerialisableObject", fields=list(sourceImage="MriImage",targetImage="MriImage",affineMatrices="list",controlPointImages="list",reverseControlPointImages="list",method="character"), methods=list(
     initialize = function (sourceImage = MriImage$new(), targetImage = MriImage$new(), affineMatrices = NULL, controlPointImages = NULL, reverseControlPointImages = NULL, method = c("niftyreg","fsl"), ...)
     {
@@ -16,52 +20,25 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         
         if (!is.list(controlPointImages))
             controlPointImages <- list(controlPointImages)
-        controlPointImages <- lapply(controlPointImages, function(x) { if (is.null(x)) x else as(x,"MriImage") })
+        controlPointImages <- .listApply(controlPointImages, as, "MriImage")
         
         if (!is.list(reverseControlPointImages))
             reverseControlPointImages <- list(reverseControlPointImages)
-        reverseControlPointImages <- lapply(reverseControlPointImages, function(x) { if (is.null(x)) x else as(x,"MriImage") })
+        reverseControlPointImages <- .listApply(reverseControlPointImages, as, "MriImage")
         
         initFields(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=method)
     },
     
-    getAffineMatrices = function (i = NULL)
+    getInverse = function (i = 1, quiet = FALSE)
     {
-        if (is.null(i))
-            return (affineMatrices)
-        else if (length(i) == 1 && i <= length(affineMatrices))
-            return (affineMatrices[[i]])
-        else if (length(i) > 1)
-            return (affineMatrices[i])
-        else
-            return (NULL)
-    },
-    
-    getControlPointImages = function (i = NULL)
-    {
-        if (is.null(i))
-            return (controlPointImages)
-        else if (length(i) == 1 && i <= length(controlPointImages))
-            return (controlPointImages[[i]])
-        else if (length(i) > 1)
-            return (controlPointImages[i])
-        else
-            return (NULL)
+        if (!quiet && equivalet(c("nonlinear","reverse-nonlinear") %in% .self$getTypes(), c(TRUE,FALSE)))
+            flag(OL$Warning, "Nonlinear part of the transformation is not invertible")
+        
+        inverseAffines <- .listApply(.self$affineMatrices, solve)
+        return (Transformation$new(.self$getTargetImage(), .self$getSourceImage(i), .listFind(inverseAffines,i), .listFind(reverseControlPointImages,i), .listFind(controlPointImages,i), method=.self$method))
     },
     
     getMethod = function () { return (method) },
-    
-    getReverseControlPointImages = function (i = NULL)
-    {
-        if (is.null(i))
-            return (reverseControlPointImages)
-        else if (length(i) == 1 && i <= length(reverseControlPointImages))
-            return (reverseControlPointImages[[i]])
-        else if (length(i) > 1)
-            return (reverseControlPointImages[i])
-        else
-            return (NULL)
-    },
     
     getSourceImage = function (i = NULL, reverse = FALSE)
     {
@@ -81,28 +58,31 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
             return (targetImage)
     },
     
-    getTransformObject = function (i = 1, reverse = FALSE, preferAffine = FALSE, errorIfMissing = TRUE)
+    getTransformObjects = function (i = 1, reverse = FALSE, preferAffine = FALSE, errorIfMissing = TRUE)
     {
+        if (length(i) > 1)
+            return (lapply(i, .self$getTransformObject, reverse=reverse, preferAffine=preferAffine, errorIfMissing=errorIfMissing))
+        
+        object <- NULL
         source <- as(.self$getSourceImage(i,reverse), "niftiImage")
         target <- as(.self$getTargetImage(i,reverse), "niftiImage")
-        object <- NULL
         
         if (reverse)
         {
             # NB: for the first case, we initially pass the images in reverse order
-            if (!is.null(.self$getAffineMatrices(i)) && (is.null(.self$getReverseControlPointImages(i)) || preferAffine))
-                object <- invertAffine(asAffine(.self$getAffineMatrices(i), target, source))
-            else if (!is.null(.self$getReverseControlPointImages(i)))
-                object <- structure(as(.self$getReverseControlPointImages(i),"niftiImage"), source=source, target=target)
+            if (!is.null(.listFind(affineMatrices,i)) && (is.null(.listFind(reverseControlPointImages,i)) || preferAffine))
+                object <- invertAffine(asAffine(.listFind(affineMatrices,i), target, source))
+            else if (!is.null(.listFind(reverseControlPointImages, i)))
+                object <- structure(as(.listFind(reverseControlPointImages,i),"niftiImage"), source=source, target=target)
             else if (errorIfMissing)
                 report(OL$Error, "No suitable reverse transform is available for index #{i}")
         }
         else
         {
-            if (!is.null(.self$getAffineMatrices(i)) && (is.null(.self$getControlPointImages(i)) || preferAffine))
-                object <- asAffine(.self$getAffineMatrices(i), source, target)
-            else if (!is.null(.self$getControlPointImages(i)))
-                object <- structure(as(.self$getControlPointImages(i),"niftiImage"), source=source, target=target)
+            if (!is.null(.listFind(affineMatrices,i)) && (is.null(.listFind(controlPointImages,i)) || preferAffine))
+                object <- asAffine(.listFind(affineMatrices,i), source, target)
+            else if (!is.null(.listFind(controlPointImages, i)))
+                object <- structure(as(.listFind(controlPointImages,i),"niftiImage"), source=source, target=target)
             else if (errorIfMissing)
                 report(OL$Error, "No suitable forward transform is available for index #{i}")
         }
@@ -182,7 +162,7 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
     }
     
     # Calculate the deformation field
-    deformationField <- RNiftyReg::deformationField(x$getTransformObject(index,reverse,preferAffine), jacobian=TRUE)
+    deformationField <- RNiftyReg::deformationField(x$getTransformObjects(index,reverse,preferAffine), jacobian=TRUE)
     
     # Find the requested slice of the Jacobian map and deformation field
     jacobian <- reorderMriImage(as(jacobian(deformationField),"MriImage"))$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
@@ -295,31 +275,6 @@ identityTransformation <- function (sourceImage, targetImage)
     return (transform)
 }
 
-invertTransformation <- function (transform, quiet = FALSE)
-{
-    if (!is(transform, "Transformation"))
-        report(OL$Error, "The specified transform is not a Transformation object")
-    if (transform$nRegistrations() > 1)
-        report(OL$Error, "Transformations covering more than one registration cannot be directly inverted")
-    
-    affineMatrices <- controlPointImages <- reverseControlPointImages <- list()
-    
-    availableTypes <- transform$getTypes()
-    if (all(c("nonlinear","reverse-nonlinear") %in% availableTypes))
-    {
-        controlPointImages <- transform$getReverseControlPointImages()
-        reverseControlPointImages <- transform$getControlPointImages()
-    }
-    else if (!quiet && "nonlinear" %in% availableTypes)
-        flag(OL$Warning, "Nonlinear part of the specified transformation is not invertible")
-    
-    if ("affine" %in% availableTypes)
-        affineMatrices <- lapply(transform$getAffineMatrices(), invertAffine)
-    
-    newTransform <- Transformation$new(transform$getTargetImage(), transform$getSourceImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=transform$getMethod())
-    return (newTransform)
-}
-
 decomposeTransformation <- function (transform)
 {
     if (!is(transform, "Transformation"))
@@ -327,7 +282,7 @@ decomposeTransformation <- function (transform)
     if (!("affine" %in% transform$getTypes()))
         report(OL$Error, "Decomposition can only be performed for affine transformations")
     
-    return (lapply(transform$getAffineMatrices(), decomposeAffine))
+    return (lapply(transform$getTransformObjects(1:transform$nRegistrations(),preferAffine=TRUE), decomposeAffine))
 }
 
 mergeTransformations <- function (transforms, newSourceImage)
@@ -341,17 +296,9 @@ mergeTransformations <- function (transforms, newSourceImage)
     if (!all(methods == methods[1]))
         report(OL$Error, "Method must be the same for all transformations")
     
-    pad <- function (x, len)
-    {
-        if (length(x) == len)
-            x
-        else
-            c(x, rep(list(NULL),len-length(x)))
-    }
-    
-    affineMatrices <- do.call("c", lapply(transforms, function(x) pad(x$getAffineMatrices(),x$nRegistrations())))
-    controlPointImages <- do.call("c", lapply(transforms, function(x) pad(x$getControlPointImages(),x$nRegistrations())))
-    reverseControlPointImages <- do.call("c", lapply(transforms, function(x) pad(x$getReverseControlPointImages(),x$nRegistrations())))
+    affineMatrices <- do.call("c", lapply(transforms, function(x) .listPad(x$affineMatrices,x$nRegistrations())))
+    controlPointImages <- do.call("c", lapply(transforms, function(x) .listPad(x$controlPointImages,x$nRegistrations())))
+    reverseControlPointImages <- do.call("c", lapply(transforms, function(x) .listPad(x$reverseControlPointImages,x$nRegistrations())))
     
     transform <- Transformation$new(newSourceImage, transforms[[1]]$getTargetImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=methods[1])
     return (transform)
