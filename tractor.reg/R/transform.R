@@ -70,3 +70,13 @@ translatePoints <- function (points, offset)
     else
         report(OL$Error, "Points must be specified as a numeric vector or matrix")
 }
+
+transformVoxelToWorld <- function (points, image, simple = FALSE, ...)
+{
+    RNiftyReg::voxelToWorld(points, as(image,"niftiImage"), simple=simple, ...)
+}
+
+transformWorldToVoxel <- function (points, image, simple = FALSE, ...)
+{
+    RNiftyReg::worldToVoxel(points, as(image,"niftiImage"), simple=simple, ...)
+}
