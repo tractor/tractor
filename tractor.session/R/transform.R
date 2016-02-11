@@ -22,26 +22,8 @@
 
 .findTransformation <- function (image, session, newSpace, oldSpace = NULL)
 {
-    guessSpace <- function ()
-    {
-        if (image$isInternal())
-            return (NULL)
-        else if (dirname(image$getSource()) == .StandardBrainPath)
-            return ("mni")
-        else
-        {
-            for (space in setdiff(names(.RegistrationTargets),"mni"))
-            {
-                if (dirname(image$getSource()) == session$getDirectory(space))
-                    return (space)
-            }
-        }
-        
-        return (NULL)
-    }
-    
     if (is.null(oldSpace))
-        oldSpace <- guessSpace()
+        oldSpace <- guessSpace(image, session)
     
     if (is.null(oldSpace) || is.null(newSpace))
         report(OL$Error, "Source and target spaces are not both defined")
@@ -49,6 +31,32 @@
     transform <- session$getTransformation(.resolveSpace(oldSpace,session), .resolveSpace(newSpace,session))
     
     return (transform)
+}
+
+guessSpace <- function (image, session = NULL)
+{
+    if (image$isInternal())
+        return (NULL)
+    else if (dirname(image$getSource()) == .StandardBrainPath)
+        return ("mni")
+    else
+    {
+        if (is.null(session))
+        {
+            if (image$getSource() %~% "^(.+)/tractor")
+                session <- attachMriSession(ore.lastmatch()[,1])
+            else
+                report(OL$Error, "Image does not seem to be within a session directory - the session must be specified")
+        }
+        
+        for (space in setdiff(names(.RegistrationTargets),"mni"))
+        {
+            if (dirname(image$getSource()) == session$getDirectory(space))
+                return (es("#{session$getDirectory()}:#{space}"))
+        }
+    }
+    
+    return (NULL)
 }
 
 transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, preferAffine = FALSE, interpolation = 1)
