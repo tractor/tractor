@@ -31,7 +31,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     
     getInverse = function (i = 1, quiet = FALSE)
     {
-        if (!quiet && equivalet(c("nonlinear","reverse-nonlinear") %in% .self$getTypes(), c(TRUE,FALSE)))
+        if (!quiet && equivalent(c("nonlinear","reverse-nonlinear") %in% .self$getTypes(), c(TRUE,FALSE)))
             flag(OL$Warning, "Nonlinear part of the transformation is not invertible")
         
         inverseAffines <- .listApply(.self$affineMatrices, solve)
