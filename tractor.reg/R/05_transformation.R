@@ -5,7 +5,7 @@ MriImage <- getRefClass("MriImage")
 .listPad <- function (list, len) { if (length(list) == len) list else c(list, rep(list(NULL),len-length(list))) }
 
 Transformation <- setRefClass("Transformation", contains="SerialisableObject", fields=list(sourceImage="MriImage",targetImage="MriImage",affineMatrices="list",controlPointImages="list",reverseControlPointImages="list",method="character"), methods=list(
-    initialize = function (sourceImage = MriImage$new(), targetImage = MriImage$new(), affineMatrices = NULL, controlPointImages = NULL, reverseControlPointImages = NULL, method = c("niftyreg","fsl"), ...)
+    initialize = function (sourceImage = MriImage$new(), targetImage = MriImage$new(), affineMatrices = NULL, controlPointImages = NULL, reverseControlPointImages = NULL, method = c("niftyreg","fsl"), version = 2, ...)
     {
         method <- match.arg(method)
         
@@ -13,7 +13,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
             affineMatrices <- list(affineMatrices)
         affineMatrices <- lapply(affineMatrices, function(x) {
             # For backwards compatibility, handle FSL-type affines
-            if (method == "fsl" && !("affine" %in% class(x)))
+            if (method == "fsl" && version < 2)
                 x <- RNiftyReg:::convertAffine(x, as(sourceImage,"niftiImage"), as(targetImage,"niftiImage"), "niftyreg")
             return (structure(asAffine(x), source=NULL, target=NULL))
         })
@@ -34,7 +34,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         if (!quiet && equivalent(c("nonlinear","reverse-nonlinear") %in% .self$getTypes(), c(TRUE,FALSE)))
             flag(OL$Warning, "Nonlinear part of the transformation is not invertible")
         
-        inverseAffines <- .listApply(.self$affineMatrices, solve)
+        inverseAffines <- .listApply(.self$affineMatrices, function(x) asAffine(solve(x)))
         return (Transformation$new(.self$getTargetImage(), .self$getSourceImage(i), .listFind(inverseAffines,i), .listFind(reverseControlPointImages,i), .listFind(controlPointImages,i), method=.self$method))
     },
     
