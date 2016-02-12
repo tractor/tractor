@@ -61,9 +61,9 @@ runExperiment <- function ()
             transformedImage$binarise()
         
         if (is.null(finalImage))
-            finalImage <- thresholdedImage
+            finalImage <- transformedImage
         else
-            finalImage <- finalImage + thresholdedImage
+            finalImage <- finalImage + transformedImage
     }
     
     if (is.null(finalImage))

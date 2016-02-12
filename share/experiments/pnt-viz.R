@@ -96,8 +96,6 @@ runExperiment <- function ()
             trackerPath <- currentSession$getTracker()$run(seeds, nStreamlines, requireMap=FALSE, requireStreamlines=TRUE)
             streamSource <- StreamlineSource$new(trackerPath)
             
-            result <- trackWithSession(session, seeds, requireImage=FALSE, requireStreamlines=TRUE, nStreamlines=nStreamlines, ...)
-
             data <- array(0, dim=metadata$getDimensions())
             for (i in 1:nValidSeeds)
             {
