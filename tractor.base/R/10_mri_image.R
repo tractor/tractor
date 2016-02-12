@@ -776,7 +776,7 @@ reorderMriImage <- function (image)
     
     data <- image$getData()
     dims <- image$getDimensions()
-    voxelDims <- image$getVoxelDimensions()
+    voxelDims <- abs(image$getVoxelDimensions())
     nDims <- image$getDimensionality()
     origin <- image$getOrigin()
     
@@ -815,10 +815,6 @@ reorderMriImage <- function (image)
                 data <- aperm(data, dimPermutation)
         }
     }
-    
-    # Fix signs of voxel dimensions to correspond to LAS
-    # FIXME: This is probably not really necessary - does any code depend on it?
-    voxelDims <- abs(voxelDims) * c(-1, rep(1,nDims-1))
     
     # Figure out which dimensions need to be flipped
     # We sum by row because the data dimensions have already been permuted

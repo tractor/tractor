@@ -533,11 +533,11 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
         report(OL$Error, "An unreordered image can only be written to NIfTI format")
     
     if (params$format == "Analyze")
-        writeMriImageToAnalyze(image, fileNames, gzipped=params$gzipped)
+        writeAnalyze(image, fileNames, gzipped=params$gzipped)
     else if (params$format == "Nifti")
-        writeMriImageToNifti(image, fileNames, gzipped=params$gzipped)
+        writeNifti(image, fileNames, gzipped=params$gzipped)
     else if (params$format == "Mgh")
-        writeMriImageToMgh(image, fileNames, gzipped=params$gzipped)
+        writeMgh(image, fileNames, gzipped=params$gzipped)
     
     invisible (fileNames)
 }
