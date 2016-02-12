@@ -7,7 +7,7 @@ transformImage <- function (transform, newImage = NULL, index = 1, preferAffine 
         newImage <- transform$getSourceImage(index, reverse)
     
     xfm <- transform$getTransformObjects(index, reverse, preferAffine)
-    result <- applyTransform(xfm, as(newImage,"niftiImage"), interpolation=interpolation)
+    result <- applyTransform(xfm, as(newImage,"niftiImage"), interpolation=.interpolationNameToCode(interpolation))
     
     return (as(result, "MriImage"))
 }

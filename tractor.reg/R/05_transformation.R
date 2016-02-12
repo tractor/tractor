@@ -232,7 +232,7 @@ registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetM
             result <- list(transform=transform, transformedImage=transformImage(transform,interpolation=interpolation,...))
     }
     else if (method == "niftyreg")
-        result <- registerImagesWithNiftyreg(getImageAsObject(sourceImage,reorder=FALSE), getImageAsObject(targetImage,reorder=FALSE), sourceMask=getImageAsObject(sourceMask,allowNull=TRUE,reorder=FALSE), targetMask=getImageAsObject(targetMask,allowNull=TRUE,reorder=FALSE), types=types, affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
+        result <- registerImagesWithNiftyreg(sourceImage, targetImage, sourceMask=sourceMask, targetMask=targetMask, types=types, affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
     else if (method == "fsl")
     {
         if (any(c("nonlinear","reverse-nonlinear") %in% types))
@@ -263,7 +263,7 @@ resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, interpolat
     
     sourceNifti <- as(image, "niftiImage")
     xfm <- buildAffine(scales=scales, source=sourceNifti)
-    result <- applyTransform(xfm, sourceNifti, interpolation=interpolation)
+    result <- applyTransform(xfm, sourceNifti, interpolation=.interpolationNameToCode(interpolation))
     
     return (as(result, "MriImage"))
 }

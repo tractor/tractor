@@ -10,26 +10,17 @@ registerImagesWithFlirt <- function (sourceFileName, targetFileName, sourceMaskF
     else
         interpolation <- match.arg(interpolation, c("nearestneighbour","trilinear","sinc","spline"))
     
-    if (estimateOnly)
-        outputFileExpression <- ""
-    else
+    outputFileExpression <- inweightExpression <- refweightExpression <- initExpression <- ""
+    if (!estimateOnly)
     {
         outputFileName <- threadSafeTempFile()
         outputFileExpression <- es("-out #{outputFileName}")
     }
-    
-    if (is.null(sourceMaskFileName))
-        inweightExpression <- ""
-    else
+    if (!is.null(sourceMaskFileName))
         inweightExpression <- es("-inweight #{sourceMaskFileName}")
-    if (is.null(targetMaskFileName))
-        refweightExpression <- ""
-    else
+    if (!is.null(targetMaskFileName))
         refweightExpression <- es("-refweight #{targetMaskFileName}")
-    
-    if (is.null(initAffine))
-        initExpression <- ""
-    else
+    if (!is.null(initAffine))
     {
         inputMatrixFile <- ensureFileSuffix(threadSafeTempFile(), "mat")
         initAffine <- RNiftyReg:::convertAffine(initAffine, sourceFileName, targetFileName, "fsl")

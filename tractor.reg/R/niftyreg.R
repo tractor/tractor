@@ -1,14 +1,24 @@
+.interpolationNameToCode <- function (interpolation)
+{
+    if (is.character(interpolation))
+        code <- switch(interpolation, nearestneighbour=0, trilinear=1, sinc=2, spline=3, cubicspline=3, NULL)
+    else
+        code <- interpolation
+    
+    if (code == 2)
+        report(OL$Error, "NiftyReg does not support sinc interpolation")
+    else if (is.null(code))
+        report(OL$Error, "Interpolation type \"#{interpolation}\" is not valid")
+    
+    return (code)
+}
+
 registerImagesWithNiftyreg <- function (sourceImage, targetImage, sourceMask = NULL, targetMask = NULL, init = NULL, types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, interpolation = 1, linearOptions = list(), nonlinearOptions = list())
 {
-    if (!is(sourceImage,"MriImage") || !is(targetImage,"MriImage"))
-        report(OL$Error, "Source and target images must be specified as MriImage objects")
+    .formatImage <- function(x) { if (is(x,"MriImage")) as(x,"niftiImage") else x }
     
     types <- match.arg(types, several.ok=TRUE)
-    
-    if (is.character(interpolation))
-        interpolation <- switch(interpolation, nearestneighbour=0, trilinear=1, sinc=2, spline=3, cubicspline=3, NULL)
-    if (interpolation == 2)
-        report(OL$Error, "NiftyReg does not support sinc interpolation")
+    interpolation <- .interpolationNameToCode(interpolation)
     
     linearResult <- nonlinearResult <- list()
     
@@ -18,10 +28,10 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, sourceMask = N
         if (!any(affineDof == c(6,12)))
             report(OL$Error, "Only 6 and 12 degrees of freedom are supported by NiftyReg")
         
-        linearOptions$source <- as(sourceImage, "niftiImage")
-        linearOptions$target <- as(targetImage, "niftiImage")
-        linearOptions$sourceMask <- sourceMask
-        linearOptions$targetMask <- targetMask
+        linearOptions$source <- .formatImage(sourceImage)
+        linearOptions$target <- .formatImage(targetImage)
+        linearOptions$sourceMask <- .formatImage(sourceMask)
+        linearOptions$targetMask <- .formatImage(targetMask)
         linearOptions$init <- init
         linearOptions$scope <- ifelse(affineDof==6, "rigid", "affine")
         if (is.null(linearOptions$estimateOnly))
@@ -41,14 +51,11 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, sourceMask = N
     # Run the nonlinear part of the registration, if required
     if ("nonlinear" %in% types)
     {
-        nonlinearOptions$source <- as(sourceImage, "niftiImage")
-        nonlinearOptions$target <- as(targetImage, "niftiImage")
-        nonlinearOptions$sourceMask <- sourceMask
-        nonlinearOptions$targetMask <- targetMask
-        if (is(init, "MriImage"))
-            nonlinearOptions$init <- as(init, "niftiImage")
-        else
-            nonlinearOptions$init <- init
+        nonlinearOptions$source <- .formatImage(sourceImage)
+        nonlinearOptions$target <- .formatImage(targetImage)
+        nonlinearOptions$sourceMask <- .formatImage(sourceMask)
+        nonlinearOptions$targetMask <- .formatImage(targetMask)
+        nonlinearOptions$init <- .formatImage(init)
         if (is.null(nonlinearOptions$estimateOnly))
             nonlinearOptions$estimateOnly <- estimateOnly
         if (is.null(nonlinearOptions$interpolation) && !is.null(interpolation))
