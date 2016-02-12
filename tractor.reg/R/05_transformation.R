@@ -259,7 +259,7 @@ resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, interpolat
     
     if (is.null(voxelDims))
         voxelDims <- image$getFieldOfView() / imageDims
-    scales <- voxelDims / image$getVoxelDimensions()
+    scales <- abs(image$getVoxelDimensions() / voxelDims)
     
     sourceNifti <- as(image, "niftiImage")
     xfm <- buildAffine(scales=scales, source=sourceNifti)

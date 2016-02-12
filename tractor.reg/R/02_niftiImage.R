@@ -6,7 +6,7 @@ setAs("MriImage", "niftiImage", function(from) {
     else
         data <- as(from, "array")
     
-    pixdim(data) <- from$getVoxelDimensions()
+    pixdim(data) <- abs(from$getVoxelDimensions())
     pixunits(data) <- from$getVoxelUnits()
     
     if (from$nTags() > 0)
