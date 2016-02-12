@@ -16,6 +16,8 @@
 {
     if (tolower(space) == "mni")
         return ("mni")
+    else if (space %~% ore(":",syntax="fixed"))
+        return (space)
     else
         return (paste(session$getDirectory(), space, sep=":"))
 }
