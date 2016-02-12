@@ -1,5 +1,5 @@
 Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=list(line="matrix",seedIndex="integer",voxelDims="numeric",coordUnit="character",pointSpacings="numeric"), methods=list(
-    initialize = function (line = matrix(), seedIndex = NULL, voxelDims = NULL, coordUnit = c("vox","mm"), pointSpacings = NULL, ...)
+    initialize = function (line = matrix(NA,0,3), seedIndex = NULL, voxelDims = NULL, coordUnit = c("vox","mm"), pointSpacings = NULL, ...)
     {
         object <- initFields(line=promote(line,byrow=TRUE), seedIndex=as.integer(seedIndex), voxelDims=as.numeric(voxelDims)[1:3], coordUnit=match.arg(coordUnit))
 
@@ -8,7 +8,7 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
         
         if (!is.null(pointSpacings))
             object$pointSpacings <- rep(as.numeric(pointSpacings), length.out=nrow(object$line)-1)
-        else if (nrow(object$line) == 1)
+        else if (nrow(object$line) < 2)
             object$pointSpacings <- numeric(0)
         else
             object$pointSpacings <- apply(diff(object$line), 1, vectorLength)
@@ -59,7 +59,7 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
             
             # NB: pointSpacings[1] is the distance *from* the first point on the line
             leftStop <- ifelse(length(leftWide) > 0, max(leftWide)+1, 1)
-            rightStop <- ifelse(length(rightWide) > 0, min(rightWide), nPoints)
+            rightStop <- ifelse(length(rightWide) > 0, min(rightWide), .self$nPoints())
             
             .self$trim(leftStop, rightStop)
         }
@@ -147,7 +147,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         if (pathOnly)
             return (tempFile)
         else
-            return (StreamlineSource$new(tempFile)$getStreamlines(1L))
+            return (StreamlineSource$new(tempFile)$getStreamlines())
     },
     
     getSelection = function () { return (selection) },

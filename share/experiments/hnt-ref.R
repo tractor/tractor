@@ -1,5 +1,5 @@
 #@args session directory, seed point
-#@desc Create a reference tract for use with heuristic neighbourhood tractography. This is a matter of simply running tractography with an appropriate session and seed point, and the options are therefore closely related to those of the "track" experiment.
+#@desc Create a reference tract for use with heuristic neighbourhood tractography. This is a matter of simply running tractography with an appropriate session and seed point.
 
 library(tractor.reg)
 library(tractor.session)
@@ -17,7 +17,7 @@ runExperiment <- function ()
     
     pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
     isStandardSeed <- getConfigVariable("SeedInMNISpace", FALSE)
-    nSamples <- getConfigVariable("NumberOfSamples", 5000)
+    nStreamlines <- getConfigVariable("Streamlines", 5000)
     tractName <- getConfigVariable("TractName", "tract")
     
     if (isStandardSeed)
@@ -25,8 +25,8 @@ runExperiment <- function ()
     else
         seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
     
-    trackerPath <- session$getTracker()$run(seed, nSamples, requireMap=TRUE)
-    image <- newMriImageByThresholding(readImageFile(trackerPath), 0.01*nSamples)
+    trackerPath <- session$getTracker()$run(seed, nStreamlines, requireMap=TRUE)
+    image <- readImageFile(trackerPath)$threshold(0.01*nStreamlines)
     tract <- newFieldTractFromMriImage(image, seed)
     reference <- newReferenceTractWithTract(tract, session=session, nativeSeed=seed)
     

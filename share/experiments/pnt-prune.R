@@ -14,7 +14,7 @@ runExperiment <- function ()
     modelName <- getConfigVariable("ModelName", NULL, "character")
     sessionNumbers <- getConfigVariable("SessionNumbers", NULL, "character")
     
-    nSamples <- getConfigVariable("NumberOfSamples", 1000)
+    nStreamlines <- getConfigVariable("Streamlines", 1000)
     subgroupSize <- getConfigVariable("SubgroupSize", 500)
     truncate <- getConfigVariable("TruncateToReference", TRUE)
     randomSeed <- getConfigVariable("RandomSeed", NULL, "integer")
@@ -93,7 +93,7 @@ runExperiment <- function ()
         
         tracker <- currentSession$getTracker()
         tracker$setOptions(rightwardsVector=rightwardsVector)
-        trackerPath <- tracker$run(bestSeed, nSamples, requireMap=FALSE, requireStreamlines=TRUE)
+        trackerPath <- tracker$run(bestSeed, nStreamlines, requireMap=FALSE, requireStreamlines=TRUE)
         streamSource <- StreamlineSource$new(trackerPath)
         
         originalMedianLine <- streamSource$getMedian(options$lengthQuantile)
@@ -104,13 +104,13 @@ runExperiment <- function ()
         report(OL$Info, "Median line log-likelihood is #{medianLogLikelihood}", round=3)
 
         sessionData <- NULL
-        nGroups <- (nSamples - 1) %/% subgroupSize + 1
+        nGroups <- (nStreamlines - 1) %/% subgroupSize + 1
 
         report(OL$Info, "Creating complete data table...")
         for (j in 1:nGroups)
         {
             firstStreamline <- subgroupSize * (j-1) + 1
-            lastStreamline <- min(j*subgroupSize, nSamples)
+            lastStreamline <- min(j*subgroupSize, nStreamlines)
             
             splines <- vector("list", lastStreamline-firstStreamline+1)
             for (k in firstStreamline:lastStreamline)
@@ -130,7 +130,7 @@ runExperiment <- function ()
         logLikelihoodRatios <- logLikelihoods - medianLogLikelihood
         keepProbabilities <- exp(pmin(logLikelihoodRatios,0))
         toAccept <- which(!is.na(keepProbabilities) & runif(length(keepProbabilities)) <= keepProbabilities)
-        toReject <- setdiff(1:nSamples, toAccept)
+        toReject <- setdiff(1:nStreamlines, toAccept)
         
         if (length(toAccept) == 0)
         {

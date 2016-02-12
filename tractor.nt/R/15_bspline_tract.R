@@ -114,7 +114,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
             return (NULL)
         }
 
-        line <- translatePoints(streamlineTract$getLine(), -streamlineTract$getSeedPoint())
+        line <- tractor.reg::translatePoints(streamlineTract$getLine(), -streamlineTract$getSeedPoint())
         data <- data.frame(t=pointLocs, x=line[,1], y=line[,2], z=line[,3])
         
         # Copy the relevant info into a clean environment to avoid baggage in "lm" objects

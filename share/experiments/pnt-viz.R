@@ -13,7 +13,7 @@ runExperiment <- function ()
     
     maxSeeds <- getConfigVariable("MaximumSeedPoints", 1, "integer")
     minPosterior <- getConfigVariable("MinimumPosterior", 0, "numeric")
-    nSamples <- getConfigVariable("NumberOfSamples", 1000, "integer")
+    nStreamlines <- getConfigVariable("Streamlines", 1000, "integer")
     
     createVolumes <- getConfigVariable("CreateVolumes", TRUE)
     createImages <- getConfigVariable("CreateImages", FALSE)
@@ -93,16 +93,16 @@ runExperiment <- function ()
             metadata <- currentSession$getImageByType("maskedb0", metadataOnly=TRUE)
             sequence <- match(sort(currentPosteriors[validSeeds]), currentPosteriors)
             seeds <- t(neighbourhoodInfo$vectors[,sequence])
-            trackerPath <- currentSession$getTracker()$run(seeds, nSamples, requireMap=FALSE, requireStreamlines=TRUE)
+            trackerPath <- currentSession$getTracker()$run(seeds, nStreamlines, requireMap=FALSE, requireStreamlines=TRUE)
             streamSource <- StreamlineSource$new(trackerPath)
             
-            result <- trackWithSession(session, seeds, requireImage=FALSE, requireStreamlines=TRUE, nSamples=nSamples, ...)
+            result <- trackWithSession(session, seeds, requireImage=FALSE, requireStreamlines=TRUE, nStreamlines=nStreamlines, ...)
 
             data <- array(0, dim=metadata$getDimensions())
             for (i in 1:nValidSeeds)
             {
-                firstStreamline <- nSamples * (i-1) + 1
-                lastStreamline <- i * nSamples
+                firstStreamline <- nStreamlines * (i-1) + 1
+                lastStreamline <- i * nStreamlines
                 imageForSeed <- streamSource$select(firstStreamline:lastStreamline)$getVisitationMap(metadata)
                 data <- data + imageForSeed$getData() * currentPosteriors[sequence[i]]
             }

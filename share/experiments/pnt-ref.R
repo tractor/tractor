@@ -15,7 +15,7 @@ runExperiment <- function ()
     
     pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
     isStandardSeed <- getConfigVariable("SeedInMNISpace", FALSE)
-    nSamples <- getConfigVariable("NumberOfSamples", 5000)
+    nStreamlines <- getConfigVariable("Streamlines", 5000)
     maxAngle <- getConfigVariable("MaximumAngle", NULL, "numeric")
     tractName <- getConfigVariable("TractName", "tract")
     
@@ -31,7 +31,7 @@ runExperiment <- function ()
         seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
     
     options <- createTractOptionList("knot", lengthQuantile, registerToReference, NULL, NULL)
-    returnValue <- referenceSplineTractWithOptions(options, session, seed, nSamples=nSamples, maxAngle=maxAngle)
+    returnValue <- referenceSplineTractWithOptions(options, session, seed, nStreamlines=nStreamlines, maxAngle=maxAngle)
     
     reference <- newReferenceTractWithTract(returnValue$spline, nativeSeed=seed, session=session, options=returnValue$options)
     writeNTResource(reference, "reference", "pnt", list(tractName=tractName))

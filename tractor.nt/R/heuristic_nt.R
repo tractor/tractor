@@ -1,7 +1,5 @@
-runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold = 0.2, searchWidth = 7, nSamples = 5000)
+runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold = 0.2, searchWidth = 7, nStreamlines = 5000)
 {
-    require("tractor.track")
-    
     if (!is(refTract, "FieldTract"))
         report(OL$Error, "Reference tract must be specified as a FieldTract object")
     if (!is.numeric(seed) || (length(seed) != 3))
@@ -25,9 +23,8 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     if (!equivalent(refTract$getVoxelDimensions(), faImage$getVoxelDimensions(), signMatters=FALSE, tolerance=1e-3))
     {
         report(OL$Info, "Resampling reference tract to the resolution of the session's native space")
-        require("tractor.reg")
-        newRefImage <- resampleImage(refTract$getImage(), faImage$getVoxelDimensions())
-        newRefSeed <- round(transformWorldToVoxel(transformVoxelToWorld(refTract$getSeedPoint(), refTract$getImage(), simple=TRUE), newRefImage, simple=TRUE))
+        newRefImage <- tractor.reg::resampleImage(refTract$getImage(), faImage$getVoxelDimensions())
+        newRefSeed <- round(tractor.reg::transformWorldToVoxel(tractor.reg::transformVoxelToWorld(refTract$getSeedPoint(), refTract$getImage(), simple=TRUE), newRefImage, simple=TRUE))
         refTract <- newFieldTractFromMriImage(newRefImage, newRefSeed)
     }
     
@@ -35,12 +32,12 @@ runNeighbourhoodTractography <- function (session, seed, refTract, faThreshold =
     reducedRefTract <- createReducedTractInfo(refTract)
     report(OL$Info, "Reference tract contains ", reducedRefTract$nVoxels, " nonzero voxels; length is ", reducedRefTract$length)
     
-    trackerPath <- session$getTracker()$run(candidateSeeds[validSeeds,], nSamples, requireMap=FALSE, requireStreamlines=TRUE)
+    trackerPath <- session$getTracker()$run(candidateSeeds[validSeeds,], nStreamlines, requireMap=FALSE, requireStreamlines=TRUE)
     streamSource <- StreamlineSource$new(trackerPath)
     for (i in seq_along(validSeeds))
     {
-        firstStreamline <- nSamples * (i-1) + 1
-        lastStreamline <- i * nSamples
+        firstStreamline <- nStreamlines * (i-1) + 1
+        lastStreamline <- i * nStreamlines
         imageForSeed <- streamSource$select(firstStreamline:lastStreamline)$getVisitationMap(faImage)
         candidateTract <- newFieldTractFromMriImage(imageForSeed, candidateSeeds[validSeeds[i],])
         similarities[validSeeds[i]] <- calculateSimilarity(reducedRefTract, candidateTract)

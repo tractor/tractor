@@ -166,7 +166,7 @@ void MedianTrackvisDataSource::get (Streamline &data)
         fileStream.seekg(4 * (nProperties-seedProperty-1), ios::cur);
     }
     
-    const int lengthIndex = static_cast<int>(round((totalStreamlines-1) * quantile));
+    const int lengthIndex = static_cast<int>(floor((totalStreamlines-1) * quantile));
     const int leftLength = getNthElement(leftLengths, lengthIndex);
     const int rightLength = getNthElement(rightLengths, lengthIndex);
     
@@ -391,7 +391,7 @@ void MedianTrackvisDataSink::setup (const size_type &count, const_iterator begin
             throw std::runtime_error("Point types do not match across streamlines, so median will make no sense");
     }
     
-    const int lengthIndex = static_cast<int>(round((count-1) * quantile));
+    const int lengthIndex = static_cast<int>(floor((count-1) * quantile));
     const int leftLength = getNthElement(leftLengths, lengthIndex);
     const int rightLength = getNthElement(rightLengths, lengthIndex);
     
