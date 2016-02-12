@@ -80,7 +80,7 @@ runExperiment <- function ()
             currentImage <- readImageFile(region, sparse=TRUE)
             data <- currentImage$getData()
             positive <- (data$getData() > 0)
-            locs <- data$getCoordinates()[positive,]
+            locs <- data$getCoordinates()[positive,,drop=FALSE]
             currentIndices <- sort(unique(data$getData()[positive]))
             
             if (length(currentIndices) == 0)
