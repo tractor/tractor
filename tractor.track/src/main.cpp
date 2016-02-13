@@ -168,7 +168,9 @@ RcppExport SEXP trkApply (SEXP _trkPath, SEXP _indices, SEXP _function)
 BEGIN_RCPP
     BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
     Pipeline<Streamline> pipeline(&trkFile);
-    pipeline.setSubset(as<int_vector>(_indices));
+    int_vector indices = as<int_vector>(_indices);
+    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
+    pipeline.setSubset(indices);
     Function function(_function);
     RCallbackDataSink sink(function);
     pipeline.addSink(&sink);
@@ -193,7 +195,9 @@ BEGIN_RCPP
     // A labelled source is used for speed, since it stores the streamline offsets for seeking
     LabelledTrackvisDataSource trkFile(as<std::string>(_trkPath));
     Pipeline<Streamline> pipeline(&trkFile);
-    pipeline.setSubset(as<int_vector>(_indices));
+    int_vector indices = as<int_vector>(_indices);
+    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
+    pipeline.setSubset(indices);
     
     int_vector dims(3);
     const Grid<3> &grid = trkFile.getGrid3D();
@@ -229,7 +233,9 @@ RcppExport SEXP trkLengths (SEXP _trkPath, SEXP _indices)
 BEGIN_RCPP
     BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
     Pipeline<Streamline> pipeline(&trkFile);
-    pipeline.setSubset(as<int_vector>(_indices));
+    int_vector indices = as<int_vector>(_indices);
+    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
+    pipeline.setSubset(indices);
     StreamlineLengthsDataSink sink;
     pipeline.addSink(&sink);
     
@@ -244,7 +250,9 @@ RcppExport SEXP trkMap (SEXP _trkPath, SEXP _indices, SEXP _imagePath, SEXP _res
 BEGIN_RCPP
     BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
     Pipeline<Streamline> pipeline(&trkFile);
-    pipeline.setSubset(as<int_vector>(_indices));
+    int_vector indices = as<int_vector>(_indices);
+    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
+    pipeline.setSubset(indices);
     
     int_vector dims(3);
     const Grid<3> &grid = trkFile.getGrid3D();
@@ -267,7 +275,9 @@ BEGIN_RCPP
     // Block size must match number of streamlines, as a running median can't be calculated
     BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
     Pipeline<Streamline> pipeline(&trkFile, trkFile.nStreamlines());
-    pipeline.setSubset(as<int_vector>(_indices));
+    int_vector indices = as<int_vector>(_indices);
+    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
+    pipeline.setSubset(indices);
     MedianTrackvisDataSink medianFile(as<std::string>(_resultPath), trkFile.getGrid3D(), as<double>(_quantile));
     pipeline.addSink(&medianFile);
     
@@ -283,7 +293,9 @@ BEGIN_RCPP
     // BasicTrackvisDataSource does not read labels, but when truncating they may not be preserved anyway
     BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
     Pipeline<Streamline> pipeline(&trkFile);
-    pipeline.setSubset(as<int_vector>(_indices));
+    int_vector indices = as<int_vector>(_indices);
+    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
+    pipeline.setSubset(indices);
     StreamlineTruncator truncator(as<double>(_leftLength), as<double>(_rightLength));
     pipeline.addManipulator(&truncator);
     BasicTrackvisDataSink resultFile(as<std::string>(_resultPath), trkFile.getGrid3D());
