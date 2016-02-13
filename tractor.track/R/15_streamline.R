@@ -69,7 +69,7 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     
     transform = function (xfm, reverse = FALSE, ...)
     {
-        .self$line <- transformPoints(xfm, .self$line, voxel=(.self$coordUnit=="vox"), reverse=reverse, ...)
+        .self$line <- promote(transformPoints(xfm, .self$line, voxel=(.self$coordUnit=="vox"), reverse=reverse, ...), byrow=TRUE)
         .self$updatePointSpacings()
         
         if (reverse)

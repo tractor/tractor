@@ -1,9 +1,9 @@
 #@desc Visualise the results of evaluating a data set against a PNT model, creating Analyze/NIfTI/MGH volumes (with CreateVolumes:true) and/or projection images (CreateImages:true) of the best matching tracts for each session. A single seed point is used in each case, but individual streamlines generated from this seed are retained or rejected depending on their likelihood under the model.
 
-suppressPackageStartupMessages(require(tractor.session))
-suppressPackageStartupMessages(require(tractor.nt))
-library(tractor.track)
 library(tractor.reg)
+library(tractor.track)
+library(tractor.session)
+library(tractor.nt)
 
 runExperiment <- function ()
 {

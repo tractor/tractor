@@ -50,13 +50,13 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
         report(OL$Error, "The specified transform is not a Transformation object")
     
     if (!voxel)
-        points <- worldToVoxel(points, transform$getSourceImage(index,reverse))
+        points <- worldToVoxel(points, as(transform$getSourceImage(index,reverse),"niftiImage"))
     
     xfm <- transform$getTransformObjects(index, reverse, preferAffine)
     newPoints <- applyTransform(xfm, points, nearest=nearest)
     
     if (!voxel)
-        newPoints <- voxelToWorld(newPoints, transform$getTargetImage(index,reverse))
+        newPoints <- voxelToWorld(newPoints, as(transform$getTargetImage(index,reverse),"niftiImage"))
     
     return (newPoints)
 }
