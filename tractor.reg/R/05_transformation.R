@@ -61,7 +61,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     getTransformObjects = function (i = 1, reverse = FALSE, preferAffine = FALSE, errorIfMissing = TRUE)
     {
         if (length(i) > 1)
-            return (lapply(i, .self$getTransformObject, reverse=reverse, preferAffine=preferAffine, errorIfMissing=errorIfMissing))
+            return (lapply(i, .self$getTransformObjects, reverse=reverse, preferAffine=preferAffine, errorIfMissing=errorIfMissing))
         
         object <- NULL
         source <- as(.self$getSourceImage(i,reverse), "niftiImage")
@@ -102,7 +102,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         if (ndim(sourceImage) == ndim(targetImage))
             return (1L)
         else
-            return (length(dim(targetImage)[ndim(targetImage)]))
+            return (dim(sourceImage)[ndim(sourceImage)])
     },
     
     summarise = function ()

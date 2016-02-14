@@ -16,7 +16,8 @@ setAs("MriImage", "niftiImage", function(from) {
     
     if (from$isReordered())
     {
-        origin <- (from$getOrigin() - 1) * abs(from$getVoxelDimensions())
+        voxDims <- replace(c(1,1,1), 1:min(3,from$getDimensionality()), abs(from$getVoxelDimensions()[1:min(3,from$getDimensionality())]))
+        origin <- (from$getOrigin() - 1) * voxDims
         xform <- diag(4)
         if (from$getDimensionality() == 2)
             xform[c(1,6)] <- c(-1,1) * abs(from$getVoxelDimensions())

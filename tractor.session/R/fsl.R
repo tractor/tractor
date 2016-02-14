@@ -73,7 +73,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     
     sourceImage <- session$getImageByType("rawdata", "diffusion", metadataOnly=TRUE)
     targetImage <- session$getImageByType("refb0", "diffusion", metadataOnly=TRUE)
-    transform <- tractor.reg::Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="fsl")
+    transform <- tractor.reg::Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="fsl", version=1)
     
     invisible (transform)
 }
