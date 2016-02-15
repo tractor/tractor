@@ -5,6 +5,7 @@ BASH=/bin/bash
 ECHO=/bin/echo
 ECHO_N=/bin/echo -n
 DIFF=diff -b
+TIME=time -p
 
 COLUMNS=40
 TRACTOR=../bin/tractor -q -z -i -v0
@@ -35,8 +36,8 @@ create-tests:
 
 %.out: %.sh
 	@$(ECHO_N) "`grep '#@desc' $< | sed 's/#@desc //'`... "
-	@$(BASH) $< >$@ 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
-	@$(DIFF) $*.save $@ >tmp/tmp.diff 2>&1 && ( $(ECHO) "OK"; rm -f tmp/tmp.diff ) || ( $(ECHO) "FAIL"; cat tmp/tmp.diff; rm -f tmp/tmp.diff; rm -f $@; exit 1 )
+	@$(TIME) ( $(BASH) $< >$@ 2>&1 ) >tmp/tmp.time 2>&1 || ( $(ECHO) ""; cat tmp/tmp.out; rm -f tmp/tmp.out; exit 1 )
+	@real=`grep '^real' tmp/tmp.time | sed 's/real *//'`; $(DIFF) $*.save $@ >tmp/tmp.diff 2>&1 && ( $(ECHO) "OK ($$real s)"; rm -f tmp/tmp.* ) || ( $(ECHO) "FAIL"; cat tmp/tmp.diff; rm -f tmp/tmp.* $@; exit 1 )
 
 %.save: %.sh
 	@$(ECHO_N) "Updating test output for $@... "
