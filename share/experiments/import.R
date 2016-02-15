@@ -7,7 +7,7 @@ runExperiment <- function ()
 {
     requireArguments("session directory", "image files or DICOM directories")
     
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- attachMriSession(Arguments[1])
     nImages <- nArguments() - 1
     
     weighting <- getConfigVariable("ImageWeighting", "t1", validValues=c("t1","t2","pd","diffusion","functional"))

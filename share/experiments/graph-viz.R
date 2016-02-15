@@ -45,7 +45,7 @@ runExperiment <- function ()
             if (length(space) != 2)
                 report(OL$Error, "Cannot resolve the space of the vertex locations")
             
-            brainMask <- newSessionFromDirectory(space[1])$getImageByType("mask", space[2])
+            brainMask <- attachMriSession(space[1])$getImageByType("mask", space[2])
             kernel <- shapeKernel(c(3,3,3), type="box")
             brainMask$map(function(x) x - erode(x,kernel), sparse=TRUE)
             

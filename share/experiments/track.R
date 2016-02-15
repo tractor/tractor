@@ -9,7 +9,7 @@ library(tractor.session)
 runExperiment <- function ()
 {
     requireArguments("session directory")
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- attachMriSession(Arguments[1])
     
     strategy <- getConfigVariable("Strategy", "global", validValues=c("global","regionwise","voxelwise"))
     nStreamlines <- getConfigVariable("Streamlines", "100x")

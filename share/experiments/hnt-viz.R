@@ -29,7 +29,7 @@ runExperiment <- function ()
     parallelApply(seq_len(nSessions), function (i) {
         report(OL$Info, "Generating tract for session ", i)
         
-        currentSession <- newSessionFromDirectory(sessionList[i])
+        currentSession <- attachMriSession(sessionList[i])
         currentSeed <- results$getResult(i)$bestSeed
         
         # FIXME: doesn't seem necessary to hard-code the number of streamlines

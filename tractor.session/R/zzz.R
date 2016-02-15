@@ -21,8 +21,8 @@
         if (nGroups < 2)
             return (NULL)
         else if (nGroups < 3)
-            newSessionFromDirectory(groups[1])$getImageFileNameByType(groups[2])
+            attachMriSession(groups[1])$getImageFileNameByType(groups[2])
         else
-            newSessionFromDirectory(groups[1])$getImageFileNameByType(groups[4], groups[2])
+            attachMriSession(groups[1])$getImageFileNameByType(groups[4], groups[2])
     })
 }

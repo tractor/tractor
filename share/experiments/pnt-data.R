@@ -57,9 +57,9 @@ runExperiment <- function ()
             
             # Allow for out of bounds session numbers (used by pnt-data-sge)
             if (length(sessionList) == 1)
-                currentSession <- newSessionFromDirectory(sessionList)
+                currentSession <- attachMriSession(sessionList)
             else
-                currentSession <- newSessionFromDirectory(sessionList[i])
+                currentSession <- attachMriSession(sessionList[i])
             
             if (exists("seedMatrix"))
                 currentSeed <- round(changePointType(seedMatrix[i,], session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))

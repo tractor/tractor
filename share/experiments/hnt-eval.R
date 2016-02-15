@@ -26,7 +26,7 @@ runExperiment <- function ()
     }
 
     results <- parallelApply(seq_len(nSessions), function (i) {
-        currentSession <- newSessionFromDirectory(sessionList[i])
+        currentSession <- attachMriSession(sessionList[i])
 
         if (exists("seedMatrix"))
             currentSeed <- round(changePointType(seedMatrix[i,], session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))

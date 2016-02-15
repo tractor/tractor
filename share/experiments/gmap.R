@@ -52,7 +52,7 @@ runExperiment <- function ()
         }
         
         image <- readImageFile(imageFileName)
-        session <- newSessionFromDirectory(sessionList[i])
+        session <- attachMriSession(sessionList[i])
         
         threshold <- baseThreshold * switch(thresholdMode, nothing=1, maximum=max(image,na.rm=TRUE), minimum=min(image,na.rm=TRUE))
         

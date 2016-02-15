@@ -54,7 +54,7 @@ runExperiment <- function ()
     parallelApply(seq_len(nSessions), function (i) {
         report(OL$Info, "Generating tract for session ", i)
         
-        currentSession <- newSessionFromDirectory(sessionList[i])
+        currentSession <- attachMriSession(sessionList[i])
         if (seedsInData)
         {
             if (subjectsInData)

@@ -7,7 +7,7 @@ library(lattice)
 
 runExperiment <- function ()
 {    
-    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
+    session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
     mode <- getConfigVariable("Mode", "rotation", validValues=c("rotation","translation","scale","skew","all"))
     interactive <- getConfigVariable("Interactive", TRUE)

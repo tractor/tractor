@@ -12,7 +12,7 @@ runExperiment <- function ()
     ignoreExisting <- getConfigVariable("IgnoreExisting", FALSE)
     freesurferSpaceReference <- getConfigVariable("FreesurferSpaceReference", NULL, "character")
     
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- attachMriSession(Arguments[1])
     
     segmentationFiles <- splitAndConvertString(Arguments[-1], ",", fixed=TRUE)
     if (!is.null(types))

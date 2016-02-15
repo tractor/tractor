@@ -6,7 +6,7 @@ library(tractor.session)
 
 runExperiment <- function ()
 {
-    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
+    session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
     if (getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)

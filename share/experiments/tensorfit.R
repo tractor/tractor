@@ -5,7 +5,7 @@ library(tractor.session)
 
 runExperiment <- function ()
 {
-    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
+    session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
     method <- getConfigVariable("Method", "ls", validValues=c("ls","iwls","fsl"))
     

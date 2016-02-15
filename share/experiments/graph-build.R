@@ -20,7 +20,7 @@ runExperiment <- function ()
     
     targetRegions <- splitAndConvertString(targetRegions, ",", fixed=TRUE)
     
-    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
+    session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     parcellation <- session$getParcellation(type, threshold=parcellationConfidence)
     
     targetMatches <- matchRegions(targetRegions, parcellation, labels=TRUE)

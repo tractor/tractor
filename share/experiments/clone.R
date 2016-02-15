@@ -12,7 +12,7 @@ runExperiment <- function ()
     deleteOriginal <- getConfigVariable("DeleteOriginal", FALSE, errorIfInvalid=TRUE)
     copyHidden <- getConfigVariable("CopyHidden", FALSE)
     
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- attachMriSession(Arguments[1])
     
     targetDir <- Arguments[2]
     if (file.exists(targetDir))

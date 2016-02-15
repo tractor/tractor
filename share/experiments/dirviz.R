@@ -7,7 +7,7 @@ library(tractor.session)
 runExperiment <- function ()
 {
     requireArguments("session directory")
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- attachMriSession(Arguments[1])
     
     x <- getConfigVariable("X", NA, "numeric", errorIfInvalid=TRUE)
     y <- getConfigVariable("Y", NA, "numeric", errorIfInvalid=TRUE)

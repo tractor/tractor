@@ -8,7 +8,7 @@ runExperiment <- function ()
 {
     requireArguments("session directory", "seed point")
     
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- attachMriSession(Arguments[1])
     seed <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
     if (!exists("seed") || length(seed) != 3)
         report(OL$Error, "Seed point must be given as a single vector in 3D space, comma or space separated")

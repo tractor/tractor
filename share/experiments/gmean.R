@@ -25,7 +25,7 @@ runExperiment <- function ()
             next
         }
         
-        session <- newSessionFromDirectory(sessionList[i])
+        session <- attachMriSession(sessionList[i])
         image <- readImageFile(fileName)
         
         if (thresholdMode == "maximum")

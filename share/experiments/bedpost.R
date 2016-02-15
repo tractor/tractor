@@ -5,7 +5,7 @@ library(tractor.session)
 
 runExperiment <- function ()
 {
-    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
+    session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
     nFibres <- getConfigVariable("NumberOfFibres", 2, "integer")
     howRunBedpost <- getConfigVariable("Context", "fg", validValues=c("fg","bg","screen"))
