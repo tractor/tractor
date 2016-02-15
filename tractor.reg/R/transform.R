@@ -1,53 +1,15 @@
-transformImage <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, finalInterpolation = 1)
+transformImage <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, interpolation = 1)
 {
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified transform is not a Transformation object")
     
-    options <- list(nLevels=0, verbose=FALSE)
+    if (is.null(newImage))
+        newImage <- transform$getSourceImage(index, reverse)
     
-    availableTypes <- transform$getTypes()
-    if (preferAffine && ("affine" %in% availableTypes))
-        type <- "affine"
-    else if (reverse && ("reverse-nonlinear" %in% availableTypes))
-    {
-        type <- "nonlinear"
-        options$initControl <- transform$getReverseControlPointImage(index)
-    }
-    else if (!reverse && ("nonlinear" %in% availableTypes))
-    {
-        type <- "nonlinear"
-        options$initControl <- transform$getControlPointImage(index)
-    }
-    else if ("affine" %in% availableTypes)
-        type <- "affine"
-    else
-        report(OL$Error, "The specified Transformation object does not contain the necessary information")
+    xfm <- transform$getTransformObjects(index, reverse, preferAffine)
+    result <- applyTransform(xfm, as(newImage,"niftiImage"), interpolation=.interpolationNameToCode(interpolation))
     
-    if (!is.null(newImage))
-        sourceImage <- newImage
-    else if (reverse)
-        sourceImage <- transform$getTargetImage()
-    else
-        sourceImage <- transform$getSourceImage()
-    
-    if (reverse)
-        targetImage <- transform$getSourceImage()
-    else
-        targetImage <- transform$getTargetImage()
-    
-    if (type == "affine")
-    {
-        initAffine <- transform$getAffineMatrix(index)
-        if (reverse)
-            initAffine <- invertAffine(initAffine)
-        options$scope <- "affine"
-        
-        result <- registerImagesWithNiftyreg(sourceImage, targetImage, initAffine=initAffine, types="affine", estimateOnly=FALSE, finalInterpolation=finalInterpolation, linearOptions=options)
-    }
-    else
-        result <- registerImagesWithNiftyreg(sourceImage, targetImage, types="nonlinear", estimateOnly=FALSE, finalInterpolation=finalInterpolation, nonlinearOptions=options)
-    
-    return (result$transformedImage)
+    return (as(result, "MriImage"))
 }
 
 # Parcellation images can be transformed using nearest neighbour interpolation, but this function gives more flexibility while still ensuring a sensible, nonoverlapping result
@@ -56,10 +18,7 @@ transformParcellation <- function (transform, parcellation, threshold = 0.5, ind
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified transform is not a Transformation object")
     
-    if (reverse)
-        targetSpace <- transform$getSourceImage()
-    else
-        targetSpace <- transform$getTargetImage()
+    targetSpace <- transform$getTargetImage(index, reverse)
     
     # NB: "threshold - .Machine$double.eps" should always evaluate (just) strictly less than "threshold"
     # This allows values at threshold to be kept without adding an extra evaluation every time below
@@ -69,8 +28,8 @@ transformParcellation <- function (transform, parcellation, threshold = 0.5, ind
     uniqueIndices <- setdiff(unique(as.vector(parcellation$image$getData())), 0L)
     for (i in uniqueIndices)
     {
-        currentImage <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x==i,1,0))
-        transformedImage <- transformImage(transform, currentImage, index=index, preferAffine=preferAffine, reverse=reverse, finalInterpolation=1)
+        currentImage <- parcellation$image$copy()$map(function(x) ifelse(x==i,1,0))
+        transformedImage <- transformImage(transform, currentImage, index=index, preferAffine=preferAffine, reverse=reverse, interpolation=1)
         toUpdate <- which(transformedImage$getData() > maxValues)
         if (length(toUpdate) > 0)
         {
@@ -81,7 +40,7 @@ transformParcellation <- function (transform, parcellation, threshold = 0.5, ind
             report(OL$Warning, "Region with index #{i} is unrepresented in the transformed parcellation")
     }
     
-    finalImage <- newMriImageWithData(finalParcellation, targetSpace)
+    finalImage <- asMriImage(finalParcellation, targetSpace)
     return (list(image=finalImage, regions=parcellation$regions))
 }
 
@@ -90,54 +49,14 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified transform is not a Transformation object")
     
-    availableTypes <- transform$getTypes()
-    if (preferAffine && ("affine" %in% availableTypes))
-        type <- "affine"
-    else if (reverse && ("reverse-nonlinear" %in% availableTypes))
-    {
-        type <- "nonlinear"
-        controlPoints <- transform$getReverseControlPointImage(index)
-    }
-    else if (!reverse && ("nonlinear" %in% availableTypes))
-    {
-        type <- "nonlinear"
-        controlPoints <- transform$getControlPointImage(index)
-    }
-    else if ("affine" %in% availableTypes)
-        type <- "affine"
-    else
-        report(OL$Error, "The specified Transformation object does not contain the necessary information")
+    if (!voxel)
+        points <- worldToVoxel(points, as(transform$getSourceImage(index,reverse),"niftiImage"))
     
-    if (reverse)
-    {
-        sourceImage <- transform$getTargetImage()
-        targetImage <- transform$getSourceImage()
-    }
-    else
-    {
-        sourceImage <- transform$getSourceImage()
-        targetImage <- transform$getTargetImage()
-    }
+    xfm <- transform$getTransformObjects(index, reverse, preferAffine)
+    newPoints <- applyTransform(xfm, points, nearest=nearest)
     
     if (!voxel)
-        points <- transformWorldToVoxel(points, sourceImage)
-        
-    if (type == "affine")
-    {
-        affine <- transform$getAffineMatrix(index)
-        if (reverse)
-            affine <- invertAffine(affine)
-        
-        newPoints <- transformWithAffine(points, affine, sourceImage, targetImage)
-        
-        if (nearest)
-            newPoints <- round(newPoints)
-    }
-    else
-        newPoints <- transformWithControlPoints(points, controlPoints, sourceImage, targetImage, nearest=nearest)
-    
-    if (!voxel)
-        newPoints <- transformVoxelToWorld(newPoints, targetImage)
+        newPoints <- voxelToWorld(newPoints, as(transform$getTargetImage(index,reverse),"niftiImage"))
     
     return (newPoints)
 }
@@ -150,4 +69,14 @@ translatePoints <- function (points, offset)
         return (points + offset)
     else
         report(OL$Error, "Points must be specified as a numeric vector or matrix")
+}
+
+transformVoxelToWorld <- function (points, image, simple = FALSE, ...)
+{
+    RNiftyReg::voxelToWorld(points, as(image,"niftiImage"), simple=simple, ...)
+}
+
+transformWorldToVoxel <- function (points, image, simple = FALSE, ...)
+{
+    RNiftyReg::worldToVoxel(points, as(image,"niftiImage"), simple=simple, ...)
 }

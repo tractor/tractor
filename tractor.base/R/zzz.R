@@ -1,3 +1,6 @@
+#' @import methods ore reportr
+NULL
+
 .onLoad <- function (libname, pkgname)
 {
     if (is.null(getOption("tractorFileType")))

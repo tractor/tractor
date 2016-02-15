@@ -1,0 +1,7 @@
+diffusion: diffusion
+fdt: fdt
+bedpost: fdt.bedpostX
+transforms: transforms
+structural: structural
+freesurfer: freesurfer
+functional: functional

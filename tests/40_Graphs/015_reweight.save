@@ -4,7 +4,7 @@
          Mean shortest path : 3.22 steps
           Global efficiency : 0.322
       Mean local efficiency : 0.297
-Mean clustering coefficient : 0.0874
+Mean clustering coefficient : 0.243
 ---
          Number of vertices : 68 (67 connected)
             Number of edges : 203
@@ -13,4 +13,4 @@ Mean clustering coefficient : 0.0874
          Mean shortest path : 6.77 (inverse weight)
           Global efficiency : 0.155
       Mean local efficiency : 0.148
-Mean clustering coefficient : 0.0899
+Mean clustering coefficient : 0.566

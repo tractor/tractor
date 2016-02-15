@@ -1,7 +1,7 @@
-* INFO: Translation (mm): -0.700066, 1.178597, -3.157293
+* INFO: Translation (mm): 0.234745, 0.85875, 0.189211
 * INFO: Scales          : 1.008339, 1.011765, 1.029363
-* INFO: Skews           : -0.002046, -0.002328, -0.012041
-* INFO: Rotations (rad) : 0.003214, 0.016547, 0.007683
+* INFO: Skews           : 0.002046, 0.002328, -0.012041
+* INFO: Rotations (rad) : 0.003214, -0.016547, -0.007683
 ---
 Rotation & Translation Matrix:
 0.999834 0.007682 -0.016547 -0.700066 

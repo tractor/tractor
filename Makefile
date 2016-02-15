@@ -2,11 +2,13 @@ SHELL=/bin/bash
 export SHELL
 
 R=R
+ENV=/usr/bin/env
 ECHO=/bin/echo
 ECHO_N=/bin/echo -n
 GIT=git
 MD5=md5
-INSTALL=bin/tractor_Rinstall
+FETCH=bin/tractor_pkgget -m
+INSTALL=$(ENV) R=$(R) bin/tractor_Rinstall
 
 default: build post-build-info
 
@@ -28,8 +30,11 @@ post-install-info:
 	@$(ECHO) "The ~/.bashrc file can be created if it does not already exist."
 
 install-libs:
-	@$(INSTALL) lib/reportr lib/corpcor lib/Rcpp
-	@$(INSTALL) -k lib/RcppArmadillo
+	@$(INSTALL) lib/Rcpp lib/RcppEigen lib/corpcor
+	@$(INSTALL) lib/ore lib/reportr lib/mmand lib/RNiftyReg
+	@$(INSTALL) -k lib/png
+
+check-and-install-libs: install-libs
 
 install-base:
 	@$(INSTALL) tractor.base
@@ -38,10 +43,9 @@ install-utils:
 	@$(INSTALL) tractor.utils
 
 install-reg:
-	@$(INSTALL) lib/bitops lib/oro.nifti lib/RNiftyReg tractor.reg
+	@$(INSTALL) tractor.reg
 
 install-session:
-	@$(INSTALL) -k lib/mmand
 	@$(INSTALL) tractor.session
 
 install-nt:
@@ -51,40 +55,40 @@ install-track:
 	@$(INSTALL) tractor.track
 
 install-graph:
-	@$(INSTALL) -k lib/igraph
 	@$(INSTALL) tractor.graph
 
 install: build
 	@rm -f install.log
-	@$(MAKE) install-libs install-base install-utils install-reg install-session install-nt install-track install-graph post-install-info
+	@$(MAKE) check-and-install-libs install-base install-utils install-reg install-session install-track install-nt install-graph post-install-info
 
-install-local:
-	@mkdir -p lib/R
-	@$(MAKE) install
+install-local: install
+
+install-global:
+	@$(MAKE) install INSTALL="$(INSTALL) -g"
 
 install-all: install
 
 uninstall:
-	$(R) CMD REMOVE tractor.graph tractor.track tractor.nt tractor.session tractor.reg tractor.utils tractor.base
-
-uninstall-local:
 	@rm -rf lib/R
 
-uninstall-all: uninstall
-	$(R) CMD REMOVE RNiftyReg oro.nifti bitops mmand RcppArmadillo Rcpp corpcor reportr
+uninstall-local: uninstall
+
+uninstall-global:
+	$(R) CMD REMOVE tractor.graph tractor.track tractor.nt tractor.session tractor.reg tractor.utils tractor.base
 
 clean:
 	@cd tests && $(MAKE) clean
 
 distclean: clean
+	@rm -f lib/.VERSION
 	@rm -f bin/exec/tractor src/build.log install.log
 	@rm -f tractor.track/config.log tractor.track/config.status tractor.track/src/Makevars tractor.track/src/config.h
 
 test:
-	@cd tests && $(MAKE) run-tests
+	@cd tests && $(MAKE) run-tests R=$(R)
 
 dtest:
-	@cd tests && $(MAKE) debug-tests
+	@cd tests && $(MAKE) debug-tests R=$(R)
 
 create-md5:
 	@$(GIT) ls-files | grep -v -e '^lib/' -e '^etc/md5.txt' -e '\.git' | xargs $(MD5) -r >etc/md5.txt

@@ -1,0 +1,89 @@
+#! /bin/bash
+
+status=1
+trap 'exit $status' 0 1 2 15
+
+target_dir="tmp"
+all_builds=0
+
+force_source=0
+
+main_url="http://cran.rstudio.com"
+url=$main_url
+mirror_url="http://cran.tractor-mri.org.uk"
+
+usage()
+{
+    echo "tractor_pkgget (program v3.0.0)"
+    echo "Fetch a particular version of an R package from CRAN or a mirror"
+    echo
+    echo "Usage: tractor_pkgget [-mas] [-d dir] pkg_name pkg_version"
+    echo
+}
+
+fail()
+{
+    echo " FAIL"
+    exit
+}
+
+set -- `getopt "hmad:" "$@"` || {
+    usage 1>&2
+    exit
+}
+
+while [ $# -gt 0 ]
+    do
+    case "$1" in
+        -h) usage; status=0; exit ;;
+        -m) url=$mirror_url ;;
+        -a) all_builds=1 ;;
+        -s) force_source=1 ;;
+        -d) shift; target_dir="$1" ;;
+        --) shift; break ;;
+    esac
+    shift
+done
+
+name=$1
+version=$2
+r_version="3.0"
+
+if [ $all_builds -eq 1 ]; then
+    cd "$target_dir" && mkdir -p src/contrib bin/macosx/contrib bin/macosx/mavericks/contrib || exit
+    curl -f -o "src/contrib/${name}_${version}.tar.gz" "${url}/src/contrib/${name}_${version}.tar.gz"
+    Rscript -e "tools::write_PACKAGES('src/contrib')" || exit
+    
+    for r_version in 3.0 3.1 3.2; do
+        mkdir -p bin/macosx/contrib/${r_version} bin/macosx/mavericks/contrib/${r_version}
+        curl -f -o "bin/macosx/contrib/${r_version}/${name}_${version}.tgz" "${url}/bin/macosx/contrib/${r_version}/${name}_${version}.tgz"
+        Rscript -e "tools::write_PACKAGES('bin/macosx/contrib/${r_version}')"
+        curl -f -o "bin/macosx/mavericks/contrib/${r_version}/${name}_${version}.tgz" "${url}/bin/macosx/mavericks/contrib/${r_version}/${name}_${version}.tgz"
+        Rscript -e "tools::write_PACKAGES('bin/macosx/mavericks/contrib/${r_version}')"
+    done
+else
+    echo -n "Fetching R package \"${name}\", version ${version}..."
+    
+    if [ $force_source -eq 1 ]; then
+        pkg_type="source"
+    else
+        pkg_type=`Rscript -e 'cat(getOption("pkgType"))'` || fail
+        [ $pkg_type != "source" ] && {
+            script='v<-R.Version(); cat(sub("^(\\\\d+\\\\.\\\\d+)(?:\\\\..+)?$","\\\\1",paste(v$major,v$minor,sep="."),perl=TRUE))'
+            r_version=`Rscript -e "$script"`
+        }
+    fi
+    
+    cd "$target_dir" || fail
+    if [ $pkg_type = "source" ]; then
+        curl -s -O "${url}/src/contrib/${name}_${version}.tar.gz" || fail
+    elif [ $pkg_type = "mac.binary" -o $pkg_type = "mac.binary." ]; then
+        curl -s -O "${url}/bin/macosx/contrib/${r_version}/${name}_${version}.tgz" || fail
+    elif [ $pkg_type = "mac.binary.mavericks" ]; then
+        curl -s -O "${url}/bin/macosx/mavericks/contrib/${r_version}/${name}_${version}.tgz" || fail
+    fi
+    
+    echo " OK"
+fi
+
+status=0

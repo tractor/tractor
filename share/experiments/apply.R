@@ -37,7 +37,7 @@ runExperiment <- function ()
         cat(paste(result, "\n", sep=""))
     else
     {
-        resultImage <- newMriImageWithData(result, images[[1]])
+        resultImage <- asMriImage(result, images[[1]])
         writeImageFile(resultImage, resultName)
     }
 }

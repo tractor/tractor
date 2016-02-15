@@ -11,7 +11,7 @@ runExperiment <- function ()
     sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
     metricName <- getConfigVariable("Metric", NULL, "character", validValues=c("weight","FA","MD","axialdiff","radialdiff"))
     mode <- getConfigVariable("AveragingMode", "binary", validValues=c("binary","weighted"))
-    baseThreshold <- getConfigVariable("WeightThreshold", 0.01)
+    baseThreshold <- getConfigVariable("ThresholdLevel", 0.01)
     thresholdMode <- getConfigVariable("ThresholdRelativeTo", "nothing", validValues=c("nothing","maximum","minimum"))
     
     for (i in seq_along(sessionList))
@@ -25,7 +25,7 @@ runExperiment <- function ()
             next
         }
         
-        session <- newSessionFromDirectory(sessionList[i])
+        session <- attachMriSession(sessionList[i])
         image <- readImageFile(fileName)
         
         if (thresholdMode == "maximum")
@@ -36,7 +36,7 @@ runExperiment <- function ()
             threshold <- baseThreshold
 
         images <- createWeightingAndMetricImages(image, session, type=tolower(metricName), mode=mode, threshold=threshold)
-        finalImage <- newMriImageWithBinaryFunction(images$metric, images$weight, "*")
+        finalImage <- images$metric * images$weight
         metric <- sum(finalImage$getData(),na.rm=TRUE) / sum(images$weight$getData(),na.rm=TRUE)
 
         cat(paste(metric, "\n", sep=""))

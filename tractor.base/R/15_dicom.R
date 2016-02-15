@@ -1,3 +1,18 @@
+#' The DicomMetadata class
+#' 
+#' This class represents DICOM metadata, which typically contains detailed
+#' information about the scan parameters and subject.
+#' 
+#' @field source String naming the source file
+#' @field tags Data frame of tag information
+#' @field tagOffset Starting offset for tags in the file
+#' @field dataOffset Starting offset for pixel data in the file
+#' @field dataLength Pixel data length
+#' @field explicitTypes Logical value indicating whether explicit types are
+#'   used in the file
+#' @field endian String naming the endianness of the file
+#' 
+#' @export
 DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(source="character",tags="data.frame",tagOffset="integer",dataOffset="integer",dataLength="integer",explicitTypes="logical",endian="character"), methods=list(
     getDataLength = function () { return (dataLength) },
     
@@ -13,6 +28,7 @@ DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fie
     
     getTagValue = function (group, element)
     {
+        "Retrieve the value of a given tag, using an appropriate R type. Returns NA if the tag is missing"
         valueRow <- subset(tags, (tags$groups == group & tags$elements == element))
         if (dim(valueRow)[1] == 0 || valueRow$values == "")
             return (NA)
@@ -33,16 +49,11 @@ DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fie
     nTags = function () { return (nrow(tags)) }
 ))
 
+#' @export
 print.DicomMetadata <- function (x, descriptions = FALSE, ...)
 {
     tags <- x$getTags()
     nTags <- nrow(tags)
-    if (descriptions && !exists("dictionary"))
-    {
-        # First set to NULL to keep package checker happy
-        dictionary <- NULL
-        data("dictionary", package="tractor.base", envir=environment(NULL))
-    }
     
     if (nTags > 0)
     {
@@ -51,7 +62,7 @@ print.DicomMetadata <- function (x, descriptions = FALSE, ...)
             cat("DESCRIPTION", rep(" ",19), "VALUE\n", sep="")
             for (i in seq_len(nTags))
             {
-                description <- getDescriptionForDicomTag(tags$groups[i], tags$elements[i], dictionary)
+                description <- getDescriptionForDicomTag(tags$groups[i], tags$elements[i])
                 cat(" ", substr(description, 1, 27), sep="")
                 nSpaces <- max(3, 30-nchar(description))
                 cat(rep(" ",nSpaces), sep="")
@@ -72,11 +83,8 @@ print.DicomMetadata <- function (x, descriptions = FALSE, ...)
     }
 }
 
-getDescriptionForDicomTag <- function (groupRequired, elementRequired, dictionary = NULL)
+getDescriptionForDicomTag <- function (groupRequired, elementRequired)
 {
-    if (is.null(dictionary))
-        data("dictionary", package="tractor.base", envir=environment(NULL))
-    
     dictionaryRow <- subset(dictionary, (dictionary$group==groupRequired & dictionary$element==elementRequired))
     if (nrow(dictionaryRow) == 0)
         description <- sprintf("Unknown (0x%04x, 0x%04x)", groupRequired, elementRequired)
@@ -86,7 +94,41 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired, dictionar
     return (description)
 }
 
-newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary = NULL, stopTag = NULL, ignoreTransferSyntax = FALSE)
+#' Read a DICOM file into a DicomMetadata object
+#' 
+#' This function reads a DICOM file into a \code{\link{DicomMetadata}} object.
+#' Only DICOM files from magnetic resonance scanners are supported.
+#' 
+#' @param fileName The name of a DICOM file.
+#' @param checkFormat If \code{TRUE}, the function will check for the magic
+#'   string \code{"DICM"} at byte offset 128. This string should be present,
+#'   but in reality not all files contain it.
+#' @param stopTag An integer vector giving the group and element numbers (in
+#'   that order) of a DICOM tag, or \code{NULL}. If not \code{NULL}, the
+#'   function will stop parsing the DICOM file if the specified tag is
+#'   encountered. This can be used to speed up the process if a specific tag is
+#'   required.
+#' @param ignoreTransferSyntax If \code{TRUE}, any transfer syntax stored in
+#'   the file will be ignored, and the code will try to deduce the transfer
+#'   syntax using heuristics. This may occasionally be necessary for awkward
+#'   DICOM files, but is not generally recommended.
+#' @return \code{readDicomFile} returns a \code{\linkS4class{DicomMetadata}}
+#'   object, or \code{NULL} on failure.
+#' 
+#' @author Jon Clayden
+#' @seealso The DICOM standard, found online at \url{http://dicom.nema.org/}.
+#'   (Warning: may produce headaches!) Also \code{\link{readDicomDirectory}}
+#'   for information on how to create \code{\linkS4class{MriImage}} objects
+#'   from DICOM files.
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
+readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreTransferSyntax = FALSE)
 {
     fileName <- expandFileName(fileName)
     
@@ -101,10 +143,6 @@ newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary =
     tagOffset <- 0
     dataOffset <- dataLength <- NA
     
-    if (is.null(dictionary))
-        data("dictionary", package="tractor.base", envir=environment(NULL))
-    dictionary$type <- as.vector(dictionary$type)
-    typeCol <- which(colnames(dictionary) == "type")
     connection <- file(fileName, "rb")
     on.exit(close(connection))
     

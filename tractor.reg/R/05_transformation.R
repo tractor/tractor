@@ -1,50 +1,108 @@
+MriImage <- getRefClass("MriImage")
+
+.listFind <- function (list, i) { if (i > length(list)) NULL else list[[i]] }
+.listApply <- function (list, f, ...) { lapply(list, function(x) { if (is.null(x)) NULL else f(x,...) }) }
+.listPad <- function (list, len) { if (length(list) == len) list else c(list, rep(list(NULL),len-length(list))) }
+
 Transformation <- setRefClass("Transformation", contains="SerialisableObject", fields=list(sourceImage="MriImage",targetImage="MriImage",affineMatrices="list",controlPointImages="list",reverseControlPointImages="list",method="character"), methods=list(
-    getAffineMatrix = function (i = NULL)
+    initialize = function (sourceImage = MriImage$new(), targetImage = MriImage$new(), affineMatrices = NULL, controlPointImages = NULL, reverseControlPointImages = NULL, method = c("niftyreg","fsl"), version = 2, ...)
     {
-        if (is.null(i))
-        {
-            mat <- affineMatrices
-            mat <- lapply(mat, function(m) {
-                attr(m, "affineType") <- method
-                return (m)
-            })
-            return (mat)
-        }
-        else
-        {
-            mat <- affineMatrices[[i]]
-            attr(mat, "affineType") <- method
-            return (mat)
-        }
+        method <- match.arg(method)
+        
+        if (!is.list(affineMatrices))
+            affineMatrices <- list(affineMatrices)
+        affineMatrices <- lapply(affineMatrices, function(x) {
+            # For backwards compatibility, handle FSL-type affines
+            if (method == "fsl" && version < 2)
+                x <- RNiftyReg:::convertAffine(x, as(sourceImage,"niftiImage"), as(targetImage,"niftiImage"), "niftyreg")
+            return (structure(asAffine(x), source=NULL, target=NULL))
+        })
+        
+        if (!is.list(controlPointImages))
+            controlPointImages <- list(controlPointImages)
+        controlPointImages <- .listApply(controlPointImages, as, "MriImage")
+        
+        if (!is.list(reverseControlPointImages))
+            reverseControlPointImages <- list(reverseControlPointImages)
+        reverseControlPointImages <- .listApply(reverseControlPointImages, as, "MriImage")
+        
+        initFields(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=method)
     },
     
-    getControlPointImage = function (i = NULL)
+    getInverse = function (i = 1, quiet = FALSE)
     {
-        if (is.null(i))
-            return (controlPointImages)
-        else
-            return (controlPointImages[[i]])
+        if (!quiet && equivalent(c("nonlinear","reverse-nonlinear") %in% .self$getTypes(), c(TRUE,FALSE)))
+            flag(OL$Warning, "Nonlinear part of the transformation is not invertible")
+        
+        inverseAffines <- .listApply(.self$affineMatrices, function(x) asAffine(solve(x)))
+        return (Transformation$new(.self$getTargetImage(), .self$getSourceImage(i), .listFind(inverseAffines,i), .listFind(reverseControlPointImages,i), .listFind(controlPointImages,i), method=.self$method))
     },
     
     getMethod = function () { return (method) },
     
-    getReverseControlPointImage = function (i = NULL)
+    getSourceImage = function (i = NULL, reverse = FALSE)
     {
-        if (is.null(i))
-            return (reverseControlPointImages)
+        if (reverse)
+            return (targetImage)
+        else if (is.null(i) || .self$nRegistrations() == 1)
+            return (sourceImage)
         else
-            return (reverseControlPointImages[[i]])
+            return (extractMriImage(sourceImage, ndim(sourceImage), i))
     },
     
-    getSourceImage = function () { return (sourceImage) },
+    getTargetImage = function (i = NULL, reverse = FALSE)
+    {
+        if (reverse)
+            return (.self$getSourceImage(i))
+        else
+            return (targetImage)
+    },
     
-    getTargetImage = function () { return (targetImage) },
+    getTransformObjects = function (i = 1, reverse = FALSE, preferAffine = FALSE, errorIfMissing = TRUE)
+    {
+        if (length(i) > 1)
+            return (lapply(i, .self$getTransformObjects, reverse=reverse, preferAffine=preferAffine, errorIfMissing=errorIfMissing))
+        
+        object <- NULL
+        source <- as(.self$getSourceImage(i,reverse), "niftiImage")
+        target <- as(.self$getTargetImage(i,reverse), "niftiImage")
+        
+        if (reverse)
+        {
+            # NB: for the first case, we initially pass the images in reverse order
+            if (!is.null(.listFind(affineMatrices,i)) && (is.null(.listFind(reverseControlPointImages,i)) || preferAffine))
+                object <- invertAffine(asAffine(.listFind(affineMatrices,i), target, source))
+            else if (!is.null(.listFind(reverseControlPointImages, i)))
+                object <- structure(as(.listFind(reverseControlPointImages,i),"niftiImage"), source=source, target=target)
+            else if (errorIfMissing)
+                report(OL$Error, "No suitable reverse transform is available for index #{i}")
+        }
+        else
+        {
+            if (!is.null(.listFind(affineMatrices,i)) && (is.null(.listFind(controlPointImages,i)) || preferAffine))
+                object <- asAffine(.listFind(affineMatrices,i), source, target)
+            else if (!is.null(.listFind(controlPointImages, i)))
+                object <- structure(as(.listFind(controlPointImages,i),"niftiImage"), source=source, target=target)
+            else if (errorIfMissing)
+                report(OL$Error, "No suitable forward transform is available for index #{i}")
+        }
+        
+        return (object)
+    },
     
     getTypes = function ()
     {
         transformTypeNames <- c("affine", "nonlinear", "reverse-nonlinear")
-        availability <- sapply(list(affineMatrices,controlPointImages,reverseControlPointImages), length) > 0
+        availability <- sapply(list(affineMatrices,controlPointImages,reverseControlPointImages), function(x) sum(!sapply(x,is.null))) > 0
         return (transformTypeNames[availability])
+    },
+    
+    nRegistrations = function ()
+    {
+        if (ndim(sourceImage) == ndim(targetImage))
+            return (1L)
+        else
+            return (dim(sourceImage)[ndim(sourceImage)])
     },
     
     summarise = function ()
@@ -89,15 +147,9 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
         report(OL$Error, "Exactly one element of the location should be specified")
     inPlaneAxes <- setdiff(1:3, throughPlaneAxis)
     
-    availableTypes <- x$getTypes()
-    affine <- controlPointImage <- NULL
-    
     if (is.null(sourceImage))
     {
-        if (reverse)
-            sourceImage <- x$getTargetImage()
-        else
-            sourceImage <- x$getSourceImage()
+        sourceImage <- x$getSourceImage(index, reverse)
         
         if (sourceImage$isEmpty())
         {
@@ -106,42 +158,25 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
             sourceImage <- readImageFile(sourceImage$getSource())
         }
         else if (!sourceImage$isReordered())
-            sourceImage <- newMriImageByReordering(sourceImage)
+            sourceImage <- reorderMriImage(sourceImage)
     }
     
-    if (preferAffine && ("affine" %in% availableTypes))
-        affine <- x$getAffineMatrix(index)
-    else if (reverse && ("reverse-nonlinear" %in% availableTypes))
-        controlPointImage <- x$getReverseControlPointImage(index)
-    else if (!reverse && ("nonlinear" %in% availableTypes))
-        controlPointImage <- x$getControlPointImage(index)
-    else if ("affine" %in% availableTypes)
-        affine <- x$getAffineMatrix(index)
-    else
-        report(OL$Error, "The specified Transformation object does not contain the necessary information")
-    
-    if (!is.null(affine) && reverse)
-        affine <- invertAffine(affine)
-    
     # Calculate the deformation field
-    if (reverse)
-        deformationField <- getDeformationField(x$getSourceImage(), affine=affine, controlPointImage=controlPointImage, jacobian=TRUE)
-    else
-        deformationField <- getDeformationField(x$getTargetImage(), affine=affine, controlPointImage=controlPointImage, jacobian=TRUE)
+    deformationField <- RNiftyReg::deformationField(x$getTransformObjects(index,reverse,preferAffine), jacobian=TRUE)
     
     # Find the requested slice of the Jacobian map and deformation field
-    jacobian <- extractDataFromMriImage(newMriImageByReordering(as(deformationField$jacobian,"MriImage")), throughPlaneAxis, loc[throughPlaneAxis])
-    field <- extractDataFromMriImage(newMriImageByReordering(as(deformationField$deformationField,"MriImage")), throughPlaneAxis, loc[throughPlaneAxis])
+    jacobian <- reorderMriImage(as(jacobian(deformationField),"MriImage"))$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
+    field <- reorderMriImage(as(deformationField,"MriImage"))$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
     
     # Remove the last row and column from the data, because NiftyReg seems to calculate it wrongly
-    fieldDims <- dim(field)
-    jacobian <- jacobian[1:(fieldDims[1]-1),1:(fieldDims[2]-1)]
-    field <- field[1:(fieldDims[1]-1),1:(fieldDims[2]-1),,]
+    # fieldDims <- dim(field)
+    # jacobian <- jacobian[1:(fieldDims[1]-1),1:(fieldDims[2]-1)]
+    # field <- field[1:(fieldDims[1]-1),1:(fieldDims[2]-1),,]
     
     # Convert the field to voxel positions and find the closest plane (on average) in source space
     fieldDims <- dim(field)
     dim(field) <- c(prod(fieldDims[1:2]), fieldDims[3])
-    fieldVoxels <- reorderPoints(transformWorldToVoxel(field,sourceImage$getMetadata()), sourceImage$getMetadata())
+    fieldVoxels <- reorderPoints(worldToVoxel(field,sourceImage$getMetadata()), sourceImage$getMetadata())
     sourceLoc <- rep(NA, 3)
     sourceLoc[throughPlaneAxis] <- round(mean(fieldVoxels[,throughPlaneAxis], na.rm=TRUE))
     fieldVoxels <- fieldVoxels[,inPlaneAxes]
@@ -160,7 +195,7 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
     points((fieldVoxels[,1]-1)/width[1], (fieldVoxels[,2]-1)/width[2], pch=3, col=colours[colourIndices])
 }
 
-registerImages <- function (sourceImage, targetImage, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, finalInterpolation = 1, cache = c("auto","read","write","ignore"), file = NULL, ...)
+registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, cache = c("auto","read","write","ignore"), file = NULL, ...)
 {
     if (is.null(method))
         method <- "niftyreg"
@@ -194,16 +229,16 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
         if (estimateOnly)
             result <- list(transform=transform, transformedImage=NULL, reverseTransformedImage=NULL)
         else
-            result <- list(transform=transform, transformedImage=transformImage(transform,finalInterpolation=finalInterpolation,...))
+            result <- list(transform=transform, transformedImage=transformImage(transform,interpolation=interpolation,...))
     }
     else if (method == "niftyreg")
-        result <- registerImagesWithNiftyreg(getImageAsObject(sourceImage,reorder=FALSE), getImageAsObject(targetImage,reorder=FALSE), targetMask=getImageAsObject(targetMask,allowNull=TRUE,reorder=FALSE), types=types, affineDof=affineDof, estimateOnly=estimateOnly, finalInterpolation=finalInterpolation, ...)
+        result <- registerImagesWithNiftyreg(sourceImage, targetImage, sourceMask=sourceMask, targetMask=targetMask, types=types, affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
     else if (method == "fsl")
     {
         if (any(c("nonlinear","reverse-nonlinear") %in% types))
             report(OL$Error, "FSL-FLIRT does not perform nonlinear registration")
         
-        result <- registerImagesWithFlirt(getImageAsFileName(sourceImage), getImageAsFileName(targetImage), targetMaskFileName=getImageAsFileName(targetMask,allowNull=TRUE), affineDof=affineDof, estimateOnly=estimateOnly, finalInterpolation=finalInterpolation, ...)
+        result <- registerImagesWithFlirt(getImageAsFileName(sourceImage), getImageAsFileName(targetImage), sourceMaskFileName=getImageAsFileName(sourceMask,allowNull=TRUE), targetMaskFileName=getImageAsFileName(targetMask,allowNull=TRUE), affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
     }
     
     if (cache == "write" || (cache == "auto" && !cacheHit))
@@ -215,7 +250,7 @@ registerImages <- function (sourceImage, targetImage, targetMask = NULL, method 
     return (result)
 }
 
-resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, origin = NULL, finalInterpolation = 1)
+resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, interpolation = 1)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "Specified image is not a valid MriImage object")
@@ -224,44 +259,20 @@ resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, origin = N
     
     if (is.null(voxelDims))
         voxelDims <- image$getFieldOfView() / imageDims
-    if (is.null(imageDims))
-        imageDims <- round(image$getFieldOfView() / abs(voxelDims))
+    scales <- abs(image$getVoxelDimensions() / voxelDims)
     
-    targetImage <- getRefClass("MriImage")$new(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=image$getVoxelUnits(), origin=origin)
+    sourceNifti <- as(image, "niftiImage")
+    xfm <- buildAffine(scales=scales, source=sourceNifti)
+    result <- applyTransform(xfm, sourceNifti, interpolation=.interpolationNameToCode(interpolation))
     
-    options <- list(nLevels=0, verbose=FALSE, scope="affine")
-    result <- registerImagesWithNiftyreg(image, targetImage, initAffine=NULL, types="affine", estimateOnly=FALSE, finalInterpolation=finalInterpolation, linearOptions=options)
-    
-    return (result$transformedImage)
+    return (as(result, "MriImage"))
 }
 
 identityTransformation <- function (sourceImage, targetImage)
 {
-    result <- registerImages(sourceImage, targetImage, method="niftyreg", types="affine", estimateOnly=TRUE, linearOptions=list(nLevels=0,verbose=FALSE))
-    return (result$transform)
-}
-
-invertTransformation <- function (transform, quiet = FALSE)
-{
-    if (!is(transform, "Transformation"))
-        report(OL$Error, "The specified transform is not a Transformation object")
-    
-    affineMatrices <- controlPointImages <- reverseControlPointImages <- list()
-    
-    availableTypes <- transform$getTypes()
-    if (all(c("nonlinear","reverse-nonlinear") %in% availableTypes))
-    {
-        controlPointImages <- transform$getReverseControlPointImage()
-        reverseControlPointImages <- transform$getControlPointImage()
-    }
-    else if (!quiet && "nonlinear" %in% availableTypes)
-        flag(OL$Warning, "Nonlinear part of the specified transformation is not invertible")
-    
-    if ("affine" %in% availableTypes)
-        affineMatrices <- lapply(transform$getAffineMatrix(), invertAffine)
-    
-    newTransform <- Transformation$new(sourceImage=transform$getTargetImage(), targetImage=transform$getSourceImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=transform$getMethod())
-    return (newTransform)
+    xfm <- buildAffine(source=sourceImage, target=targetImage)
+    transform <- Transformation$new(sourceImage, targetImage, affineMatrices=list(xfm), method="niftyreg")
+    return (transform)
 }
 
 decomposeTransformation <- function (transform)
@@ -271,19 +282,7 @@ decomposeTransformation <- function (transform)
     if (!("affine" %in% transform$getTypes()))
         report(OL$Error, "Decomposition can only be performed for affine transformations")
     
-    nSourceDims <- transform$getSourceImage()$getDimensionality()
-    nTargetDims <- transform$getTargetImage()$getDimensionality()
-    if (nSourceDims == nTargetDims)
-        return (list(decomposeAffine(transform$getAffineMatrix(1), transform$getSourceImage(), transform$getTargetImage())))
-    else
-    {
-        targetImageNifti <- as(transform$getTargetImage(), "nifti")
-        result <- lapply(seq_len(transform$getSourceImage()$getDimensions()[nSourceDims]), function (i) {
-            currentSourceImage <- newMriImageByExtraction(transform$getSourceImage(), nSourceDims, i)
-            decomposeAffine(transform$getAffineMatrix(i), currentSourceImage, targetImageNifti)
-        })
-        return (result)
-    }
+    return (lapply(transform$getTransformObjects(1:transform$nRegistrations(),preferAffine=TRUE), decomposeAffine))
 }
 
 mergeTransformations <- function (transforms, newSourceImage)
@@ -297,10 +296,10 @@ mergeTransformations <- function (transforms, newSourceImage)
     if (!all(methods == methods[1]))
         report(OL$Error, "Method must be the same for all transformations")
     
-    affineMatrices <- do.call("c", lapply(transforms, function(x) x$getAffineMatrix()))
-    controlPointImages <- do.call("c", lapply(transforms, function(x) x$getControlPointImage()))
-    reverseControlPointImages <- do.call("c", lapply(transforms, function(x) x$getReverseControlPointImage()))
+    affineMatrices <- do.call("c", lapply(transforms, function(x) .listPad(x$affineMatrices,x$nRegistrations())))
+    controlPointImages <- do.call("c", lapply(transforms, function(x) .listPad(x$controlPointImages,x$nRegistrations())))
+    reverseControlPointImages <- do.call("c", lapply(transforms, function(x) .listPad(x$reverseControlPointImages,x$nRegistrations())))
     
-    transform <- Transformation$new(sourceImage=newSourceImage, targetImage=transforms[[1]]$getTargetImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=methods[1])
+    transform <- Transformation$new(newSourceImage, transforms[[1]]$getTargetImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=methods[1])
     return (transform)
 }

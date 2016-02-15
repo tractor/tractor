@@ -1,3 +1,33 @@
+#' Create a character string by concatenating the elements of a vector
+#' 
+#' Create a character string by concatenating the elements of a vector, using a
+#' separator and optional final separator.
+#' 
+#' @param strings A vector, which will be coerced to mode \code{character}.
+#' @param sep A unit length character vector giving the separator to insert
+#'   between elements.
+#' @param finalSep An optional unit length character vector giving the
+#'   separator to insert between the final two elements.
+#' @param ranges Logical value. If \code{TRUE} and \code{strings} can be
+#'   interpreted as integers, collapse runs of consecutive numbers into range
+#'   notation.
+#' @return A character vector of length one.
+#' @author Jon Clayden
+#' @seealso \code{\link{paste}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @examples
+#' implode(1:3, ", ")  # "1, 2, 3"
+#' implode(1:3, ", ", " and ")  # "1, 2 and 3"
+#' implode(1:2, ", ", " and ")  # "1 and 2"
+#' implode(1:3, ", ", ranges=TRUE)  # "1-3"
+#' 
+#' @export
 implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
 {
     # Transform runs of integers into ranges
@@ -54,6 +84,29 @@ implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
     }
 }
 
+#' Pretty print labelled information
+#' 
+#' This is a simple function to print a series of labels and associated data
+#' values, or key-value pairs.
+#' 
+#' @param labels A character vector of labels.
+#' @param values A character vector of values. Must have the same length as
+#'   \code{labels}.
+#' @param outputLevel The output level to print the output to. See
+#'   \code{setOutputLevel}, in the reportr package.
+#' @param leftJustify Logical value: if \code{TRUE} the labels will be left
+#'   justified; otherwise they will be right justified.
+#' @return This function is called for its side effect.
+#' @author Jon Clayden
+#' @seealso \code{\link{setOutputLevel}} for the reportr output level system.
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
 printLabelledValues <- function (labels, values, outputLevel = OL$Info, leftJustify = FALSE)
 {
     if (length(labels) != length(values))
@@ -74,6 +127,41 @@ printLabelledValues <- function (labels, values, outputLevel = OL$Info, leftJust
     invisible(NULL)
 }
 
+#' Functions for file name and path manipulation
+#' 
+#' Functions for expanding file paths, finding relative paths and ensuring that
+#' a file name has the required suffix.
+#' 
+#' @param fileName A character vector of file names.
+#' @param suffix A character vector of file suffixes, which will be recycled if
+#'   shorter than \code{fileName}.
+#' @param strip A character vector of suffixes to remove before appending
+#'   \code{suffix}. The intended suffix does not need to be given here, as the
+#'   function will not append it if the specified file name already has the
+#'   correct suffix.
+#' @param base If \code{fileName} is a relative path, this option gives the
+#'   base directory which the path is relative to. If \code{fileName} is an
+#'   absolute path, this argument is ignored.
+#' @param path,referencePath Character strings representing file paths.
+#' @return The \code{ensureFileSuffix} function returns the specified file
+#'   names with the requested suffixes appended. \code{expandFileName} returns
+#'   the full path to the specified file name, collapsing \code{".."} elements
+#'   if appropriate. \code{relativePath} returns the specified \code{path},
+#'   expressed relative to \code{referencePath}.
+#' 
+#' @author Jon Clayden
+#' @seealso \code{\link{path.expand}} performs some of what
+#' \code{expandFileName} does.
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @aliases paths
+#' @rdname paths
+#' @export
 relativePath <- function (path, referencePath)
 {
     mainPieces <- strsplit(expandFileName(path), .Platform$file.sep, fixed=TRUE)[[1]]
@@ -86,45 +174,8 @@ relativePath <- function (path, referencePath)
     return (implode(newPieces, sep=.Platform$file.sep))
 }
 
-copyDirectory <- function (from, to, allFiles = TRUE, deleteOriginal = FALSE)
-{
-    if (length(from) != 1 || length(to) != 1)
-        report(OL$Error, "Source and target paths must be single strings")
-    
-    from <- expandFileName(from)
-    to <- expandFileName(to)
-    
-    if (file.exists(to))
-    {
-        if (!file.info(to)$isdir)
-            report(OL$Error, "Target path already exists but isn't a directory")
-        else if (file.exists(file.path(to, basename(from))))
-            report(OL$Error, "Subdirectory of the target directory matching the source name already exists - it will not be overwritten")
-        else
-            to <- file.path(to, basename(from))
-    }
-    
-    # The "to" path should not exist at this point
-    success <- dir.create(to, recursive=TRUE)
-    
-    files <- list.files(from, all.files=allFiles, full.names=FALSE, recursive=TRUE, include.dirs=TRUE)
-    isDirectory <- file.info(file.path(from,files))$isdir
-    
-    for (dir in files[isDirectory])
-    {
-        if (!success)
-            break
-        success <- dir.create(file.path(to,dir), recursive=TRUE)
-    }
-    if (any(!isDirectory))
-        success <- file.copy(file.path(from,files[!isDirectory]), file.path(to,files[!isDirectory]))
-    
-    if (deleteOriginal && all(success))
-        unlink(from, recursive=TRUE)
-    
-    return (all(success))
-}
-
+#' @rdname paths
+#' @export
 expandFileName <- function (fileName, base = getwd())
 {
     fileName <- path.expand(fileName)
@@ -144,6 +195,8 @@ expandFileName <- function (fileName, base = getwd())
     return (fileName)
 }
 
+#' @rdname paths
+#' @export
 ensureFileSuffix <- function (fileName, suffix, strip = NULL)
 {
     if (is.null(strip))
@@ -168,6 +221,8 @@ ensureFileSuffix <- function (fileName, suffix, strip = NULL)
     }
 }
 
+#' @rdname execute
+#' @export
 locateExecutable <- function (fileName, errorIfMissing = TRUE)
 {
     pathDirs <- unlist(strsplit(Sys.getenv("PATH"), .Platform$path.sep, fixed=TRUE))
@@ -188,12 +243,47 @@ locateExecutable <- function (fileName, errorIfMissing = TRUE)
     }
 }
 
-execute <- function (executable, paramString = NULL, errorOnFail = TRUE, silent = FALSE, ...)
+#' Find or run an external executable file
+#' 
+#' The \code{execute} function is a wrapper around the \code{\link{system}}
+#' function in base , which echoes the command being run (including the full
+#' path to the executable) if the reportr output level is \code{Debug}.
+#' \code{locateExecutable} simply returns the path to an executable file on the
+#' system \code{PATH}.
+#' 
+#' @aliases execute locateExecutable
+#' @param executable,fileName Name of the executable to run.
+#' @param params A character vector giving the parameters to pass to the
+#'   executable, if any. Elements will be separated by a space.
+#' @param errorOnFail,errorIfMissing Logical value: should an error be produced
+#'   if the executable can't be found?
+#' @param silent Logical value: should the executable be run without any
+#'   output?
+#' @param \dots Additional arguments to \code{\link{system}}.
+#' @return For \code{execute}, the return value of the underlying call to
+#'   \code{\link{system}}. For \code{locateExecutable}, the location of the
+#'   requested executable, or \code{NULL} if it could not be found.
+#' 
+#' @note These functions are designed for Unix systems and may not work on
+#'   Windows.
+#' @author Jon Clayden
+#' @seealso \code{\link{system}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
+execute <- function (executable, params = NULL, errorOnFail = TRUE, silent = FALSE, ...)
 {
     execLoc <- locateExecutable(executable, errorOnFail)
     if (!is.null(execLoc))
     {
-        execString <- paste(execLoc, paramString, sep=" ")
+        if (length(params) > 1)
+            params <- implode(params, sep=" ")
+        execString <- paste(execLoc, params, sep=" ")
         if (silent && getOutputLevel() > OL$Debug)
             execString <- paste(execString, ">/dev/null 2>&1", sep=" ")
         report(OL$Debug, execString)
@@ -201,6 +291,25 @@ execute <- function (executable, paramString = NULL, errorOnFail = TRUE, silent 
     }
 }
 
+#' Promote a vector to a single-column or single-row matrix
+#' 
+#' The \code{promote} function promotes a vector argument to a single-column or
+#' single-row matrix. Matrix arguments are returned unmodified.
+#' 
+#' @param x A vector or matrix.
+#' @param byrow Logical value: if \code{TRUE}, a vector will be promoted to a
+#'   single-row matrix; otherwise a single-column matrix will result.
+#' @return A matrix version of the \code{x} argument.
+#' @author Jon Clayden
+#' @seealso \code{\link{matrix}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
 promote <- function (x, byrow = FALSE)
 {
     if (is.matrix(x))
@@ -216,6 +325,36 @@ promote <- function (x, byrow = FALSE)
         return (NA)
 }
 
+#' Test two numeric vectors for equivalence
+#' 
+#' This function is a wrapper for \code{isTRUE(all.equal(x,y,\dots{}))}, but
+#' with the additional capability of doing sign-insensitive comparison.
+#' 
+#' @param x The first numeric vector.
+#' @param y The second numeric vector.
+#' @param signMatters Logical value: if FALSE then equivalence in absolute
+#'   value is sufficient.
+#' @param \dots Additional arguments to \code{\link{all.equal}}, notably
+#'   \code{tolerance}.
+#' @return \code{TRUE} if all elements of \code{x} match all elements of
+#'   \code{y} to within tolerance, ignoring signs if required. \code{FALSE}
+#'   otherwise.
+#' @author Jon Clayden
+#' @seealso \code{\link{all.equal}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @examples
+#' 
+#' equivalent(c(-1,1), c(1,1))  # FALSE
+#' equivalent(c(-1,1), c(1,1), signMatters=FALSE)  # TRUE
+#' equivalent(1:2, 2:3, tolerance=2)  # TRUE
+#' 
+#' @export
 equivalent <- function (x, y, signMatters = TRUE, ...)
 {
     if (signMatters)
@@ -236,6 +375,27 @@ stripNul <- function (x, method = c("truncate","drop"))
         return (x[-nul])
 }
 
+#' Obtain thread-safe temporary file names
+#' 
+#' This function is a wrapper around \code{\link{tempfile}}, which creates
+#' temporary file names whose path contains the process ID of the calling
+#' process. This avoids clashes between threads created by functions such as
+#' \code{mclapply} (in the ``parallel'' package), which can easily occur with
+#' the standard \code{\link{tempfile}} function.
+#' 
+#' @param pattern Character vector giving the initial part of each file name.
+#' @return A character vector of temporary file names. No files are actually
+#'   created.
+#' @author Jon Clayden
+#' @seealso \code{\link{tempfile}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
 threadSafeTempFile <- function (pattern = "file")
 {
     tempDir <- file.path(tempdir(), paste("temp",Sys.getpid(),sep="_"))

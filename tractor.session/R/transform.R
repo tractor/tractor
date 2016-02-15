@@ -16,32 +16,16 @@
 {
     if (tolower(space) == "mni")
         return ("mni")
+    else if (space %~% ore(":",syntax="fixed"))
+        return (space)
     else
         return (paste(session$getDirectory(), space, sep=":"))
 }
 
 .findTransformation <- function (image, session, newSpace, oldSpace = NULL)
 {
-    guessSpace <- function ()
-    {
-        if (image$isInternal())
-            return (NULL)
-        else if (dirname(image$getSource()) == .StandardBrainPath)
-            return ("mni")
-        else
-        {
-            for (space in setdiff(names(.RegistrationTargets),"mni"))
-            {
-                if (dirname(image$getSource()) == session$getDirectory(space))
-                    return (space)
-            }
-        }
-        
-        return (NULL)
-    }
-    
     if (is.null(oldSpace))
-        oldSpace <- guessSpace()
+        oldSpace <- guessSpace(image, session)
     
     if (is.null(oldSpace) || is.null(newSpace))
         report(OL$Error, "Source and target spaces are not both defined")
@@ -51,30 +35,50 @@
     return (transform)
 }
 
-transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, preferAffine = FALSE, finalInterpolation = 1)
+guessSpace <- function (image, session = NULL)
 {
-    require("tractor.reg")
+    if (image$isInternal())
+        return (NULL)
+    else if (dirname(image$getSource()) == .StandardBrainPath)
+        return ("mni")
+    else
+    {
+        if (is.null(session))
+        {
+            if (image$getSource() %~% "^(.+)/tractor")
+                session <- attachMriSession(ore.lastmatch()[,1])
+            else
+                report(OL$Error, "Image does not seem to be within a session directory - the session must be specified")
+        }
+        
+        for (space in setdiff(names(.RegistrationTargets),"mni"))
+        {
+            if (dirname(image$getSource()) == session$getDirectory(space))
+                return (es("#{session$getDirectory()}:#{space}"))
+        }
+    }
     
+    return (NULL)
+}
+
+transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, preferAffine = FALSE, interpolation = 1)
+{
     transform <- .findTransformation(image, session, newSpace, oldSpace)
-    newImage <- transformImage(transform, image, preferAffine=preferAffine, finalInterpolation=finalInterpolation)
+    newImage <- tractor.reg::transformImage(transform, image, preferAffine=preferAffine, interpolation=interpolation)
     
     return (newImage)
 }
 
 transformParcellationToSpace <- function (parcellation, session, newSpace, oldSpace = "structural", threshold = 0.5, preferAffine = FALSE)
 {
-    require("tractor.reg")
-    
     transform <- .findTransformation(parcellation$image, session, newSpace, oldSpace)
-    newParcellation <- transformParcellation(transform, parcellation, threshold, preferAffine=preferAffine)
+    newParcellation <- tractor.reg::transformParcellation(transform, parcellation, threshold, preferAffine=preferAffine)
     
     return (newParcellation)
 }
 
 transformPointsToSpace <- function (points, session, newSpace, oldSpace = NULL, pointType = NULL, outputVoxel = FALSE, preferAffine = FALSE, nearest = FALSE)
 {
-    require("tractor.reg")
-    
     if (is.null(pointType))
     {
         pointType <- attr(points, "pointType")
@@ -100,7 +104,7 @@ transformPointsToSpace <- function (points, session, newSpace, oldSpace = NULL, 
         pointType <- "r"
     }
     
-    newPoints <- transformPoints(transform, points, voxel=(pointType!="mm"), preferAffine=preferAffine, nearest=nearest)
+    newPoints <- tractor.reg::transformPoints(transform, points, voxel=(pointType!="mm"), preferAffine=preferAffine, nearest=nearest)
     
     attr(newPoints, "space") <- .constructSpace(newSpace, session)
     attr(newPoints, "pointType") <- ifelse(pointType=="mm", "mm", "r")
@@ -110,8 +114,6 @@ transformPointsToSpace <- function (points, session, newSpace, oldSpace = NULL, 
 
 changePointType <- function (points, image, newPointType, oldPointType = NULL)
 {
-    require("tractor.reg")
-    
     if (is.null(oldPointType))
     {
         oldPointType <- attr(points, "pointType")
@@ -128,9 +130,9 @@ changePointType <- function (points, image, newPointType, oldPointType = NULL)
     if (oldPointType == newPointType)
         newPoints <- points
     else if (oldPointType == "mm" && newPointType != "mm")
-        newPoints <- transformWorldToVoxel(points, image) - offsets[[newPointType]]
+        newPoints <- tractor.reg::transformWorldToVoxel(points, image) - offsets[[newPointType]]
     else if (oldPointType != "mm" && newPointType == "mm")
-        newPoints <- transformVoxelToWorld(points + offsets[[oldPointType]], image)
+        newPoints <- tractor.reg::transformVoxelToWorld(points + offsets[[oldPointType]], image)
     else
         newPoints <- points + offsets[[oldPointType]] - offsets[[newPointType]]
     
@@ -143,8 +145,6 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
-    
-    require("tractor.reg")
     
     if (is(reference, "MriImage"))
         targetImage <- reference
@@ -160,7 +160,7 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
     {
         report(OL$Info, "Storing identity transforms")
         volume <- session$getImageByType("rawdata", type, volumes=1)
-        transforms <- rep(list(identityTransformation(volume,targetImage)), nVolumes)
+        transforms <- rep(list(tractor.reg::identityTransformation(volume,targetImage)), nVolumes)
         
         report(OL$Info, "Symlinking data volume")
         symlinkImageFiles(session$getImageFileNameByType("rawdata",type), session$getImageFileNameByType("data",type), overwrite=TRUE)
@@ -183,17 +183,17 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
         {
             report(OL$Verbose, "Reading and registering volume ", i)
             volume <- session$getImageByType("rawdata", type, volumes=i)
-            result <- registerImages(volume, targetImage, targetMask=maskImage, types="affine", cache="ignore", method=method, ..., linearOptions=c(list(nLevels=nLevels[i]),options))
+            result <- tractor.reg::registerImages(volume, targetImage, targetMask=maskImage, types="affine", cache="ignore", method=method, ..., linearOptions=c(list(nLevels=nLevels[i]),options))
             finalArray[,,,i] <- result$transformedImage$getData()
             transforms[[i]] <- result$transform
         }
         
         report(OL$Info, "Writing out transformed data")
-        finalImage <- newMriImageWithData(finalArray, sourceMetadata)
+        finalImage <- asMriImage(finalArray, sourceMetadata)
         writeImageFile(finalImage, session$getImageFileNameByType("data",type))
     }
     
-    transform <- mergeTransformations(transforms, sourceMetadata)
+    transform <- tractor.reg::mergeTransformations(transforms, sourceMetadata)
     transform$serialise(file.path(session$getDirectory(type), "coreg_xfm.Rdata"))
     
     return (transform)

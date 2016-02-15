@@ -1,10 +1,31 @@
 .EmptyMatrix <- matrix(NA, nrow=0, ncol=0)
 
+#' The empty matrix
+#' 
+#' The empty matrix is a standard matrix of dimensions 0 x 0. It is intended to
+#' be used as a placeholder where a matrix is required but no information is
+#' stored.
+#' 
+#' @param object Any object.
+#' @return \code{emptyMatrix} returns the empty matrix, equivalent to
+#'   \code{matrix(NA,0,0)}. \code{is.emptyMatrix} returns \code{TRUE} if its
+#'   argument is identical to the empty matrix.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
 emptyMatrix <- function ()
 {
     return (.EmptyMatrix)
 }
 
+#' @rdname emptyMatrix
+#' @export
 is.emptyMatrix <- function (object)
 {
     return (identical(object, .EmptyMatrix))
@@ -12,11 +33,33 @@ is.emptyMatrix <- function (object)
 
 setClassUnion("MriImageData", c("SparseArray","array","NULL"))
 
+#' The MriImage class
+#' 
+#' This class represents an MRI image. An object of this class is made up of
+#' some voxel data, stored as a sparse or dense numeric array, and some
+#' metadata, such as the file it was read from, the voxel dimensions, and so
+#' on. The group generic functions \code{\link{Math}}, \code{\link{Ops}} and
+#' \code{\link{Summary}} are defined for this class, as are methods for
+#' coercing to and from a standard \code{\link{array}}.
+#' 
+#' @field imageDims Integer vector of dimensions
+#' @field voxelDims Numeric vector of pixel/voxel spacings
+#' @field voxelDimUnits Character vector of spatial and/or temporal spacing
+#'   units. Millimetres and seconds (i.e., c("mm","s")) are typical
+#' @field source String naming the file(s) that the image was read from. This
+#'   is reset to the empty string if the image is modified
+#' @field origin Numeric vector giving the spatial coordinate origin
+#' @field storedXform Numeric matrix giving the NIfTI xform matrix read from
+#'   file, if any
+#' @field reordered Logical value indicating whether the image has been
+#'   reordered. See \code{\link{reorderMriImage}}
+#' @field tags Named list of arbitrary DICOM-style tags
+#' @field data Sparse or dense array of data, or \code{NULL}
+#' 
+#' @export
 MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",storedXform="matrix",reordered="logical",tags="list",data="MriImageData"), methods=list(
     initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, storedXform = emptyMatrix(), reordered = TRUE, tags = list(), data = NULL, ...)
     {
-        if (length(tags) != 0 && !all(c("keys","values") %in% names(tags)))
-            report(OL$Error, "Tag list must be empty, or else contain \"keys\" and \"values\" components")
         if (is.null(voxelDimUnits))
             voxelDimUnits <- "unknown"
         
@@ -24,10 +67,19 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         if (source == "internal")
             source <- ""
         
+        # For backwards compatibility
+        if (length(tags) == 2 && all(c("keys","values") %in% names(tags)))
+            tags <- structure(as.list(tags$values), names=tags$keys)
+        
         if (!is.null(imageDims) && !is.null(data) && !equivalent(imageDims,dim(data)))
             dim(data) <- imageDims
         else if (is.null(imageDims))
             imageDims <- dim(data)
+        
+        if (length(origin) < 3)
+            origin <- c(as.numeric(origin), rep(0,3-length(origin)))
+        else
+            origin <- as.numeric(origin)[1:3]
         
         # For backwards compatibility
         if (is.null(voxelDims) && "voxdims" %in% names(list(...)))
@@ -35,10 +87,10 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             oldFields <- list(...)
             if (is.null(oldFields$voxunit))
                 oldFields$voxunit <- "unknown"
-            object <- initFields(imageDims=as.integer(oldFields$imagedims), voxelDims=as.numeric(oldFields$voxdims), voxelDimUnits=oldFields$voxunit, source=source, origin=as.numeric(origin), storedXform=storedXform, reordered=reordered, tags=tags, data=data)
+            object <- initFields(imageDims=as.integer(oldFields$imagedims), voxelDims=as.numeric(oldFields$voxdims), voxelDimUnits=oldFields$voxunit, source=source, origin=origin, storedXform=storedXform, reordered=reordered, tags=tags, data=data)
         }
         else
-            object <- initFields(imageDims=as.integer(imageDims), voxelDims=as.numeric(voxelDims), voxelDimUnits=voxelDimUnits, source=source, origin=as.numeric(origin), storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
+            object <- initFields(imageDims=as.integer(imageDims), voxelDims=as.numeric(voxelDims), voxelDimUnits=voxelDimUnits, source=source, origin=origin, storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
         
         names(object$voxelDimUnits)[object$voxelDimUnits %~% "m$"] <- "spatial"
         names(object$voxelDimUnits)[object$voxelDimUnits %~% "s$"] <- "temporal"
@@ -48,6 +100,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     apply = function (...)
     {
+        "Apply a function to the margins of the image"
         if (.self$isEmpty())
             report(OL$Error, "The image contains no data")
         else if (.self$isSparse())
@@ -56,10 +109,27 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             return (base::apply(data, ...))
     },
     
+    binarise = function ()
+    {
+        "Binarise the image by setting nonzero values to one"
+        .self$map(function(x) ifelse(x!=0, 1L, 0L))
+    },
+    
+    fill = function (value)
+    {
+        "Fill the image with a particular value"
+        if (value == 0)
+            .self$data <- newSparseArrayWithData(vector(class(value),0), matrix(NA,0,length(imageDims)), imageDims)
+        else
+            .self$data <- array(value, dim=imageDims)
+        .self$setSource(NULL)
+    },
+    
     getData = function () { return (data) },
     
     getDataAtPoint = function (...)
     {
+        "Obtain the value of the image at a particular point"
         if (is.null(data))
             return (NA)
         
@@ -84,6 +154,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getMetadata = function ()
     {
+        "Obtain a version of the image with any data removed"
         if (.self$isEmpty())
             return (.self$copy())
         else
@@ -92,6 +163,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getNonzeroIndices = function (array = TRUE, positiveOnly = FALSE)
     {
+        "Find voxels whose values are not zero"
         .warnIfIndexingUnreorderedImage(.self)
         
         if (.self$isEmpty())
@@ -117,10 +189,42 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getOrigin = function () { return (origin) },
     
+    getSlice = function (dim, loc)
+    {
+        "Extract data from a slice of the image along one dimension"
+        if (length(imageDims) < max(2,dim))
+            report(OL$Error, "The dimensionality of the image is too low")
+        if (!(loc %in% seq_len(imageDims[dim])))
+            report(OL$Error, "The specified location is out of bounds")
+        
+        .warnIfIndexingUnreorderedImage(.self)
+        
+        dimsToKeep <- setdiff(seq_along(imageDims), dim)
+        if (.self$isEmpty())
+            newData <- NULL
+        else if (.self$isSparse())
+        {
+            # This code is faster when working with a sparse array
+            newData <- array(0, dim=imageDims[dimsToKeep])
+            matchingCoords <- which(data$getCoordinates()[,dim] == loc)
+            newData[data$getCoordinates()[matchingCoords,dimsToKeep,drop=FALSE]] <- data$getData()[matchingCoords]
+        }
+        else
+        {
+            # This "apply" call is a cheeky bit of R wizardry (credit: Peter Dalgaard)
+            newData <- base::apply(data, dimsToKeep, "[", loc)
+            if (is.vector(newData))
+                newData <- promote(newData)
+        }
+        
+        invisible(newData)
+    },
+    
     getSource = function () { return (source) },
     
     getSparseness = function ()
     {
+        "Obtain the proportion of zeroes in the image"
         if (.self$isEmpty())
             return (NA)
         else if (.self$isSparse())
@@ -131,18 +235,16 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     getStoredXformMatrix = function () { return (storedXform) },
     
-    getTag = function (key)
+    getTags = function (keys = NULL)
     {
-        if (!is.null(tags$keys) && !is.null(tags$values) && any(key == tags$keys))
-        {
-            rawValues <- tags$values[which(key == tags$keys)]
-            return (strsplit(implode(rawValues,sep=""), "\\s*\\\\\\s*", perl=TRUE))
-        }
+        "Retrieve some or all of the tags stored with the image"
+        if (is.null(keys))
+            return (tags)
+        else if (length(keys) == 1)
+            return (tags[[keys]])
         else
-            return (NA_character_)
+            return (tags[keys])
     },
-    
-    getTags = function () { return (tags) },
     
     getVoxelDimensions = function () { return (voxelDims) },
     
@@ -156,21 +258,67 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     
     isSparse = function () { return (is(data,"SparseArray")) },
     
+    map = function (fun, ..., sparse = NULL)
+    {
+        "Replace the current data with the result of a function"
+        args <- lapply(list(.self,...), function(x) {
+            if (is(x, "MriImage"))
+                return (as.array(x$getData()))
+            else
+                return (x)
+        })
+        result <- do.call(fun, args)
+        
+        if (!equivalent(dim(result), imageDims))
+            report(OL$Error, "Result of data mapping does not match original image dimensions")
+        
+        if (is.null(sparse))
+            sparse <- (sum(result==0) / length(result) >= 0.75)
+        if (isTRUE(sparse))
+            result <- as(result, "SparseArray")
+        
+        .self$data <- result
+        .self$setSource(NULL)
+    },
+    
+    mask = function (maskImage)
+    {
+        "Mask the image, setting zero voxels in the mask to zero"
+        .self$map(function(x,y) ifelse(y==0,0,x), maskImage)
+    },
+    
+    nTags = function () { return (length(tags)) },
+    
     setOrigin = function (newOrigin)
     {
+        "Update the origin of the image"
         if (is.numeric(newOrigin) && length(newOrigin) == .self$getDimensionality())
         {
             .self$origin <- newOrigin
             .self$setSource(NULL)
         }
+        invisible(.self)
     },
     
     setSource = function (newSource)
     {
+        "Update the source of the image"
         if (is.null(newSource))
             .self$source <- ""
         else if (is.character(newSource) && (length(newSource) == 1))
             .self$source <- newSource
+        invisible(.self)
+    },
+    
+    setXform = function (newXform)
+    {
+        "Update the xform matrix associated with the image"
+        if (is.matrix(newXform) && equivalent(dim(newXform),c(4,4)))
+        {
+            .self$storedXform  <- newXform
+            .self$setSource(NULL)
+        }
+        invisible(.self)
     },
     
     summarise = function ()
@@ -185,8 +333,12 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         if (all(voxelDimUnits == "unknown"))
             voxelDimString <- paste(voxelDimString, "(units unknown)", sep=" ")
         
+        tagNames <- names(tags)
+        if (length(tagNames) == 0)
+            tagNames <- "(none)"
+        
         labels <- c("Image source", "Image dimensions", "Voxel dimensions", "Coordinate origin", "Additional tags")
-        values <- c(ifelse(source=="","internal",source), paste(implode(imageDims, sep=" x "),"voxels",sep=" "), voxelDimString, paste("(",implode(round(origin,2), sep=","),")",sep=""), length(tags$keys))
+        values <- c(ifelse(source=="","internal",source), paste(implode(imageDims, sep=" x "),"voxels",sep=" "), voxelDimString, paste("(",implode(round(origin,2), sep=","),")",sep=""), implode(tagNames,sep=", "))
         
         if (!.self$isEmpty())
         {
@@ -196,7 +348,15 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         }
         
         return (list(labels=labels, values=values))
-    }
+    },
+    
+    threshold = function (level, defaultValue = 0)
+    {
+        "Threshold the image by setting values below the threshold level to zero"
+        .self$map(function(x) ifelse(x >= level, x, defaultValue))
+    },
+    
+    writeToFile = function (...) { writeImageToFile(.self, ...) }
 ))
 
 # Register deserialiser for MriImageMetadata legacy class
@@ -207,7 +367,7 @@ registerDeserialiser("MriImageMetadata", function (fields) {
 
 setAs("MriImage", "array", function (from) as(from$getData(),"array"))
 
-setAs("array", "MriImage", function (from) newMriImageWithData(from))
+setAs("array", "MriImage", function (from) asMriImage(from))
 
 setAs("MriImage", "nifti", function (from) {
     if (is.null(getOption("niftiAuditTrail")))
@@ -305,40 +465,42 @@ setAs("nifti", "MriImage", function (from) {
         flag(OL$Warning, "Indexing into an image which is not reordered has no consistent meaning")
 }
 
+#' @export
 as.array.MriImage <- function (x, ...)
 {
     as(x, "array")
 }
 
+#' @export
 dim.MriImage <- function (x)
 {
     x$getDimensions()
 }
 
+#' @export
 Math.MriImage <- function (x, ...)
 {
-    newImage <- newMriImageWithSimpleFunction(x, .Generic, ...)
-    return (newImage)
+    x$copy()$map(.Generic)
 }
 
+#' @export
 Ops.MriImage <- function (e1, e2)
 {
-    if (is(e2, "MriImage"))
-        newImage <- newMriImageWithBinaryFunction(e1, e2, .Generic)
-    else
-        newImage <- newMriImageWithSimpleFunction(e1, .Generic, e2)
-    return (newImage)
+    e1$copy()$map(.Generic, e2)
 }
 
+#' @export
 Summary.MriImage <- function (x, ..., na.rm = FALSE)
 {
     if (nargs() > 2)
-        report(OL$Error, "Function \"", .Generic, "\" is not defined for more than one image object")
+        report(OL$Error, "Function \"#{.Generic}\" is not defined for more than one image object")
     
     result <- get(.Generic)(x$getData(),na.rm=na.rm)
     return (result)
 }
 
+#' @rdname index
+#' @export
 setMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - as.integer(!missing(drop))
@@ -353,6 +515,8 @@ setMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, 
         return (x$data[,,...,drop=drop])
 })
 
+#' @rdname index
+#' @export
 setMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - as.integer(!missing(drop))
@@ -367,6 +531,8 @@ setMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, i, j, .
         return (x$data[i,,...,drop=drop])
 })
 
+#' @rdname index
+#' @export
 setMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     if (x$isSparse())
@@ -378,6 +544,8 @@ setMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, .
         return (x$data[,j,...,drop=drop])
 })
 
+#' @rdname index
+#' @export
 setMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     if (x$isSparse())
@@ -389,6 +557,8 @@ setMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., 
         return (x$data[i,j,...,drop=drop])
 })
 
+#' @rdname index
+#' @export
 setReplaceMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - 1
@@ -405,6 +575,8 @@ setReplaceMethod("[", signature(x="MriImage",i="missing",j="missing"), function 
     return (x)
 })
 
+#' @rdname index
+#' @export
 setReplaceMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - 1
@@ -421,6 +593,8 @@ setReplaceMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, 
     return (x)
 })
 
+#' @rdname index
+#' @export
 setReplaceMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
     if (x$isSparse())
@@ -434,6 +608,8 @@ setReplaceMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, 
     return (x)
 })
 
+#' @rdname index
+#' @export
 setReplaceMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
     if (x$isSparse())
@@ -453,10 +629,50 @@ setMethod("Ops", "MriImage", Ops.MriImage)
 
 setMethod("Summary", "MriImage", Summary.MriImage)
 
-# NB: Be careful when changing the behaviour of this function
-# Quite a bit of other code relies on various aspects of its semantics
-newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = NA, voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA)
+#' Creating MriImage objects from data
+#' 
+#' Functions for creating MriImage objects from data, including other images.
+#' All of these functions use data from arrays or \code{MriImage} objects to
+#' create a new \code{MriImage} object. \code{asMriImage} is the basic fucntion
+#' for creating an object from its constituents: an array of voxel values and
+#' some metadata (and/or a template image).
+#' 
+#' \code{extractMriImage} reduces the dimensionality of the source image by
+#' one, by extracting a single ``slice'' of data along one dimension.
+#' \code{trimMriImage} trims empty space from the edges of an image, reducing
+#' the dimensions of the image and thus avoiding the storage of lots of zeroes.
+#' \code{reorderMriImage} reorders the image data (and corresponding metadata)
+#' to the LAS convention, an operation which is usually performed when an
+#' image is read from file.
+#' 
+#' @param data An array of pixel/voxel data.
+#' @param templateImage An optional \code{MriImage} object, to be used as a
+#'   metadata template.
+#' @param imageDims,voxelDims,voxelDimUnits,origin,tags,reordered Metadata for
+#'   the new image object. These values override any from the metadata object
+#'   or data array. See \code{\linkS4class{MriImage}} class documentation for
+#'   details.
+#' @param image An \code{MriImage} object.
+#' @param dim,loc The dimension and location along that dimension for which
+#'   data should be extracted.
+#' @param clearance The number of voxels' clearance left around a trimmed
+#'   image.
+#' @return An \code{MriImage} object.
+#' 
+#' @author Jon Clayden
+#' @seealso \code{\linkS4class{MriImage}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
+asMriImage <- function (data, templateImage = nilObject(), imageDims = NA, voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA, reordered = NA)
 {
+    # NB: Be careful when changing the behaviour of this function
+    # Quite a bit of other code relies on various aspects of its semantics
     if (is.null(data))
         report(OL$Error, "Data may not be NULL")
     if (is.logical(data))
@@ -486,118 +702,35 @@ newMriImageWithData <- function (data, templateImage = nilObject(), imageDims = 
     else
         report(OL$Error, "No information on image dimensions is available")
     
-    defaults <- list(voxelDims=rep(1,nDims), voxelDimUnits="unknown", origin=c(1,1,1,0,0,0,0), storedXform=emptyMatrix(), reordered=TRUE, tags=list())
+    defaults <- list(voxelDims=rep(1,nDims), voxelDimUnits="unknown", origin=c(1,1,1), storedXform=emptyMatrix(), tags=list(), reordered=TRUE)
     template <- templateImage$serialise()
-    params <- list(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, origin=origin, tags=tags)
+    params <- list(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, origin=origin, tags=tags, reordered=reordered)
     params <- params[!is.na(params)]
     
     composite <- c(params, template, defaults)
     composite <- composite[!duplicated(names(composite))]
     
-    image <- MriImage$new(imageDims=composite$imageDims[1:nDims], voxelDims=composite$voxelDims[1:nDims], voxelDimUnits=composite$voxelDimUnits, origin=composite$origin[1:nDims], storedXform=composite$storedXform, reordered=composite$reordered, tags=composite$tags, data=data)
+    image <- MriImage$new(imageDims=composite$imageDims[1:nDims], voxelDims=composite$voxelDims[1:nDims], voxelDimUnits=composite$voxelDimUnits, origin=composite$origin, storedXform=composite$storedXform, reordered=composite$reordered, tags=composite$tags, data=data)
     invisible (image)
 }
 
-newMriImageWithDataRepresentation <- function (image, representation = c("dense","coordlist"))
-{
-    if (!is(image, "MriImage"))
-        report(OL$Error, "Specified image is not an MriImage object")
-    if (image$isEmpty())
-        return (image)
-    
-    representation <- match.arg(representation)
-    
-    if (image$isSparse() && representation == "dense")
-        newImage <- newMriImageWithData(as(image$getData(), "array"), image)
-    else if (!image$isSparse() && representation == "coordlist")
-        newImage <- newMriImageWithData(as(image$getData(), "SparseArray"), image)
-    else
-        newImage <- image
-    
-    return (newImage)
-}
-
-newMriImageWithSimpleFunction <- function (image, fun, ...)
+#' @rdname asMriImage
+#' @export
+extractMriImage <- function (image, dim, loc)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
     
-    fun <- match.fun(fun)
-    newData <- fun(image$getData(), ...)
-    return (newMriImageWithData(newData, image))
-}
-
-newMriImageWithBinaryFunction <- function (image1, image2, fun, ...)
-{
-    if (!is(image1,"MriImage") || !is(image2,"MriImage"))
-        report(OL$Error, "The specified images are not MriImage objects")
-    
-    fun <- match.fun(fun)
-    newData <- fun(image1$getData(), image2$getData(), ...)
-    return (newMriImageWithData(newData, image1))
-}
-
-extractDataFromMriImage <- function (image, dim, loc)
-{
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
-    if (image$getDimensionality() < max(2,dim))
-        report(OL$Error, "The dimensionality of the specified image is too low")
-    if (!(loc %in% 1:(image$getDimensions()[dim])))
-        report(OL$Error, "The specified location is out of bounds")
-    
-    .warnIfIndexingUnreorderedImage(image)
-    
-    dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
-    if (image$isEmpty())
-        newData <- NULL
-    else if (image$isSparse())
-    {
-        # This code is faster when working with a sparse array
-        newData <- array(0, dim=image$getDimensions()[dimsToKeep])
-        matchingCoords <- which(image$getData()$getCoordinates()[,dim] == loc)
-        newData[image$getData()$getCoordinates()[matchingCoords,dimsToKeep,drop=FALSE]] <- image$getData()$getData()[matchingCoords]
-    }
-    else
-    {
-        # This "apply" call is a cheeky bit of R wizardry (credit: Peter Dalgaard)
-        newData <- image$apply(dimsToKeep, "[", loc)
-        if (is.vector(newData))
-            newData <- promote(newData)
-    }
-    
-    invisible (newData)
-}
-
-newMriImageByExtraction <- function (image, dim, loc)
-{
-    newData <- extractDataFromMriImage(image, dim, loc)
+    newData <- image$getSlice(dim, loc)
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
     
-    image <- MriImage$new(imageDims=image$getDimensions()[dimsToKeep], voxelDims=image$getVoxelDimensions()[dimsToKeep], voxelDimUnits=image$getVoxelUnits(), origin=image$getOrigin()[dimsToKeep], storedXform=image$getStoredXformMatrix(), reordered=image$isReordered(), tags=image$getTags(), data=newData)
+    image <- MriImage$new(imageDims=image$getDimensions()[dimsToKeep], voxelDims=image$getVoxelDimensions()[dimsToKeep], voxelDimUnits=image$getVoxelUnits(), origin=image$getOrigin(), storedXform=image$getStoredXformMatrix(), reordered=image$isReordered(), tags=image$getTags(), data=newData)
     return (image)
 }
 
-newMriImageByMasking <- function (image, mask)
-{
-    if (!identical(image$getDimensions(), dim(mask)))
-        report(OL$Error, "The specified image and mask do not have the same dimensions")
-    if (!is.logical(mask))
-        mask <- mask != 0
-    
-    newData <- image$getData() * mask
-    newImage <- newMriImageWithData(newData, image)
-    invisible (newImage)
-}
-
-newMriImageByThresholding <- function (image, level, defaultValue = 0)
-{
-    thresholdFunction <- function (x) { return (ifelse(x >= level, x, defaultValue)) }
-    newImage <- newMriImageWithSimpleFunction(image, thresholdFunction)
-    invisible (newImage)
-}
-
-newMriImageByTrimming <- function (image, clearance = 4)
+#' @rdname asMriImage
+#' @export
+trimMriImage <- function (image, clearance = 4)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
@@ -620,12 +753,17 @@ newMriImageByTrimming <- function (image, clearance = 4)
     newDims <- sapply(indices, length)
     
     # NB: Origin is not corrected here
-    newImage <- newMriImageWithData(data, image, imageDims=newDims)
+    newImage <- asMriImage(data, image, imageDims=newDims)
     invisible (newImage)
 }
 
-newMriImageByReordering <- function (image)
+#' @rdname asMriImage
+#' @export
+reorderMriImage <- function (image)
 {
+    if (!is(image, "MriImage"))
+        report(OL$Error, "The specified image is not an MriImage object")
+    
     # Image is already reordered
     if (image$isReordered())
         return (image)
@@ -638,7 +776,7 @@ newMriImageByReordering <- function (image)
     
     data <- image$getData()
     dims <- image$getDimensions()
-    voxelDims <- image$getVoxelDimensions()
+    voxelDims <- abs(image$getVoxelDimensions())
     nDims <- image$getDimensionality()
     origin <- image$getOrigin()
     
@@ -677,10 +815,6 @@ newMriImageByReordering <- function (image)
                 data <- aperm(data, dimPermutation)
         }
     }
-    
-    # Fix signs of voxel dimensions to correspond to LAS
-    # FIXME: This is probably not really necessary - does any code depend on it?
-    voxelDims <- abs(voxelDims) * c(-1, rep(1,nDims-1))
     
     # Figure out which dimensions need to be flipped
     # We sum by row because the data dimensions have already been permuted

@@ -6,7 +6,7 @@ suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {
-    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
+    session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
     statusOnly <- getConfigVariable("StatusOnly", FALSE)
     interactive <- getConfigVariable("Interactive", TRUE)
@@ -52,7 +52,7 @@ runExperiment <- function ()
             
             if (is.null(dicomDir))
                 dicomDir <- session$getDirectory()
-            else if (dicomDir %!~% "^([A-Za-z]:)?/")
+            else if (!(dicomDir %~% "^([A-Za-z]:)?/"))
                 dicomDir <- file.path(session$getDirectory(), dicomDir)
             dicomDir <- gsub("//+", "/", dicomDir, perl=TRUE)
 

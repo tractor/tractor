@@ -13,11 +13,9 @@ runExperiment <- function ()
     if (!is.null(baseThreshold))
     {
         threshold <- baseThreshold * switch(thresholdMode, nothing=1, maximum=max(image,na.rm=TRUE), minimum=min(image,na.rm=TRUE))
-        image <- newMriImageByThresholding(image, threshold)
+        image <- image$threshold(threshold)
     }
     
-    image <- newMriImageWithSimpleFunction(image, function(x) ifelse(x>0, 1, 0))
-    
-    writeImageFile(image, Arguments[nArguments()])
+    writeImageFile(image$binarise(), Arguments[nArguments()])
     invisible(NULL)
 }

@@ -6,7 +6,7 @@ library(tractor.session)
 
 runExperiment <- function ()
 {
-    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
+    session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
     useInternalViewer <- getConfigVariable("UseInternalViewer", TRUE)
     useOrthographic <- getConfigVariable("UseOrthographicView", TRUE)
@@ -37,8 +37,8 @@ runExperiment <- function ()
 
                 createSliceGraphic(b0Image, point[1], point[2], point[3], device="internal")
 
-                currentData <- extractDataFromMriImage(dataImage, i, point[i])
-                maskData <- extractDataFromMriImage(maskImage, i, point[i])
+                currentData <- dataImage$getSlice(i, point[i])
+                maskData <- maskImage$getSlice(i, point[i])
                 dim(currentData) <- c(prod(dim(currentData))/dim(currentData)[3], dim(currentData)[3])
                 currentData <- currentData[maskData>0,]
                 fit <- estimateDiffusionTensors(currentData, scheme, method="ls")

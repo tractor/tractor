@@ -28,9 +28,9 @@ runExperiment <- function ()
     report(OL$Info, "Applying ", operation, " operation with ", kernelShape, " kernel of size ", implode(round(width)," x "), " voxels")
     
     kernel <- shapeKernel(width, type=kernelShape)
-    newImage <- newMriImageWithSimpleFunction(image, get(operation), kernel=kernel)
+    image$map(get(operation), kernel=kernel)
     fileName <- paste(Arguments[1], "morphed", sep="_")
-    writeImageFile(newImage, fileName)
+    writeImageFile(image, fileName)
     
     invisible(NULL)
 }

@@ -8,15 +8,14 @@ runExperiment <- function ()
 {
     requireArguments("session directory", "seed point")
     
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- attachMriSession(Arguments[1])
     seed <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
     if (!exists("seed") || length(seed) != 3)
         report(OL$Error, "Seed point must be given as a single vector in 3D space, comma or space separated")
     
     pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
-    tracker <- getConfigVariable("Tracker", "tractor", validValues=c("fsl","tractor"), deprecated=TRUE)
     isStandardSeed <- getConfigVariable("SeedInMNISpace", FALSE)
-    nSamples <- getConfigVariable("NumberOfSamples", 5000)
+    nStreamlines <- getConfigVariable("Streamlines", 5000)
     maxAngle <- getConfigVariable("MaximumAngle", NULL, "numeric")
     tractName <- getConfigVariable("TractName", "tract")
     
@@ -32,7 +31,7 @@ runExperiment <- function ()
         seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
     
     options <- createTractOptionList("knot", lengthQuantile, registerToReference, NULL, NULL)
-    returnValue <- referenceSplineTractWithOptions(options, session, seed, nSamples=nSamples, maxAngle=maxAngle, tracker=tracker)
+    returnValue <- referenceSplineTractWithOptions(options, session, seed, nStreamlines=nStreamlines, maxAngle=maxAngle)
     
     reference <- newReferenceTractWithTract(returnValue$spline, nativeSeed=seed, session=session, options=returnValue$options)
     writeNTResource(reference, "reference", "pnt", list(tractName=tractName))

@@ -1,3 +1,3 @@
 #@desc Checking tractography between parcellated regions
-${TRACTOR} xtrack data/session SeedRegions:precentral_gyrus_left TargetRegions:precentral_gyrus_right NumberOfSamples:1 TractName:tmp/tract
+${TRACTOR} track data/session precentral_gyrus_left TargetRegions:precentral_gyrus_right Streamlines:10 TractName:tmp/tract RequirePaths:true
 rm -f tmp/tract_streamlines.Rdata

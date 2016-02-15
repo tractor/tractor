@@ -6,7 +6,7 @@ library(tractor.session)
 
 runExperiment <- function ()
 {
-    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
+    session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
     if (getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
@@ -17,7 +17,7 @@ runExperiment <- function ()
     if (file.exists(session$getDirectory("diffusion")))
     {
         report(OL$Info, "\nDIFFUSION:", prefixFormat="")
-        labels <- c("Preprocessing complete", "Data dimensions", "Voxel dimensions", "Diffusion b-values", "Number of gradient directions", "Diffusion tensors fitted", "FSL BEDPOST run", "Camino files created")
+        labels <- c("Preprocessing complete", "Data dimensions", "Voxel dimensions", "Diffusion b-values", "Number of gradient directions", "Diffusion tensors fitted", "Fibre orientation model")
         if (session$imageExists("data","diffusion"))
         {
             metadata <- session$getImageByType("data", "diffusion", metadataOnly=TRUE)
@@ -30,9 +30,9 @@ runExperiment <- function ()
         
         nFibres <- getBedpostNumberOfFibresForSession(session)
         if (nFibres == 0)
-            bedpostValue <- FALSE
+            modelValue <- "(none)"
         else
-            bedpostValue <- paste("TRUE (", nFibres, " fibre(s) per voxel)", sep="")
+            modelValue <- es("FSL-BEDPOSTX (#{nFibres} fibre(s) per voxel)")
         if (is.null(scheme <- newSimpleDiffusionSchemeFromSession(session)))
             bValues <- directions <- NA
         else
@@ -41,7 +41,7 @@ runExperiment <- function ()
             directions <- implode(scheme$nDirections(), ", ")
         }
         
-        values <- c(session$imageExists("data","diffusion"), dims, voxelDims, bValues, directions, session$imageExists("FA","diffusion"), bedpostValue, file.exists(file.path(session$getDirectory("camino"),"sequence.scheme")))
+        values <- c(session$imageExists("data","diffusion"), dims, voxelDims, bValues, directions, session$imageExists("FA","diffusion"), modelValue)
         printLabelledValues(labels, values, leftJustify=TRUE)
     }
     
@@ -56,15 +56,15 @@ runExperiment <- function ()
             metadataSummary <- metadata$summarise()
             dims <- metadataSummary$values[2]
             voxelDims <- metadataSummary$values[3]
-            frequency <- s("#{1/metadata$getVoxelDimensions()[4]} Hz", signif=3)
+            frequency <- es("#{1/metadata$getVoxelDimensions()[4]} Hz", signif=3)
             
             timeSeconds <- metadata$getVoxelDimensions()[4] * metadata$getDimensions()[4]
             if (!is.finite(timeSeconds))
                 time <- NA
             else if (timeSeconds > 60)
-                time <- s("#{timeSeconds/60} min", signif=3)
+                time <- es("#{timeSeconds/60} min", signif=3)
             else
-                time <- s("#{timeSeconds} s", signif=3)
+                time <- es("#{timeSeconds} s", signif=3)
         }
         else
             dims <- voxelDims <- frequency <- time <- NA

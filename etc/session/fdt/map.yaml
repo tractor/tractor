@@ -1,0 +1,8 @@
+data: data
+mask: nodif_brain_mask
+s0: dti_S0
+fa: dti_FA
+md: dti_MD
+eigenvalue: dti_L%
+eigenvector: dti_V%
+sse: dti_sse

@@ -46,7 +46,7 @@ runExperiment <- function ()
     for (i in 1:nSessions)
     {
         report(OL$Info, "Current session is ", sessionList[i])
-        currentSession <- newSessionFromDirectory(sessionList[i])
+        currentSession <- attachMriSession(sessionList[i])
         if (seedsInData)
         {
             if (subjectsInData)

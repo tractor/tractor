@@ -1,53 +1,15 @@
-superimposePng <- function (lowerFile, upperFile, newFile, maskFile = NULL)
+writePng <- function (data, fileName, aspectRatio)
 {
-    lowerFile <- ensureFileSuffix(lowerFile, "png")
-    upperFile <- ensureFileSuffix(upperFile, "png")
-    newFile <- ensureFileSuffix(newFile, "png")
-
-    paramString <- paste(upperFile, lowerFile, sep=" ")
-    if (is.character(maskFile))
+    if (length(dim(data)) == 3)
     {
-        maskFile <- ensureFileSuffix(maskFile, "png")
-        paramString <- paste(paramString, maskFile, "+matte", sep=" ")
+        data <- data[,dim(data)[2]:1,]
+        data <- aperm(data, c(2,1,3))
     }
-    paramString <- paste(paramString, newFile, sep=" ")
+    else if (length(dim(data)) == 2)
+        data <- data[,dim(data)[2]:1]
     
-    execute("composite", paramString, errorOnFail=TRUE)
-}
-
-interpolatePng <- function (oldFile, newFile, newDims, filter = "Mitchell")
-{   
-    oldFile <- ensureFileSuffix(oldFile, "png")
-    newFile <- ensureFileSuffix(newFile, "png")
+    data[data<0] <- 0
+    data[data>1] <- 1
     
-    dimsString <- paste(newDims[1], "x", newDims[2], "!", sep="")
-    paramString <- paste("-filter", filter, "-resize", dimsString, oldFile, newFile, sep=" ")
-    execute("convert", paramString, errorOnFail=TRUE)
-}
-
-writePng <- function (data, colourScale = 1, fileName = NULL, windowLimits = NULL)
-{
-    if (capabilities("png") == FALSE)
-        report(OL$Error, "PNG output capability required")
-    if (is.null(fileName))
-        report(OL$Error, "File name must be specified")
-        
-    dims <- dim(data)
-    if (length(dims) != 2)
-        report(OL$Error, "Can only write 2D array data to a PNG file")
-    
-    fileName <- ensureFileSuffix(fileName, "png")
-    scale <- getColourScale(colourScale)
-
-    # Tracts acquire gaps if the width and length are not extended by 1
-    # (don't know why!)
-    png(fileName, bg=scale$background, width=dims[1]+1, height=dims[2]+1)
-    par(mai=c(0,0,0,0))
-    if (is.null(windowLimits))
-        image(data, col=scale$colours, axes=FALSE, asp=dims[2]/dims[1])
-    else
-        image(data, col=scale$colours, axes=FALSE, asp=dims[2]/dims[1], zlim=sort(windowLimits))
-    dev.off()
-    
-    invisible (fileName)
+    png::writePNG(data, ensureFileSuffix(fileName,"png"), asp=aspectRatio)
 }

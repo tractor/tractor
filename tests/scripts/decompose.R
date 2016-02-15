@@ -7,7 +7,7 @@ runExperiment <- function ()
 {
     requireArguments("session directory", "volume index")
     
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- attachMriSession(Arguments[1])
     index <- as.numeric(Arguments[2])
     
     transform <- getVolumeTransformationForSession(session, "diffusion")

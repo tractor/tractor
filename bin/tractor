@@ -4,12 +4,10 @@ status=1
 command="$0 $*"
 architecture=""
 keep_log=0
-keep_report=0
 tmpdir=${TMPDIR:-/tmp}
 log_file="$tmpdir/tractor$$_log"
 expect_file="$tmpdir/tractor$$_expect"
-report_file="$tmpdir/tractor$$_report"
-trap 'rm -f $expect_file; [ $keep_report -eq 0 ] && rm -f $report_file; [ $keep_log -eq 0 ] && rm -f $log_file; exit $status' 0 1 2 15
+trap 'rm -f $expect_file; [ $keep_log -eq 0 ] && rm -f $log_file; exit $status' 0 1 2 15
 
 config_file="/dev/null"
 output_level='Warning'
@@ -74,7 +72,7 @@ usage()
     echo
 }
 
-set -- `getopt "hldozqfbriv:p:a:w:c:" "$@"` || {
+set -- `getopt "hldozqfbiv:p:a:w:c:" "$@"` || {
     usage 1>&2
     exit
 }
@@ -100,7 +98,6 @@ while [ $# -gt 0 ]
         -q) quiet=1 ;;
         -f) profile_performance=1; command_flags="-f ${command_flags}" ;;
         -b) batch_mode=1 ;;
-        -r) keep_report=1 ;;
         -v) shift; verbose_level=$1 ;;
         -p) shift; parallelisation_factor=$1 ;;
         -a) shift; architecture=$1 ;;
@@ -116,19 +113,15 @@ done
     exit
 }
 
-if [ ! -z "${architecture}" ]; then
-    function R {
-        exec R --arch=${architecture} $*
-    }
-fi
+[ -z "$R" ] && R=R
+
+[ ! -z "${architecture}" ] && R="$R --arch=${architecture}"
 
 script_name=`echo $1 | sed 's/\.R$//'`
 
 [ $supress_config -eq 0 -a -f "$HOME/.tractor/${script_name}.yaml" ] && config_file="$HOME/.tractor/${script_name}.yaml:$config_file"
 
 [ $keep_log -eq 1 ] && log_file="$working_dir/tractor_${script_name}.log"
-
-[ $keep_report -eq 1 ] && report_file="$working_dir/tractor_report.yaml"
 
 [ -d "${TRACTOR_HOME}/lib/R" ] && export R_LIBS="${TRACTOR_HOME}/lib/R"
 
@@ -172,7 +165,7 @@ fi
 }
 
 if [ $show_options -eq 1 ]; then
-    echo "library(utils); library(tractor.utils); describeExperiment('$script_file', $COLUMNS)" | R --slave --vanilla 2>&1
+    echo "library(utils); library(tractor.utils); describeExperiment('$script_file', $COLUMNS)" | "$R" --slave --vanilla 2>&1
     status=0
     exit
 fi
@@ -204,37 +197,33 @@ fi
 [ $quiet -eq 0 ] && echo "Starting TractoR environment..." 1>&2
 
 if [ -x "$TRACTOR_HOME/bin/exec/tractor" ]; then
-    R --vanilla CMD "$TRACTOR_HOME/bin/exec/tractor" -w "$working_dir" -r "$report_file" -l "$output_level" -c "$config_file" -p "$parallelisation_factor" -g "$log_file" $command_flags "$script_file" $args 2>&1
+    "$R" --vanilla CMD "$TRACTOR_HOME/bin/exec/tractor" -w "$working_dir" -l "$output_level" -c "$config_file" -p "$parallelisation_factor" -g "$log_file" $command_flags "$script_file" $args 2>&1
 elif [ $batch_mode -eq 1 ]; then
     cat >"$expect_file" <<EOF
 library(utils)
 library(tractor.utils)
-bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\$$output_level, '$config_file', '$args', $parallelisation_factor, $profile_performance)
+bootstrapExperiment('$script_file', '$working_dir', OL\$$output_level, '$config_file', '$args', $parallelisation_factor, $profile_performance)
 EOF
-    R CMD BATCH --slave --vanilla $expect_file $log_file
+    "$R" CMD BATCH --slave --vanilla $expect_file $log_file
 elif [ $interactive -eq 0 ]; then
-    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\$$output_level, '$config_file', '$args', $parallelisation_factor, $profile_performance)" | R --slave --vanilla 2>&1 | tee $log_file
+    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', OL\$$output_level, '$config_file', '$args', $parallelisation_factor, $profile_performance)" | "$R" --slave --vanilla 2>&1 | tee $log_file
 elif [ $expect_available -eq 0 ]; then
     cat >"$expect_file" <<EOF
 log_user 0
-spawn R --quiet --vanilla
+spawn $R --quiet --vanilla
 set timeout 3
 send "library(utils)\n"
 expect -re ">.+\r\n"
 send "library(tractor.utils)\n"
 expect -re ">.+\r\n"
-send "bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\\\$$output_level, '$config_file', '$args', $parallelisation_factor, $profile_performance)\n"
+send "bootstrapExperiment('$script_file', '$working_dir', OL\\\$$output_level, '$config_file', '$args', $parallelisation_factor, $profile_performance)\n"
 expect -re ">.+\r\n"
 interact
 EOF
-    [ ! -z "${architecture}" ] && {
-        sed "s/R --quiet --vanilla/R --arch=${architecture} --quiet --vanilla/" $expect_file > ${expect_file}_tmp
-        mv ${expect_file}_tmp $expect_file
-    }
     expect -f $expect_file | tee $log_file
 else
-    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', '$report_file', OL\$$output_level, '$config_file', '$args', $parallelisation_factor, $profile_performance)" >.Rprofile
-    R --slave --no-save --no-restore --no-site-file --no-environ 2>&1 | tee $log_file
+    echo "library(utils); library(tractor.utils); bootstrapExperiment('$script_file', '$working_dir', OL\$$output_level, '$config_file', '$args', $parallelisation_factor, $profile_performance)" >.Rprofile
+    "$R" --slave --no-save --no-restore --no-site-file --no-environ 2>&1 | tee $log_file
 fi
 
 warnings=`grep -c WARNING $log_file`
@@ -252,12 +241,11 @@ errors=`grep -c ERROR $log_file`
 }
 
 [ $profile_performance -eq 1 ] && {
-    R CMD Rprof "$working_dir/tractor-Rprof.out" > "$working_dir/${script_name}.Rprof"
+    "$R" CMD Rprof "$working_dir/tractor-Rprof.out" > "$working_dir/${script_name}.Rprof"
     rm -f "$working_dir/tractor-Rprof.out"
 }
 
 if [ $quiet -eq 0 ]; then
-	[ -f "$report_file" ] && cat "$report_file" | sed 's/^/- /'
     echo "Experiment completed with $warnings warning(s) and $errors error(s)" 1>&2
 fi
 

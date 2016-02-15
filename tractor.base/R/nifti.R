@@ -127,7 +127,7 @@ readNifti <- function (fileNames)
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
 
-writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL)
+writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
@@ -152,10 +152,6 @@ writeMriImageToNifti <- function (image, fileNames, gzipped = FALSE, datatype = 
     if (image$isReordered())
     {
         origin <- (image$getOrigin() - 1) * abs(image$getVoxelDimensions())
-        if (length(origin) > 3)
-            origin <- origin[1:3]
-        else if (length(origin) < 3)
-            origin <- c(origin, rep(0,3-length(origin)))
         origin <- ifelse(origin < 0, rep(0,3), origin)
         origin[2:3] <- -origin[2:3]
         sformRows <- c(-fullVoxelDims[2], 0, 0, origin[1],

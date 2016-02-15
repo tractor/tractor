@@ -1,4 +1,4 @@
-MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",subdirectoryCache.="list",mapCache.="list",transformStrategyCache.="list"), methods=list(
+MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",caches.="list"), methods=list(
     initialize = function (directory = NULL, ...)
     {
         if (is.null(directory))
@@ -9,8 +9,9 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             report(OL$Error, "Session directory does not exist")
         else
         {
-            object <- initFields(directory=expandFileName(directory), subdirectoryCache.=list(), mapCache.=list())
+            object <- initFields(directory=expandFileName(directory), caches.=list())
             object$updateCaches()
+            object$caches.$objects <- list()
             object$getDirectory("root", createIfMissing=TRUE)
             updateSessionHierarchy(object)
             return (object)
@@ -28,10 +29,10 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             
             if (type == "root")
                 requiredDir <- root
-            else if (!(type %in% names(subdirectoryCache.)))
-                report(OL$Error, "Directory type \"", type, "\" is not valid")
+            else if (!(type %in% names(caches.$subdirectories)))
+                report(OL$Error, "Directory type \"#{type}\" is not valid")
             else
-                requiredDir <- expandFileName(subdirectoryCache.[[type]], base=root)
+                requiredDir <- expandFileName(caches.$subdirectories[[type]], base=root)
 
             if (createIfMissing && !file.exists(requiredDir))
                 dir.create(requiredDir, recursive=TRUE)
@@ -52,15 +53,43 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         if (!is.null(place) && tolower(place) == "mni")
             return (getFileNameForStandardImage(type))
         else
-            return (getImageFileNameForSession(.self, type, place, index))
+        {
+            type <- tolower(type)
+            
+            if (is.null(place))
+            {
+                locs <- which(sapply(caches.$maps, function(x) type %in% names(x)))
+                if (length(locs) < 1)
+                    report(OL$Error, "The specified file type (\"#{type}\") does not have a standard location")
+                else if (length(locs) > 1)
+                {
+                    locs <- names(caches.$maps)[locs]
+                    if (length(which(locs %in% .PrimarySessionDirectories)) == 1)
+                        place <- locs[locs %in% .PrimarySessionDirectories]
+                    else
+                        report(OL$Error, "The specified file type (\"#{type}\") is ambiguous: it can exist in places #{implode(paste('\"',locs,'\"',sep=''),', ',finalSep=' and ')}")
+                }
+                else
+                    place <- names(caches.$maps)[locs[1]]
+            }
+            
+            map <- caches.$maps[[place]]
+            names(map) <- tolower(names(map))
+            directory <- .self$getDirectory(place)
+            
+            fileName <- map[[type]]
+            if (is.null(fileName))
+                report(OL$Error, "Image type \"#{type}\" is not valid")
+            
+            if (fileName %~% "\\%")
+                fileName <- sapply(index, function(i) sub("%",as.character(i),fileName,fixed=TRUE))
+            
+            return (file.path(directory, fileName))
+        }
     },
-    
-    getMap = function (place) { return (mapCache.[[place]]) },
     
     getParcellation = function (place = "structural", ...)
     {
-        require("tractor.reg")
-        
         fileName <- .self$getImageFileNameByType("parcellation", place)
         if (!imageFileExists(fileName))
         {
@@ -68,12 +97,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
                 report(OL$Error, "T1w image parcellation has not yet been performed")
             else
             {
-                parcellation <- transformParcellationToSpace(.self$getParcellation("structural"), .self, place, ...)
-                writeParcellation(parcellation, fileName)
+                parcellation <- tractor.reg::transformParcellationToSpace(.self$getParcellation("structural"), .self, place, ...)
+                tractor.reg::writeParcellation(parcellation, fileName)
             }
         }
         else
-            parcellation <- readParcellation(fileName)
+            parcellation <- tractor.reg::readParcellation(fileName)
         
         return (parcellation)
     },
@@ -82,23 +111,37 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getRegistrationTargetFileName = function (space) { return (.self$getImageFileNameByType(.RegistrationTargets[[space]], space)) },
     
+    getTracker = function (mask = NULL)
+    {
+        if (!("diffusionModel" %in% names(caches.$objects)))
+        {
+            if (.self$imageExists("avf", "bedpost"))
+                caches.$objects$diffusionModel <- tractor.track::bedpostDiffusionModel(.self$getDirectory("bedpost"))
+            else
+                report(OL$Error, "No diffusion model is available for the session with root directory #{.self$getDirectory()}")
+        }
+        
+        if (is.null(mask))
+            mask <- getImageFileNameByType("mask", "diffusion")
+        
+        return (tractor.track::Tracker$new(caches.$objects$diffusionModel, mask))
+    },
+    
     getTransformation = function (sourceSpace, targetSpace)
     {
-        require("tractor.reg")
-        
-        strategy <- transformStrategyCache.[[s("#{sourceSpace}2#{targetSpace}")]]
+        strategy <- caches.$transformStrategies[[es("#{sourceSpace}2#{targetSpace}")]]
         if ("reverse" %in% strategy)
-            return (invertTransformation(.self$getTransformation(targetSpace, sourceSpace)))
+            return (.self$getTransformation(targetSpace, sourceSpace)$getInverse())
         else
         {
             sourceImageFile <- .self$getRegistrationTargetFileName(sourceSpace)
             targetImageFile <- .self$getRegistrationTargetFileName(targetSpace)
-            transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(paste(sourceSpace,"2",targetSpace,sep=""),"Rdata"))
+            transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"Rdata"))
             
             # Injected option for backwards compatibility
             targetMask <- NULL
             if (sourceSpace == "diffusion" && targetSpace == "mni")
-                targetMask <- newMriImageWithSimpleFunction(getStandardImage("white"), function(x) x/10 + 1)
+                targetMask <- getStandardImage("white")$map(function(x) x/10 + 1)
             
             options <- list(sourceImageFile, targetImageFile, targetMask=targetMask, estimateOnly=TRUE, cache="ignore", file=transformFile)
             options$types <- "affine"
@@ -113,12 +156,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             }
             if (all(c("nonlinear","symmetric") %in% strategy))
                 options$types <- c(options$types, "reverse-nonlinear")
-            result <- do.call(registerImages, options)
+            result <- do.call(tractor.reg::registerImages, options)
             
-            reverseTransformFile <- file.path(.self$getDirectory("transforms"), ensureFileSuffix(paste(targetSpace,"2",sourceSpace,sep=""),"Rdata"))
+            reverseTransformFile <- file.path(.self$getDirectory("transforms"), ensureFileSuffix(es("#{targetSpace}2#{sourceSpace}"),"Rdata"))
             if (!file.exists(reverseTransformFile))
             {
-                inverseTransform <- invertTransformation(result$transform, quiet=TRUE)
+                inverseTransform <- result$transform$getInverse(quiet=TRUE)
                 inverseTransform$serialise(reverseTransformFile)
             }
             
@@ -140,11 +183,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             report(OL$Error, "Existing externally-mapped directory #{dirToRemove} will not be overwritten")
         else
         {
-            if (ask)
-                ans <- ask("Directory #{dirToRemove} already exists. Delete it? [yn]")
-            else
-                ans <- "y"
-            
+            ans <- (if (ask) ask("Directory #{dirToRemove} already exists. Delete it? [yn]") else "y")
             if (tolower(ans) == "y")
                 unlink(dirToRemove, recursive=TRUE)
         }
@@ -152,88 +191,53 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     updateCaches = function ()
     {
+        defaultsPath <- file.path(Sys.getenv("TRACTOR_HOME"), "etc", "session")
+        
+        subdirectories <- readYaml(file.path(defaultsPath, "map.yaml"))
         mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")
         if (file.exists(mapFileName))
         {
-            subdirectories <- c(readYaml(mapFileName), .DefaultSessionDirectories)
+            subdirectories <- c(readYaml(mapFileName), subdirectories)
             subdirectories <- subdirectories[!duplicated(names(subdirectories))]
         }
-        else
-            subdirectories <- .DefaultSessionDirectories
-            
-        .self$subdirectoryCache. <- subdirectories
-            
+        .self$caches.$subdirectories <- subdirectories
+        
         maps <- list()
-        for (place in names(.DefaultSessionMap))
+        for (place in .AllSessionDirectories)
         {
+            defaultFileName <- file.path(defaultsPath, subdirectories[[place]], "map.yaml")
+            if (!file.exists(defaultFileName))
+                next
+            maps[[place]] <- readYaml(defaultFileName)
             mapFileName <- file.path(.self$getDirectory(place), "map.yaml")
             if (file.exists(mapFileName))
             {
-                currentMap <- c(readYaml(mapFileName), .DefaultSessionMap[[place]])
-                maps[[place]] <- currentMap[!duplicated(names(currentMap))]
+                maps[[place]] <- c(readYaml(mapFileName), maps[[place]])
+                maps[[place]] <- maps[[place]][!duplicated(names(maps[[place]]))]
             }
-            else
-                maps[[place]] <- .DefaultSessionMap[[place]]
         }
-            
-        .self$mapCache. <- maps
+        .self$caches.$maps <- maps
         
-        transformStrategies <- readYaml(file.path(Sys.getenv("TRACTOR_HOME"), "etc", "session", "transforms", "strategy.yaml"))
+        transformStrategies <- readYaml(file.path(defaultsPath, "transforms", "strategy.yaml"))
         strategyFileName <- file.path(.self$getDirectory("transforms"), "strategy.yaml")
         if (file.exists(strategyFileName))
         {
             transformStrategies <- c(readYaml(strategyFileName), transformStrategies)
             transformStrategies <- transformStrategies[!duplicated(names(transformStrategies))]
         }
-        
-        .self$transformStrategyCache. <- transformStrategies
+        .self$caches.$transformStrategies <- transformStrategies
     }
 ))
 
-newSessionFromDirectory <- function (directory)
+attachMriSession <- function (directory)
 {
     session <- MriSession$new(directory)
     invisible (session)
 }
 
-getImageFileNameForSession <- function (session, type, place = NULL, index = 1)
+newSessionFromDirectory <- function (directory)
 {
-    if (!is(session, "MriSession"))
-        report(OL$Error, "The specified session is not an MriSession object")
-    
-    type <- tolower(type)
-    
-    if (is.null(place))
-    {
-        locs <- which(sapply(.DefaultSessionMap, function(x) type %in% names(x)))
-        if (length(locs) < 1)
-            report(OL$Error, "The specified file type (\"#{type}\") does not have a standard location")
-        else if (length(locs) > 1)
-        {
-            locs <- names(.DefaultSessionMap)[locs]
-            if (length(which(locs %in% .PrimarySessionDirectories)) == 1)
-                place <- locs[locs %in% .PrimarySessionDirectories]
-            else
-                report(OL$Error, "The specified file type (\"#{type}\") is ambiguous: it can exist in places #{implode(paste('\"',locs,'\"',sep=''),', ',finalSep=' and ')}")
-        }
-        else
-            place <- names(.DefaultSessionMap)[locs[1]]
-    }
-    
-    map <- session$getMap(place)
-    names(map) <- tolower(names(map))
-    directory <- session$getDirectory(place)
-    
-    fileName <- map[[type]]
-    if (is.null(fileName))
-        report(OL$Error, "Image type \"", type, "\" is not valid")
-    
-    if (fileName %~% "\\%")
-        fileName <- sapply(index, function(i) sub("%",as.character(i),fileName,fixed=TRUE))
-    
-    filePath <- file.path(directory, fileName)
-    
-    return (filePath)
+    return (attachMriSession(directory))
 }
 
 getImageCountForSession <- function (session, type, place = NULL)
@@ -242,7 +246,7 @@ getImageCountForSession <- function (session, type, place = NULL)
         report(OL$Error, "Specified session is not an MriSession object")
     
     i <- 1
-    while (imageFileExists(getImageFileNameForSession(session, type, place, index=i)))
+    while (session$imageExists(type, place, i))
         i <- i + 1
     
     return (i-1)
@@ -291,103 +295,6 @@ updateSessionHierarchy <- function (session)
     }
 }
 
-standardiseSessionHierarchy <- function (session, includeDirectories = FALSE)
-{
-    if (!is(session, "MriSession"))
-        report(OL$Error, "The specified session is not an MriSession object")
-    
-    for (dirName in names(.DefaultSessionMap))
-    {
-        directory <- session$getDirectory(dirName)
-        mapFileName <- file.path(directory, "map.yaml")
-        if (file.exists(mapFileName))
-        {
-            map <- readYaml(mapFileName)
-            names <- intersect(names(map), names(.DefaultSessionMap[[dirName]]))
-            files <- file.path(directory, unlist(map[names]))
-            
-            nonImageFiles <- unlist(.DefaultSessionMap[[dirName]][names]) %~% "\\."
-            wildcardFiles <- unlist(.DefaultSessionMap[[dirName]][names]) %~% "\\%"
-            otherFiles <- !(nonImageFiles | wildcardFiles)
-            
-            if (any(nonImageFiles))
-            {
-                fileExistence <- file.exists(files[nonImageFiles])
-                currentNames <- names[nonImageFiles][fileExistence]
-                currentFiles <- files[nonImageFiles][fileExistence]
-                file.rename(currentFiles, file.path(directory,unlist(.DefaultSessionMap[[dirName]][currentNames])))
-            }
-            if (any(wildcardFiles))
-            {
-                # Wildcard files are assumed to be images
-                for (i in 1:9)
-                {
-                    currentFiles <- sub("\\%", i, files[wildcardFiles], perl=TRUE)
-                    fileExistence <- imageFileExists(currentFiles)
-                    currentNames <- names[wildcardFiles][fileExistence]
-                    currentFiles <- currentFiles[fileExistence]
-                    currentTargets <- sub("\\%", i, unlist(.DefaultSessionMap[[dirName]][currentNames]), perl=TRUE)
-                    copyImageFiles(currentFiles, file.path(directory,currentTargets), deleteOriginals=TRUE)
-                }
-            }
-            if (any(otherFiles))
-            {
-                fileExistence <- imageFileExists(files[otherFiles])
-                currentNames <- names[otherFiles][fileExistence]
-                currentFiles <- files[otherFiles][fileExistence]
-                copyImageFiles(currentFiles, file.path(directory,unlist(.DefaultSessionMap[[dirName]][currentNames])), deleteOriginals=TRUE)
-            }
-            
-            unlink(mapFileName)
-        }
-    }
-    
-    # We don't change the directory map by default, since it can point to another session, and so the move could break things
-    mapFileName <- file.path(session$getDirectory("root"), "map.yaml")
-    if (includeDirectories && file.exists(mapFileName))
-    {
-        map <- readYaml(mapFileName)
-        names <- intersect(names(map), names(.DefaultSessionDirectories))
-        for (name in names)
-        {
-            oldLoc <- session$getDirectory(name)
-            newLoc <- expandFileName(.DefaultSessionDirectories[[name]], base=session$getDirectory("root"))
-            file.rename(oldLoc, newLoc)
-        }
-        
-        unlink(mapFileName)
-    }
-    
-    session$updateCaches()
-}
-
-createCaminoFilesForSession <- function (session)
-{
-    if (!is(session, "MriSession"))
-        report(OL$Error, "The specified session is not an MriSession object")
-    
-    session$unlinkDirectory("camino", ask=TRUE)
-    caminoDir <- session$getDirectory("camino", createIfMissing=TRUE)
-    
-    sourceDir <- session$getDirectory("fdt")
-    if (!file.exists(file.path(sourceDir,"bvals")) || !file.exists(file.path(sourceDir,"bvecs")) || !imageFileExists(session$getImageFileNameByType("data","diffusion")) || !imageFileExists(session$getImageFileNameByType("mask","diffusion")))
-        report(OL$Error, "Some required files are missing - the session must be processed for FSL first")
-    
-    # Having created the Camino directory, reading and writing back the
-    # scheme is sufficient to create the Camino file
-    report(OL$Info, "Creating a scheme file")
-    scheme <- newSimpleDiffusionSchemeFromSession(session)
-    writeSimpleDiffusionSchemeForSession(session, scheme)
-    
-    report(OL$Info, "Copying data and mask images")
-    dataImage <- session$getImageByType("data", "diffusion")
-    writeMriImageToCamino(dataImage, file.path(caminoDir,"data"))
-    maskImage <- session$getImageByType("mask", "diffusion")
-    writeMriImageToCamino(maskImage, file.path(caminoDir,"mask"))
-    
-    invisible (NULL)
-}
-
 createRadialDiffusivityMapForSession <- function (session)
 {
     if (!is(session, "MriSession"))
@@ -395,7 +302,7 @@ createRadialDiffusivityMapForSession <- function (session)
     
     secondEigenvalue <- session$getImageByType("eigenvalue", "diffusion", index=2)
     thirdEigenvalue <- session$getImageByType("eigenvalue", "diffusion", index=3)
-    radialDiffusivity <- newMriImageWithBinaryFunction(secondEigenvalue, thirdEigenvalue, function(x,y) (x+y)/2)
+    radialDiffusivity <- secondEigenvalue$map(function(x,y) (x+y)/2, thirdEigenvalue)
     
     writeImageFile(radialDiffusivity, session$getImageFileNameByType("radialdiff"))
 }

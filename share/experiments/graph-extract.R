@@ -11,7 +11,7 @@ runExperiment <- function ()
     subgraphName <- getConfigVariable("SubgraphName", NULL, "character", errorIfMissing=TRUE)
     
     graph <- deserialiseReferenceObject(graphName)
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- attachMriSession(Arguments[1])
     parcellation <- session$getParcellation()
     regionNames <- matchRegions(splitAndConvertString(Arguments[-1],",",fixed=TRUE), parcellation, labels=TRUE)
     

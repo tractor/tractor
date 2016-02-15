@@ -9,10 +9,16 @@
 	url = https://github.com/jonclayden/RNiftyReg.git
 [submodule "lib/corpcor"]
 	path = lib/corpcor
-	url = https://github.com/jonclayden/corpcor.git
+	url = https://github.com/tractor/corpcor.git
 [submodule "lib/Rcpp"]
 	path = lib/Rcpp
-	url = https://github.com/jonclayden/Rcpp.git
-[submodule "lib/RcppArmadillo"]
-	path = lib/RcppArmadillo
-	url = https://github.com/jonclayden/RcppArmadillo.git
+	url = https://github.com/tractor/Rcpp.git
+[submodule "lib/ore"]
+	path = lib/ore
+	url = https://github.com/jonclayden/ore.git
+[submodule "lib/RcppEigen"]
+	path = lib/RcppEigen
+	url = https://github.com/tractor/RcppEigen.git
+[submodule "lib/png"]
+	path = lib/png
+	url = https://github.com/tractor/png.git

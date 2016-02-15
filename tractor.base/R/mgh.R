@@ -53,7 +53,7 @@ readMgh <- function (fileNames)
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
 
-writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE)
+writeMgh <- function (image, fileNames, gzipped = FALSE)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
@@ -74,12 +74,9 @@ writeMriImageToMgh <- function (image, fileNames, gzipped = FALSE)
     
     fullVoxelDims <- c(image$getVoxelDimensions(), rep(0,3-ndims))[1:3]
     
+    # We can assume the image is reordered here
     origin <- image$getOrigin()
-    if (length(origin) > 3)
-        origin <- origin[1:3]
-    else if (length(origin) < 3)
-        origin <- c(origin, rep(0,3-length(origin)))
-    origin <- (origin + fullDims[1:3]/2 - 1) * fullVoxelDims
+    origin <- (origin + fullDims[1:3]/2 - 1) * fullVoxelDims * c(-1,1,1)
     xformlikeMatrix <- matrix(c(-1, 0, 0, origin[1],
                                  0, 1, 0, origin[2],
                                  0, 0, 1, origin[3]), nrow=3, byrow=TRUE)

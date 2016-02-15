@@ -11,7 +11,7 @@ runExperiment <- function ()
     place <- getConfigVariable("Place", NULL, "character")
     index <- getConfigVariable("Index", 1L, "integer")
     
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- attachMriSession(Arguments[1])
     path <- session$getImageFileNameByType(Arguments[2], place, index)
     
     cat(paste(path, "\n", sep=""))

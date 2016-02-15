@@ -1,10 +1,4 @@
-#@desc Evaluate a series of candidate tracts for similarity to a reference tract. The
-#@desc specified TractName must match that passed to the "hnt-ref" experiment used to
-#@desc generate the reference tract. Source sessions for the candidate tracts are
-#@desc given using the SessionList option. The SeedPointList is optional - if omitted
-#@desc then the standard space seed point associated with the reference tract will be
-#@desc used to establish neighbourhood centre points. Any candidate seed point with
-#@desc anisotropy lower than AnisotropyThreshold will be ignored.
+#@desc Evaluate a series of candidate tracts for similarity to a reference tract. The specified TractName must match that passed to the "hnt-ref" experiment used to generate the reference tract. Source sessions for the candidate tracts are given using the SessionList option. The SeedPointList is optional - if omitted then the standard space seed point associated with the reference tract will be used to establish neighbourhood centre points. Any candidate seed point with anisotropy lower than AnisotropyThreshold will be ignored.
 
 library(tractor.reg)
 library(tractor.session)
@@ -18,7 +12,7 @@ runExperiment <- function ()
     pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
     searchWidth <- getConfigVariable("SearchWidth", 1)
     faThreshold <- getConfigVariable("AnisotropyThreshold", 0.2)
-    nSamples <- getConfigVariable("NumberOfSamples", 1000)
+    nStreamlines <- getConfigVariable("Streamlines", 1000)
     resultsName <- getConfigVariable("ResultsName", "results")
     
     reference <- getNTResource("reference", "hnt", list(tractName=tractName))
@@ -32,14 +26,14 @@ runExperiment <- function ()
     }
 
     results <- parallelApply(seq_len(nSessions), function (i) {
-        currentSession <- newSessionFromDirectory(sessionList[i])
+        currentSession <- attachMriSession(sessionList[i])
 
         if (exists("seedMatrix"))
             currentSeed <- round(changePointType(seedMatrix[i,], session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
         else
             currentSeed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), currentSession, "diffusion", oldSpace="mni", pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
 
-        result <- runNeighbourhoodTractography(currentSession, currentSeed, reference$getTract(), faThreshold, searchWidth, nSamples=nSamples)
+        result <- runNeighbourhoodTractography(currentSession, currentSeed, reference$getTract(), faThreshold, searchWidth, nStreamlines=nStreamlines)
         return (result)
     })
     

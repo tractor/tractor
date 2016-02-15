@@ -1,11 +1,8 @@
 import(reportr)
 import(tractor.base)
+import(tractor.track)
 import(tractor.session)
 
-exportClasses(FieldTract, StreamlineTractMetadata, StreamlineTract, StreamlineSetTract, StreamlineCollectionTract, BSplineTract, ReferenceTract, UninformativeTractModel, MatchingTractModel, HeuristicNTResults, ProbabilisticNTResults)
-
-S3method(plot, StreamlineTract)
-S3method(plot, StreamlineSetTract)
-S3method(plot, StreamlineCollectionTract)
+exportClasses(FieldTract, BSplineTract, ReferenceTract, UninformativeTractModel, MatchingTractModel, HeuristicNTResults, ProbabilisticNTResults)
 
 exportPattern("^[^\\.]")

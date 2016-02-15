@@ -6,7 +6,7 @@ library(tractor.session)
 
 runExperiment <- function ()
 {
-    session <- newSessionFromDirectory(ifelse(nArguments()==0, ".", Arguments[1]))
+    session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
     force <- getConfigVariable("Force", FALSE)
     options <- getConfigVariable("Options", "-all", "character")
@@ -27,7 +27,7 @@ runExperiment <- function ()
     {
         regionFilePath <- file.path(Sys.getenv("TRACTOR_HOME"), "etc", "parcellations", ensureFileSuffix(parcellationName,"lut"))
         parcellation <- readParcellation(session$getImageFileNameByType(parcellationName), regionFilePath)
-        parcellation$image <- transformImageToSpace(parcellation$image, session, "structural", "freesurfer", finalInterpolation=0)
+        parcellation$image <- transformImageToSpace(parcellation$image, session, "structural", "freesurfer", interpolation=0)
         writeParcellation(parcellation, session$getImageFileNameByType("parcellation","structural"))
     }
 }

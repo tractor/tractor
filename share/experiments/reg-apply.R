@@ -14,7 +14,7 @@ runExperiment <- function ()
     
     sourceImage <- readImageFile(Arguments[1])
     transform <- deserialiseReferenceObject(transformName)
-    transformedImage <- transformImage(transform, sourceImage, preferAffine=preferAffine, reverse=reverse, finalInterpolation=interpolation)
+    transformedImage <- transformImage(transform, sourceImage, preferAffine=preferAffine, reverse=reverse, interpolation=interpolation)
     writeImageFile(transformedImage, Arguments[2])
 
     invisible(NULL)

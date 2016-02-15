@@ -13,7 +13,7 @@ runExperiment <- function ()
     
     maxSeeds <- getConfigVariable("MaximumSeedPoints", 1, "integer")
     minPosterior <- getConfigVariable("MinimumPosterior", 0, "numeric")
-    nSamples <- getConfigVariable("NumberOfSamples", 1000, "integer")
+    nStreamlines <- getConfigVariable("Streamlines", 1000, "integer")
     
     createVolumes <- getConfigVariable("CreateVolumes", TRUE)
     createImages <- getConfigVariable("CreateImages", FALSE)
@@ -54,7 +54,7 @@ runExperiment <- function ()
     parallelApply(seq_len(nSessions), function (i) {
         report(OL$Info, "Generating tract for session ", i)
         
-        currentSession <- newSessionFromDirectory(sessionList[i])
+        currentSession <- attachMriSession(sessionList[i])
         if (seedsInData)
         {
             if (subjectsInData)
@@ -83,17 +83,36 @@ runExperiment <- function ()
         indices <- match(1:maxSeeds, ranks)
         currentPosteriors[setdiff(1:nPoints,indices)] <- NA
         
-        trackingResult <- trackInNeighbourhood(currentSession, currentSeed, width=searchWidth, weights=currentPosteriors, weightThreshold=minPosterior, nSamples=nSamples)
-        if (is.null(trackingResult))
+        neighbourhoodInfo <- createNeighbourhoodInfo(searchWidth, centre=currentSeed)
+        validSeeds <- which(currentPosteriors >= minPosterior)
+        nValidSeeds <- length(validSeeds)
+        report(OL$Info, "#{nValidSeeds} seed point(s) have weights above the threshold of #{minPosterior}")        
+
+        if (nValidSeeds > 0)
         {
-            report(OL$Warning, "No seed points above threshold for session number ", i)
-            return (invisible(NULL))
+            metadata <- currentSession$getImageByType("maskedb0", metadataOnly=TRUE)
+            sequence <- match(sort(currentPosteriors[validSeeds]), currentPosteriors)
+            seeds <- t(neighbourhoodInfo$vectors[,sequence])
+            trackerPath <- currentSession$getTracker()$run(seeds, nStreamlines, requireMap=FALSE, requireStreamlines=TRUE)
+            streamSource <- StreamlineSource$new(trackerPath)
+            
+            data <- array(0, dim=metadata$getDimensions())
+            for (i in 1:nValidSeeds)
+            {
+                firstStreamline <- nStreamlines * (i-1) + 1
+                lastStreamline <- i * nStreamlines
+                imageForSeed <- streamSource$select(firstStreamline:lastStreamline)$getVisitationMap(metadata)
+                data <- data + imageForSeed$getData() * currentPosteriors[sequence[i]]
+            }
+            
+            normalisationFactor <- sum(currentPosteriors[sequence])
+            resultImage <- asMriImage(data/normalisationFactor, metadata)
+            
+            currentTractName <- paste(tractName, "_session", i, sep="")
+            if (createVolumes)
+                writeImageFile(resultImage, currentTractName)
         }
-        
-        currentTractName <- paste(tractName, "_session", i, sep="")
-        if (createVolumes)
-            writeImageFile(trackingResult$image, currentTractName)
-        if (createImages)
-            writePngsForResult(trackingResult, prefix=currentTractName, threshold=vizThreshold, showSeed=showSeed)
+        else
+            report(OL$Warning, "No seed points above threshold for session number ", i)
     })
 }

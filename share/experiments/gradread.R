@@ -6,7 +6,7 @@ suppressPackageStartupMessages(require(tractor.session))
 runExperiment <- function ()
 {
     requireArguments("session directory", "text file", "large b-value")
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- attachMriSession(Arguments[1])
     fileName <- Arguments[2]
     largeBValue <- as.numeric(Arguments[3])
     

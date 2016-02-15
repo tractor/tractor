@@ -1,40 +1,58 @@
 #! /bin/bash
 
+[ -z "$R" ] && R=R
+
 export R_INSTALL_VANILLA=1
 export R_COMPILE_PKGS=1
 
+global_lib=0
 keep_going=0
 
 usage()
 {
-    echo "tractor_Rinstall (program v2.5.1)"
+    echo "tractor_Rinstall (program v3.0.0)"
     echo "TractoR-specific wrapper for installing R packages"
     echo
-    echo "Usage: tractor_Rinstall [-k] pkg_path [pkg_path ...]"
+    echo "Usage: tractor_Rinstall [-gk] pkg_path [pkg_path ...]"
     echo
 }
 
-[ "$1" = "-k" ] && {
-    keep_going=1
-    shift
+set -- `getopt "hgk" "$@"` || {
+    usage 1>&2
+    exit
 }
 
-[ $# -lt 1 -o ! -d "$1" ] && {
+while [ $# -gt 0 ]
+    do
+    case "$1" in
+        -h) usage; exit 0 ;;
+        -g) global_lib=1 ;;
+        -k) keep_going=1 ;;
+        --) shift; break ;;
+    esac
+    shift
+done
+
+[ $# -lt 1 ] && {
     usage 1>&2
     exit
 }
 
 while [ $# -gt 0 ]; do
     name=`basename "$1"`
-    echo -n "Installing R package \"${name}\"... "
+    echo -n "Installing R package \"${name%_*}\"... "
     
     # Use tractor.base to check if we're in a TractoR directory
-    if [ -d tractor.base -a -d lib/R ]; then
-        R CMD INSTALL --library=lib/R --clean "${1}" >>install.log 2>&1
-    elif [ ! -z "${TRACTOR_HOME}" -a -d "${TRACTOR_HOME}/lib/R" ]; then
-        R CMD INSTALL --library="${TRACTOR_HOME}/lib/R" --clean "${1}" >>install.log 2>&1
+    if [ $global_lib -eq 1 ]; then
+        "$R" CMD INSTALL --clean "${1}" >>install.log 2>&1
+    elif [ ! -z "${TRACTOR_HOME}" ]; then
+        [ ! -d "${TRACTOR_HOME}/lib/R" ] && mkdir -p "${TRACTOR_HOME}/lib/R"
+        "$R" CMD INSTALL --library="${TRACTOR_HOME}/lib/R" --clean "${1}" >>install.log 2>&1
+    elif [ -d tractor.base ]; then
+        [ ! -d lib/R ] && mkdir -p lib/R
+        "$R" CMD INSTALL --library=lib/R --clean "${1}" >>install.log 2>&1
     else
-        R CMD INSTALL --clean "${1}" >>install.log 2>&1
+        false
     fi
     
     if [ $? -eq 0 ]; then

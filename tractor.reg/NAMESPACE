@@ -1,13 +1,13 @@
+import(methods)
+import(ore)
 import(reportr)
 import(tractor.base)
 import(RNiftyReg)
-
-importFrom(oro.nifti, nifti, is.nifti, as.nifti, convert.datatype, convert.bitpix)
 
 exportClasses(Transformation)
 
 S3method(plot, Transformation)
 
 exportPattern("^[^\\.]")
-export(transformVoxelToWorld)
-export(transformWorldToVoxel)
+export(voxelToWorld)
+export(worldToVoxel)

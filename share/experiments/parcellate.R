@@ -12,7 +12,7 @@ runExperiment <- function ()
     ignoreExisting <- getConfigVariable("IgnoreExisting", FALSE)
     freesurferSpaceReference <- getConfigVariable("FreesurferSpaceReference", NULL, "character")
     
-    session <- newSessionFromDirectory(Arguments[1])
+    session <- attachMriSession(Arguments[1])
     
     segmentationFiles <- splitAndConvertString(Arguments[-1], ",", fixed=TRUE)
     if (!is.null(types))
@@ -62,7 +62,7 @@ runExperiment <- function ()
         if (types[i] %in% c("desikan-killiany","destrieux"))
         {
             report(OL$Info, "Transforming Freesurfer image back to the original T1w space")
-            currentParcellation$image <- transformImage(freesurferTransform, currentParcellation$image, finalInterpolation=0)
+            currentParcellation$image <- transformImage(freesurferTransform, currentParcellation$image, interpolation=0)
         }
         
         if (is.null(parcellation))
@@ -74,7 +74,7 @@ runExperiment <- function ()
             if (length(duplicates) > 0)
             {
                 # Order is important here, since the duplicates vector will be wrong if the lookup table is modified first
-                parcellation$image <- newMriImageWithSimpleFunction(parcellation$image, function(x) ifelse(x %in% parcellation$regions$index[duplicates], 0, x))
+                parcellation$image$map(function(x) ifelse(x %in% parcellation$regions$index[duplicates], 0, x))
                 parcellation$regions <- parcellation$regions[-duplicates,]
             }
             
@@ -86,7 +86,7 @@ runExperiment <- function ()
             else
                 delta <- 0
             
-            parcellation$image <- newMriImageWithBinaryFunction(parcellation$image, currentParcellation$image, function(x,y) ifelse(y==0,x,y+delta))
+            parcellation$image$map(function(x,y) ifelse(y==0,x,y+delta), currentParcellation$image)
             parcellation$regions <- rbind(parcellation$regions, currentParcellation$regions)
         }
     }

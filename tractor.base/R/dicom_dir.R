@@ -1,3 +1,38 @@
+#' Sort a directory of DICOM files into series
+#' 
+#' This function sorts a directory containing DICOM files into subdirectories
+#' by series number (DICOM tag 0x0020,0x0011) series time (0x0008,0x0031),
+#' subject name (0x0010,0x0010) and/or scan date (0x0008,0x0020). Each unique
+#' identifier, together with its description, will be used as the name for a
+#' new subdirectory of the specified top-level directory, and all relevant
+#' files will be copied into that subdirectory. Duplicate file names are
+#' disambiguated if necessary.
+#' 
+#' @param directory A length-1 character vector giving the directory to search
+#'   for DICOM files. Subdirectories will also be searched.
+#' @param deleteOriginals A single logical value. If \code{TRUE}, then the
+#'   source files will be deleted after being copied to their new locations,
+#'   making the operation a move rather than a copy. Nothing will be deleted if
+#'   the copy fails.
+#' @param sortOn The string \code{"series"}, \code{"subject"} or \code{"date"},
+#'   or any combination in the order desired. This will be the basis of the
+#'   sort, which will be nested if more than one type is specified.
+#' @param useSeriesTime Logical value. If \code{TRUE}, use the series time
+#'   rather than number as the identifier. This can be more reliable if the
+#'   files are from multiple scan sessions.
+#' @return This function is called for its side effect.
+#' 
+#' @author Jon Clayden
+#' @seealso \code{\link{readDicomDirectory}} for reading DICOM files into an
+#' \code{MriImage} object.
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
 sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "series", useSeriesTime = FALSE)
 {
     if (!file.exists(directory) || !file.info(directory)$isdir)
@@ -20,7 +55,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     report(OL$Info, "Reading ", currentSort, " identifiers from ", nFiles, " files")
     for (i in 1:nFiles)
     {
-        metadata <- try(newDicomMetadataFromFile(files[i], stopTag=identifierTag), silent=TRUE)
+        metadata <- try(readDicomFile(files[i], stopTag=identifierTag), silent=TRUE)
         if (is.null(metadata) || ("try-error" %in% class(metadata)))
         {
             report(OL$Info, "Skipping ", files[i])
@@ -51,7 +86,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
         matchingFiles <- which(identifiers==id)
         if (length(matchingFiles) > 0)
         {
-            metadata <- newDicomMetadataFromFile(files[matchingFiles[1]], stopTag=descriptionTag)
+            metadata <- readDicomFile(files[matchingFiles[1]], stopTag=descriptionTag)
             description <- metadata$getTagValue(descriptionTag[1], descriptionTag[2])
             
             if (currentSort == "series")
@@ -94,6 +129,39 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     }
 }
 
+#' Read a directory of DICOM files
+#' 
+#' This function scans a directory for files in DICOM format, and converts them
+#' to a single Analyze/NIfTI-format image of the appropriate dimensionality.
+#' 
+#' @param dicomDir Character vector of length one giving the name of a
+#'   directory containing DICOM files.
+#' @param readDiffusionParams Logical value: should diffusion MRI parameters
+#'   (b-values and gradient directions) be retrieved from the files if
+#'   possible?
+#' @param untileMosaics Logical value: should Siemens mosaic images be
+#'   converted into 3D volumes? This may occasionally be performed in error,
+#'   which can be prevented by setting this value to \code{FALSE}.
+#' @return A list containing elements
+#'   \describe{
+#'     \item{image}{An \code{\linkS4class{MriImage}} object.}
+#'     \item{bValues}{Diffusion b-values, if requested. Will be \code{NA} if
+#'       the information could not be found in files.}
+#'     \item{bVectors}{Diffusion gradient vectors, if requested. Will be
+#'       \code{NA} if the information could not be found in the files.}
+#'   }
+#' 
+#' @author Jon Clayden
+#' @seealso \code{\linkS4class{DicomMetadata}}, \code{\linkS4class{MriImage}},
+#' \code{\link{sortDicomDirectory}}.
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
 readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
 {
     if (!file.exists(dicomDir) || !file.info(dicomDir)$isdir)
@@ -104,9 +172,6 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     files <- files[!file.info(files)$isdir]
     nFiles <- length(files)
     
-    dictionary <- NULL
-    data("dictionary", package="tractor.base", envir=environment(NULL))
-
     report(OL$Info, "Reading image information from ", nFiles, " files")
     info <- data.frame(seriesNumber=numeric(nFiles), seriesDescription=character(nFiles), acquisitionNumber=numeric(nFiles), imageNumber=numeric(nFiles), sliceLocation=numeric(nFiles), stringsAsFactors=FALSE)
     images <- vector("list", nFiles)
@@ -123,7 +188,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     count <- 0
     for (i in seq_along(files))
     {
-        metadata <- newDicomMetadataFromFile(files[i], dictionary=dictionary)
+        metadata <- readDicomFile(files[i])
         if (is.null(metadata))
         {
             # Not a DICOM file - skip it
@@ -332,25 +397,22 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     # Invert position for Y direction due to switch to LAS convention
     imagePosition[2] <- -imagePosition[2]
     
-    # Origin is 0 for temporal dimensions
-    # For other dimensions, use the image position (which is the centre of the first voxel stored)
-    origin <- rep(0, length(dimsToKeep))
-    origin[1:3] <- 1 - ordering[1:3] * (imagePosition / voxelDims[1:3])
-    origin[1:3] <- ifelse(ordering[1:3] == c(1,1,1), origin[1:3], imageDims[1:3]-origin[1:3]+1)
+    # For origin, use the image position (which is the centre of the first voxel stored)
+    origin <- 1 - ordering[1:3] * (imagePosition / voxelDims[1:3])
+    origin <- ifelse(ordering[1:3] == c(1,1,1), origin, imageDims[1:3]-origin+1)
     
     # Create the final image
-    image <- newMriImageWithData(data, imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), origin=origin, tags=list())
+    image <- asMriImage(data, imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), origin=origin, tags=list())
     
     returnValue <- list(image=image, seriesDescriptions=unique(info$seriesDescription))
     if (readDiffusionParams)
+    {
+        # Invert Y direction again
+        volumeBVectors[2,] <- -volumeBVectors[2,]
         returnValue <- c(returnValue, list(bValues=volumeBValues, bVectors=volumeBVectors))
+    }
     
     invisible (returnValue)
-}
-
-newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
-{
-    readDicomDirectory(dicomDir, readDiffusionParams, untileMosaics)
 }
 
 readImageParametersFromMetadata <- function (metadata, untileMosaics = TRUE, metadataOnly = FALSE)
