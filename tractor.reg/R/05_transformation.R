@@ -122,10 +122,7 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
 {
     reorderPoints <- function (points, image)
     {
-        xform <- image$getStoredXformMatrix()
-        if (!is.matrix(xform) || !equivalent(dim(xform),c(4,4)))
-            return (points)
-        
+        xform <- image$getXform()
         orientation <- tractor.base:::xformToOrientation(xform, string=FALSE)
         dimPermutation <- match(1:3, abs(orientation))
         points <- points[,dimPermutation,drop=FALSE]

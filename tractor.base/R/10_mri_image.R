@@ -92,6 +92,9 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         else
             object <- initFields(imageDims=as.integer(imageDims), voxelDims=as.numeric(voxelDims), voxelDimUnits=voxelDimUnits, source=source, origin=origin, storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
         
+        if (length(object$imageDims) != length(object$voxelDims))
+            report(OL$Error, "Image and voxel dimensions should have the same length")
+        
         names(object$voxelDimUnits)[object$voxelDimUnits %~% "m$"] <- "spatial"
         names(object$voxelDimUnits)[object$voxelDimUnits %~% "s$"] <- "temporal"
         
@@ -233,8 +236,6 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             return (sum(data==0 | is.na(data)) / prod(.self$getDimensions()))
     },
     
-    getStoredXformMatrix = function () { return (storedXform) },
-    
     getTags = function (keys = NULL)
     {
         "Retrieve some or all of the tags stored with the image"
@@ -249,6 +250,32 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     getVoxelDimensions = function () { return (voxelDims) },
     
     getVoxelUnits = function () { return (voxelDimUnits) },
+    
+    getXform = function (implicit = TRUE)
+    {
+        "Retrieve the stored or implicit xform matrix"
+        if (!.self$isReordered() && equivalent(dim(storedXform),c(4,4)))
+            return (storedXform)
+        else if (implicit)
+        {
+            xform <- diag(4)
+            zeroBasedOrigin <- pmax(origin-1, c(0,0,0))
+            if (.self$getDimensionality() == 2)
+            {
+                xform[c(1,6)] <- c(-1,1) * abs(voxelDims)
+                zeroBasedOrigin[1:2] <- zeroBasedOrigin[1:2] * abs(voxelDims)
+            }
+            else
+            {
+                xform[c(1,6,11)] <- c(-1,1,1) * abs(voxelDims[1:3])
+                zeroBasedOrigin <- zeroBasedOrigin * abs(voxelDims[1:3])
+            }
+            xform[1:3,4] <- c(1,-1,-1) * zeroBasedOrigin
+            return (xform)
+        }
+        else
+            return (emptyMatrix())
+    },
     
     isEmpty = function () { return (is.null(data)) },
     
@@ -397,29 +424,10 @@ setAs("MriImage", "nifti", function (from) {
     fullDims <- c(nDims, abs(from$getDimensions()), rep(1,7-nDims))
     fullVoxelDims <- c(-1, abs(from$getVoxelDimensions()), rep(0,7-nDims))
     
-    if (from$isReordered())
-    {
-        origin <- (from$getOrigin() - 1) * abs(from$getVoxelDimensions())
-        if (length(origin) > 3)
-            origin <- origin[1:3]
-        else if (length(origin) < 3)
-            origin <- c(origin, rep(0,3-length(origin)))
-        origin <- ifelse(origin < 0, rep(0,3), origin)
-        origin[2:3] <- -origin[2:3]
-        sformRows <- c(-fullVoxelDims[2], 0, 0, origin[1],
-                        0, fullVoxelDims[3], 0, origin[2],
-                        0, 0, fullVoxelDims[4], origin[3])
-        
-        quaternion <- list(q=c(0,0,1,0), offset=origin, handedness=-1)
-    }
-    else
-    {
-        xform <- from$getStoredXformMatrix()
-        sformRows <- c(xform[1,], xform[2,], xform[3,])
-        quaternion <- xformToQuaternion(xform)
-        fullVoxelDims[1] <- quaternion$handedness
-    }
-    
+    xform <- from$getXform()
+    sformRows <- c(xform[1,], xform[2,], xform[3,])
+    quaternion <- xformToQuaternion(xform)
+    fullVoxelDims[1] <- quaternion$handedness
     xformCode <- ifelse(from$getDimensionality() == 2, 0, 2)
     
     return (new(structure("nifti",package="oro.nifti"), .Data=data, dim_=fullDims, datatype=datatype$code, bitpix=8*datatype$size, pixdim=fullVoxelDims, xyzt_units=unitCode, qform_code=xformCode, sform_code=xformCode, quatern_b=quaternion$q[2], quatern_c=quaternion$q[3], quatern_d=quaternion$q[4], qoffset_x=quaternion$offset[1], qoffset_y=quaternion$offset[2], qoffset_z=quaternion$offset[3], srow_x=sformRows[1:4], srow_y=sformRows[5:8], srow_z=sformRows[9:12], cal_min=min(data), cal_max=max(data)))
@@ -461,7 +469,7 @@ setAs("nifti", "MriImage", function (from) {
 .warnIfIndexingUnreorderedImage <- function (image)
 {
     # The argument is an unreordered image and contains a non-LAS xform
-    if (is(image,"MriImage") && !image$isReordered() && equivalent(dim(image$getStoredXformMatrix()),c(4,4)) && xformToOrientation(image$getStoredXformMatrix()) != "LAS")
+    if (is(image,"MriImage") && !image$isReordered() && xformToOrientation(image$getXform()) != "LAS")
         flag(OL$Warning, "Indexing into an image which is not reordered has no consistent meaning")
 }
 
@@ -724,7 +732,7 @@ extractMriImage <- function (image, dim, loc)
     newData <- image$getSlice(dim, loc)
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
     
-    image <- MriImage$new(imageDims=image$getDimensions()[dimsToKeep], voxelDims=image$getVoxelDimensions()[dimsToKeep], voxelDimUnits=image$getVoxelUnits(), origin=image$getOrigin(), storedXform=image$getStoredXformMatrix(), reordered=image$isReordered(), tags=image$getTags(), data=newData)
+    image <- MriImage$new(imageDims=image$getDimensions()[dimsToKeep], voxelDims=image$getVoxelDimensions()[dimsToKeep], voxelDimUnits=image$getVoxelUnits(), origin=image$getOrigin(), storedXform=image$getXform(implicit=FALSE), reordered=image$isReordered(), tags=image$getTags(), data=newData)
     return (image)
 }
 
@@ -768,7 +776,7 @@ reorderMriImage <- function (image)
     if (image$isReordered())
         return (image)
     
-    xformMatrix <- image$getStoredXformMatrix()
+    xformMatrix <- image$getXform(implicit=FALSE)
     
     # There is no xform matrix stored with the image - we can't do anything
     if (!equivalent(dim(xformMatrix), c(4,4)))

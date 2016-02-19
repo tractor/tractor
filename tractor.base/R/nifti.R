@@ -132,7 +132,7 @@ writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL)
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
     
-    description <- "TractoR NIfTI writer v2.4.0"
+    description <- "TractoR NIfTI writer v3.0.0"
     fileFun <- (if (gzipped) gzfile else file)
     
     datatype <- chooseDataTypeForImage(image, "Nifti")
@@ -149,24 +149,10 @@ writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL)
     else
         unitCode <- sum(unitCode)
     
-    if (image$isReordered())
-    {
-        origin <- (image$getOrigin() - 1) * abs(image$getVoxelDimensions())
-        origin <- ifelse(origin < 0, rep(0,3), origin)
-        origin[2:3] <- -origin[2:3]
-        sformRows <- c(-fullVoxelDims[2], 0, 0, origin[1],
-                        0, fullVoxelDims[3], 0, origin[2],
-                        0, 0, fullVoxelDims[4], origin[3])
-        
-        quaternion <- list(q=c(0,0,1,0), offset=origin, handedness=-1)
-    }
-    else
-    {
-        xform <- image$getStoredXformMatrix()
-        sformRows <- c(xform[1,], xform[2,], xform[3,])
-        quaternion <- xformToQuaternion(xform)
-        fullVoxelDims[1] <- quaternion$handedness
-    }
+    xform <- image$getXform()
+    sformRows <- c(xform[1,], xform[2,], xform[3,])
+    quaternion <- xformToQuaternion(xform)
+    fullVoxelDims[1] <- quaternion$handedness
     
     connection <- fileFun(fileNames$headerFile, "w+b")
     

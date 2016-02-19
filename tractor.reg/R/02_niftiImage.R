@@ -14,19 +14,7 @@ setAs("MriImage", "niftiImage", function(from) {
     else
         image <- data
     
-    if (from$isReordered())
-    {
-        voxDims <- replace(c(1,1,1), 1:min(3,from$getDimensionality()), abs(from$getVoxelDimensions()[1:min(3,from$getDimensionality())]))
-        origin <- (from$getOrigin() - 1) * voxDims
-        xform <- diag(4)
-        if (from$getDimensionality() == 2)
-            xform[c(1,6)] <- c(-1,1) * abs(from$getVoxelDimensions())
-        else
-            xform[c(1,6,11)] <- c(-1,1,1) * abs(from$getVoxelDimensions()[1:3])
-        xform[1:3,4] <- c(1,-1,-1) * origin
-    }
-    else
-        xform <- from$getStoredXformMatrix()
+    xform <- from$getXform()
     
     sform(image) <- qform(image) <- structure(xform, code=2L)
     class(image) <- "niftiImage"
