@@ -11,9 +11,24 @@
 #' @field explicitTypes Logical value indicating whether explicit types are
 #'   used in the file
 #' @field endian String naming the endianness of the file
+#' @field asciiHeader String containing the contents of the ASCII header, if
+#'   requested and present in the file.
 #' 
 #' @export
-DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(source="character",tags="data.frame",tagOffset="integer",dataOffset="integer",dataLength="integer",explicitTypes="logical",endian="character"), methods=list(
+DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(source="character",tags="data.frame",tagOffset="integer",dataOffset="integer",dataLength="integer",explicitTypes="logical",endian="character",asciiHeader="character"), methods=list(
+    getAsciiHeader = function () { return (asciiHeader) },
+    
+    getAsciiFieldValues = function (regex)
+    {
+        regex <- ore(regex, "\\s*=\\s*(.+)")
+        groups <- groups(ore.search(regex, asciiHeader, all=TRUE))
+        values <- groups[,ncol(groups)]
+        if (all(values %~% ore(number)))
+            return (as.numeric(values))
+        else
+            return (values)
+    },
+    
     getDataLength = function () { return (dataLength) },
     
     getDataOffset = function () { return (dataOffset) },
@@ -112,6 +127,8 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired)
 #'   the file will be ignored, and the code will try to deduce the transfer
 #'   syntax using heuristics. This may occasionally be necessary for awkward
 #'   DICOM files, but is not generally recommended.
+#' @param ascii If \code{TRUE}, the function will attempt to read an embedded
+#'   Siemens ASCII header, if one exists.
 #' @return \code{readDicomFile} returns a \code{\linkS4class{DicomMetadata}}
 #'   object, or \code{NULL} on failure.
 #' 
@@ -128,7 +145,7 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreTransferSyntax = FALSE)
+readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreTransferSyntax = FALSE, ascii = TRUE)
 {
     fileName <- expandFileName(fileName)
     
@@ -142,6 +159,7 @@ readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreT
     deferredTransferSyntax <- NULL
     tagOffset <- 0
     dataOffset <- dataLength <- NA
+    asciiHeader <- NULL
     
     connection <- file(fileName, "rb")
     on.exit(close(connection))
@@ -322,8 +340,11 @@ readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreT
         if (duplicateTags)
             flag(OL$Warning, "Duplicated DICOM tags detected - only the first value will be kept")
         
+        if (ascii)
+            asciiHeader <- ore.search(ore("### ASCCONV BEGIN[^#]+###(.+)### ASCCONV END ###",options="m"), ore.file(fileName,binary=TRUE))[,1]
+        
         tags <- data.frame(groups=groups, elements=elements, types=types, values=values, stringsAsFactors=FALSE)
-        invisible (DicomMetadata$new(source=fileName, tags=tags, tagOffset=as.integer(tagOffset), dataOffset=as.integer(dataOffset), dataLength=as.integer(dataLength), explicitTypes=explicitTypes, endian=endian))
+        invisible (DicomMetadata$new(source=fileName, tags=tags, tagOffset=as.integer(tagOffset), dataOffset=as.integer(dataOffset), dataLength=as.integer(dataLength), explicitTypes=explicitTypes, endian=endian, asciiHeader=as.character(asciiHeader)))
     }
     else
         invisible (NULL)
