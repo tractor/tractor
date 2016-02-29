@@ -11,19 +11,23 @@
 #' @field explicitTypes Logical value indicating whether explicit types are
 #'   used in the file
 #' @field endian String naming the endianness of the file
-#' @field asciiHeader String containing the contents of the ASCII header, if
-#'   requested and present in the file.
+#' @field asciiFields Character vector containing the contents of the ASCII
+#'   header, if requested and present in the file.
 #' 
 #' @export
-DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(source="character",tags="data.frame",tagOffset="integer",dataOffset="integer",dataLength="integer",explicitTypes="logical",endian="character",asciiHeader="character"), methods=list(
-    getAsciiHeader = function () { return (asciiHeader) },
-    
-    getAsciiField = function (regex)
+DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(source="character",tags="data.frame",tagOffset="integer",dataOffset="integer",dataLength="integer",explicitTypes="logical",endian="character",asciiFields="character"), methods=list(
+    getAsciiFields = function (regex = NULL)
     {
-        regex <- ore(regex, "\\s*=\\s*(.+)\\s*")
-        groups <- groups(ore.search(regex, asciiHeader, all=TRUE))
-        values <- groups[,ncol(groups)]
+        "Retrieve the value of one or more fields in the ASCII header. Returns NA if no fields match"
+        if (is.null(regex))
+            return (asciiFields)
         
+        regex <- ore(regex, ".+\\s*=\\s*(.+)\\s*$")
+        groups <- groups(ore.search(regex, asciiFields))
+        if (identical(groups, NA_character_) || is.null(dim(groups)))
+            return (NA)
+        
+        values <- groups[,ncol(groups)]
         if (all(values %~% ore(number)))
             return (as.numeric(values))
         else
@@ -160,7 +164,7 @@ readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreT
     deferredTransferSyntax <- NULL
     tagOffset <- 0
     dataOffset <- dataLength <- NA
-    asciiHeader <- NULL
+    asciiFields <- NULL
     
     connection <- file(fileName, "rb")
     on.exit(close(connection))
@@ -342,10 +346,13 @@ readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreT
             flag(OL$Warning, "Duplicated DICOM tags detected - only the first value will be kept")
         
         if (ascii)
+        {
             asciiHeader <- ore.search(ore("### ASCCONV BEGIN[^#]+###(.+)### ASCCONV END ###",options="m"), ore.file(fileName,binary=TRUE))[,1]
+            asciiFields <- ore.split(ore("\n",syntax="fixed"), asciiHeader)
+        }
         
         tags <- data.frame(groups=groups, elements=elements, types=types, values=values, stringsAsFactors=FALSE)
-        invisible (DicomMetadata$new(source=fileName, tags=tags, tagOffset=as.integer(tagOffset), dataOffset=as.integer(dataOffset), dataLength=as.integer(dataLength), explicitTypes=explicitTypes, endian=endian, asciiHeader=as.character(asciiHeader)))
+        invisible (DicomMetadata$new(source=fileName, tags=tags, tagOffset=as.integer(tagOffset), dataOffset=as.integer(dataOffset), dataLength=as.integer(dataLength), explicitTypes=explicitTypes, endian=endian, asciiFields=as.character(asciiFields)))
     }
     else
         invisible (NULL)

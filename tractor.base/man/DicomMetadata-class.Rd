@@ -27,12 +27,14 @@ used in the file}
 
 \item{\code{endian}}{String naming the endianness of the file}
 
-\item{\code{asciiHeader}}{String containing the contents of the ASCII header, if
-requested and present in the file.}
+\item{\code{asciiFields}}{Character vector containing the contents of the ASCII
+header, if requested and present in the file.}
 }}
 \section{Methods}{
 
 \describe{
+\item{\code{getAsciiFields(regex = NULL)}}{Retrieve the value of one or more fields in the ASCII header. Returns NA if no fields match}
+
 \item{\code{getTagValue(group, element)}}{Retrieve the value of a given tag, using an appropriate R type. Returns NA if the tag is missing}
 }}
 
