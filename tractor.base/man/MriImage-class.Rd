@@ -59,6 +59,8 @@ reordered. See \code{\link{reorderMriImage}}}
 
 \item{\code{getTags(keys = NULL)}}{Retrieve some or all of the tags stored with the image}
 
+\item{\code{getXform(implicit = TRUE)}}{Retrieve the stored or implicit xform matrix}
+
 \item{\code{map(fun, ..., sparse = NULL)}}{Replace the current data with the result of a function}
 
 \item{\code{mask(maskImage)}}{Mask the image, setting zero voxels in the mask to zero}

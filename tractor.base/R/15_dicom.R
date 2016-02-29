@@ -18,11 +18,12 @@
 DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(source="character",tags="data.frame",tagOffset="integer",dataOffset="integer",dataLength="integer",explicitTypes="logical",endian="character",asciiHeader="character"), methods=list(
     getAsciiHeader = function () { return (asciiHeader) },
     
-    getAsciiFieldValues = function (regex)
+    getAsciiField = function (regex)
     {
-        regex <- ore(regex, "\\s*=\\s*(.+)")
+        regex <- ore(regex, "\\s*=\\s*(.+)\\s*")
         groups <- groups(ore.search(regex, asciiHeader, all=TRUE))
         values <- groups[,ncol(groups)]
+        
         if (all(values %~% ore(number)))
             return (as.numeric(values))
         else

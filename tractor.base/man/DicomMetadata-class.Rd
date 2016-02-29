@@ -26,6 +26,9 @@ information about the scan parameters and subject.
 used in the file}
 
 \item{\code{endian}}{String naming the endianness of the file}
+
+\item{\code{asciiHeader}}{String containing the contents of the ASCII header, if
+requested and present in the file.}
 }}
 \section{Methods}{
 

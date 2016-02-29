@@ -5,7 +5,7 @@
 \title{Read a DICOM file into a DicomMetadata object}
 \usage{
 readDicomFile(fileName, checkFormat = TRUE, stopTag = NULL,
-  ignoreTransferSyntax = FALSE)
+  ignoreTransferSyntax = FALSE, ascii = TRUE)
 }
 \arguments{
 \item{fileName}{The name of a DICOM file.}
@@ -24,6 +24,9 @@ required.}
 the file will be ignored, and the code will try to deduce the transfer
 syntax using heuristics. This may occasionally be necessary for awkward
 DICOM files, but is not generally recommended.}
+
+\item{ascii}{If \code{TRUE}, the function will attempt to read an embedded
+Siemens ASCII header, if one exists.}
 }
 \value{
 \code{readDicomFile} returns a \code{\linkS4class{DicomMetadata}}
