@@ -41,7 +41,6 @@ Streamline Tracker::run ()
     
     bool starting = true;
     bool rightwardsVectorValid = !Space<3>::zeroVector(rightwardsVector);
-    int timesLeftMask = 0;
     Space<3>::Point loc;
     std::vector<int> roundedLoc(3), loopcheckLoc(3);
     size_t vectorLoc;
@@ -80,19 +79,11 @@ Streamline Tracker::run ()
             previousStep = rightwardsVector * (dir==0 ? 1.0 : -1.0);
         
         int step;
-        bool leftMask = false;
         int previouslyInsideMask = -1;
-        bool terminateOnNextStep = false;
         
         // Run the tracking
         for (step=0; step<(maxSteps/2); step++)
         {
-            if (terminateOnNextStep)
-            {
-                logger.debug2.indent() << "Terminating: deferred termination" << endl;
-                break;
-            }
-            
             // Check that the current step location is in bounds
             bool inBounds = true;
             for (int i=0; i<3; i++)
@@ -113,22 +104,11 @@ Streamline Tracker::run ()
             // Index for current location
             visited->flattenIndex(roundedLoc, vectorLoc);
             
-            if (starting && (*maskData)[vectorLoc] == 0)
-                timesLeftMask++;
-            
             // Stop if we've stepped outside the mask, possibly deferring termination if required
             if ((*maskData)[vectorLoc] == 0 && previouslyInsideMask == 1)
             {
-                leftMask = true;
-                timesLeftMask++;
-                
-                if (flags["terminate-outside"])
-                    terminateOnNextStep = true;
-                else
-                {
-                    logger.debug2.indent() << "Terminating: stepped outside tracking mask" << endl;
-                    break;
-                }
+                logger.debug2.indent() << "Terminating: stepped outside tracking mask" << endl;
+                break;
             }
             previouslyInsideMask = ((*maskData)[vectorLoc] == 0 ? 0 : 1);
             
@@ -136,21 +116,24 @@ Streamline Tracker::run ()
             if (!(*visited)[vectorLoc])
                 (*visited)[vectorLoc] = true;
             
-            // Add label if we're in a target area
-            if (targetData != NULL && (*targetData)[vectorLoc] > 0)
-            {
-                labels.insert((*targetData)[vectorLoc]);
-                
-                if ((*targetData)[vectorLoc] != startTarget)
-                    terminateOnNextStep = true;
-            }
-            
             // Store current (unrounded) location if required
             // NB: This part of the code must always be reached at the seed point
             if (dir == 0)
                 rightPoints.push_back(loc);
             else
                 leftPoints.push_back(loc);
+            
+            // Add label if we're in a target area; terminate if required and we've left the starting region
+            if (targetData != NULL && (*targetData)[vectorLoc] > 0)
+            {
+                labels.insert((*targetData)[vectorLoc]);
+                
+                if (flags["terminate-targets"] && (*targetData)[vectorLoc] != startTarget)
+                {
+                    logger.debug2.indent() << "Terminating: target hit" << endl;
+                    break;
+                }
+            }
             
             // Sample a direction for the current step
             Space<3>::Vector currentStep = dataSource->sampleDirection(loc, previousStep);
@@ -206,17 +189,7 @@ Streamline Tracker::run ()
             }
         }
         
-        // Store the number of steps taken in each direction, if required
-        if (flags["must-leave"] && !leftMask)
-        {
-            logger.debug2.indent() << "Streamline piece did not leave mask; discarding it" << endl;
-            if (dir == 0)
-                rightPoints.clear();
-            else
-                leftPoints.clear();
-        }
-        else
-            logger.debug2.indent() << "Completed " << step << " steps" << endl;
+        logger.debug2.indent() << "Completed " << step << " steps" << endl;
     }
     
     logger.debug1.indent() << "Tracking finished" << endl;
