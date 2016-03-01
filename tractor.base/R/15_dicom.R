@@ -24,9 +24,10 @@ DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fie
         
         regex <- ore(regex, ".+\\s*=\\s*(.+)\\s*$")
         groups <- groups(ore.search(regex, asciiFields))
-        if (identical(groups, NA_character_) || is.null(dim(groups)))
+        if (all(is.na(groups)))
             return (NA)
         
+        groups <- promote(groups)
         values <- groups[,ncol(groups)]
         if (all(values %~% ore(number)))
             return (as.numeric(values))
