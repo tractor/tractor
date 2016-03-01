@@ -22,17 +22,16 @@ DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fie
         if (is.null(regex))
             return (asciiFields)
         
-        regex <- ore(regex, ".+\\s*=\\s*(.+)\\s*$")
-        groups <- groups(ore.search(regex, asciiFields))
+        regex <- ore("^\\s*(\\S*", regex, "\\S*)\\s*=\\s*(.+)\\s*$")
+        groups <- groups(ore.search(regex, asciiFields, simplify=FALSE), simplify=TRUE)
         if (all(is.na(groups)))
             return (NA)
         
-        groups <- promote(groups)
-        values <- groups[,ncol(groups)]
+        values <- groups[,ncol(groups),]
         if (all(values %~% ore(number)))
-            return (as.numeric(values))
-        else
-            return (values)
+            values <- as.numeric(values)
+        names(values) <- groups[,ncol(groups)-1,]
+        return (values)
     },
     
     getDataLength = function () { return (dataLength) },
