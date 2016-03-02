@@ -4,7 +4,7 @@ Date: 2016-01-12
 Title: Read, Manipulate and Visualise Magnetic Resonance Images
 Author: Jon Clayden
 Maintainer: Jon Clayden <code@clayden.org>
-Imports: methods, ore, reportr
+Imports: methods, ore (>= 1.3.0), reportr
 Suggests: mmand, png
 Enhances: oro.nifti
 Description: Functions for working with magnetic resonance images. Analyze,
