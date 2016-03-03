@@ -314,8 +314,10 @@ promote <- function (x, byrow = FALSE)
 {
     if (is.matrix(x))
         return (x)
+    else if (byrow)
+        return (matrix(x, nrow=1))
     else
-        return (matrix(x, byrow=byrow))
+        return (matrix(x, ncol=1))
 }
 
 #' Test two numeric vectors for equivalence
