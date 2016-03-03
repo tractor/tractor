@@ -1,7 +1,7 @@
-         Number of vertices : 68 (67 connected)
-            Number of edges : 203
-               Edge density : 6.15%
-         Mean shortest path : 3.2 steps
-          Global efficiency : 0.324
-      Mean local efficiency : 0.313
-Mean clustering coefficient : 0.257
+         Number of vertices : 68 (68 connected)
+            Number of edges : 300
+               Edge density : 10.18%
+         Mean shortest path : 2.87 steps
+          Global efficiency : 0.422
+      Mean local efficiency : 0.653
+Mean clustering coefficient : 0.468
