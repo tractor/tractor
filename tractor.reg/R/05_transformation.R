@@ -267,7 +267,7 @@ resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, interpolat
 
 identityTransformation <- function (sourceImage, targetImage)
 {
-    xfm <- buildAffine(source=sourceImage, target=targetImage)
+    xfm <- buildAffine(source=as(sourceImage,"niftiImage"), target=as(targetImage,"niftiImage"))
     transform <- Transformation$new(sourceImage, targetImage, affineMatrices=list(xfm), method="niftyreg")
     return (transform)
 }
