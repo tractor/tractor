@@ -155,8 +155,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
             else
                 return (x)
         })
-        newAttributes <- c(newAttributes, .self$edgeAttributes)
-        .self$edgeAttributes <- newAttributes[!duplicated(names(newAttributes))]
+        newAttributes <- deduplicate(newAttributes, .self$edgeAttributes)
         .self$edgeAttributes <- .self$edgeAttributes[!sapply(.self$edgeAttributes,is.null)]
     },
     
@@ -185,8 +184,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
             else
                 return (x)
         })
-        newAttributes <- c(newAttributes, .self$vertexAttributes)
-        .self$vertexAttributes <- newAttributes[!duplicated(names(newAttributes))]
+        newAttributes <- deduplicate(newAttributes, .self$vertexAttributes)
         .self$vertexAttributes <- .self$vertexAttributes[!sapply(.self$vertexAttributes,is.null)]
     },
     

@@ -127,6 +127,31 @@ printLabelledValues <- function (labels, values, outputLevel = OL$Info, leftJust
     invisible(NULL)
 }
 
+#' Concatenate and deduplicate vectors
+#' 
+#' This function returns its arguments, after concatenating them using \code{c}
+#' and then removing elements with duplicate names. The first element with each
+#' name will remain. Unnamed elements are retained.
+#' 
+#' @param ... One or more vectors of any mode, usually named.
+#' @return The concatenated and deduplicated vector.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
+deduplicate <- function (...)
+{
+    x <- c(...)
+    if (!is.null(names(x)))
+        x <- x[names(x) == "" | !duplicated(names(x))]
+    return (x)
+}
+
 #' Functions for file name and path manipulation
 #' 
 #' Functions for expanding file paths, finding relative paths and ensuring that

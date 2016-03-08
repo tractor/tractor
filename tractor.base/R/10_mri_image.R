@@ -715,8 +715,7 @@ asMriImage <- function (data, templateImage = nilObject(), imageDims = NA, voxel
     params <- list(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, origin=origin, tags=tags, reordered=reordered)
     params <- params[!is.na(params)]
     
-    composite <- c(params, template, defaults)
-    composite <- composite[!duplicated(names(composite))]
+    composite <- deduplicate(params, template, defaults)
     
     image <- MriImage$new(imageDims=composite$imageDims[1:nDims], voxelDims=composite$voxelDims[1:nDims], voxelDimUnits=composite$voxelDimUnits, origin=composite$origin, storedXform=composite$storedXform, reordered=composite$reordered, tags=composite$tags, data=data)
     invisible (image)

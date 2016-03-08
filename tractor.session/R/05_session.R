@@ -196,10 +196,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         subdirectories <- readYaml(file.path(defaultsPath, "map.yaml"))
         mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")
         if (file.exists(mapFileName))
-        {
-            subdirectories <- c(readYaml(mapFileName), subdirectories)
-            subdirectories <- subdirectories[!duplicated(names(subdirectories))]
-        }
+            subdirectories <- deduplicate(readYaml(mapFileName), subdirectories)
         .self$caches.$subdirectories <- subdirectories
         
         maps <- list()
@@ -211,20 +208,14 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             maps[[place]] <- readYaml(defaultFileName)
             mapFileName <- file.path(.self$getDirectory(place), "map.yaml")
             if (file.exists(mapFileName))
-            {
-                maps[[place]] <- c(readYaml(mapFileName), maps[[place]])
-                maps[[place]] <- maps[[place]][!duplicated(names(maps[[place]]))]
-            }
+                maps[[place]] <- deduplicate(readYaml(mapFileName), maps[[place]])
         }
         .self$caches.$maps <- maps
         
         transformStrategies <- readYaml(file.path(defaultsPath, "transforms", "strategy.yaml"))
         strategyFileName <- file.path(.self$getDirectory("transforms"), "strategy.yaml")
         if (file.exists(strategyFileName))
-        {
-            transformStrategies <- c(readYaml(strategyFileName), transformStrategies)
-            transformStrategies <- transformStrategies[!duplicated(names(transformStrategies))]
-        }
+            transformStrategies <- deduplicate(readYaml(strategyFileName), transformStrategies)
         .self$caches.$transformStrategies <- transformStrategies
     }
 ))
