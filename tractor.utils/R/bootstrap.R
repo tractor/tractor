@@ -104,33 +104,19 @@ describeExperiment <- function (scriptFile, fill = FALSE)
         }
     }
     
-    relevantInputLines <- grep("getConfigVariable", inputLines, value=TRUE, fixed=TRUE)
+    relevantInputLines <- inputLines %~|% ore("getConfigVariable",syntax="fixed")
     for (currentLine in relevantInputLines)
         eval(parse(text=currentLine))
     
     if (length(outputLines) == 1)
         outputLines <- c(outputLines, "   None")
     
-    relevantInputLines <- grep("#@args", inputLines, value=TRUE, fixed=TRUE)
-    if (length(relevantInputLines) != 0)
-    {
-        argsString <- implode(sub("^\\s*\\#\\@args\\s*", "", relevantInputLines, perl=TRUE), sep=", ")
-        outputLines <- c(outputLines, paste("ARGUMENTS:", argsString, sep=" "))
-    }
-    
-    relevantInputLines <- grep("#@example", inputLines, value=TRUE, fixed=TRUE)
-    if (length(relevantInputLines) != 0)
-    {
-        exampleStrings <- sub("^\\s*\\#\\@example\\s*", "", relevantInputLines, perl=TRUE)
-        outputLines <- c(outputLines, "\nEXAMPLES:", exampleStrings)
-    }
-    
-    relevantInputLines <- grep("#@desc", inputLines, value=TRUE, fixed=TRUE)
-    if (length(relevantInputLines) != 0)
-    {
-        descriptionString <- implode(sub("^\\s*\\#\\@desc\\s*", "", relevantInputLines, perl=TRUE), sep=" ")
-        outputLines <- c(outputLines, "\nDESCRIPTION:", descriptionString)
-    }
+    if (any(inputLines %~% "^\\s*\\#\\@args\\s+(.+)$"))
+        outputLines <- c(outputLines, es("ARGUMENTS: #{implode(groups(ore.lastmatch()),sep=', ')}"))
+    if (any(inputLines %~% "^\\s*\\#\\@example\\s+(.+)$"))
+        outputLines <- c(outputLines, "\nEXAMPLES:", groups(ore.lastmatch()))
+    if (any(inputLines %~% "^\\s*\\#\\@desc\\s+(.+)$"))
+        outputLines <- c(outputLines, "\nDESCRIPTION:", implode(groups(ore.lastmatch()),sep=" "))
     
     if (fill == FALSE)
         cat(outputLines, sep="\n")
