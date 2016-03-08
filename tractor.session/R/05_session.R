@@ -116,7 +116,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         if (!("diffusionModel" %in% names(caches.$objects)))
         {
             if (.self$imageExists("avf", "bedpost"))
-                caches.$objects$diffusionModel <- tractor.track::bedpostDiffusionModel(.self$getDirectory("bedpost"))
+                .self$caches.$objects$diffusionModel <- tractor.track::bedpostDiffusionModel(.self$getDirectory("bedpost"))
             else
                 report(OL$Error, "No diffusion model is available for the session with root directory #{.self$getDirectory()}")
         }
