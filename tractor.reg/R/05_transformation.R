@@ -4,8 +4,8 @@ MriImage <- getRefClass("MriImage")
 .listApply <- function (list, f, ...) { lapply(list, function(x) { if (is.null(x)) NULL else f(x,...) }) }
 .listPad <- function (list, len) { if (length(list) == len) list else c(list, rep(list(NULL),len-length(list))) }
 
-Transformation <- setRefClass("Transformation", contains="SerialisableObject", fields=list(sourceImage="MriImage",targetImage="MriImage",affineMatrices="list",controlPointImages="list",reverseControlPointImages="list",method="character"), methods=list(
-    initialize = function (sourceImage = MriImage$new(), targetImage = MriImage$new(), affineMatrices = NULL, controlPointImages = NULL, reverseControlPointImages = NULL, method = c("niftyreg","fsl"), version = 2, ...)
+Transformation <- setRefClass("Transformation", contains="SerialisableObject", fields=list(sourceImage="MriImage",targetImage="MriImage",affineMatrices="list",controlPointImages="list",reverseControlPointImages="list",method="character",version="integer"), methods=list(
+    initialize = function (sourceImage = MriImage$new(), targetImage = MriImage$new(), affineMatrices = NULL, controlPointImages = NULL, reverseControlPointImages = NULL, method = c("niftyreg","fsl"), version = 2L, ...)
     {
         method <- match.arg(method)
         
@@ -26,7 +26,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
             reverseControlPointImages <- list(reverseControlPointImages)
         reverseControlPointImages <- .listApply(reverseControlPointImages, as, "MriImage")
         
-        initFields(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=method)
+        initFields(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=method, version=as.integer(version))
     },
     
     getInverse = function (i = 1, quiet = FALSE)
