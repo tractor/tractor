@@ -1,4 +1,5 @@
+import(ore)
 import(reportr)
-importFrom(tractor.base, promote, implode, ensureFileSuffix)
+importFrom(tractor.base, deduplicate, promote, implode, ensureFileSuffix)
 
 exportPattern("^[^\\.]")

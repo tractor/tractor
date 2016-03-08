@@ -53,19 +53,21 @@ getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMi
     if (is.null(mode) && !is.null(defaultValue))
         mode <- mode(defaultValue)
     
-    if (!exists("ConfigVariables") || !(name %in% names(ConfigVariables)))
+    if (!exists("ConfigVariables") || !any(tolower(name) == tolower(names(ConfigVariables))))
     {
         if (errorIfMissing)
-            report(OL$Error, "The configuration variable \"", name, "\" must be specified")
+            report(OL$Error, "The configuration variable \"#{name}\" must be specified")
         else
             return (defaultValue)
     }
     else
     {
         if (deprecated)
-            report(OL$Warning, "The configuration variable \"", name, "\" is deprecated")
+            report(OL$Warning, "The configuration variable \"#{name}\" is deprecated")
         
-        value <- ConfigVariables[[name]]
+        loc <- which(tolower(name) == tolower(names(ConfigVariables)))
+        value <- ConfigVariables[[loc]]
+        ConfigVariables[[loc]] <<- NULL
         if (is.null(mode) || mode == "NULL")
             return (matchAgainstValidValues(value))
         else if (!isValidAs(value, mode))

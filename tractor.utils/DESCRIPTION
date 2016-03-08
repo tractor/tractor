@@ -5,7 +5,7 @@ Title: Miscellaneous functions used by TractoR scripts and packages
 Author: Jon Clayden
 Maintainer: Jon Clayden <code@clayden.org>
 Depends: R (>= 2.12.1), utils
-Imports: reportr, tractor.base
+Imports: ore, reportr, tractor.base
 Suggests: parallel
 Description: The tractor.utils package primarily provides functions that facilitate the interaction between the TractoR shell script and R, but some other utility functions are also included.
 Encoding: UTF-8

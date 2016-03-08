@@ -31,14 +31,14 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputL
     results <- withReportrHandlers({
         source(scriptFile)
         
-        config <- readYaml(configFiles)
-        config <- readYaml(text=configText, init=config)
-        if (!is.null(config[[".unlabelled"]]))
+        fileConfig <- readYaml(configFiles)
+        textConfig <- readYaml(text=configText)
+        if (!is.null(textConfig[[".unlabelled"]]))
         {
-            assign("Arguments", config[[".unlabelled"]], envir=globalenv())
-            config[[".unlabelled"]] <- NULL
+            assign("Arguments", textConfig[[".unlabelled"]], envir=globalenv())
+            textConfig[[".unlabelled"]] <- NULL
         }
-        assign("ConfigVariables", config, envir=globalenv())
+        assign("ConfigVariables", deduplicate(textConfig,fileConfig), envir=globalenv())
         
         setwd(workingDirectory)
         
@@ -51,18 +51,27 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputL
         {
             if (debug)
                 debug(runExperiment)
-        
+            
             if (profile)
                 Rprof("tractor-Rprof.out")
-        
+            
             runExperiment()
-        
+            
             if (profile)
                 Rprof(NULL)
         }
     })
     
     reportFlags()
+    
+    if (any(names(ConfigVariables) %in% names(textConfig)))
+    {
+        unusedNames <- paste0("\"", names(ConfigVariables)[names(ConfigVariables) %in% names(textConfig)], "\"")
+        if (length(unusedNames) == 1)
+            report(OL$Warning, "Configuration variable #{unusedNames} was not used")
+        else
+            report(OL$Warning, "Configuration variables #{implode(unusedNames,sep=', ',finalSep=' and ')} were not used")
+    }
     
     if (!standalone)
         return (results)
