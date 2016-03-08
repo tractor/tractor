@@ -20,10 +20,10 @@ transformParcellation <- function (transform, parcellation, threshold = 0.5, ind
     
     targetSpace <- transform$getTargetImage(index, reverse)
     
-    # NB: "threshold - .Machine$double.eps" should always evaluate (just) strictly less than "threshold"
+    # NB: "threshold * (1-.Machine$double.neg.eps)" should always evaluate (just) strictly less than "threshold"
     # This allows values at threshold to be kept without adding an extra evaluation every time below
     finalParcellation <- array(0L, dim=targetSpace$getDimensions())
-    maxValues <- array(max(0, threshold - .Machine$double.eps), dim=targetSpace$getDimensions())
+    maxValues <- array(max(0, threshold * (1-.Machine$double.neg.eps)), dim=targetSpace$getDimensions())
     
     uniqueIndices <- setdiff(unique(as.vector(parcellation$image$getData())), 0L)
     for (i in uniqueIndices)
