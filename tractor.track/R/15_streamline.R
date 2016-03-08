@@ -90,7 +90,7 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
         if (start != 1 || end != nrow(line))
         {
             .self$line <- line[start:end,]
-            .self$seedIndex <- seedIndex - start + 1
+            .self$seedIndex <- as.integer(seedIndex - start + 1)
             .self$pointSpacings <- .self$pointSpacings[start:(end-1)]
         }
     },
