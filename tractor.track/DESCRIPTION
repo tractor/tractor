@@ -7,6 +7,7 @@ Maintainer: Jon Clayden <code@clayden.org>
 Depends: R (>= 2.12.1), methods
 Imports: reportr, tractor.base, Rcpp
 LinkingTo: Rcpp, RcppEigen
+Suggests: tractor.reg
 Description: The tractor.track package provides functions for performing tractography using diffusion MRI data
 Encoding: UTF-8
 LazyLoad: yes
