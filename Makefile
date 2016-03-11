@@ -7,8 +7,8 @@ ECHO=/bin/echo
 ECHO_N=/bin/echo -n
 GIT=git
 MD5=md5
-FETCH=bin/tractor_pkgget -m
-INSTALL=$(ENV) R=$(R) bin/tractor_Rinstall
+FETCH=bin/extra/tractor_pkgget -m
+INSTALL=$(ENV) R=$(R) bin/extra/tractor_Rinstall
 
 default: build post-build-info
 
