@@ -136,14 +136,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         {
             sourceImageFile <- .self$getRegistrationTargetFileName(sourceSpace)
             targetImageFile <- .self$getRegistrationTargetFileName(targetSpace)
-            transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"Rdata"))
             
-            # Injected option for backwards compatibility
-            targetMask <- NULL
-            if (sourceSpace == "diffusion" && targetSpace == "mni")
-                targetMask <- getStandardImage("white")$map(function(x) x/10 + 1)
-            
-            options <- list(sourceImageFile, targetImageFile, targetMask=targetMask, estimateOnly=TRUE, cache="ignore", file=transformFile)
+            options <- list(sourceImageFile, targetImageFile, targetMask=NULL, estimateOnly=TRUE, cache="ignore")
             options$types <- "affine"
             if ("fsl" %in% strategy)
                 options$method <- "fsl"
@@ -156,7 +150,28 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             }
             if (all(c("nonlinear","symmetric") %in% strategy))
                 options$types <- c(options$types, "reverse-nonlinear")
-            result <- do.call(tractor.reg::registerImages, options)
+            
+            fileHit <- FALSE
+            transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"Rdata"))
+            if (file.exists(transformFile))
+            {
+                transform <- deserialiseReferenceObject(transformFile)
+                if (all(options$types %in% transform$getTypes()))
+                {
+                    fileHit <- TRUE
+                    result <- list(transform=transform)
+                }
+            }
+            
+            if (!fileHit)
+            {
+                # Injected option for backwards compatibility
+                if (sourceSpace == "diffusion" && targetSpace == "mni")
+                    options$targetMask <- getStandardImage("white")$map(function(x) x/10 + 1)
+                
+                result <- do.call(tractor.reg::registerImages, options)
+                result$transform$serialise(transformFile)
+            }
             
             reverseTransformFile <- file.path(.self$getDirectory("transforms"), ensureFileSuffix(es("#{targetSpace}2#{sourceSpace}"),"Rdata"))
             if (!file.exists(reverseTransformFile))

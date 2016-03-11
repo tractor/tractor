@@ -192,7 +192,7 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
     points((fieldVoxels[,1]-1)/width[1], (fieldVoxels[,2]-1)/width[2], pch=3, col=colours[colourIndices])
 }
 
-registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, cache = c("auto","read","write","ignore"), file = NULL, ...)
+registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, cache = c("auto","read","write","ignore"), ...)
 {
     if (is.null(method))
         method <- "niftyreg"
@@ -202,17 +202,7 @@ registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetM
     cache <- match.arg(cache)
     
     transform <- NULL
-    fileHit <- FALSE
     cacheHit <- FALSE
-    
-    if (!is.null(file) && file.exists(file))
-    {
-        transform <- deserialiseReferenceObject(file)
-        if (all(types %in% transform$getTypes()))
-            fileHit <- TRUE
-        else
-            transform <- NULL
-    }
     
     if (cache %in% c("auto","read"))
     {
@@ -240,9 +230,6 @@ registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetM
     
     if (cache == "write" || (cache == "auto" && !cacheHit))
         updateTransformationCache(result$transform, force=TRUE)
-    
-    if (!is.null(file) && !fileHit)
-        result$transform$serialise(file)
     
     return (result)
 }
