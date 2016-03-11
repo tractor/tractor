@@ -31,6 +31,7 @@ private:
     float stepLength;
     int maxSteps;
     bool jitter;
+    bool autoResetRightwardsVector;
     
     Logger logger;
     
@@ -62,7 +63,8 @@ public:
     {
         // An existing rightwards vector needs to be discarded when a new seed is used
         this->seed = seed;
-        this->rightwardsVector = Space<3>::zeroVector();
+        if (autoResetRightwardsVector)
+            this->rightwardsVector = Space<3>::zeroVector();
         this->jitter = jitter;
     }
     
@@ -72,7 +74,13 @@ public:
         targetData = targets->getData<int>();
     }
     
-    void setRightwardsVector (const Space<3>::Vector &rightwardsVector) { this->rightwardsVector = rightwardsVector; }
+    void setRightwardsVector (const Space<3>::Vector &rightwardsVector)
+    {
+        // If the specified rightwards vector is nontrivial, don't clobber it when setting the seed
+        this->rightwardsVector = rightwardsVector;
+        this->autoResetRightwardsVector = Space<3>::zeroVector(rightwardsVector);
+    }
+    
     void setInnerProductThreshold (const float innerProductThreshold) { this->innerProductThreshold = innerProductThreshold; }
     void setStepLength (const float stepLength) { this->stepLength = stepLength; }
     void setMaxSteps (const int maxSteps) { this->maxSteps = maxSteps; }

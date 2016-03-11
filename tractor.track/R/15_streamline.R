@@ -36,9 +36,9 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     {
         newUnit <- match.arg(newUnit)
         if (newUnit == "vox" && .self$coordUnit == "mm")
-            .self$line <- t(apply(line-1, 1, "*", abs(voxelDims)))
-        else if (newUnit == "mm" && .self$coordUnit == "vox")
             .self$line <- t(apply(line, 1, "/", abs(voxelDims))) + 1
+        else if (newUnit == "mm" && .self$coordUnit == "vox")
+            .self$line <- t(apply(line-1, 1, "*", abs(voxelDims)))
         
         if (newUnit != .self$coordUnit)
         {
@@ -69,7 +69,7 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     
     transform = function (xfm, reverse = FALSE, ...)
     {
-        .self$line <- promote(transformPoints(xfm, .self$line, voxel=(.self$coordUnit=="vox"), reverse=reverse, ...), byrow=TRUE)
+        .self$line <- promote(tractor.reg::transformPoints(xfm, .self$line, voxel=(.self$coordUnit=="vox"), reverse=reverse, ...), byrow=TRUE)
         .self$updatePointSpacings()
         
         if (reverse)
