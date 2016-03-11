@@ -15,8 +15,6 @@
 
 registerImagesWithNiftyreg <- function (sourceImage, targetImage, sourceMask = NULL, targetMask = NULL, init = NULL, types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, interpolation = 1, linearOptions = list(), nonlinearOptions = list())
 {
-    .formatImage <- function(x) { if (is(x,"MriImage")) as(x,"niftiImage") else x }
-    
     types <- match.arg(types, several.ok=TRUE)
     interpolation <- .interpolationNameToCode(interpolation)
     
@@ -28,10 +26,10 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, sourceMask = N
         if (!any(affineDof == c(6,12)))
             report(OL$Error, "Only 6 and 12 degrees of freedom are supported by NiftyReg")
         
-        linearOptions$source <- .formatImage(sourceImage)
-        linearOptions$target <- .formatImage(targetImage)
-        linearOptions$sourceMask <- .formatImage(sourceMask)
-        linearOptions$targetMask <- .formatImage(targetMask)
+        linearOptions$source <- sourceImage
+        linearOptions$target <- targetImage
+        linearOptions$sourceMask <- sourceMask
+        linearOptions$targetMask <- targetMask
         linearOptions$init <- init
         linearOptions$scope <- ifelse(affineDof==6, "rigid", "affine")
         if (is.null(linearOptions$estimateOnly))
@@ -51,11 +49,11 @@ registerImagesWithNiftyreg <- function (sourceImage, targetImage, sourceMask = N
     # Run the nonlinear part of the registration, if required
     if ("nonlinear" %in% types)
     {
-        nonlinearOptions$source <- .formatImage(sourceImage)
-        nonlinearOptions$target <- .formatImage(targetImage)
-        nonlinearOptions$sourceMask <- .formatImage(sourceMask)
-        nonlinearOptions$targetMask <- .formatImage(targetMask)
-        nonlinearOptions$init <- .formatImage(init)
+        nonlinearOptions$source <- sourceImage
+        nonlinearOptions$target <- targetImage
+        nonlinearOptions$sourceMask <- sourceMask
+        nonlinearOptions$targetMask <- targetMask
+        nonlinearOptions$init <- init
         if (is.null(nonlinearOptions$estimateOnly))
             nonlinearOptions$estimateOnly <- estimateOnly
         if (is.null(nonlinearOptions$interpolation) && !is.null(interpolation))

@@ -1,27 +1,5 @@
 setOldClass(c("niftiImage", "internalImage"))
 
-setAs("MriImage", "niftiImage", function(from) {
-    if (from$isEmpty())
-        data <- array(0L, dim=from$getDimensions())
-    else
-        data <- as(from, "array")
-    
-    pixdim(data) <- abs(from$getVoxelDimensions())
-    pixunits(data) <- from$getVoxelUnits()
-    
-    if (from$nTags() > 0)
-        image <- updateNifti(data, from$getTags())
-    else
-        image <- data
-    
-    xform <- from$getXform()
-    
-    sform(image) <- qform(image) <- structure(xform, code=2L)
-    class(image) <- "niftiImage"
-    
-    return (image)
-})
-
 .convertNiftiImage <- function (from)
 {
     metadata <- dumpNifti(from)

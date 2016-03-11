@@ -7,7 +7,7 @@ transformImage <- function (transform, newImage = NULL, index = 1, preferAffine 
         newImage <- transform$getSourceImage(index, reverse)
     
     xfm <- transform$getTransformObjects(index, reverse, preferAffine)
-    result <- applyTransform(xfm, as(newImage,"niftiImage"), interpolation=.interpolationNameToCode(interpolation))
+    result <- applyTransform(xfm, newImage, interpolation=.interpolationNameToCode(interpolation))
     
     return (as(result, "MriImage"))
 }
@@ -50,13 +50,13 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
         report(OL$Error, "The specified transform is not a Transformation object")
     
     if (!voxel)
-        points <- worldToVoxel(points, as(transform$getSourceImage(index,reverse),"niftiImage"))
+        points <- worldToVoxel(points, transform$getSourceImage(index,reverse))
     
     xfm <- transform$getTransformObjects(index, reverse, preferAffine)
     newPoints <- applyTransform(xfm, points, nearest=nearest)
     
     if (!voxel)
-        newPoints <- voxelToWorld(newPoints, as(transform$getTargetImage(index,reverse),"niftiImage"))
+        newPoints <- voxelToWorld(newPoints, transform$getTargetImage(index,reverse))
     
     return (newPoints)
 }
@@ -73,10 +73,10 @@ translatePoints <- function (points, offset)
 
 transformVoxelToWorld <- function (points, image, simple = FALSE, ...)
 {
-    RNiftyReg::voxelToWorld(points, as(image,"niftiImage"), simple=simple, ...)
+    RNiftyReg::voxelToWorld(points, image, simple=simple, ...)
 }
 
 transformWorldToVoxel <- function (points, image, simple = FALSE, ...)
 {
-    RNiftyReg::worldToVoxel(points, as(image,"niftiImage"), simple=simple, ...)
+    RNiftyReg::worldToVoxel(points, image, simple=simple, ...)
 }

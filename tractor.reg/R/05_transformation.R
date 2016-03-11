@@ -14,7 +14,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         affineMatrices <- lapply(affineMatrices, function(x) {
             # For backwards compatibility, handle FSL-type affines
             if (method == "fsl" && version < 2)
-                x <- RNiftyReg:::convertAffine(x, as(sourceImage,"niftiImage"), as(targetImage,"niftiImage"), "niftyreg")
+                x <- RNiftyReg:::convertAffine(x, sourceImage, targetImage, "niftyreg")
             return (structure(asAffine(x), source=NULL, target=NULL))
         })
         
@@ -64,8 +64,8 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
             return (lapply(i, .self$getTransformObjects, reverse=reverse, preferAffine=preferAffine, errorIfMissing=errorIfMissing))
         
         object <- NULL
-        source <- as(.self$getSourceImage(i,reverse), "niftiImage")
-        target <- as(.self$getTargetImage(i,reverse), "niftiImage")
+        source <- .self$getSourceImage(i,reverse)
+        target <- .self$getTargetImage(i,reverse)
         
         if (reverse)
         {
@@ -73,7 +73,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
             if (!is.null(.listFind(affineMatrices,i)) && (is.null(.listFind(reverseControlPointImages,i)) || preferAffine))
                 object <- invertAffine(asAffine(.listFind(affineMatrices,i), target, source))
             else if (!is.null(.listFind(reverseControlPointImages, i)))
-                object <- structure(as(.listFind(reverseControlPointImages,i),"niftiImage"), source=source, target=target)
+                object <- structure(.listFind(reverseControlPointImages,i), source=source, target=target)
             else if (errorIfMissing)
                 report(OL$Error, "No suitable reverse transform is available for index #{i}")
         }
@@ -82,7 +82,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
             if (!is.null(.listFind(affineMatrices,i)) && (is.null(.listFind(controlPointImages,i)) || preferAffine))
                 object <- asAffine(.listFind(affineMatrices,i), source, target)
             else if (!is.null(.listFind(controlPointImages, i)))
-                object <- structure(as(.listFind(controlPointImages,i),"niftiImage"), source=source, target=target)
+                object <- structure(.listFind(controlPointImages,i), source=source, target=target)
             else if (errorIfMissing)
                 report(OL$Error, "No suitable forward transform is available for index #{i}")
         }
@@ -258,16 +258,15 @@ resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, interpolat
         voxelDims <- image$getFieldOfView() / imageDims
     scales <- abs(image$getVoxelDimensions() / voxelDims)
     
-    sourceNifti <- as(image, "niftiImage")
-    xfm <- buildAffine(scales=scales, source=sourceNifti)
-    result <- applyTransform(xfm, sourceNifti, interpolation=.interpolationNameToCode(interpolation))
+    xfm <- buildAffine(scales=scales, source=image)
+    result <- applyTransform(xfm, image, interpolation=.interpolationNameToCode(interpolation))
     
     return (as(result, "MriImage"))
 }
 
 identityTransformation <- function (sourceImage, targetImage)
 {
-    xfm <- buildAffine(source=as(sourceImage,"niftiImage"), target=as(targetImage,"niftiImage"))
+    xfm <- buildAffine(source=sourceImage, target=targetImage)
     transform <- Transformation$new(sourceImage, targetImage, affineMatrices=list(xfm), method="niftyreg")
     return (transform)
 }
