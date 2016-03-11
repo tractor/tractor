@@ -89,7 +89,7 @@ runExperiment <- function ()
         
         neighbourhood <- createNeighbourhoodInfo(searchWidth, centre=currentSeed)
         bestSeed <- neighbourhood$vectors[,bestSeedIndex]
-        report(OL$Info, "Seed point is (#{implode(bestSeed,",")})")
+        report(OL$Info, "Seed point is (#{implode(bestSeed,',')})")
         
         tracker <- currentSession$getTracker()
         tracker$setOptions(rightwardsVector=rightwardsVector)
