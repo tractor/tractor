@@ -14,6 +14,7 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
     
     data <- promote(data, byrow=TRUE)
     invalid <- which(data <= 0)
+    bad <- rowSums(data <= 0, na.rm=TRUE)
     if (length(invalid) > 0)
     {
         report(OL$Warning, "Data contains ", length(invalid), " nonpositive values - these will be ignored")
@@ -40,8 +41,13 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
         # If there are missing values we need to fit voxels one at a time
         ordinaryLeastSquaresFit <- function (i)
         {
-            tempSolution <- suppressWarnings(lsfit(bMatrix, logData[i,]))
-            return (c(tempSolution$coefficients, tempSolution$residuals))
+            if (sum(!is.na(logData[i,])) < 7)
+                return (c(rep(NA,7), rep(NA,ncol(logData))))
+            else
+            {
+                tempSolution <- suppressWarnings(lsfit(bMatrix, logData[i,]))
+                return (c(tempSolution$coefficients, tempSolution$residuals))
+            }
         }
         
         values <- sapply(1:nrow(logData), ordinaryLeastSquaresFit)
@@ -84,15 +90,20 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
     }
     
     coeffs <- promote(solution$coefficients)
-    returnValue <- list(logS0=coeffs[1,], tensors=coeffs[2:7,,drop=FALSE], sse=colSums(promote(solution$residuals)^2,na.rm=TRUE))
+    returnValue <- list(logS0=coeffs[1,], tensors=coeffs[2:7,,drop=FALSE], sse=colSums(promote(solution$residuals)^2,na.rm=TRUE), bad=bad)
     
     if (requireMetrics)
     {
         calculateEigensystem <- function (tensorComponents)
         {
-            tensor <- createDiffusionTensorFromComponents(tensorComponents)
-            system <- eigen(tensor, symmetric=TRUE)
-            return (c(system$values, system$vectors))
+            if (any(is.na(tensorComponents)))
+                return (rep(NA, 12))
+            else
+            {
+                tensor <- createDiffusionTensorFromComponents(tensorComponents)
+                system <- eigen(tensor, symmetric=TRUE)
+                return (c(system$values, system$vectors))
+            }
         }
         calculateMetrics <- function (eigenvalues)
         {
@@ -162,4 +173,5 @@ createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwl
     }
     writeMap((fit$eigenvalues[2,]+fit$eigenvalues[3,]) / 2, session$getImageFileNameByType("radialdiff","diffusion"))
     writeMap(fit$sse, session$getImageFileNameByType("sse","diffusion"))
+    writeMap(fit$bad, file.path(session$getDirectory("diffusion"), "dti_bad"))
 }
