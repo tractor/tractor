@@ -6,23 +6,26 @@ tmpdir=${TMPDIR:-/tmp}
 trap 'exit $status' 0 1 2 15
 
 config_file="/dev/null"
+variables=""
 use_grid_engine=0
 cross_apply=0
 queue=""
 qsub_options=""
-parallelisation_factor=1
+parallelisation_factor=${TRACTOR_PLOUGH_THREADS:-1}
 working_dir="."
 distribution_version="ersion unknown"
 
 tractor_flags=""
+tractor_options=""
 
 usage()
 {
     echo "plough (program v3.0.0, distribution v$distribution_version)"
     echo "Plough through your TractoR analysis!"
     echo
-    echo "Usage: plough [-GX] [-C config_file] [-Q grid_queue] [-O grid_options]"
-    echo "              [-P factor] [tractor_flags] script [arg1 [arg2 ...]]"
+    echo "Usage: plough [-GX] [-C config_file] [-V variable_name] [-Q grid_queue]"
+    echo "              [-O grid_options] [-P factor] [tractor_flags] script"
+    echo "              [arg1 [arg2 ...]]"
     echo "       plough -H"
     echo
     echo "  -H          Display this usage information and exit"
@@ -32,24 +35,27 @@ usage()
     echo "              turn"
     echo "  -C file     Specify a configuration file in YAML format. For plough this"
     echo "              option is required"
+    echo "  -V var      Specify a variable over which the loop will be run. It must"
+    echo "              be defined in a config file"
     echo "  -Q queue    Specify the grid engine queue name to submit to"
     echo "  -O options  Specify any addition grid engine options required. These"
     echo "              must be quoted if they include any spaces"
-    echo "  -P factor   Set the parallelisation factor for multicore systems"
+    echo "  -P factor   Set the parallelisation factor for multicore systems."
+    echo "              Ignored if '-G' is specified"
     echo
     echo "The specified TractoR script is called with different combinations of"
     echo "parameters. By default, the loop is over all configuration variables in"
     echo "the file(s) specified using the '-C' flag, in parallel. With the '-X' flag"
     echo "every combination of values is used instead. The calls can be parallel-"
-    echo "ised, either across cores (using the '-P' option), or through a grid"
-    echo "engine scheduler (using '-G')."
+    echo "ised, either across cores (using the '-P' flag), or through a grid engine"
+    echo "scheduler (using '-G')."
     echo
     echo "Flags are uppercase to avoid conflicting with those for tractor, but '-H',"
     echo "'-C' and '-P' are shared, and therefore case-insensitive."
     echo
 }
 
-set -- `getopt "HGXC:Q:O:P:hldozqfbiv:p:a:w:c:" "$@"` || {
+set -- `getopt "HGXC:V:Q:O:P:hldozqfbiv:p:a:w:c:" "$@"` || {
     usage 1>&2
     exit
 }
@@ -68,6 +74,7 @@ while [ $# -gt 0 ]
         -G) use_grid_engine=1 ;;
         -X) cross_apply=1 ;;
         -[Cc]) shift; config_file="$config_file:$1" ;;
+        -V) shift; variables="$variables,$1" ;;
         -Q) shift; queue=$1 ;;
         -O) shift; options="$options $1" ;;
         -[Pp]) shift; parallelisation_factor=$1 ;;
@@ -87,7 +94,7 @@ done
 
 script_name=`echo $1 | sed 's/\.R$//'`
 shift
-tractor_flags="$tractor_flags $@"
+tractor_options="$@"
 
 [ -d "${TRACTOR_HOME}/lib/R" ] && export R_LIBS="${TRACTOR_HOME}/lib/R"
 
@@ -98,6 +105,6 @@ tractor_flags="$tractor_flags $@"
     export COLUMNS
 }
 
-echo "library(utils); library(tractor.utils); ploughExperiment('$script_name', '$config_file', '$tractor_flags', $use_grid_engine, $cross_apply, '$queue', '$options', $parallelisation_factor)" #| "$R" --slave --vanilla 2>&1
+echo "library(utils); library(tractor.utils); ploughExperiment('$script_name', '$config_file', '$variables', '$tractor_flags', '$tractor_options', $use_grid_engine, $cross_apply, '$queue', '$options', $parallelisation_factor)" | "$R" --slave --vanilla 2>&1
 
 status=0
