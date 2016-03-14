@@ -252,6 +252,8 @@ locateExecutable <- function (fileName, errorIfMissing = TRUE)
 {
     pathDirs <- unlist(strsplit(Sys.getenv("PATH"), .Platform$path.sep, fixed=TRUE))
     possibleLocations <- file.path(pathDirs, fileName)
+    if (fileName %~% "^([A-Za-z]:)?/")
+        possibleLocations <- c(fileName, possibleLocations)
     filesExist <- file.exists(possibleLocations)
     
     if (sum(filesExist) == 0)
