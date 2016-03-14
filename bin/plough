@@ -12,6 +12,7 @@ cross_apply=0
 queue=""
 qsub_options=""
 parallelisation_factor=${TRACTOR_PLOUGH_THREADS:-1}
+debug=0
 working_dir="."
 distribution_version="ersion unknown"
 
@@ -23,7 +24,7 @@ usage()
     echo "plough (program v3.0.0, distribution v$distribution_version)"
     echo "Plough through your TractoR analysis!"
     echo
-    echo "Usage: plough [-GX] [-C config_file] [-V variable_name] [-Q grid_queue]"
+    echo "Usage: plough [-GXD] [-C config_file] [-V variable_name] [-Q grid_queue]"
     echo "              [-O grid_options] [-P factor] [tractor_flags] script"
     echo "              [arg1 [arg2 ...]]"
     echo "       plough -H"
@@ -33,6 +34,7 @@ usage()
     echo "              Engine. The 'qsub' executable must be on your PATH"
     echo "  -X          Cross-apply each set of options, taking each combination in"
     echo "              turn"
+    echo "  -D          Produce debugging output"
     echo "  -C file     Specify a configuration file in YAML format. For plough this"
     echo "              option is required"
     echo "  -V var      Specify a variable over which the loop will be run. It must"
@@ -51,11 +53,11 @@ usage()
     echo "scheduler (using '-G')."
     echo
     echo "Flags are uppercase to avoid conflicting with those for tractor, but '-H',"
-    echo "'-C' and '-P' are shared, and therefore case-insensitive."
+    echo "'-D', '-C' and '-P' are shared, and therefore case-insensitive."
     echo
 }
 
-set -- `getopt "HGXC:V:Q:O:P:hldozqfbiv:p:a:w:c:" "$@"` || {
+set -- `getopt "HGXDC:V:Q:O:P:hldozqfbiv:p:a:w:c:" "$@"` || {
     usage 1>&2
     exit
 }
@@ -73,6 +75,7 @@ while [ $# -gt 0 ]
         -[Hh]) usage; status=0; exit ;;
         -G) use_grid_engine=1 ;;
         -X) cross_apply=1 ;;
+        -[Dd]) debug=1 ;;
         -[Cc]) shift; config_file="$config_file:$1" ;;
         -V) shift; variables="$variables,$1" ;;
         -Q) shift; queue=$1 ;;
@@ -87,6 +90,11 @@ done
 
 [ $# -eq 0 ] && {
     echo "Error: No script name given. Type \"plough -H\" for help" 1>&2
+    exit
+}
+
+[ "$config_file" = /dev/null ] && {
+    echo "Error: No config file name given. Type \"plough -H\" for help" 1>&2
     exit
 }
 
@@ -105,6 +113,8 @@ tractor_options="$@"
     export COLUMNS
 }
 
-echo "library(utils); library(tractor.utils); ploughExperiment('$script_name', '$config_file', '$variables', '$tractor_flags', '$tractor_options', $use_grid_engine, $cross_apply, '$queue', '$options', $parallelisation_factor)" | "$R" --slave --vanilla 2>&1
+[ $debug -eq 1 ] && echo "library(utils); library(tractor.utils); ploughExperiment('$script_name', '$config_file', '$variables', '$tractor_flags', '$tractor_options', $use_grid_engine, $cross_apply, '$queue', '$options', $parallelisation_factor, $debug)"
+
+echo "library(utils); library(tractor.utils); ploughExperiment('$script_name', '$config_file', '$variables', '$tractor_flags', '$tractor_options', $use_grid_engine, $cross_apply, '$queue', '$options', $parallelisation_factor, $debug)" | "$R" --slave --vanilla 2>&1
 
 status=0
