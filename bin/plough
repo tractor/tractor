@@ -1,0 +1,103 @@
+#! /bin/bash
+
+status=1
+command="$0 $*"
+tmpdir=${TMPDIR:-/tmp}
+trap 'exit $status' 0 1 2 15
+
+config_file="/dev/null"
+use_grid_engine=0
+cross_apply=0
+queue=""
+qsub_options=""
+parallelisation_factor=1
+working_dir="."
+distribution_version="ersion unknown"
+
+tractor_flags=""
+
+usage()
+{
+    echo "plough (program v3.0.0, distribution v$distribution_version)"
+    echo "Plough through your TractoR analysis!"
+    echo
+    echo "Usage: plough [-GX] [-C config_file] [-Q grid_queue] [-O grid_options]"
+    echo "              [-P factor] [tractor_flags] script [arg1 [arg2 ...]]"
+    echo "       plough -H"
+    echo
+    echo "  -H          Display this usage information and exit"
+    echo "  -G          Schedule parallel jobs on the Oracle (formerly Sun) Grid"
+    echo "              Engine. The 'qsub' executable must be on your PATH"
+    echo "  -X          Cross-apply each set of options, taking each combination in"
+    echo "              turn"
+    echo "  -C file     Specify a configuration file in YAML format. For plough this"
+    echo "              option is required"
+    echo "  -Q queue    Specify the grid engine queue name to submit to"
+    echo "  -O options  Specify any addition grid engine options required. These"
+    echo "              must be quoted if they include any spaces"
+    echo "  -P factor   Set the parallelisation factor for multicore systems"
+    echo
+    echo "The specified TractoR script is called with different combinations of"
+    echo "parameters. By default, the loop is over all configuration variables in"
+    echo "the file(s) specified using the '-C' flag, in parallel. With the '-X' flag"
+    echo "every combination of values is used instead. The calls can be parallel-"
+    echo "ised, either across cores (using the '-P' option), or through a grid"
+    echo "engine scheduler (using '-G')."
+    echo
+    echo "Flags are uppercase to avoid conflicting with those for tractor, but '-H',"
+    echo "'-C' and '-P' are shared, and therefore case-insensitive."
+    echo
+}
+
+set -- `getopt "HGXC:Q:O:P:hldozqfbiv:p:a:w:c:" "$@"` || {
+    usage 1>&2
+    exit
+}
+
+[ -z "${TRACTOR_HOME}" ] && {
+    echo "Note: The TRACTOR_HOME environment variable is not set; it will be guessed"
+    export TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
+}
+
+[ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
+
+while [ $# -gt 0 ]
+    do
+    case "$1" in
+        -[Hh]) usage; status=0; exit ;;
+        -G) use_grid_engine=1 ;;
+        -X) cross_apply=1 ;;
+        -[Cc]) shift; config_file="$config_file:$1" ;;
+        -Q) shift; queue=$1 ;;
+        -O) shift; options="$options $1" ;;
+        -[Pp]) shift; parallelisation_factor=$1 ;;
+        -[vaw]) tractor_flags="$tractor_flags $1 $2"; shift ;;
+        --) shift; break ;;
+        -*) tractor_flags="$tractor_flags $1" ;;
+    esac
+    shift
+done
+
+[ $# -eq 0 ] && {
+    echo "Error: No script name given. Type \"plough -H\" for help" 1>&2
+    exit
+}
+
+[ -z "$R" ] && R=R
+
+script_name=`echo $1 | sed 's/\.R$//'`
+shift
+tractor_flags="$tractor_flags $@"
+
+[ -d "${TRACTOR_HOME}/lib/R" ] && export R_LIBS="${TRACTOR_HOME}/lib/R"
+
+[ -z $COLUMNS ] && {
+    type tput >/dev/null 2>&1
+    tput_available=$?
+    [ $tput_available -eq 0 ] && COLUMNS=`tput cols` || COLUMNS=80
+    export COLUMNS
+}
+
+echo "library(utils); library(tractor.utils); ploughExperiment('$script_name', '$config_file', '$tractor_flags', $use_grid_engine, $cross_apply, '$queue', '$options', $parallelisation_factor)" #| "$R" --slave --vanilla 2>&1
+
+status=0
