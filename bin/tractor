@@ -29,7 +29,7 @@ expect_available=$?
 
 usage()
 {
-    echo "tractor (program v2.6.1, distribution v$distribution_version)"
+    echo "tractor (program v3.0.0, distribution v$distribution_version)"
     echo "Run a TractoR experiment script in R and report the results"
     echo
     echo "Usage: tractor [-ldzqfbi] [-v level] [-p factor] [-a architecture] ..."
@@ -40,24 +40,24 @@ usage()
     echo "  -h          Display this usage information and exit"
     echo "  -o          Do not run the script, but instead produce a list of the"
     echo "              options that it supports, along with their default values"
-    echo "  -l          Direct output to a log file as well as stdout"
-    echo "  -d          Produce debugging output; equivalent to '-v 3'"
+    echo "  -l          Direct output to a log file as well as to stdout"
+    echo "  -d          Produce debugging output. Equivalent to '-v 3'"
     echo "  -z          Do not write the command line used into a history log file"
-    echo "  -q          Run in quiet mode; the tractor script will not produce any"
+    echo "  -q          Run in quiet mode. The tractor script will not produce any"
     echo "              output of its own"
     echo "  -f          Profile the performance of the script"
     echo "  -b          Run R in batch mode, which is entirely noninteractive, and"
-    echo "              will produce no output until it finishes running: this can"
+    echo "              will produce no output until it finishes running. This can"
     echo "              be useful when running multiple experiments in parallel"
     echo "  -i          Ignore any personal config files in ~/.tractor"
-    echo "  -v {0-3}    Produce verbose output: the level determines the amount of"
-    echo "              extra information reported, from 0 (least) to 3 (most)"
+    echo "  -v {0-3}    Adjust the verbosity of output generated. The level should"
+    echo "              be between 0 (least) to 3 (most). Default is 1"
     echo "  -p factor   Set the parallelisation factor for multicore systems (only"
     echo "              used by certain scripts)"
     echo "  -a arch     Specify a subarchitecture (e.g. 'x86_64'), which is passed"
-    echo "              to R: relevant only for multiarchitecture systems"
-    echo "  -w dir      Specify the working directory for the experiment, which"
-    echo "              will be created if necessary (default .)"
+    echo "              to R. Relevant only for multiarchitecture systems"
+    echo "  -w dir      Specify the working directory, which will be created if"
+    echo "              necessary. Default is '.', the current directory"
     echo "  -c file     Specify a configuration file in YAML format"
     echo
     echo "The script, a text file containing R code, need not be specified with the"
@@ -109,7 +109,7 @@ while [ $# -gt 0 ]
 done
 
 [ $# -eq 0 ] && {
-    echo "Error: No script name given; type tractor -h for help" 1>&2
+    echo "Error: No script name given. Type \"tractor -h\" for help" 1>&2
     exit
 }
 
