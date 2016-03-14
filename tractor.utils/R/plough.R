@@ -1,6 +1,9 @@
 ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, tractorOptions, useGridEngine, crossApply, queueName, qsubOptions, parallelisationFactor, debug)
 {
-    setOutputLevel(ifelse(isTRUE(debug==1), OL$Debug, OL$Info))
+    crossApply <- isTRUE(crossApply == 1)
+    useGridEngine <- isTRUE(useGridEngine == 1)
+    debug <- isTRUE(debug == 1)
+    setOutputLevel(ifelse(debug, OL$Debug, OL$Info))
     
     config <- readYaml(configFiles)
     variableLengths <- sapply(config, length)
@@ -10,11 +13,6 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
         variables <- names(config)[variableLengths > 1]
     else if (!all(variables %in% names(config)))
         report(OL$Error, "Specified variable(s) #{implode(variables[!(variables %in% names(config))],sep=', ',finalSep=' and ')} are not mentioned in the config files")
-    # otherVariables <- names(config)[!(names(config) %in% variables)]
-    
-    crossApply <- isTRUE(crossApply == 1)
-    useGridEngine <- isTRUE(useGridEngine == 1)
-    qsubPath <- locateExecutable("qsub", errorIfMissing=useGridEngine)
     
     usingParallel <- FALSE
     if (isValidAs(parallelisationFactor,"integer") && as.integer(parallelisationFactor) > 1)
@@ -34,27 +32,28 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
     if (crossApply)
     {
         n <- prod(variableLengths[variables])
-        data <- as.data.frame(expand.grid(config[variables], stringsAsFactors=FALSE))
-        # data <- cbind(data, as.data.frame(lapply(config[!(names(config) %in% variables)], rep, length.out=n)))
+        data <- as.data.frame(expand.grid(config[variables], stringsAsFactors=FALSE), stringsAsFactors=FALSE)
     }
     else
     {
         n <- max(variableLengths[variables])
-        data <- as.data.frame(lapply(config[variables], rep, length.out=n))
+        data <- as.data.frame(lapply(config[variables], rep, length.out=n), stringsAsFactors=FALSE)
     }
     
     report(OL$Info, "Scheduling #{n} jobs")
     
-    setUpRun <- function (i, currentFile)
+    tractorPath <- file.path(Sys.getenv("TRACTOR_HOME"), "bin", "tractor")
+    debugFlag <- ifelse(debug, "-d", "")
+    
+    buildArgs <- function (i)
     {
-        currentFlags <- ore.subst("(?<!\\\\)\\%(\\w+)", function(names) data[i,names], tractorFlags, all=TRUE)
-        currentFlags <- ore.subst("(?<!\\\\)\\%\\%", i, currentFlags, all=TRUE)
-        currentOptions <- ore.subst("(?<!\\\\)\\%(\\w+)", function(names) data[i,names], tractorOptions, all=TRUE)
-        currentOptions <- ore.subst("(?<!\\\\)\\%\\%", i, currentOptions, all=TRUE)
-        writeYaml(as.list(data[i,]), currentFile, capitaliseLabels=FALSE)
+        currentFlags <- ore.subst("(?<!\\\\)\\%(\\w+)", function(match) data[i,groups(match)], tractorFlags, all=TRUE)
+        currentFlags <- ore.subst("(?<!\\\\)\\%\\%", as.character(i), currentFlags, all=TRUE)
+        currentOptions <- ore.subst("(?<!\\\\)\\%(\\w+)", function(match) data[i,groups(match)], tractorOptions, all=TRUE)
+        currentOptions <- ore.subst("(?<!\\\\)\\%\\%", as.character(i), currentOptions, all=TRUE)
+        return (es("#{debugFlag} #{currentFlags} #{scriptName} #{currentOptions}"))
     }
     
-    tractorPath <- file.path(Sys.getenv("TRACTOR_HOME"), "bin", "tractor")
     if (useGridEngine)
     {
         for (i in seq_len(n))
@@ -63,22 +62,36 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
             if (file.exists(tempDir))
                 unlink(tempDir, recursive=TRUE)
             dir.create(file.path(tempDir,"log"), recursive=TRUE)
-            dir.create(file.path(tempDir,"output"), recursive=TRUE)
             
             qsubScriptFile <- file.path(tempDir, "script")
             qsubScript <- c("#!/bin/sh",
                             "#$ -S /bin/bash",
-                            es("#{tractorPath} -c #{currentFile} #{currentFlags} #{scriptName} #{currentOptions}"))
+                            es("#{tractorPath} -c #{currentFile} #{buildArgs(i)}"))
             writeLines(qsubScript, qsubScriptFile)
+            execute("chmod", es("+x #{qsubScriptFile}"))
+            
+            currentFile <- file.path(tempDir, es("config.#{i}.yaml"))
+            writeYaml(as.list(data[i,,drop=FALSE]), currentFile, capitaliseLabels=FALSE)
+            
+            queueOption <- ifelse(queueName=="", "", es("-q #{queueName}"))
+            qsubArgs <- es("-terse -V -wd #{path.expand(getwd())} #{queueOption} -N #{scriptName} -o #{file.path(tempDir,'log')} -e /dev/null -t 1-#{n} #{qsubOptions} #{qsubScriptFile}")
+            result <- execute("qsub", qsubArgs, intern=TRUE)
+            jobNumber <- as.numeric(ore.match("^(\\d+)\\.?.*$", result)[,1])
+            jobNumber <- jobNumber[!is.na(jobNumber)]
+            report(OL$Verbose, "Job number for index #{i} is #{jobNumber}")
         }
     }
     else
     {
         parallelApply(seq_len(n), function(i) {
             currentFile <- threadSafeTempFile()
-            setUpRun(i, currentFile)
-            execute(tractorPath, es("-c #{currentFile} #{currentFlags} #{scriptName} #{currentOptions}"))
+            writeYaml(as.list(data[i,,drop=FALSE]), currentFile, capitaliseLabels=FALSE)
+            
+            execute(tractorPath, es("-c #{currentFile} #{buildArgs(i)}"))
+            
             unlink(currentFile)
         })
     }
+    
+    invisible(NULL)
 }
