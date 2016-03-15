@@ -97,7 +97,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
                 report(OL$Error, "T1w image parcellation has not yet been performed")
             else
             {
-                parcellation <- tractor.reg::transformParcellationToSpace(.self$getParcellation("structural"), .self, place, ...)
+                parcellation <- transformParcellationToSpace(.self$getParcellation("structural"), .self, place, ...)
                 tractor.reg::writeParcellation(parcellation, fileName)
             }
         }
