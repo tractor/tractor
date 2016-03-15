@@ -1,0 +1,62 @@
+.TH "plough" 1
+
+.SH NAME
+plough \- Interface for running multiple related TractoR experiments
+
+.SH SYNOPSIS
+.B plough \fR[\fB\-GXD\fR] \fB\-C \fIconfig_file\fR [\fB\-V \fIvariable_name\fR] [\fB\-Q \fIgrid_queue\fR] [\fB\-O \fIgrid_options\fR] [\fB\-P \fIfactor\fR] [\fItractor_flags\fR] \fIscript\fR [\fIarguments\fR]\fB
+.br
+.B plough \-H
+
+.SH DESCRIPTION
+The \fBplough\fR program is a wrapper around \fBtractor\fR(1), which allows a particular script to be run with several different sets of parameters. The loop can be easily parallelised across multiple cores, or using the Oracle (formerly Sun) Grid Engine, if the latter is installed.
+.PP
+The program's flags are all uppercase, to avoid conflicting with those from \fBtractor\fR, and the two sets of flags can therefore be freely mixed. The \fItractor_flags\fR and/or \fIarguments\fR can include references to the loop variables, using their name preceded by a percentage sign ('%'), which will be replaced by the appropriate value on each loop. In addition, the symbol '%%' will be replaced by the loop number.
+
+.SH OPTIONS
+.TP
+.B \-H
+Display usage information and quit.
+.TP
+.B \-G
+Schedule parallel jobs on the Oracle (formerly Sun) Grid Engine. The \fBqsub\fR(1) executable must be on your \fBPATH\fR.
+.TP
+.B \-X
+Cross-apply the loop variables, taking each combination in turn. The total number of instances will be the product of the lengths of all loop variables, rather than the maximum.
+.TP
+.B \-D
+Produce debugging output.
+.TP
+.B \-C \fIconfig_file\fB
+Specify a configuration file in YAML format (see \fBtractor\fR(1) for details). This flag must be specified at least once, and may be used multiple times.
+.TP
+.B \-V \fIvariable_name\fB
+Specify one or more variables over which the loop will be run (comma-separated). These must be defined in a config file. By default all variables with more than one element will be used.
+.TP
+.B \-Q \fIgrid_queue\fB
+Name the grid engine queue on which jobs should be scheduled. Has no effect if '\-G' is not set.
+.TP
+.B \-O \fIgrid_options\fB
+Specify additional options to pass to \fBqsub\fR(1), for example to request certain resources from the grid engine. The options must be quoted if they contain any spaces. Has no effect if '\-G' is not set.
+.TP
+.B \-P \fIfactor\fB
+Set the parallelisation factor for multicore systems. At most this number of threads will be created to call \fBtractor\fR with each combination of parameters. This option is ignored if '\-G' is set. The default is taken from the \fBTRACTOR_PLOUGH_THREADS\fR environment variable, if it is set; otherwise it is 1 (i\.e\. no parallelisation).
+
+.SH EXAMPLES
+A simple use case is a call to a TractoR script across multiple sessions, as in
+.TP
+.PP
+plough \-C config.yaml \-q mean %Session@FA
+.PP
+which calculates the mean voxel value in each session's fractional anisotropy map. Note that the 'config.yaml' file must assign one or more values to the 'Session' variable, each giving the path to a session directory. A more complex example might be
+.TP
+.PP
+plough \-C config.yaml \-V Session \-V TractName \-X \-w %TractName pnt-data %Session DatasetName:%TractName_data SearchWidth:7
+.PP
+This example runs the 'pnt-data' script, using every possible combination of 'Session' and 'TractName' in turn ('\-X'). Experiments for each 'TractName' will be run within a corresponding subdirectory ('\-w %TractName'). The 'SearchWidth' variable will be common to all instances.
+
+.SH DIAGNOSTICS
+Return value is 0 if the child jobs were successfully launched or run, and 1 otherwise. The program will wait for its children unless they are run through the grid engine.
+
+.SH AUTHOR
+Jon Clayden <code@clayden.org>
