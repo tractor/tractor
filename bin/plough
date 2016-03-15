@@ -53,7 +53,7 @@ usage()
     echo "scheduler (using '-G')."
     echo
     echo "Flags are uppercase to avoid conflicting with those for tractor, but '-H',"
-    echo "'-D', '-C' and '-P' are shared, and therefore case-insensitive."
+    echo "'-C' and '-P' are shared, and therefore case-insensitive."
     echo
 }
 
@@ -75,7 +75,7 @@ while [ $# -gt 0 ]
         -[Hh]) usage; status=0; exit ;;
         -G) use_grid_engine=1 ;;
         -X) cross_apply=1 ;;
-        -[Dd]) debug=1 ;;
+        -D) debug=1 ;;
         -[Cc]) shift; config_file="$config_file:$1" ;;
         -V) shift; variables="$variables,$1" ;;
         -Q) shift; queue=$1 ;;

@@ -43,7 +43,6 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
     report(OL$Info, "Scheduling #{n} jobs")
     
     tractorPath <- file.path(Sys.getenv("TRACTOR_HOME"), "bin", "tractor")
-    debugFlag <- ifelse(debug, "-d", "")
     
     buildArgs <- function (i)
     {
@@ -51,7 +50,7 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
         currentFlags <- ore.subst("(?<!\\\\)\\%\\%", as.character(i), currentFlags, all=TRUE)
         currentOptions <- ore.subst("(?<!\\\\)\\%(\\w+)", function(match) data[i,groups(match)], tractorOptions, all=TRUE)
         currentOptions <- ore.subst("(?<!\\\\)\\%\\%", as.character(i), currentOptions, all=TRUE)
-        return (es("#{debugFlag} #{currentFlags} #{scriptName} #{currentOptions}"))
+        return (es("#{currentFlags} #{scriptName} #{currentOptions}"))
     }
     
     if (useGridEngine)
@@ -63,15 +62,16 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
                 unlink(tempDir, recursive=TRUE)
             dir.create(file.path(tempDir,"log"), recursive=TRUE)
             
+            currentFile <- file.path(tempDir, es("config.#{i}.yaml"))
+            writeYaml(as.list(data[i,,drop=FALSE]), currentFile, capitaliseLabels=FALSE)
+            
             qsubScriptFile <- file.path(tempDir, "script")
             qsubScript <- c("#!/bin/sh",
                             "#$ -S /bin/bash",
+                            es("TRACTOR_PLOUGH_ID=#{i}")
                             es("#{tractorPath} -c #{currentFile} #{buildArgs(i)}"))
             writeLines(qsubScript, qsubScriptFile)
             execute("chmod", es("+x #{qsubScriptFile}"))
-            
-            currentFile <- file.path(tempDir, es("config.#{i}.yaml"))
-            writeYaml(as.list(data[i,,drop=FALSE]), currentFile, capitaliseLabels=FALSE)
             
             queueOption <- ifelse(queueName=="", "", es("-q #{queueName}"))
             qsubArgs <- es("-terse -V -wd #{path.expand(getwd())} #{queueOption} -N #{scriptName} -o #{file.path(tempDir,'log')} -e /dev/null -t 1-#{n} #{qsubOptions} #{qsubScriptFile}")
@@ -87,6 +87,7 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
             currentFile <- threadSafeTempFile()
             writeYaml(as.list(data[i,,drop=FALSE]), currentFile, capitaliseLabels=FALSE)
             
+            Sys.setenv(TRACTOR_PLOUGH_ID=i)
             execute(tractorPath, es("-c #{currentFile} #{buildArgs(i)}"))
             
             unlink(currentFile)
