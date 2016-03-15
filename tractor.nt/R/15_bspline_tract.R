@@ -140,11 +140,10 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         assign("ends", ends, envir=workingEnvironment)
         
         basis <- bs(data$t, degree=3, knots=knots[-ends], Boundary.knots=knots[ends])
-        basisString <- "bs(t, degree=3, knots=knots[-ends], Boundary.knots=knots[ends])"
         
-        modelX <- local(lm(as.formula(paste("x ~ ",basisString,sep="")), data=data), workingEnvironment)
-        modelY <- local(lm(as.formula(paste("y ~ ",basisString,sep="")), data=data), workingEnvironment)
-        modelZ <- local(lm(as.formula(paste("z ~ ",basisString,sep="")), data=data), workingEnvironment)
+        modelX <- local(lm(x ~ bs(t,degree=3,knots=knots[-ends],Boundary.knots=knots[ends]), data=data), workingEnvironment)
+        modelY <- local(lm(y ~ bs(t,degree=3,knots=knots[-ends],Boundary.knots=knots[ends]), data=data), workingEnvironment)
+        modelZ <- local(lm(z ~ bs(t,degree=3,knots=knots[-ends],Boundary.knots=knots[ends]), data=data), workingEnvironment)
         models <- list(modelX, modelY, modelZ)
 
         knotLocsX <- as.vector(predict(modelX, data.frame(t=knots)))
