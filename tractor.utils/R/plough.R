@@ -68,7 +68,7 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
             qsubScriptFile <- file.path(tempDir, "script")
             qsubScript <- c("#!/bin/sh",
                             "#$ -S /bin/bash",
-                            es("TRACTOR_PLOUGH_ID=#{i}")
+                            es("TRACTOR_PLOUGH_ID=#{i}"),
                             es("#{tractorPath} -c #{currentFile} #{buildArgs(i)}"))
             writeLines(qsubScript, qsubScriptFile)
             execute("chmod", es("+x #{qsubScriptFile}"))
