@@ -26,10 +26,22 @@ setAs("niftiImage", "MriImage", .convertNiftiImage)
 setAs("internalImage", "MriImage", .convertNiftiImage)
 
 # MriImage methods for RNiftyReg generics
-pixdim.MriImage <- function (object)                { object$getVoxelDimensions() }
+pixdim.MriImage <- function (object)
+{
+    object$getVoxelDimensions()
+}
 
-"pixdim<-.MriImage" <- function (object, value)     { report(OL$Error, "MriImage voxel dimensions cannot be changed at present") }
+"pixdim<-.MriImage" <- function (object, value)
+{
+    report(OL$Error, "MriImage voxel dimensions cannot be changed at present")
+}
 
-pixunits.MriImage <- function (object)              { object$getVoxelUnits() }
+pixunits.MriImage <- function (object)
+{
+    object$getVoxelUnits()
+}
 
-"pixunits<-.MriImage" <- function (object, value)   { report(OL$Error, "MriImage voxel units cannot be changed at present") }
+"pixunits<-.MriImage" <- function (object, value)
+{
+    report(OL$Error, "MriImage voxel units cannot be changed at present")
+}
