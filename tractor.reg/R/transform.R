@@ -25,7 +25,7 @@ transformParcellation <- function (transform, parcellation, threshold = 0.5, ind
     finalParcellation <- array(0L, dim=targetSpace$getDimensions())
     maxValues <- array(max(0, threshold * (1-.Machine$double.neg.eps)), dim=targetSpace$getDimensions())
     
-    uniqueIndices <- setdiff(unique(as.vector(parcellation$image$getData())), 0L)
+    uniqueIndices <- sort(setdiff(unique(as.vector(parcellation$image$getData())), 0L))
     for (i in uniqueIndices)
     {
         currentImage <- parcellation$image$copy()$map(function(x) ifelse(x==i,1,0))
