@@ -67,6 +67,8 @@ runExperiment <- function ()
         
         for (i in seq_len(nRegions))
         {
+            report(OL$Verbose, "Finding connections for region \"#{targetMatches[i]}\"")
+            
             for (j in seq_len(ifelse(selfConnections,i,i-1)))
             {
                 # The subset of streamline indices connecting these two regions
