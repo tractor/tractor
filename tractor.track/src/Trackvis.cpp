@@ -138,14 +138,15 @@ void TrackvisDataSource::attach (const std::string &fileStem)
 void LabelledTrackvisDataSource::attach (const std::string &fileStem)
 {
     TrackvisDataSource::attach(fileStem);
-    labelList.read(fileStem);
+    if (!externalLabelList)
+        labelList = new StreamlineLabelList(fileStem);
 }
 
 void LabelledTrackvisDataSource::get (Streamline &data)
 {
     // This increments currentStreamline, so we subtract 1 below
     readStreamline(data);
-    data.setLabels(labelList.getLabels(currentStreamline-1));
+    data.setLabels(labelList->getLabels(currentStreamline-1));
 }
 
 void MedianTrackvisDataSource::get (Streamline &data)
@@ -246,7 +247,7 @@ void BasicTrackvisDataSource::seek (const int n)
 
 void LabelledTrackvisDataSource::seek (const int n)
 {
-    fileStream.seekg(labelList.getOffset(n));
+    fileStream.seekg(labelList->getOffset(n));
     currentStreamline = n;
 }
 

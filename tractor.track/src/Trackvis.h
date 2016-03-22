@@ -89,8 +89,8 @@ class LabelledTrackvisDataSource : public TrackvisDataSource
 protected:
     std::ifstream auxFileStream;
     BinaryInputStream auxBinaryStream;
-    StreamlineLabelList labelList;
-    // std::map<int,std::string> labelDictionary;
+    StreamlineLabelList *labelList;
+    bool externalLabelList;
     
 public:
     LabelledTrackvisDataSource ()
@@ -98,9 +98,11 @@ public:
         auxBinaryStream.attach(&auxFileStream);
     }
     
-    LabelledTrackvisDataSource (const std::string &fileStem)
+    LabelledTrackvisDataSource (const std::string &fileStem, StreamlineLabelList *labelList = NULL)
+        : labelList(labelList)
     {
         auxBinaryStream.attach(&auxFileStream);
+        this->externalLabelList = (labelList != NULL);
         attach(fileStem);
     }
     
@@ -109,6 +111,8 @@ public:
         auxBinaryStream.detach();
         if (auxFileStream.is_open())
             auxFileStream.close();
+        if (!externalLabelList)
+            delete labelList;
     }
     
     void attach (const std::string &fileStem);

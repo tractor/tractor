@@ -106,7 +106,9 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     }
 ))
 
-StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character",selection="integer",count.="integer"), methods=list(
+setClassUnion("ExternalPointerOrNull", c("externalptr","NULL"))
+
+StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character",selection="integer",count.="integer",labelsPtr.="ExternalPointerOrNull"), methods=list(
     initialize = function (file = NULL, ...)
     {
         if (is.null(file))
@@ -117,7 +119,11 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         file <- ensureFileSuffix(file, NULL, strip=c("trk","trkl"))
         count <- as.integer(.Call("trkCount", file, PACKAGE="tractor.track"))
         
-        return (initFields(file=file, selection=integer(0), count.=count))
+        labelsPtr <- NULL
+        if (file.exists(ensureFileSuffix(file, "trkl", strip=c("trk","trkl"))))
+            labelsPtr <- .Call("trkLabels", file, PACKAGE="tractor.track")
+        
+        return (initFields(file=file, selection=integer(0), count.=count, labelsPtr.=labelsPtr))
     },
     
     extractAndTruncate = function (leftLength, rightLength)
@@ -136,7 +142,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     
     getMapAndLengthData = function ()
     {
-        return (.Call("trkFastMapAndLengths", file, selection, PACKAGE="tractor.track"))
+        return (.Call("trkFastMapAndLengths", file, selection, labelsPtr., PACKAGE="tractor.track"))
     },
     
     getMedian = function (quantile = 0.99, pathOnly = FALSE)
@@ -203,7 +209,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         else
         {
             if (is.null(indices))
-                indices <- .Call("trkFind", file, as.integer(labels), PACKAGE="tractor.track")
+                indices <- .Call("trkFind", file, as.integer(labels), labelsPtr., PACKAGE="tractor.track")
             .self$selection <- as.integer(indices)
         }
         
