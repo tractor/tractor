@@ -2,14 +2,14 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
 {
     crossApply <- isTRUE(crossApply == 1)
     useGridEngine <- isTRUE(useGridEngine == 1)
-    debug <- isTRUE(debug == 1)
-    setOutputLevel(ifelse(debug, OL$Debug, OL$Info))
+    setOutputLevel(ifelse(isTRUE(debug==1), OL$Debug, OL$Info))
     
     config <- readYaml(configFiles)
     variableLengths <- sapply(config, length)
     
     variables <- splitAndConvertString(variables, ",", fixed=TRUE)
-    if (length(variables) == 0 || all(variables == ""))
+    variables <- variables[variables != ""]
+    if (length(variables) == 0)
         variables <- names(config)[variableLengths > 1]
     else if (!all(variables %in% names(config)))
         report(OL$Error, "Specified variable(s) #{implode(variables[!(variables %in% names(config))],sep=', ',finalSep=' and ')} are not mentioned in the config files")
@@ -46,9 +46,9 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
     
     buildArgs <- function (i)
     {
-        currentFlags <- ore.subst("(?<!\\\\)\\%(\\w+)", function(match) data[i,groups(match)], tractorFlags, all=TRUE)
+        currentFlags <- ore.subst("(?<!\\\\)\\%([A-Za-z]+)", function(match) data[i,groups(match)], tractorFlags, all=TRUE)
         currentFlags <- ore.subst("(?<!\\\\)\\%\\%", as.character(i), currentFlags, all=TRUE)
-        currentOptions <- ore.subst("(?<!\\\\)\\%(\\w+)", function(match) data[i,groups(match)], tractorOptions, all=TRUE)
+        currentOptions <- ore.subst("(?<!\\\\)\\%([A-Za-z]+)", function(match) data[i,groups(match)], tractorOptions, all=TRUE)
         currentOptions <- ore.subst("(?<!\\\\)\\%\\%", as.character(i), currentOptions, all=TRUE)
         return (es("#{currentFlags} #{scriptName} #{currentOptions}"))
     }
