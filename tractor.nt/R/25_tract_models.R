@@ -103,7 +103,7 @@ calculateRescaledCosinesFromAngles <- function (angles, naRemove = TRUE)
     return (cosines)
 }
 
-createDataTableForSplines <- function (splines, refSpline, pointType, subjectId = NULL, neighbourhood = NULL)
+createDataTableForSplines <- function (splines, refSpline, pointType, sessionPath = NULL, neighbourhood = NULL)
 {
     if (!is.list(splines))
         report(OL$Error, "Spline tracts must be specified as a list of BSplineTract objects")
@@ -134,8 +134,8 @@ createDataTableForSplines <- function (splines, refSpline, pointType, subjectId 
     }
 
     data <- data.frame(pointType=rep(pointType,nSplines), leftLength=leftLengths, rightLength=rightLengths)
-    if (!is.null(subjectId))
-        data <- cbind(data, data.frame(subject=rep(subjectId,nSplines)))
+    if (!is.null(sessionPath))
+        data <- cbind(data, data.frame(sessionPath=rep(sessionPath,nSplines)))
     if (!is.null(neighbourhood))
         data <- cbind(data, data.frame(x=neighbourhood$vectors[1,], y=neighbourhood$vectors[2,], z=neighbourhood$vectors[3,]))
     data <- cbind(data, similarityCosines)

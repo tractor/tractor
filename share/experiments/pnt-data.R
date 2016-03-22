@@ -41,7 +41,7 @@ runExperiment <- function ()
         
         neighbourhood <- createNeighbourhoodInfo(centre=seed, width=searchWidth)
         splines <- calculateSplinesForNeighbourhood(session, neighbourhood, reference, faThreshold, nStreamlines)
-        data <- createDataTableForSplines(splines, reference$getTract(), "knot", subjectId=i, neighbourhood=neighbourhood)
+        data <- createDataTableForSplines(splines, reference$getTract(), "knot", sessionPath=Arguments[1], neighbourhood=neighbourhood)
         write.table(data, file=fileName)
     }
 }
