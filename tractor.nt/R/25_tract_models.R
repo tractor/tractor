@@ -145,16 +145,23 @@ createDataTableForSplines <- function (splines, refSpline, pointType, sessionPat
 
 readPntDataTable <- function (datasetName)
 {
-    # Dataset may have been created piecemeal by plough, so we need to collect the pieces
-    fileNames <- list.files(dirname(datasetName))
-    datasetStem <- ensureFileSuffix(datasetStem, NULL, strip="txt")
-    match <- ore.search(ore("^",ore.escape(datasetStem),"\\.(\\d+)\\.txt$"), fileNames, simplify=FALSE)
-    indices <- as.integer(groups(match, simplify=FALSE))
-    fileNames <- fileNames[!is.na(indices)]
-    indices <- indices[!is.na(indices)]
-    data <- Reduce(rbind, lapply(fileNames[order(indices)], read.table, stringsAsFactors=FALSE))
-    write.table(data, ensureFileSuffix(datasetName,"txt"))
-    # unlink(fileNames)
+    if (file.exists(ensureFileSuffix(datasetName, "txt")))
+        data <- read.table(ensureFileSuffix(datasetName,"txt"), stringsAsFactors=FALSE)
+    else
+    {
+        # Dataset will have been created piecemeal by plough, so we need to collect the pieces
+        fileNames <- list.files(dirname(datasetName))
+        datasetStem <- ensureFileSuffix(datasetStem, NULL, strip="txt")
+        match <- ore.search(ore("^",ore.escape(datasetStem),"\\.(\\d+)\\.txt$"), fileNames, simplify=FALSE)
+        indices <- as.integer(groups(match, simplify=FALSE))
+        fileNames <- fileNames[!is.na(indices)]
+        indices <- indices[!is.na(indices)]
+        data <- Reduce(rbind, lapply(fileNames[order(indices)], read.table, stringsAsFactors=FALSE))
+        write.table(data, ensureFileSuffix(datasetName,"txt"))
+        # unlink(fileNames)
+    }
+    
+    return (data)
 }
 
 newUninformativeTractModelFromDataTable <- function (data, maxLength = NULL, weights = NULL)
