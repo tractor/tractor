@@ -13,27 +13,27 @@ runExperiment <- function ()
         values <- c(values, sysInfo["machine"], sysInfo["sysname"], sysInfo["release"])
     }
     
-    tractorVersion <- readLines(file.path(Sys.getenv("TRACTOR_HOME"), "VERSION"))
+    gitAvailable <- !is.null(locateExecutable("git", errorIfMissing=FALSE))
+    gitDirectory <- file.path(Sys.getenv("TRACTOR_HOME"), ".git")
+    if (gitAvailable && file.exists(gitDirectory))
+    {
+        gitRepoVersion <- execute("git", es("--git-dir=\"#{gitDirectory}\" describe"), intern=TRUE)
+        tractorVersion <- ore.subst("^v", "", gitRepoVersion)
+    }
+    else
+        tractorVersion <- readLines(file.path(Sys.getenv("TRACTOR_HOME"), "VERSION"))
+    
     rBuild <- R.Version()
     labels <- c(labels, "TractoR home directory", "TractoR version", "R version", "R build platform", "R package library")
     values <- c(values, Sys.getenv("TRACTOR_HOME"), tractorVersion[1], paste(rBuild$major,rBuild$minor,sep="."), rBuild$platform, .libPaths()[1])
     
-    labels <- c(labels, "FSL version", "ImageMagick version")
+    labels <- c(labels, "FSL version")
     
     fslVersionFile <- file.path(Sys.getenv("FSLDIR"), "etc", "fslversion")
     if (file.exists(fslVersionFile))
         values <- c(values, readLines(fslVersionFile)[1])
     else
         values <- c(values, "N/A (not found)")
-    
-    convertLoc <- locateExecutable("convert", errorIfMissing=FALSE)
-    if (is.null(convertLoc))
-        values <- c(values, "N/A (not found)")
-    else
-    {
-        versionString <- execute("convert", "-version", intern=TRUE)[1]
-        values <- c(values, sub("^.+ImageMagick ([0-9.-]+) .+$","\\1",versionString))
-    }
     
     if (getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
