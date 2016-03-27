@@ -71,7 +71,7 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         .self$targetInfo <- list(path=path, indices=indices, labels=labels)
     },
     
-    run = function (seeds, count, basename = threadSafeTempFile(), profileFun = NULL, requireMap = TRUE, requireStreamlines = FALSE, requireMedian = FALSE, terminateAtTargets = FALSE, jitter = FALSE)
+    run = function (seeds, count, basename = threadSafeTempFile(), profileFun = NULL, requireMap = TRUE, requireStreamlines = FALSE, requireMedian = FALSE, terminateAtTargets = FALSE, jitter = TRUE)
     {
         if (is.nilModel(model))
             report(OL$Error, "No diffusion model has been specified")
