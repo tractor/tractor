@@ -69,27 +69,24 @@ calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference,
     nSeeds <- ncol(seeds)
     middle <- (nSeeds %/% 2) + 1
     
-    splines <- list()
-    for (i in 1:nSeeds)
+    splines <- vector("list", nSeeds)
+    for (i in seq_len(nSeeds))
     {
         seed <- seeds[,i]
-        report(OL$Info, "Current seed point is ", implode(seed,sep=","), " (", i, "/", nSeeds, ")")
+        report(OL$Verbose, "Current seed point is ", implode(seed,sep=","), " (#{i}/#{nSeeds})")
         
         if (any(seed <= 0 | seed > fa$getDimensions()))
         {
-            report(OL$Info, "Skipping seed point because it's out of bounds")
-            splines <- c(splines, list(NA))
+            report(OL$Verbose, "Skipping seed point because it's out of bounds")
+            splines[[i]] <- NA
         }
         else if (!is.na(fa$getDataAtPoint(seed)) && (fa$getDataAtPoint(seed) < faThreshold) && (i != middle))
         {
-            report(OL$Info, "Skipping seed point because FA < ", faThreshold)
-            splines <- c(splines, list(NA))
+            report(OL$Verbose, "Skipping seed point because FA < ", faThreshold)
+            splines[[i]] <- NA
         }
         else
-        {
-            spline <- splineTractWithOptions(reference$getTractOptions(), session, seed, reference$getSourceSession(), nStreamlines, rightwardsVector)
-            splines <- c(splines, list(spline))
-        }
+            splines[[i]] <- splineTractWithOptions(reference$getTractOptions(), session, seed, reference$getSourceSession(), nStreamlines, rightwardsVector)
     }
     
     invisible (splines)
@@ -97,12 +94,12 @@ calculateSplinesForNeighbourhood <- function (session, neighbourhood, reference,
 
 calculatePosteriorsForDataTable <- function (data, matchingModel)
 {
-    if (is.null(data$subject))
-        data <- cbind(data, data.frame(subject=rep(1,nrow(data))))
+    if (is.null(data$sessionPath))
+        data <- cbind(data, data.frame(sessionPath=rep("",nrow(data))))
     
-    subjects <- factor(data$subject)
+    subjects <- factor(data$sessionPath)
     nSubjects <- nlevels(subjects)
-    nSplines <- tapply(data$subject, subjects, length)
+    nSplines <- tapply(data$sessionPath, subjects, length)
     validSplines <- tapply(!is.na(data$leftLength), subjects, "[")
     nValidSplines <- tapply(!is.na(data$leftLength), subjects, sum)
     
@@ -127,12 +124,12 @@ runMatchingEMForDataTable <- function (data, refSpline, lengthCutoff = NULL, lam
 {
     if (!is(refSpline,"BSplineTract"))
         report(OL$Error, "Reference tract must be specified as a BSplineTract object")
-    if (is.null(data$subject))
-        report(OL$Error, "The 'subject' field must be present in the data table")
+    if (is.null(data$sessionPath))
+        report(OL$Error, "The \"sessionPath\" field must be present in the data table")
     
-    subjects <- factor(data$subject)
+    subjects <- factor(data$sessionPath)
     nSubjects <- nlevels(subjects)
-    nSplines <- tapply(data$subject, subjects, length)
+    nSplines <- tapply(data$sessionPath, subjects, length)
     validSplines <- tapply(!is.na(data$leftLength), subjects, "[")
     nValidSplines <- tapply(!is.na(data$leftLength), subjects, sum)
     

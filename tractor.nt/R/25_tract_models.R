@@ -193,12 +193,12 @@ newMatchingTractModelFromDataTable <- function (data, refSpline, maxLength = NUL
 {
     if (is.null(weights))
     {
-        if (is.null(data$subject))
-            report(OL$Error, "The 'subject' field must be present in the data table if weights are not specified")
+        if (is.null(data$sessionPath))
+            report(OL$Error, "The \"sessionPath\" field must be present in the data table if weights are not specified")
         
         # Each subject needs normalising individually for the number of valid
         # candidate tracts available
-        subjects <- factor(data$subject)
+        subjects <- factor(data$sessionPath)
         nTotalSplines <- tapply(data$leftLength, subjects, length)
         nValidSplines <- tapply(!is.na(data$leftLength), subjects, sum)
         weights <- unlist(lapply(seq_along(nValidSplines), function (i) rep(1,nTotalSplines[i]) / nValidSplines[i]))
