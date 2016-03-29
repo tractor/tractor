@@ -207,7 +207,9 @@ matchPaths <- function (path, referencePath)
 {
     expandedPath <- expandFileName(path)
     expandedReferencePath <- expandFileName(referencePath)
-    return (referencePath[match(expandedPath, expandedReferencePath)])
+    indices <- match(expandedPath, expandedReferencePath)
+    result <- structure(referencePath[indices], indices=indices)
+    return (result)
 }
 
 #' @rdname paths
