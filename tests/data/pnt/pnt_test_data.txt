@@ -1,2 +1,2 @@
-"pointType" "leftLength" "rightLength" "subject" "x" "y" "z" "leftSimCosine1" "leftSimCosine2" "leftSimCosine3" "leftSimCosine4" "leftSimCosine5" "leftSimCosine6" "rightSimCosine1" "rightSimCosine2" "rightSimCosine3" "rightSimCosine4" "rightSimCosine5" "rightSimCosine6"
-"1" "knot" 6 3 1 50 60 35 NA 0.239132454251043 0.767048540295971 0.728958727842863 0.723187569114795 0.864460276600772 NA 0.92600352513985 0.124257837663807 NA NA NA
+"pointType" "leftLength" "rightLength" "sessionPath" "x" "y" "z" "leftSimCosine1" "leftSimCosine2" "leftSimCosine3" "leftSimCosine4" "leftSimCosine5" "leftSimCosine6" "rightSimCosine1" "rightSimCosine2" "rightSimCosine3" "rightSimCosine4" "rightSimCosine5" "rightSimCosine6"
+"1" "knot" 6 3 "data/session" 50 60 35 NA 0.239132454251043 0.767048540295971 0.728958727842863 0.723187569114795 0.864460276600772 NA 0.92600352513985 0.124257837663807 NA NA NA
