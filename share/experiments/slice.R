@@ -1,36 +1,62 @@
-#@args image file, [output file name]
+#@args image file(s)
 #@desc Create a 2D slice image from the specified Analyze/NIfTI/MGH volume. Exactly one of the X, Y and Z options must be specified, giving the location on the appropriate axis where the slice should be taken.
-
-suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {
-    requireArguments("image file")
-    image <- readImageFile(Arguments[1])
+    requireArguments("image file(s)")
     
-    if (nArguments() > 1)
-        outputFile <- Arguments[2]
-    else
-        outputFile <- image$getSource()
+    exist <- imageFileExists(Arguments)
+    if (any(!exist))
+        report(OL$Warning, "Image(s) #{implode(Arguments[!exist],sep=', ',finalSep=' and ')} do not exist")
     
-    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
-    x <- getConfigVariable("X", NA, "numeric", errorIfInvalid=TRUE)
-    y <- getConfigVariable("Y", NA, "numeric", errorIfInvalid=TRUE)
-    z <- getConfigVariable("Z", NA, "numeric", errorIfInvalid=TRUE)
+    images <- lapply(Arguments[exist], readImageFile)
+    dims <- sapply(image, dim, simplify="array")
+    if (any(diff(t(dims)) != 0))
+        report(OL$Error, "Images must have the same dimensions")
+    
+    x <- getConfigVariable("X", NULL, "character")
+    y <- getConfigVariable("Y", NULL, "character")
+    z <- getConfigVariable("Z", NULL, "character")
+    clearance <- getConfigVariable("Clearance", NULL, "integer")
+    nColumns <- getConfigVariable("Columns", NULL, "integer")
     windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
+    colourScale <- getConfigVariable("ColourScale", "heat")
+    projectOverlays <- getConfigVariable("ProjectOverlays", NULL, "logical")
+    alpha <- getConfigVariable("Alpha", "linear", validValues=c("linear","log"))
+    zoomFactor <- getConfigVariable("ZoomFactor", 1)
+    separate <- getConfigVariable("Separate", FALSE)
+    
+    colourScale <- switch(colourScale, greyscale=1L, grayscale=1L, heat=2L, rainbow=3L, bluered=4L, red=5L, blue=6L, colourScale)
     
     if (!is.null(windowLimits))
     {
         windowLimits <- splitAndConvertString(windowLimits, ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
-        if (length(windowLimits) != 2)
-            report(OL$Error, "Window limits must be given as a 2-vector giving the low and high limits")
+        windowLimits <- lapply(seq_along(Arguments), function(i) {
+            if (length(windowLimits) >= 2*i)
+                windowLimits[c(2*i-1,2*i)]
+            else
+                NULL
+        })
     }
     
-    point <- c(x,y,z)
-    nas <- is.na(point)
-    point[nas] <- 1
-    point <- round(changePointType(point, image, "r", pointType))
-    point[nas] <- NA
+    if (!is.null(clearance))
+    {
+        images[[1]] <- trimMriImage(images[[1]], clearance)
+        for (i in seq_len(length(images)-1))
+            images[[i+1]] <- trimMriImage(images[[i+1]], indices=attr(images[[1]],"indices"))
+    }
     
-    createSliceGraphic(image, point[1], point[2], point[3], device="png", file=outputFile, windowLimits=windowLimits)
+    resolveLocs <- function (axis, locs)
+    {
+        if (is.null(locs))
+            return (integer(0))
+        else if (locs == "all")
+            return (seq_len(dims[axis,1]))
+        else if (locs %~% "(\\d+)s")
+            return (seq(1, dims[axis,1], as.integer(ore.lastmatch()[,1])))
+        else
+            return (splitAndConvertString(locs, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE))
+    }
+    
+    # Special viz function needed
 }
