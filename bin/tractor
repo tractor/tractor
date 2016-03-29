@@ -121,7 +121,7 @@ script_name=`echo $1 | sed 's/\.R$//'`
 
 [ $supress_config -eq 0 -a -f "$HOME/.tractor/${script_name}.yaml" ] && config_file="$HOME/.tractor/${script_name}.yaml:$config_file"
 
-[ $keep_log -eq 1 ] && log_file="$working_dir/tractor_${script_name}.log"
+[ $keep_log -eq 1 ] && log_file="$working_dir/tractor_${script_name}${TRACTOR_PLOUGH_ID+.}${TRACTOR_PLOUGH_ID}.log"
 
 [ -d "${TRACTOR_HOME}/lib/R" ] && export R_LIBS="${TRACTOR_HOME}/lib/R"
 
