@@ -151,14 +151,14 @@ readPntDataTable <- function (datasetName)
     {
         # Dataset will have been created piecemeal by plough, so we need to collect the pieces
         fileNames <- list.files(dirname(datasetName))
-        datasetStem <- ensureFileSuffix(datasetStem, NULL, strip="txt")
+        datasetStem <- ensureFileSuffix(datasetName, NULL, strip="txt")
         match <- ore.search(ore("^",ore.escape(datasetStem),"\\.(\\d+)\\.txt$"), fileNames, simplify=FALSE)
         indices <- as.integer(groups(match, simplify=FALSE))
         fileNames <- fileNames[!is.na(indices)]
         indices <- indices[!is.na(indices)]
         data <- Reduce(rbind, lapply(fileNames[order(indices)], read.table, stringsAsFactors=FALSE))
         write.table(data, ensureFileSuffix(datasetName,"txt"))
-        # unlink(fileNames)
+        unlink(fileNames)
     }
     
     return (data)
