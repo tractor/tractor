@@ -85,5 +85,5 @@ runExperiment <- function ()
         }
         else
             report(OL$Warning, "No seed points above threshold for session number #{i}")
-    })
+    }
 }

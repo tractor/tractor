@@ -65,7 +65,7 @@ runExperiment <- function ()
             report(OL$Warning, "No match data available for session number #{i}")
             return (invisible(NULL))
         }
-        bestSeed <- currentData[bestSeedIndex,c("x","y","z")]
+        bestSeed <- as.matrix(currentData[bestSeedIndex,c("x","y","z")])
         report(OL$Info, "Best seed point is (#{implode(bestSeed,',')})")
         
         tracker <- currentSession$getTracker()
