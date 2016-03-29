@@ -167,12 +167,14 @@ deduplicate <- function (...)
 #' @param base If \code{fileName} is a relative path, this option gives the
 #'   base directory which the path is relative to. If \code{fileName} is an
 #'   absolute path, this argument is ignored.
-#' @param path,referencePath Character strings representing file paths.
+#' @param path,referencePath Character vectors whose elements represent file
+#'   paths.
 #' @return The \code{ensureFileSuffix} function returns the specified file
 #'   names with the requested suffixes appended. \code{expandFileName} returns
 #'   the full path to the specified file name, collapsing \code{".."} elements
 #'   if appropriate. \code{relativePath} returns the specified \code{path},
-#'   expressed relative to \code{referencePath}.
+#'   expressed relative to \code{referencePath}. \code{matchPaths} resolves a
+#'   a vector of paths against a vector of reference paths.
 #' 
 #' @author Jon Clayden
 #' @seealso \code{\link{path.expand}} performs some of what
@@ -197,6 +199,15 @@ relativePath <- function (path, referencePath)
     newPieces <- c(rep("..", length(refPieces)-firstDifferentPiece), mainPieces[firstDifferentPiece:length(mainPieces)])
     
     return (implode(newPieces, sep=.Platform$file.sep))
+}
+
+#' @rdname paths
+#' @export
+matchPaths <- function (path, referencePath)
+{
+    expandedPath <- expandFileName(path)
+    expandedReferencePath <- expandFileName(referencePath)
+    return (referencePath[match(expandedPath, expandedReferencePath)])
 }
 
 #' @rdname paths

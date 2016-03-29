@@ -3,18 +3,22 @@
 \name{relativePath}
 \alias{ensureFileSuffix}
 \alias{expandFileName}
+\alias{matchPaths}
 \alias{paths}
 \alias{relativePath}
 \title{Functions for file name and path manipulation}
 \usage{
 relativePath(path, referencePath)
 
+matchPaths(path, referencePath)
+
 expandFileName(fileName, base = getwd())
 
 ensureFileSuffix(fileName, suffix, strip = NULL)
 }
 \arguments{
-\item{path, referencePath}{Character strings representing file paths.}
+\item{path, referencePath}{Character vectors whose elements represent file
+paths.}
 
 \item{fileName}{A character vector of file names.}
 
@@ -35,7 +39,8 @@ The \code{ensureFileSuffix} function returns the specified file
   names with the requested suffixes appended. \code{expandFileName} returns
   the full path to the specified file name, collapsing \code{".."} elements
   if appropriate. \code{relativePath} returns the specified \code{path},
-  expressed relative to \code{referencePath}.
+  expressed relative to \code{referencePath}. \code{matchPaths} resolves a
+  a vector of paths against a vector of reference paths.
 }
 \description{
 Functions for expanding file paths, finding relative paths and ensuring that
