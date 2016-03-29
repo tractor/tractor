@@ -665,6 +665,8 @@ setMethod("Summary", "MriImage", Summary.MriImage)
 #'   data should be extracted.
 #' @param clearance The number of voxels' clearance left around a trimmed
 #'   image.
+#' @param indices A list of indices to keep along each dimension. Determined
+#'   from the specified \code{clearance} if \code{NULL}.
 #' @return An \code{MriImage} object.
 #' 
 #' @author Jon Clayden
@@ -737,7 +739,7 @@ extractMriImage <- function (image, dim, loc)
 
 #' @rdname asMriImage
 #' @export
-trimMriImage <- function (image, clearance = 4)
+trimMriImage <- function (image, clearance = 4, indices = NULL)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
@@ -746,21 +748,24 @@ trimMriImage <- function (image, clearance = 4)
     
     data <- image$getData()
     dims <- image$getDimensions()
-    indices <- lapply(seq_len(image$getDimensionality()), function (i) {
-        dimMax <- apply(data, i, max)
-        toKeep <- which(is.finite(dimMax) & dimMax > 0)
-        if (length(toKeep) == 0)
-            report(OL$Error, "Trimming the image would remove its entire contents")
-        minLoc <- max(1, min(toKeep)-clearance[i])
-        maxLoc <- min(dims[i], max(toKeep)+clearance[i])
-        return (minLoc:maxLoc)
-    })
+    if (is.null(indices))
+    {
+        indices <- lapply(seq_len(image$getDimensionality()), function (i) {
+            dimMax <- apply(data, i, max)
+            toKeep <- which(is.finite(dimMax) & dimMax > 0)
+            if (length(toKeep) == 0)
+                report(OL$Error, "Trimming the image would remove its entire contents")
+            minLoc <- max(1, min(toKeep)-clearance[i])
+            maxLoc <- min(dims[i], max(toKeep)+clearance[i])
+            return (minLoc:maxLoc)
+        })
+    }
     
     data <- do.call("[", c(list(data),indices,list(drop=FALSE)))
     newDims <- sapply(indices, length)
     
     # NB: Origin is not corrected here
-    newImage <- asMriImage(data, image, imageDims=newDims)
+    newImage <- structure(asMriImage(data,image,imageDims=newDims), indices=indices)
     invisible (newImage)
 }
 

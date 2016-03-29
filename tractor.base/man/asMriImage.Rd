@@ -13,7 +13,7 @@ asMriImage(data, templateImage = nilObject(), imageDims = NA,
 
 extractMriImage(image, dim, loc)
 
-trimMriImage(image, clearance = 4)
+trimMriImage(image, clearance = 4, indices = NULL)
 
 reorderMriImage(image)
 }
@@ -35,6 +35,9 @@ data should be extracted.}
 
 \item{clearance}{The number of voxels' clearance left around a trimmed
 image.}
+
+\item{indices}{A list of indices to keep along each dimension. Determined
+from the specified \code{clearance} if \code{NULL}.}
 }
 \value{
 An \code{MriImage} object.
