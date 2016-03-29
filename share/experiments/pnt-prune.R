@@ -1,4 +1,5 @@
 #@desc Visualise the results of evaluating a data set against a PNT model, creating Analyze/NIfTI/MGH volumes (with CreateVolumes:true) and/or projection images (CreateImages:true) of the best matching tracts for each session. A single seed point is used in each case, but individual streamlines generated from this seed are retained or rejected depending on their likelihood under the model.
+#@args [session directories]
 
 library(tractor.reg)
 library(tractor.track)
@@ -9,42 +10,30 @@ runExperiment <- function ()
 {
     tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
     datasetName <- getConfigVariable("DatasetName", NULL, "character", errorIfMissing=TRUE)
-    resultsName <- getConfigVariable("ResultsName", NULL, "character", errorIfMissing=TRUE)
-    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
     modelName <- getConfigVariable("ModelName", NULL, "character")
-    sessionNumbers <- getConfigVariable("SessionNumbers", NULL, "character")
-    
+    resultsName <- getConfigVariable("ResultsName", NULL, "character", errorIfMissing=TRUE)
     nStreamlines <- getConfigVariable("Streamlines", 1000)
     subgroupSize <- getConfigVariable("SubgroupSize", 500)
     truncate <- getConfigVariable("TruncateToReference", TRUE)
     randomSeed <- getConfigVariable("RandomSeed", NULL, "integer")
     
-    createVolumes <- getConfigVariable("CreateVolumes", TRUE)
-    createImages <- getConfigVariable("CreateImages", FALSE)
-    showSeed <- getConfigVariable("ShowSeedPoint", TRUE)
-    
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     refSession <- reference$getSourceSession()
     options <- reference$getTractOptions()
-
+    model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
+    results <- getNTResource("results", "pnt", list(resultsName=resultsName))
+    
     if (!is.null(randomSeed))
         set.seed(randomSeed)
-
-    model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
     
-    if (!createVolumes && !createImages)
-        report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
-    
-    nSessions <- length(sessionList)
-    
-    results <- getNTResource("results", "pnt", list(resultsName=resultsName))
-    if (results$nSessions() != nSessions)
-        report(OL$Error, "Length of the session list specified does not match the results file")
-    nPoints <- results$nPoints()
-
-    searchWidth <- round(nPoints^(1/3))
-    if (searchWidth^3 != nPoints)
-        report(OL$Error, "Results file does not describe a cubic search space")
+    data <- readPntDataTable(datasetName)
+    if (nArguments() > 0)
+        sessionList <- matchPaths(Arguments, unique(data$sessionPath))
+    else
+    {
+        sessionList <- unique(data$sessionPath)
+        attr(sessionList, "indices") <- 1:length(sessionList)
+    }
     
     referenceSteps <- calculateSplineStepVectors(reference$getTract(), reference$getTractOptions()$pointType)
     if (nrow(referenceSteps$right) >= 2)
@@ -54,42 +43,30 @@ runExperiment <- function ()
     else
         report(OL$Error, "The reference tract has no length on either side")
     
-    if (is.null(sessionNumbers))
-        sessionNumbers <- 1:nSessions
-    else
-        sessionNumbers <- splitAndConvertString(sessionNumbers, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
-    
-    data <- read.table(ensureFileSuffix(datasetName,"txt"))
-    seedsInData <- all(c("x","y","z") %in% colnames(data))
-    subjectsInData <- ("subject" %in% colnames(data)) && (is.integer(data$subject))
-    
-    parallelApply(sessionNumbers, function (i) {
-        report(OL$Info, "Generating tract for session #{i}")
-        
-        currentSession <- attachMriSession(sessionList[i])
-        if (seedsInData)
+    for (i in seq_along(sessionList))
+    {
+        if (is.na(sessionList[i]))
         {
-            if (subjectsInData)
-                currentData <- subset(data, subject==i)
-            else
-                currentData <- data[(((i-1)*nPoints)+1):(i*nPoints),]
-            currentSeed <- round(apply(currentData[,c("x","y","z")], 2, median))
+            report(OL$Warning, "Session path #{Arguments[i]} does not appear in the dataset")
+            next
         }
-        else
-            currentSeed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), currentSession, "diffusion", oldSpace="mni", pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
         
-        currentPosteriors <- results$getTractPosteriors(i)
+        report(OL$Info, "Generating tract for session #{sessionList[i]}")
+        currentSession <- attachMriSession(sessionList[i])
+        currentData <- subset(data, sessionPath==sessionList[i])
+        currentPosteriors <- results$getTractPosteriors(attr(sessionList,"indices")[i])
+        
+        if (length(currentPosteriors) != nrow(currentData))
+            report(OL$Error, "Posterior vector length does not match the dataset")
         
         bestSeedIndex <- which.max(currentPosteriors)
         if (length(bestSeedIndex) == 0)
         {
-            report(OL$Warning, "No match data available for session number ", i)
+            report(OL$Warning, "No match data available for session number #{i}")
             return (invisible(NULL))
         }
-        
-        neighbourhood <- createNeighbourhoodInfo(searchWidth, centre=currentSeed)
-        bestSeed <- neighbourhood$vectors[,bestSeedIndex]
-        report(OL$Info, "Seed point is (#{implode(bestSeed,',')})")
+        bestSeed <- currentData[bestSeedIndex,c("x","y","z")]
+        report(OL$Info, "Best seed point is (#{implode(bestSeed,',')})")
         
         tracker <- currentSession$getTracker()
         tracker$setOptions(rightwardsVector=rightwardsVector)
@@ -170,9 +147,6 @@ runExperiment <- function ()
         report(OL$Info, "Creating visitation map")
         faPath <- currentSession$getImageFileNameByType("FA", "diffusion")
         visitationMap <- streamSource$getVisitationMap(faPath)
-        
-        currentTractName <- paste(tractName, "_session", i, sep="")
-        if (createVolumes)
-            writeImageFile(visitationMap, currentTractName)
-    })
+        writeImageFile(visitationMap, es("#{tractName}.#{i}"))
+    }
 }

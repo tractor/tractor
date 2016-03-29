@@ -4,6 +4,7 @@
 #@desc likelihoods relative to the reference tract (an indicator of goodness-of-fit);
 #@desc or "null-posterior", for the posterior probability of no match. In each case one
 #@desc value is given per session.
+#@args [session directories]
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
@@ -14,55 +15,49 @@ runExperiment <- function ()
     datasetName <- getConfigVariable("DatasetName", NULL, "character", errorIfMissing=TRUE)
     modelName <- getConfigVariable("ModelName", NULL, "character")
     resultsName <- getConfigVariable("ResultsName", NULL, "character", errorIfMissing=TRUE)
-    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
-    
     originalMaxSeeds <- getConfigVariable("MaximumSeedPoints", 1, "integer")
     minPosterior <- getConfigVariable("MinimumPosterior", 0, "numeric")
-    
     mode <- getConfigVariable("Mode", NULL, "character", errorIfMissing=TRUE, c("location","posterior","ratio","null-posterior"), errorIfInvalid=TRUE)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
-    
-    nSessions <- length(sessionList)
-    
     results <- getNTResource("results", "pnt", list(resultsName=resultsName))
-    if (results$nSessions() != nSessions)
-        report(OL$Error, "Length of the session list specified does not match the results file")
-    nPoints <- results$nPoints()
-
-    searchWidth <- round(nPoints^(1/3))
-    if (searchWidth^3 != nPoints)
-        report(OL$Error, "Results file does not describe a cubic search space")
     
-    data <- read.table(ensureFileSuffix(datasetName,"txt"))
-    seedsInData <- all(c("x","y","z") %in% colnames(data))
-    subjectsInData <- ("subject" %in% colnames(data)) && (is.integer(data$subject))
+    data <- readPntDataTable(datasetName)
+    if (nArguments() > 0)
+        sessionList <- matchPaths(Arguments, unique(data$sessionPath))
+    else
+    {
+        sessionList <- unique(data$sessionPath)
+        attr(sessionList, "indices") <- 1:length(sessionList)
+    }
+    
     logLikelihoods <- calculateMatchedLogLikelihoodsForDataTable(data, model)
     
     refData <- createDataTableForSplines(list(reference$getTract()), reference$getTract(), reference$getTractOptions()$pointType)
     refLogLikelihood <- calculateMatchedLogLikelihoodsForDataTable(refData, model)
     
-    for (i in 1:nSessions)
+    for (i in seq_along(sessionList))
     {
+        if (is.na(sessionList[i]))
+        {
+            report(OL$Warning, "Session path #{Arguments[i]} does not appear in the dataset")
+            next
+        }
+        
         report(OL$Info, "Current session is ", sessionList[i])
         currentSession <- attachMriSession(sessionList[i])
-        if (seedsInData)
-        {
-            if (subjectsInData)
-                currentData <- subset(data, subject==i)
-            else
-                currentData <- data[(((i-1)*nPoints)+1):(i*nPoints),]
-            currentSeed <- round(apply(currentData[,c("x","y","z")], 2, median))
-        }
-        else
-            currentSeed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), currentSession, "diffusion", oldSpace="mni", pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
-        currentPosteriors <- results$getTractPosteriors(i)
-        report(OL$Info, "Neighbourhood centre point is ", implode(currentSeed,sep=","))
+        currentData <- subset(data, sessionPath==sessionList[i])
+        currentSeed <- round(apply(currentData[,c("x","y","z")], 2, median))
+        currentPosteriors <- results$getTractPosteriors(attr(sessionList,"indices")[i])
+        
+        report(OL$Info, "Neighbourhood centroid is (#{implode(currentSeed,sep=',')})")
+        if (length(currentPosteriors) != nrow(currentData))
+            report(OL$Error, "Posterior vector length does not match the dataset")
         
         if (mode == "null-posterior")
         {
-            cat(paste(results$getNullPosterior(i), "\n", sep=""))
+            cat(paste(results$getNullPosterior(attr(sessionList,"indices")[i]), "\n", sep=""))
             next
         }
         
@@ -72,7 +67,7 @@ runExperiment <- function ()
         
         if (all(is.na(ranks)))
         {
-            report(OL$Warning, "No match data available for session number ", i)
+            report(OL$Warning, "No match data available for session number #{i}")
             next
         }
         
@@ -80,18 +75,11 @@ runExperiment <- function ()
             maxSeeds <- maxRank
         else
             maxSeeds <- originalMaxSeeds
+        
         indices <- match(1:maxSeeds, ranks)
-        currentPosteriors[setdiff(1:nPoints,indices)] <- NA
-        
+        currentPosteriors[-indices] <- NA
         indices <- intersect(indices, which(currentPosteriors>=minPosterior))
-        
-        if (seedsInData)
-            seeds <- as.matrix(currentData[indices,c("x","y","z")])
-        else
-        {
-            neighbourhoodInfo <- createNeighbourhoodInfo(searchWidth, centre=currentSeed)
-            seeds <- t(neighbourhoodInfo$vectors[,indices])
-        }
+        seeds <- as.matrix(currentData[indices,c("x","y","z")])
         
         for (j in 1:originalMaxSeeds)
         {
@@ -99,7 +87,7 @@ runExperiment <- function ()
                 cat("NA\n")
             else
             {
-                likelihoodIndex <- ((i-1)*nPoints) + indices[j]
+                likelihoodIndex <- ((i-1)*length(currentPosteriors)) + indices[j]
                 value <- switch(mode, location=implode(seeds[j,],sep=","),
                                       posterior=currentPosteriors[indices[j]],
                                       ratio=(logLikelihoods[likelihoodIndex]-refLogLikelihood))
