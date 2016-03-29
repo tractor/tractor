@@ -23,7 +23,7 @@ runExperiment <- function ()
     # This is certainly the most sensible choice, so for now we hard-code it
     alphaOffset <- 1
 
-    data <- read.table(ensureFileSuffix(datasetName,"txt"))
+    data <- readPntDataTable(datasetName)
     
     if (is.null(alphaPriorMean))
         results <- runMatchingEMForDataTable(data, reference$getTract(), lengthCutoff=maxKnotCount, nullPrior=nullPrior, asymmetricModel=asymmetricModel)

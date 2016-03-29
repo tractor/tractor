@@ -16,7 +16,7 @@ runExperiment <- function ()
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
 
-    data <- read.table(ensureFileSuffix(datasetName,"txt"))
+    data <- readPntDataTable(datasetName)
     model <- newMatchingTractModelFromDataTable(data, reference$getTract(), maxLength=maxKnotCount, asymmetric=asymmetricModel)
     
     writeNTResource(model, "model", "pnt", list(tractName=tractName,datasetName=datasetName))

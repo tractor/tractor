@@ -11,7 +11,7 @@ runExperiment <- function ()
     
     model <- getNTResource("model", "pnt", list(modelName=modelName))
     
-    data <- read.table(ensureFileSuffix(datasetName,"txt"))
+    data <- readPntDataTable(datasetName)
     
     results <- calculatePosteriorsForDataTable(data, model)
     resultsObject <- newProbabilisticNTResultsFromPosteriors(results$tp, results$np, results$mm, NULL)
