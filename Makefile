@@ -16,7 +16,8 @@ post-build-info:
 	@$(ECHO) 'Run "make install" to install packages'
 
 build:
-	@cd src && $(MAKE) R=$(R)
+	@$(ECHO_N) "Building tractor executable... "
+	@cd src && $(R) CMD make >build.log 2>&1 && $(ECHO) "OK" || ( $(ECHO) "FAIL"; exit 0 )
 
 post-install-info:
 	@$(ECHO)
@@ -81,7 +82,7 @@ clean:
 
 distclean: clean
 	@rm -f lib/.VERSION
-	@rm -f bin/exec/tractor src/build.log install.log
+	@rm -f bin/exec/tractor src/tractor.o src/build.log install.log
 	@rm -f tractor.track/config.log tractor.track/config.status tractor.track/src/Makevars tractor.track/src/config.h
 
 test:

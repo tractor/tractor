@@ -1,9 +1,11 @@
-R=R
+include ${R_HOME}/etc${R_ARCH}/Makeconf
 
-ECHO=/bin/echo
-ECHO_N=/bin/echo -n
+all: ../bin/exec/tractor
 
-all: tractor.c tractor.h
-	@$(ECHO_N) "Building tractor executable... "
-	@mkdir -p ../bin/exec
-	@CC=`$(R) CMD config CC`; CPPFLAGS=`$(R) CMD config --cppflags`; LDFLAGS=`$(R) CMD config --ldflags`; $(R) CMD LINK $$CC $$CPPFLAGS $$LDFLAGS -o ../bin/exec/tractor tractor.c >build.log 2>&1 && $(ECHO) "OK" || ( $(ECHO) "FAIL"; exit 0 )
+## The following is not needed, but avoids PIC flags.
+tractor.o: tractor.c tractor.h
+	$(CC) $(ALL_CPPFLAGS) $(CFLAGS) -c tractor.c -o $@
+
+## replace $(LIBR) $(LIBS) by $(STATIC_LIBR) if R was build with a static libR
+../bin/exec/tractor: tractor.o
+	$(MAIN_LINK) -o $@ tractor.o $(LIBR) $(LIBS) || $(MAIN_LINK) -o $@ tractor.o $(STATIC_LIBR)

@@ -5,10 +5,10 @@
 
 #include "tractor.h"
 
-FILE *log_file = NULL;
-char *bootstrap_string = NULL;
-char *script_file = NULL, *working_dir = NULL, *output_level = NULL, *config_file = NULL, *script_args = NULL;
-int parallelisation_factor = 1, profile_performance = 0;
+static FILE *log_file = NULL;
+static char *bootstrap_string = NULL;
+static char *script_file = NULL, *working_dir = NULL, *output_level = NULL, *config_file = NULL, *script_args = NULL;
+static int parallelisation_factor = 1, profile_performance = 0;
 
 char * allocate_and_copy_string (const char *from)
 {
@@ -142,6 +142,8 @@ int main (int argc, char **argv)
     ptr_R_ReadConsole = &read_console;
     ptr_R_WriteConsole = NULL;
     ptr_R_WriteConsoleEx = &write_console;
+    R_Outputfile = NULL;
+    R_Consolefile = NULL;
     ptr_R_CleanUp = &tidy_up_all;
     R_running_as_main_program = 1;
     
@@ -245,7 +247,7 @@ int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int
         if (log_file != NULL)
         {
             fputs(prompt, log_file);
-            fputs(buffer, log_file);
+            fputs((const char *) buffer, log_file);
         }
     }
     
