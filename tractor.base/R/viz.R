@@ -102,7 +102,7 @@ colourMap <- function (image, scale, zlim = NULL)
     nColours <- length(scale$colours)
     
     if (is.null(zlim))
-        zlim <- range(image, na.rm=TRUE)
+        zlim <- suppressWarnings(range(image, na.rm=TRUE))
     else
         zlim <- sort(zlim)
     
@@ -137,10 +137,10 @@ maximumIntensityProjection <- function (image, axis)
         coords <- image$getData()$getCoordinates()
         data <- image$getData()$getData()
         factors <- lapply(seq_len(nDims-1), function(i) factor(coords[,planeAxes[i]],levels=seq_len(dims[planeAxes[i]])))
-        result <- tapply(data, factors, max)
+        result <- suppressWarnings(tapply(data, factors, max, na.rm=TRUE))
     }
     else
-        result <- image$apply(planeAxes, max)
+        result <- suppressWarnings(image$apply(planeAxes, max, na.rm=TRUE))
     
     invisible(result)
 }
@@ -385,4 +385,108 @@ createCombinedGraphics <- function (images, modes, colourScales, axes = 1:3, sli
     }
     else
         report(OL$Warning, "The 'createCombinedGraphics' function only supports the \"png\" device for now")
+}
+
+compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScale = 2, projectOverlays = NULL, alpha = c("binary","linear","log"), prefix = "image", zoomFactor = 1, windowLimits = NULL, nColumns = NULL, separate = FALSE)
+{
+    if (!is.list(images) || length(images) < 1)
+        report(OL$Error, "Images should be specified in a list with at least one element")
+    if (is.null(windowLimits))
+        windowLimits <- rep(list(NULL), length(images))
+    else if (!is.list(windowLimits) || length(windowLimits) != length(images))
+        report(OL$Error, "Window limits should be specified in a list of the same length as the images")
+    
+    alpha <- match.arg(alpha)
+    
+    dims <- sapply(images, dim, simplify="array")
+    if (any(diff(t(dims)) != 0))
+        report(OL$Error, "Images must all have the same dimensionality")
+    dims <- dims[,1]
+    voxelDims <- images[[1]]$getVoxelDimensions()
+    fieldOfView <- images[[1]]$getFieldOfView()
+    
+    alphaImages <- lapply(seq_along(images), function(i) {
+        if (i == 1)
+            NULL
+        else if (alpha == "linear")
+            images[[i]]$copy()
+        else
+        {
+            body <- switch(alpha, binary="ifelse(x>0,1,0)", log="ifelse(x>0,log(x),0)")
+            images[[i]]$copy()$map(eval(parse(text=es("function(x) #{body}"))))
+        }
+    })
+    
+    info <- data.frame(loc=c(x,y,z), axis=c(rep(1L,length(x)), rep(2L,length(y)), rep(3L,length(z))))
+    widthAxes <- c(2, 1, 1)
+    heightAxes <- c(3, 3, 2)
+    info$width <- ceiling(abs(dims[widthAxes] * voxelDims[widthAxes] * zoomFactor))[info$axis]
+    info$height <- ceiling(abs(dims[heightAxes] * voxelDims[heightAxes] * zoomFactor))[info$axis]
+    nPanes <- nrow(info)
+    
+    # Use projections, unless multiple slices on the same axis were requested
+    if (is.null(projectOverlays))
+        projectOverlays <- !any(duplicated(info$axis))
+    
+    if (!separate)
+    {
+        # By default, make the grid close to square
+        if (is.null(nColumns))
+            nColumns <- ceiling(sqrt(nPanes))
+        nRows <- ceiling(nPanes / nColumns)
+        
+        # Column-major order
+        gridLocs <- vectorToMatrixLocs(1:nPanes, c(nColumns,nRows))[,2:1,drop=FALSE]
+        cellWidth <- max(info$width)
+        cellHeight <- max(info$height)
+        
+        finalImage <- array(NA, dim=c(nColumns*cellWidth, nRows*cellHeight, 3))
+    }
+    
+    for (j in seq_len(nPanes))
+    {
+        for (i in seq_along(images))
+        {
+            if (projectOverlays && i > 1)
+                data <- maximumIntensityProjection(images[[i]], info$axis[j])
+            else
+                data <- images[[i]]$getSlice(info$axis[j], info$loc[j])
+            
+            if (i == 1)
+                currentImage <- colourMap(data, 1, windowLimits[[i]])
+            else
+            {
+                layerImage <- colourMap(data, colourScale, windowLimits[[i]])
+                if (projectOverlays)
+                    layerAlpha <- maximumIntensityProjection(alphaImages[[i]], info$axis[j])
+                else
+                    layerAlpha <- alphaImages[[i]]$getSlice(info$axis[j], info$loc[j])
+                layerAlpha <- colourMap(layerAlpha, 1)
+                currentImage <- (1-layerAlpha) * currentImage + layerAlpha * layerImage
+            }
+        }
+        
+        paneAxes <- setdiff(1:3, info$axis[j])
+        red <- mmand::rescale(currentImage[,,1], abs(voxelDims[paneAxes] * zoomFactor), mmand::mnKernel())
+        green <- mmand::rescale(currentImage[,,2], abs(voxelDims[paneAxes] * zoomFactor), mmand::mnKernel())
+        blue <- mmand::rescale(currentImage[,,3], abs(voxelDims[paneAxes] * zoomFactor), mmand::mnKernel())
+        currentImage <- c(red, green, blue)
+        
+        if (separate)
+        {
+            dim(currentImage) <- c(dim(red), 3L)
+            fileName <- es("#{prefix}_#{letters[24:26][info$axis[j]]}#{info$loc[j]}")
+            writePng(currentImage, fileName, fieldOfView[paneAxes[2]]/fieldOfView[paneAxes[1]])
+        }
+        else
+        {
+            # The image will get Y-flipped and transposed by writePng()
+            colStart <- round((gridLocs[j,2]-1) * cellWidth + 1 + (cellWidth-info$width[j])/2)
+            rowStart <- round((nRows-gridLocs[j,1]) * cellHeight + 1 + (cellHeight-info$height[j])/2)
+            finalImage[colStart:(colStart+info$width[j]-1), rowStart:(rowStart+info$height[j]-1),] <- currentImage
+        }
+    }
+    
+    if (!separate)
+        writePng(finalImage, prefix)
 }

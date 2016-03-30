@@ -1,4 +1,4 @@
-writePng <- function (data, fileName, aspectRatio)
+writePng <- function (data, fileName, aspectRatio = 1)
 {
     if (length(dim(data)) == 3)
     {
@@ -6,7 +6,7 @@ writePng <- function (data, fileName, aspectRatio)
         data <- aperm(data, c(2,1,3))
     }
     else if (length(dim(data)) == 2)
-        data <- data[,dim(data)[2]:1]
+        data <- t(data[,dim(data)[2]:1])
     
     data[data<0] <- 0
     data[data>1] <- 1

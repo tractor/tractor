@@ -751,7 +751,7 @@ trimMriImage <- function (image, clearance = 4, indices = NULL)
     if (is.null(indices))
     {
         indices <- lapply(seq_len(image$getDimensionality()), function (i) {
-            dimMax <- apply(data, i, max)
+            dimMax <- suppressWarnings(apply(data, i, max, na.rm=TRUE))
             toKeep <- which(is.finite(dimMax) & dimMax > 0)
             if (length(toKeep) == 0)
                 report(OL$Error, "Trimming the image would remove its entire contents")
