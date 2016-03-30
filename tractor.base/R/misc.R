@@ -32,7 +32,7 @@ implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
 {
     # Transform runs of integers into ranges
     # This is surprisingly tricky to get right!
-    if (ranges && is.integer(strings))
+    if (ranges && is.integer(strings) && length(strings) > 1)
     {
         # Perform run-length encoding on the differences between elements
         gapRunLengths <- rle(diff(strings))
