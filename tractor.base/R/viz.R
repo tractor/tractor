@@ -138,6 +138,7 @@ maximumIntensityProjection <- function (image, axis)
         data <- image$getData()$getData()
         factors <- lapply(seq_len(nDims-1), function(i) factor(coords[,planeAxes[i]],levels=seq_len(dims[planeAxes[i]])))
         result <- suppressWarnings(tapply(data, factors, max, na.rm=TRUE))
+        result[is.na(result)] <- 0
     }
     else
         result <- suppressWarnings(image$apply(planeAxes, max, na.rm=TRUE))
@@ -408,12 +409,10 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScale =
     alphaImages <- lapply(seq_along(images), function(i) {
         if (i == 1)
             NULL
-        else if (alpha == "linear")
-            images[[i]]$copy()
         else
         {
-            body <- switch(alpha, binary="ifelse(x>0,1,0)", log="ifelse(x>0,log(x),0)")
-            images[[i]]$copy()$map(eval(parse(text=es("function(x) #{body}"))))
+            validExpression <- switch(alpha, binary="1", linear="x", log="log(x)")
+            images[[i]]$copy()$map(eval(parse(text=es("function(x) ifelse(!is.na(x) & x>0, #{validExpression}, 0)"))))
         }
     })
     
