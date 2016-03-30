@@ -14,8 +14,6 @@ runExperiment <- function ()
     if (any(diff(t(dims)) != 0))
         report(OL$Error, "Images must have the same dimensions")
     
-    outputPrefix <- paste(basename(images[[1]]$getSource()), "slice", sep="_")
-    
     x <- getConfigVariable("X", NULL, "character")
     y <- getConfigVariable("Y", NULL, "character")
     z <- getConfigVariable("Z", NULL, "character")
@@ -27,8 +25,12 @@ runExperiment <- function ()
     alpha <- getConfigVariable("Alpha", "binary", validValues=c("binary","linear","log"))
     zoomFactor <- getConfigVariable("ZoomFactor", 1)
     separate <- getConfigVariable("Separate", FALSE)
+    outputPrefix <- getConfigVariable("GraphicName", "slices")
     
-    colourScale <- switch(colourScale, greyscale=1L, grayscale=1L, heat=2L, rainbow=3L, "blue-red"=4L, red=5L, blue=6L, colourScale)
+    if (is.null(x) && is.null(y) && is.null(z))
+        report(OL$Error, "At least one of X, Y and Z should be specified")
+    
+    colourScale <- switch(colourScale, greyscale=1L, grayscale=1L, heat=2L, rainbow=3L, "blue-red"=4L, reds=5L, blues=6L, "yellow-red"=7L, colourScale)
     
     if (!is.null(windowLimits))
     {
@@ -55,6 +57,8 @@ runExperiment <- function ()
             return (integer(0))
         else if (locs == "all")
             result <- seq_len(dims[axis,1])
+        else if (locs == "max")
+            result <- which.max(images[[length(images)]]$apply(axis,sum,na.rm=TRUE))
         else if (locs %~% "(\\d+)s")
             result <- seq(1, dims[axis,1], as.integer(ore.lastmatch()[,1]))
         else
@@ -62,6 +66,8 @@ runExperiment <- function ()
         
         if (!is.null(attr(images[[1]],"indices")))
             result <- na.omit(match(result, attr(images[[1]],"indices")[[axis]]))
+        
+        report(OL$Verbose, "Using #{LETTERS[24:26][axis]} slice(s) #{implode(as.integer(result),', ',' and ',ranges=TRUE)}")
         
         return (result)
     }
