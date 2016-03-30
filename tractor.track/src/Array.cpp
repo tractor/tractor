@@ -3,15 +3,6 @@
 #include "Space.h"
 #include "Array.h"
 
-// Tell the compiler that we're going to need these specialisations (otherwise
-// it won't generate the relevant code and we'll get a linker error)
-template class Array<bool>;
-template class Array<short>;
-template class Array<int>;
-template class Array<float>;
-template class Array<double>;
-template class Array<Space<3>::Vector>;
-
 template <typename DataType>
 Neighbourhood Array<DataType>::getNeighbourhood () const
 {
@@ -134,3 +125,12 @@ void Array<DataType>::expandIndex (const size_t &loc, std::vector<int> &result) 
         result[i] = (loc / temp) % dims[i];
     }
 }
+
+// Tell the compiler that we're going to need these specialisations (otherwise
+// it won't generate the relevant code and we'll get a linker error)
+template class Array<bool>;
+template class Array<short>;
+template class Array<int>;
+template class Array<float>;
+template class Array<double>;
+template class Array<Space<3>::Vector>;
