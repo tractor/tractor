@@ -1,5 +1,17 @@
-HeuristicNTResults <- setRefClass("HeuristicNTResults", contains="SerialisableObject", fields=list(results="list"), methods=list(
+HeuristicNTResults <- setRefClass("HeuristicNTResults", contains="SerialisableObject", fields=list(results="list",sessionPaths="character"), methods=list(
+    initialize = function (results = list(), sessionPaths = character(0), ...)
+    {
+        if (length(sessionPaths) > 0 && length(sessionPaths) != length(results))
+            report(OL$Error, "Session path length does not match the results list")
+        
+        initFields(results=result, sessionPaths=sessionPaths)
+    },
+    
     getResult = function (pos) { return (results[[pos]]) },
+    
+    getResults = function () { return (results) },
+    
+    getSessionPaths = function () { return (sessionPaths) },
     
     nSessions = function () { return (length(results)) },
     
@@ -46,15 +58,6 @@ ProbabilisticNTResults <- setRefClass("ProbabilisticNTResults", contains="Serial
         return (list(labels=labels, values=values))
     }
 ))
-
-newHeuristicNTResultsFromList <- function (results)
-{
-    if (!is.list(results) || length(results) == 0 || !is.list(results[[1]]))
-        report(OL$Error, "The specified heuristic NT results list appears to be invalid")
-    
-    object <- HeuristicNTResults$new(results=results)
-    invisible (object)
-}
 
 newProbabilisticNTResultsFromPosteriors <- function (tractPosteriors, nullPosteriors, matchingModel, uninformativeModel = NULL)
 {

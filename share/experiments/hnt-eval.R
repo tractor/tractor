@@ -1,4 +1,5 @@
 #@desc Evaluate a series of candidate tracts for similarity to a reference tract. The specified TractName must match that passed to the "hnt-ref" experiment used to generate the reference tract. Source sessions for the candidate tracts are given using the SessionList option. The SeedPointList is optional - if omitted then the standard space seed point associated with the reference tract will be used to establish neighbourhood centre points. Any candidate seed point with anisotropy lower than AnisotropyThreshold will be ignored.
+#@args session directory, [seed point]
 
 library(tractor.reg)
 library(tractor.session)
@@ -7,36 +8,23 @@ library(tractor.nt)
 runExperiment <- function ()
 {
     tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
-    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
-    seedList <- getConfigVariable("SeedPointList", NULL, "integer")
-    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
     searchWidth <- getConfigVariable("SearchWidth", 1)
     faThreshold <- getConfigVariable("AnisotropyThreshold", 0.2)
     nStreamlines <- getConfigVariable("Streamlines", 1000)
     resultsName <- getConfigVariable("ResultsName", "results")
     
     reference <- getNTResource("reference", "hnt", list(tractName=tractName))
-    nSessions <- length(sessionList)
     
-    if (!is.null(seedList))
-    {
-        if (is.null(pointType))
-            report(OL$Error, "Point type must be specified with the seed list")
-        seedMatrix <- matrix(seedList, ncol=3, byrow=TRUE)
-    }
-
-    results <- parallelApply(seq_len(nSessions), function (i) {
-        currentSession <- attachMriSession(sessionList[i])
-
-        if (exists("seedMatrix"))
-            currentSeed <- round(changePointType(seedMatrix[i,], session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
-        else
-            currentSeed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), currentSession, "diffusion", oldSpace="mni", pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
-
-        result <- runNeighbourhoodTractography(currentSession, currentSeed, reference$getTract(), faThreshold, searchWidth, nStreamlines=nStreamlines)
-        return (result)
-    })
+    session <- attachMriSession(Arguments[1])
+    if (nArguments() > 1)
+        seed <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
+    else
+        seed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), session, "diffusion", oldSpace="mni", pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
     
-    resultsObject <- newHeuristicNTResultsFromList(results)
+    result <- runNeighbourhoodTractography(session, seed, reference$getTract(), faThreshold, searchWidth, nStreamlines=nStreamlines)
+    
+    resultsObject <- HeuristicNTResults$new(results, Arguments[1])
+    if (isValidAs(Sys.getenv("TRACTOR_PLOUGH_ID"), "integer"))
+        resultsName <- paste(ensureFileSuffix(resultsName,NULL,strip="Rdata"), Sys.getenv("TRACTOR_PLOUGH_ID"), sep=".")
     writeNTResource(resultsObject, "results", "hnt", list(resultsName=resultsName))
 }

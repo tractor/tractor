@@ -2,6 +2,7 @@
 #@desc volumes and/or projection images of the "best" matching candidate tracts.
 #@desc The TractName, ResultsName and SessionList options must match those passed to
 #@desc the "hnt-eval" experiment.
+#@args [session directory]
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
@@ -10,33 +11,28 @@ runExperiment <- function ()
 {
     tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
     resultsName <- getConfigVariable("ResultsName", "results", errorIfMissing=TRUE)
-    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
-    
-    createVolumes <- getConfigVariable("CreateVolumes", TRUE)
-    createImages <- getConfigVariable("CreateImages", FALSE)
-    vizThreshold <- getConfigVariable("VisualisationThreshold", 0.01)
-    showSeed <- getConfigVariable("ShowSeedPoint", TRUE)
-    
-    if (!createVolumes && !createImages)
-        report(OL$Error, "One of \"CreateVolumes\" and \"CreateImages\" must be true")
-    
-    nSessions <- length(sessionList)
+    nStreamlines <- getConfigVariable("Streamlines", 1000L)
     
     results <- getNTResource("results", "hnt", list(resultsName=resultsName))
-    if (results$nSessions() != nSessions)
-        report(OL$Error, "Length of the session list specified does not match the results file")
+    
+    if (nArguments() > 0)
+        sessionList <- matchPaths(Arguments, results$getSessionPaths())
+    else
+    {
+        sessionList <- results$getSessionPaths()
+        attr(sessionList, "indices") <- 1:length(sessionList)
+    }
 
-    parallelApply(seq_len(nSessions), function (i) {
-        report(OL$Info, "Generating tract for session ", i)
+    for (i in seq_along(sessionList))
+    {
+        report(OL$Info, "Generating tract for session ", sessionList[i])
         
         currentSession <- attachMriSession(sessionList[i])
-        currentSeed <- results$getResult(i)$bestSeed
+        currentSeed <- results$getResult(attr(sessionList,"indices")[i])$bestSeed
         
-        # FIXME: doesn't seem necessary to hard-code the number of streamlines
-        trackerPath <- currentSession$getTracker()$run(currentSeed, 5000, requireMap=TRUE)
+        trackerPath <- currentSession$getTracker()$run(currentSeed, nStreamlines, requireMap=TRUE)
         
-        currentTractName <- paste(tractName, "_session", i, sep="")
-        if (createVolumes)
-            copyImageFiles(trackerPath, currentTractName)
+        currentTractName <- paste(tractName, i, sep=".")
+        copyImageFiles(trackerPath, currentTractName)
     })
 }

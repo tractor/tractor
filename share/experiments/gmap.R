@@ -76,7 +76,7 @@ runExperiment <- function ()
     {
         if (showReference || useReferencePlanes)
         {
-            refTractFileName <- getFileNameForNTResource("reference", "hnt", list(tractName=tractName), expectExists=TRUE)
+            refTractFileName <- getFileNameForNTResource("reference", "hnt", list(tractName=tractName), intent="read")
             reference <- deserialiseReferenceObject(refTractFileName)
         }
         if (showReference && !is(reference,"FieldTract"))
