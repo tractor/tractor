@@ -80,7 +80,7 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         
         mapPath <- streamlinePath <- medianPath <- NULL
         if (requireMap)
-            mapPath <- basename
+            mapPath <- ensureFileSuffix(basename, tractor.base:::.FileTypes$headerSuffixes[tractor.base:::.FileTypes$typeNames == getOption("tractorFileType")])
         if (requireStreamlines)
             streamlinePath <- basename
         if (requireMedian)
