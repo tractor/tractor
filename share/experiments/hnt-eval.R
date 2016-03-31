@@ -23,7 +23,7 @@ runExperiment <- function ()
     
     result <- runNeighbourhoodTractography(session, seed, reference$getTract(), faThreshold, searchWidth, nStreamlines=nStreamlines)
     
-    resultsObject <- HeuristicNTResults$new(results, Arguments[1])
+    resultsObject <- HeuristicNTResults$new(list(result), Arguments[1])
     if (isValidAs(Sys.getenv("TRACTOR_PLOUGH_ID"), "integer"))
         resultsName <- paste(ensureFileSuffix(resultsName,NULL,strip="Rdata"), Sys.getenv("TRACTOR_PLOUGH_ID"), sep=".")
     writeNTResource(resultsObject, "results", "hnt", list(resultsName=resultsName))

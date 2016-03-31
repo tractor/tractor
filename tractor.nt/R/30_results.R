@@ -4,7 +4,7 @@ HeuristicNTResults <- setRefClass("HeuristicNTResults", contains="SerialisableOb
         if (length(sessionPaths) > 0 && length(sessionPaths) != length(results))
             report(OL$Error, "Session path length does not match the results list")
         
-        initFields(results=result, sessionPaths=sessionPaths)
+        initFields(results=results, sessionPaths=sessionPaths)
     },
     
     getResult = function (pos) { return (results[[pos]]) },
