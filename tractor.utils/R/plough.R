@@ -14,6 +14,8 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
     else if (!all(variables %in% names(config)))
         report(OL$Error, "Specified variable(s) #{implode(variables[!(variables %in% names(config))],sep=', ',finalSep=' and ')} are not mentioned in the config files")
     
+    report(OL$Info, "Looping over variable(s) #{implode(variables,sep=', ',finalSep=' and ')}")
+    
     usingParallel <- FALSE
     if (isValidAs(parallelisationFactor,"integer") && as.integer(parallelisationFactor) > 1)
     {
@@ -39,6 +41,9 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
         n <- max(variableLengths[variables])
         data <- as.data.frame(lapply(config[variables], rep, length.out=n), stringsAsFactors=FALSE)
     }
+    
+    for (name in setdiff(names(config), c(variables,"")))
+        data[[name]] <- config[[name]]
     
     report(OL$Info, "Scheduling #{n} jobs")
     
