@@ -1,0 +1,6 @@
+* INFO: There are 1 connected component(s) in the image
+* INFO: Largest component contains 1072 voxel(s)
+Value of image "boxes_components" at location (40,40,28) is 1
+* INFO: There are 2 connected component(s) in the image
+* INFO: Largest component contains 729 voxel(s)
+Value of image "boxes_components" at location (40,40,28) is 2
