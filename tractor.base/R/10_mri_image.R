@@ -297,7 +297,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         result <- do.call(fun, args)
         
         if (!equivalent(dim(result), imageDims))
-            report(OL$Error, "Result of data mapping does not match original image dimensions")
+            dim(result) <- imageDims
         
         if (is.null(sparse))
             sparse <- (sum(result==0) / length(result) >= 0.75)
