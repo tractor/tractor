@@ -84,7 +84,7 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
         
         queueOption <- ifelse(queueName=="", "", es("-q #{queueName}"))
         qsubArgs <- es("-terse -V -wd #{path.expand(getwd())} #{queueOption} -N #{scriptName} -o #{file.path(tempDir,'log')} -e /dev/null -t 1-#{n} #{qsubOptions} #{qsubScriptFile}")
-        result <- execute("qsub", qsubArgs, intern=TRUE)
+        result <- execute("qsub", qsubArgs, stdout=TRUE)
         jobNumber <- as.numeric(ore.match("^(\\d+)\\.?.*$", result)[,1])
         jobNumber <- jobNumber[!is.na(jobNumber)]
         report(OL$Info, "Job number is #{jobNumber}")
@@ -95,8 +95,7 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
             currentFile <- threadSafeTempFile()
             writeYaml(as.list(data[i,,drop=FALSE]), currentFile, capitaliseLabels=FALSE)
             
-            Sys.setenv(TRACTOR_PLOUGH_ID=i)
-            execute(tractorPath, es("-c #{currentFile} #{buildArgs(i)}"))
+            execute(tractorPath, es("-c #{currentFile} #{buildArgs(i)}"), env=es("TRACTOR_PLOUGH_ID=#{i}"))
             
             unlink(currentFile)
         })

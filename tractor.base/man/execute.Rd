@@ -26,15 +26,15 @@ output?}
 }
 \value{
 For \code{execute}, the return value of the underlying call to
-  \code{\link{system}}. For \code{locateExecutable}, the location of the
+  \code{\link{system2}}. For \code{locateExecutable}, the location of the
   requested executable, or \code{NULL} if it could not be found.
 }
 \description{
-The \code{execute} function is a wrapper around the \code{\link{system}}
-function in base , which echoes the command being run (including the full
-path to the executable) if the reportr output level is \code{Debug}.
-\code{locateExecutable} simply returns the path to an executable file on the
-system \code{PATH}.
+The \code{execute} function is a wrapper around the \code{\link{system2}}
+function in base, which additionally echoes the command being run (including
+the full path to the executable) if the reportr output level is
+\code{Debug}. \code{locateExecutable} simply returns the path to an
+executable file on the system \code{PATH}.
 }
 \note{
 These functions are designed for Unix systems and may not work on
@@ -53,6 +53,6 @@ Journal of Statistical Software 44(8):1-18.
 \url{http://www.jstatsoft.org/v44/i08/}.
 }
 \seealso{
-\code{\link{system}}
+\code{\link{system2}}
 }
 

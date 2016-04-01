@@ -17,7 +17,7 @@ runExperiment <- function ()
     gitDirectory <- file.path(Sys.getenv("TRACTOR_HOME"), ".git")
     if (gitAvailable && file.exists(gitDirectory))
     {
-        gitRepoVersion <- execute("git", es("--git-dir=\"#{gitDirectory}\" describe"), intern=TRUE)
+        gitRepoVersion <- execute("git", es("--git-dir=\"#{gitDirectory}\" describe"), stdout=TRUE)
         tractorVersion <- ore.subst("^v", "", gitRepoVersion)
     }
     else

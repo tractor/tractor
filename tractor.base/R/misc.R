@@ -285,13 +285,12 @@ locateExecutable <- function (fileName, errorIfMissing = TRUE)
 
 #' Find or run an external executable file
 #' 
-#' The \code{execute} function is a wrapper around the \code{\link{system}}
-#' function in base , which echoes the command being run (including the full
-#' path to the executable) if the reportr output level is \code{Debug}.
-#' \code{locateExecutable} simply returns the path to an executable file on the
-#' system \code{PATH}.
+#' The \code{execute} function is a wrapper around the \code{\link{system2}}
+#' function in base, which additionally echoes the command being run (including
+#' the full path to the executable) if the reportr output level is
+#' \code{Debug}. \code{locateExecutable} simply returns the path to an
+#' executable file on the system \code{PATH}.
 #' 
-#' @aliases execute locateExecutable
 #' @param executable,fileName Name of the executable to run.
 #' @param params A character vector giving the parameters to pass to the
 #'   executable, if any. Elements will be separated by a space.
@@ -301,13 +300,13 @@ locateExecutable <- function (fileName, errorIfMissing = TRUE)
 #'   output?
 #' @param \dots Additional arguments to \code{\link{system}}.
 #' @return For \code{execute}, the return value of the underlying call to
-#'   \code{\link{system}}. For \code{locateExecutable}, the location of the
+#'   \code{\link{system2}}. For \code{locateExecutable}, the location of the
 #'   requested executable, or \code{NULL} if it could not be found.
 #' 
 #' @note These functions are designed for Unix systems and may not work on
 #'   Windows.
 #' @author Jon Clayden
-#' @seealso \code{\link{system}}
+#' @seealso \code{\link{system2}}
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -321,13 +320,11 @@ execute <- function (executable, params = NULL, errorOnFail = TRUE, silent = FAL
     execLoc <- locateExecutable(executable, errorOnFail)
     if (!is.null(execLoc))
     {
-        if (length(params) > 1)
-            params <- implode(params, sep=" ")
-        execString <- paste(execLoc, params, sep=" ")
+        report(OL$Debug, "#{execLoc} #{implode(params,sep=' ')}")
         if (silent && getOutputLevel() > OL$Debug)
-            execString <- paste(execString, ">/dev/null 2>&1", sep=" ")
-        report(OL$Debug, execString)
-        system(execString, ...)
+            system2(execLoc, params, stdout=FALSE, stderr=FALSE, ...)
+        else
+            system2(execLoc, params, ...)
     }
 }
 
