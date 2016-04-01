@@ -13,10 +13,15 @@ createMaskImageForSession <- function (session, method = c("kmeans","fill"), nCl
         
         kmeansResult <- kmeans(as.vector(t2Image$getData()), nClusters)
         lowSignalCluster <- which.min(kmeansResult$centers)
-        otherClusters <- setdiff(1:nClusters, lowSignalCluster)
         
         maskData <- array(0L, dim=t2Image$getDimensions())
         maskData[kmeansResult$cluster != lowSignalCluster] <- 1L
+        
+        report(OL$Info, "Finding the largest connected component")
+        kernel <- mmand::shapeKernel(width=3, dim=3, type="diamond")
+        maskData <- mmand::components(maskData, kernel)
+        largestIndex <- which.max(table(maskData))
+        maskData <- ifelse(!is.na(maskData) & maskData==largestIndex, 1L, 0L)
         
         report(OL$Info, "Applying morphological operations to remove gaps in the mask")
         kernel <- mmand::shapeKernel(width=5, dim=2, type="diamond")
@@ -24,7 +29,7 @@ createMaskImageForSession <- function (session, method = c("kmeans","fill"), nCl
         kernel <- mmand::shapeKernel(width=3, dim=2, type="diamond")
         maskData <- mmand::dilate(maskData, kernel)
         
-        outsideMask <- maskData == 0
+        outsideMask <- (maskData == 0)
         report(OL$Info, round((1-sum(outsideMask)/length(outsideMask))*100,2), "% of voxels are classified as foreground")
         
         t2Image[outsideMask] <- 0L
