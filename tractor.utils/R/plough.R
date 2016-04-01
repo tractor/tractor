@@ -60,31 +60,34 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
     
     if (useGridEngine)
     {
+        tempDir <- expandFileName("getmp")
+        if (file.exists(tempDir))
+            unlink(tempDir, recursive=TRUE)
+        dir.create(file.path(tempDir,"log"), recursive=TRUE)
+        
+        args <- sapply(seq_len(n), buildArgs)
+        argsFile <- file.path(tempDir, "args")
+        writeLines(args, argsFile)
+        
+        configPrefix <- file.path(tempDir, "config")
         for (i in seq_len(n))
-        {
-            tempDir <- expandFileName("sgetmp")
-            if (file.exists(tempDir))
-                unlink(tempDir, recursive=TRUE)
-            dir.create(file.path(tempDir,"log"), recursive=TRUE)
-            
-            currentFile <- file.path(tempDir, es("config.#{i}.yaml"))
-            writeYaml(as.list(data[i,,drop=FALSE]), currentFile, capitaliseLabels=FALSE)
-            
-            qsubScriptFile <- file.path(tempDir, "script")
-            qsubScript <- c("#!/bin/sh",
-                            "#$ -S /bin/bash",
-                            es("TRACTOR_PLOUGH_ID=#{i}"),
-                            es("#{tractorPath} -c #{currentFile} #{buildArgs(i)}"))
-            writeLines(qsubScript, qsubScriptFile)
-            execute("chmod", es("+x #{qsubScriptFile}"))
-            
-            queueOption <- ifelse(queueName=="", "", es("-q #{queueName}"))
-            qsubArgs <- es("-terse -V -wd #{path.expand(getwd())} #{queueOption} -N #{scriptName} -o #{file.path(tempDir,'log')} -e /dev/null -t 1-#{n} #{qsubOptions} #{qsubScriptFile}")
-            result <- execute("qsub", qsubArgs, intern=TRUE)
-            jobNumber <- as.numeric(ore.match("^(\\d+)\\.?.*$", result)[,1])
-            jobNumber <- jobNumber[!is.na(jobNumber)]
-            report(OL$Verbose, "Job number for index #{i} is #{jobNumber}")
-        }
+            writeYaml(as.list(data[i,,drop=FALSE]), es("#{configPrefix}.#{i}.yaml"), capitaliseLabels=FALSE)
+        
+        qsubScriptFile <- file.path(tempDir, "script")
+        qsubScript <- c("#!/bin/sh",
+                        "#$ -S /bin/bash",
+                        es("TRACTOR_PLOUGH_ID=${SGE_TASK_ID}"),
+                        es("TRACTOR_ARGS=`sed \"${SGE_TASK_ID}q;d\" #{argsFile}`"),
+                        es("#{tractorPath} -c #{configPrefix}.${SGE_TASK_ID}.yaml ${TRACTOR_ARGS}"))
+        writeLines(qsubScript, qsubScriptFile)
+        execute("chmod", es("+x #{qsubScriptFile}"))
+        
+        queueOption <- ifelse(queueName=="", "", es("-q #{queueName}"))
+        qsubArgs <- es("-terse -V -wd #{path.expand(getwd())} #{queueOption} -N #{scriptName} -o #{file.path(tempDir,'log')} -e /dev/null -t 1-#{n} #{qsubOptions} #{qsubScriptFile}")
+        result <- execute("qsub", qsubArgs, intern=TRUE)
+        jobNumber <- as.numeric(ore.match("^(\\d+)\\.?.*$", result)[,1])
+        jobNumber <- jobNumber[!is.na(jobNumber)]
+        report(OL$Info, "Job number is #{jobNumber}")
     }
     else
     {
