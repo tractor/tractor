@@ -171,32 +171,42 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
             maskImage <- session$getImageByType("mask", type)
         else
             maskImage <- NULL
-    
-        if (length(nLevels) != nVolumes)
-            nLevels <- rep(nLevels, length.out=nVolumes)
-    
-        finalArray <- array(NA, dim=sourceMetadata$getDimensions())
-        transforms <- vector("list", nVolumes)
-    
-        report(OL$Info, "Coregistering data to reference volume...")
-        for (i in seq_len(nVolumes))
-        {
-            report(OL$Verbose, "Reading and registering volume ", i)
-            volume <- session$getImageByType("rawdata", type, volumes=i)
-            result <- tractor.reg::registerImages(volume, targetImage, targetMask=maskImage, types="affine", cache="ignore", method=method, ..., linearOptions=c(list(nLevels=nLevels[i]),options))
-            finalArray[,,,i] <- result$transformedImage$getData()
-            transforms[[i]] <- result$transform
-        }
         
-        report(OL$Info, "Writing out transformed data")
-        finalImage <- asMriImage(finalArray, sourceMetadata)
-        writeImageFile(finalImage, session$getImageFileNameByType("data",type))
+        if (method == "niftyreg")
+        {
+            report(OL$Info, "Coregistering data to reference volume...")
+            result <- tractor.reg::registerImages(session$getImageFileNameByType("rawdata",type), targetImage, targetMask=maskImage, types="affine", cache="ignore", method="niftyreg", ..., linearOptions=c(list(nLevels=nLevels,sequentialInit=TRUE),options))
+            transforms <- result$transform
+            
+            report(OL$Info, "Writing out transformed data")
+            writeImageFile(result$image, session$getImageFileNameByType("data",type))
+        }
+        else
+        {
+            finalArray <- array(NA, dim=sourceMetadata$getDimensions())
+            transforms <- vector("list", nVolumes)
+        
+            report(OL$Info, "Coregistering data to reference volume...")
+            for (i in seq_len(nVolumes))
+            {
+                report(OL$Verbose, "Reading and registering volume ", i)
+                volume <- session$getImageByType("rawdata", type, volumes=i)
+                result <- tractor.reg::registerImages(volume, targetImage, targetMask=maskImage, types="affine", cache="ignore", method=method, ..., linearOptions=c(list(nLevels=nLevels),options))
+                finalArray[,,,i] <- result$transformedImage$getData()
+                transforms[[i]] <- result$transform
+            }
+        
+            report(OL$Info, "Writing out transformed data")
+            finalImage <- asMriImage(finalArray, sourceMetadata)
+            writeImageFile(finalImage, session$getImageFileNameByType("data",type))
+        }
     }
     
-    transform <- tractor.reg::mergeTransformations(transforms, sourceMetadata)
-    transform$serialise(file.path(session$getDirectory(type), "coreg_xfm.Rdata"))
+    if (!is(transforms, "Transformation"))
+        transforms <- tractor.reg::mergeTransformations(transforms, sourceMetadata)
+    transforms$serialise(file.path(session$getDirectory(type), "coreg_xfm.Rdata"))
     
-    return (transform)
+    return (transforms)
 }
 
 getVolumeTransformationForSession <- function (session, type)
