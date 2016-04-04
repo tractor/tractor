@@ -397,7 +397,8 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScale =
     else if (!is.list(windowLimits) || length(windowLimits) != length(images))
         report(OL$Error, "Window limits should be specified in a list of the same length as the images")
     
-    alpha <- match.arg(alpha)
+    if (is.character(alpha))
+        alpha <- match.arg(alpha)
     
     dims <- sapply(images, dim, simplify="array")
     if (any(diff(t(dims)) != 0))
@@ -409,6 +410,8 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScale =
     alphaImages <- lapply(seq_along(images), function(i) {
         if (i == 1)
             NULL
+        else if (is.numeric(alpha))
+            images[[i]]$copy()$map(function(x) ifelse(!is.na(x) & x>0, alpha, 0))
         else
         {
             validExpression <- switch(alpha, binary="1", linear="x", log="log(x)")
@@ -460,7 +463,10 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScale =
                     layerAlpha <- maximumIntensityProjection(alphaImages[[i]], info$axis[j])
                 else
                     layerAlpha <- alphaImages[[i]]$getSlice(info$axis[j], info$loc[j])
-                layerAlpha <- colourMap(layerAlpha, 1)
+                if (is.numeric(alpha))
+                    layerAlpha <- colourMap(layerAlpha, 1, c(0,1))
+                else
+                    layerAlpha <- colourMap(layerAlpha, 1)
                 currentImage <- (1-layerAlpha) * currentImage + layerAlpha * layerImage
             }
         }
