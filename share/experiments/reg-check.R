@@ -44,6 +44,7 @@ runExperiment <- function ()
     transformedImage <- transformImage(transform, sourceImage, preferAffine=preferAffine, reverse=reverse, interpolation=1)
     kernel <- shapeKernel(3, min(3,transformedImage$getDimensionality()), type="diamond")
     gradient <- dilate(transformedImage,kernel) - erode(transformedImage,kernel)
+    gradient[!is.finite(gradient)] <- 0
     outlineImage <- asMriImage(threshold(gradient,method="kmeans",binarise=FALSE), transformedImage)
     
     writeImageFile(outlineImage, paste(basename(sourceImage$getSource()),"outline",sep="_"))
