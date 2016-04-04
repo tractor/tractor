@@ -3,6 +3,7 @@
 #@interactive TRUE
 
 library(tractor.session)
+library(tractor.reg)
 library(lattice)
 
 runExperiment <- function ()
@@ -10,13 +11,20 @@ runExperiment <- function ()
     session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
     mode <- getConfigVariable("Mode", "rotation", validValues=c("rotation","translation","scale","skew","all"))
+    requireValues <- getConfigVariable("RequireValues", FALSE)
     interactive <- getConfigVariable("Interactive", TRUE)
     
+    allValues <- NULL
     if (mode == "all")
         mode <- c("rotation","translation","scale","skew")
+    nModes <- length(mode)
     
-    for (currentMode in mode)
+    if (!interactive)
+        pdf(file="corrections.pdf", width=8, height=2.5*nModes)
+    
+    for (i in seq_len(nModes))
     {
+        currentMode <- mode[i]
         ylab <- switch(currentMode, rotation="rotation angle, deg", translation="translation, mm", scale="scale factor", skew="skew")
         legend <- switch(currentMode, rotation=c("X (roll)","Y (pitch)","Z (yaw)"),
                                       translation=,
@@ -34,20 +42,29 @@ runExperiment <- function ()
         }
     
         data <- data.frame(index=seq_len(ncol(values)), x=values[1,], y=values[2,], z=values[3,])
-    
-        if (interactive)
+        
+        if (requireValues)
         {
-            print(xyplot(x + y + z ~ index, data, allow.multiple=TRUE, type="l", lwd=2, xlab="volume number", ylab=ylab, auto.key=list(space="right",text=legend,lines=TRUE,points=FALSE)))
+            if (is.null(allValues))
+                allValues <- data.frame(index=seq_len(ncol(values)), x=values[1,], y=values[2,], z=values[3,])
+            else
+                allValues <- cbind(allValues, data.frame(x=values[1,], y=values[2,], z=values[3,]))
             
-            ans <- ask("Copy figure to pdf file? [yn]")
-            if (tolower(ans) == "y")
-                dev.print(pdf, file=paste(currentMode,"s.pdf",sep=""))
+            colnames(allValues)[(-2:0)+ncol(allValues)] <- paste(legend, currentMode)
         }
-        else
-        {
-            pdf(file=paste(currentMode,"s.pdf",sep=""))
-            print(xyplot(x + y + z ~ index, data, allow.multiple=TRUE, type="l", lwd=2, xlab="volume number", ylab=ylab, auto.key=list(space="right",text=legend,lines=TRUE,points=FALSE)))
-            dev.off()
-        }
+        
+        print(xyplot(x + y + z ~ index, data, allow.multiple=TRUE, type="l", lwd=2, xlab="volume number", ylab=ylab, auto.key=list(space="right",text=legend,lines=TRUE,points=FALSE)), more=(i<nModes), split=c(1,i,1,nModes))
     }
+    
+    if (interactive)
+    {
+        ans <- ask("Copy figure to pdf file? [yn]")
+        if (tolower(ans) == "y")
+            dev.print(pdf, file="corrections.pdf")
+    }
+    else
+        dev.off()
+    
+    if (requireValues)
+        write.csv(allValues, "corrections.csv", row.names=FALSE)
 }
