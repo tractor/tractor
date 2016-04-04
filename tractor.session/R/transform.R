@@ -179,7 +179,7 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
             transforms <- result$transform
             
             report(OL$Info, "Writing out transformed data")
-            writeImageFile(result$image, session$getImageFileNameByType("data",type))
+            writeImageFile(result$transformedImage, session$getImageFileNameByType("data",type))
         }
         else
         {

@@ -196,8 +196,7 @@ runExperiment <- function ()
             {
                 scheme <- newSimpleDiffusionSchemeFromSession(session)
                 bValues <- scheme$expandComponents()$bValues
-                nLevels <- ifelse(bValues>1500, 3, 2)
-                coregisterDataVolumesForSession(session, "diffusion", refVolume, useMask=FALSE, nLevels=nLevels, method=eddyCorrectMethod)
+                coregisterDataVolumesForSession(session, "diffusion", refVolume, useMask=FALSE, nLevels=2, method=eddyCorrectMethod, options=list(symmetric=FALSE))
             }
         }
     }
