@@ -8,8 +8,6 @@ runExperiment <- function ()
 {
     requireArguments("image file", "centre point")
     
-    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
-    isStandardPoint <- getConfigVariable("CentreInMNISpace", FALSE)
     shape <- getConfigVariable("Shape", "box", validValues=c("box","disc","diamond"))
     width <- getConfigVariable("Width", 7)
     widthUnit <- getConfigVariable("WidthUnit", "vox", validValues=c("mm","vox"))
@@ -17,15 +15,6 @@ runExperiment <- function ()
     
     image <- readImageFile(Arguments[1])
     centre <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
-    
-    if (isStandardPoint)
-    {
-        space <- guessSpace(image)
-        session <- attachMriSession(ore.search("^([^:]+):",space)[,1])
-        centre <- transformPointsToSpace(centre, session, space, oldSpace="mni", pointType=pointType, outputVoxel=TRUE, nearest=TRUE)
-    }
-    else
-        centre <- round(changePointType(centre, image, "r", pointType))
     
     if (length(width) == 1)
         width <- rep(width, min(3,image$getDimensionality()))

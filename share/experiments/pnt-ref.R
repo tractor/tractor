@@ -13,8 +13,6 @@ runExperiment <- function ()
     if (!exists("seed") || length(seed) != 3)
         report(OL$Error, "Seed point must be given as a single vector in 3D space, comma or space separated")
     
-    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
-    isStandardSeed <- getConfigVariable("SeedInMNISpace", FALSE)
     nStreamlines <- getConfigVariable("Streamlines", 5000)
     maxAngle <- getConfigVariable("MaximumAngle", NULL, "numeric")
     tractName <- getConfigVariable("TractName", "tract")
@@ -24,11 +22,6 @@ runExperiment <- function ()
     
     if (!is.null(maxAngle))
         maxAngle <- maxAngle / 180 * pi
-    
-    if (isStandardSeed)
-        seed <- transformPointsToSpace(seed, session, "diffusion", oldSpace="mni", pointType=pointType, outputVoxel=TRUE, nearest=TRUE)
-    else
-        seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
     
     options <- createTractOptionList("knot", lengthQuantile, registerToReference, NULL, NULL)
     returnValue <- referenceSplineTractWithOptions(options, session, seed, nStreamlines=nStreamlines, maxAngle=maxAngle)

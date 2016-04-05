@@ -12,7 +12,6 @@ runExperiment <- function ()
     x <- getConfigVariable("X", NA, "numeric", errorIfInvalid=TRUE)
     y <- getConfigVariable("Y", NA, "numeric", errorIfInvalid=TRUE)
     z <- getConfigVariable("Z", NA, "numeric", errorIfInvalid=TRUE)
-    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
     source <- getConfigVariable("Source", "tensor", validValues=c("bedpost","tensor"))
     thresholdLevel <- getConfigVariable("ThresholdLevel", 0.2)
     windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
@@ -34,10 +33,6 @@ runExperiment <- function ()
     if (length(throughPlaneAxis) != 1)
         report(OL$Error, "Exactly one of X, Y or Z must be specified")
     inPlaneAxes <- setdiff(1:3, throughPlaneAxis)
-    
-    point[inPlaneAxes] <- 1
-    point <- changePointType(point, faImage, "r", pointType)
-    point[inPlaneAxes] <- NA
     
     createSliceGraphic(faImage, point[1], point[2], point[3], device="internal", windowLimits=windowLimits)
     

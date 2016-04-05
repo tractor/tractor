@@ -15,15 +15,8 @@ runExperiment <- function ()
     if (!exists("seed") || length(seed) != 3)
         report(OL$Error, "Seed point must be given as a single vector in 3D space, comma or space separated")
     
-    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE, errorIfMissing=TRUE)
-    isStandardSeed <- getConfigVariable("SeedInMNISpace", FALSE)
     nStreamlines <- getConfigVariable("Streamlines", 5000)
     tractName <- getConfigVariable("TractName", "tract")
-    
-    if (isStandardSeed)
-        seed <- transformPointsToSpace(seed, session, "diffusion", oldSpace="mni", pointType=pointType, outputVoxel=TRUE, nearest=TRUE)
-    else
-        seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
     
     trackerPath <- session$getTracker()$run(seed, nStreamlines, requireMap=TRUE)
     image <- readImageFile(trackerPath)$threshold(0.01*nStreamlines)

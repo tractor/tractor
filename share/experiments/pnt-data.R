@@ -7,7 +7,6 @@ library(tractor.nt)
 runExperiment <- function ()
 {
     tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
-    pointType <- getConfigVariable("PointType", NULL, "character", validValues=c("fsl","r","mm"), errorIfInvalid=TRUE)
     searchWidth <- getConfigVariable("SearchWidth", 1)
     faThreshold <- getConfigVariable("AnisotropyThreshold", 0.2)
     nStreamlines <- getConfigVariable("Streamlines", 1000)
@@ -49,12 +48,7 @@ runExperiment <- function ()
     else
     {
         if (nArguments() > 1)
-        {
             seed <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
-            if (is.null(pointType))
-                report(OL$Error, "Point type must be specified with the seed point")
-            seed <- round(changePointType(seed, session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
-        }
         else
             seed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), session, "diffusion", oldSpace="mni", pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
         
