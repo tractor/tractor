@@ -1,5 +1,5 @@
-#@desc Checking that we can export a graph to CSV format
+#@desc Checking that we can read and write graphs in CSV format
 cp data/graph/diffusion.Rdata tmp/graph.Rdata
 ${TRACTOR} graph2csv GraphName:tmp/graph
-cat tmp/graph.csv
+${TRACTOR} graph-props tmp/graph.csv
 rm -f tmp/graph.*

@@ -4,7 +4,7 @@ An object of class "Graph"
 Number of vertices : 68
    Number of edges : 2346
       Edge density : 100%
- Vertex attributes : voxelCount, volume, name
+ Vertex attributes : name, voxelCount, volume
    Edge attributes : covariance, correlation, precision, partialCorrelation
 An object of class "Graph"
 ---
@@ -12,5 +12,5 @@ An object of class "Graph"
 Number of vertices : 68
    Number of edges : 2346
       Edge density : 100%
- Vertex attributes : voxelCount, volume, name
+ Vertex attributes : name, voxelCount, volume
    Edge attributes : covariance, correlation, precision, partialCorrelation

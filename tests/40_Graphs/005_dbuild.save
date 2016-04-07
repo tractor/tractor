@@ -4,5 +4,5 @@ An object of class "Graph"
 Number of vertices : 68
    Number of edges : 300
       Edge density : 10.18%
- Vertex attributes : voxelCount, volume, name
+ Vertex attributes : name, voxelCount, volume
    Edge attributes : nStreamlines, binaryFA, weightedFA, binaryMD, weightedMD, streamlineLength, uniqueVoxels, voxelVisits
