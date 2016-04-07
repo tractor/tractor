@@ -285,9 +285,10 @@ asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections
     {
         if (ncol(x) != nrow(x))
             report(OL$Error, "Association matrix must be square")
-        else if (is.null(directed))
-            directed <- !isSymmetric(x)
-        else if (directed == isSymmetric(x))
+        
+        if (is.null(directed))
+            directed <- !isSymmetric(unname(x))
+        else if (directed == isSymmetric(unname(x)))
             flag(OL$Warning, "The \"directed\" argument does not match the symmetry of the matrix")
         
         if (is.null(nVertices))
