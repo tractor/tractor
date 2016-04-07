@@ -21,9 +21,9 @@ principalNetworks <- function (x, ...)
 }
 
 # Table of raw data, e.g. cortical thickness measurements
-principalNetworks.matrix <- function (x, ..., allVertexNames = NULL)
+principalNetworks.matrix <- function (x, ...)
 {
-    graph <- asGraph(cor(x), edgeList=FALSE, directed=FALSE, allVertexNames=allVertexNames)
+    graph <- asGraph(cor(x), edgeList=FALSE, directed=FALSE)
     principalGraphs <- calculatePrincipalGraphsForGraphs(graph, ...)
     principalGraphs$scores <- scale(x) %*% principalGraphs$eigenvectors
     
@@ -111,13 +111,13 @@ principalNetworks.list <- function (x, components = NULL, eigenvalueThreshold = 
     # Calculate residual association matrices after subtracting out higher components
     residualMatrices <- Reduce("-", fullMatrices, init=associationMatrix, accumulate=TRUE)
     residualMatrices <- residualMatrices[-1]
-    residualGraphs <- lapply(residualMatrices[components], asGraph, edgeList=FALSE, allVertexNames=x[[1]]$getVertexAttributes("name"))
+    residualGraphs <- lapply(residualMatrices[components], asGraph, edgeList=FALSE)
     residualGraphs <- lapply(residualGraphs, function(r) { r$setVertexLocations(x[[1]]$getVertexLocations(),x[[1]]$getVertexLocationUnit(),x[[1]]$getVertexLocationSpace()); r })
     names(residualGraphs) <- paste("PN", components, sep="")
     
-    verticesToKeep <- attr(loadings, "salient")
-    matrices <- lapply(components, function(i) fullMatrices[[i]][verticesToKeep[,i],verticesToKeep[,i]])
-    componentGraphs <- lapply(matrices, asGraph, edgeList=FALSE, allVertexNames=x[[1]]$getVertexAttributes("name"))
+    verticesToDrop <- setdiff(seq_len(x[[1]]$nVertices()), attr(loadings,"salient"))
+    matrices <- lapply(components, function(i) { x <- fullMatrices[[i]]; x[verticesToDrop,] <- x[,verticesToDrop] <- 0; x })
+    componentGraphs <- lapply(matrices, asGraph, edgeList=FALSE)
     componentGraphs <- lapply(componentGraphs, function(r) { r$setVertexLocations(x[[1]]$getVertexLocations(),x[[1]]$getVertexLocationUnit(),x[[1]]$getVertexLocationSpace()); r })
     names(componentGraphs) <- paste("PN", components, sep="")
     

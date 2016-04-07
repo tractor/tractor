@@ -251,7 +251,7 @@ asGraph <- function (x, ...)
     UseMethod("asGraph")
 }
 
-asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections = TRUE, allVertexNames = NULL, ...)
+asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections = TRUE, nVertices = NULL, ...)
 {
     if (is.null(edgeList))
         edgeList <- (ncol(x) == 2)
@@ -261,7 +261,10 @@ asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections
         if (is.null(directed))
             report(OL$Error, "Directedness must be specified when creating a graph from an edge list")
         
-        nVertices <- max(x, length(allVertexNames))
+        if (is.null(nVertices))
+            nVertices <- max(x)
+        else if (max(x) > nVertices)
+            report(OL$Error, "At least one edge connects a nonexistent vertex")
         edges <- structure(x, dimnames=NULL)
         
         if (!directed)
@@ -286,38 +289,23 @@ asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections
             directed <- !isSymmetric(x)
         else if (directed == isSymmetric(x))
             flag(OL$Warning, "The \"directed\" argument does not match the symmetry of the matrix")
+        
+        if (is.null(nVertices))
+            nVertices <- ncol(x)
+        else if (ncol(x) != nVertices)
+            report(OL$Error, "The association matrix size does not match the number of vertices")
     
         if (!directed)
             x[lower.tri(x,diag=FALSE)] <- NA
         if (!selfConnections)
             diag(x) <- NA
     
-        if (is.null(allVertexNames))
-            allVertexNames <- union(rownames(x), colnames(x))
-        
-        nVertices <- max(ncol(x), length(allVertexNames))
-    
-        if (is.null(allVertexNames))
-        {
-            rowVertexLocs <- 1:nrow(x)
-            colVertexLocs <- 1:ncol(x)
-        }
-        else
-        {
-            rowVertexLocs <- match(rownames(x), allVertexNames)
-            colVertexLocs <- match(colnames(x), allVertexNames)
-        }
-    
         edges <- which(!is.na(x) & x != 0, arr.ind=TRUE)
         edgeWeights <- x[edges]
-        edges[,1] <- rowVertexLocs[edges[,1]]
-        edges[,2] <- colVertexLocs[edges[,2]]
         dimnames(edges) <- NULL
     }
     
     graph <- Graph$new(vertexCount=nVertices, edges=edges, edgeWeights=edgeWeights, directed=directed)
-    if (!is.null(allVertexNames))
-        graph$setVertexAttributes(name=allVertexNames)
     
     return (graph)
 }
