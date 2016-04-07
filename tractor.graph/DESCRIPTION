@@ -5,7 +5,7 @@ Title: Functions for working with connectivity graphs
 Author: Jon Clayden and Fani Deligianni
 Maintainer: Jon Clayden <code@clayden.org>
 Depends: R (>= 2.12.1), graphics, grDevices, methods, stats, utils
-Imports: reportr, tractor.base, Rcpp
+Imports: ore, reportr, tractor.base, Rcpp
 Suggests: lattice, igraph
 LinkingTo: Rcpp
 Description: The tractor.graph package provides methods for creating and manipulating graphs based on information derived from medical images.
