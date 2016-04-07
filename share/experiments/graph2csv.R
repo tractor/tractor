@@ -9,22 +9,10 @@ runExperiment <- function ()
     graphName <- getConfigVariable("GraphName", NULL, "character")
     
     if (nArguments() > 0)
-        fileName <- ensureFileSuffix(implode(Arguments[1]," "), "Rdata")
+        fileName <- ensureFileSuffix(implode(Arguments[1]," "), NULL, strip=c("Rdata","csv"))
     else
-        fileName <- ensureFileSuffix(graphName, "Rdata")
+        fileName <- ensureFileSuffix(graphName, NULL, strip=c("Rdata","csv"))
     
-    graph <- deserialiseReferenceObject(fileName)
-    fileName <- ensureFileSuffix(fileName, "csv", strip="Rdata")
-    connection <- file(fileName, "w")
-    
-    attribStrings <- sapply(graph$getVertexAttributes(), function(attrib) paste0(": ", implode(attrib,",")))
-    if (length(attribStrings) > 0)
-    {
-        attribStrings <- paste0("# ", names(graph$getVertexAttributes()), attribStrings)
-        writeLines(attribStrings, connection)
-    }
-    
-    write.table(graph$getAssociationMatrix(), connection, sep=",", row.names=FALSE, col.names=FALSE)
-    
-    close(connection)
+    graph <- readGraphFile(fileName, "binary")
+    writeGraphFile(graph, fileName, "csv")
 }

@@ -11,7 +11,7 @@ runExperiment <- function ()
     loadingThreshold <- getConfigVariable("LoadingThreshold", 0.1)
     dropTrivial <- getConfigVariable("DropTrivial", TRUE)
     
-    graph <- deserialiseReferenceObject(graphName)
+    graph <- readGraphFile(graphName)
     outputFileName <- paste(graphName, "decomposed", sep="_")
     
     if (method == "principal-networks")

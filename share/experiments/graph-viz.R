@@ -25,7 +25,7 @@ runExperiment <- function ()
             report(OL$Error, "Weight limits must be specified as a 2-vector giving the low and high limits")
     }
     
-    graph <- deserialiseReferenceObject(graphName)
+    graph <- readGraphFile(graphName)
     
     dev.new()
     

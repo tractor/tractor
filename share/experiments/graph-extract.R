@@ -10,7 +10,7 @@ runExperiment <- function ()
     graphName <- getConfigVariable("GraphName", NULL, "character", errorIfMissing=TRUE)
     subgraphName <- getConfigVariable("SubgraphName", NULL, "character", errorIfMissing=TRUE)
     
-    graph <- deserialiseReferenceObject(graphName)
+    graph <- readGraphFile(graphName)
     session <- attachMriSession(Arguments[1])
     parcellation <- session$getParcellation()
     regionNames <- matchRegions(splitAndConvertString(Arguments[-1],",",fixed=TRUE), parcellation, labels=TRUE)
@@ -24,5 +24,5 @@ runExperiment <- function ()
         report(OL$Warning, "Regions ", implode(regionNames[is.na(indices)],",",finalSep=" and "), " are not present in the graph")
     
     subgraph <- inducedSubgraph(graph, na.omit(indices))
-    subgraph$serialise(subgraphName)
+    writeGraphFile(subgraph, subgraphName)
 }

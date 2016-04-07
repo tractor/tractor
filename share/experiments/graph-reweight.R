@@ -10,7 +10,7 @@ runExperiment <- function ()
     graphName <- getConfigVariable("GraphName", NULL, "character", errorIfMissing=TRUE)
     vertexAttributeFunction <- getConfigVariable("VertexAttributes", "ignore", validValues=c("ignore","sum","mean","max","min"))
     
-    graph <- deserialiseReferenceObject(graphName)
+    graph <- readGraphFile(graphName)
     attributes <- graph$getEdgeAttributes()
     
     if (vertexAttributeFunction != "ignore")

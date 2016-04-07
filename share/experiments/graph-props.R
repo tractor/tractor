@@ -14,9 +14,9 @@ runExperiment <- function ()
     disconnectedVertices <- getConfigVariable("DisconnectedVertices", FALSE)
     
     if (nArguments() > 0)
-        graph <- deserialiseReferenceObject(implode(Arguments, " "))
+        graph <- readGraphFile(implode(Arguments, " "))
     else
-        graph <- deserialiseReferenceObject(graphName)
+        graph <- readGraphFile(graphName)
     
     if (!is(graph, "Graph"))
         report(OL$Error, "The specified file does not contain a valid graph object")
