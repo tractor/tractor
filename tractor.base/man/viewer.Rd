@@ -12,7 +12,7 @@ timeSeriesPanel(point, data, imageNames)
 
 viewImages(images, colourScales = NULL, point = NULL, interactive = TRUE,
   crosshairs = TRUE, orientationLabels = TRUE, fixedWindow = TRUE,
-  infoPanel = defaultInfoPanel, ...)
+  indexNames = NULL, infoPanel = defaultInfoPanel, ...)
 }
 \arguments{
 \item{point}{For \code{viewImages}, a length 3 integer vector giving the
@@ -20,7 +20,9 @@ initial location of the crosshairs, in voxels. For info panel functions,
 the current location of the crosshairs.}
 
 \item{data}{A list giving the data value(s) at the current crosshair
-location in each image displayed.}
+location in each image displayed. Typically numeric, but in principle may
+be of any mode, and will be character mode when \code{indexNames} is not
+\code{NULL}.}
 
 \item{imageNames}{A character vector giving a name for each image displayed.}
 
@@ -41,6 +43,9 @@ labels are displayed.}
 
 \item{fixedWindow}{A single logical value. If \code{TRUE}, each image is
 windowed globally, rather than for each slice.}
+
+\item{indexNames}{A list whose elements are either \code{NULL} or a named
+character vector giving the names associated with each index in the image.}
 
 \item{infoPanel}{A function with at least three arguments, which must plot
 something to fill the bottom-right panel of the viewer after each change

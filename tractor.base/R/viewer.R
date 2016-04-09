@@ -8,7 +8,12 @@ defaultInfoPanel <- function (point, data, imageNames)
     plot(NA, xlim=c(0,1), ylim=c(0,1), xlab="", ylab="", xaxt="n", yaxt="n", bty="n", main=paste("Location: (",implode(point,","),")",sep=""))
     nImages <- length(imageNames)
     yLocs <- c(0.9 - 0:(nImages-1) * 0.1, 0)
-    labels <- c(quitInstructions, paste(imageNames, ": ", sapply(data,function(x) signif(mean(x),6)), sep=""))
+    labels <- c(quitInstructions, paste(imageNames, ": ", sapply(data, function(x) {
+        if (is.numeric(x))
+            signif(mean(x),6)
+        else
+            x
+    }), sep=""))
     text(rep(0.5,nImages+1), yLocs, rev(labels), col=c(rep("red",nImages),"grey70"))
 }
 
@@ -54,6 +59,8 @@ timeSeriesPanel <- function (point, data, imageNames)
 #'   labels are displayed.
 #' @param fixedWindow A single logical value. If \code{TRUE}, each image is
 #'   windowed globally, rather than for each slice.
+#' @param indexNames A list whose elements are either \code{NULL} or a named
+#'   character vector giving the names associated with each index in the image.
 #' @param infoPanel A function with at least three arguments, which must plot
 #'   something to fill the bottom-right panel of the viewer after each change
 #'   of crosshair location. The three mandatory arguments correspond to the
@@ -62,7 +69,9 @@ timeSeriesPanel <- function (point, data, imageNames)
 #'   \code{timeSeriesPanel} functions are valid examples.
 #' @param \dots Additional arguments to \code{infoPanel}.
 #' @param data A list giving the data value(s) at the current crosshair
-#'   location in each image displayed.
+#'   location in each image displayed. Typically numeric, but in principle may
+#'   be of any mode, and will be character mode when \code{indexNames} is not
+#'   \code{NULL}.
 #' @param imageNames A character vector giving a name for each image displayed.
 #' @return These functions are called for their side effects.
 #' 
@@ -80,7 +89,7 @@ timeSeriesPanel <- function (point, data, imageNames)
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @rdname viewer
 #' @export
-viewImages <- function (images, colourScales = NULL, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, fixedWindow = TRUE, infoPanel = defaultInfoPanel, ...)
+viewImages <- function (images, colourScales = NULL, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, fixedWindow = TRUE, indexNames = NULL, infoPanel = defaultInfoPanel, ...)
 {
     if (is(images, "MriImage"))
         images <- list(images)
@@ -145,11 +154,16 @@ viewImages <- function (images, colourScales = NULL, point = NULL, interactive =
         }
         else
         {
-            data <- lapply(images, function(image) {
-                if (image$getDimensionality() == 4)
-                    image[point[1],point[2],point[3],]
+            data <- lapply(seq_along(images), function(i) {
+                if (images[[i]]$getDimensionality() == 4)
+                    images[[i]][point[1],point[2],point[3],]
+                else if (!is.null(indexNames[[i]]))
+                {
+                    value <- images[[i]][point[1],point[2],point[3]]
+                    es("#{value} (#{indexNames[[i]][as.character(value)]})")
+                }
                 else
-                    image[point[1],point[2],point[3]]
+                    images[[i]][point[1],point[2],point[3]]
             })
             infoPanel(point, data, imageNames, ...)
         }

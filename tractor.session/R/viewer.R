@@ -2,6 +2,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
 {
     viewer <- match.arg(viewer, .Viewers)
     imageList <- list(...)
+    indexNames <- rep(list(NULL), length(imageList))
     
     if (is.null(lookupTable))
         lookupTable <- rep(list("greyscale"), length(imageList))
@@ -50,6 +51,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
                 colours <- rep(NA, indexRange[2]-indexRange[1]+1)
                 colours[regions$index - min(regions$index) + 1] <- regions$colour
                 colourScales[[i]] <- list(background="#000000", colours=colours)
+                indexNames[[i]] <- structure(regions$label, names=as.character(regions$index))
             }
         }
         
@@ -65,7 +67,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
         
         infoPanel <- (if (timeSeries) timeSeriesPanel else defaultInfoPanel)
         
-        viewImages(images, interactive=interactive, colourScales=colourScales, fixedWindow=fixedWindow, infoPanel=infoPanel)
+        viewImages(images, interactive=interactive, colourScales=colourScales, fixedWindow=fixedWindow, indexNames=indexNames, infoPanel=infoPanel)
     }
     else
     {
