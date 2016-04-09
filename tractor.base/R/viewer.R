@@ -6,15 +6,20 @@ defaultInfoPanel <- function (point, data, imageNames)
     quitInstructions <- paste(ifelse(usingQuartz,"Press Esc","Right click"), "to exit", sep=" ")
     
     plot(NA, xlim=c(0,1), ylim=c(0,1), xlab="", ylab="", xaxt="n", yaxt="n", bty="n", main=paste("Location: (",implode(point,","),")",sep=""))
-    nImages <- length(imageNames)
-    yLocs <- c(0.9 - 0:(nImages-1) * 0.1, 0)
-    labels <- c(quitInstructions, paste(imageNames, ": ", sapply(data, function(x) {
-        if (is.numeric(x))
-            signif(mean(x),6)
-        else
-            x
-    }), sep=""))
-    text(rep(0.5,nImages+1), yLocs, rev(labels), col=c(rep("red",nImages),"grey70"))
+    nImages <- min(4, length(imageNames))
+    yLocs <- 0.95 - cumsum(c(0,rep(c(0.1,0.13),nImages)))
+    yLocs[length(yLocs)] <- -0.05
+    labels <- quitInstructions
+    for (i in seq_len(nImages))
+    {
+        labels <- c(labels, {
+            if (is.numeric(data[[i]]))
+                as.character(signif(mean(data[[i]]),6))
+            else
+                data[[i]]
+        }, imageNames[i])
+    }
+    text(0.5, yLocs, rev(labels), col=c(rep(c("white","red"),nImages),"grey70"), cex=pmin(1,1/strwidth(rev(labels))), xpd=TRUE)
 }
 
 #' @rdname viewer
