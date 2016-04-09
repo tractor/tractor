@@ -14,7 +14,16 @@ runExperiment <- function ()
     requireArguments("source image file", "output file")
     
     sourceImage <- readImageFile(Arguments[1])
-    transform <- deserialiseReferenceObject(transformName)
+    
+    transformName <- splitAndConvertString(transformName, ",", fixed=TRUE)
+    if (length(transformName) > 1)
+    {
+        transforms <- lapply(transformName, deserialiseReferenceObject)
+        transform <- composeTransformations(transforms)
+    }
+    else
+        transform <- deserialiseReferenceObject(transformName)
+    
     transformedImage <- transformImage(transform, sourceImage, preferAffine=preferAffine, reverse=reverse, half=half, interpolation=interpolation)
     writeImageFile(transformedImage, Arguments[2])
 

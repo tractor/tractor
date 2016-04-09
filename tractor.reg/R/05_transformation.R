@@ -11,7 +11,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         
         if (!is.list(affineMatrices))
             affineMatrices <- list(affineMatrices)
-        affineMatrices <- lapply(affineMatrices, function(x) {
+        affineMatrices <- .listApply(affineMatrices, function(x) {
             # For backwards compatibility, handle FSL-type affines
             if (method == "fsl" && version < 2)
                 x <- RNiftyReg:::convertAffine(x, sourceImage, targetImage, "niftyreg")
@@ -287,5 +287,25 @@ mergeTransformations <- function (transforms, newSourceImage)
     reverseControlPointImages <- do.call("c", lapply(transforms, function(x) .listPad(x$reverseControlPointImages,x$nRegistrations())))
     
     transform <- Transformation$new(newSourceImage, transforms[[1]]$getTargetImage(), affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=methods[1])
+    return (transform)
+}
+
+composeTransformations <- function (transforms)
+{
+    if (!is.list(transforms))
+        report(OL$Error, "Transformations must be specified in a list")
+    if (length(transforms) == 0)
+        report(OL$Error, "At least one transformation must be given")
+    
+    transform <- Reduce(function(x,y) {
+        n <- max(x$nRegistrations(), y$nRegistrations())
+        xi <- rep(1:x$nRegistrations(), length.out=n)
+        yi <- rep(1:y$nRegistrations(), length.out=n)
+        xfms <- lapply(seq_len(n), function(i) composeTransforms(x$getTransformObjects(xi[i]), y$getTransformObjects(yi[i])))
+        rxfms <- lapply(seq_len(n), function(i) composeTransforms(y$getTransformObjects(yi[i],reverse=TRUE,errorIfMissing=FALSE), x$getTransformObjects(xi[i],reverse=TRUE,errorIfMissing=FALSE)))
+        areAffine <- sapply(xfms, isAffine)
+        return (Transformation$new(x$getSourceImage(), y$getTargetImage(), replace(xfms,!areAffine,list(NULL)), replace(xfms,areAffine,list(NULL)), replace(rxfms,areAffine,list(NULL)), method="niftyreg"))
+    }, transforms)
+    
     return (transform)
 }
