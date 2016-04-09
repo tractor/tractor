@@ -58,7 +58,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
             return (targetImage)
     },
     
-    getTransformObjects = function (i = 1, reverse = FALSE, preferAffine = FALSE, errorIfMissing = TRUE)
+    getTransformObjects = function (i = 1, reverse = FALSE, preferAffine = FALSE, half = FALSE, errorIfMissing = TRUE)
     {
         if (length(i) > 1)
             return (lapply(i, .self$getTransformObjects, reverse=reverse, preferAffine=preferAffine, errorIfMissing=errorIfMissing))
@@ -86,6 +86,9 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
             else if (errorIfMissing)
                 report(OL$Error, "No suitable forward transform is available for index #{i}")
         }
+        
+        if (half && !is.null(object))
+            object <- halfTransform(object)
         
         return (object)
     },

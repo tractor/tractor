@@ -9,12 +9,13 @@ runExperiment <- function ()
     interpolation <- getConfigVariable("Interpolation", "trilinear", validValues=c("nearestneighbour","trilinear","spline"))
     preferAffine <- getConfigVariable("PreferAffine", FALSE)
     reverse <- getConfigVariable("Reverse", FALSE)
+    half <- getConfigVariable("HalfWay", FALSE)
     
     requireArguments("source image file", "output file")
     
     sourceImage <- readImageFile(Arguments[1])
     transform <- deserialiseReferenceObject(transformName)
-    transformedImage <- transformImage(transform, sourceImage, preferAffine=preferAffine, reverse=reverse, interpolation=interpolation)
+    transformedImage <- transformImage(transform, sourceImage, preferAffine=preferAffine, reverse=reverse, half=half, interpolation=interpolation)
     writeImageFile(transformedImage, Arguments[2])
 
     invisible(NULL)

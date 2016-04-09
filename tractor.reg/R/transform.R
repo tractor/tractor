@@ -1,4 +1,4 @@
-transformImage <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, interpolation = 1)
+transformImage <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, half = FALSE, interpolation = 1)
 {
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified transform is not a Transformation object")
@@ -6,14 +6,14 @@ transformImage <- function (transform, newImage = NULL, index = 1, preferAffine 
     if (is.null(newImage))
         newImage <- transform$getSourceImage(index, reverse)
     
-    xfm <- transform$getTransformObjects(index, reverse, preferAffine)
+    xfm <- transform$getTransformObjects(index, reverse, preferAffine, half)
     result <- applyTransform(xfm, newImage, interpolation=.interpolationNameToCode(interpolation))
     
     return (as(result, "MriImage"))
 }
 
 # Parcellation images can be transformed using nearest neighbour interpolation, but this function gives more flexibility while still ensuring a sensible, nonoverlapping result
-transformParcellation <- function (transform, parcellation, threshold = 0.5, index = 1, preferAffine = FALSE, reverse = FALSE)
+transformParcellation <- function (transform, parcellation, threshold = 0.5, index = 1, preferAffine = FALSE, reverse = FALSE, half = FALSE)
 {
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified transform is not a Transformation object")
@@ -29,7 +29,7 @@ transformParcellation <- function (transform, parcellation, threshold = 0.5, ind
     for (i in uniqueIndices)
     {
         currentImage <- parcellation$image$copy()$map(function(x) ifelse(x==i,1,0))
-        transformedImage <- transformImage(transform, currentImage, index=index, preferAffine=preferAffine, reverse=reverse, interpolation=1)
+        transformedImage <- transformImage(transform, currentImage, index=index, preferAffine=preferAffine, reverse=reverse, half=half, interpolation=1)
         toUpdate <- which(transformedImage$getData() > maxValues)
         if (length(toUpdate) > 0)
         {
@@ -44,7 +44,7 @@ transformParcellation <- function (transform, parcellation, threshold = 0.5, ind
     return (list(image=finalImage, regions=parcellation$regions))
 }
 
-transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferAffine = FALSE, reverse = FALSE, nearest = FALSE)
+transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferAffine = FALSE, reverse = FALSE, half = FALSE, nearest = FALSE)
 {
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified transform is not a Transformation object")
@@ -52,7 +52,7 @@ transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferA
     if (!voxel)
         points <- worldToVoxel(points, transform$getSourceImage(index,reverse))
     
-    xfm <- transform$getTransformObjects(index, reverse, preferAffine)
+    xfm <- transform$getTransformObjects(index, reverse, preferAffine, half)
     newPoints <- applyTransform(xfm, points, nearest=nearest)
     
     if (!voxel)
