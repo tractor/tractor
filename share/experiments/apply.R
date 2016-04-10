@@ -6,6 +6,7 @@
 runExperiment <- function ()
 {
     nInputs <- getConfigVariable("Inputs", NULL, "integer")
+    combine <- getConfigVariable("Combine", NULL, "character", validValues=c("mean","sum","prod","min","max"))
     resultName <- getConfigVariable("ResultName", "result")
     
     if (is.null(nInputs))
@@ -31,7 +32,20 @@ runExperiment <- function ()
     report(OL$Debug, "Function string is `", funString, "`")
     fun <- eval(parse(text=funString))
     
-    result <- do.call(fun, lapply(images, function(x) x$getData()))
+    if (is.null(combine))
+        result <- do.call(fun, lapply(images, function(x) x$getData()))
+    else
+    {
+        combine <- match.fun(combine)
+        data <- array(NA_real_, c(dim(images[[1]]),nInputs))
+        args <- alist(x=,y=,z=,t=,u=,v=,w=)[1:images[[1]]$getDimensionality()]
+        for (i in seq_len(nInputs))
+        {
+            values <- do.call(fun, images[[i]]$getData())
+            data <- do.call("[<-", c(list(data),args,list(i,values)))
+        }
+        result <- apply(data, 1:images[[1]]$getDimensionality(), combine, na.rm=TRUE)
+    }
     
     if (length(result) == 1)
         cat(paste(result, "\n", sep=""))
