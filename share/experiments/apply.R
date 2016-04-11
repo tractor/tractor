@@ -41,7 +41,7 @@ runExperiment <- function ()
         args <- alist(x=,y=,z=,t=,u=,v=,w=)[1:images[[1]]$getDimensionality()]
         for (i in seq_len(nInputs))
         {
-            values <- do.call(fun, images[[i]]$getData())
+            values <- do.call(fun, list(images[[i]]$getData()))
             data <- do.call("[<-", c(list(data),args,list(i,values)))
         }
         result <- apply(data, 1:images[[1]]$getDimensionality(), combine, na.rm=TRUE)
