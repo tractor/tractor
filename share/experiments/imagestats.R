@@ -11,7 +11,7 @@ runExperiment <- function ()
     fileName <- implode(Arguments, sep=" ")
     image <- readImageFile(fileName)
     
-    scope <- getConfigVariable("Scope", "all", validValues=c("nonzero","zero","positive","negative","all"))
+    scope <- getConfigVariable("Scope", "nonzero", validValues=c("nonzero","zero","positive","negative","all"))
     maskFile <- getConfigVariable("MaskFile", NULL, "character")
     threshold <- getConfigVariable("IntensityThreshold", 0)
     
