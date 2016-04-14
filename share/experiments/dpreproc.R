@@ -12,7 +12,7 @@ runExperiment <- function ()
     interactive <- getConfigVariable("Interactive", TRUE)
     stages <- getConfigVariable("RunStages", "1-4")
     skipCompleted <- getConfigVariable("SkipCompletedStages", TRUE)
-    dicomDir <- getConfigVariable("DicomDirectory", NULL, "character")
+    dicomDirs <- getConfigVariable("DicomDirectories", NULL, "character")
     useGradientCache <- getConfigVariable("UseGradientCache", "second", validValues=c("first","second","never"))
     flipAxes <- getConfigVariable("FlipGradientAxes", NULL, "character")
     maskingMethod <- getConfigVariable("MaskingMethod", "kmeans", validValues=c("bet","kmeans","fill"))
@@ -20,6 +20,14 @@ runExperiment <- function ()
     betIntensityThreshold <- getConfigVariable("BetIntensityThreshold", 0.3)
     betVerticalGradient <- getConfigVariable("BetVerticalGradient", 0)
     eddyCorrectMethod <- getConfigVariable("EddyCorrectionMethod", "fsl", validValues=c("fsl","niftyreg","none"))
+    useTopup <- getConfigVariable("UseTopup", TRUE)
+    echoSpacing <- getConfigVariable("EchoSpacing", NULL)
+    
+    if (useTopup && !locateExecutable("topup",errorIfMissing=FALSE))
+    {
+      report(OL$Warning, "Topup not found, continuing without it")
+      useTopup=FALSE
+    }
     
     if ((interactive || statusOnly) && getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
@@ -50,13 +58,14 @@ runExperiment <- function ()
             session$unlinkDirectory("diffusion", ask=interactive)
             workingDir <- session$getDirectory("diffusion", createIfMissing=TRUE)
             
-            if (is.null(dicomDir))
-                dicomDir <- session$getDirectory()
-            else if (!(dicomDir %~% "^([A-Za-z]:)?/"))
-                dicomDir <- file.path(session$getDirectory(), dicomDir)
-            dicomDir <- gsub("//+", "/", dicomDir, perl=TRUE)
+            if (is.null(dicomDirs))
+                dicomDirs <- session$getDirectory()
 
-            info <- readDicomDirectory(dicomDir, readDiffusionParams=TRUE)
+            dicomDirs <- splitAndConvertString(dicomDirs, ",", fixed=TRUE)
+            ifelse(dicomDirs %~% "^([A-Za-z]:)?/", dicomDirs, file.path(session$getDirectory(), dicomDirs))
+            
+            dicomDirs <- gsub("//+", "/", dicomDirs, perl=TRUE)
+            info <- readDicomDirectory(dicomDirs, readDiffusionParams=TRUE)
 
             writeImageFile(info$image, session$getImageFileNameByType("rawdata","diffusion"))
             print(info$image)
