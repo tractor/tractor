@@ -1,6 +1,6 @@
 gradientDirectionsAvailableForSession <- function (session)
 {
-    return (!is.null(newSimpleDiffusionSchemeFromSession(session)))
+    return (!is.null(session$getDiffusionScheme()))
 }
 
 saveSeriesDescriptionsForSession <- function (session, descriptions)
@@ -72,7 +72,7 @@ updateGradientCacheFromSession <- function (session, force = FALSE)
         }
     }
     
-    scheme <- newSimpleDiffusionSchemeFromSession(session)
+    scheme <- session$getDiffusionScheme()
     gradientSet <- cbind(scheme$getGradientDirections(), scheme$getBValues())
     write.table(gradientSet, file.path(cacheDirectory,paste("set",number,".txt",sep="")), row.names=FALSE, col.names=FALSE)
     
@@ -87,11 +87,11 @@ flipGradientVectorsForSession <- function (session, axes)
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    scheme <- newSimpleDiffusionSchemeFromSession(session)
+    scheme <- session$getDiffusionScheme()
     directions <- scheme$getGradientDirections()
     directions[,axes] <- (-directions[,axes])
     scheme <- SimpleDiffusionScheme$new(scheme$getBValues(), directions)
-    writeSimpleDiffusionSchemeForSession(session, scheme)
+    session$updateDiffusionScheme(scheme)
 }
 
 rotateGradientVectorsForSession <- function (session)
@@ -102,10 +102,10 @@ rotateGradientVectorsForSession <- function (session)
     transform <- getVolumeTransformationForSession(session, "diffusion")
     decompositions <- tractor.reg::decomposeTransformation(transform)
     
-    unrotatedScheme <- newSimpleDiffusionSchemeFromSession(session, unrotated=TRUE)
+    unrotatedScheme <- session$getDiffusionScheme(unrotated=TRUE)
     directions <- unrotatedScheme$getGradientDirections()
     directions <- sapply(1:nrow(directions), function(i) decompositions[[i]]$rotationMatrix %*% directions[i,])
     rotatedScheme <- SimpleDiffusionScheme$new(unrotatedScheme$getBValues(), t(directions))
-    writeSimpleDiffusionSchemeForSession(session, unrotatedScheme, unrotated=TRUE)
-    writeSimpleDiffusionSchemeForSession(session, rotatedScheme)
+    session$updateDiffusionScheme(unrotatedScheme, unrotated=TRUE)
+    session$updateDiffusionScheme(rotatedScheme)
 }

@@ -128,7 +128,7 @@ createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwl
     
     method <- match.arg(method)
     
-    scheme <- newSimpleDiffusionSchemeFromSession(session)
+    scheme <- session$getDiffusionScheme()
     
     maskImage <- session$getImageByType("mask", "diffusion")
     intraMaskLocs <- which(maskImage$getData() > 0, arr.ind=TRUE)

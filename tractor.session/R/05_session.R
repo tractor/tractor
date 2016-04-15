@@ -18,6 +18,25 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         }
     },
     
+    getDiffusionScheme = function (unrotated = FALSE)
+    {
+        diffusionDir <- .self$getDirectory("diffusion")
+        
+        if (unrotated && file.exists(file.path(diffusionDir,"directions-orig.txt")))
+            fileName <- file.path(diffusionDir, "directions-orig.txt")
+        else
+            fileName <- file.path(diffusionDir, "directions.txt")
+    
+        if (file.exists(fileName))
+        {
+            gradientSet <- unname(as.matrix(read.table(fileName)))
+            scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
+            return (scheme)
+        }
+        else
+            return (NULL)
+    },
+    
     getDirectory = function (type = NULL, createIfMissing = FALSE)
     {
         if (is.null(type))
@@ -232,6 +251,34 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         if (file.exists(strategyFileName))
             transformStrategies <- deduplicate(readYaml(strategyFileName), transformStrategies)
         .self$caches.$transformStrategies <- transformStrategies
+    },
+    
+    updateDiffusionScheme = function (scheme = NULL, unrotated = FALSE)
+    {
+        if (!is.null(scheme) && !is(scheme, "SimpleDiffusionScheme"))
+            report(OL$Error, "Specified scheme is not a SimpleDiffusionScheme object")
+        
+        # No point in reading and writing from the same location at the same time
+        if (is.null(scheme))
+            scheme <- .self$getDiffusionScheme()
+        else
+        {
+            diffusionDir <- .self$getDirectory("diffusion")
+            gradientSet <- cbind(scheme$getGradientDirections(), scheme$getBValues())
+            
+            lines <- ore.subst("\\.0+\\s*$", "", apply(format(gradientSet,scientific=FALSE),1,implode,sep="  "))
+            if (unrotated)
+                writeLines(lines, file.path(diffusionDir,"directions-orig.txt"))
+            else
+                writeLines(lines, file.path(diffusionDir,"directions.txt"))
+        }
+        
+        fslDir <- .self$getDirectory("fdt")
+        if (!unrotated && file.exists(fslDir))
+        {
+            write.table(matrix(scheme$getBValues(),nrow=1), file.path(fslDir,"bvals"), row.names=FALSE, col.names=FALSE)
+            write.table(t(scheme$getGradientDirections()), file.path(fslDir,"bvecs"), row.names=FALSE, col.names=FALSE)
+        }
     }
 ))
 
@@ -287,7 +334,7 @@ updateSessionHierarchy <- function (session)
             bValues <- unlist(read.table(file.path(newFdtDirectory, "bvals")))
             bVectors <- as.matrix(read.table(file.path(newFdtDirectory, "bvecs")))
             scheme <- SimpleDiffusionScheme$new(bValues, t(bVectors))
-            writeSimpleDiffusionSchemeForSession(session, scheme)
+            session$updateDiffusionScheme(scheme)
         }
         
         # Update caches before creating FDT files, so that everything can be found

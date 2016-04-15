@@ -27,7 +27,7 @@ runExperiment <- function ()
             if (useOrthographic)
                 layout(matrix(1:4,nrow=2,byrow=TRUE))
 
-            scheme <- newSimpleDiffusionSchemeFromSession(session)
+            scheme <- session$getDiffusionScheme()
 
             for (i in 1:3)
             {

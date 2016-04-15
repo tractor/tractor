@@ -76,7 +76,7 @@ runExperiment <- function ()
             if (all(!is.na(info$bValues)) && all(!is.na(info$bVectors)))
             {
                 scheme <- SimpleDiffusionScheme$new(info$bValues, t(info$bVectors))
-                writeSimpleDiffusionSchemeForSession(session, scheme)
+                session$updateDiffusionScheme(scheme)
             }
             
             if (useGradientCache == "first" || (useGradientCache == "second" && !gradientDirectionsAvailableForSession(session)))
@@ -86,7 +86,7 @@ runExperiment <- function ()
                 {
                     report(OL$Info, "Gradient cache hit - using stored gradient scheme")
                     scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
-                    writeSimpleDiffusionSchemeForSession(session, scheme)
+                    session$updateDiffusionScheme(scheme)
                 }
             }
             
@@ -103,7 +103,7 @@ runExperiment <- function ()
     
         if (runStages[2] && (!skipCompleted || !stagesComplete[2]))
         {
-            scheme <- newSimpleDiffusionSchemeFromSession(session)
+            scheme <- session$getDiffusionScheme()
             if (is.null(scheme))
                 report(OL$Error, "No b-value or gradient direction information is available")
 
@@ -203,7 +203,7 @@ runExperiment <- function ()
                 runEddyCorrectWithSession(session, refVolume)
             else
             {
-                scheme <- newSimpleDiffusionSchemeFromSession(session)
+                scheme <- session$getDiffusionScheme()
                 bValues <- scheme$getBValues()
                 nLevels <- ifelse(bValues>1500, 3, 2)
                 coregisterDataVolumesForSession(session, "diffusion", refVolume, useMask=FALSE, nLevels=nLevels, method=eddyCorrectMethod)

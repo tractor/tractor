@@ -33,7 +33,7 @@ runExperiment <- function ()
             modelValue <- "(none)"
         else
             modelValue <- es("FSL-BEDPOSTX (#{nFibres} fibre(s) per voxel)")
-        if (is.null(scheme <- newSimpleDiffusionSchemeFromSession(session)))
+        if (is.null(scheme <- session$getDiffusionScheme()))
             bValues <- directions <- NA
         else
         {

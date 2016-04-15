@@ -87,5 +87,5 @@ runExperiment <- function ()
     
     report(OL$Info, "Writing gradient direction files")
     scheme <- SimpleDiffusionScheme$new(bvals, t(bvecs))
-    writeSimpleDiffusionSchemeForSession(session, scheme)
+    session$updateDiffusionScheme(scheme)
 }

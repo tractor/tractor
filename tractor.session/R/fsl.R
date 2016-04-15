@@ -85,13 +85,7 @@ createFdtFilesForSession <- function (session, overwriteExisting = FALSE)
     maskImageName <- session$getImageFileNameByType("mask", "fdt")
     
     if (overwriteExisting || !file.exists(file.path(targetDir,"bvals")) || !file.exists(file.path(targetDir,"bvecs")))
-    {
-        scheme <- newSimpleDiffusionSchemeFromSession(session)
-        if (is.null(scheme))
-            report(OL$Error, "The specified session does not contain gradient direction information")
-        
-        writeSimpleDiffusionSchemeForSession(session, scheme, thirdPartyOnly=TRUE)
-    }
+        session$updateDiffusionScheme()
     if (overwriteExisting || !imageFileExists(dataImageName))
     {
         targetDataImageName <- session$getImageFileNameByType("data", "diffusion")

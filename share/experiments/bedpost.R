@@ -15,7 +15,7 @@ runExperiment <- function ()
         report(OL$Info, "BEDPOSTX has been previously run for this session - use Force:true to run it again")
     else
     {
-        scheme <- newSimpleDiffusionSchemeFromSession(session)
+        scheme <- session$getDiffusionScheme()
         if (is.null(scheme))
             report(OL$Error, "No diffusion gradient directions are stored for this session")
         
