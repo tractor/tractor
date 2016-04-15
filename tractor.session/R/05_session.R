@@ -286,7 +286,7 @@ updateSessionHierarchy <- function (session)
         {
             bValues <- unlist(read.table(file.path(newFdtDirectory, "bvals")))
             bVectors <- as.matrix(read.table(file.path(newFdtDirectory, "bvecs")))
-            scheme <- newSimpleDiffusionSchemeWithDirections(bVectors, bValues)
+            scheme <- SimpleDiffusionScheme$new(bValues, t(bVectors))
             writeSimpleDiffusionSchemeForSession(session, scheme)
         }
         

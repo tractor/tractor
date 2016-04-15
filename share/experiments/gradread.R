@@ -86,6 +86,6 @@ runExperiment <- function ()
     bvals[lowBValueIndices] <- smallBValue
     
     report(OL$Info, "Writing gradient direction files")
-    scheme <- newSimpleDiffusionSchemeWithDirections(bvecs, bvals)
+    scheme <- SimpleDiffusionScheme$new(bvals, t(bvecs))
     writeSimpleDiffusionSchemeForSession(session, scheme)
 }

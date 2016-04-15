@@ -72,8 +72,8 @@ updateGradientCacheFromSession <- function (session, force = FALSE)
         }
     }
     
-    schemeComponents <- newSimpleDiffusionSchemeFromSession(session)$expandComponents()
-    gradientSet <- cbind(t(schemeComponents$directions), schemeComponents$bValues)
+    scheme <- newSimpleDiffusionSchemeFromSession(session)
+    gradientSet <- cbind(scheme$getGradientDirections(), scheme$getBValues())
     write.table(gradientSet, file.path(cacheDirectory,paste("set",number,".txt",sep="")), row.names=FALSE, col.names=FALSE)
     
     cacheIndex <- rbind(cacheIndex, data.frame(descriptions=seriesDescriptions,number=number))
@@ -87,9 +87,10 @@ flipGradientVectorsForSession <- function (session, axes)
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    schemeComponents <- newSimpleDiffusionSchemeFromSession(session)$expandComponents()
-    schemeComponents$directions[axes,] <- (-schemeComponents$directions[axes,])
-    scheme <- newSimpleDiffusionSchemeWithDirections(schemeComponents$directions, schemeComponents$bValues)
+    scheme <- newSimpleDiffusionSchemeFromSession(session)
+    directions <- scheme$getGradientDirections()
+    directions[,axes] <- (-directions[,axes])
+    scheme <- SimpleDiffusionScheme$new(scheme$getBValues(), directions)
     writeSimpleDiffusionSchemeForSession(session, scheme)
 }
 
@@ -102,9 +103,9 @@ rotateGradientVectorsForSession <- function (session)
     decompositions <- tractor.reg::decomposeTransformation(transform)
     
     unrotatedScheme <- newSimpleDiffusionSchemeFromSession(session, unrotated=TRUE)
-    schemeComponents <- unrotatedScheme$expandComponents()
-    schemeComponents$directions <- sapply(1:ncol(schemeComponents$directions), function (i) decompositions[[i]]$rotationMatrix %*% schemeComponents$directions[,i])
-    rotatedScheme <- newSimpleDiffusionSchemeWithDirections(schemeComponents$directions, schemeComponents$bValues)
+    directions <- unrotatedScheme$getGradientDirections()
+    directions <- sapply(1:nrow(directions), function(i) decompositions[[i]]$rotationMatrix %*% directions[i,])
+    rotatedScheme <- SimpleDiffusionScheme$new(unrotatedScheme$getBValues(), t(directions))
     writeSimpleDiffusionSchemeForSession(session, unrotatedScheme, unrotated=TRUE)
     writeSimpleDiffusionSchemeForSession(session, rotatedScheme)
 }

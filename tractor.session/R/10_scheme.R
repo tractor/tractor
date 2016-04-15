@@ -1,83 +1,46 @@
-SimpleDiffusionScheme <- setRefClass("SimpleDiffusionScheme", contains="SerialisableObject", fields=list(bValues="numeric",gradientDirections="list"), methods=list(
-    initialize = function (...)
+SimpleDiffusionScheme <- setRefClass("SimpleDiffusionScheme", contains="SerialisableObject", fields=list(bValues="numeric",gradientDirections="matrix"), methods=list(
+    initialize = function (bValues = NULL, directions = emptyMatrix(), ...)
     {
-        params <- list(...)
-        if (!all(c("bValues","gradientDirections") %in% names(params)))
-            report(OL$Error, "Gradient directions and b-values must be specified")
-        if (is.matrix(params$gradientDirections))
-            params$gradientDirections <- list(params$gradientDirections)
-        if (length(params$bValues) != length(params$gradientDirections))
-            report(OL$Error, "An equal number of gradient subsets and b-values must be given")
-        params$gradientDirections <- lapply(params$gradientDirections, validateGradientDirections)
+        if (is.list(directions))
+            directions <- t(Reduce(cbind, directions))
+        else if (!is.matrix(directions))
+            report(OL$Error, "Gradient directions must be specified in a matrix")
         
-        initFields(bValues=params$bValues, gradientDirections=params$gradientDirections)
-    },
-    
-    expandComponents = function ()
-    {
-        returnValue <- list()
-        returnValue$directions <- Reduce(cbind, gradientDirections)
-        returnValue$bValues <- rep(bValues, .self$nDirections())
-        return (returnValue)
+        # NB: This changed in TractoR 3.0, from column-per-direction to row-per-direction
+        if (ncol(directions) != 3 && nrow(directions) == 3)
+        {
+            report(OL$Info, "Transposing gradient direction matrix")
+            directions <- t(directions)
+        }
+        
+        if (length(bValues) != nrow(directions))
+            report(OL$Error, "Gradient matrix doesn't match the length of the b-value vector")
+        
+        # Normalise directions to unit length
+        directions <- t(apply(directions, 1, function (x) {
+            length <- vectorLength(x)
+            return (x / ifelse(length==0,1,length))
+        }))
+        
+        initFields(bValues=as.numeric(bValues), gradientDirections=unname(directions))
     },
     
     getBValues = function () { return (bValues) },
     
     getGradientDirections = function () { return (gradientDirections) },
     
-    nDirections = function () { return (sapply(gradientDirections, ncol)) },
+    nDirections = function () { return (tapply(seq_len(nrow(gradientDirections)), list(round(bValues)), length)) },
+    
+    nShells = function (threshold = 100) { return (sum(unique(round(bValues)) >= threshold)) },
     
     summarise = function ()
     {
-        labels <- c("Number of gradient directions", "Diffusion b-values")
-        values <- c(implode(nDirections(),", "), paste(implode(round(bValues),", "), "s/mm^2"))
+        uniqueBValues <- sort(unique(round(bValues)))
+        labels <- c("Number of shells", "Diffusion b-values", "Number of directions")
+        values <- c(nShells(), paste(implode(uniqueBValues,", "), "s/mm^2"), implode(nDirections()[as.character(uniqueBValues)],", "))
         return (list(labels=labels, values=values))
     }
 ))
-
-validateGradientDirections <- function (directions)
-{
-    if (!is.matrix(directions))
-        report(OL$Error, "Gradient directions must be specified in a matrix")
-    else if (ncol(directions) != 3 && nrow(directions) != 3)
-        report(OL$Error, "Gradient directions should be specified as a 3xN matrix")
-    else if (ncol(directions) == 3 && nrow(directions) != 3)
-    {
-        report(OL$Info, "Transposing gradient direction matrix")
-        directions <- t(directions)
-    }
-    
-    # Normalise directions to unit length
-    directions <- apply(directions, 2, function (x) {
-        length <- vectorLength(x)
-        return (x / ifelse(length==0,1,length))
-    })
-    
-    return (directions)
-}
-
-newSimpleDiffusionSchemeWithDirections <- function (directions, bValues)
-{
-    if (is.list(directions))
-        invisible(SimpleDiffusionScheme$new(bValues=bValues, gradientDirections=gradientDirections))
-    else if (is.matrix(directions))
-    {
-        if (ncol(directions) == 3 && nrow(directions) != 3)
-        {
-            report(OL$Info, "Transposing gradient direction matrix")
-            directions <- t(directions)
-        }
-        
-        # Find groups with the same b-value
-        bValueRunLengths <- rle(bValues)
-        subsetBreaks <- cumsum(c(0, bValueRunLengths$lengths))
-        gradientDirections <- lapply(seq_along(bValueRunLengths$lengths), function (i) directions[,(subsetBreaks[i]+1):subsetBreaks[i+1],drop=FALSE])
-        
-        invisible(SimpleDiffusionScheme$new(bValues=bValueRunLengths$values, gradientDirections=gradientDirections))
-    }
-    else
-        report(OL$Error, "Gradient directions must be specified as a matrix or list of matrices")
-}
 
 newSimpleDiffusionSchemeFromSession <- function (session, unrotated = FALSE)
 {
@@ -100,7 +63,7 @@ newSimpleDiffusionSchemeFromSession <- function (session, unrotated = FALSE)
         gradientSet <- as.matrix(read.table(fileName))
         dimnames(gradientSet) <- NULL
         
-        scheme <- newSimpleDiffusionSchemeWithDirections(t(gradientSet[,1:3]), gradientSet[,4])
+        scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
         invisible(scheme)
     }
     else
@@ -117,8 +80,7 @@ writeSimpleDiffusionSchemeForSession <- function (session, scheme, thirdPartyOnl
     diffusionDir <- session$getDirectory("diffusion")
     fslDir <- session$getDirectory("fdt")
     
-    components <- scheme$expandComponents()
-    gradientSet <- cbind(t(components$directions), components$bValues)
+    gradientSet <- cbind(scheme$getGradientDirections(), scheme$getBValues())
     
     if (!thirdPartyOnly)
     {
@@ -131,7 +93,7 @@ writeSimpleDiffusionSchemeForSession <- function (session, scheme, thirdPartyOnl
     
     if (!unrotated && file.exists(fslDir))
     {
-        write.table(matrix(components$bValues,nrow=1), file.path(fslDir,"bvals"), row.names=FALSE, col.names=FALSE)
-        write.table(components$directions, file.path(fslDir,"bvecs"), row.names=FALSE, col.names=FALSE)
+        write.table(matrix(scheme$getBValues(),nrow=1), file.path(fslDir,"bvals"), row.names=FALSE, col.names=FALSE)
+        write.table(t(scheme$getGradientDirections()), file.path(fslDir,"bvecs"), row.names=FALSE, col.names=FALSE)
     }
 }

@@ -27,12 +27,11 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
         bMatrix <- (-scheme)
     else
     {
-        components <- scheme$expandComponents()
-        bMatrix <- t(apply(components$directions, 2, function (column) {
-            mat <- column %o% column
+        bMatrix <- t(apply(scheme$getGradientDirections(), 1, function (row) {
+            mat <- row %o% row
             return (c(mat[1,1], 2*mat[1,2], 2*mat[1,3], mat[2,2], 2*mat[2,3], mat[3,3]))
         }))
-        bMatrix <- bMatrix * (-components$bValues)
+        bMatrix <- bMatrix * (-scheme$getBValues())
     }
     
     report(OL$Info, "Fitting tensors by ordinary least-squares", ifelse(method=="iwls"," (for initialisation)",""))
