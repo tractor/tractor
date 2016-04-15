@@ -32,6 +32,29 @@ showImagesInFslview <- function (imageFileNames, wait = FALSE, lookupTable = NUL
     
     invisible(unlist(imageFileNames))
 }
+runEddyWithSession <- function (session, useTopup = FALSE)
+{
+  if (!is(session, "MriSession"))
+    report(OL$Error, "Specified session is not an MriSession object")
+  if (!imageFileExists(session$getImageFileNameByType("rawdata","diffusion")))
+    report(OL$Error, "The specified session does not contain a raw data image")
+
+  # eddy --imain=rawdata --mask=brain_mask --acqp=acquisition --index=index --bvecs=bvecs --bvals=bvals --topup=topup --out=data
+  report(OL$Info, "Running eddy to remove eddy current induced artefacts...")
+  paramString <- paste(paste("--imain",session$getImageFileNameByType("rawdata","diffusion"), sep="="), paste("--out",session$getImageFileNameByType("data","diffusion"),sep="="), paste("--mask",session$getImageFileNameByType("mask","diffusion"),sep="="), sep=" ")
+  
+  if (useTopup && fileExists(session$getFileNameByType("topup","diffusion")))
+    paramString <- paste(paramString, paste("--topup",session$getFileNameByType("topup","diffusion"),sep="="), sep=" ")
+  
+  execute("eddy", paramString, errorOnFail=TRUE)
+  
+  targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
+  file.rename(file.path(session$getDirectory("diffusion"),"data.ecclog"), file.path(targetDir,"data.ecclog"))
+
+  # commenting out for now...
+  # transform <- readEddyCorrectTransformsForSession(session)
+  # transform$serialise(file.path(session$getDirectory("diffusion"), "coreg_xfm.Rdata"))
+}
 
 runEddyCorrectWithSession <- function (session, refVolume)
 {
