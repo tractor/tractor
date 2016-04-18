@@ -65,22 +65,27 @@ runExperiment <- function ()
             ifelse(dicomDirs %~% "^([A-Za-z]:)?/", dicomDirs, file.path(session$getDirectory(), dicomDirs))
             
             dicomDirs <- ore.subst("//+", "/", dicomDirs, all=TRUE)
-            info <- readDicomDirectory(dicomDirs, readDiffusionParams=TRUE)
+            info <- lapply(dicomDirs, readDicomDirectory, readDiffusionParams=TRUE)
+            mergedImage <- mergeMriImages(lapply(info, "[[", "image"))
 
-            writeImageFile(info$image, session$getImageFileNameByType("rawdata","diffusion"))
-            print(info$image)
+            writeImageFile(mergedImage, session$getImageFileNameByType("rawdata","diffusion"))
+            print(mergedImage)
 
-            seriesDescriptions <- implode(gsub("\\W","",info$seriesDescriptions,perl=TRUE), ",")
+            seriesDescriptions <- do.call("c", lapply(info, "[[", "seriesDescriptions"))
+            seriesDescriptions <- implode(ore.subst("\\W","_",seriesDescriptions,all=TRUE), ",")
             writeLines(seriesDescriptions, file.path(session$getDirectory("diffusion"),"descriptions.txt"))
-
-            if (any(!is.na(info$bValues)) && any(!is.na(info$bVectors)))
+            
+            bValues <- do.call("c", lapply(info, "[[", "bValues"))
+            bVectors <- do.call("cbind", lapply(info, "[[", "bVectors"))
+            if (any(!is.na(bValues)) && any(!is.na(bVectors)))
             {
-                scheme <- SimpleDiffusionScheme$new(info$bValues, t(info$bVectors))
+                scheme <- SimpleDiffusionScheme$new(bValues, t(bVectors))
                 session$updateDiffusionScheme(scheme)
             }
             
-            if (any(!is.na(info$echoSeparations)))
-                writeLines(as.character(info$echoSeparations), file.path(session$getDirectory("diffusion"),"echosep.txt"))
+            echoSeparations <- do.call("c", lapply(info, "[[", "echoSeparations"))
+            if (any(!is.na(echoSeparations)))
+                writeLines(as.character(echoSeparations), file.path(session$getDirectory("diffusion"),"echosep.txt"))
             
             if (useGradientCache == "first" || (useGradientCache == "second" && !gradientDirectionsAvailableForSession(session)))
             {
