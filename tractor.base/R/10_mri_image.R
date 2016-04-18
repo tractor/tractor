@@ -871,12 +871,12 @@ mergeMriImages <- function (...)
         return (images[[1]])
     
     dimensionalities <- sapply(images, function(x) x$getDimensionality())
-    dimensions <- sapply(seq_along(images), function(i) c(images[[i]]$getDimensions(), rep(1,max(dimensionalities)-dimensionalities[i])))
-    maxDimensions <- apply(dimensions, 1, max)
+    dimensions <- sapply(seq_along(images), function(i) c(images[[i]]$getDimensions(), rep(NA,max(dimensionalities)-dimensionalities[i])))
+    maxDimensions <- na.omit(apply(dimensions, 1, max))
     imageSizes <- apply(dimensions, 2, prod)
     blockSize <- prod(maxDimensions)
     data <- do.call("c", lapply(images, as.array))
-    dim(data) <- c(maxDimensions[maxDimensions>1], length(data) %/% blockSize)
+    dim(data) <- c(maxDimensions, length(data) %/% blockSize)
     
     return (asMriImage(data, images[[which.max(imageSizes)]]))
 }

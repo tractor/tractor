@@ -66,7 +66,7 @@ runExperiment <- function ()
             
             dicomDirs <- ore.subst("//+", "/", dicomDirs, all=TRUE)
             info <- lapply(dicomDirs, readDicomDirectory, readDiffusionParams=TRUE)
-            mergedImage <- mergeMriImages(lapply(info, "[[", "image"))
+            mergedImage <- do.call(mergeMriImages, lapply(info, "[[", "image"))
 
             writeImageFile(mergedImage, session$getImageFileNameByType("rawdata","diffusion"))
             print(mergedImage)
