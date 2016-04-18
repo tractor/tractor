@@ -860,3 +860,23 @@ reorderMriImage <- function (image)
     
     return (image)
 }
+
+#' @export
+mergeMriImages <- function (...)
+{
+    images <- list(...)
+    if (any(!sapply(images, is, "MriImage")))
+        report(OL$Error, "All arguments must be MriImage objects")
+    if (length(images) == 1)
+        return (images[[1]])
+    
+    dimensionalities <- sapply(images, function(x) x$getDimensionality())
+    dimensions <- sapply(seq_along(images), function(i) c(images[[i]]$getDimensions(), rep(1,max(dimensionalities)-dimensionalities[i])))
+    maxDimensions <- apply(dimensions, 1, max)
+    imageSizes <- apply(dimensions, 2, prod)
+    blockSize <- prod(maxDimensions)
+    data <- do.call("c", lapply(images, as.array))
+    dim(data) <- c(maxDimensions[maxDimensions>1], length(data) %/% blockSize)
+    
+    return (asMriImage(data, images[[which.max(imageSizes)]]))
+}
