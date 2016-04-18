@@ -188,7 +188,7 @@ readDicomDirectories <- function (directories, readDiffusionParams = FALSE, unti
     images <- vector("list", nFiles)
     if (readDiffusionParams)
     {
-        bValues <- numeric(nFiles)
+        bValues <- echoSeparations <- numeric(nFiles)
         bVectors <- matrix(NA, nrow=3, ncol=nFiles)
     }
     
@@ -241,6 +241,7 @@ readDicomDirectories <- function (directories, readDiffusionParams = FALSE, unti
                 report(OL$Info, "Attempting to read diffusion parameters using ", diffusion$defType, " DICOM convention")
             bValues[i] <- diffusion$bval
             bVectors[,i] <- diffusion$bvec
+            echoSeparations[i] <- ifelse(is.null(diffusion$echoSeparation), NA, diffusion$echoSeparation)
         }
         
         if (!seenValidFile)
@@ -260,6 +261,7 @@ readDicomDirectories <- function (directories, readDiffusionParams = FALSE, unti
     {
         bValues <- bValues[valid]
         bVectors <- bVectors[,valid]
+        echoSeparations <- echoSeparations[valid]
     }
     
     if (length(unique(info$seriesDescription)) > 1)
@@ -346,10 +348,12 @@ readDicomDirectories <- function (directories, readDiffusionParams = FALSE, unti
     {
         bValues <- bValues[sortOrder]
         bVectors <- bVectors[,sortOrder]
+        echoSeparations <- echoSeparations[sortOrder]
         
         # Initialisation
         volumeBValues <- rep(NA, nVolumes)
         volumeBVectors <- matrix(NA, nrow=3, ncol=nVolumes)
+        volumeEchoSeparations <- rep(NA, nVolumes)
     }
     
     # Insert data into the appropriate places
@@ -372,6 +376,7 @@ readDicomDirectories <- function (directories, readDiffusionParams = FALSE, unti
         {
             volumeBValues[volume] <- bValues[i]
             volumeBVectors[,volume] <- bVectors[,i]
+            volumeEchoSeparations[volume] <- echoSeparations[i]
         }
     }
 
@@ -420,7 +425,7 @@ readDicomDirectories <- function (directories, readDiffusionParams = FALSE, unti
     {
         # Invert Y direction again
         volumeBVectors[2,] <- -volumeBVectors[2,]
-        returnValue <- c(returnValue, list(bValues=volumeBValues, bVectors=volumeBVectors))
+        returnValue <- c(returnValue, list(bValues=volumeBValues, bVectors=volumeBVectors, echoSeparations=volumeEchoSeparations))
     }
     
     invisible (returnValue)
@@ -618,13 +623,14 @@ readDiffusionParametersFromMetadata <- function (metadata)
     {
         bval <- metadata$getTagValue(0x0019, 0x100c)
         bvec <- metadata$getTagValue(0x0019, 0x100e)
+        echoSeparation <- metadata$getAsciiFields("EchoSpacing") / 1e6 * (metadata$getAsciiFields("EPIFactor") - 1)
         
         if (is.na(bval))
-            return (list(bval=NA, bvec=rep(NA,3), defType="none"))
+            return (list(bval=NA, bvec=rep(NA,3), echoSeparation=echoSeparation, defType="none"))
         else if (bval == 0 || identical(bvec, rep(0,3)))
-            return (list(bval=0, bvec=rep(0,3), defType="Siemens"))
+            return (list(bval=0, bvec=rep(0,3), echoSeparation=echoSeparation, defType="Siemens"))
         else
-            return (list(bval=bval, bvec=bvec, defType="Siemens"))
+            return (list(bval=bval, bvec=bvec, echoSeparation=echoSeparation, defType="Siemens"))
     }
     else
         return (list(bval=NA, bvec=rep(NA,3), defType="none"))

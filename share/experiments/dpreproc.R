@@ -73,11 +73,14 @@ runExperiment <- function ()
             seriesDescriptions <- implode(gsub("\\W","",info$seriesDescriptions,perl=TRUE), ",")
             writeLines(seriesDescriptions, file.path(session$getDirectory("diffusion"),"descriptions.txt"))
 
-            if (all(!is.na(info$bValues)) && all(!is.na(info$bVectors)))
+            if (any(!is.na(info$bValues)) && any(!is.na(info$bVectors)))
             {
                 scheme <- SimpleDiffusionScheme$new(info$bValues, t(info$bVectors))
                 session$updateDiffusionScheme(scheme)
             }
+            
+            if (any(!is.na(info$echoSeparations)))
+                writeLines(as.character(info$echoSeparations), file.path(session$getDirectory("diffusion"),"echosep.txt"))
             
             if (useGradientCache == "first" || (useGradientCache == "second" && !gradientDirectionsAvailableForSession(session)))
             {
