@@ -84,6 +84,43 @@ implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
     }
 }
 
+#' Number agreement with a vector
+#' 
+#' This function chooses the singular or plural form of a word based on the
+#' length of an associated vector, or an integer.
+#' 
+#' @param singular The singular form of the word.
+#' @param x A vector of any mode, whose length is used to choose the correct
+#'   word form, unless \code{n} is specified.
+#' @param n An integer which is used to choose the correct word form (singular
+#'   if n = 1, plural otherwise). Take priority over \code{x} if not
+#'   \code{NULL}.
+#' @param plural The plural form of the word. If \code{NULL}, an 's' is simply
+#'   appended to the singular form.
+#' @return Either \code{singular} or \code{plural}, as appropriate.
+#' 
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
+pluralise <- function (singular, x = NULL, n = NULL, plural = NULL)
+{
+    if (is.null(vec) && is.null(n))
+        report(OL$Error, "Either \"x\" or \"n\" must be given")
+    else if (is.null(n))
+        n <- length(x)
+    
+    if (is.null(plural))
+        plural <- paste0(singular, "s")
+    
+    return (ifelse(n==1L, singular, plural))
+}
+
 #' Pretty print labelled information
 #' 
 #' This is a simple function to print a series of labels and associated data
