@@ -21,7 +21,7 @@ runExperiment <- function ()
         session$getDirectory(weighting, createIfMissing=TRUE)
         
         if (isTRUE(file.info(Arguments[2])$isdir))
-            image <- readDicomDirectories(Arguments[2])$image
+            image <- readDicomDirectory(Arguments[2])$image
         else
             image <- readImageFile(Arguments[2])
         
@@ -48,7 +48,7 @@ runExperiment <- function ()
             report(OL$Info, "Copying image ", i, " of ", nImages)
         
             if (isTRUE(file.info(Arguments[i+1])$isdir))
-                image <- readDicomDirectories(Arguments[i+1])$image
+                image <- readDicomDirectory(Arguments[i+1])$image
             else if (!imageFileExists(Arguments[i+1]))
             {
                 report(OL$Warning, "Complete image file does not exist: \"", Arguments[i+1], "\"")

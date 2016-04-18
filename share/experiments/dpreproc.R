@@ -65,7 +65,7 @@ runExperiment <- function ()
             ifelse(dicomDirs %~% "^([A-Za-z]:)?/", dicomDirs, file.path(session$getDirectory(), dicomDirs))
             
             dicomDirs <- ore.subst("//+", "/", dicomDirs, all=TRUE)
-            info <- readDicomDirectories(dicomDirs, readDiffusionParams=TRUE)
+            info <- readDicomDirectory(dicomDirs, readDiffusionParams=TRUE)
 
             writeImageFile(info$image, session$getImageFileNameByType("rawdata","diffusion"))
             print(info$image)

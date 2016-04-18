@@ -4,14 +4,14 @@
 #' alternatives.
 #' 
 #' @rdname tractor.base-deprecated
-#' @inheritParams readDicomDirectories
+#' @inheritParams readDicomDirectory
 #' @param dicomDir Character vector of length one giving the name of a
 #'   directory containing DICOM files.
 #' @export
 newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
 {
-    .Deprecated("readDicomDirectories", "tractor.base")
-    readDicomDirectories(dicomDir, readDiffusionParams, untileMosaics)
+    .Deprecated("readDicomDirectory", "tractor.base")
+    readDicomDirectory(dicomDir, readDiffusionParams, untileMosaics)
 }
 
 #' @rdname tractor.base-deprecated

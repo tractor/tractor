@@ -139,7 +139,7 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired)
 #' 
 #' @author Jon Clayden
 #' @seealso The DICOM standard, found online at \url{http://dicom.nema.org/}.
-#'   (Warning: may produce headaches!) Also \code{\link{readDicomDirectories}}
+#'   (Warning: may produce headaches!) Also \code{\link{readDicomDirectory}}
 #'   for information on how to create \code{\linkS4class{MriImage}} objects
 #'   from DICOM files.
 #' @references Please cite the following reference when using TractoR in your
