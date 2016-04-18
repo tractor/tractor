@@ -14,7 +14,7 @@ runExperiment <- function ()
     else
         fileName <- Arguments[1]
     
-    info <- readDicomDirectory(Arguments[1], untileMosaics=untileMosaics)
+    info <- readDicomDirectories(Arguments[1], untileMosaics=untileMosaics)
     reportFlags()
     writeImageFile(info$image, fileName)
     print(info$image)

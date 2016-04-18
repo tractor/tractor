@@ -50,7 +50,7 @@ Journal of Statistical Software 44(8):1-18.
 }
 \seealso{
 The DICOM standard, found online at \url{http://dicom.nema.org/}.
-  (Warning: may produce headaches!) Also \code{\link{readDicomDirectory}}
+  (Warning: may produce headaches!) Also \code{\link{readDicomDirectories}}
   for information on how to create \code{\linkS4class{MriImage}} objects
   from DICOM files.
 }

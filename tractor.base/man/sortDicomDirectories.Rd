@@ -49,7 +49,7 @@ Journal of Statistical Software 44(8):1-18.
 \url{http://www.jstatsoft.org/v44/i08/}.
 }
 \seealso{
-\code{\link{readDicomDirectory}} for reading DICOM files into an
+\code{\link{readDicomDirectories}} for reading DICOM files into an
 \code{MriImage} object.
 }
 

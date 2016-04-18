@@ -16,5 +16,5 @@ runExperiment <- function ()
     
     sortOn <- splitAndConvertString(sortOn, ",", fixed=TRUE)
     
-    sortDicomDirectory(directory, deleteOriginals, sortOn=sortOn, useSeriesTime=useSeriesTime)
+    sortDicomDirectories(directory, deleteOriginals, sortOn=sortOn, useSeriesTime=useSeriesTime)
 }
