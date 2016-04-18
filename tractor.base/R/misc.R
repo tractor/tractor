@@ -110,7 +110,7 @@ implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
 #' @export
 pluralise <- function (singular, x = NULL, n = NULL, plural = NULL)
 {
-    if (is.null(vec) && is.null(n))
+    if (is.null(x) && is.null(n))
         report(OL$Error, "Either \"x\" or \"n\" must be given")
     else if (is.null(n))
         n <- length(x)

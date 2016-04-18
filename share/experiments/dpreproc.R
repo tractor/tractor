@@ -23,7 +23,7 @@ runExperiment <- function ()
     useTopup <- getConfigVariable("UseTopup", TRUE)
     echoSpacing <- getConfigVariable("EchoSpacing", NULL)
     
-    if (useTopup && !locateExecutable("topup",errorIfMissing=FALSE))
+    if (useTopup && is.null(locateExecutable("topup",errorIfMissing=FALSE)))
     {
       report(OL$Warning, "Topup not found, continuing without it")
       useTopup=FALSE
