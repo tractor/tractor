@@ -160,7 +160,7 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     copyImageFiles(paste(session$getImageFileNameByType("maskedb0"),"mask",sep="_"), session$getImageFileNameByType("mask","diffusion"), overwrite=TRUE, deleteOriginals=TRUE)
 }
 
-runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","screen"))
+runBedpostWithSession <- function (session, nFibres = 3, how = c("fg","bg","screen"))
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
@@ -169,20 +169,21 @@ runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","scre
     
     targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
     createFdtFilesForSession(session)
-    
     session$unlinkDirectory("bedpost")
+    
+    modelArg <- ifelse(session$getDiffusionScheme()$nShells() > 1, "-model 2", "")
     
     if (how == "screen")
     {
         report(OL$Info, "Starting bedpostx in a \"screen\" session")
         bedpostLoc <- locateExecutable("bedpostx", errorIfMissing=TRUE)
-        paramString <- paste("-d -m", bedpostLoc, targetDir, "-n", nFibres, sep=" ")
+        paramString <- paste("-d -m", bedpostLoc, targetDir, "-n", nFibres, modelArg, sep=" ")
         execute("screen", paramString, errorOnFail=TRUE)
     }
     else
     {
         report(OL$Info, "Starting bedpostx as a ", ifelse(how=="fg","normal foreground","background"), " process")
-        paramString <- paste(targetDir, "-n", nFibres, sep=" ")
+        paramString <- paste(targetDir, "-n", nFibres, modelArg, sep=" ")
         execute("bedpostx", paramString, errorOnFail=TRUE, wait=(how=="fg"))
     }
 }

@@ -7,7 +7,7 @@ runExperiment <- function ()
 {
     session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
-    nFibres <- getConfigVariable("NumberOfFibres", 2, "integer")
+    nFibres <- getConfigVariable("NumberOfFibres", 3, "integer")
     howRunBedpost <- getConfigVariable("Context", "fg", validValues=c("fg","bg","screen"))
     force <- getConfigVariable("Force", FALSE)
     
