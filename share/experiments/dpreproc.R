@@ -11,7 +11,7 @@ runExperiment <- function ()
     statusOnly <- getConfigVariable("StatusOnly", FALSE)
     interactive <- getConfigVariable("Interactive", TRUE)
     stages <- getConfigVariable("RunStages", "1-4")
-    skipCompleted <- getConfigVariable("SkipCompletedStages", TRUE)
+    force <- getConfigVariable("Force", FALSE)
     dicomDirs <- getConfigVariable("DicomDirectories", NULL, "character")
     useGradientCache <- getConfigVariable("UseGradientCache", "second", validValues=c("first","second","never"))
     flipAxes <- getConfigVariable("FlipGradientAxes", NULL, "character")
@@ -53,7 +53,7 @@ runExperiment <- function ()
         printLabelledValues(c("Session directory","Stages completed"), c(session$getDirectory(),implode(which(stagesComplete),", ")))
     else
     {
-        if (runStages[1] && (!skipCompleted || !stagesComplete[1]))
+        if (runStages[1] && (force || !stagesComplete[1]))
         {
             session$unlinkDirectory("diffusion", ask=interactive)
             workingDir <- session$getDirectory("diffusion", createIfMissing=TRUE)
@@ -101,7 +101,7 @@ runExperiment <- function ()
             }
         }
     
-        if (runStages[2] && (!skipCompleted || !stagesComplete[2]))
+        if (runStages[2] && (force || !stagesComplete[2]))
         {
             scheme <- session$getDiffusionScheme()
             if (is.null(scheme))
@@ -148,7 +148,7 @@ runExperiment <- function ()
             writeImageFile(refVolume, session$getImageFileNameByType("refb0"))
         }
         
-        if (runStages[3] && (!skipCompleted || !stagesComplete[3]))
+        if (runStages[3] && (force || !stagesComplete[3]))
         {
             done <- "n"
             repeat
@@ -196,7 +196,7 @@ runExperiment <- function ()
             }
         }
         
-        if (runStages[4] && (!skipCompleted || !stagesComplete[4]))
+        if (runStages[4] && (force || !stagesComplete[4]))
         {
             refVolume <- as.integer(readLines(file.path(session$getDirectory("diffusion"),"refb0-index.txt")))
             if (eddyCorrectMethod == "fsl")
