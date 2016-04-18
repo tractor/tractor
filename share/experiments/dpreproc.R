@@ -44,10 +44,10 @@ runExperiment <- function ()
     if (all(!runStages))
         report(OL$Info, "Nothing to do")
     
-    stagesComplete <- c(imageFileExists(session$getImageFileNameByType("rawdata","diffusion")),
-                        imageFileExists(session$getImageFileNameByType("refb0","diffusion")),
-                        imageFileExists(session$getImageFileNameByType("mask","diffusion")),
-                        imageFileExists(session$getImageFileNameByType("data","diffusion")))
+    stagesComplete <- c(session$imageExists("rawdata","diffusion"),
+                        session$imageExists("refb0","diffusion"),
+                        session$imageExists("mask","diffusion"),
+                        session$imageExists("data","diffusion"))
 
     if (statusOnly)
         printLabelledValues(c("Session directory","Stages completed"), c(session$getDirectory(),implode(which(stagesComplete),", ")))
