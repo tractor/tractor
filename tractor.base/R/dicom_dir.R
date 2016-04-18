@@ -23,7 +23,7 @@
 #' @return This function is called for its side effect.
 #' 
 #' @author Jon Clayden
-#' @seealso \code{\link{readDicomDirectory}} for reading DICOM files into an
+#' @seealso \code{\link{readDicomDirectories}} for reading DICOM files into an
 #' \code{MriImage} object.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
@@ -139,8 +139,8 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
 #' This function scans a directory for files in DICOM format, and converts them
 #' to a single Analyze/NIfTI-format image of the appropriate dimensionality.
 #' 
-#' @param dicomDir Character vector of length one giving the name of a
-#'   directory containing DICOM files.
+#' @param directories Character vector giving the names of one or more
+#'   directories containing DICOM files.
 #' @param readDiffusionParams Logical value: should diffusion MRI parameters
 #'   (b-values and gradient directions) be retrieved from the files if
 #'   possible?
@@ -167,13 +167,19 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
+readDicomDirectories <- function (directories, readDiffusionParams = FALSE, untileMosaics = TRUE)
 {
-    if (!file.exists(dicomDir) || !file.info(dicomDir)$isdir)
-        report(OL$Error, "The specified path (", dicomDir, ") does not point to a directory")
+    invalid <- (!file.exists(directories) | !file.info(directories)$isdir)
+    if (any(invalid))
+        flag(OL$Warning, "#{pluralise('Path',n=sum(invalid))} #{implode(directories[invalid],', ',' and ')} do not exist or do not point to directories")
+    else
+        directories <- expandFileName(directories[!invalid])
     
-    report(OL$Info, "Looking for DICOM files in directory ", dicomDir)
-    files <- expandFileName(list.files(dicomDir, full.names=TRUE, recursive=TRUE))
+    if (length(directories) < 1)
+        report(OL$Error, "No valid directories specified")
+    
+    report(OL$Info, "Looking for DICOM files in #{pluralise('directory',plural='directories',x=directories)} #{implode(directories,', ',' and ')}")
+    files <- expandFileName(list.files(directories, full.names=TRUE, recursive=TRUE))
     files <- files[!file.info(files)$isdir]
     nFiles <- length(files)
     
