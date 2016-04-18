@@ -8,8 +8,8 @@
 #' files will be copied into that subdirectory. Duplicate file names are
 #' disambiguated if necessary.
 #' 
-#' @param directory A length-1 character vector giving the directory to search
-#'   for DICOM files. Subdirectories will also be searched.
+#' @param directories A character vector giving the directories to search for
+#'   DICOM files. Subdirectories will also be searched.
 #' @param deleteOriginals A single logical value. If \code{TRUE}, then the
 #'   source files will be deleted after being copied to their new locations,
 #'   making the operation a move rather than a copy. Nothing will be deleted if
@@ -33,10 +33,16 @@
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "series", useSeriesTime = FALSE)
+sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn = "series", useSeriesTime = FALSE)
 {
-    if (!file.exists(directory) || !file.info(directory)$isdir)
-        report(OL$Error, "Specified path (", directory, ") does not exist or does not point to a directory")
+    invalid <- (!file.exists(directories) | !file.info(directories)$isdir)
+    if (any(invalid))
+        flag(OL$Warning, "#{pluralise('Path',n=sum(invalid))} #{implode(directories[invalid],', ',' and ')} do not exist or do not point to directories")
+    else
+        directories <- expandFileName(directories[!invalid])
+    
+    if (length(directories) < 1)
+        report(OL$Error, "No valid directories specified")
     
     sortOn <- match.arg(sortOn, c("series","subject","date"), several.ok=TRUE)
     currentSort <- sortOn[1]
@@ -44,8 +50,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     identifierTag <- switch(currentSort, series=(if (useSeriesTime) c(0x0008,0x0031) else c(0x0020,0x0011)), subject=c(0x0010,0x0010), date=c(0x0008,0x0020))
     descriptionTag <- switch(currentSort, series=c(0x0008,0x103e), subject=c(0x0010,0x0010), date=c(0x0008,0x0020))
     
-    directory <- expandFileName(directory)
-    files <- expandFileName(list.files(directory, full.names=TRUE, recursive=TRUE))
+    files <- expandFileName(list.files(directories, full.names=TRUE, recursive=TRUE))
     files <- files[!file.info(files)$isdir]
     nFiles <- length(files)
 
@@ -75,7 +80,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     nDicomFiles <- count
     if (nDicomFiles == 0)
         report(OL$Error, "No readable DICOM files were found")
-
+    
     uniqueIdentifiers <- na.omit(sort(unique(identifiers)))
     report(OL$Info, "Found ", switch(currentSort,series="series",subject="subjects",date="dates"), " ", implode(uniqueIdentifiers,", "), "; creating subdirectories")
     
@@ -105,8 +110,8 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
                 subdirectory <- as.character(description)
             }
             
-            if (!file.exists(file.path(directory, subdirectory)))
-                dir.create(file.path(directory, subdirectory))
+            if (!file.exists(subdirectory))
+                dir.create(subdirectory)
             
             currentIdFiles <- basename(files[matchingFiles])
             duplicates <- duplicated(currentIdFiles)
@@ -114,7 +119,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
                 currentIdFiles[duplicates] <- paste(currentIdFiles[duplicates], seq_len(sum(duplicates)), sep="_")
             
             from <- files[matchingFiles]
-            to <- file.path(directory,subdirectory,currentIdFiles)
+            to <- file.path(subdirectory,currentIdFiles)
             inPlace <- from == to
             success <- file.copy(from[!inPlace], to[!inPlace])
             
@@ -124,7 +129,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
                 unlink(from[!inPlace])
             
             if (length(remainingSorts) > 0)
-                sortDicomDirectory(file.path(directory,subdirectory), TRUE, sortOn=remainingSorts)
+                sortDicomDirectories(subdirectory, TRUE, sortOn=remainingSorts)
         }
     }
 }
@@ -153,7 +158,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
 #' 
 #' @author Jon Clayden
 #' @seealso \code{\linkS4class{DicomMetadata}}, \code{\linkS4class{MriImage}},
-#' \code{\link{sortDicomDirectory}}.
+#' \code{\link{sortDicomDirectories}}.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 

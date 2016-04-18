@@ -47,6 +47,6 @@ Journal of Statistical Software 44(8):1-18.
 }
 \seealso{
 \code{\linkS4class{DicomMetadata}}, \code{\linkS4class{MriImage}},
-\code{\link{sortDicomDirectory}}.
+\code{\link{sortDicomDirectories}}.
 }
 
