@@ -861,6 +861,26 @@ reorderMriImage <- function (image)
     return (image)
 }
 
+#' Merging MriImage objects
+#' 
+#' This function concatenates the data from a series of \code{MriImage}
+#' objects, and then attempts to work out the final dimensions of the merged
+#' image and returns it.
+#' 
+#' @param ... \code{MriImage} objects. They do not need to have the same
+#'   dimensionality, but they would usually not vary by more than one
+#'   dimension.
+#' @return A merged image.
+#' 
+#' @author Jon Clayden
+#' @seealso \code{\linkS4class{MriImage}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
 mergeMriImages <- function (...)
 {
