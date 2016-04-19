@@ -32,6 +32,22 @@ showImagesInFslview <- function (imageFileNames, wait = FALSE, lookupTable = NUL
     
     invisible(unlist(imageFileNames))
 }
+
+runTopupWithSession <- function (session, reversePEVolumes = NULL, echoSeparation = NULL)
+{
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
+    if (!session$imageExists("rawdata","diffusion"))
+        report(OL$Error, "The specified session does not contain a raw data image")
+    
+    targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
+    
+    bValues <- session$getDiffusionScheme()$getBValues()
+    bZeroVolumes <- which(bValues == min(bValues))
+    bZeroData <- session$getImageByType("rawdata", "diffusion", volumes=bZeroVolumes)
+    writeImageFile(bZeroData, file.path(targetDir,"b0vols"))
+}
+
 runEddyWithSession <- function (session, useTopup = FALSE)
 {
   if (!is(session, "MriSession"))
