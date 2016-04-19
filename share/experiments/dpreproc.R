@@ -79,6 +79,13 @@ runExperiment <- function ()
             bVectors <- do.call("cbind", lapply(info, "[[", "bVectors"))
             if (any(!is.na(bValues)) && any(!is.na(bVectors)))
             {
+                missing <- (is.na(bValues) | apply(is.na(bVectors),2,any))
+                if (any(missing))
+                {
+                    report(OL$Warning, "Gradient information for #{pluralise('volume',n=sum(missing))} #{implode(which(missing),',',' and ',ranges=TRUE)} is missing - treating as zero")
+                    bValues[missing] <- 0
+                    bVectors[,missing] <- 0
+                }
                 scheme <- SimpleDiffusionScheme$new(bValues, t(bVectors))
                 session$updateDiffusionScheme(scheme)
             }
