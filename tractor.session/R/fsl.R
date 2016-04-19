@@ -56,8 +56,8 @@ runTopupWithSession <- function (session, reversePEVolumes = NULL, echoSeparatio
         similarities <- sapply(seq_along(bZeroVolumes)[-1], function(i) RNiftyReg::similarity(extractMriImage(bZeroData,4,i), referenceVolume))
         
         kMeansResult <- kmeans(similarities, 2, nstart=3)
-        reversePEVolumes <- which(kMeansResult$cluster == which.min(kMeansResult$centers))
-        report(OL$Info, "#{pluralise('Volume',reversePEVolumes)} #{implode(reversePEVolumes,',',' and ',ranges=TRUE)} have lower similarity to the first b=0 volume")
+        reversePEVolumes <- which(kMeansResult$cluster == which.min(kMeansResult$centers)) + 1L
+        report(OL$Info, "#{pluralise('Volume',reversePEVolumes)} #{implode(reversePEVolumes,',',' and ',ranges=TRUE)} #{pluralise('has',reversePEVolumes,plural='have')} lower similarity to the first b=0 volume")
     }
     else if (!all(reversePEVolumes %in% bZeroVolumes))
         report(OL$Error, "Not all reverse phase-encode volumes have b=0")
@@ -76,7 +76,7 @@ runTopupWithSession <- function (session, reversePEVolumes = NULL, echoSeparatio
         echoSeparationFile <- file.path(session$getDirectory("diffusion"), "echosep.txt")
         if (file.exists(echoSeparationFile))
         {
-            echoSeparation <- as.numeric(readLines(echoSeparationFile))
+            echoSeparation <- as.numeric(readLines(echoSeparationFile))[bZeroVolumes]
             invalid <- (is.na(echoSeparation) | echoSeparation == 0)
             if (all(invalid))
                 echoSeparation <- rep(0, nBZeroVolumes)
