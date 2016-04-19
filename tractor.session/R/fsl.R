@@ -44,8 +44,57 @@ runTopupWithSession <- function (session, reversePEVolumes = NULL, echoSeparatio
     
     bValues <- session$getDiffusionScheme()$getBValues()
     bZeroVolumes <- which(bValues == min(bValues))
+    nBZeroVolumes <- length(bZeroVolumes)
     bZeroData <- session$getImageByType("rawdata", "diffusion", volumes=bZeroVolumes)
-    writeImageFile(bZeroData, file.path(targetDir,"b0vols"))
+    bZeroDataFile <- file.path(targetDir, "b0vols")
+    writeImageFile(bZeroData, bZeroDataFile)
+    
+    if (is.null(reversePEVolumes))
+    {
+        report(OL$Info, "Reverse phase-encode volumes not specified - attempting to guess")
+        referenceVolume <- extractMriImage(bZeroData, 4, 1)
+        similarities <- sapply(seq_along(bZeroVolumes)[-1], function(i) RNiftyReg::similarity(extractMriImage(bZeroData,4,i), referenceVolume))
+        
+        kMeansResult <- kmeans(similarities, 2, nstart=3)
+        reversePEVolumes <- which(kMeansResult$cluster == which.min(kMeansResult$centers))
+        report(OL$Info, "#{pluralise('Volume',reversePEVolumes)} #{implode(reversePEVolumes,',',' and ',ranges=TRUE)} have lower similarity to the first b=0 volume")
+    }
+    else if (!all(reversePEVolumes %in% bZeroVolumes))
+        report(OL$Error, "Not all reverse phase-encode volumes have b=0")
+    else
+        reversePEVolumes <- match(reversePEVolumes, bZeroVolumes)
+    
+    # Assuming anterior-posterior phase-encoding direction here
+    phaseEncoding <- t(c(0,1,0)) %x% matrix(1,nBZeroVolumes,1)
+    phaseEncoding[reversePEVolumes,2] <- -1
+    
+    # Use the specified echo separation if available, otherwise use the file, or failing that just zero
+    if (!is.null(echoSeparation))
+        echoSeparation <- rep(echoSeparation, length.out=nBZeroVolumes)
+    else
+    {
+        echoSeparationFile <- file.path(session$getDirectory("diffusion"), "echosep.txt")
+        if (file.exists(echoSeparationFile))
+        {
+            echoSeparation <- as.numeric(readLines(echoSeparationFile))
+            invalid <- (is.na(echoSeparation) | echoSeparation == 0)
+            if (all(invalid))
+                echoSeparation <- rep(0, nBZeroVolumes)
+            else if (all(echoSeparation[!invalid] == echoSeparation[!invalid][1]))
+                echoSeparation[invalid] <- echoSeparation[!invalid][1]
+            else
+                echoSeparation[invalid] <- 0
+        }
+        else
+            echoSeparation <- rep(0, nBZeroVolumes)
+    }
+    
+    phaseFile <- file.path(targetDir, "phase.txt")
+    lines <- apply(cbind(phaseEncoding,echoSeparation), 1, implode, sep=" ")
+    writeLines(lines, phaseFile)
+    
+    params <- es("--imain=#{bZeroDataFile}", "--datain=#{phaseFile}", "--config=b02b0.cnf", "--out=#{file.path(targetDir,'topup')}", "--iout=#{file.path(targetDir,'b0corrected')}")
+    execute("topup", params, errorOnFail=TRUE)
 }
 
 runEddyWithSession <- function (session, useTopup = FALSE)
