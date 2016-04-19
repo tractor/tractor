@@ -93,7 +93,8 @@ runTopupWithSession <- function (session, reversePEVolumes = NULL, echoSeparatio
     lines <- apply(cbind(phaseEncoding,echoSeparation), 1, implode, sep=" ")
     writeLines(lines, phaseFile)
     
-    params <- es("--imain=#{bZeroDataFile}", "--datain=#{phaseFile}", "--config=b02b0.cnf", "--out=#{file.path(targetDir,'topup')}", "--iout=#{file.path(targetDir,'b0corrected')}")
+    report(OL$Info, "Running topup to correct susceptibility induced distortions")
+    params <- es(c("--imain=#{bZeroDataFile}", "--datain=#{phaseFile}", "--config=b02b0.cnf", "--out=#{file.path(targetDir,'topup')}", "--iout=#{file.path(targetDir,'b0corrected')}"))
     execute("topup", params, errorOnFail=TRUE)
 }
 
