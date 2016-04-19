@@ -15,19 +15,14 @@ runExperiment <- function ()
     dicomDirs <- getConfigVariable("DicomDirectories", NULL, "character")
     useGradientCache <- getConfigVariable("UseGradientCache", "second", validValues=c("first","second","never"))
     flipAxes <- getConfigVariable("FlipGradientAxes", NULL, "character")
+    useTopup <- getConfigVariable("UseTopup", TRUE)
+    reversePEVolumes <- getConfigVariable("ReversePEVolumes", NULL, "character")
+    echoSeparation <- getConfigVariable("EchoSeparation", NULL, "numeric")
     maskingMethod <- getConfigVariable("MaskingMethod", "kmeans", validValues=c("bet","kmeans","fill"))
     nClusters <- getConfigVariable("KMeansClusters", 2, "integer")
     betIntensityThreshold <- getConfigVariable("BetIntensityThreshold", 0.3)
     betVerticalGradient <- getConfigVariable("BetVerticalGradient", 0)
     eddyCorrectMethod <- getConfigVariable("EddyCorrectionMethod", "fsl", validValues=c("fsl","niftyreg","none"))
-    useTopup <- getConfigVariable("UseTopup", TRUE)
-    echoSpacing <- getConfigVariable("EchoSpacing", NULL)
-    
-    if (useTopup && is.null(locateExecutable("topup",errorIfMissing=FALSE)))
-    {
-      report(OL$Warning, "Topup not found, continuing without it")
-      useTopup=FALSE
-    }
     
     if ((interactive || statusOnly) && getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
@@ -118,49 +113,64 @@ runExperiment <- function ()
     
         if (runStages[2] && (force || !stagesComplete[2]))
         {
-            scheme <- session$getDiffusionScheme()
-            if (is.null(scheme))
-                report(OL$Error, "No b-value or gradient direction information is available")
-
-            bValues <- scheme$getBValues()
-            minBValue <- min(bValues)
-
-            zeroes <- which(bValues == minBValue)
-            if (length(zeroes) == 1)
+            if (useTopup && is.null(locateExecutable("topup",errorIfMissing=FALSE)))
             {
-                choice <- zeroes
-                report(OL$Info, "Volume ", choice, " is the only T2-weighted (b=", minBValue, ") volume in the data set")
+                report(OL$Warning, "The \"topup\" executable was not found - continuing without it")
+                useTopup <- FALSE
             }
-            else if (!interactive)
+            
+            if (useTopup)
             {
-                choice <- zeroes[1]
-                report(OL$Info, "Using volume ", choice, " with b=", minBValue, " as the reference volume")
+                if (!is.null(reversePEVolumes))
+                    reversePEVolumes <- splitAndConvertString(reversePEVolumes, ",", "integer", fixed=TRUE)
+                runTopupWithSession(session, reversePEVolumes, echoSeparation)
             }
             else
             {
-                report(OL$Info, "There are ", length(zeroes), " T2-weighted (b=", minBValue, ") volumes")
-                choice <- -1
+                scheme <- session$getDiffusionScheme()
+                if (is.null(scheme))
+                    report(OL$Error, "No b-value or gradient direction information is available")
 
-                while (!(choice %in% seq_along(zeroes)))
+                bValues <- scheme$getBValues()
+                minBValue <- min(bValues)
+
+                zeroes <- which(bValues == minBValue)
+                if (length(zeroes) == 1)
                 {
-                    choice <- ask("Use which one as the reference [1-", length(zeroes), "; s to show in fslview]?")
-                    if (tolower(choice) == "s")
-                    {
-                        zeroVolumes <- readImageFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=zeroes)
-                        showImagesInViewer(zeroVolumes, viewer="fslview")
-                    }
-                    else
-                        choice <- as.integer(choice)
+                    choice <- zeroes
+                    report(OL$Info, "Volume ", choice, " is the only T2-weighted (b=", minBValue, ") volume in the data set")
                 }
+                else if (!interactive)
+                {
+                    choice <- zeroes[1]
+                    report(OL$Info, "Using volume ", choice, " with b=", minBValue, " as the reference volume")
+                }
+                else
+                {
+                    report(OL$Info, "There are ", length(zeroes), " T2-weighted (b=", minBValue, ") volumes")
+                    choice <- -1
+
+                    while (!(choice %in% seq_along(zeroes)))
+                    {
+                        choice <- ask("Use which one as the reference [1-", length(zeroes), "; s to show in fslview]?")
+                        if (tolower(choice) == "s")
+                        {
+                            zeroVolumes <- readImageFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=zeroes)
+                            showImagesInViewer(zeroVolumes, viewer="fslview")
+                        }
+                        else
+                            choice <- as.integer(choice)
+                    }
                 
-                choice <- zeroes[choice]
+                    choice <- zeroes[choice]
+                }
+            
+                writeLines(as.character(choice), file.path(session$getDirectory("diffusion"),"refb0-index.txt"))
+            
+                report(OL$Info, "Extracting reference volume")
+                refVolume <- readImageFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=choice)
+                writeImageFile(refVolume, session$getImageFileNameByType("refb0"))
             }
-            
-            writeLines(as.character(choice), file.path(session$getDirectory("diffusion"),"refb0-index.txt"))
-            
-            report(OL$Info, "Extracting reference volume")
-            refVolume <- readImageFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=choice)
-            writeImageFile(refVolume, session$getImageFileNameByType("refb0"))
         }
         
         if (runStages[3] && (force || !stagesComplete[3]))
