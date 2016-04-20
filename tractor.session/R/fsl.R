@@ -53,7 +53,7 @@ createAcquisitionParameterFileForSession <- function (session, reversePEVolumes 
         writeImageFile(bZeroData, file.path(targetDir,"b0vols"))
     }
     
-    phaseFile <- file.path(targetDir, "phase.txt")
+    phaseFile <- file.path(targetDir, "acqparams.txt")
     
     # Give the user a chance to override our guesswork, e.g. if their phase-encode direction is not A-P
     if (!file.exists(phaseFile))
@@ -146,7 +146,9 @@ runEddyWithSession <- function (session)
     writeLines(implode(indices," "), indexFile)
     
     report(OL$Info, "Running eddy to remove eddy current induced artefacts...")
-    params <- es(c("--imain=#{session$getImageFileNameByType('rawdata','diffusion')}", "--mask=#{session$getImageFileNameByType('mask','diffusion')}", "--acqp=#{phaseFile}", "--index=#{indexFile}", "--bvecs=#{file.path(targetDir,'bvecs')}", "--bvals=#{file.path(targetDir,'bvals')}", "--topup=#{file.path(targetDir,'topup')}", "--out=#{file.path(targetDir,'data')}"))
+    params <- es(c("--imain=#{session$getImageFileNameByType('rawdata','diffusion')}", "--mask=#{session$getImageFileNameByType('mask','diffusion')}", "--acqp=#{phaseFile}", "--index=#{indexFile}", "--bvecs=#{file.path(targetDir,'bvecs')}", "--bvals=#{file.path(targetDir,'bvals')}", "--out=#{file.path(targetDir,'data')}"))
+    if (imageFileExists(file.path(targetDir, "topup_fieldcoef")))
+        params <- c(params, es("--topup=#{file.path(targetDir,'topup')}"))
     execute("eddy", params, errorOnFail=TRUE)
     
     # commenting out for now...
