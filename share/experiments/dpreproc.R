@@ -22,7 +22,7 @@ runExperiment <- function ()
     nClusters <- getConfigVariable("KMeansClusters", 2, "integer")
     betIntensityThreshold <- getConfigVariable("BetIntensityThreshold", 0.3)
     betVerticalGradient <- getConfigVariable("BetVerticalGradient", 0)
-    eddyCorrectMethod <- getConfigVariable("EddyCorrectionMethod", "fsl", validValues=c("fsl","niftyreg","none"))
+    eddyCorrectMethod <- getConfigVariable("EddyCorrectionMethod", "eddy", validValues=c("eddy","eddycorrect","fsl","niftyreg","none"))
     
     if ((interactive || statusOnly) && getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
@@ -113,64 +113,63 @@ runExperiment <- function ()
     
         if (runStages[2] && (force || !stagesComplete[2]))
         {
-            if (useTopup && is.null(locateExecutable("topup",errorIfMissing=FALSE)))
-            {
-                report(OL$Warning, "The \"topup\" executable was not found - continuing without it")
-                useTopup <- FALSE
-            }
+            scheme <- session$getDiffusionScheme()
+            if (is.null(scheme))
+                report(OL$Error, "No b-value or gradient direction information is available")
             
-            if (useTopup)
+            b0Path <- session$getImageFileNameByType("rawdata", "diffusion")
+            if (useTopup && eddyCorrectMethod == "eddy")
             {
-                if (!is.null(reversePEVolumes))
-                    reversePEVolumes <- splitAndConvertString(reversePEVolumes, ",", "integer", fixed=TRUE)
-                runTopupWithSession(session, reversePEVolumes, echoSeparation)
-            }
-            else
-            {
-                scheme <- session$getDiffusionScheme()
-                if (is.null(scheme))
-                    report(OL$Error, "No b-value or gradient direction information is available")
-
-                bValues <- scheme$getBValues()
-                minBValue <- min(bValues)
-
-                zeroes <- which(bValues == minBValue)
-                if (length(zeroes) == 1)
+                if (is.null(locateExecutable("topup",errorIfMissing=FALSE)))
                 {
-                    choice <- zeroes
-                    report(OL$Info, "Volume ", choice, " is the only T2-weighted (b=", minBValue, ") volume in the data set")
-                }
-                else if (!interactive)
-                {
-                    choice <- zeroes[1]
-                    report(OL$Info, "Using volume ", choice, " with b=", minBValue, " as the reference volume")
+                    report(OL$Warning, "The \"topup\" executable was not found - continuing without it")
+                    useTopup <- FALSE
                 }
                 else
                 {
-                    report(OL$Info, "There are ", length(zeroes), " T2-weighted (b=", minBValue, ") volumes")
-                    choice <- -1
-
-                    while (!(choice %in% seq_along(zeroes)))
-                    {
-                        choice <- ask("Use which one as the reference [1-", length(zeroes), "; s to show in fslview]?")
-                        if (tolower(choice) == "s")
-                        {
-                            zeroVolumes <- readImageFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=zeroes)
-                            showImagesInViewer(zeroVolumes, viewer="fslview")
-                        }
-                        else
-                            choice <- as.integer(choice)
-                    }
-                
-                    choice <- zeroes[choice]
+                    if (!is.null(reversePEVolumes))
+                        reversePEVolumes <- splitAndConvertString(reversePEVolumes, ",", "integer", fixed=TRUE)
+                    runTopupWithSession(session, reversePEVolumes, echoSeparation)
+                    b0Path <- file.path(session$getDirectory("fdt"), "b0corrected")
                 }
-            
-                writeLines(as.character(choice), file.path(session$getDirectory("diffusion"),"refb0-index.txt"))
-            
-                report(OL$Info, "Extracting reference volume")
-                refVolume <- readImageFile(session$getImageFileNameByType("rawdata","diffusion"), volumes=choice)
-                writeImageFile(refVolume, session$getImageFileNameByType("refb0"))
             }
+            
+            bValues <- scheme$getBValues()
+            minBValue <- min(bValues)
+            zeroes <- which(bValues == minBValue)
+            if (length(zeroes) == 1)
+            {
+                choice <- zeroes
+                report(OL$Info, "Volume #{choice} is the only T2-weighted (b=#{minBValue}) volume in the data set")
+            }
+            else if (!interactive)
+            {
+                choice <- zeroes[1]
+                report(OL$Info, "Using volume #{choice} with b=#{minBValue} as the reference volume")
+            }
+            else
+            {
+                report(OL$Info, "There #{pluralise('is',zeroes,plural='are')} #{length(zeroes)} T2-weighted (b=#{minBValue}) #{pluralise('volume',zeroes)}")
+                choice <- -1
+
+                while (!(choice %in% seq_along(zeroes)))
+                {
+                    choice <- ask("Use which one as the reference [1-#{length(zeroes)}; s to show in fslview]?")
+                    if (tolower(choice) == "s")
+                    {
+                        zeroVolumes <- readImageFile(b0Path, volumes=(if(useTopup) NULL else zeroes))
+                        showImagesInViewer(zeroVolumes, viewer="fslview")
+                    }
+                    else
+                        choice <- as.integer(choice)
+                }
+            }
+        
+            writeLines(as.character(zeroes[choice]), file.path(session$getDirectory("diffusion"),"refb0-index.txt"))
+        
+            report(OL$Info, "Extracting reference volume")
+            refVolume <- readImageFile(b0Path, volumes=(if(useTopup) choice else zeroes[choice]))
+            writeImageFile(refVolume, session$getImageFileNameByType("refb0"))
         }
         
         if (runStages[3] && (force || !stagesComplete[3]))
@@ -224,10 +223,15 @@ runExperiment <- function ()
         if (runStages[4] && (force || !stagesComplete[4]))
         {
             refVolume <- as.integer(readLines(file.path(session$getDirectory("diffusion"),"refb0-index.txt")))
-            if (eddyCorrectMethod == "fsl")
+            
+            if (eddyCorrectMethod == "eddy" && !is.null(locateExecutable("eddy",errorIfMissing=FALSE)))
+                runEddyWithSession(session)
+            else if (eddyCorrectMethod %in% c("eddycorrect","fsl") && !is.null(locateExecutable("eddy_correct",errorIfMissing=FALSE)))
                 runEddyCorrectWithSession(session, refVolume)
             else
             {
+                if (eddyCorrectMethod != "none")
+                    eddyCorrectMethod <- "niftyreg"
                 scheme <- session$getDiffusionScheme()
                 bValues <- scheme$getBValues()
                 nLevels <- ifelse(bValues>1500, 3, 2)
