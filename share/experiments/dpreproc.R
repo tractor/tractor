@@ -18,7 +18,7 @@ runExperiment <- function ()
     useTopup <- getConfigVariable("UseTopup", TRUE)
     reversePEVolumes <- getConfigVariable("ReversePEVolumes", NULL, "character")
     echoSeparation <- getConfigVariable("EchoSeparation", NULL, "numeric")
-    maskingMethod <- getConfigVariable("MaskingMethod", "kmeans", validValues=c("bet","kmeans","fill"))
+    maskingMethod <- getConfigVariable("MaskingMethod", "bet", validValues=c("bet","kmeans","fill"))
     nClusters <- getConfigVariable("KMeansClusters", 2, "integer")
     betIntensityThreshold <- getConfigVariable("BetIntensityThreshold", 0.3)
     betVerticalGradient <- getConfigVariable("BetVerticalGradient", 0)
@@ -174,6 +174,12 @@ runExperiment <- function ()
         
         if (runStages[3] && (force || !stagesComplete[3]))
         {
+            if (maskingMethod == "bet" && is.null(locateExecutable("bet",errorIfMissing=FALSE)))
+            {
+                report(OL$Warning, "The \"bet\" executable was not found - using k-means instead")
+                maskingMethod <- "kmeans"
+            }
+            
             done <- "n"
             repeat
             {
