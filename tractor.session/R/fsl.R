@@ -134,6 +134,7 @@ runEddyWithSession <- function (session)
     
     targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
     phaseFile <- createAcquisitionParameterFileForSession(session, writeBZeroes=FALSE)
+    session$updateDiffusionScheme()
     
     bValues <- session$getDiffusionScheme()$getBValues()
     bZeroVolumes <- which(bValues == min(bValues))
