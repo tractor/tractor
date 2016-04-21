@@ -631,5 +631,9 @@ clusteringCoefficients <- function (graph)
         report(OL$Error, "Specified graph is not a valid Graph or igraph object")
     
     require("igraph")
-    return (transitivity(as(graph,"igraph"),"local"))
+    igraph <- as(graph, "igraph")
+    
+    degree <- degree(igraph, mode="all", loops=FALSE)
+    coefs <- 2 * adjacent.triangles(igraph) / (degree*(degree-1))
+    return (replace(coefs, is.nan(coefs), 0))
 }
