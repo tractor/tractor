@@ -59,26 +59,31 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
     {
         weightedLeastSquaresFit <- function (i)
         {
-            voxelLogData <- logData[i,]
-            voxelResiduals <- solution$residuals[,i]
-            previousSumOfSquares <- sum(voxelResiduals^2, na.rm=TRUE)
-            sumOfSquaresChange <- Inf
-            tempSolution <- NULL
-            
-            while (sumOfSquaresChange > convergenceLevel)
+            if (sum(!is.na(logData[i,])) < 7)
+                return (c(rep(NA,7), rep(NA,ncol(logData))))
+            else
             {
-                # Weights are simply the predicted signals; nonpositive data values get zero weight
-                weights <- exp(voxelLogData - voxelResiduals)
-                weights[is.na(weights)] <- 0
-                tempSolution <- suppressWarnings(lsfit(bMatrix, voxelLogData, wt=weights))
-                voxelResiduals <- tempSolution$residuals
-                
-                sumOfSquares <- sum(tempSolution$residuals^2, na.rm=TRUE)
-                sumOfSquaresChange <- abs((previousSumOfSquares - sumOfSquares) / previousSumOfSquares)
-                previousSumOfSquares <- sumOfSquares
-            }
+                voxelLogData <- logData[i,]
+                voxelResiduals <- solution$residuals[,i]
+                previousSumOfSquares <- sum(voxelResiduals^2, na.rm=TRUE)
+                sumOfSquaresChange <- Inf
+                tempSolution <- NULL
             
-            return (c(tempSolution$coefficients, tempSolution$residuals))
+                while (sumOfSquaresChange > convergenceLevel)
+                {
+                    # Weights are simply the predicted signals; nonpositive data values get zero weight
+                    weights <- exp(voxelLogData - voxelResiduals)
+                    weights[is.na(weights)] <- 0
+                    tempSolution <- suppressWarnings(lsfit(bMatrix, voxelLogData, wt=weights))
+                    voxelResiduals <- tempSolution$residuals
+                
+                    sumOfSquares <- sum(tempSolution$residuals^2, na.rm=TRUE)
+                    sumOfSquaresChange <- abs((previousSumOfSquares - sumOfSquares) / previousSumOfSquares)
+                    previousSumOfSquares <- sumOfSquares
+                }
+            
+                return (c(tempSolution$coefficients, tempSolution$residuals))
+            }
         }
         
         report(OL$Info, "Applying iterative weighted least-squares")
