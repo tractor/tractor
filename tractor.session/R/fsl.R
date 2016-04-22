@@ -150,11 +150,15 @@ runEddyWithSession <- function (session)
     params <- es(c("--imain=#{session$getImageFileNameByType('rawdata','diffusion')}", "--mask=#{session$getImageFileNameByType('mask','diffusion')}", "--acqp=#{phaseFile}", "--index=#{indexFile}", "--bvecs=#{file.path(targetDir,'bvecs')}", "--bvals=#{file.path(targetDir,'bvals')}", "--out=#{file.path(targetDir,'data')}"))
     if (imageFileExists(file.path(targetDir, "topup_fieldcoef")))
         params <- c(params, es("--topup=#{file.path(targetDir,'topup')}"))
-    execute("eddy", params, errorOnFail=TRUE)
+    execute("eddy", params, errorOnFail=TRUE, stdout=file.path(targetDir,"eddy.log"))
     
-    # commenting out for now...
-    # transform <- readEddyCorrectTransformsForSession(session)
-    # transform$serialise(file.path(session$getDirectory("diffusion"), "coreg_xfm.Rdata"))
+    mainDataPath <- session$getImageFileNameByType("data", "diffusion")
+    fdtDataPath <- session$getImageFileNameByType("data", "fdt")
+    copyImageFiles(fdtDataPath, mainDataPath, overwrite=TRUE, deleteOriginals=TRUE)
+    symlinkImageFiles(mainDataPath, fdtDataPath)
+    
+    transform <- readEddyCorrectTransformsForSession(session)
+    transform$serialise(file.path(session$getDirectory("diffusion"), "coreg_xfm.Rdata"))
 }
 
 runEddyCorrectWithSession <- function (session, refVolume)
@@ -180,24 +184,35 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    logFile <- file.path(session$getDirectory("fdt"), "data.ecclog")
-    if (!file.exists(logFile))
-        report(OL$Error, "Eddy current correction log not found")
-    logLines <- readLines(logFile)
-    logLines <- subset(logLines, logLines %~% "^[0-9\\-\\. ]+$")
-    
-    connection <- textConnection(logLines)
-    matrices <- as.matrix(read.table(connection))
-    close(connection)
-    
-    if (is.null(index))
-        index <- seq_len(nrow(matrices) / 4)
-    
-    matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
-    
     sourceImage <- session$getImageByType("rawdata", "diffusion", metadataOnly=TRUE)
     targetImage <- session$getImageByType("refb0", "diffusion", metadataOnly=TRUE)
-    transform <- tractor.reg::Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="fsl", version=1)
+    
+    eddyParamsFile <- file.path(session$getDirectory("fdt"), "data.eddy_parameters")
+    eddyCorrectLogFile <- file.path(session$getDirectory("fdt"), "data.ecclog")
+    if (file.exists(eddyParamsFile))
+    {
+        corrections <- as.matrix(read.table(eddyParamsFile))
+        affines <- lapply(seq_len(nrow(corrections)), function(i) solve(RNiftyReg::buildAffine(translation=corrections[i,1:3], angles=corrections[i,4:6], source=targetImage)))
+        transform <- tractor.reg::Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=affines, controlPointImages=list(), reverseControlPointImages=list(), method="fsl")
+    }
+    else if (file.exists(eddyCorrectLogFile))
+    {
+        logLines <- readLines(eddyCorrectLogFile)
+        logLines <- subset(logLines, logLines %~% "^[0-9\\-\\. ]+$")
+    
+        connection <- textConnection(logLines)
+        matrices <- as.matrix(read.table(connection))
+        close(connection)
+    
+        if (is.null(index))
+            index <- seq_len(nrow(matrices) / 4)
+    
+        matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
+        
+        transform <- tractor.reg::Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="fsl", version=1)
+    }
+    else
+        report(OL$Error, "No eddy current correction log was found")
     
     invisible (transform)
 }
