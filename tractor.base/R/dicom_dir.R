@@ -139,7 +139,12 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
             unlink(from[!inPlace])
         
         if (length(remainingSorts) > 0)
+        {
+            wd <- getwd()
+            on.exit(setwd(wd))
+            setwd(subdirectory)
             sortDicomDirectories(subdirectory, TRUE, sortOn=remainingSorts)
+        }
     }
 }
 
