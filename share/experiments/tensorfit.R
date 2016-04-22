@@ -9,6 +9,12 @@ runExperiment <- function ()
     
     method <- getConfigVariable("Method", "ls", validValues=c("ls","iwls","fsl"))
     
+    if (method != "iwls" && session$getDiffusionScheme()$nShells() > 1)
+    {
+        report(OL$Info, "Using IWLS, since diffusion acquisition scheme has multiple shells")
+        method <- "iwls"
+    }
+    
     if (method == "fsl")
         runDtifitWithSession(session)
     else
