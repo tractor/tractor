@@ -50,8 +50,10 @@ runExperiment <- function ()
                 locs <- which(maskData > 0, arr.ind=TRUE)
                 d1 <- locs[fit$fa>=faThreshold,1]
                 d2 <- locs[fit$fa>=faThreshold,2]
-
-                col <- rgb(abs(fullEigenvectors[1,]), abs(fullEigenvectors[2,]), abs(fullEigenvectors[3,]))
+                
+                valid <- (apply(is.na(fullEigenvectors),2,sum) == 0)
+                col <- rep(NA, ncol(fullEigenvectors))
+                col[valid] <- rgb(abs(fullEigenvectors[1,valid]), abs(fullEigenvectors[2,valid]), abs(fullEigenvectors[3,valid]))
 
                 segments((d1-1)/(dims[1]-1)-eigenvectors[1,]/(2*dims[1]), (d2-1)/(dims[2]-1)-eigenvectors[2,]/(2*dims[2]), (d1-1)/(dims[1]-1)+eigenvectors[1,]/(2*dims[1]), (d2-1)/(dims[2]-1)+eigenvectors[2,]/(2*dims[2]), lwd=lineWidth, col=col)
             }
