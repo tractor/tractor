@@ -33,11 +33,139 @@ showImagesInFslview <- function (imageFileNames, wait = FALSE, lookupTable = NUL
     invisible(unlist(imageFileNames))
 }
 
+createAcquisitionParameterFileForSession <- function (session, reversePEVolumes = NULL, echoSeparation = NULL, writeBZeroes = TRUE)
+{
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
+    if (!session$imageExists("rawdata","diffusion"))
+        report(OL$Error, "The specified session does not contain a raw data image")
+    
+    targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
+    
+    bValues <- session$getDiffusionScheme()$getBValues()
+    bZeroVolumes <- which(bValues == min(bValues))
+    nBZeroVolumes <- length(bZeroVolumes)
+    bZeroData <- NULL
+    
+    if (writeBZeroes)
+    {
+        bZeroData <- session$getImageByType("rawdata", "diffusion", volumes=bZeroVolumes)
+        writeImageFile(bZeroData, file.path(targetDir,"b0vols"))
+    }
+    
+    phaseFile <- file.path(targetDir, "acqparams.txt")
+    
+    # Give the user a chance to override our guesswork, e.g. if their phase-encode direction is not A-P
+    if (!file.exists(phaseFile))
+    {
+        if (is.null(reversePEVolumes))
+        {
+            report(OL$Info, "Reverse phase-encode volumes not specified - attempting to guess")
+            if (is.null(bZeroData))
+                bZeroData <- session$getImageByType("rawdata", "diffusion", volumes=bZeroVolumes)
+            referenceVolume <- extractMriImage(bZeroData, 4, 1)
+            similarities <- sapply(seq_along(bZeroVolumes)[-1], function(i) RNiftyReg::similarity(extractMriImage(bZeroData,4,i), referenceVolume))
+        
+            kMeansResult <- kmeans(similarities, 2, nstart=3)
+            reversePEVolumes <- which(kMeansResult$cluster == which.min(kMeansResult$centers)) + 1L
+            report(OL$Info, "#{pluralise('Volume',reversePEVolumes)} #{implode(reversePEVolumes,',',' and ',ranges=TRUE)} #{pluralise('has',reversePEVolumes,plural='have')} lower similarity to the first b=0 volume")
+        }
+        else if (!all(reversePEVolumes %in% bZeroVolumes))
+        {
+            report(OL$Warning, "Not all reverse phase-encode volumes have b=0")
+            return (NULL)
+        }
+        else
+            reversePEVolumes <- match(reversePEVolumes, bZeroVolumes)
+    
+        # Assuming anterior-posterior phase-encoding direction here
+        phaseEncoding <- t(c(0,1,0)) %x% matrix(1,nBZeroVolumes,1)
+        phaseEncoding[reversePEVolumes,2] <- -1
+    
+        # Use the specified echo separation if available, otherwise use the file, or failing that just zero
+        if (!is.null(echoSeparation))
+            echoSeparation <- rep(echoSeparation, length.out=nBZeroVolumes)
+        else
+        {
+            echoSeparationFile <- file.path(session$getDirectory("diffusion"), "echosep.txt")
+            if (file.exists(echoSeparationFile))
+            {
+                echoSeparation <- as.numeric(readLines(echoSeparationFile))[bZeroVolumes]
+                invalid <- (is.na(echoSeparation) | echoSeparation == 0)
+                if (all(invalid))
+                    echoSeparation <- rep(0, nBZeroVolumes)
+                else if (all(echoSeparation[!invalid] == echoSeparation[!invalid][1]))
+                    echoSeparation[invalid] <- echoSeparation[!invalid][1]
+                else
+                    echoSeparation[invalid] <- 0
+            }
+            else
+                echoSeparation <- rep(0, nBZeroVolumes)
+        }
+    
+        lines <- apply(cbind(phaseEncoding,echoSeparation), 1, implode, sep=" ")
+        writeLines(lines, phaseFile)
+    }
+    
+    return (phaseFile)
+}
+
+runTopupWithSession <- function (session, reversePEVolumes = NULL, echoSeparation = NULL)
+{
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
+    if (!session$imageExists("rawdata","diffusion"))
+        report(OL$Error, "The specified session does not contain a raw data image")
+    
+    targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
+    phaseFile <- createAcquisitionParameterFileForSession(session)
+    
+    report(OL$Info, "Running topup to correct susceptibility induced distortions...")
+    params <- es(c("--imain=#{file.path(targetDir,'b0vols')}", "--datain=#{phaseFile}", "--config=b02b0.cnf", "--out=#{file.path(targetDir,'topup')}", "--iout=#{file.path(targetDir,'b0corrected')}"))
+    execute("topup", params, errorOnFail=TRUE)
+}
+
+runEddyWithSession <- function (session)
+{
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
+    if (!session$imageExists("rawdata","diffusion"))
+        report(OL$Error, "The specified session does not contain a raw data image")
+    
+    targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
+    phaseFile <- createAcquisitionParameterFileForSession(session, writeBZeroes=FALSE)
+    session$updateDiffusionScheme()
+    
+    bValues <- session$getDiffusionScheme()$getBValues()
+    bZeroVolumes <- which(bValues == min(bValues))
+    indices <- sapply(seq_along(bValues), function(i) {
+        j <- i - bZeroVolumes
+        which.min(replace(j, j<0, Inf))
+    })
+    
+    indexFile <- file.path(targetDir, "index.txt")
+    writeLines(implode(indices," "), indexFile)
+    
+    report(OL$Info, "Running eddy to remove eddy current induced artefacts...")
+    params <- es(c("--imain=#{session$getImageFileNameByType('rawdata','diffusion')}", "--mask=#{session$getImageFileNameByType('mask','diffusion')}", "--acqp=#{phaseFile}", "--index=#{indexFile}", "--bvecs=#{file.path(targetDir,'bvecs')}", "--bvals=#{file.path(targetDir,'bvals')}", "--out=#{file.path(targetDir,'data')}"))
+    if (imageFileExists(file.path(targetDir, "topup_fieldcoef")))
+        params <- c(params, es("--topup=#{file.path(targetDir,'topup')}"))
+    execute("eddy", params, errorOnFail=TRUE, stdout=file.path(targetDir,"eddy.log"))
+    
+    mainDataPath <- session$getImageFileNameByType("data", "diffusion")
+    fdtDataPath <- session$getImageFileNameByType("data", "fdt")
+    copyImageFiles(fdtDataPath, mainDataPath, overwrite=TRUE, deleteOriginals=TRUE)
+    symlinkImageFiles(mainDataPath, fdtDataPath)
+    
+    transform <- readEddyCorrectTransformsForSession(session)
+    transform$serialise(file.path(session$getDirectory("diffusion"), "coreg_xfm.Rdata"))
+}
+
 runEddyCorrectWithSession <- function (session, refVolume)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
-    if (!imageFileExists(session$getImageFileNameByType("rawdata","diffusion")))
+    if (!session$imageExists("rawdata","diffusion"))
         report(OL$Error, "The specified session does not contain a raw data image")
     
     report(OL$Info, "Running eddy_correct to remove eddy current induced artefacts...")
@@ -56,24 +184,35 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    logFile <- file.path(session$getDirectory("fdt"), "data.ecclog")
-    if (!file.exists(logFile))
-        report(OL$Error, "Eddy current correction log not found")
-    logLines <- readLines(logFile)
-    logLines <- subset(logLines, logLines %~% "^[0-9\\-\\. ]+$")
-    
-    connection <- textConnection(logLines)
-    matrices <- as.matrix(read.table(connection))
-    close(connection)
-    
-    if (is.null(index))
-        index <- seq_len(nrow(matrices) / 4)
-    
-    matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
-    
     sourceImage <- session$getImageByType("rawdata", "diffusion", metadataOnly=TRUE)
     targetImage <- session$getImageByType("refb0", "diffusion", metadataOnly=TRUE)
-    transform <- tractor.reg::Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="fsl", version=1)
+    
+    eddyParamsFile <- file.path(session$getDirectory("fdt"), "data.eddy_parameters")
+    eddyCorrectLogFile <- file.path(session$getDirectory("fdt"), "data.ecclog")
+    if (file.exists(eddyParamsFile))
+    {
+        corrections <- as.matrix(read.table(eddyParamsFile))
+        affines <- lapply(seq_len(nrow(corrections)), function(i) solve(RNiftyReg::buildAffine(translation=corrections[i,1:3], angles=corrections[i,4:6], source=targetImage)))
+        transform <- tractor.reg::Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=affines, controlPointImages=list(), reverseControlPointImages=list(), method="fsl")
+    }
+    else if (file.exists(eddyCorrectLogFile))
+    {
+        logLines <- readLines(eddyCorrectLogFile)
+        logLines <- subset(logLines, logLines %~% "^[0-9\\-\\. ]+$")
+    
+        connection <- textConnection(logLines)
+        matrices <- as.matrix(read.table(connection))
+        close(connection)
+    
+        if (is.null(index))
+            index <- seq_len(nrow(matrices) / 4)
+    
+        matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
+        
+        transform <- tractor.reg::Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="fsl", version=1)
+    }
+    else
+        report(OL$Error, "No eddy current correction log was found")
     
     invisible (transform)
 }
@@ -85,13 +224,7 @@ createFdtFilesForSession <- function (session, overwriteExisting = FALSE)
     maskImageName <- session$getImageFileNameByType("mask", "fdt")
     
     if (overwriteExisting || !file.exists(file.path(targetDir,"bvals")) || !file.exists(file.path(targetDir,"bvecs")))
-    {
-        scheme <- newSimpleDiffusionSchemeFromSession(session)
-        if (is.null(scheme))
-            report(OL$Error, "The specified session does not contain gradient direction information")
-        
-        writeSimpleDiffusionSchemeForSession(session, scheme, thirdPartyOnly=TRUE)
-    }
+        session$updateDiffusionScheme()
     if (overwriteExisting || !imageFileExists(dataImageName))
     {
         targetDataImageName <- session$getImageFileNameByType("data", "diffusion")
@@ -143,7 +276,7 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     copyImageFiles(paste(session$getImageFileNameByType("maskedb0"),"mask",sep="_"), session$getImageFileNameByType("mask","diffusion"), overwrite=TRUE, deleteOriginals=TRUE)
 }
 
-runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","screen"))
+runBedpostWithSession <- function (session, nFibres = 3, how = c("fg","bg","screen"))
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
@@ -152,20 +285,21 @@ runBedpostWithSession <- function (session, nFibres = 2, how = c("fg","bg","scre
     
     targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
     createFdtFilesForSession(session)
-    
     session$unlinkDirectory("bedpost")
+    
+    modelArg <- ifelse(session$getDiffusionScheme()$nShells() > 1, "-model 2", "")
     
     if (how == "screen")
     {
         report(OL$Info, "Starting bedpostx in a \"screen\" session")
         bedpostLoc <- locateExecutable("bedpostx", errorIfMissing=TRUE)
-        paramString <- paste("-d -m", bedpostLoc, targetDir, "-n", nFibres, sep=" ")
+        paramString <- paste("-d -m", bedpostLoc, targetDir, "-n", nFibres, modelArg, sep=" ")
         execute("screen", paramString, errorOnFail=TRUE)
     }
     else
     {
         report(OL$Info, "Starting bedpostx as a ", ifelse(how=="fg","normal foreground","background"), " process")
-        paramString <- paste(targetDir, "-n", nFibres, sep=" ")
+        paramString <- paste(targetDir, "-n", nFibres, modelArg, sep=" ")
         execute("bedpostx", paramString, errorOnFail=TRUE, wait=(how=="fg"))
     }
 }

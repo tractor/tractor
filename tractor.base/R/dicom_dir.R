@@ -30,8 +30,8 @@ dropCommonPrefix <- function (strings)
 #' files will be copied into that subdirectory. Duplicate file names are
 #' disambiguated if necessary.
 #' 
-#' @param directory A length-1 character vector giving the directory to search
-#'   for DICOM files. Subdirectories will also be searched.
+#' @param directories A character vector giving the directories to search for
+#'   DICOM files. Subdirectories will also be searched.
 #' @param deleteOriginals A single logical value. If \code{TRUE}, then the
 #'   source files will be deleted after being copied to their new locations,
 #'   making the operation a move rather than a copy. Nothing will be deleted if
@@ -39,9 +39,6 @@ dropCommonPrefix <- function (strings)
 #' @param sortOn The string \code{"series"}, \code{"subject"} or \code{"date"},
 #'   or any combination in the order desired. This will be the basis of the
 #'   sort, which will be nested if more than one type is specified.
-#' @param useSeriesTime Logical value. If \code{TRUE}, use the series time
-#'   rather than number as the identifier. This can be more reliable if the
-#'   files are from multiple scan sessions.
 #' @return This function is called for its side effect.
 #' 
 #' @author Jon Clayden
@@ -55,18 +52,23 @@ dropCommonPrefix <- function (strings)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "series")
+sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn = "series")
 {
-    if (!file.exists(directory) || !file.info(directory)$isdir)
-        report(OL$Error, "Specified path (#{directory}) does not exist or does not point to a directory")
+    invalid <- (!file.exists(directories) | !file.info(directories)$isdir)
+    if (any(invalid))
+        flag(OL$Warning, "#{pluralise('Path',n=sum(invalid))} #{implode(directories[invalid],', ',' and ')} do not exist or do not point to directories")
+    else
+        directories <- expandFileName(directories[!invalid])
+    
+    if (length(directories) < 1)
+        report(OL$Error, "No valid directories specified")
     
     sortOn <- match.arg(sortOn, c("series","subject","date"), several.ok=TRUE)
     currentSort <- sortOn[1]
     remainingSorts <- sortOn[-1]
     identifierTag <- switch(currentSort, series=c(0x0020,0x000e), subject=c(0x0010,0x0010), date=c(0x0008,0x0020))
     
-    directory <- expandFileName(directory)
-    files <- expandFileName(list.files(directory, full.names=TRUE, recursive=TRUE))
+    files <- expandFileName(list.files(directories, full.names=TRUE, recursive=TRUE))
     files <- files[!file.info(files)$isdir]
     nFiles <- length(files)
 
@@ -94,7 +96,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
     nDicomFiles <- count
     if (nDicomFiles == 0)
         report(OL$Error, "No readable DICOM files were found")
-
+    
     uniqueIdentifiers <- na.omit(sort(unique(identifiers)))
     shortIdentifiers <- dropCommonPrefix(uniqueIdentifiers)
     report(OL$Info, "Found ", switch(currentSort,series="series",subject="subjects",date="dates"), " ", implode(shortIdentifiers,", "), "; creating subdirectories")
@@ -118,8 +120,8 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
             report(OL$Info, "#{ore.subst('^.',toupper,currentSort)} #{shortIdentifiers[i]} includes #{length(matchingFiles)} files")
         }
         
-        if (!file.exists(file.path(directory, subdirectory)))
-            dir.create(file.path(directory, subdirectory))
+        if (!file.exists(subdirectory))
+            dir.create(subdirectory)
         
         currentIdFiles <- basename(files[matchingFiles])
         duplicates <- duplicated(currentIdFiles)
@@ -127,17 +129,17 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
             currentIdFiles[duplicates] <- paste(currentIdFiles[duplicates], seq_len(sum(duplicates)), sep="_")
         
         from <- files[matchingFiles]
-        to <- file.path(directory,subdirectory,currentIdFiles)
-        inPlace <- (from == to)
+        to <- file.path(subdirectory,currentIdFiles)
+        inPlace <- from == to
         success <- file.copy(from[!inPlace], to[!inPlace])
         
         if (!all(success))
-            report(OL$Warning, "Not all files copied successfully for #{currentSort} #{shortIdentifiers[i]} - nothing will be deleted")
+            report(OL$Warning, "Not all files copied successfully for ", currentSort, " ", id, " - nothing will be deleted")
         else if (deleteOriginals)
             unlink(from[!inPlace])
         
         if (length(remainingSorts) > 0)
-            sortDicomDirectory(file.path(directory,subdirectory), TRUE, sortOn=remainingSorts)
+            sortDicomDirectories(subdirectory, TRUE, sortOn=remainingSorts)
     }
 }
 
@@ -165,7 +167,7 @@ sortDicomDirectory <- function (directory, deleteOriginals = FALSE, sortOn = "se
 #' 
 #' @author Jon Clayden
 #' @seealso \code{\linkS4class{DicomMetadata}}, \code{\linkS4class{MriImage}},
-#' \code{\link{sortDicomDirectory}}.
+#' \code{\link{sortDicomDirectories}}.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -189,7 +191,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     images <- vector("list", nFiles)
     if (readDiffusionParams)
     {
-        bValues <- numeric(nFiles)
+        bValues <- echoSeparations <- numeric(nFiles)
         bVectors <- matrix(NA, nrow=3, ncol=nFiles)
     }
     
@@ -242,6 +244,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
                 report(OL$Info, "Attempting to read diffusion parameters using ", diffusion$defType, " DICOM convention")
             bValues[i] <- diffusion$bval
             bVectors[,i] <- diffusion$bvec
+            echoSeparations[i] <- ifelse(is.null(diffusion$echoSeparation), NA, diffusion$echoSeparation)
         }
         
         if (!seenValidFile)
@@ -261,6 +264,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     {
         bValues <- bValues[valid]
         bVectors <- bVectors[,valid]
+        echoSeparations <- echoSeparations[valid]
     }
     
     if (length(unique(info$seriesDescription)) > 1)
@@ -347,10 +351,12 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     {
         bValues <- bValues[sortOrder]
         bVectors <- bVectors[,sortOrder]
+        echoSeparations <- echoSeparations[sortOrder]
         
         # Initialisation
         volumeBValues <- rep(NA, nVolumes)
         volumeBVectors <- matrix(NA, nrow=3, ncol=nVolumes)
+        volumeEchoSeparations <- rep(NA, nVolumes)
     }
     
     # Insert data into the appropriate places
@@ -373,6 +379,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
         {
             volumeBValues[volume] <- bValues[i]
             volumeBVectors[,volume] <- bVectors[,i]
+            volumeEchoSeparations[volume] <- echoSeparations[i]
         }
     }
 
@@ -421,7 +428,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     {
         # Invert Y direction again
         volumeBVectors[2,] <- -volumeBVectors[2,]
-        returnValue <- c(returnValue, list(bValues=volumeBValues, bVectors=volumeBVectors))
+        returnValue <- c(returnValue, list(bValues=volumeBValues, bVectors=volumeBVectors, echoSeparations=volumeEchoSeparations))
     }
     
     invisible (returnValue)
@@ -619,13 +626,14 @@ readDiffusionParametersFromMetadata <- function (metadata)
     {
         bval <- metadata$getTagValue(0x0019, 0x100c)
         bvec <- metadata$getTagValue(0x0019, 0x100e)
+        echoSeparation <- metadata$getAsciiFields("EchoSpacing") / 1e6 * (metadata$getAsciiFields("EPIFactor") - 1)
         
         if (is.na(bval))
-            return (list(bval=NA, bvec=rep(NA,3), defType="none"))
+            return (list(bval=NA, bvec=rep(NA,3), echoSeparation=echoSeparation, defType="none"))
         else if (bval == 0 || identical(bvec, rep(0,3)))
-            return (list(bval=0, bvec=rep(0,3), defType="Siemens"))
+            return (list(bval=0, bvec=rep(0,3), echoSeparation=echoSeparation, defType="Siemens"))
         else
-            return (list(bval=bval, bvec=bvec, defType="Siemens"))
+            return (list(bval=bval, bvec=bvec, echoSeparation=echoSeparation, defType="Siemens"))
     }
     else
         return (list(bval=NA, bvec=rep(NA,3), defType="none"))

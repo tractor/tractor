@@ -5,6 +5,8 @@
 #' 
 #' @rdname tractor.base-deprecated
 #' @inheritParams readDicomDirectory
+#' @param dicomDir Character vector of length one giving the name of a
+#'   directory containing DICOM files.
 #' @export
 newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
 {

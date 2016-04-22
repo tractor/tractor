@@ -27,12 +27,11 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
         bMatrix <- (-scheme)
     else
     {
-        components <- scheme$expandComponents()
-        bMatrix <- t(apply(components$directions, 2, function (column) {
-            mat <- column %o% column
+        bMatrix <- t(apply(scheme$getGradientDirections(), 1, function (row) {
+            mat <- row %o% row
             return (c(mat[1,1], 2*mat[1,2], 2*mat[1,3], mat[2,2], 2*mat[2,3], mat[3,3]))
         }))
-        bMatrix <- bMatrix * (-components$bValues)
+        bMatrix <- bMatrix * (-scheme$getBValues())
     }
     
     report(OL$Info, "Fitting tensors by ordinary least-squares", ifelse(method=="iwls"," (for initialisation)",""))
@@ -60,26 +59,31 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
     {
         weightedLeastSquaresFit <- function (i)
         {
-            voxelLogData <- logData[i,]
-            voxelResiduals <- solution$residuals[,i]
-            previousSumOfSquares <- sum(voxelResiduals^2, na.rm=TRUE)
-            sumOfSquaresChange <- Inf
-            tempSolution <- NULL
-            
-            while (sumOfSquaresChange > convergenceLevel)
+            if (sum(!is.na(logData[i,])) < 7)
+                return (c(rep(NA,7), rep(NA,ncol(logData))))
+            else
             {
-                # Weights are simply the predicted signals; nonpositive data values get zero weight
-                weights <- exp(voxelLogData - voxelResiduals)
-                weights[is.na(weights)] <- 0
-                tempSolution <- suppressWarnings(lsfit(bMatrix, voxelLogData, wt=weights))
-                voxelResiduals <- tempSolution$residuals
-                
-                sumOfSquares <- sum(tempSolution$residuals^2, na.rm=TRUE)
-                sumOfSquaresChange <- abs((previousSumOfSquares - sumOfSquares) / previousSumOfSquares)
-                previousSumOfSquares <- sumOfSquares
-            }
+                voxelLogData <- logData[i,]
+                voxelResiduals <- solution$residuals[,i]
+                previousSumOfSquares <- sum(voxelResiduals^2, na.rm=TRUE)
+                sumOfSquaresChange <- Inf
+                tempSolution <- NULL
             
-            return (c(tempSolution$coefficients, tempSolution$residuals))
+                while (sumOfSquaresChange > convergenceLevel)
+                {
+                    # Weights are simply the predicted signals; nonpositive data values get zero weight
+                    weights <- exp(voxelLogData - voxelResiduals)
+                    weights[is.na(weights)] <- 0
+                    tempSolution <- suppressWarnings(lsfit(bMatrix, voxelLogData, wt=weights))
+                    voxelResiduals <- tempSolution$residuals
+                
+                    sumOfSquares <- sum(tempSolution$residuals^2, na.rm=TRUE)
+                    sumOfSquaresChange <- abs((previousSumOfSquares - sumOfSquares) / previousSumOfSquares)
+                    previousSumOfSquares <- sumOfSquares
+                }
+            
+                return (c(tempSolution$coefficients, tempSolution$residuals))
+            }
         }
         
         report(OL$Info, "Applying iterative weighted least-squares")
@@ -129,7 +133,7 @@ createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwl
     
     method <- match.arg(method)
     
-    scheme <- newSimpleDiffusionSchemeFromSession(session)
+    scheme <- session$getDiffusionScheme()
     
     maskImage <- session$getImageByType("mask", "diffusion")
     intraMaskLocs <- which(maskImage$getData() > 0, arr.ind=TRUE)

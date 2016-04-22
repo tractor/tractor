@@ -7,7 +7,7 @@ runExperiment <- function ()
 {
     session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
-    nFibres <- getConfigVariable("NumberOfFibres", 2, "integer")
+    nFibres <- getConfigVariable("NumberOfFibres", 3, "integer")
     howRunBedpost <- getConfigVariable("Context", "fg", validValues=c("fg","bg","screen"))
     force <- getConfigVariable("Force", FALSE)
     
@@ -15,7 +15,7 @@ runExperiment <- function ()
         report(OL$Info, "BEDPOSTX has been previously run for this session - use Force:true to run it again")
     else
     {
-        scheme <- newSimpleDiffusionSchemeFromSession(session)
+        scheme <- session$getDiffusionScheme()
         if (is.null(scheme))
             report(OL$Error, "No diffusion gradient directions are stored for this session")
         
