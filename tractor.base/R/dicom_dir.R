@@ -23,12 +23,11 @@ dropCommonPrefix <- function (strings)
 #' Sort a directory of DICOM files into series
 #' 
 #' This function sorts a directory containing DICOM files into subdirectories
-#' by series number (DICOM tag 0x0020,0x0011) series time (0x0008,0x0031),
-#' subject name (0x0010,0x0010) and/or scan date (0x0008,0x0020). Each unique
-#' identifier, together with its description, will be used as the name for a
-#' new subdirectory of the specified top-level directory, and all relevant
-#' files will be copied into that subdirectory. Duplicate file names are
-#' disambiguated if necessary.
+#' by series UID (DICOM tag 0x0020,0x000e), subject name (0x0010,0x0010) and/or
+#' scan date (0x0008,0x0020). Each unique identifier, together with its
+#' description for series, will be used as the name for a new subdirectory, and
+#' all relevant files will be copied into that subdirectory. Duplicate file
+#' names are disambiguated if necessary.
 #' 
 #' @param directories A character vector giving the directories to search for
 #'   DICOM files. Subdirectories will also be searched.
@@ -39,6 +38,9 @@ dropCommonPrefix <- function (strings)
 #' @param sortOn The string \code{"series"}, \code{"subject"} or \code{"date"},
 #'   or any combination in the order desired. This will be the basis of the
 #'   sort, which will be nested if more than one type is specified.
+#' @param nested Logical value. If \code{TRUE} and \code{directories} is of
+#'   length 1, subdirectories will be created within the specified original
+#'   directory. Otherwise they will be created in the working directory.
 #' @return This function is called for its side effect.
 #' 
 #' @author Jon Clayden
@@ -52,7 +54,7 @@ dropCommonPrefix <- function (strings)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn = "series")
+sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn = "series", nested = TRUE)
 {
     invalid <- (!file.exists(directories) | !file.info(directories)$isdir)
     if (any(invalid))
@@ -62,6 +64,8 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
     
     if (length(directories) < 1)
         report(OL$Error, "No valid directories specified")
+    else if (nested && length(directories) > 1)
+        nested <- FALSE
     
     sortOn <- match.arg(sortOn, c("series","subject","date"), several.ok=TRUE)
     currentSort <- sortOn[1]
@@ -120,6 +124,8 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
             report(OL$Info, "#{ore.subst('^.',toupper,currentSort)} #{shortIdentifiers[i]} includes #{length(matchingFiles)} files")
         }
         
+        if (nested)
+            subdirectory <- file.path(directories, subdirectory)
         if (!file.exists(subdirectory))
             dir.create(subdirectory)
         
@@ -134,17 +140,12 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
         success <- file.copy(from[!inPlace], to[!inPlace])
         
         if (!all(success))
-            report(OL$Warning, "Not all files copied successfully for ", currentSort, " ", id, " - nothing will be deleted")
+            report(OL$Warning, "Not all files copied successfully for #{currentSort} #{shortIdentifiers[i]} - nothing will be deleted")
         else if (deleteOriginals)
             unlink(from[!inPlace])
         
         if (length(remainingSorts) > 0)
-        {
-            wd <- getwd()
-            on.exit(setwd(wd))
-            setwd(subdirectory)
-            sortDicomDirectories(subdirectory, TRUE, sortOn=remainingSorts)
-        }
+            sortDicomDirectories(subdirectory, TRUE, sortOn=remainingSorts, nested=TRUE)
     }
 }
 

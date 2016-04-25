@@ -5,7 +5,7 @@
 \title{Sort a directory of DICOM files into series}
 \usage{
 sortDicomDirectories(directories, deleteOriginals = FALSE,
-  sortOn = "series", useSeriesTime = FALSE)
+  sortOn = "series", nested = TRUE)
 }
 \arguments{
 \item{directories}{A character vector giving the directories to search for
@@ -20,21 +20,20 @@ the copy fails.}
 or any combination in the order desired. This will be the basis of the
 sort, which will be nested if more than one type is specified.}
 
-\item{useSeriesTime}{Logical value. If \code{TRUE}, use the series time
-rather than number as the identifier. This can be more reliable if the
-files are from multiple scan sessions.}
+\item{nested}{Logical value. If \code{TRUE} and \code{directories} is of
+length 1, subdirectories will be created within the specified original
+directory. Otherwise they will be created in the working directory.}
 }
 \value{
 This function is called for its side effect.
 }
 \description{
 This function sorts a directory containing DICOM files into subdirectories
-by series number (DICOM tag 0x0020,0x0011) series time (0x0008,0x0031),
-subject name (0x0010,0x0010) and/or scan date (0x0008,0x0020). Each unique
-identifier, together with its description, will be used as the name for a
-new subdirectory of the specified top-level directory, and all relevant
-files will be copied into that subdirectory. Duplicate file names are
-disambiguated if necessary.
+by series UID (DICOM tag 0x0020,0x000e), subject name (0x0010,0x0010) and/or
+scan date (0x0008,0x0020). Each unique identifier, together with its
+description for series, will be used as the name for a new subdirectory, and
+all relevant files will be copied into that subdirectory. Duplicate file
+names are disambiguated if necessary.
 }
 \author{
 Jon Clayden
