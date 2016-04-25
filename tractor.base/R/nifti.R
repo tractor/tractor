@@ -8,6 +8,15 @@ hasNiftiMagicString <- function (fileName)
     return (any(sapply(unlist(.Nifti$magicStrings,recursive=FALSE), identical, magicString)))
 }
 
+niftiDatatype <- function (typeCode)
+{
+    typeIndex <- which(.Nifti$datatypes$codes == typeCode)
+    if (length(typeIndex) != 1)
+        report(OL$Error, "NIfTI data type code #{typeCode} is not supported")
+    datatype <- list(code=typeCode, type=.Nifti$datatypes$rTypes[typeIndex], size=.Nifti$datatypes$sizes[typeIndex], isSigned=.Nifti$datatypes$isSigned[typeIndex])
+    return (datatype)
+}
+
 readNifti <- function (fileNames)
 {
     getXformMatrix <- function ()
@@ -105,11 +114,7 @@ readNifti <- function (fileNames)
     dims <- dims[1:ndims + 1]
     
     xformMatrix <- getXformMatrix()
-    
-    typeIndex <- which(.Nifti$datatypes$codes == typeCode)
-    if (length(typeIndex) != 1)
-        report(OL$Error, "Data type of file ", fileNames$imageFile, " (", typeCode, ") is not supported")
-    datatype <- list(code=typeCode, type=.Nifti$datatypes$rTypes[typeIndex], size=.Nifti$datatypes$sizes[typeIndex], isSigned=.Nifti$datatypes$isSigned[typeIndex])
+    datatype <- niftiDatatype(typeCode)
     
     # We're only interested in the bottom 5 bits (spatial and temporal units)
     spatialUnitCode <- packBits(intToBits(unitCode) & intToBits(7), "integer")
@@ -127,7 +132,7 @@ readNifti <- function (fileNames)
     invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
 }
 
-writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL)
+writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL, maxSize = NULL)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
@@ -135,7 +140,39 @@ writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL)
     description <- "TractoR NIfTI writer v3.0.0"
     fileFun <- (if (gzipped) gzfile else file)
     
+    slope <- 1
+    intercept <- 0
+    dataRange <- range(image, na.rm=TRUE)
     datatype <- chooseDataTypeForImage(image, "Nifti")
+    if (!is.null(maxSize) && maxSize < datatype$size)
+    {
+        if (maxSize >= 4)
+            datatype <- niftiDatatype(16)
+        else
+        {
+            datatype <- niftiDatatype(ifelse(maxSize >= 2, 4, 2))
+            if (datatype$isSigned)
+            {
+                typeRange <- 2^(datatype$size*8-1) * c(-1,1) - c(0,1)
+                slope <- diff(dataRange) / diff(typeRange)
+                intercept <- -typeRange[1] * slope
+            }
+            else
+            {
+                typeRange <- c(0, 2^datatype$size - 1)
+                slope <- diff(dataRange) / typeRange[2]
+                intercept <- dataRange[1]
+            }
+            
+            # Note: the original image gets modified here, and its source will be (re)set below
+            originalData <- as.array(image)
+            image$map(function(x) as.integer(round((x-intercept)/slope)))
+            newData <- as.array(image) * slope + intercept
+            meanRelativeDifference <- mean(abs((newData-originalData) / originalData), na.rm=TRUE)
+            if (meanRelativeDifference > 1e-4)
+                report(OL$Warning, "Mean relative error in compressed image is #{meanRelativeDifference*100}%", round=2)
+        }
+    }
     
     ndims <- image$getDimensionality()
     fullDims <- c(ndims, image$getDimensions(), rep(1,7-ndims))
@@ -166,11 +203,11 @@ writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL)
     writeBin(fullVoxelDims, connection, size=4)
     
     # Voxel offset, data scaling slope and intercept
-    writeBin(as.double(c(352,1,0)), connection, size=4)
+    writeBin(as.double(c(352,slope,intercept)), connection, size=4)
     
     writeBin(raw(3), connection)
     writeBin(as.integer(unitCode), connection, size=1)
-    writeBin(as.double(rev(range(image$getData(),na.rm=TRUE))), connection, size=4)
+    writeBin(as.double(rev(dataRange)), connection, size=4)
     writeBin(raw(16), connection)
     writeBin(charToRaw(description), connection, size=1)
     writeBin(raw(24+80-nchar(description)), connection)

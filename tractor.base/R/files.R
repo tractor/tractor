@@ -272,6 +272,10 @@ chooseDataTypeForImage <- function (image, format)
 #' @param overwrite Logical value: overwrite an existing image file? For
 #'   \code{writeImageFile}, an error will be raised if there is an existing
 #'   file and this is set to FALSE.
+#' @param maxSize If not \code{NULL}, the maximum number of bytes per pixel to
+#'   use when storing the data. This can lead to a substantial loss of
+#'   precision, and is usually not desirable. Only used when writing to the
+#'   NIfTI file format.
 #' @param errorIfMissing Logical value: raise an error if no suitable files
 #'   were found?
 #' @param deleteOriginals Logical value: if \code{TRUE}, \code{copyImageFiles}
@@ -498,7 +502,7 @@ writeImageData <- function (image, connection, type, size, endian = .Platform$en
 
 #' @rdname files
 #' @export
-writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE)
+writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE, maxSize = NULL)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
@@ -535,7 +539,7 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
     if (params$format == "Analyze")
         writeAnalyze(image, fileNames, gzipped=params$gzipped)
     else if (params$format == "Nifti")
-        writeNifti(image, fileNames, gzipped=params$gzipped)
+        writeNifti(image, fileNames, gzipped=params$gzipped, maxSize=maxSize)
     else if (params$format == "Mgh")
         writeMgh(image, fileNames, gzipped=params$gzipped)
     

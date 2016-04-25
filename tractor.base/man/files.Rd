@@ -24,7 +24,8 @@ copyImageFiles(from, to, overwrite = FALSE, deleteOriginals = FALSE)
 readImageFile(fileName, fileType = NULL, metadataOnly = FALSE,
   volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
 
-writeImageFile(image, fileName = NULL, fileType = NA, overwrite = TRUE)
+writeImageFile(image, fileName = NULL, fileType = NA, overwrite = TRUE,
+  maxSize = NULL)
 
 registerPathHandler(regex, handler)
 }
@@ -69,6 +70,11 @@ image is of interest. Ignored if \code{sparse} is not \code{TRUE}.}
 This is recommended in most circumstances.}
 
 \item{image}{An \code{\linkS4class{MriImage}} object.}
+
+\item{maxSize}{If not \code{NULL}, the maximum number of bytes per pixel to
+use when storing the data. This can lead to a substantial loss of
+precision, and is usually not desirable. Only used when writing to the
+NIfTI file format.}
 
 \item{regex}{A regular expression.}
 
