@@ -13,7 +13,7 @@ runExperiment <- function ()
     
     scope <- getConfigVariable("Scope", "nonzero", validValues=c("nonzero","zero","positive","negative","all"))
     maskFile <- getConfigVariable("MaskFile", NULL, "character")
-    threshold <- getConfigVariable("IntensityThreshold", 0)
+    threshold <- getConfigVariable("ThresholdLevel", 0)
     
     if (!is.null(maskFile))
     {
@@ -66,8 +66,8 @@ runExperiment <- function ()
         if (!is.na(millilitreMultiplier))
             volumeString <- paste(volumeString, " (", format(round(volume*millilitreMultiplier,2), big.mark=","), " ml)", sep="")
         
-        labels <- c("Number of voxels", "Volume", "Intensity range", "5% trimmed range", "Mean", "5% trimmed mean", "Median", "Standard deviation")
-        values <- c(format(length(data),big.mark=","), volumeString, implode(signif(range(data),4),sep=" to "), implode(signif(quantile(data,c(0.05,0.95)),4),sep=" to "), signif(mean(data),4), signif(mean(data,trim=0.05),4), signif(median(data),4), signif(sd(data),4))
+        labels <- c("Scope", "Number of voxels", "Volume", "Intensity range", "5% trimmed range", "Mean", "5% trimmed mean", "Median", "Standard deviation")
+        values <- c(scope, format(length(data),big.mark=","), volumeString, implode(signif(range(data),4),sep=" to "), implode(signif(quantile(data,c(0.05,0.95)),4),sep=" to "), signif(mean(data),4), signif(mean(data,trim=0.05),4), signif(median(data),4), signif(sd(data),4))
     }
     
     if (getOutputLevel() > OL$Info)
