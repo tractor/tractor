@@ -201,19 +201,19 @@ runExperiment <- function ()
                         break
                     else if (maskingMethod == "bet")
                     {
-                        report(OL$Info, "Previous intensity threshold was ", betIntensityThreshold, "; smaller values give larger brain outlines")
+                        report(OL$Info, "Previous intensity threshold was #{betIntensityThreshold}; smaller values give larger brain outlines")
                         tempValue <- ask("Intensity threshold? [0 to 1; Enter for same as before]")
                         if (tempValue != "")
                             betIntensityThreshold <- as.numeric(tempValue)
 
-                        report(OL$Info, "Previous vertical gradient was ", betVerticalGradient, "; positive values shift the outline downwards")
+                        report(OL$Info, "Previous vertical gradient was #{betVerticalGradient}; positive values shift the outline downwards")
                         tempValue <- ask("Vertical gradient? [-1 to 1; Enter for same as before]")
                         if (tempValue != "")
                             betVerticalGradient <- as.numeric(tempValue)
                     }
                     else if (maskingMethod == "kmeans")
                     {
-                        report(OL$Info, "Previous number of clusters was ", nClusters, "; larger values will usually give larger brain outlines")
+                        report(OL$Info, "Previous number of clusters was #{nClusters}; larger values will usually give larger brain outlines")
                         tempValue <- ask("Number of clusters? [2 to 10; b to switch to using FSL-BET]")
                         if (tempValue == "b")
                             maskingMethod <- "bet"
