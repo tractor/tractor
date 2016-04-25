@@ -17,7 +17,7 @@ runExperiment <- function ()
     if (file.exists(session$getDirectory("diffusion")))
     {
         report(OL$Info, "\nDIFFUSION:", prefixFormat="")
-        labels <- c("Preprocessing complete", "Data dimensions", "Voxel dimensions", "Diffusion b-values", "Number of gradient directions", "Diffusion tensors fitted", "Fibre orientation model")
+        labels <- c("Preprocessing complete", "Data dimensions", "Voxel dimensions", "Number of shells", "Diffusion b-values", "Number of gradient directions", "Diffusion tensors fitted", "Fibre orientation model")
         if (session$imageExists("data","diffusion"))
         {
             metadata <- session$getImageByType("data", "diffusion", metadataOnly=TRUE)
@@ -28,20 +28,18 @@ runExperiment <- function ()
         else
             dims <- voxelDims <- NA
         
+        if (is.null(scheme <- session$getDiffusionScheme()))
+            schemeValues <- rep(NA_character_, 3L)
+        else
+            schemeValues <- scheme$summarise()$values
+        
         nFibres <- getBedpostNumberOfFibresForSession(session)
         if (nFibres == 0)
             modelValue <- "(none)"
         else
-            modelValue <- es("FSL-BEDPOSTX (#{nFibres} fibre(s) per voxel)")
-        if (is.null(scheme <- session$getDiffusionScheme()))
-            bValues <- directions <- NA
-        else
-        {
-            bValues <- paste(implode(round(scheme$getBValues()),", "), "s/mm^2")
-            directions <- implode(scheme$nDirections(), ", ")
-        }
+            modelValue <- es("FSL-BEDPOSTX (#{nFibres} #{pluralise('fibre',n=nFibres)} per voxel)")
         
-        values <- c(session$imageExists("data","diffusion"), dims, voxelDims, bValues, directions, session$imageExists("FA","diffusion"), modelValue)
+        values <- c(session$imageExists("data","diffusion"), dims, voxelDims, schemeValues, session$imageExists("FA","diffusion"), modelValue)
         printLabelledValues(labels, values, leftJustify=TRUE)
     }
     

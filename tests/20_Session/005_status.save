@@ -5,10 +5,11 @@ DIFFUSION:
   Preprocessing complete        : TRUE
   Data dimensions               : 96 x 96 x 60 x 12 voxels
   Voxel dimensions              : 2.5 x 2.5 x 2.5 mm x 1 s
-  Diffusion b-values            : 0, 1000, 0 s/mm^2
-  Number of gradient directions : 1, 10, 1
+  Number of shells              : 1
+  Diffusion b-values            : 0, 1000 s/mm^2
+  Number of gradient directions : 2, 10
   Diffusion tensors fitted      : TRUE
-  Fibre orientation model       : FSL-BEDPOSTX (1 fibre(s) per voxel)
+  Fibre orientation model       : FSL-BEDPOSTX (1 fibre per voxel)
 
 FUNCTIONAL:
   Data dimensions    : 64 x 64 x 30 x 15 voxels
