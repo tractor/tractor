@@ -143,6 +143,7 @@ writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL, maxS
     slope <- 1
     intercept <- 0
     dataRange <- range(image, na.rm=TRUE)
+    dataImage <- image
     datatype <- chooseDataTypeForImage(image, "Nifti")
     if (!is.null(maxSize) && maxSize < datatype$size)
     {
@@ -150,6 +151,10 @@ writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL, maxS
             datatype <- niftiDatatype(16)
         else
         {
+            originalData <- as.array(image)
+            if (any(is.na(originalData)))
+                dataRange <- range(0, dataRange)
+            
             datatype <- niftiDatatype(ifelse(maxSize >= 2, 4, 2))
             if (datatype$isSigned)
             {
@@ -159,15 +164,16 @@ writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL, maxS
             }
             else
             {
-                typeRange <- c(0, 2^datatype$size - 1)
+                typeRange <- c(0, 2^(datatype$size*8) - 1)
                 slope <- diff(dataRange) / typeRange[2]
                 intercept <- dataRange[1]
             }
             
-            # Note: the original image gets modified here, and its source will be (re)set below
-            originalData <- as.array(image)
-            image$map(function(x) as.integer(round((x-intercept)/slope)))
-            newData <- as.array(image) * slope + intercept
+            # NAs are typically not preserved when the data type is changed, so we replace them with zeros
+            # The original image is replaced by its approximation; its source will be (re)set below
+            dataImage <- image$copy()$map(function(x) as.integer(round((ifelse(is.na(x),0,x)-intercept)/slope)))
+            image$map(function(x,y) y * slope + intercept, dataImage)
+            newData <- as.array(image)
             meanRelativeDifference <- mean(abs((newData-originalData) / originalData), na.rm=TRUE)
             if (meanRelativeDifference > 1e-4)
                 report(OL$Warning, "Mean relative error in compressed image is #{meanRelativeDifference*100}%", round=2)
@@ -234,7 +240,7 @@ writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL, maxS
         connection <- fileFun(fileNames$imageFile, "w+b")
     }
     
-    writeImageData(image, connection, datatype$type, datatype$size)
+    writeImageData(dataImage, connection, datatype$type, datatype$size)
     close(connection)
     
     if (image$isInternal())
