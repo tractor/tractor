@@ -711,6 +711,8 @@ writeStreamlineCollectionTractToTrackvis <- function (tract, fileName)
     for (i in seq_len(tract$nStreamlines()))
     {
         rescaled <- rescalePoints(tract$getPoints(i), "mm", tract$getMetadata(), tract$getSeedPoint(i))
+        # TrackVis's voxel grid aligns with left edges, not centres
+        rescaled$points <- translatePoints(rescaled$points, 0.5 * abs(tract$getImageMetadata()$getVoxelDimensions()))
         writeBin(as.integer(lengths[i]), connection, size=4)
         writeBin(as.vector(t(rescaled$points),"double"), connection, size=4)
     }
