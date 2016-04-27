@@ -1,5 +1,9 @@
 #@args image file(s)
-#@desc Create a 2D slice image from the specified Analyze/NIfTI/MGH volume. Exactly one of the X, Y and Z options must be specified, giving the location on the appropriate axis where the slice should be taken.
+#@desc Create one or more composited slice images from the specified Analyze/NIfTI/MGH volumes. At least one of the X, Y and Z options must be specified, giving the location(s) on the appropriate axis where the slice should be taken: values for these variables can be a one or more literal integers, comma separated, or an integer followed by "s" for every nth slice, or "all" for all slices, or "max" for the slice containing the maximum total image intensity. All slices will be tiled into one big image unless Separate:true is given.
+#@example # Overlay a tract visitation map on the corresponding FA map
+#@example tractor slice session@FA tract X:max Y:max Z:max Alpha:log
+#@example # A contact-sheet style version
+#@example tractor slice session@FA tract Z:all Clearance:4 Alpha:log
 
 runExperiment <- function ()
 {

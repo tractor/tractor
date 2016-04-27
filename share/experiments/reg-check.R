@@ -1,3 +1,4 @@
+#@desc Visualise the result of a registration by overlaying the "morphological gradient" of the transformed source image, which shows up edges, on the target image.
 #@args [source image file, target image file]
 
 library(tractor.reg)

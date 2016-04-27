@@ -1,5 +1,11 @@
+#@desc Run tractography for a session containing diffusion data, either for the entire seed area at once (Strategy:global) or regionwise or voxelwise. The number of streamlines generated in each case may be given as a literal integer (in which case points are chosen randomly for each streamline) or as an integer followed by "x", in which case that many will be generated for each eligible seed. Seed regions may be voxel locations (given using the R voxel convention), image file names or named regions in a parcellation. If RequirePaths:true is given then streamlines will be saved in TrackVis .trk format. If target regions are also specified then an auxiliary label file with extension .trkl is also created, which maps streamlines onto the targets they reached.
 #@args session directory, [seed region(s)]
+#@example # Seed everywhere within the brain mask
 #@example tractor track /data/subject1
+#@example # Seed in all white matter and use cortical grey matter regions as targets
+#@example tractor track /data/subject1 white_matter TargetRegions:cerebal_cortex TerminateAtTargets:true
+#@example # Seed just outside a particular grey matter region
+#@example tractor track /data/subject1 postcentral_gyrus_left BoundaryManipulation:outer
 
 library(ore)
 library(tractor.track)
