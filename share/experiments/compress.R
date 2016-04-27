@@ -1,5 +1,5 @@
-#@desc Creates a version of the specified file that uses a small datatype to limit disk usage.
-#@args image file
+#@desc Creates a version of the specified file that uses a small datatype to limit disk usage. If no output file is specified then the input file will be overwritten.
+#@args image file, [output file]
 
 runExperiment <- function ()
 {
@@ -8,5 +8,5 @@ runExperiment <- function ()
     maxSize <- getConfigVariable("MaxBytesPerPixel", 2L)
     
     image <- readImageFile(implode(Arguments, sep=" "))
-    writeImageFile(image, paste(basename(image$getSource()), "compressed", sep="_"), maxSize=maxSize)
+    writeImageFile(image, Arguments[nArguments()], maxSize=maxSize)
 }

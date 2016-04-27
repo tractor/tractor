@@ -1,3 +1,4 @@
+#@desc Identify connected components in an image, i.e., regions of continguously nonzero voxels, and create a new image replacing each voxel value with its component number. Component numbers will be sorted by size if the SortBySize option is true. Diagonal neighbours are only considered if IncludeDiagonal is true.
 #@args image file
 
 library(mmand)
@@ -22,8 +23,7 @@ runExperiment <- function ()
         image$map(function(x) ranks[x])
     }
     
-    fileName <- paste(Arguments[1], "components", sep="_")
-    writeImageFile(image, fileName)
+    writeImageFile(image, paste(basename(image$getSource()),"components",sep="_"))
     
     invisible(NULL)
 }

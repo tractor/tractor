@@ -1,7 +1,4 @@
-#@desc Visualise the results of heuristic neighbourhood tractography, creating image
-#@desc volumes and/or projection images of the "best" matching candidate tracts.
-#@desc The TractName, ResultsName and SessionList options must match those passed to
-#@desc the "hnt-eval" experiment.
+#@desc Visualise the results of heuristic neighbourhood tractography, creating a visitation map of the "best" matching candidate tract. If a session directory is not specified then an image will be created for each session path stored in the results file.
 #@args [session directory]
 
 suppressPackageStartupMessages(require(tractor.session))

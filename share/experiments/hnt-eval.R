@@ -1,4 +1,4 @@
-#@desc Evaluate a series of candidate tracts for similarity to a reference tract. The specified TractName must match that passed to the "hnt-ref" experiment used to generate the reference tract. Source sessions for the candidate tracts are given using the SessionList option. The SeedPointList is optional - if omitted then the standard space seed point associated with the reference tract will be used to establish neighbourhood centre points. Any candidate seed point with anisotropy lower than AnisotropyThreshold will be ignored.
+#@desc Evaluate a series of candidate tracts for similarity to a reference tract. The specified TractName must match that passed to the "hnt-ref" experiment used to generate the reference tract. If the seed point is omitted then the standard space seed point associated with the reference tract will be used to establish the neighbourhood centre point. Any candidate seed point with anisotropy lower than AnisotropyThreshold will be ignored.
 #@args session directory, [seed point]
 
 library(tractor.reg)

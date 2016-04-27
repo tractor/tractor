@@ -1,5 +1,5 @@
 #@args session directory, text file, large b-value, [small b-value]
-#@desc Read diffusion gradient directions from a text file, and update the specified session directory. The text file should contain the diffusion gradient vectors applied to the data set, given either one-per-column or one-per-row, normalised or unnormalised, and with or without zeroes for b=0 measurements. The small b-value is assumed to be zero if it is not explicitly specified.
+#@desc Read diffusion gradient directions from a text file, and update the specified session directory. The text file should contain the diffusion gradient vectors applied to the data set, given either one-per-column or one-per-row, normalised or unnormalised, and with or without zeroes for b=0 measurements. The small b-value is assumed to be zero if it is not explicitly specified. This script currently does not support multiple "large" b-values.
 
 suppressPackageStartupMessages(require(tractor.session))
 

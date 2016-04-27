@@ -19,7 +19,7 @@ runExperiment <- function ()
         image <- readImageFile(implode(Arguments[-1], sep=" "))
         interpolation <- switch(interpolation, nearestneighbour=0, trilinear=1, spline=3)
         newImage <- transformImageToSpace(image, session, tlc(targetSpace), tlc(sourceSpace), preferAffine=preferAffine, interpolation=interpolation)
-        writeImageFile(newImage, paste(basename(image$getSource()),"transformed",sep="_"))
+        writeImageFile(newImage, paste(basename(image$getSource()),targetSpace,sep="_"))
     }
     else
     {

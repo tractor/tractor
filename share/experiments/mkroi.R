@@ -1,5 +1,5 @@
 #@args image file, centre point
-#@desc Create an Analyze/NIfTI/MGH volume containing a cuboidal region of interest with fixed voxel width in all dimensions. A session directory must be specified in addition to the ROI centre point so that the script can identify the correct diffusion space to use. The output file name is set with the ROIName option.
+#@desc Create an Analyze/NIfTI/MGH volume containing a region of interest with a box, disc or diamond shape. The specified Width may include multiple values and does not need to be the same for each dimension. The output file name is set with the ROIName option.
 
 library(tractor.reg)
 library(mmand)

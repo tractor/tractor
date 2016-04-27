@@ -1,8 +1,4 @@
-#@desc Extract parameters of interest from HNT results. The specified ResultsName must
-#@desc match that given to the "hnt-eval" script. Mode can be "location", for the
-#@desc voxel location of the best seed point (using the R convention); or "similarity"
-#@desc for the value of the similarity score at that point. In either case, one value
-#@desc is given per session.
+#@desc Extract parameters of interest from HNT results. The specified ResultsName must match that given to the "hnt-eval" script. Mode can be "location", for the voxel location of the best seed point (using the R convention); or "similarity" for the value of the similarity score at that point. If a session directory is not specified then a value will be given for each session path stored in the results file.
 #@args [session directory]
 
 suppressPackageStartupMessages(require(tractor.session))
