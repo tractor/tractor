@@ -1,9 +1,4 @@
-#@desc Run Expectation-Maximisation to fit a tract matching model and apply it to a
-#@desc dataset. This script is generally used instead of the "pnt-train" and "pnt-eval"
-#@desc combination. The TractName and DatasetName should match those given to the
-#@desc "pnt-data" script. AlphaPriorMean controls the shape of the prior distribution;
-#@desc NULL indicates no prior. For small datasets in particular, 1 is usually a good
-#@desc setting. For larger datasets the effect of this parameter will be small.
+#@desc Run Expectation-Maximisation to fit a tract matching model and apply it to a dataset. This script is generally used instead of the "pnt-train" and "pnt-eval" combination. The TractName and DatasetName should match those given to the "pnt-data" script. AlphaPriorMean controls the shape of the prior distribution; 0 indicates no prior. For small datasets in particular, 1 is usually a good setting. For larger datasets the effect of this parameter will be small.
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
@@ -14,11 +9,14 @@ runExperiment <- function ()
     datasetName <- getConfigVariable("DatasetName", NULL, "character", errorIfMissing=TRUE)
     maxKnotCount <- getConfigVariable("MaximumKnotCount", NULL, "integer")
     asymmetricModel <- getConfigVariable("AsymmetricModel", TRUE)
-    alphaPriorMean <- getConfigVariable("AlphaPriorMean", NULL, "numeric")
+    alphaPriorMean <- getConfigVariable("AlphaPriorMean", 1, "numeric")
     nullPrior <- getConfigVariable("NullPrior", NULL, "numeric")
     resultsName <- getConfigVariable("ResultsName", "results")
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
+    
+    if (alphaPriorMean == 0)
+        alphaPriorMean <- NULL
     
     # This is certainly the most sensible choice, so for now we hard-code it
     alphaOffset <- 1
