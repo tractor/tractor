@@ -1,3 +1,4 @@
+             Scope : nonzero
   Number of voxels : 77,617
             Volume : 1,212,766 mm^3 (1,212.77 ml)
    Intensity range : 1 to 1
@@ -6,6 +7,7 @@
    5% trimmed mean : 1
             Median : 1
 Standard deviation : 0
+             Scope : nonzero
   Number of voxels : 15,857
             Volume : 247,765.6 mm^3 (247.77 ml)
    Intensity range : 1 to 1
