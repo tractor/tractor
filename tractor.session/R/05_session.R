@@ -184,10 +184,6 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             
             if (!fileHit)
             {
-                # Injected option for backwards compatibility
-                if (sourceSpace == "diffusion" && targetSpace == "mni")
-                    options$targetMask <- getStandardImage("white")$map(function(x) x/10 + 1)
-                
                 report(OL$Info, "Transformation strategy from #{ifelse(sourceSpace=='mni','MNI',sourceSpace)} to #{ifelse(targetSpace=='mni','MNI',targetSpace)} space is #{implode(strategy,', ',' and ')} - registering images")
                 result <- do.call(tractor.reg::registerImages, options)
                 result$transform$serialise(transformFile)
