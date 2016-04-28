@@ -13,8 +13,6 @@ runExperiment <- function ()
     
     requireArguments("source image file", "output file")
     
-    sourceImage <- readImageFile(Arguments[1])
-    
     transformName <- splitAndConvertString(transformName, ",", fixed=TRUE)
     if (length(transformName) > 1)
     {
@@ -24,7 +22,7 @@ runExperiment <- function ()
     else
         transform <- deserialiseReferenceObject(transformName)
     
-    transformedImage <- transformImage(transform, sourceImage, preferAffine=preferAffine, reverse=reverse, half=half, interpolation=interpolation)
+    transformedImage <- transformImage(transform, RNiftyReg::readNifti(Arguments[1]), preferAffine=preferAffine, reverse=reverse, half=half, interpolation=interpolation)
     writeImageFile(transformedImage, Arguments[2])
 
     invisible(NULL)

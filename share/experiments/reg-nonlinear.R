@@ -16,7 +16,7 @@ runExperiment <- function ()
     
     symmetric <- getConfigVariable("Symmetric", TRUE)
     nLevels <- getConfigVariable("Levels", 3L, "integer")
-    maxIterations <- getConfigVariable("MaxIterations", 300L, "integer")
+    maxIterations <- getConfigVariable("MaxIterations", 150L, "integer")
     nBins <- getConfigVariable("HistogramBins", 64L, "integer")
     bendingEnergyWeight <- getConfigVariable("BendingEnergyWeight", 0.001)
     linearEnergyWeight <- getConfigVariable("LinearEnergyWeight", 0.01)
@@ -62,17 +62,20 @@ runExperiment <- function ()
         }
     }
     
+    source <- identifyImageFileNames(Arguments[1])$fileStem
+    target <- identifyImageFileNames(Arguments[2])$fileStem
+    
     if (!is.null(initControlFile) && !symmetric)
         init <- readImageFile(initControlFile)
     else if (!is.null(initAffineFile))
-        init <- RNiftyReg::readAffine(initAffineFile, Arguments[1], Arguments[2], type=initAffineType)
+        init <- RNiftyReg::readAffine(initAffineFile, source, target, type=initAffineType)
     
     types <- "nonlinear"
     if (symmetric)
         types <- c("reverse-nonlinear", types)
     
     report(OL$Info, "Performing registration")
-    result <- registerImages(Arguments[1], Arguments[2], sourceMask=sourceMaskFile, targetMask=targetMaskFile, method="niftyreg", types=types, estimateOnly=estimateOnly, interpolation=interpolation, cache="ignore", init=init, nonlinearOptions=list(nLevels=nLevels,maxIterations=maxIterations,nBins=nBins,bendingEnergyWeight=bendingEnergyWeight,linearEnergyWeight=linearEnergyWeight,jacobianWeight=jacobianWeight,finalSpacing=rep(finalSpacing,3),spacingUnit=spacingUnit))
+    result <- registerImages(source, target, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method="niftyreg", types=types, estimateOnly=estimateOnly, interpolation=interpolation, cache="ignore", init=init, nonlinearOptions=list(nLevels=nLevels,maxIterations=maxIterations,nBins=nBins,bendingEnergyWeight=bendingEnergyWeight,linearEnergyWeight=linearEnergyWeight,jacobianWeight=jacobianWeight,finalSpacing=rep(finalSpacing,3),spacingUnit=spacingUnit))
     
     result$transform$serialise(transformName)
     
