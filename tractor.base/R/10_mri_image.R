@@ -383,7 +383,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         .self$map(function(x) ifelse(x >= level, x, defaultValue))
     },
     
-    writeToFile = function (...) { writeImageToFile(.self, ...) }
+    writeToFile = function (...) { writeImageFile(.self, ...) }
 ))
 
 # Register deserialiser for MriImageMetadata legacy class
