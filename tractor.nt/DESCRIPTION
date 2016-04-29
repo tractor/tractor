@@ -4,8 +4,8 @@ Date: 2014-07-24
 Title: Neighbourhood tractography methods for white matter segmentation
 Author: Jon Clayden and Fani Deligianni
 Maintainer: Jon Clayden <code@clayden.org>
-Depends: R (>= 2.12.1), methods, splines
-Imports: ore, reportr, tractor.base, tractor.track, tractor.session
+Depends: R (>= 2.12.1), methods
+Imports: splines, ore, reportr, tractor.base, tractor.track, tractor.session
 Suggests: tractor.reg
 Description: The tractor.nt package provides a reference implementation for white matter segmentation with neighbourhood tractography (NT). Functions for performing both heuristic and model-based NT are included.
 Encoding: UTF-8

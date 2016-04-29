@@ -27,9 +27,9 @@ runExperiment <- function ()
     
     report(OL$Info, "Applying ", operation, " operation with ", kernelShape, " kernel of size ", implode(round(width)," x "), " voxels")
     
+    fileName <- paste(basename(image$getSource()), "morphed", sep="_")
     kernel <- shapeKernel(width, type=kernelShape)
     image$map(get(operation), kernel=kernel)
-    fileName <- paste(Arguments[1], "morphed", sep="_")
     writeImageFile(image, fileName)
     
     invisible(NULL)

@@ -4,7 +4,6 @@
 
 library(tractor.reg)
 library(tractor.session)
-library(splines)
 library(tractor.nt)
 
 runExperiment <- function ()

@@ -1,9 +1,4 @@
-#@desc Extract parameters of interest from PNT results. Mode can be "location", for the
-#@desc voxel location of the best seed point (using the R convention); "posterior", for
-#@desc posterior matching probability at that point; "ratio", for the log-ratio of
-#@desc likelihoods relative to the reference tract (an indicator of goodness-of-fit);
-#@desc or "null-posterior", for the posterior probability of no match. In each case one
-#@desc value is given per session.
+#@desc Extract parameters of interest from PNT results. Mode can be "location", for the voxel location of the best seed point (using the R convention); "posterior", for posterior matching probability at that point; "ratio", for the log-ratio of likelihoods relative to the reference tract (an indicator of goodness-of-fit); or "null-posterior", for the posterior probability of no match. If a session directory is not specified then a value will be given for each session path stored in the dataset.
 #@args [session directories]
 
 suppressPackageStartupMessages(require(tractor.session))

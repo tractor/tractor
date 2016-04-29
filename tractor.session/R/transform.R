@@ -175,7 +175,7 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
         if (method == "niftyreg")
         {
             report(OL$Info, "Coregistering data to reference volume...")
-            result <- tractor.reg::registerImages(session$getImageFileNameByType("rawdata",type), targetImage, targetMask=maskImage, types="affine", cache="ignore", method="niftyreg", ..., linearOptions=c(list(nLevels=nLevels,sequentialInit=TRUE),options))
+            result <- tractor.reg::registerImages(session$getImageFileNameByType("rawdata",type), targetImage, targetMask=maskImage, types="affine", method="niftyreg", ..., linearOptions=c(list(nLevels=nLevels,sequentialInit=TRUE),options))
             transforms <- result$transform
             
             report(OL$Info, "Writing out transformed data")
@@ -191,7 +191,7 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
             {
                 report(OL$Verbose, "Reading and registering volume ", i)
                 volume <- session$getImageByType("rawdata", type, volumes=i)
-                result <- tractor.reg::registerImages(volume, targetImage, targetMask=maskImage, types="affine", cache="ignore", method=method, ..., linearOptions=c(list(nLevels=nLevels),options))
+                result <- tractor.reg::registerImages(volume, targetImage, targetMask=maskImage, types="affine", method=method, ..., linearOptions=c(list(nLevels=nLevels),options))
                 finalArray[,,,i] <- result$transformedImage$getData()
                 transforms[[i]] <- result$transform
             }

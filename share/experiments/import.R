@@ -80,7 +80,7 @@ runExperiment <- function ()
             for (i in 2:nImages)
             {
                 currentImage <- session$getImageByType("t1", "structural", index=i)
-                result <- registerImages(currentImage, reference, types="affine", affineDof=6, cache="ignore")
+                result <- registerImages(currentImage, reference, types="affine", affineDof=6)
                 data[,,,i] <- result$transformedImage$getData()
             }
             

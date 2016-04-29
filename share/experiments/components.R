@@ -11,6 +11,7 @@ runExperiment <- function ()
     requireArguments("image file")
     
     image <- readImageFile(Arguments[1])
+    fileStem <- basename(image$getSource())
     kernel <- shapeKernel(3, min(3,image$getDimensionality()), type=ifelse(includeDiagonal,"box","diamond"))
     image$map(mmand::components, kernel=kernel)
     report(OL$Info, "There are #{max(image,na.rm=TRUE)} connected component(s) in the image")
@@ -23,7 +24,7 @@ runExperiment <- function ()
         image$map(function(x) ranks[x])
     }
     
-    writeImageFile(image, paste(basename(image$getSource()),"components",sep="_"))
+    writeImageFile(image, paste(fileStem,"components",sep="_"))
     
     invisible(NULL)
 }

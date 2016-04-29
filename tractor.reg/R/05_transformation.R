@@ -4,58 +4,70 @@ MriImage <- getRefClass("MriImage")
 .listApply <- function (list, f, ...) { lapply(list, function(x) { if (is.null(x)) NULL else f(x,...) }) }
 .listPad <- function (list, len) { if (length(list) == len) list else c(list, rep(list(NULL),len-length(list))) }
 
-Transformation <- setRefClass("Transformation", contains="SerialisableObject", fields=list(sourceImage="MriImage",targetImage="MriImage",affineMatrices="list",controlPointImages="list",reverseControlPointImages="list",method="character",version="integer"), methods=list(
-    initialize = function (sourceImage = MriImage$new(), targetImage = MriImage$new(), affineMatrices = NULL, controlPointImages = NULL, reverseControlPointImages = NULL, method = c("niftyreg","fsl"), version = 2L, ...)
+setOldClass("niftyreg")
+setClassUnion("NiftyregOrNull", c("niftyreg","NULL"))
+
+Transformation <- setRefClass("Transformation", contains="SerialisableObject", fields=list(directory="character",method="character",n="integer",inverted.="logical"), methods=list(
+    initialize = function (directory = "", source = NULL, target = NULL, ...)
     {
-        method <- match.arg(method)
+        if (length(directory) == 1 && directory != "")
+        {
+            directory <- ensureFileSuffix(directory, "trxfm")
+            if (!file.exists(directory))
+                dir.create(directory, recursive=TRUE)
+            
+            if (is.character(source))
+                symlinkImageFiles(source, file.path(directory,"source"), overwrite=TRUE)
+            else if (isImage(source))
+                writeNifti(source, file.path(directory,"source"))
+            
+            if (is.character(target))
+                symlinkImageFiles(target, file.path(directory,"target"), overwrite=TRUE)
+            else if (isImage(target))
+                writeNifti(target, file.path(directory,"target"))
+        }
+        else
+            directory <- ""
         
-        if (!is.list(affineMatrices))
-            affineMatrices <- list(affineMatrices)
-        affineMatrices <- .listApply(affineMatrices, function(x) {
-            # For backwards compatibility, handle FSL-type affines
-            if (method == "fsl" && version < 2)
-                x <- RNiftyReg:::convertAffine(x, sourceImage, targetImage, "niftyreg")
-            return (structure(asAffine(x), source=NULL, target=NULL))
-        })
-        
-        if (!is.list(controlPointImages))
-            controlPointImages <- list(controlPointImages)
-        controlPointImages <- .listApply(controlPointImages, as, "MriImage")
-        
-        if (!is.list(reverseControlPointImages))
-            reverseControlPointImages <- list(reverseControlPointImages)
-        reverseControlPointImages <- .listApply(reverseControlPointImages, as, "MriImage")
-        
-        initFields(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=affineMatrices, controlPointImages=controlPointImages, reverseControlPointImages=reverseControlPointImages, method=method, version=as.integer(version))
+        initFields(directory=directory, method="niftyreg", n=integer(0), inverted.=FALSE)
     },
     
-    getInverse = function (i = 1, quiet = FALSE)
-    {
-        if (!quiet && equivalent(c("nonlinear","reverse-nonlinear") %in% .self$getTypes(), c(TRUE,FALSE)))
-            flag(OL$Warning, "Nonlinear part of the transformation is not invertible")
-        
-        inverseAffines <- .listApply(.self$affineMatrices, function(x) asAffine(solve(x)))
-        return (Transformation$new(.self$getTargetImage(), .self$getSourceImage(i), .listFind(inverseAffines,i), .listFind(reverseControlPointImages,i), .listFind(controlPointImages,i), method=.self$method))
-    },
+    getDirectory = function () { return (directory) },
     
     getMethod = function () { return (method) },
     
-    getSourceImage = function (i = NULL, reverse = FALSE)
+    getSourceImage = function (i = NULL, reverse = FALSE, ...)
     {
-        if (reverse)
-            return (targetImage)
-        else if (is.null(i) || .self$nRegistrations() == 1)
-            return (sourceImage)
+        imageName <- ifelse(xor(reverse,inverted.), "target", "source")
+        image <- readImageFile(file.path(directory,imageName), reorder=FALSE, ...)
+        
+        if (imageName == "target" || is.null(i) || .self$nRegistrations() == 1)
+            return (image)
         else
-            return (extractMriImage(sourceImage, ndim(sourceImage), i))
+            return (suppressWarnings(extractMriImage(image, ndim(image), i)))
     },
     
-    getTargetImage = function (i = NULL, reverse = FALSE)
+    getSourceImagePath = function (i = NULL, reverse = FALSE)
     {
-        if (reverse)
-            return (.self$getSourceImage(i))
+        imageName <- ifelse(xor(reverse,inverted.), "target", "source")
+        return (file.path(directory, imageName))
+    },
+    
+    getTargetImage = function (i = NULL, reverse = FALSE, ...)
+    {
+        imageName <- ifelse(xor(reverse,inverted.), "source", "target")
+        image <- readImageFile(file.path(directory,imageName), reorder=FALSE, ...)
+        
+        if (imageName == "target" || is.null(i) || .self$nRegistrations() == 1)
+            return (image)
         else
-            return (targetImage)
+            return (suppressWarnings(extractMriImage(image, ndim(image), i)))
+    },
+    
+    getTargetImagePath = function (i = NULL, reverse = FALSE)
+    {
+        imageName <- ifelse(xor(reverse,inverted.), "source", "target")
+        return (file.path(directory, imageName))
     },
     
     getTransformObjects = function (i = 1, reverse = FALSE, preferAffine = FALSE, half = FALSE, errorIfMissing = TRUE)
@@ -64,28 +76,16 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
             return (lapply(i, .self$getTransformObjects, reverse=reverse, preferAffine=preferAffine, errorIfMissing=errorIfMissing))
         
         object <- NULL
-        source <- .self$getSourceImage(i,reverse)
-        target <- .self$getTargetImage(i,reverse)
+        source <- .self$getSourceImage(i, reverse, metadataOnly=TRUE)
+        target <- .self$getTargetImage(i, reverse, metadataOnly=TRUE)
         
-        if (reverse)
-        {
-            # NB: for the first case, we initially pass the images in reverse order
-            if (!is.null(.listFind(affineMatrices,i)) && (is.null(.listFind(reverseControlPointImages,i)) || preferAffine))
-                object <- invertAffine(asAffine(.listFind(affineMatrices,i), target, source))
-            else if (!is.null(.listFind(reverseControlPointImages, i)))
-                object <- structure(.listFind(reverseControlPointImages,i), source=source, target=target)
-            else if (errorIfMissing)
-                report(OL$Error, "No suitable reverse transform is available for index #{i}")
-        }
-        else
-        {
-            if (!is.null(.listFind(affineMatrices,i)) && (is.null(.listFind(controlPointImages,i)) || preferAffine))
-                object <- asAffine(.listFind(affineMatrices,i), source, target)
-            else if (!is.null(.listFind(controlPointImages, i)))
-                object <- structure(.listFind(controlPointImages,i), source=source, target=target)
-            else if (errorIfMissing)
-                report(OL$Error, "No suitable forward transform is available for index #{i}")
-        }
+        fileStem <- file.path(directory, ifelse(xor(reverse,inverted.),"reverse","forward"))
+        if (file.exists(es("#{fileStem}#{i}.mat")) && (preferAffine || !file.exists(es("#{fileStem}#{i}.nii.gz"))))
+            object <- readAffine(es("#{fileStem}#{i}.mat"), source=source, target=target)
+        else if (file.exists(es("#{fileStem}#{i}.nii.gz")))
+            object <- structure(readNifti(es("#{fileStem}#{i}.nii.gz"),internal=TRUE), source=source, target=target)
+        else if (errorIfMissing)
+            report(OL$Error, "No suitable #{basename(fileStem)} transform is available for index #{i}")
         
         if (half && !is.null(object))
             object <- halfTransform(object)
@@ -96,28 +96,88 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     getTypes = function ()
     {
         transformTypeNames <- c("affine", "nonlinear", "reverse-nonlinear")
-        availability <- sapply(list(affineMatrices,controlPointImages,reverseControlPointImages), function(x) sum(!sapply(x,is.null))) > 0
+        regularExpressions <- c("^forward\\d+\\.mat$", "^forward\\d+\\.nii.gz$", "^reverse\\d+\\.nii.gz$")
+        fileNames <- list.files(directory)
+        availability <- sapply(regularExpressions, function(re) any(fileNames %~% re))
         return (transformTypeNames[availability])
+    },
+    
+    invert = function ()
+    {
+        .self$inverted <- !.self$inverted
+        return (.self)
+    },
+    
+    isInverted = function () { return (.self$inverted) },
+    
+    move = function (newDirectory)
+    {
+        if (isTRUE(file.rename(directory, newDirectory)))
+            .self$directory <- newDirectory
+        else
+            flag(OL$Warning, "Could not move transformation file to directory #{newDirectory}")
+        return (.self)
     },
     
     nRegistrations = function ()
     {
-        if (ndim(sourceImage) == ndim(targetImage))
-            return (1L)
-        else
-            return (dim(sourceImage)[ndim(sourceImage)])
+        if (length(.self$n) != 1)
+        {
+            source <- .self$getSourceImage(metadataOnly=TRUE)
+            target <- .self$getTargetImage(metadataOnly=TRUE)
+            if (ndim(source) == ndim(target))
+                .self$n <- 1L
+            else
+                .self$n <- dim(source)[ndim(source)]
+        }
+        return (.self$n)
     },
     
     summarise = function ()
     {
-        sourceSummary <- sourceImage$summarise()
-        targetSummary <- targetImage$summarise()
+        sourceSummary <- .self$getSourceImage(metadataOnly=TRUE)$summarise()
+        targetSummary <- .self$getTargetImage(metadataOnly=TRUE)$summarise()
         
         values <- c(sourceSummary$values[match(c("Image dimensions","Voxel dimensions"), sourceSummary$labels)], targetSummary$values[match(c("Image dimensions","Voxel dimensions"), targetSummary$labels)])
-        values <- c(.self$getMethod(), implode(.self$getTypes(),", "), values)
-        names(values) <- c("Registration method", "Stored transformations", "Source image dimensions", "Source voxel dimensions", "Target image dimensions", "Target voxel dimensions")
+        values <- c(.self$getMethod(), implode(.self$getTypes(),", "), .self$isInverted(), values)
+        names(values) <- c("Registration method", "Stored transformations", "Currently inverted", "Source image dimensions", "Source voxel dimensions", "Target image dimensions", "Target voxel dimensions")
         
         return (values)
+    },
+    
+    updateFromObjects = function (affineMatrices = NULL, controlPointImages = NULL, reverseControlPointImages = NULL, method = c("niftyreg","fsl"))
+    {
+        if (!is.null(affineMatrices))
+        {
+            lapply(seq_along(affineMatrices), function(i) {
+                writeAffine(affineMatrices[[i]], file.path(directory,es("forward#{i}.mat")))
+                writeAffine(invertAffine(affineMatrices[[i]]), file.path(directory,es("reverse#{i}.mat")))
+            })
+        }
+        
+        if (!is.null(controlPointImages))
+            lapply(seq_along(controlPointImages), function(i) writeNifti(controlPointImages[[i]], file.path(directory,es("forward#{i}.nii.gz"))))
+        
+        if (!is.null(reverseControlPointImages))
+            lapply(seq_along(reverseControlPointImages), function(i) writeNifti(reverseControlPointImages[[i]], file.path(directory,es("reverse#{i}.nii.gz"))))
+        
+        .self$method <- match.arg(method)
+        return (.self)
+    },
+    
+    updateFromResult = function (result)
+    {
+        if (!("niftyreg" %in% class(result)))
+            report(OL$Error, "The specified result is not a \"niftyreg\" object")
+        
+        if (length(result$forwardTransforms) > 0 && isAffine(result$forwardTransforms[[1]]))
+            .self$updateFromObjects(affineMatrices=result$forwardTransforms, method="niftyreg")
+        else if (length(result$forwardTransforms) > 0 && isImage(result$forwardTransforms[[1]]))
+            .self$updateFromObjects(controlPointImages=result$forwardTransforms, method="niftyreg")
+        if (length(result$reverseTransforms) > 0 && isImage(result$reverseTransforms[[1]]))
+            .self$updateFromObjects(reverseControlPointImages=result$reverseTransforms, method="niftyreg")
+        
+        return (.self)
     }
 ))
 
@@ -195,33 +255,16 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
     points((fieldVoxels[,1]-1)/width[1], (fieldVoxels[,2]-1)/width[2], pch=3, col=colours[colourIndices])
 }
 
-registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, cache = c("auto","read","write","ignore"), ...)
+registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)
 {
     if (is.null(method))
         method <- "niftyreg"
     else
         method <- match.arg(method, c("niftyreg","fsl"))
     types <- match.arg(types, c("affine","nonlinear","reverse-nonlinear"), several.ok=TRUE)
-    cache <- match.arg(cache)
     
-    transform <- NULL
-    cacheHit <- FALSE
-    
-    if (cache %in% c("auto","read"))
-    {
-        transform <- checkTransformationCache(getImageAsFileName(sourceImage), getImageAsFileName(targetImage), method, types)
-        if (!is.null(transform))
-            cacheHit <- TRUE
-    }
-    
-    if (!is.null(transform))
-    {
-        if (estimateOnly)
-            result <- list(transform=transform, transformedImage=NULL, reverseTransformedImage=NULL)
-        else
-            result <- list(transform=transform, transformedImage=transformImage(transform,interpolation=interpolation,...))
-    }
-    else if (method == "niftyreg")
+    transform <- Transformation$new(threadSafeTempFile(), sourceImage, targetImage)
+    if (method == "niftyreg")
         result <- registerImagesWithNiftyreg(sourceImage, targetImage, sourceMask=sourceMask, targetMask=targetMask, types=types, affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
     else if (method == "fsl")
     {
@@ -230,9 +273,6 @@ registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetM
         
         result <- registerImagesWithFlirt(getImageAsFileName(sourceImage), getImageAsFileName(targetImage), sourceMaskFileName=getImageAsFileName(sourceMask,allowNull=TRUE), targetMaskFileName=getImageAsFileName(targetMask,allowNull=TRUE), affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
     }
-    
-    if (cache == "write" || (cache == "auto" && !cacheHit))
-        updateTransformationCache(result$transform, force=TRUE)
     
     return (result)
 }

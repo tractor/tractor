@@ -7,6 +7,7 @@ runExperiment <- function ()
 {
     interpolation <- getConfigVariable("Interpolation", "trilinear", validValues=c("nearestneighbour","trilinear","spline"))
     initAffineFile <- getConfigVariable("InitialAffineFile", NULL, "character")
+    initAffineType <- getConfigVariable("InitialAffineType", NULL, "character", validValues=c("niftyreg","fsl"))
     initControlFile <- getConfigVariable("InitialControlPointFile", NULL, "character")
     sourceMaskFile <- getConfigVariable("SourceMaskFile", NULL, "character")
     targetMaskFile <- getConfigVariable("TargetMaskFile", NULL, "character")
@@ -15,7 +16,7 @@ runExperiment <- function ()
     
     symmetric <- getConfigVariable("Symmetric", TRUE)
     nLevels <- getConfigVariable("Levels", 3L, "integer")
-    maxIterations <- getConfigVariable("MaximumIterations", 300L, "integer")
+    maxIterations <- getConfigVariable("MaxIterations", 150L, "integer")
     nBins <- getConfigVariable("HistogramBins", 64L, "integer")
     bendingEnergyWeight <- getConfigVariable("BendingEnergyWeight", 0.001)
     linearEnergyWeight <- getConfigVariable("LinearEnergyWeight", 0.01)
@@ -61,17 +62,20 @@ runExperiment <- function ()
         }
     }
     
+    source <- identifyImageFileNames(Arguments[1])$fileStem
+    target <- identifyImageFileNames(Arguments[2])$fileStem
+    
     if (!is.null(initControlFile) && !symmetric)
         init <- readImageFile(initControlFile)
     else if (!is.null(initAffineFile))
-        init <- RNiftyReg::readAffine(initAffineFile)
+        init <- RNiftyReg::readAffine(initAffineFile, source, target, type=initAffineType)
     
     types <- "nonlinear"
     if (symmetric)
         types <- c("reverse-nonlinear", types)
     
     report(OL$Info, "Performing registration")
-    result <- registerImages(Arguments[1], Arguments[2], sourceMask=sourceMaskFile, targetMask=targetMaskFile, method="niftyreg", types=types, estimateOnly=estimateOnly, interpolation=interpolation, cache="ignore", init=init, nonlinearOptions=list(nLevels=nLevels,maxIterations=maxIterations,nBins=nBins,bendingEnergyWeight=bendingEnergyWeight,linearEnergyWeight=linearEnergyWeight,jacobianWeight=jacobianWeight,finalSpacing=rep(finalSpacing,3),spacingUnit=spacingUnit))
+    result <- registerImages(source, target, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method="niftyreg", types=types, estimateOnly=estimateOnly, interpolation=interpolation, init=init, nonlinearOptions=list(nLevels=nLevels,maxIterations=maxIterations,nBins=nBins,bendingEnergyWeight=bendingEnergyWeight,linearEnergyWeight=linearEnergyWeight,jacobianWeight=jacobianWeight,finalSpacing=rep(finalSpacing,3),spacingUnit=spacingUnit))
     
     result$transform$serialise(transformName)
     

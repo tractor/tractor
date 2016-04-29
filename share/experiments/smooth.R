@@ -28,8 +28,8 @@ runExperiment <- function ()
     
     report(OL$Info, "Smoothing with kernel of sigma (", implode(round(width,2),","), ") voxels")
     
+    fileName <- paste(basename(image$getSource()), "smoothed", sep="_")
     image$map(gaussianSmooth, sigma=width)
-    fileName <- paste(Arguments[1], "smoothed", sep="_")
     writeImageFile(image, fileName)
     
     invisible(NULL)

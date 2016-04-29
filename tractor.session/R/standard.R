@@ -1,4 +1,4 @@
-getFileNameForStandardImage <- function (name = c("brain","white","grey","gray","csf"), errorIfMissing = TRUE)
+getFileNameForStandardImage <- function (name = "brain", errorIfMissing = TRUE)
 {
     if (is.null(.StandardBrainPath))
     {
@@ -8,12 +8,9 @@ getFileNameForStandardImage <- function (name = c("brain","white","grey","gray",
             return (NULL)
     }
     
+    # There used to be other options, but for now they have gone
     name <- match.arg(name)
-    fileName <- switch(name, brain="brain",
-                             white="white",
-                             gray=,             # drop-through
-                             grey="grey",
-                             csf="csf")
+    fileName <- switch(name, brain="brain")
     
     return (file.path(.StandardBrainPath, fileName))
 }
