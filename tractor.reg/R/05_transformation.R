@@ -195,33 +195,16 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
     points((fieldVoxels[,1]-1)/width[1], (fieldVoxels[,2]-1)/width[2], pch=3, col=colours[colourIndices])
 }
 
-registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, cache = c("auto","read","write","ignore"), ...)
+registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)
 {
     if (is.null(method))
         method <- "niftyreg"
     else
         method <- match.arg(method, c("niftyreg","fsl"))
     types <- match.arg(types, c("affine","nonlinear","reverse-nonlinear"), several.ok=TRUE)
-    cache <- match.arg(cache)
     
     transform <- NULL
-    cacheHit <- FALSE
-    
-    if (cache %in% c("auto","read"))
-    {
-        transform <- checkTransformationCache(getImageAsFileName(sourceImage), getImageAsFileName(targetImage), method, types)
-        if (!is.null(transform))
-            cacheHit <- TRUE
-    }
-    
-    if (!is.null(transform))
-    {
-        if (estimateOnly)
-            result <- list(transform=transform, transformedImage=NULL, reverseTransformedImage=NULL)
-        else
-            result <- list(transform=transform, transformedImage=transformImage(transform,interpolation=interpolation,...))
-    }
-    else if (method == "niftyreg")
+    if (method == "niftyreg")
         result <- registerImagesWithNiftyreg(sourceImage, targetImage, sourceMask=sourceMask, targetMask=targetMask, types=types, affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
     else if (method == "fsl")
     {
@@ -230,9 +213,6 @@ registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetM
         
         result <- registerImagesWithFlirt(getImageAsFileName(sourceImage), getImageAsFileName(targetImage), sourceMaskFileName=getImageAsFileName(sourceMask,allowNull=TRUE), targetMaskFileName=getImageAsFileName(targetMask,allowNull=TRUE), affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
     }
-    
-    if (cache == "write" || (cache == "auto" && !cacheHit))
-        updateTransformationCache(result$transform, force=TRUE)
     
     return (result)
 }
