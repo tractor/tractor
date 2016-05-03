@@ -12,8 +12,8 @@
 #         fsl: prefer to use FSL-FLIRT for linear registration
 #    niftyreg: prefer to use NiftyReg for linear registration
 
-# Diffusion to MNI space transforms are affine by default for backwards
-# compatibility; this is liable to change in a future release
+# Substantial distortion has been seen when nonlinearly warping diffusion data
+# to MNI space, so an affine transformation is used for now
 diffusion2mni: affine
 mni2diffusion: [ affine, reverse ]
 
@@ -28,5 +28,5 @@ mni2functional: [ nonlinear, symmetric, reverse ]
 
 # Within-subject functional transforms are linear by default, to avoid problems
 # with susceptibility artefacts
-functional2structural: [ affine, niftyreg, reverse ]
-structural2functional: [ affine, niftyreg ]
+functional2structural: [ affine, reverse ]
+structural2functional: affine
