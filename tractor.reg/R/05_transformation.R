@@ -286,8 +286,18 @@ attachTransformation <- function (path)
         transform <- Transformation$new(dirPath)
     else if (file.exists(filePath))
     {
+        convertImage <- function (rawImage)
+        {
+            if (!is.null(rawImage$source) && rawImage$source != "")
+                return (rawImage$source)
+            else if (!is.null(rawImage$data))
+                return (deserialiseReferenceObject(object=rawImage))
+            else
+                report(OL$Error, "Old-style serialised transform file #{path} cannot be updated")
+        }
+        
         fields <- deserialiseReferenceObject(filePath, raw=TRUE)
-        transform <- Transformation$new(dirPath, fields$sourceImage, fields$targetImage)
+        transform <- Transformation$new(dirPath, convertImage(fields$sourceImage), convertImage(fields$targetImage))
         transform$updateFromObjects(fields$affineMatrices, fields$controlPointImages, fields$reverseControlPointImages, fields$method)
     }
     else

@@ -8,11 +8,4 @@
         else
             options(tractorRegistrationMethod="niftyreg")
     }
-    
-    # Old transformations are not reliably distinguishable from current ones, so we retrofit an explicit version indicator
-    registerDeserialiser("Transformation", function (fields) {
-        if (!("version" %in% names(fields)))
-            fields$version <- 1L
-        return (do.call(Transformation$new, fields))
-    })
 }

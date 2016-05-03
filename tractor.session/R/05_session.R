@@ -175,12 +175,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"Rdata"))
             if (file.exists(transformFile) && !file.exists(transformDir))
             {
-                attachTransformation(transformFile)$move(transformDir)
+                tractor.reg::attachTransformation(transformFile)$move(transformDir)
                 unlink(transformFile)
             }
             if (file.exists(transformDir))
             {
-                transform <- attachTransformation(transformDir)
+                transform <- tractor.reg::attachTransformation(transformDir)
                 if (all(options$types %in% transform$getTypes()))
                     return (transform)
             }

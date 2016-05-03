@@ -219,9 +219,9 @@ getVolumeTransformationForSession <- function (session, type)
     transformDirName <- file.path(directory, "coreg.xfmb")
     
     if (file.exists(transformDirName))
-        return (attachTransformation(transformDirName))
+        return (tractor.reg::attachTransformation(transformDirName))
     else if (file.exists(transformFileName))
-        return (attachTransformation(transformFileName)$move(transformDirName))
+        return (tractor.reg::attachTransformation(transformFileName)$move(transformDirName))
     else if (type == "diffusion")
         return (readEddyCorrectTransformsForSession(session))
     else
