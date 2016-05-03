@@ -39,7 +39,7 @@ runExperiment <- function ()
     }
     else if (file.exists(ensureFileSuffix(transformName,"Rdata")))
     {
-        transform <- deserialiseReferenceObject(transformName)
+        transform <- attachTransformation(transformName)
         if (!is(transform, "Transformation"))
             report(OL$Warning, "Existing transformation file is not valid")
         else if (is.null(initAffineFile) && "affine" %in% transform$getTypes())

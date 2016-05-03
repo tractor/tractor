@@ -19,7 +19,7 @@ runExperiment <- function ()
     else
         sourceImage <- NULL
     
-    transform <- deserialiseReferenceObject(transformName)
+    transform <- attachTransformation(transformName)
     if (!is(transform, "Transformation"))
         report(OL$Error, "The specified file does not contain a valid Transformation object")
     

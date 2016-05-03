@@ -20,7 +20,7 @@ runExperiment <- function ()
         transform <- composeTransformations(transforms)
     }
     else
-        transform <- deserialiseReferenceObject(transformName)
+        transform <- attachTransformation(transformName)
     
     transformedImage <- transformImage(transform, RNiftyReg::readNifti(Arguments[1]), preferAffine=preferAffine, reverse=reverse, half=half, interpolation=interpolation)
     writeImageFile(transformedImage, Arguments[2])

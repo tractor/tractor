@@ -10,7 +10,7 @@ runExperiment <- function ()
     preferAffine <- getConfigVariable("PreferAffine", FALSE)
     reverse <- getConfigVariable("Reverse", FALSE)
     
-    transform <- deserialiseReferenceObject(transformName)
+    transform <- attachTransformation(transformName)
     
     if (nArguments() > 0)
         sourceImage <- readImageFile(Arguments[1])

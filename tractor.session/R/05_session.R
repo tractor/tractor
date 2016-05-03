@@ -150,7 +150,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     {
         strategy <- caches.$transformStrategies[[es("#{sourceSpace}2#{targetSpace}")]]
         if ("reverse" %in% strategy)
-            return (.self$getTransformation(targetSpace, sourceSpace)$getInverse())
+            return (.self$getTransformation(targetSpace,sourceSpace)$invert())
         else
         {
             sourceImageFile <- .self$getRegistrationTargetFileName(sourceSpace)
@@ -171,31 +171,23 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
                 options$types <- c(options$types, "reverse-nonlinear")
             
             fileHit <- FALSE
+            transformDir <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"xfmb"))
             transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"Rdata"))
-            if (file.exists(transformFile))
+            if (file.exists(transformFile) && !file.exists(transformDir))
             {
-                transform <- deserialiseReferenceObject(transformFile)
+                attachTransformation(transformFile)$move(transformDir)
+                unlink(transformFile)
+            }
+            if (file.exists(transformDir))
+            {
+                transform <- attachTransformation(transformDir)
                 if (all(options$types %in% transform$getTypes()))
-                {
-                    fileHit <- TRUE
-                    result <- list(transform=transform)
-                }
+                    return (transform)
             }
             
-            if (!fileHit)
-            {
-                report(OL$Info, "Transformation strategy from #{ifelse(sourceSpace=='mni','MNI',sourceSpace)} to #{ifelse(targetSpace=='mni','MNI',targetSpace)} space is #{implode(strategy,', ',' and ')} - registering images")
-                result <- do.call(tractor.reg::registerImages, options)
-                result$transform$serialise(transformFile)
-            }
-            
-            reverseTransformFile <- file.path(.self$getDirectory("transforms"), ensureFileSuffix(es("#{targetSpace}2#{sourceSpace}"),"Rdata"))
-            if (!file.exists(reverseTransformFile))
-            {
-                inverseTransform <- result$transform$getInverse(quiet=TRUE)
-                inverseTransform$serialise(reverseTransformFile)
-            }
-            
+            report(OL$Info, "Transformation strategy from #{ifelse(sourceSpace=='mni','MNI',sourceSpace)} to #{ifelse(targetSpace=='mni','MNI',targetSpace)} space is #{implode(strategy,', ',' and ')} - registering images")
+            result <- do.call(tractor.reg::registerImages, options)
+            result$transform$move(transformDir)
             return (result$transform)
         }
     },
