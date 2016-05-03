@@ -114,7 +114,8 @@ symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE)
         currentSource <- unique(c(info$headerFile, info$imageFile))
         currentTarget <- unique(ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix), strip=suffixes))
         
-        if (overwrite && any(file.exists(currentTarget)))
+        # NB: file.exists() requires the target of an existing link to exist
+        if (overwrite && any(!is.na(Sys.readlink(currentTarget))))
             unlink(currentTarget)
         if (relative)
         {

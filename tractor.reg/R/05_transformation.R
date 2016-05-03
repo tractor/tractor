@@ -15,12 +15,12 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
             if (is.character(source))
                 symlinkImageFiles(source, file.path(directory,"source"), overwrite=TRUE)
             else if (isImage(source))
-                writeNifti(source, file.path(directory,"source"))
+                writeNifti(source, file.path(directory,"source.nii.gz"))
             
             if (is.character(target))
                 symlinkImageFiles(target, file.path(directory,"target"), overwrite=TRUE)
             else if (isImage(target))
-                writeNifti(target, file.path(directory,"target"))
+                writeNifti(target, file.path(directory,"target.nii.gz"))
         }
         else
             directory <- ""
@@ -100,17 +100,27 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     
     invert = function ()
     {
-        .self$inverted <- !.self$inverted
+        .self$inverted. <- !.self$inverted.
         return (.self)
     },
     
-    isInverted = function () { return (.self$inverted) },
+    isInverted = function () { return (.self$inverted.) },
     
     move = function (newDirectory)
     {
+        # Symlinks will need updating
+        oldSource <- Sys.readlink(identifyImageFileNames(.self$getSourceImagePath(reverse=inverted.))$imageFile)
+        oldTarget <- Sys.readlink(identifyImageFileNames(.self$getTargetImagePath(reverse=inverted.))$imageFile)
+        
         newDirectory <- ensureFileSuffix(newDirectory, "xfmb")
         if (isTRUE(file.rename(directory, newDirectory)))
+        {
+            if (!is.na(oldSource) && oldSource != "")
+                symlinkImageFiles(file.path(directory,oldSource), file.path(newDirectory,"source"), overwrite=TRUE)
+            if (!is.na(oldTarget) && oldTarget != "")
+                symlinkImageFiles(file.path(directory,oldTarget), file.path(newDirectory,"target"), overwrite=TRUE)
             .self$directory <- newDirectory
+        }
         else
             flag(OL$Warning, "Could not move transformation file to directory #{newDirectory}")
         return (.self)

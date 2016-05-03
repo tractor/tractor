@@ -156,7 +156,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             sourceImageFile <- .self$getRegistrationTargetFileName(sourceSpace)
             targetImageFile <- .self$getRegistrationTargetFileName(targetSpace)
             
-            options <- list(sourceImageFile, targetImageFile, targetMask=NULL, estimateOnly=TRUE, cache="ignore")
+            options <- list(sourceImageFile, targetImageFile, targetMask=NULL, estimateOnly=TRUE)
             options$types <- "affine"
             if ("fsl" %in% strategy)
                 options$method <- "fsl"
