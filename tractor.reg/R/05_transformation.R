@@ -266,6 +266,26 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
     points((fieldVoxels[,1]-1)/width[1], (fieldVoxels[,2]-1)/width[2], pch=3, col=colours[colourIndices])
 }
 
+# Read either an older .Rdata file or a new .xfmb folder
+attachTransformation <- function (path)
+{
+    pathStem <- ensureFileSuffix(path, NULL, strip=c("xfmb","Rdata"))
+    dirPath <- ensureFileSuffix(pathStem, "xfmb")
+    filePath <- ensureFileSuffix(pathStem, "Rdata")
+    if (file.exists(dirPath) && file.info(dirPath)$isdir)
+        transform <- Transformation$new(dirPath)
+    else if (file.exists(filePath))
+    {
+        fields <- deserialiseReferenceObject(filePath, raw=TRUE)
+        transform <- Transformation$new(dirPath, fields$sourceImage, fields$targetImage)
+        transform$updateFromObjects(fields$affineMatrices, fields$controlPointImages, fields$reverseControlPointImages, fields$method)
+    }
+    else
+        report(OL$Error, "No suitable serialised transformation was found")
+    
+    return (transform)
+}
+
 registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)
 {
     if (is.null(method))
