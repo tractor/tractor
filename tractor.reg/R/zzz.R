@@ -6,7 +6,7 @@
         if (isTRUE(regMethod %in% c("niftyreg","fsl")))
             options(tractorRegistrationMethod=as.vector(regMethod))
         else
-            options(tractorRegistrationMethod="fsl")
+            options(tractorRegistrationMethod="niftyreg")
     }
     
     # Old transformations are not reliably distinguishable from current ones, so we retrofit an explicit version indicator
