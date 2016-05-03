@@ -20,6 +20,7 @@ runExperiment <- function ()
     strategy <- getConfigVariable("Strategy", "global", validValues=c("global","regionwise","voxelwise"))
     nStreamlines <- getConfigVariable("Streamlines", "100x")
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL, "numeric")
+    parcellationConfidence <- getConfigVariable("ParcellationConfidence", 0.2)
     boundaryManipulation <- getConfigVariable("BoundaryManipulation", "none", validValues=c("none","erode","dilate","inner","outer"))
     kernelShape <- getConfigVariable("KernelShape", "diamond", "character", validValues=c("box","disc","diamond"))
     jitter <- getConfigVariable("JitterSeeds", TRUE)
@@ -73,7 +74,7 @@ runExperiment <- function ()
         
         if (any(!areFiles))
         {
-            parcellation <- session$getParcellation("diffusion")
+            parcellation <- session$getParcellation("diffusion", threshold=parcellationConfidence)
             indices <- sort(matchRegions(regionNames[!areFiles], parcellation))
             labels <- parcellation$regions$label[parcellation$regions$index %in% indices]
             locs <- which(parcellation$image$getData() %in% indices, arr.ind=TRUE)
