@@ -1,7 +1,8 @@
-registerImagesWithFlirt <- function (sourceFileName, targetFileName, sourceMaskFileName = NULL, targetMaskFileName = NULL, initAffine = NULL, affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)
+registerImagesWithFlirt <- function (transform, sourceMaskFileName = NULL, targetMaskFileName = NULL, initAffine = NULL, affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)
 {
-    if (!is.character(sourceFileName) || !is.character(targetFileName))
-        report(OL$Error, "Source and target images must be specified by their filenames")
+    sourceFileName <- transform$getSourceImagePath()
+    targetFileName <- transform$getTargetImagePath()
+    
     if (!any(affineDof == c(6,7,9,12)))
         report(OL$Error, "The specified affine degrees of freedom is not valid")
     
@@ -39,7 +40,7 @@ registerImagesWithFlirt <- function (sourceFileName, targetFileName, sourceMaskF
     report(OL$Info, "FSL-FLIRT registration completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
     
     affine <- readAffine(outputMatrixFile, sourceFileName, targetFileName, type="fsl")
-    transform <- Transformation$new(readImageFile(sourceFileName,metadataOnly=TRUE,reorder=FALSE), readImageFile(targetFileName,metadataOnly=TRUE,reorder=FALSE), affineMatrices=list(affine), method="fsl")
+    transform$updateFromObjects(affineMatrices=list(affine), method="fsl")
     
     result <- list(transform=transform, transformedImage=NULL, reverseTransformedImage=NULL)
     if (!estimateOnly)

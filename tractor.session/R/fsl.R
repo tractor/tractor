@@ -186,6 +186,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     
     sourceImage <- session$getImageByType("rawdata", "diffusion", metadataOnly=TRUE)
     targetImage <- session$getImageByType("refb0", "diffusion", metadataOnly=TRUE)
+    transform <- tractor.reg::Transformation$new(threadSafeTempFile(), sourceImage, targetImage)
     
     eddyParamsFile <- file.path(session$getDirectory("fdt"), "data.eddy_parameters")
     eddyCorrectLogFile <- file.path(session$getDirectory("fdt"), "data.ecclog")
@@ -193,7 +194,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     {
         corrections <- as.matrix(read.table(eddyParamsFile))
         affines <- lapply(seq_len(nrow(corrections)), function(i) solve(RNiftyReg::buildAffine(translation=corrections[i,1:3], angles=corrections[i,4:6], source=targetImage)))
-        transform <- tractor.reg::Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=affines, controlPointImages=list(), reverseControlPointImages=list(), method="fsl")
+        transform$updateFromObjects(affineMatrices=affines, method="fsl")
     }
     else if (file.exists(eddyCorrectLogFile))
     {
@@ -209,7 +210,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     
         matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
         
-        transform <- tractor.reg::Transformation$new(sourceImage=sourceImage, targetImage=targetImage, affineMatrices=matrices, controlPointImages=list(), reverseControlPointImages=list(), method="fsl", version=1)
+        transform$updateFromObjects(affineMatrices=matrices, method="fsl")
     }
     else
         report(OL$Error, "No eddy current correction log was found")
