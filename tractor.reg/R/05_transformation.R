@@ -4,7 +4,7 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         method <- "niftyreg"
         if (length(directory) == 1 && directory != "")
         {
-            directory <- ensureFileSuffix(directory, "xfmb")
+            directory <- expandFileName(ensureFileSuffix(directory, "xfmb"))
             if (!file.exists(directory))
                 dir.create(directory, recursive=TRUE)
             
@@ -149,8 +149,8 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         targetSummary <- .self$getTargetImage(metadataOnly=TRUE)$summarise()
         
         values <- c(sourceSummary$values[match(c("Image dimensions","Voxel dimensions"), sourceSummary$labels)], targetSummary$values[match(c("Image dimensions","Voxel dimensions"), targetSummary$labels)])
-        values <- c(.self$getMethod(), implode(.self$getTypes(),", "), .self$isInverted(), values)
-        names(values) <- c("Registration method", "Stored transformations", "Currently inverted", "Source image dimensions", "Source voxel dimensions", "Target image dimensions", "Target voxel dimensions")
+        values <- c(.self$getDirectory(), .self$getMethod(), implode(.self$getTypes(),", "), .self$isInverted(), values)
+        names(values) <- c("Bundle directory", "Registration method", "Stored transformations", "Currently inverted", "Source image dimensions", "Source voxel dimensions", "Target image dimensions", "Target voxel dimensions")
         
         return (values)
     },
