@@ -13,7 +13,10 @@ runExperiment <- function ()
     nearest <- getConfigVariable("Nearest", FALSE)
     
     tlc <- function(x) { if (is.null(x)) NULL else tolower(x) }
-        
+    
+    if (is.null(targetSpace))
+        targetSpace <- sourceSpace
+    
     session <- attachMriSession(Arguments[1])
     if (imageFileExists(implode(Arguments[-1], sep=" ")))
     {
@@ -27,7 +30,16 @@ runExperiment <- function ()
         point <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
         if (is.null(pointType))
             report(OL$Error, "Point type must be specified if a point location is given")
-        newPoint <- transformPointsToSpace(point, session, tlc(targetSpace), tlc(sourceSpace), pointType=tlc(pointType), outputVoxel=TRUE, preferAffine=preferAffine, nearest=nearest)
+        
+        if (targetSpace == sourceSpace)
+        {
+            newPoint <- changePointType(point, session$getRegistrationTarget(tlc(sourceSpace)), "r", pointType)
+            if (nearest)
+                newPoint <- round(newPoint)
+        }
+        else
+            newPoint <- transformPointsToSpace(point, session, tlc(targetSpace), tlc(sourceSpace), pointType=tlc(pointType), outputVoxel=TRUE, preferAffine=preferAffine, nearest=nearest)
+        
         cat(paste(implode(round(newPoint,3),sep=","), "\n", sep=""))
     }
 }
