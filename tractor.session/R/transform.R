@@ -204,7 +204,7 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
     
     if (!is(transforms, "Transformation"))
         transforms <- tractor.reg::mergeTransformations(transforms, sourceMetadata)
-    transforms$serialise(file.path(session$getDirectory(type), "coreg_xfm.Rdata"))
+    transforms$move(file.path(session$getDirectory(type), "coreg"))
     
     return (transforms)
 }

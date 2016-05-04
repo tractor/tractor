@@ -158,7 +158,7 @@ runEddyWithSession <- function (session)
     symlinkImageFiles(mainDataPath, fdtDataPath)
     
     transform <- readEddyCorrectTransformsForSession(session)
-    transform$serialise(file.path(session$getDirectory("diffusion"), "coreg_xfm.Rdata"))
+    transform$move(file.path(session$getDirectory("diffusion"), "coreg"))
 }
 
 runEddyCorrectWithSession <- function (session, refVolume)
@@ -176,7 +176,7 @@ runEddyCorrectWithSession <- function (session, refVolume)
     file.rename(file.path(session$getDirectory("diffusion"),"data.ecclog"), file.path(targetDir,"data.ecclog"))
     
     transform <- readEddyCorrectTransformsForSession(session)
-    transform$serialise(file.path(session$getDirectory("diffusion"), "coreg_xfm.Rdata"))
+    transform$move(file.path(session$getDirectory("diffusion"), "coreg"))
 }
 
 readEddyCorrectTransformsForSession <- function (session, index = NULL)
