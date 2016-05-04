@@ -80,7 +80,7 @@ newReferenceTractWithTract <- function (tract, standardSeed = NULL, nativeSeed =
             report(OL$Error, "The native space point associated with the tract must be specified")
         
         transform <- session$getTransformation("diffusion", "mni")
-        standardSeed <- transformPoints(transform, nativeSeed, voxel=(seedUnit!="mm"))
+        standardSeed <- tractor.reg::transformPoints(transform, nativeSeed, voxel=(seedUnit!="mm"))
     }
     
     reference <- ReferenceTract$new(tract=tract, standardSeed=standardSeed, seedUnit=seedUnit, session=session, options=options)

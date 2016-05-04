@@ -138,6 +138,7 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
         assign("data", data, envir=workingEnvironment)
         assign("knots", knots, envir=workingEnvironment)
         assign("ends", ends, envir=workingEnvironment)
+        assign("bs", splines::bs, envir=workingEnvironment)
         
         basis <- bs(data$t, degree=3, knots=knots[-ends], Boundary.knots=knots[ends])
         
