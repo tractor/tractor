@@ -157,8 +157,7 @@ runEddyWithSession <- function (session)
     copyImageFiles(fdtDataPath, mainDataPath, overwrite=TRUE, deleteOriginals=TRUE)
     symlinkImageFiles(mainDataPath, fdtDataPath)
     
-    transform <- readEddyCorrectTransformsForSession(session)
-    transform$move(file.path(session$getDirectory("diffusion"), "coreg"))
+    readEddyCorrectTransformsForSession(session)
 }
 
 runEddyCorrectWithSession <- function (session, refVolume)
@@ -175,8 +174,7 @@ runEddyCorrectWithSession <- function (session, refVolume)
     targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
     file.rename(file.path(session$getDirectory("diffusion"),"data.ecclog"), file.path(targetDir,"data.ecclog"))
     
-    transform <- readEddyCorrectTransformsForSession(session)
-    transform$move(file.path(session$getDirectory("diffusion"), "coreg"))
+    readEddyCorrectTransformsForSession(session)
 }
 
 readEddyCorrectTransformsForSession <- function (session, index = NULL)
@@ -184,37 +182,37 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    sourceImage <- session$getImageByType("rawdata", "diffusion", metadataOnly=TRUE)
-    targetImage <- session$getImageByType("refb0", "diffusion", metadataOnly=TRUE)
-    transform <- tractor.reg::Transformation$new(threadSafeTempFile(), sourceImage, targetImage)
+    sourcePath <- session$getImageFileNameByType("rawdata", "diffusion")
+    targetPath <- session$getImageFileNameByType("refb0", "diffusion")
+    transform <- tractor.reg::Transformation$new(threadSafeTempFile(), sourcePath, targetPath)
     
     eddyParamsFile <- file.path(session$getDirectory("fdt"), "data.eddy_parameters")
     eddyCorrectLogFile <- file.path(session$getDirectory("fdt"), "data.ecclog")
     if (file.exists(eddyParamsFile))
     {
         corrections <- as.matrix(read.table(eddyParamsFile))
-        affines <- lapply(seq_len(nrow(corrections)), function(i) solve(RNiftyReg::buildAffine(translation=corrections[i,1:3], angles=corrections[i,4:6], source=targetImage)))
+        affines <- lapply(seq_len(nrow(corrections)), function(i) solve(RNiftyReg::buildAffine(translation=corrections[i,1:3], angles=corrections[i,4:6], source=targetPath)))
         transform$updateFromObjects(affineMatrices=affines, method="fsl")
     }
     else if (file.exists(eddyCorrectLogFile))
     {
         logLines <- readLines(eddyCorrectLogFile)
         logLines <- subset(logLines, logLines %~% "^[0-9\\-\\. ]+$")
-    
+        
         connection <- textConnection(logLines)
         matrices <- as.matrix(read.table(connection))
         close(connection)
-    
+        
         if (is.null(index))
             index <- seq_len(nrow(matrices) / 4)
-    
-        matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
         
-        transform$updateFromObjects(affineMatrices=matrices, method="fsl")
+        matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
+        transform$updateFromObjects(affineMatrices=matrices, method="fsl", convert=TRUE)
     }
     else
         report(OL$Error, "No eddy current correction log was found")
     
+    transform$move(file.path(session$getDirectory("diffusion"), "coreg"))
     invisible (transform)
 }
 

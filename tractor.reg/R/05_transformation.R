@@ -155,33 +155,38 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         return (values)
     },
     
-    updateFromObjects = function (affineMatrices = NULL, controlPointImages = NULL, reverseControlPointImages = NULL, method = c("niftyreg","fsl"))
+    updateFromObjects = function (affineMatrices = NULL, controlPointImages = NULL, reverseControlPointImages = NULL, method = c("niftyreg","fsl"), convert = FALSE)
     {
         if (!is.null(affineMatrices))
         {
-            lapply(seq_along(affineMatrices), function(i) {
+            for (i in seq_along(affineMatrices))
+            {
                 if (isAffine(affineMatrices[[i]]))
                 {
+                    if (convert && method == "fsl")
+                        affineMatrices[[i]] <- RNiftyReg:::convertAffine(affineMatrices[[i]], .self$getSourceImage(metadataOnly=TRUE), .self$getTargetImage(metadataOnly=TRUE), "niftyreg")
                     writeAffine(affineMatrices[[i]], file.path(directory,es("forward#{i}.mat")))
                     writeAffine(invertAffine(affineMatrices[[i]]), file.path(directory,es("reverse#{i}.mat")))
                 }
-            })
+            }
         }
         
         if (!is.null(controlPointImages))
         {
-            lapply(seq_along(controlPointImages), function(i) {
+            for (i in seq_along(controlPointImages))
+            {
                 if (isImage(controlPointImages[[i]]))
                     writeNifti(controlPointImages[[i]], file.path(directory,es("forward#{i}.nii.gz")))
-            })
+            }
         }
         
         if (!is.null(reverseControlPointImages))
         {
-            lapply(seq_along(reverseControlPointImages), function(i) {
+            for (i in seq_along(reverseControlPointImages))
+            {
                 if (isImage(reverseControlPointImages[[i]]))
                     writeNifti(reverseControlPointImages[[i]], file.path(directory,es("reverse#{i}.nii.gz")))
-            })
+            }
         }
         
         writeLines(method, file.path(directory,"method.txt"))
@@ -296,12 +301,12 @@ attachTransformation <- function (path, source = NULL, target = NULL)
             else if (!is.null(rawImage$data))
                 return (deserialiseReferenceObject(object=rawImage))
             else
-                report(OL$Error, "Old-style serialised transform file #{path} cannot be updated")
+                report(OL$Error, "Old-style serialised transform file #{filePath} cannot be updated")
         }
         
         fields <- deserialiseReferenceObject(filePath, raw=TRUE)
         transform <- Transformation$new(dirPath, convertImage(fields$sourceImage), convertImage(fields$targetImage))
-        transform$updateFromObjects(fields$affineMatrices, fields$controlPointImages, fields$reverseControlPointImages, fields$method)
+        transform$updateFromObjects(fields$affineMatrices, fields$controlPointImages, fields$reverseControlPointImages, fields$method, convert=TRUE)
     }
     else
         transform <- Transformation$new(dirPath, source, target)
