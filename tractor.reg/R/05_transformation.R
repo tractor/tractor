@@ -108,11 +108,14 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     
     move = function (newDirectory)
     {
+        newDirectory <- ensureFileSuffix(newDirectory, "xfmb")
+        if (.self$directory == newDirectory)
+            return (.self)
+        
         # Symlinks will need updating
         oldSource <- Sys.readlink(identifyImageFileNames(.self$getSourceImagePath(reverse=inverted.))$imageFile)
         oldTarget <- Sys.readlink(identifyImageFileNames(.self$getTargetImagePath(reverse=inverted.))$imageFile)
         
-        newDirectory <- ensureFileSuffix(newDirectory, "xfmb")
         if (isTRUE(file.rename(directory, newDirectory)))
         {
             if (!is.na(oldSource) && oldSource != "")
@@ -276,8 +279,8 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
     points((fieldVoxels[,1]-1)/width[1], (fieldVoxels[,2]-1)/width[2], pch=3, col=colours[colourIndices])
 }
 
-# Read either an older .Rdata file or a new .xfmb folder
-attachTransformation <- function (path)
+# Read either an older .Rdata file or a new .xfmb folder, or create the latter
+attachTransformation <- function (path, source = NULL, target = NULL)
 {
     pathStem <- ensureFileSuffix(path, NULL, strip=c("xfmb","Rdata"))
     dirPath <- ensureFileSuffix(pathStem, "xfmb")
@@ -301,12 +304,12 @@ attachTransformation <- function (path)
         transform$updateFromObjects(fields$affineMatrices, fields$controlPointImages, fields$reverseControlPointImages, fields$method)
     }
     else
-        report(OL$Error, "No suitable serialised transformation was found")
+        transform <- Transformation$new(dirPath, source, target)
     
     return (transform)
 }
 
-registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)
+registerImages <- function (sourceImage, targetImage, transform = NULL, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)
 {
     if (is.null(method))
         method <- "niftyreg"
@@ -314,7 +317,16 @@ registerImages <- function (sourceImage, targetImage, sourceMask = NULL, targetM
         method <- match.arg(method, c("niftyreg","fsl"))
     types <- match.arg(types, c("affine","nonlinear","reverse-nonlinear"), several.ok=TRUE)
     
-    transform <- Transformation$new(threadSafeTempFile(), sourceImage, targetImage)
+    if (!is.null(transform))
+    {
+        if (missing(sourceImage))
+            sourceImage <- transform$getSourceImage()
+        if (missing(targetImage))
+            targetImage <- transform$getTargetImage()
+    }
+    else
+        transform <- Transformation$new(threadSafeTempFile(), sourceImage, targetImage)
+    
     if (method == "niftyreg")
         result <- registerImagesWithNiftyreg(transform, sourceMask=sourceMask, targetMask=targetMask, types=types, affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
     else if (method == "fsl")

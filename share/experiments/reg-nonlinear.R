@@ -34,20 +34,22 @@ runExperiment <- function ()
         sourceMaskFile <- NULL
     }
     
-    init <- NULL
+    init <- transform <- NULL
+    source <- identifyImageFileNames(Arguments[1])$fileStem
+    target <- identifyImageFileNames(Arguments[2])$fileStem
     
     if (is.null(transformName))
     {
         # Create an output transformation name from output image name
         # This file will NOT be used for initialisation, and will simply be overwritten if it exists
         if (nArguments() >= 3)
-            transformName <- paste(Arguments[3], "xfm", sep="_")
+            transform <- attachTransformation(Arguments[3], source, target)
         else
             report(OL$Error, "Transformation name must be specified if there is no output file")
     }
-    else if (file.exists(ensureFileSuffix(transformName,"Rdata")))
+    else
     {
-        transform <- attachTransformation(transformName)
+        transform <- attachTransformation(transformName, source, target)
         if (!is(transform, "Transformation"))
             report(OL$Warning, "Existing transformation file is not valid")
         else if (!symmetric && is.null(initControlFile) && "nonlinear" %in% transform$getTypes())
@@ -62,11 +64,8 @@ runExperiment <- function ()
         }
     }
     
-    source <- identifyImageFileNames(Arguments[1])$fileStem
-    target <- identifyImageFileNames(Arguments[2])$fileStem
-    
     if (!is.null(initControlFile) && !symmetric)
-        init <- readImageFile(initControlFile)
+        init <- RNiftyReg::readNifti(initControlFile)
     else if (!is.null(initAffineFile))
         init <- RNiftyReg::readAffine(initAffineFile, source, target, type=initAffineType)
     
@@ -75,9 +74,10 @@ runExperiment <- function ()
         types <- c("reverse-nonlinear", types)
     
     report(OL$Info, "Performing registration")
-    result <- registerImages(source, target, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method="niftyreg", types=types, estimateOnly=estimateOnly, interpolation=interpolation, init=init, nonlinearOptions=list(nLevels=nLevels,maxIterations=maxIterations,nBins=nBins,bendingEnergyWeight=bendingEnergyWeight,linearEnergyWeight=linearEnergyWeight,jacobianWeight=jacobianWeight,finalSpacing=rep(finalSpacing,3),spacingUnit=spacingUnit))
+    result <- registerImages(transform=transform, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method="niftyreg", types=types, estimateOnly=estimateOnly, interpolation=interpolation, init=init, nonlinearOptions=list(nLevels=nLevels,maxIterations=maxIterations,nBins=nBins,bendingEnergyWeight=bendingEnergyWeight,linearEnergyWeight=linearEnergyWeight,jacobianWeight=jacobianWeight,finalSpacing=rep(finalSpacing,3),spacingUnit=spacingUnit))
     
-    result$transform$serialise(transformName)
+    if (is.null(transform))
+        result$transform$move(transformName)
     
     if (!estimateOnly)
         writeImageFile(result$transformedImage, Arguments[3])

@@ -26,20 +26,22 @@ runExperiment <- function ()
     if (!estimateOnly && nArguments() < 3)
         report(OL$Error, "An output file name is required (as a third argument)")
     
-    init <- NULL
+    init <- transform <- NULL
+    source <- identifyImageFileNames(Arguments[1])$fileStem
+    target <- identifyImageFileNames(Arguments[2])$fileStem
     
     if (is.null(transformName))
     {
         # Create an output transformation name from output image name
         # This file will NOT be used for initialisation, and will simply be overwritten if it exists
         if (nArguments() >= 3)
-            transformName <- paste(Arguments[3], "xfm", sep="_")
+            transform <- attachTransformation(Arguments[3], source, target)
         else
             report(OL$Error, "Transformation name must be specified if there is no output file")
     }
-    else if (file.exists(ensureFileSuffix(transformName,"Rdata")))
+    else
     {
-        transform <- attachTransformation(transformName)
+        transform <- attachTransformation(transformName, source, target)
         if (!is(transform, "Transformation"))
             report(OL$Warning, "Existing transformation file is not valid")
         else if (is.null(initAffineFile) && "affine" %in% transform$getTypes())
@@ -49,16 +51,11 @@ runExperiment <- function ()
         }
     }
     
-    source <- identifyImageFileNames(Arguments[1])$fileStem
-    target <- identifyImageFileNames(Arguments[2])$fileStem
-    
     if (!is.null(initAffineFile))
         init <- RNiftyReg::readAffine(initAffineFile, source, target, type=initAffineType)
     
     report(OL$Info, "Performing registration")
-    result <- registerImages(source, target, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method=method, types="affine", affineDof=degreesOfFreedom, estimateOnly=estimateOnly, interpolation=interpolation, init=init, linearOptions=list(nLevels=nLevels,maxIterations=maxIterations,useBlockPercentage=useBlockPercentage,symmetric=symmetric))
-    
-    result$transform$serialise(transformName)
+    result <- registerImages(transform=transform, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method=method, types="affine", affineDof=degreesOfFreedom, estimateOnly=estimateOnly, interpolation=interpolation, init=init, linearOptions=list(nLevels=nLevels,maxIterations=maxIterations,useBlockPercentage=useBlockPercentage,symmetric=symmetric))
     
     if (!estimateOnly)
         writeImageFile(result$transformedImage, Arguments[3])
