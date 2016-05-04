@@ -1,8 +1,7 @@
-An object of class "Transformation"
----
     Registration method : niftyreg
  Stored transformations : affine
-Source image dimensions : 96 x 96 x 60 voxels
-Source voxel dimensions : 2.5 x 2.5 x 2.5 mm
-Target image dimensions : 91 x 109 x 91 voxels
-Target voxel dimensions : 2 x 2 x 2 mm
+     Currently inverted : FALSE
+Source image dimensions : 96 x 96 voxels
+Source voxel dimensions : 2.5 x 2.5 mm
+Target image dimensions : 197 x 233 voxels
+Target voxel dimensions : 1 x 1 mm

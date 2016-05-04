@@ -1,4 +1,4 @@
 #@desc Checking linear registration
-${TRACTOR} reg-linear data/session/tractor/diffusion/refb0 ../share/mni/brain TransformationName:tmp/transform Levels:2 EstimateOnly:true
-${TRACTOR} peek tmp/transform
-rm -f tmp/transform*
+${TRACTOR} reg-linear data/transform.xfmb/source data/transform.xfmb/target TransformationName:tmp/transform EstimateOnly:true | grep -v orientation | grep -v NiftyReg
+${TRACTOR} reg-info tmp/transform | grep -v orientation
+rm -rf tmp/transform.xfmb
