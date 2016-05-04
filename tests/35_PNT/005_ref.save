@@ -2,6 +2,6 @@ An object of class "ReferenceTract"
 ---
         Tract class : BSplineTract
   In standard space : FALSE
-Standard space seed : 46,76,39 (vox)
+Standard space seed : 100,163,77 (vox)
          Point type : knot
     Length quantile : 0.99
