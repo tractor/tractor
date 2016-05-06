@@ -32,10 +32,10 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
     
     getMethod = function () { return (method) },
     
-    getSourceImage = function (i = NULL, reverse = FALSE, ...)
+    getSourceImage = function (i = NULL, reverse = FALSE, reorder = FALSE, ...)
     {
         imageName <- ifelse(xor(reverse,inverted.), "target", "source")
-        image <- readImageFile(file.path(directory,imageName), reorder=FALSE, ...)
+        image <- readImageFile(file.path(directory,imageName), reorder=reorder, ...)
         
         if (imageName == "target" || is.null(i) || .self$nRegistrations() == 1)
             return (image)
@@ -49,10 +49,10 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         return (file.path(directory, imageName))
     },
     
-    getTargetImage = function (i = NULL, reverse = FALSE, ...)
+    getTargetImage = function (i = NULL, reverse = FALSE, reorder = FALSE, ...)
     {
         imageName <- ifelse(xor(reverse,inverted.), "source", "target")
-        image <- readImageFile(file.path(directory,imageName), reorder=FALSE, ...)
+        image <- readImageFile(file.path(directory,imageName), reorder=reorder, ...)
         
         if (imageName == "target" || is.null(i) || .self$nRegistrations() == 1)
             return (image)
@@ -237,41 +237,25 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
     inPlaneAxes <- setdiff(1:3, throughPlaneAxis)
     
     if (is.null(sourceImage))
-    {
-        sourceImage <- x$getSourceImage(index, reverse)
+        sourceImage <- x$getSourceImage(index, reverse, reorder=TRUE)
         
-        if (sourceImage$isEmpty())
-        {
-            if (sourceImage$isInternal())
-                report(OL$Error, "Original image source is unknown - a source image must be provided")
-            sourceImage <- readImageFile(sourceImage$getSource())
-        }
-        else if (!sourceImage$isReordered())
-            sourceImage <- reorderMriImage(sourceImage)
-    }
-    
     # Calculate the deformation field
-    deformationField <- RNiftyReg::deformationField(x$getTransformObjects(index,reverse,preferAffine), jacobian=TRUE)
+    deformationField <- deformationField(x$getTransformObjects(index,reverse,preferAffine), jacobian=TRUE)
     
     # Find the requested slice of the Jacobian map and deformation field
     jacobian <- reorderMriImage(as(jacobian(deformationField),"MriImage"))$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
     field <- reorderMriImage(as(deformationField,"MriImage"))$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
     
-    # Remove the last row and column from the data, because NiftyReg seems to calculate it wrongly
-    # fieldDims <- dim(field)
-    # jacobian <- jacobian[1:(fieldDims[1]-1),1:(fieldDims[2]-1)]
-    # field <- field[1:(fieldDims[1]-1),1:(fieldDims[2]-1),,]
-    
     # Convert the field to voxel positions and find the closest plane (on average) in source space
     fieldDims <- dim(field)
-    dim(field) <- c(prod(fieldDims[1:2]), fieldDims[3])
+    dim(field) <- c(prod(fieldDims[1:2]), fieldDims[4])
     fieldVoxels <- reorderPoints(worldToVoxel(field,sourceImage$getMetadata()), sourceImage$getMetadata())
     sourceLoc <- rep(NA, 3)
     sourceLoc[throughPlaneAxis] <- round(mean(fieldVoxels[,throughPlaneAxis], na.rm=TRUE))
     fieldVoxels <- fieldVoxels[,inPlaneAxes]
     
     # Use the 2.5% trimmed range of the whole Jacobian map to create a colour scale (centred at 1)
-    jacobianTrimmedRange <- quantile(abs(deformationField$jacobian@.Data), c(0.025,0.975), na.rm=TRUE) - 1
+    jacobianTrimmedRange <- quantile(abs(as.array(jacobian(deformationField))), c(0.025,0.975), na.rm=TRUE) - 1
     vizLimit <- max(abs(jacobianTrimmedRange))
     colourIndices <- 1 + round(99 * ((abs(jacobian)-1) + vizLimit) / (2*vizLimit))
     colourIndices[colourIndices < 1] <- 1
@@ -287,7 +271,7 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
 # Read either an older .Rdata file or a new .xfmb folder, or create the latter
 attachTransformation <- function (path, source = NULL, target = NULL)
 {
-    pathStem <- ensureFileSuffix(path, NULL, strip=c("xfmb","Rdata"))
+    pathStem <- ensureFileSuffix(ore.subst("/$","",path), NULL, strip=c("xfmb","Rdata"))
     dirPath <- ensureFileSuffix(pathStem, "xfmb")
     filePath <- ensureFileSuffix(pathStem, "Rdata")
     if (file.exists(dirPath) && file.info(dirPath)$isdir)
