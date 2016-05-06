@@ -18,7 +18,6 @@
     24  cerebrospinal_fluid                             CSF                              "#3C3C3C"  cerebrospinal_fluid  NA          NA
     26  accumbens_left                                  Left-Accumbens-area              "#FFA500"  deep_grey_matter     left        NA
     28  NA                                              Left-VentralDC                   "#A52A2A"  other                left        NA
-    30  NA                                              Left-vessel                      "#A020F0"  other                left        NA
     31  choroid_plexus_left                             Left-choroid-plexus              "#00C8C8"  other                left        NA
     41  cerebral_white_matter_right                     Right-Cerebral-White-Matter      "#00E100"  white_matter         right       NA
     43  lateral_ventricle_right                         Right-Lateral-Ventricle          "#781286"  cerebrospinal_fluid  right       NA
