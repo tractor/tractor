@@ -13,7 +13,7 @@ runExperiment <- function ()
     targetMaskFile <- getConfigVariable("TargetMaskFile", NULL, "character")
     degreesOfFreedom <- getConfigVariable("DegreesOfFreedom", 12L, "integer")
     estimateOnly <- getConfigVariable("EstimateOnly", FALSE)
-    transformName <- getConfigVariable("TransformationName", NULL, "character")
+    transformName <- getConfigVariable("TransformName", NULL, "character")
     
     # NiftyReg-only options
     symmetric <- getConfigVariable("Symmetric", TRUE)

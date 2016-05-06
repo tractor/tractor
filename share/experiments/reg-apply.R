@@ -5,7 +5,7 @@ library(tractor.reg)
 
 runExperiment <- function ()
 {
-    transformName <- getConfigVariable("TransformationName", NULL, "character")
+    transformName <- getConfigVariable("TransformName", NULL, "character")
     interpolation <- getConfigVariable("Interpolation", "trilinear", validValues=c("nearestneighbour","trilinear","spline"))
     preferAffine <- getConfigVariable("PreferAffine", FALSE)
     reverse <- getConfigVariable("Reverse", FALSE)

@@ -12,7 +12,7 @@ runExperiment <- function ()
     sourceMaskFile <- getConfigVariable("SourceMaskFile", NULL, "character")
     targetMaskFile <- getConfigVariable("TargetMaskFile", NULL, "character")
     estimateOnly <- getConfigVariable("EstimateOnly", FALSE)
-    transformName <- getConfigVariable("TransformationName", NULL, "character")
+    transformName <- getConfigVariable("TransformName", NULL, "character")
     
     symmetric <- getConfigVariable("Symmetric", TRUE)
     nLevels <- getConfigVariable("Levels", 3L, "integer")
