@@ -118,14 +118,14 @@ runTopupWithSession <- function (session, reversePEVolumes = NULL, echoSeparatio
         report(OL$Error, "The specified session does not contain a raw data image")
     
     targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
-    phaseFile <- createAcquisitionParameterFileForSession(session)
+    phaseFile <- createAcquisitionParameterFileForSession(session, reversePEVolumes, echoSeparation)
     
     report(OL$Info, "Running topup to correct susceptibility induced distortions...")
     params <- es(c("--imain=#{file.path(targetDir,'b0vols')}", "--datain=#{phaseFile}", "--config=b02b0.cnf", "--out=#{file.path(targetDir,'topup')}", "--iout=#{file.path(targetDir,'b0corrected')}"))
     execute("topup", params, errorOnFail=TRUE)
 }
 
-runEddyWithSession <- function (session)
+runEddyWithSession <- function (session, reversePEVolumes = NULL, echoSeparation = NULL)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
@@ -133,7 +133,7 @@ runEddyWithSession <- function (session)
         report(OL$Error, "The specified session does not contain a raw data image")
     
     targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
-    phaseFile <- createAcquisitionParameterFileForSession(session, writeBZeroes=FALSE)
+    phaseFile <- createAcquisitionParameterFileForSession(session, reversePEVolumes, echoSeparation, writeBZeroes=FALSE)
     session$updateDiffusionScheme()
     
     bValues <- session$getDiffusionScheme()$getBValues()

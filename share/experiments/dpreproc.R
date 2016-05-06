@@ -18,7 +18,7 @@ runExperiment <- function ()
     useGradientCache <- getConfigVariable("UseGradientCache", "second", validValues=c("first","second","never"))
     flipAxes <- getConfigVariable("FlipGradientAxes", NULL, "character")
     useTopup <- getConfigVariable("UseTopup", TRUE)
-    reversePEVolumes <- getConfigVariable("ReversePEVolumes", NULL, "character")
+    reversePEVolumes <- getConfigVariable("ReversePEVolumes", "none")
     echoSeparation <- getConfigVariable("EchoSeparation", NULL, "numeric")
     maskingMethod <- getConfigVariable("MaskingMethod", "bet", validValues=c("bet","kmeans","fill"))
     nClusters <- getConfigVariable("KMeansClusters", 2, "integer")
@@ -35,6 +35,13 @@ runExperiment <- function ()
             report(OL$Warning, "The \"FlipGradientAxes\" option should be specified as a comma-separated list of axis labels, as in \"x,y\"")
         flipAxes <- which(letters[24:26] %in% splitAndConvertString(flipAxes, ",", fixed=TRUE))
     }
+    
+    if (reversePEVolumes == "none")
+        reversePEVolumes <- integer(0)
+    else if (reversePEVolumes == "auto")
+        reversePEVolumes <- NULL
+    else
+        reversePEVolumes <- splitAndConvertString(reversePEVolumes, ",", "integer", fixed=TRUE)
     
     stages <- splitAndConvertString(stages, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
     runStages <- 1:4 %in% stages
@@ -129,8 +136,6 @@ runExperiment <- function ()
                 }
                 else
                 {
-                    if (!is.null(reversePEVolumes))
-                        reversePEVolumes <- splitAndConvertString(reversePEVolumes, ",", "integer", fixed=TRUE)
                     runTopupWithSession(session, reversePEVolumes, echoSeparation)
                     b0Path <- file.path(session$getDirectory("fdt"), "b0corrected")
                 }
@@ -233,7 +238,7 @@ runExperiment <- function ()
             refVolume <- as.integer(readLines(file.path(session$getDirectory("diffusion"),"refb0-index.txt")))
             
             if (eddyCorrectMethod == "eddy" && !is.null(locateExecutable("eddy",errorIfMissing=FALSE)))
-                runEddyWithSession(session)
+                runEddyWithSession(session, reversePEVolumes, echoSeparation)
             else if (eddyCorrectMethod %in% c("eddycorrect","fsl") && !is.null(locateExecutable("eddy_correct",errorIfMissing=FALSE)))
                 runEddyCorrectWithSession(session, refVolume)
             else
