@@ -32,8 +32,8 @@ usage()
     echo "tractor (program v3.0.0, distribution v$distribution_version)"
     echo "Run a TractoR experiment script in R and report the results"
     echo
-    echo "Usage: tractor [-ldzqfbi] [-v level] [-p factor] [-a architecture] ..."
-    echo "               [-w working_dir] [-c config_file] script [arg1 [arg2 ...]]"
+    echo "Usage: tractor [-ldzqfbi] [-v level] [-a architecture] [-w working_dir]"
+    echo "               [-c config_file] script [arg1 [arg2 ...]]"
     echo "       tractor -o [-w working_dir] script"
     echo "       tractor -h"
     echo
@@ -52,8 +52,6 @@ usage()
     echo "  -i          Ignore any personal config files in ~/.tractor"
     echo "  -v {0-3}    Adjust the verbosity of output generated. The level should"
     echo "              be between 0 (least) to 3 (most). Default is 1"
-    echo "  -p factor   Set the parallelisation factor for multicore systems (only"
-    echo "              used by certain scripts)"
     echo "  -a arch     Specify a subarchitecture (e.g. 'x86_64'), which is passed"
     echo "              to R. Relevant only for multiarchitecture systems"
     echo "  -w dir      Specify the working directory, which will be created if"
@@ -99,7 +97,7 @@ while [ $# -gt 0 ]
         -f) profile_performance=1; command_flags="-f ${command_flags}" ;;
         -b) batch_mode=1 ;;
         -v) shift; verbose_level=$1 ;;
-        -p) shift; parallelisation_factor=$1 ;;
+        -p) shift; parallelisation_factor=$1; echo "The '-p' option is deprecated; use \"plough\" instead" 1>&2 ;;
         -a) shift; architecture=$1 ;;
         -w) shift; working_dir=`echo $1 | sed 's/\/$//'` ;;
         -c) shift; config_file="$config_file:$1" ;;

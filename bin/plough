@@ -54,12 +54,12 @@ usage()
     echo "ised, either across cores (using the '-P' flag), or through a grid engine"
     echo "scheduler (using '-G')."
     echo
-    echo "Flags are uppercase to avoid conflicting with those for tractor, but '-H',"
-    echo "'-C' and '-P' are shared, and therefore case-insensitive."
+    echo "Flags are uppercase to avoid conflicting with those for tractor, but '-H'"
+    echo "and '-C' are shared, and therefore case-insensitive."
     echo
 }
 
-set -- `getopt "HGXDC:V:Q:O:P:hldozqfbiv:p:a:w:c:" "$@"` || {
+set -- `getopt "HGXDC:V:Q:O:P:hldozqfbiv:a:w:c:" "$@"` || {
     usage 1>&2
     exit
 }
@@ -82,7 +82,7 @@ while [ $# -gt 0 ]
         -V) shift; variables="$variables,$1" ;;
         -Q) shift; queue=$1 ;;
         -O) shift; options="$options $1" ;;
-        -[Pp]) shift; parallelisation_factor=$1 ;;
+        -P) shift; parallelisation_factor=$1 ;;
         -[vaw]) tractor_flags="$tractor_flags $1 $2"; shift ;;
         --) shift; break ;;
         -*) tractor_flags="$tractor_flags $1" ;;

@@ -4,7 +4,7 @@
 tractor \- Command line interface for the TractoR MRI analysis project
 
 .SH SYNOPSIS
-.B tractor \fR[\fB\-ldzqfbi\fR] [\fB\-v \fIlevel\fR] [\fB\-p \fIfactor\fR] [\fB\-a \fIarchitecture\fR] [\fB\-w \fIworking_dir\fR] [\fB\-c \fIconfig_file\fR] \fIscript \fR[\fIarguments\fR]\fB
+.B tractor \fR[\fB\-ldzqfbi\fR] [\fB\-v \fIlevel\fR] [\fB\-a \fIarchitecture\fR] [\fB\-w \fIworking_dir\fR] [\fB\-c \fIconfig_file\fR] \fIscript \fR[\fIarguments\fR]\fB
 .br
 .B tractor \-o \fR[\fB\-w \fIworking_dir\fR]\fB \fIscript\fB
 .br
@@ -16,6 +16,8 @@ The \fBtractor\fR program provides a simple shell interface to the packages maki
 The \fIscript\fR, a text file containing R code, need not be specified with the '\.R' extension. The program searches in the current working directory for the named \fIscript\fR first, followed by any directory specified using the '\-w' flag, then ~/\.tractor, and finally \fB$TRACTOR_HOME\fR/share/experiments. Additional search paths can be specified using the \fBTRACTOR_PATH\fR variable (see "Environment Variables" below). Any \fIscript\fR not in one of these locations must be specified using its full path.
 .PP
 By default, a log file containing a history of all TractoR experiments run is created or updated in the working directory. This can be useful to keep track of what has been done, but it can be disabled using the '\-z' flag to reduce clutter if desired. Calls to scripts which are purely informative are not usually logged.
+.PP
+Multiple related calls to a TractoR script can be easily parallelised using \fBplough\fR(1).
 
 .SH OPTIONS
 .TP
@@ -49,9 +51,6 @@ Ignore any personal config files in ~/\.tractor.
 .B \-v \fIlevel\fB
 Produce verbose output: the \fIlevel\fR determines the amount of extra information reported, from 0 (least) to 3 (most). The default is 1.
 .TP
-.B \-p \fIfactor\fB
-Set the parallelisation factor for multicore systems. At most this number of threads will be created to do the main work of the \fIscript\fR. This option is only used by certain scripts.
-.TP
 .B \-a \fIarchitecture\fB
 Specify a subarchitecture (e.g. 'x86_64'), which is passed to R. This option can be used to switch between subarchitectures on systems, such as Mac OS X, which support them, thereby switching, for example, between 32-bit and 64-bit builds of R.
 .TP
@@ -82,10 +81,6 @@ profile_performance
 batch_mode       -b                    0
 .br
 verbose_level    -v                    1
-.br
-parallelisation_factor
-.br
-                 -p                    1 (i\.e\. no parallelisation)
 .br
 architecture     -a                    ''
 .br
