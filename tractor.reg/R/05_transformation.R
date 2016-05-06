@@ -305,6 +305,8 @@ attachTransformation <- function (path, source = NULL, target = NULL)
         }
         
         fields <- deserialiseReferenceObject(filePath, raw=TRUE)
+        if ("version" %in% names(fields))
+            report(OL$Error, "Transformations from prerelease TractoR version 3.0 must be regenerated")
         transform <- Transformation$new(dirPath, convertImage(fields$sourceImage), convertImage(fields$targetImage))
         transform$updateFromObjects(fields$affineMatrices, fields$controlPointImages, fields$reverseControlPointImages, fields$method, convert=TRUE)
     }
