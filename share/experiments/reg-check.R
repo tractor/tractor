@@ -1,5 +1,5 @@
 #@desc Visualise the result of a registration by overlaying the "morphological gradient" of the transformed source image, which shows up edges, on the target image.
-#@args [source image file, target image file]
+#@args [source image file]
 
 library(tractor.reg)
 library(mmand)
@@ -15,32 +15,9 @@ runExperiment <- function ()
     if (nArguments() > 0)
         sourceImage <- readImageFile(Arguments[1])
     else
-    {
-        sourceImage <- transform$getSourceImage(reverse=reverse)
-        if (sourceImage$isEmpty())
-        {
-            if (sourceImage$isInternal())
-                report(OL$Error, "Original image source is unknown - a source image must be provided")
-            sourceImage <- readImageFile(sourceImage$getSource())
-        }
-        else if (!sourceImage$isReordered())
-            sourceImage <- reorderMriImage(sourceImage)
-    }
+        sourceImage <- transform$getSourceImage(reverse=reverse, reorder=TRUE)
     
-    if (nArguments() > 1)
-        targetImage <- readImageFile(Arguments[2])
-    else
-    {
-        targetImage <- transform$getTargetImage(reverse=reverse)
-        if (targetImage$isEmpty())
-        {
-            if (targetImage$isInternal())
-                report(OL$Error, "Original image source is unknown - a source image must be provided")
-            targetImage <- readImageFile(targetImage$getSource())
-        }
-        else if (!targetImage$isReordered())
-            targetImage <- reorderMriImage(targetImage)
-    }
+    targetImage <- transform$getTargetImage(reverse=reverse, reorder=TRUE)
     
     transformedImage <- transformImage(transform, sourceImage, preferAffine=preferAffine, reverse=reverse, interpolation=1)
     kernel <- shapeKernel(3, min(3,transformedImage$getDimensionality()), type="diamond")
