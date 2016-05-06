@@ -7,6 +7,8 @@
 
 runExperiment <- function ()
 {
+    requireArguments("image file(s)", "R expression")
+    
     nInputs <- getConfigVariable("Inputs", NULL, "integer")
     combine <- getConfigVariable("Combine", NULL, "character", validValues=c("mean","sum","prod","min","max"))
     resultName <- getConfigVariable("ResultName", "result")

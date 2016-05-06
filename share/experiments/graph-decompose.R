@@ -1,18 +1,21 @@
 #@desc Decompose a graph into parts by factoring or partitioning it. Available algorithms for this include "principal networks" (Clayden et al., PLoS ONE, 2013) and modularity maximisation (Newman, PNAS, 2006). An edge weight threshold (ignoring sign) can be applied to the results if required. Eigenvalue and loading thresholds apply to the principal networks approach only.
+#@args graph file
 
 library(tractor.graph)
 
 runExperiment <- function ()
 {
-    graphName <- getConfigVariable("GraphName", NULL, "character", errorIfMissing=TRUE)
+    requireArguments("graph file")
+    
     method <- getConfigVariable("Method", "principal-networks", validValues=c("principal-networks","modularity"))
     edgeWeightThreshold <- getConfigVariable("EdgeWeightThreshold", 0)
     eigenvalueThreshold <- getConfigVariable("EigenvalueThreshold", NULL, "numeric")
     loadingThreshold <- getConfigVariable("LoadingThreshold", 0.1)
     dropTrivial <- getConfigVariable("DropTrivial", TRUE)
     
+    graphName <- implode(Arguments, " ")
     graph <- readGraphFile(graphName)
-    outputFileName <- paste(graphName, "decomposed", sep="_")
+    outputFileName <- paste(ensureFileSuffix(basename(graphName),NULL,strip=c("Rdata","csv")), "decomposed", sep="_")
     
     if (method == "principal-networks")
     {

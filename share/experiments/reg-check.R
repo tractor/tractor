@@ -14,7 +14,7 @@ runExperiment <- function ()
     transform <- attachTransformation(Arguments[1])
     
     if (nArguments() > 1)
-        sourceImage <- readImageFile(Arguments[-1])
+        sourceImage <- readImageFile(implode(Arguments[-1]," "))
     else
         sourceImage <- transform$getSourceImage(reverse=reverse, reorder=TRUE)
     

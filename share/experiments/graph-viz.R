@@ -1,4 +1,5 @@
 #@desc Visualise the specified graph, either topologically or as an association matrix. The graph can be shown overlaid on the brain if the vertex location space is stored with the graph, and a mask exists in that space.
+#@args graph file
 #@interactive TRUE
 #@nohistory TRUE
 
@@ -6,7 +7,8 @@ library(tractor.graph)
 
 runExperiment <- function ()
 {
-    graphName <- getConfigVariable("GraphName", NULL, "character", errorIfMissing=TRUE)
+    requireArguments("graph file")
+    
     matrixView <- getConfigVariable("MatrixView", FALSE)
     useAbsoluteWeights <- getConfigVariable("AbsoluteWeights", FALSE)
     weightLimits <- getConfigVariable("WeightLimits", NULL, "character")
@@ -25,6 +27,7 @@ runExperiment <- function ()
             report(OL$Error, "Weight limits must be specified as a 2-vector giving the low and high limits")
     }
     
+    graphName <- implode(Arguments, " ")
     graph <- readGraphFile(graphName)
     
     dev.new()
@@ -74,7 +77,7 @@ runExperiment <- function ()
     
     ans <- ask("Copy figure to pdf file? [yn]")
     if (tolower(ans) == "y")
-        dev.print(pdf, file=ensureFileSuffix(graphName,"pdf"))
+        dev.print(pdf, file=ensureFileSuffix(basename(graphName),"pdf",strip=c("Rdata","csv")))
     
     invisible(NULL)
 }

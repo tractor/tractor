@@ -16,7 +16,7 @@ runExperiment <- function ()
     requireArguments("transform directory")
     
     if (nArguments() > 1)
-        sourceImage <- readImageFile(Arguments[-1])
+        sourceImage <- readImageFile(implode(Arguments[-1]," "))
     else
         sourceImage <- NULL
     

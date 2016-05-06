@@ -1,5 +1,5 @@
-#@desc Print out various graph-theoretical properties of a graph object. The object may be specified as an argument (which takes priority), or through the GraphName option. Any edge weight threshold specified is applied before the calculations. If IgnoreSign:true is given then then edges with weights greater than the threshold or less than its negative will be retained; this will be done by default if the threshold is positive. Note that further properties of the graph, such as the attributes which are defined for it, may be seen using the "peek" script.
-#@args [graph file]
+#@desc Print out various graph-theoretical properties of a graph object. Any edge weight threshold specified is applied before the calculations. If IgnoreSign:true is given then then edges with weights greater than the threshold or less than its negative will be retained; this will be done by default if the threshold is positive. Note that further properties of the graph, such as the attributes which are defined for it, may be seen using the "peek" script.
+#@args graph file
 #@nohistory TRUE
 
 library(tractor.base)
@@ -7,19 +7,14 @@ library(tractor.graph)
 
 runExperiment <- function ()
 {
-    graphName <- getConfigVariable("GraphName", NULL, "character")
+    requireArguments("graph file")
+    
     edgeWeightThreshold <- getConfigVariable("EdgeWeightThreshold", 0, "numeric")
     ignoreSign <- getConfigVariable("IgnoreSign", NULL, "logical")
     binarise <- getConfigVariable("Binarise", TRUE)
     disconnectedVertices <- getConfigVariable("DisconnectedVertices", FALSE)
     
-    if (nArguments() > 0)
-        graph <- readGraphFile(implode(Arguments, " "))
-    else
-        graph <- readGraphFile(graphName)
-    
-    if (!is(graph, "Graph"))
-        report(OL$Error, "The specified file does not contain a valid graph object")
+    graph <- readGraphFile(implode(Arguments, " "))
     
     if (is.null(ignoreSign))
         ignoreSign <- (edgeWeightThreshold >= 0)
