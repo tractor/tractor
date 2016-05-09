@@ -24,8 +24,8 @@ runExperiment <- function ()
     meanAbsEdgeWeight <- mean(abs(graph$getEdgeWeights()), na.rm=TRUE)
     edgeWeightRange <- range(graph$getEdgeWeights(), na.rm=TRUE)
     meanShortestPath <- graph$getMeanShortestPath(ignoreInfinite=!disconnectedVertices)
-    globalEfficiency <- graphEfficiency(graph, type="global")
-    localEfficiency <- mean(graphEfficiency(graph, type="local"), na.rm=TRUE)
+    globalEfficiency <- graphEfficiency(graph, type="global", disconnectedVertices=disconnectedVertices)
+    localEfficiency <- mean(graphEfficiency(graph, type="local", disconnectedVertices=disconnectedVertices), na.rm=TRUE)
     meanClusteringCoefficient <- mean(graph$getClusteringCoefficients(), na.rm=TRUE)
     
     values <- c(es("#{graph$nVertices()} (#{length(graph$getConnectedVertices())} connected)"),

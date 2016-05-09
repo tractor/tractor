@@ -576,7 +576,7 @@ thresholdEdges <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted
     return (Graph$new(vertexCount=graph$nVertices(), vertexAttributes=graph$getVertexAttributes(), vertexLocations=graph$getVertexLocations(), locationUnit=graph$getVertexLocationUnit(), locationSpace=graph$getVertexLocationSpace(), edges=graph$getEdges()[toKeep,,drop=FALSE], edgeAttributes=edgeAttributes, edgeWeights=finalEdgeWeights, directed=graph$isDirected()))
 }
 
-graphEfficiency <- function (graph, type = c("global","local"))
+graphEfficiency <- function (graph, type = c("global","local"), disconnectedVertices = FALSE)
 {
     if (!is(graph, "Graph"))
         report(OL$Error, "Specified graph is not a valid Graph object")
@@ -592,7 +592,8 @@ graphEfficiency <- function (graph, type = c("global","local"))
             return (rep(0,length(v)))
     }
     
-    graph <- inducedSubgraph(graph, v)
+    if (!disconnectedVertices)
+        graph <- inducedSubgraph(graph, v)
     
     if (type == "global")
     {
