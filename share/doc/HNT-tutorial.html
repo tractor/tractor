@@ -47,90 +47,91 @@
 
 <h2 id="overview">Overview</h2>
 
-<p>This tutorial describes how to use TractoR to perform neighbourhood tractography using the heuristic method described in Ref. (1). Heuristic neighbourhood tractography (HNT) uses a reference tract as a guide to the topology of the white matter structure that needs to be segmented. The method works with the native output of the ProbTrack algorithm (2), which represents a tract as a field of connection probabilities.</p>
+<p>This tutorial describes how to use TractoR to perform neighbourhood tractography using the heuristic method described in <a href="#reference">Ref. (1)</a>. Heuristic neighbourhood tractography (HNT) uses a reference tract as a guide to the topology of the white matter structure that needs to be segmented.</p>
 
-<p><strong>Note</strong>: The alternative <a href="PNT-tutorial.html">probabilistic approach</a> to neighbourhood tractography is generally recommended in preference to the heuristic approach described here, due to its greater flexibility and considerably improved robustness, although the heuristic method is quicker and simpler to run. If you do use this method in your studies please cite Ref. (1). Details of the underlying methods can be found there.</p>
+<p><strong>Note</strong>: The alternative <a href="PNT-tutorial.html">probabilistic approach</a> to neighbourhood tractography is recommended in preference to the heuristic approach described here, due to its greater flexibility and considerably improved robustness, although the heuristic method is slightly simpler to run. If you do use this method in your studies please cite <a href="#reference">Ref. (1)</a>. Details of the underlying methods can be found there.</p>
 
 <p>TractoR experiment scripts that may be used in a typical HNT-based study are <code>hnt-eval</code> (to evaluate a series of tracts for similarity to the reference tract), <code>hnt-viz</code> (to visualise the best-matching tract from each session directory), <code>hnt-interpret</code> (to display the seed point or similarity score for the best-matching tract in each subject), and <code>mean</code> or <code>gmean</code> (to calculate the mean anisotropy along the best-matching tracts).</p>
 
 <h2 id="requirements">Requirements</h2>
 
-<p>The prerequisites for HNT are some <a href="diffusion-processing.html">fully preprocessed</a> diffusion MR data and a <a href="reference-tracts.html">reference tract</a> representing the pathway we wish to segment in those data. The latter may be a custom reference tract, or one of the standard references provided with the software. TractoR is set up to process groups of subjects&rsquo; data using very few commands.</p>
+<p>The prerequisites for HNT are some <a href="diffusion-processing.html">fully preprocessed</a> diffusion MR data and a <a href="reference-tracts.html">reference tract</a> representing the pathway we wish to segment in those data. The latter may be a custom reference tract, or one of the standard references provided with the software.</p>
 
 <h2 id="segmenting-in-novel-data">Segmenting in novel data</h2>
 
 <p>Once a suitable reference tract is chosen and available, segmenting a similar tract in another brain volume is a matter of identifying the appropriate session directory (we&rsquo;ll use /data/testsubject for the sake of example) and the size of the search neighbourhood. These parameters are passed to <code>hnt-eval</code>, along with the tract name:</p>
 
-<pre><code>tractor hnt-eval SessionList:/data/testsubject TractName:genu SearchWidth:7
+<pre><code>tractor hnt-eval /data/testsubject TractName:genu SearchWidth:7 ResultsName:genu_results
 </code></pre>
 
-<p>Here we use a search neighbourhood of 7 x 7 x 7 voxels, as in Ref. (1). The larger the <code>SearchWidth</code>, the more likely a good match will be found, but the longer the process will take to complete. There is an anisotropy (FA) threshold of 0.2 imposed on the neighbourhood by default, so that seed points with FA lower than 0.2 will not be used to generate candidate tracts. The level of this threshold can be set with the <code>AnisotropyThreshold</code> option.</p>
+<p>Here we use a search neighbourhood of 7 x 7 x 7 voxels, as in <a href="#reference">Ref. (1)</a>. The larger the &ldquo;SearchWidth&rdquo;, the more likely a good match will be found, but the longer the process will take to complete. There is an anisotropy (FA) threshold of 0.2 imposed on the neighbourhood by default, so that seed points with FA lower than 0.2 will not be used to generate candidate tracts. The level of this threshold can be set with the &ldquo;AnisotropyThreshold&rdquo; option.</p>
 
 <p>Note that the preceding example uses a <a href="reference-tracts.html">standard reference tract</a> (the genu), so TractoR knows where to find it. However, if a custom reference tract is used, it must be copied into the working directory before running <code>hnt-eval</code>. An error will be produced if no reference tract of the specified name can be found.</p>
 
 <p>The <code>hnt-eval</code> script will generate a results file, which can be used to generate an Analyze/NIfTI volume and/or PNG projection images of the best matching tract from the test subject, with <code>hnt-viz</code>:</p>
 
-<pre><code>tractor hnt-viz SessionList:/data/testsubject TractName:genu ResultsName:results CreateVolumes:true
+<pre><code>tractor hnt-viz /data/testsubject TractName:genu ResultsName:genu_results
 </code></pre>
 
-<p>The location of the final seed point, or the similarity score of the associated tract, can be displayed using <code>hnt-interpret</code>:</p>
+<p>(The <code>slice</code> script can be used to convertThe location of the final seed point, or the similarity score of the associated tract, can be displayed using <code>hnt-interpret</code>:</p>
 
-<pre><code>tractor hnt-interpret SessionList:/data/testsubject TractName:genu ResultsName:results Mode:location
+<pre><code>tractor hnt-interpret /data/testsubject ResultsName:genu_results Mode:location
 </code></pre>
 
 <p>Finally, the mean FA along the selected tract can be calculated using the <code>mean</code> script, as in</p>
 
-<pre><code>tractor mean genu_session1 /data/testsubject Metric:FA
+<pre><code>tractor mean /data/testsubject@FA genu.1
 </code></pre>
 
-<p>where &ldquo;genu_session1&rdquo; is the tract volume created by <code>hnt-viz</code> for our test session.</p>
+<p>where &ldquo;genu.1&rdquo; is the tract volume created by <code>hnt-viz</code> for our test session.</p>
 
 <h2 id="using-a-design-file">Using a design file</h2>
 
 <p>Since the various HNT scripts have a number of options in common, which are typically repeated from one to the other, it is often convenient to store these options in a file, rather than specifying them on the command line. Moreover, since any given script will simply ignore any options which it does not use, the entire experiment&rsquo;s parameters can be stored in a single configuration file, or design file. For example, if we place into a file called &ldquo;design.yaml&rdquo; the following</p>
 
-<pre><code>SessionList: /data/testsubject
-TractName: genu
+<pre><code>TractName: genu
 SearchWidth: 7
-ResultsName: results
+ResultsName: genu_results
 </code></pre>
 
 <p>then our calls to the HNT scripts can be simpler and less repetitive. We can now use</p>
 
-<pre><code>tractor -c design.yaml hnt-eval
+<pre><code>tractor -c design.yaml hnt-eval /data/testsubject
 </code></pre>
 
 <p>to do the same job that our earlier <code>hnt-eval</code> command did, but with less command-line clutter. Note that the <code>-c</code> flag, which must come <em>before</em> the script name, tells TractoR to look in the file &ldquo;design.yaml&rdquo; for configuration parameters. (See the <code>tractor</code> man page for more details.) Any further parameters needed by specific scripts can still be given as part of a command, as in</p>
 
-<pre><code>tractor -c design.yaml hnt-viz CreateVolumes:true
+<pre><code>tractor -c design.yaml hnt-viz /data/testsubject
 </code></pre>
 
-<p>Another advantage of using a design file is that it gives more flexibility. Note that, unlike on the command line, space is allowed between parameter names and their values. More importantly, one can specify multiple values for a parameter, which cannot be done from the command line. For HNT experiments, the most important use for this is in the <code>SessionList</code> parameter, which as its name suggests, will accept a list of sessions for which a tract segmentation is required. Thus, our design can be broadened to find matching tracts in a group of subjects:</p>
+<p>Another advantage of using a design file is that it allows us to easily process multiple data sets, potentially in parallel, in one command. Thus, our design can be broadened to find matching tracts in a group of subjects:</p>
 
-<pre><code>SessionList: [ /data/testsubject1,
-               /data/testsubject2,
-               /data/testsubject3 ]
+<pre><code>Session: [ /data/testsubject1,
+           /data/testsubject2,
+           /data/testsubject3 ]
 TractName: genu
 SearchWidth: 7
-ResultsName: results
+ResultsName: genu_results
 </code></pre>
 
-<p>Note that the list of test sessions is enclosed by square brackets and separated by commas (and optionally whitespace, which may include newlines as in this example). When multiple sessions are specified in this way, <code>hnt-viz</code> will produce volumes or images for each session separately. If you want to find the FA along the best-matching tract in each subject, you can use the <code>gmean</code> script, as in</p>
+<p>Note that the list of test sessions is enclosed by square brackets and separated by commas (and optionally whitespace, which may include newlines as in this example). Now, we need to switch to using the <code>plough</code> program from the command line, which is designed to call a TractoR script with different sets of arguments. The commands above become</p>
 
-<pre><code>tractor -c design.yaml gmean genu_session
+<pre><code>plough -C design.yaml hnt-eval %Session
+plough -C design.yaml hnt-viz %Session
+plough -C design.yaml hnt-interpret %Session Mode:location
+plough -C design.yaml mean %Session@FA genu.%%
 </code></pre>
 
-<p>where &ldquo;genu_session&rdquo; is the prefix (excluding session numbers) of the set of tract volumes created by <code>hnt-viz</code>.</p>
+<p>Note the syntax <code>%Session</code>, which will be expanded by <code>plough</code> to use each value of the &ldquo;Session&rdquo; variable specified in the design file, in turn. In the final command, <code>%%</code> is also used, which is replaced by the number of the iteration being performed: 1, 2 or 3.</p>
 
 <h2 id="summary">Summary</h2>
 
-<p>This tutorial has demonstrated the stages involved in using heuristic neighbourhood tractography for tract segmentation, following the process described in Ref. (1). We used a reference tract as a guide for candidate tract selection in a test data set of one or more subjects.</p>
+<p>This tutorial has demonstrated the stages involved in using heuristic neighbourhood tractography for tract segmentation, following the process described in the reference below. We used a reference tract as a guide for candidate tract selection in a test data set of one or more subjects.</p>
 
-<h2 id="references">References</h2>
+<h2 id="reference">Reference</h2>
 
 <ol>
 <li>J.D. Clayden et al., <em>Neuroimage</em> <strong>33</strong>(2):482-492, 2006.</li>
-<li>T.E.J. Behrens et al., <em>Magnetic Resonance in Medicine</em> <strong>50</strong>(5):1077-1088, 2003.</li>
 </ol>
 
 

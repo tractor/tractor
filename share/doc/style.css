@@ -173,6 +173,7 @@ kbd {
 
 pre code {
     padding: 0px;
+    overflow-x: auto;
 }
 
 table {

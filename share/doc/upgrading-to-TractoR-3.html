@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <title>TractoR ~ Upgrading to TractoR 3</title>
+
+  <meta charset="utf-8" />
+  <meta name="author" content="Jon Clayden" />
+  <link rel="stylesheet" href="style.css" />
+  
+  <script type="text/javascript" src="hyphenator.js"></script>
+  
+  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
+  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-563735-7']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</head>
+
+<body>
+
+<div id="main" class="hyphenate">
+
+<table id="tabs">
+  <tr>
+  <td class="tab"><a href="home.html">Home</a></td>
+  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
+  <td class="tab"><a href="downloads.html">Downloads</a></td>
+  <td class="tab"><a href="changelog.html">Changelog</a></td>
+  <td class="tab"><a href="references.html">References</a></td>
+  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
+  </tr>
+</table>
+
+
+<h1>Upgrading to TractoR 3</h1>
+
+<p>As with the step up from the 1.x series to TractoR version 2.0, the 3.0 release makes substantial, incompatible changes to the package and its interface. The aims of these changes are to improve the efficiency, flexibility and scope of the package further. Work on consolidating functionality and avoiding repetition has actually resulted in a <em>reduction</em> in the number of experiment scripts, from 79 in TractoR 2.6 to 68 in version 3.0.</p>
+
+<p>The key changes are to</p>
+
+<ul>
+<li><a href="#tractography">tractography</a>, where the infrastructure has been completely rewritten to be more memory efficient and faster;</li>
+<li><a href="#parallelisation">parallelisation</a>, which is now much more widely applicable;</li>
+<li><a href="#visualisation">visualisation</a>, which is both more capable and more focussed;</li>
+<li><a href="#transformations">transformations</a>, which are stored differently; and</li>
+<li><a href="#multishell-support">multishell support</a>, and compatibility with FSL&rsquo;s <code>topup</code> and <code>eddy</code> commands.</li>
+</ul>
+
+<p>These topics are discussed in more detail below. <a href="#parallel-installation">Parallel installation</a> of TractoR 2.x and 3.x is discussed at the end.</p>
+
+<h2 id="tractography">Tractography</h2>
+
+<p>The biggest single change in the 3.0 release is the complete rewriting of the tractography infrastructure. There is now one key <code>track</code> script, rather than five variants (<code>track</code>, <code>mtrack</code>, <code>rtrack</code>, <code>xtrack</code> and <code>ptrack</code>) with different subsets of features. It is now much more efficient, and able to generate millions of streamlines without running into memory problems. More work is done in compiled (C++) code, which makes tasks such as <a href="PNT-tutorial.html">probabilistic neighbourhood tractography</a> much faster than before. Streamlines are labelled internally when they pass through target regions of interest, which makes region-to-region tracking more robust. And TrackVis .trk format is now used as TractoR&rsquo;s native format for streamlines, which allows for easy visualisation.</p>
+
+<p>Typical usages of each of TractoR 2.x&rsquo;s tractography scripts are shown below, along with the closest equivalent TractoR 3.0 command. We begin with the simple case of single-seed tractography with 1000 streamlines.</p>
+
+<pre><code># TractoR 2.x
+tractor track /data/subject1 50,48,33 PointType:R NumberOfSamples:1000
+
+# TractoR 3.x
+tractor track /data/subject1 50,48,33 Streamlines:1000 JitterSeeds:false
+</code></pre>
+
+<p>The differences are small here, but the &ldquo;NumberOfSamples&rdquo; option has been renamed to &ldquo;Streamlines&rdquo;, &ldquo;PointType&rdquo; no longer needs to be specified (since the R voxel convention is now assumed), and TractoR 3.0 will jitter seeds within a voxel by default, so we disable that for consistency.</p>
+
+<p>Next, we have the mask-based tractography approaches. We&rsquo;ll create a small region of interest and then seed 100 streamlines from each voxel within it, first combining the results into one output and second splitting it by seed point.</p>
+
+<pre><code># TractoR 2.x
+tractor mkroi /data/subject1 50,48,33 PointType:R Width:3
+tractor mtrack /data/subject1 SeedMaskFile:roi NumberOfSamples:100
+tractor rtrack /data/subject1 SeedMaskFile:roi NumberOfSamples:100
+
+# TractoR 3.x
+tractor mkroi /data/subject1@FA 50,48,33 Width:3
+tractor track /data/subject1 roi Streamlines:100x JitterSeeds:false
+tractor track /data/subject1 roi Streamlines:100x JitterSeeds:false Strategy:voxelwise
+</code></pre>
+
+<p>Here things get a bit more interesting. Firstly, the <code>mkroi</code> script used to assume that you wanted an ROI in a session&rsquo;s diffusion space, which was too strong an assumption, so now instead it takes an image as its first argument, which is used to form a reference space. Note the use of the syntax <code>/data/subject1@FA</code>, which is new to TractoR 3.0 and means &ldquo;the FA map within the session whose base directory is <code>/data/subject1</code>&rdquo;. This saves you from having to type the full path, and works properly with session maps. In TractoR 3.0 the ROI image is simply passed to <code>track</code> as the second argument rather than a point, and it will behave like the old <code>mtrack</code>. Note also that we specify <code>100x</code> as the number of streamlines, which means 100 per seed point. Without the &ldquo;x&rdquo;, only 100 streamlines in total would be generated, with each seed chosen randomly from within the ROI.</p>
+
+<p>We finally consider parcellation-based tractography with targets, the domain of the old <code>xtrack</code> script. A typical example would be seeding from white matter voxels and tracking until reaching a cortical grey matter region.</p>
+
+<pre><code># TractoR 2.x
+tractor xtrack /data/subject1 SeedRegions:white_matter TargetRegions:cerebral_cortex NumberOfSamples:100
+
+# TractoR 3.x
+tractor track /data/subject1 white_matter TargetRegions:cerebral_cortex TerminateAtTargets:true MinTargetHits:1 Streamlines:100x RequireMap:false RequirePaths:true
+</code></pre>
+
+<p>Once again, the seed region is specified as the second argument in TractoR 3.0. For consistency with <code>xtrack</code> we specify that we want to stop when we get to any of the target regions, and that streamlines that do not hit at least one of them will be discarded. (For corticocortical connections this can be increased to 2.) We don&rsquo;t want a visitation map (<code>RequireMap:false</code>) but we do want the streamline paths (<code>RequirePaths:true</code>).</p>
+
+<h2 id="parallelisation">Parallelisation</h2>
+
+<p>Support for parallelisation in prior versions of TractoR was very patchy. Some individual scripts supported running in parallel on multiple cores using the &rsquo;-p&rsquo; flag, and the special case of <code>pnt-data-sge</code> supported parallelisation using the Sun Grid Engine high-performance computing platform. Moreover, some script worked with one dataset while others expected group data, and <code>mean</code> and <code>gmean</code> differed only in this regard.</p>
+
+<p>In TractoR 3.0, support for both multicore and grid engine parallelisation is fully pervasive, and scripts are much more consistent about working with one object or dataset at a time. The core tool for this purpose is a new top-level program called <code>plough</code>, which allows an experiment script to be called multiple times but with different sets of arguments.</p>
+
+<p>The <code>pnt-data</code> script serves as a good illustrative example. In typical previous use one might create a design file, let&rsquo;s say &ldquo;design.yaml&rdquo;, with contents like</p>
+
+<pre><code>TractName: genu
+SessionList: [ /data/subject1, /data/subject2 ]
+SearchWidth: 7
+DatasetName: genu_data
+</code></pre>
+
+<p>The &ldquo;SessionList&rdquo; variable, expected by <code>pnt-data</code> in TractoR 2.x, tells the script where to find several datasets, which it would work through sequentially, in parallel across cores, or using a grid engine, using one of the commands</p>
+
+<pre><code>tractor -c design.yaml pnt-data                       # Sequential
+tractor -c design.yaml -p 2 pnt-data                  # Locally parallelised
+tractor -c design.yaml pnt-data-sge QueueName:myq     # Grid engine
+</code></pre>
+
+<p>This worked well enough, for <code>pnt-data</code> in particular, but few other scripts worked with the &rsquo;-p&rsquo; option, and <em>no</em> other scripts had an option to use a grid engine. By contrast, these options are available to every script in TractoR 3.0. The syntax for the above commands would now be</p>
+
+<pre><code>plough -C design.yaml pnt-data %SessionList           # Sequential
+plough -C design.yaml -P 2 pnt-data %SessionList      # Locally parallelised
+plough -C design.yaml -G -Q myq pnt-data %SessionList # Grid engine
+</code></pre>
+
+<p>There are a few things to note here. Firstly, <code>pnt-data</code> now takes a session directory as an argument, because it works on one session at a time. Since this differs for each call to the script, we use the <code>plough</code>-specific notation with a percent sign, <code>%SessionList</code>, to mean &ldquo;the value of the &lsquo;SessionList&rsquo; variable on this iteration of the loop&rdquo;. Note that using the grid engine is specified with the &rsquo;-G&rsquo; flag, with the queue name passed using &rsquo;-Q&rsquo;. Note also that in general, flags to <code>plough</code> use upper-case letters, to avoid confusing them with the lower-case flags of <code>tractor</code>, which can be mixed in as required.</p>
+
+<p>Using <code>plough</code> not only opens up parallelisation to all the package&rsquo;s scripts, but it also allows for some more complex commands. Let&rsquo;s say we want to run <code>pnt-data</code> for multiple tracts and sessions, all at once. We update our design file first:</p>
+
+<pre><code>TractName: [ genu, splenium ]
+Session: [ /data/subject1, /data/subject2 ]
+SearchWidth: 7
+</code></pre>
+
+<p>Now, we can construct a more complex call to <code>plough</code>, such as</p>
+
+<pre><code>plough -C design.yaml -X -P 3 -w %TractName pnt-data %Session DatasetName:%TractName_data
+</code></pre>
+
+<p>Here, we use the &rsquo;-X&rsquo; flag, which means &ldquo;apply every combination of all variables whose length is greater than one&rdquo;, so we run <code>pnt-data</code> four times, for each combination of tract and subject. We collate data from each tract in a separate working directory (&rsquo;-w&rsquo;), and name the dataset according to the tract (<code>DatasetName:%TractName_data</code>). Of course, there is no obligation to get as complex as this, but this should give a sense of what is possible with relatively little effort.</p>
+
+<h2 id="visualisation">Visualisation</h2>
+
+<p>Visualisation is another area in which TractoR 3.0 has improved and consolidated on previous versions. The interactive viewer, accessible through the <code>view</code> script, has received some refinements, for example by now showing the name of a selected region in parcellation images. However, the biggest changes are elsewhere. The old <code>proj</code> and <code>contact</code> scripts have been removed, as has the ability of many other scripts to produce PNG graphics files. Instead, there is a much more capable <code>slice</code> script, which can visualise and overlay multiple images, show multiple slices or planes in a single PNG graphic, and so on. There are some examples of its usage in the output of <code>tractor -o slice</code>.</p>
+
+<h2 id="transformations">Transformations</h2>
+
+<p>Transformations are now stored in folders with an .xfmb extension, rather than in flat .Rdata files. This change was partially forced by upstream changes to nonlinear transform representation by NiftyReg, but it does have the advantage of being more transparent and exposing the transformation information more directly. The <code>reg-info</code> script can be used to get information about them, and the new <code>reg-check</code> script can be used to check coregistration.</p>
+
+<h2 id="multishell-support">Multishell support</h2>
+
+<p>TractoR is now more aware of &ldquo;multishell&rdquo; diffusion-weighted acquisitions, in which more than one nonzero b-value is used. The output of the <code>status</code> script has been updated accordingly, and suitable options are used by the <code>bedpost</code> wrapper script. The <code>dpreproc</code> script now also interfaces to FSL&rsquo;s <a href="http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TOPUP"><code>topup</code></a> and <a href="http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/EDDY"><code>eddy</code></a> commands for correcting artefacts due to susceptibility effects and eddy currents, respectively. Supporting these is an awareness of reverse phase-encode acquisitions, and the ability to read information on echo separation from Siemens ASCII headers, a manufacturer-specific extension to DICOM files.</p>
+
+<h2 id="parallel-installation">Parallel installation</h2>
+
+<p>Parallel installation of versions 2.x and 3.x of TractoR is perfectly possible, since each version&rsquo;s packages can be easily stored in a different library. For the purpose of these instructions, we assume that you are using the &ldquo;bash&rdquo; shell, and that you already have TractoR 2.x set up.</p>
+
+<p><strong>Note</strong>: TractoR 3.x will update certain data structures to newer formats, so you would be well advised to duplicate any data that you may wish to continue to use with TractoR 2.x. In general mixing versions within a study is not recommended.</p>
+
+<p>First, navigate to wherever TractoR 2.x is installed; let&rsquo;s say <code>/usr/local/tractor</code>. Then install the packages <em>locally</em>.</p>
+
+<pre><code>cd /usr/local/tractor
+make install-local
+</code></pre>
+
+<p>The <code>install-local</code> target will install TractoR 2.x&rsquo;s R packages within <code>/usr/local/tractor/lib/R</code>, where they won&rsquo;t interfere with other TractoR versions. All of your TractoR commands will continue to work just as before.</p>
+
+<p>Next, navigate to wherever you have unpacked TractoR 3.x; let&rsquo;s say <code>/usr/local/tractor3</code>. There we do the same thing, but installs are now local by default, so</p>
+
+<pre><code>cd /usr/local/tractor3
+make install
+</code></pre>
+
+<p>is sufficient.</p>
+
+<p>Finally, we need to create an alias for TractoR 3, which sets the <code>TRACTOR_HOME</code> environment variable appropriately. For example, you could add the line</p>
+
+<pre><code>alias tractor3=&#39;TRACTOR_HOME=/usr/local/tractor3 /usr/local/tractor3/bin/tractor&#39;
+</code></pre>
+
+<p>to the &ldquo;.bashrc&rdquo; file in your home directory. (Note that this is a hidden file and may not be visible from a file browser.) You can then run <code>tractor3</code> instead of <code>tractor</code> from the command line when you want to use the new version:</p>
+
+<pre>
+<code>$ </code><kbd>tractor3 platform</kbd>
+<code>Starting TractoR environment...
+               Machine : x86_64
+               OS name : Darwin
+            OS release : 15.4.0
+TractoR home directory : /usr/local/tractor3
+       TractoR version : 3.0.0
+             R version : 3.3.0
+      R build platform : x86_64-apple-darwin15.4.0
+     R package library : /usr/local/tractor3/lib/R
+           FSL version : 5.0.9
+Experiment completed with 0 warning(s) and 0 error(s)</code>
+</pre>
+
+
+</div>
+
+</body>
+
+</html>

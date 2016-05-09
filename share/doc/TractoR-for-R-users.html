@@ -51,7 +51,7 @@
 
 <p>The <code>tractor.base</code> package is the most general-purpose of the TractoR packages, and the only one to be currently <a href="http://cran.r-project.org/web/packages/tractor.base/index.html">on CRAN</a>. It provides functions for reading, writing and manipulating MR images, along with various general-purpose functions which are used by the other packages.</p>
 
-<p>The key class in the base package is <code>MriImage</code>, which is a reference class representing an MR image, including metadata such as the source file, image dimensions and so on. Functions are provided for reading such images from Analyze/NIfTI files (<code>readImageFile</code>), from DICOM files (<code>readDicomDirectory</code>); and for creating them from other <code>MriImage</code> objects via operations such as thresholding or masking (see <code>?newMriImageWithData</code>). The class inherits from <code>SerialisableObject</code>, a simple extension of the base reference class which adds a method for serialising the fields of the object to a list. If only the underlying array of image data values is required, it can be extracted from an <code>MriImage</code> object, say <code>image</code>, with</p>
+<p>The key class in the base package is <code>MriImage</code>, which is a reference class representing an MR image, including metadata such as the source file, image dimensions and so on. Functions are provided for reading such images from Analyze/NIfTI files (<code>readImageFile</code>), from DICOM files (<code>readDicomDirectory</code>); and for creating them from other <code>MriImage</code> objects via operations such as thresholding or masking (see <code>?asMriImage</code>). The class inherits from <code>SerialisableObject</code>, a simple extension of the base reference class which adds a method for serialising the fields of the object to a list. If only the underlying array of image data values is required, it can be extracted from an <code>MriImage</code> object, say <code>image</code>, with</p>
 
 <pre><code>image$getData()
 </code></pre>
@@ -72,44 +72,41 @@
 
 <h2 id="writing-your-own-tractor-scripts">Writing your own TractoR scripts</h2>
 
-<p>A reasonably simple TractoR script is shown below, by way of illustration. This is in fact the script called <code>mean</code>, which averages the value of some metric within the nonzero region of an image. It exhibits many of the common characteristics of these scripts. The lines are numbered here for ease of reference, but in a real script these should not be included.</p>
+<p>A reasonably simple TractoR script is shown below, by way of illustration. This is in fact the script called <code>mean</code>, which averages the value of some metric within the nonzero region of a mask image. It exhibits many of the common characteristics of these scripts. The lines are numbered here for ease of reference, but in a real script these should not be included.</p>
 
-<pre><code>01 #@args image file, [session directory]
-02 #@desc Calculate the mean or weighted mean value of a metric within the nonzero region of a brain volume (usually tractography output). The specified image can be used as a binary mask (the default) or as a set of weights (with AveragingMode:weighted). In the latter case any weight threshold given is ignored.
-03 
-04 suppressPackageStartupMessages(require(tractor.session))
-05 
-06 runExperiment &lt;- function ()
-07 {
-08     requireArguments(&quot;image file&quot;)
-09     image &lt;- newMriImageFromFile(Arguments[1])
-10     
-11     if (nArguments() &gt; 1)
-12         session &lt;- newSessionFromDirectory(Arguments[2])
-13     else
-14         session &lt;- NULL
-15     
-16     metric &lt;- getConfigVariable(&quot;Metric&quot;, NULL, &quot;character&quot;, validValues=c(&quot;weight&quot;,&quot;FA&quot;,&quot;MD&quot;,&quot;axialdiff&quot;,&quot;radialdiff&quot;))
-17     mode &lt;- getConfigVariable(&quot;AveragingMode&quot;, &quot;binary&quot;, validValues=c(&quot;binary&quot;,&quot;weighted&quot;))
-18     threshold &lt;- getConfigVariable(&quot;WeightThreshold&quot;, 0.01)
-19     thresholdMode &lt;- getConfigVariable(&quot;ThresholdRelativeTo&quot;, &quot;nothing&quot;, validValues=c(&quot;nothing&quot;,&quot;maximum&quot;,&quot;minimum&quot;))
-20     
-21     if (thresholdMode == &quot;maximum&quot;)
-22         threshold &lt;- threshold * max(image, na.rm=TRUE)
-23     else if (thresholdMode == &quot;minimum&quot;)
-24         threshold &lt;- threshold * min(image, na.rm=TRUE)
-25     
-26     images &lt;- createWeightingAndMetricImages(image, session, type=tolower(metric), mode=mode, threshold=threshold)
-27     finalImage &lt;- newMriImageWithBinaryFunction(images$metric, images$weight, &quot;*&quot;)
-28     metric &lt;- sum(finalImage$getData()) / sum(images$weight$getData())
-29     
-30     cat(paste(metric, &quot;\n&quot;, sep=&quot;&quot;))
-31 }
+<pre><code>01  #@args metric image, [mask image]
+02  #@desc Calculate the mean or weighted mean value of a metric within the nonzero region of a brain volume. The specified mask image can be used as a binary mask (the default) or as a set of weights (with AveragingMode:weighted). In the latter case any weight threshold given is ignored. If the mask is missing then the metric image is itself the mask.
+03  
+04  runExperiment &lt;- function ()
+05  {
+06      requireArguments(&quot;metric image&quot;)
+07      metricImage &lt;- readImageFile(Arguments[1])
+08      
+09      if (nArguments() &gt; 1)
+10          maskImage &lt;- readImageFile(Arguments[2])
+11      else
+12          maskImage &lt;- metricImage$copy()
+13      
+14      mode &lt;- getConfigVariable(&quot;AveragingMode&quot;, &quot;binary&quot;, validValues=c(&quot;binary&quot;,&quot;weighted&quot;))
+15      threshold &lt;- getConfigVariable(&quot;ThresholdLevel&quot;, 0.01)
+16      thresholdMode &lt;- getConfigVariable(&quot;ThresholdRelativeTo&quot;, &quot;nothing&quot;, validValues=c(&quot;nothing&quot;,&quot;maximum&quot;,&quot;minimum&quot;))
+17      
+18      if (thresholdMode == &quot;maximum&quot;)
+19          threshold &lt;- threshold * max(maskImage, na.rm=TRUE)
+20      else if (thresholdMode == &quot;minimum&quot;)
+21          threshold &lt;- threshold * min(maskImage, na.rm=TRUE)
+22      
+23      if (mode == &quot;binary&quot;)
+24          maskImage$threshold(threshold)$binarise()
+25      
+26      metric &lt;- sum(metricImage * maskImage, na.rm=TRUE) / sum(maskImage, na.rm=TRUE)
+27      cat(paste(metric, &quot;\n&quot;, sep=&quot;&quot;))
+28  }
 </code></pre>
 
-<p>The only mandatory part of a script file is the definition of a <code>runExperiment()</code> function, with no arguments, as on line 6. The R code which forms the functional body of the script must be put exclusively within this function. No other functions will be run. Moreover, with the exception of statements to load required packages (as on line 4 above), no R code should be positioned outside of the <code>runExperiment()</code> function. Calls to <code>library()</code> or <code>require()</code> for all required packages except <code>tractor.utils</code>, <code>utils</code>, <code>graphics</code>, <code>grDevices</code> and <code>stats</code> should be included in this way.</p>
+<p>The only mandatory part of a script file is the definition of a <code>runExperiment()</code> function, with no arguments, as on line 4. The R code which forms the functional body of the script must be put exclusively within this function. No other functions will be run. Moreover, with the exception of statements to load required packages, no R code should be positioned outside of the <code>runExperiment()</code> function. Calls to <code>library()</code> or <code>require()</code> for all required packages except <code>tractor.utils</code>, <code>utils</code>, <code>graphics</code>, <code>grDevices</code> and <code>stats</code> should be included in this way.</p>
 
-<p>Scripts may take any number of unnamed arguments and/or named configuration parameters. Unnamed arguments are put into the character vector <code>Arguments</code> (see lines 9 and 12 above), and must be coerced to numeric or another mode if required. The <code>nArguments()</code> function returns the number of arguments that the user passed (see line 11), where a new argument is counted as having started after any whitespace. The <code>requireArguments()</code> function can be used to list the names of mandatory arguments, and will produce an error if too few arguments were passed by the user (line 8). Named parameters are recovered using the <code>getConfigVariable()</code> function, which gives the name of the parameter as its first argument (by convention, these always start with an upper case letter), a default value as the second, and optionally, the expected storage mode of the variable (i.e. &ldquo;character&rdquo;, &ldquo;integer&rdquo;, etc.). The returned value will be of this mode, and an error will be produced if the value given cannot be coerced to the specified mode. Likewise, the <code>validValues</code> argument can be provided if the parameter can only take certain specific values (as in lines 16, 17 and 19). Script authors should call <code>getConfigVariable()</code> with <code>errorIfMissing=TRUE</code> if the parameter is mandatory.</p>
+<p>Scripts may take any number of unnamed arguments and/or named configuration parameters. Unnamed arguments are put into the character vector <code>Arguments</code> (see lines 7 and 10 above), and must be coerced to numeric or another mode if required. The <code>nArguments()</code> function returns the number of arguments that the user passed (see line 9), where a new argument is counted as having started after any whitespace. The <code>requireArguments()</code> function can be used to list the names of mandatory arguments, and will produce an error if too few arguments were passed by the user (line 6). Named parameters are recovered using the <code>getConfigVariable()</code> function, which gives the name of the parameter as its first argument (by convention, these always start with an upper case letter), a default value as the second, and optionally, the expected storage mode of the variable (i.e. &ldquo;character&rdquo;, &ldquo;integer&rdquo;, etc.). The returned value will be of this mode, and an error will be produced if the value given cannot be coerced to the specified mode. Likewise, the <code>validValues</code> argument can be provided if the parameter can only take certain specific values (as in lines 14 and 16). Script authors should call <code>getConfigVariable()</code> with <code>errorIfMissing=TRUE</code> if the parameter is mandatory.</p>
 
 <p>TractoR scripts are self-documenting, and a number of special comments are used to provide this documentation. The <code>#@args</code> comment specifies unnamed arguments which the script accepts, with optional arguments in square brackets (line 1), and lines starting <code>#@desc</code> describe the function of the script (line 2). Note that there should be only one line of arguments, but there can be many lines of description. If the script is purely informative and doesn&rsquo;t need to be included within the history log file, you should include a line containing just</p>
 

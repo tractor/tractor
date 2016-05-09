@@ -47,6 +47,56 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="300-2016-05-09">3.0.0 (2016-05-09)</h2>
+
+<ul>
+<li>The package&rsquo;s requirements and dependencies have been simplified somewhat. A Fortran compiler should no longer be required to install R packages, and ImageMagick is no longer needed to create images.</li>
+<li>The tractography systems have been completely overhauled to make them much more efficient, especially when working with large numbers of streamlines, as in connectomics. A pipeline approach is now taken to limit memory requirements, and more work is done in compiled code for speed. The interface has also been consolidated, with the old <code>track</code>, <code>rtrack</code>, <code>mtrack</code>, <code>ptrack</code> and <code>xtrack</code> scripts being replaced by a single, flexible <code>track</code> script, which also offers some new features such as random seeding and length thresholding. All support for tractography using FSL <code>probtrackx</code> has been removed.</li>
+<li>The <a href="http://www.trackvis.org/docs/?subsect=fileformat">TrackVis file format</a> is now used as TractoR&rsquo;s native format for streamlines, which allows paths to be easily visualised. Consequently, the <code>streamlines2trk</code> script has been removed.</li>
+<li>A new top-level command, <code>plough</code>, allows a TractoR script to be called multiple times using different sets of arguments or configuration variables, optionally parallelising across cores or using a grid engine. This is a universal alternative to piecemeal vectorisation in a handful of specialised scripts such as <code>gmean</code> and <code>pnt-data-sge</code>. The latter two scripts have therefore been removed, while many others have been simplified by working on only one session or image at a time.</li>
+<li>TractoR can now work with &ldquo;multishell&rdquo; diffusion-weighted data, and tries to choose appropriate parameters when preprocessing and fitting such data. The <code>dpreproc</code> script also provides an interface to FSL&rsquo;s <a href="http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TOPUP"><code>topup</code></a> and <a href="http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/EDDY/"><code>eddy</code></a> tools for correcting susceptibility and eddy current induced distortions, respectively.</li>
+<li>It is now possible to refer to standard images within a session directory using a shorthand that incorporates the <code>@</code> symbol, as in <code>/data/subject1@FA</code> for the FA map from session directory <code>subject1</code>, or <code>/data/subject2@functional/data</code> for the functional data series from <code>subject2</code>. Scripts such as <code>mean</code> and <code>mkroi</code> have been substantially generalised, without becoming more verbose, by taking advantage of this mechanism.</li>
+<li>The MNI space reference brain has been updated to a newer, higher resolution and much sharper image, based on nonlinear coregistration of 152 individuals.</li>
+<li>Noninteractive visualisation of images, including overlays, is now handled by the <code>slice</code> script, which can create visualisations in one or more planes, including multiple views within the same image. This much-improved script subsumes the functionality of the old <code>proj</code> and <code>contact</code> scripts, which have been removed.</li>
+<li><a href="PNT-tutorial.html">Probabilistic neighbourhood tractography</a> is now much faster, often by 90% or more, and is in fact now appreciably faster than the older and much less robust <a href="HNT-tutorial.html">heuristic neighbourhood tractography</a> (although it typically involves more steps).</li>
+<li>Transformation information between images and spaces is now stored as a series of text matrices and NIfTI images within a directory with an .xfmb extension (for transform bundle), rather than a flat .Rdata file. This was necessary due to upstream changes in NiftyReg, but it also has the advantage of greater transparency. The new <code>reg-info</code> script can be used to obtain information about these directories.</li>
+<li>The accuracy of a registration can be visualised using the new <code>reg-check</code> script.</li>
+<li>The new <code>transform</code> script can be used to transform an image or point between named spaces as they relate to a particular session.</li>
+<li>The new <code>components</code> script can be used to find connected components in images.</li>
+<li>NIfTI files can be reduced in size, at the cost of some loss of precision, using the new <code>compress</code> script.</li>
+<li>The <code>mkroi</code> script can now generate ROIs of different shapes, and with different widths in each dimension.</li>
+<li>The <a href="https://lemon.cs.elte.hu">LEMON C++ library</a> is now used rather than the rather complex &ldquo;igraph&rdquo; R package, for calculating graph metrics.</li>
+<li>The &ldquo;MaskingMethod&rdquo; option to <code>dpreproc</code> once again defaults to using FSL-BET, but will fall back to k-means if the <code>bet</code> executable is not found. The k-means method itself has been improved by first finding the largest connected component, which tends to result in the removal of more non-brain tissue.</li>
+<li>TractoR&rsquo;s image viewer now shows parcellation labels when a lookup table file (.lut) is found.</li>
+<li>Graphs can now be read from CSV files in all scripts, although .Rdata files contain more complete information.</li>
+<li>The <code>reg-apply</code> script can now apply composite and half transforms to images.</li>
+<li>Registration can now be initialised from a FLIRT transformation matrix file.</li>
+<li>The <code>apply</code> script gains a &ldquo;Combine&rdquo; mode which allows multiple images to be merged after applying the function to each in turn. This script, along with <code>transform</code>, can now do the job of <code>gmap</code>, which was very specialised and has been removed.</li>
+<li>The <code>plotcorrections</code> script now plots all modes on the same device, and allows correction values to be written to a CSV file. The sense of its decomposition is now a little different, so results will differ from those in TractoR 2.x.</li>
+<li>The <code>dicomsort</code> script now sorts by series UID by default.</li>
+<li>Configuration variables are now matched in a case-insensitive manner, and variables which are supplied on the command line but not used are reported in a warning.</li>
+<li>TractoR can now read and parse Siemens ASCII headers from DICOM files, and these can be shown using the <code>dicomtags</code> script.</li>
+<li>An improved method is now used for placing knot points along tracts in <code>pnt-data</code>. The output also contains the session path rather than an ID number, rendering the <code>identify</code> script unnecessary. Therefore, the results of this script are not completely consistent with TractoR 2.x. Old output files can be converted to the new format, but it is better not to mix output from the two versions in one study.</li>
+<li>Default session maps are now explicitly stored within the <code>etc/session</code> subdirectory, and these may be used as templates for more specialised maps.</li>
+<li>Diffusion directions read from DICOM files are now flipped along the Y-axis by default.</li>
+<li>Seed points for tractography are now jittered within the voxel by default.</li>
+<li>Voxels containing less than the required seven strictly positive values are now handled gracefully by <code>tensorfit</code>. In addition, an image called <code>dti_bad</code> is created, which maps the numbers of bad data points across the image volume.</li>
+<li>NiftyReg is now the default linear registration method.</li>
+<li>Image origins are now always three-dimensional.</li>
+<li>Camino-specific scripts <code>fsl2camino</code>, <code>camino2fsl</code> and <code>caminofiles</code> have been removed. They were poorly maintained, and largely redundant following Camino&rsquo;s support for NIfTI images.</li>
+<li>The &ldquo;-r&rdquo; flag to the main <code>tractor</code> program is defunct.</li>
+<li>Extensive low-level and upstream package improvements have been incorporated.</li>
+</ul>
+
+<h2 id="263-2016-04-27">2.6.3 (2016-04-27)</h2>
+
+<ul>
+<li>An error in the calculation of clustering coefficients has been corrected.</li>
+<li>Graphs containing only negative weights would previously be shown with an inverted colour scale. This has been corrected.</li>
+<li>A subtle difference between TrackVis&rsquo;s voxel grid and TractoR&rsquo;s is now corrected for in the <code>streamlines2trk</code> script.</li>
+<li>Run times are now reported for tests.</li>
+</ul>
+
 <h2 id="262-2015-03-24">2.6.2 (2015-03-24)</h2>
 
 <ul>

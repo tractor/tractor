@@ -51,9 +51,7 @@
 
 <p>In its basic form, TractoR is a set of packages written for the R language and environment. R (version 3.0.0 or later) is therefore an absolute prerequisite. R is an open-source package that is easy to install. Precompiled binaries are available from a number of <a href="http://cran.r-project.org/mirrors.html">CRAN mirror sites</a>, along with the source code.</p>
 
-<p>A C/C++ compiler, such as <code>gcc</code>/<code>g++</code>, is also required. A suitable compiler can be installed using an appropriate package manager (<code>aptitude</code>, <code>yum</code>, etc.) on Linux, or with <a href="https://developer.apple.com/xcode/downloads/">Xcode</a> (from the Mac App Store) on OS X. A Fortran compiler, such as <code>gfortran</code>, is also required to build some of the packages provided with TractoR, although this is currently optional. (Mac OS X users can find binary builds of <code>gfortran</code> <a href="http://cran.r-project.org/bin/macosx/tools/">through CRAN</a>.) R handles all the details of actually compiling code.</p>
-
-<p>TractoR makes use of the <a href="http://www.imagemagick.org">ImageMagick</a> image processing suite for 2D visualisation. While TractoR will be more-or-less fully functional without ImageMagick, it is nevertheless recommended to install this software (unless it is preinstalled, which is not uncommon on Unix-like systems).</p>
+<p>A C/C++ compiler, such as <code>gcc</code>/<code>g++</code>, is also required. A suitable compiler can be installed using an appropriate package manager (<code>aptitude</code>, <code>yum</code>, etc.) on Linux, or with <a href="https://developer.apple.com/xcode/downloads/">Xcode</a> (from the Mac App Store) on OS X. R handles all the details of actually compiling code.</p>
 
 <p>Finally, TractoR&rsquo;s tractography is currently based on output from the BEDPOSTX tool in the <a href="http://www.fmrib.ox.ac.uk/fsl/">FSL package</a>. FSL is therefore required for performing tractography. TractoR also provides interfaces to other third-party medical imaging tools, such as FSL&rsquo;s BET (for brain extraction) and FLIRT (for linear registration), as well as image viewers such as FSLview and Freeview, but these are all optional.</p>
 
@@ -66,21 +64,14 @@ cd tractor
 make install
 </code></pre>
 
-<p>In most cases the installer will find R without any help, but if an error message reports &ldquo;command not found&rdquo; or similar, then please use <code>make install R=/path/to/R</code>, replacing <code>/path/to/R</code> with the actual path on your system.</p>
-
-<p>The install command could also fail if you do not have write access to the R library. The easiest way around this is to run instead</p>
-
-<pre><code>make install-local
-</code></pre>
-
-<p>which will install the required R packages within TractoR&rsquo;s own file hierarchy. This can also be useful if you want to run multiple versions of TractoR in parallel, or if you want to keep TractoR&rsquo;s versions of the various R packages separate to others which you may have installed.</p>
+<p>In most cases the installer will find R without any help, but if an error message reports &ldquo;command not found&rdquo; or similar, then please use <code>make install R=/path/to/R</code>, replacing <code>/path/to/R</code> with the actual path on your system. TractoR installs R packages into a library within its own directory structure, so it will not interfere with any other versions of those packages that you may have installed.</p>
 
 <p>To check that the TractoR packages have been installed properly and TractoR scripts can be run successfully, you can run the set of tests included with TractoR 1.3.0 and later by typing</p>
 
 <pre><code>make clean test
 </code></pre>
 
-<p>Running these tests will typically take a minute or two, during which time you should see a series of messages confirming the success of each test. If any errors arise, something is probably wrong with your installation.</p>
+<p>Running these tests will typically take a few minutes, during which time you should see a series of messages confirming the success of each test, and the run time in each case. If any errors arise, something is probably wrong with your installation.</p>
 
 <p>Unless you want to interact with TractoR exclusively through R (which is unlikely in most cases), you will also need to set up your environment so that you can use the <code>tractor</code> shell program and associated script files. To do this - assuming you use the bash shell - add the following lines to the <code>.bashrc</code> file in your home directory:</p>
 
@@ -120,7 +111,7 @@ Experiment completed with 0 warning(s) and 0 error(s)
 
 <p>The <code>tractor</code> command line interface program is a wrapper which obviates the need to interact with R directly in order to use TractoR. Many common tasks, including neighbourhood tractography (see &ldquo;Next steps&rdquo; below), can be performed in this way through short R scripts which are stored within the TractoR home directory.</p>
 
-<p>A full list of the scripts provided with the distribution can be obtained by typing <code>tractor list</code>, as shown above. Further information on a particular script, including a list of options that it supports, can be obtained using <code>tractor -o (script name)</code>. For more details on the usage of the <code>tractor</code> program, please see its man page.</p>
+<p>A full list of the scripts provided with the distribution can be obtained by typing <code>tractor list</code>, as shown above. Further information on a particular script, including a list of options that it supports, can be obtained using <code>tractor -o (script name)</code>. For more details on the usage of the <code>tractor</code> program, please see its man page (<code>man tractor</code>).</p>
 
 <h2 id="next-steps">Next steps</h2>
 

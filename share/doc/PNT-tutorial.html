@@ -47,7 +47,7 @@
 
 <h2 id="overview">Overview</h2>
 
-<p>This tutorial covers the use of TractoR to perform model-based tract segmentation as described in Ref. (1) below. Like the simpler <a href="HNT-tutorial.html">heuristic approach</a>, probabilistic neighbourhood tractography (PNT) is based on the idea of using a reference tract as a topological guide to the tract required. The model-based approach is considerably more robust but takes longer to run. If you use this method in your studies please cite Ref. (1).</p>
+<p>This tutorial covers the use of TractoR to perform model-based tract segmentation as described in <a href="#references">Ref. (1)</a> below. Like the simpler <a href="HNT-tutorial.html">heuristic approach</a>, probabilistic neighbourhood tractography (PNT) is based on the idea of using a reference tract as a topological guide to the tract required. The model-based approach is considerably more robust but takes longer to run. If you use this method in your studies please cite <a href="#references">Ref. (1)</a>.</p>
 
 <p>TractoR experiment scripts that may be used in a typical PNT-based study generally start with the prefix &ldquo;pnt-&rdquo;, but there are other, more general purpose scripts which are often used, such as <code>mean</code> or <code>gmean</code>. Details of the relevant scripts are given in each section below.</p>
 
@@ -55,17 +55,16 @@
 
 <p>As with the heuristic approach to NT, the probabilistic approach requires some <a href="diffusion-processing.html">fully preprocessed</a> diffusion MR data and a <a href="reference-tracts.html">reference tract</a> representing the pathway we wish to segment in those data.</p>
 
-<p>In addition, however, PNT makes use of a <em>matching model</em>, which must be &ldquo;trained&rdquo; from the data. The model captures information about the typical deviations that acceptable tract segmentations make from the reference tract. The easiest way to create the model is to use the <code>pnt-em</code> script, which uses a single data set and fits the model while simultaneously finding suitable tracts. This approach, which is described in Ref. (2) and was introduced in TractoR version 1.0.0, is now the recommended one for most purposes. It also requires less work from the user than the alternative, which is to split your data set into a training set and a testing set, and use <code>pnt-train</code> and <code>pnt-eval</code>, respectively, to first train the model and then use it for tract matching.</p>
+<p>In addition, however, PNT makes use of a <em>matching model</em>, which must be &ldquo;trained&rdquo; from the data. The model captures information about the typical deviations that acceptable tract segmentations make from the reference tract. The easiest way to create the model is to use the <code>pnt-em</code> script, which uses a single data set and fits the model while simultaneously finding suitable tracts. This approach, which is described in <a href="#references">Ref. (2)</a> and was introduced in TractoR version 1.0.0, is now the recommended one for most purposes. It also requires less work from the user than the alternative, which is to split your data set into a training set and a testing set, and use <code>pnt-train</code> and <code>pnt-eval</code>, respectively, to first train the model and then use it for tract matching.</p>
 
 <p>Whether <code>pnt-train</code> and <code>pnt-eval</code> or <code>pnt-em</code> are used to produce results, the results themselves take essentially the same form. Both routes are outlined below.</p>
 
 <h2 id="training-and-segmenting-in-one-step">Training and segmenting in one step</h2>
 
-<p>Using a so-called &ldquo;unsupervised&rdquo; approach, the matching model can be trained and applied iteratively using a single data set. The <code>pnt-em</code> experiment script is available to perform this function. We begin by creating a design file, which tells TractoR where to find our data, and sets the tract of interest. For this tutorial we assume the data are in subdirectories of /data. The design file, <code>design.yaml</code>, will therefore look something like this:</p>
+<p>Using a so-called &ldquo;unsupervised&rdquo; approach, the matching model can be trained and applied iteratively using a single data set. The <code>pnt-em</code> experiment script is available to perform this function. We begin by creating a <a href="HNT-tutorial.html#using-a-design-file">design file</a>, which tells TractoR where to find our data, and sets the tract of interest. For this tutorial we assume the data are in subdirectories of /data. The design file, &ldquo;design.yaml&rdquo;, will therefore look something like this:</p>
 
 <pre><code>TractName: genu
-SessionList: [ /data/subject1,
-               /data/subject2 ]
+Session: [ /data/subject1, /data/subject2 ]
 SearchWidth: 7
 DatasetName: genu_data
 ResultsName: genu_results
@@ -75,13 +74,13 @@ ResultsName: genu_results
 
 <p>With the design file created, we can run PNT using the commands</p>
 
-<pre><code>tractor -c design.yaml pnt-data
+<pre><code>plough -C design.yaml pnt-data %Session
 tractor -c design.yaml pnt-em
 </code></pre>
 
-<p>The first of these will take a lot longer than the second to run, since the tracts have to be generated and important characteristics extracted. Using default settings, run time on a standard PC is around 1 hr per subject for <code>pnt-data</code>, although the code is easily parallelisable if you have many subjects (see the <code>pnt-data-sge</code> script for running on computer clusters, or the <code>-p</code> option to <code>tractor</code> for use on multicore desktops). The result will be a text file called &ldquo;genu_data.txt&rdquo;. The second script typically takes about a minute to run, and generates model and results files.</p>
+<p>The first of these will take longer than the second to run, since the tracts have to be generated and important characteristics extracted. Using default settings, run time on a standard PC is a few minutes per subject for <code>pnt-data</code>, although the code is easily parallelisable if you have many subjects (see <code>man plough</code> for information on how <code>plough</code> facilitates this). The result of these commands will be a text file called &ldquo;genu_data.txt&rdquo;, plus model and results files with an .Rdata extension.</p>
 
-<p>Results can be visualised and interpreted as described <a href="#visualising-and-interpreting-results">below</a>.</p>
+<p>Results can be visualised and interpreted <a href="#visualising-and-interpreting-results">as described below</a>.</p>
 
 <h2 id="manual-training">Manual training</h2>
 
@@ -90,25 +89,22 @@ tractor -c design.yaml pnt-em
 <p>Once a number of training tracts have been identified and the corresponding test sessions and seed points are known, they can be put into a design file for use with the <code>pnt-train</code> script. The design file (say &ldquo;training.yaml&rdquo;) will look something like the following:</p>
 
 <pre><code>TractName: genu
-SessionList: [ /data/trainingsubject1,
-               /data/trainingsubject2 ]
-SeedPointList: [ 41, 38, 23,
-                 39, 41, 22 ]
-PointType: R
+Session: [ /data/trainingsubject1, /data/trainingsubject2 ]
+Seed: [ &quot;41,38,23&quot;, &quot;39,41,22&quot; ]
 DatasetName: training
 </code></pre>
 
-<p>The <code>SeedPointList</code> is represented as the x component of session 1, then the y component of session 1, then the z component of session 1, followed by the x component of session 2, and so on. Arranging the numbers in lines of three, as above, makes things clearer. This design will therefore involve seeding at location 41,38,23 in the session rooted at /data/trainingsubject1, and at 39,41,22 in /data/trainingsubject2.</p>
+<p>This design will involve seeding at voxel location 41,38,23 in the session rooted at /data/trainingsubject1, and at 39,41,22 in /data/trainingsubject2.</p>
 
 <p><strong>Note</strong>: We use only two training tracts to keep the example short, but in practice two is too few. The exact number of training tracts required is hard to estimate. Five may be sufficient in some cases, but more is better, and ten or more may well be needed to capture the variability most effectively.</p>
 
 <p>Training the model is then a matter of running the commands</p>
 
-<pre><code>tractor -c training.yaml pnt-data
+<pre><code>plough -C training.yaml pnt-data %Session %Seed
 tractor -c training.yaml pnt-train
 </code></pre>
 
-<p>This will create a file called &ldquo;training_model.Rdata&rdquo;, which represents the trained model. This name is always based on the <code>DatasetName</code> specified in your design file.</p>
+<p>This will create a file called &ldquo;training_model.Rdata&rdquo;, which represents the trained model. This name is always based on the &ldquo;DatasetName&rdquo; specified in your design file.</p>
 
 <p>With the reference tract and model in place, we can move on to segmenting the genu in novel brain data. Note that the reference and model are reusable between studies, as long as the reference continues to represent the tract required and the training tracts cover a suitable range of acceptable tract trajectories.</p>
 
@@ -117,51 +113,48 @@ tractor -c training.yaml pnt-train
 <p>Using the model for segmentation of the tract of interest in another subject requires a pair of commands, following a similar pattern to the ones used for training. Our aim is now to generate a series of candidate tracts in the diffusion space of the test subject, calculate the shape characteristics of each tract, and evaluate a likelihood for each under the model. We first need to create another design file, design.yaml. Its contents will be something like the following:</p>
 
 <pre><code>TractName: genu
-SessionList: /data/testsubject
 SearchWidth: 7
 DatasetName: testing
-ResultsName: results
+ResultsName: genu_results
 </code></pre>
 
-<p>Here we are using a single test subject for illustration, but several test subjects can be listed if required, using the same syntax for <code>SessionList</code> as we used above. Note that in this case no seed points are specified. A <code>SeedList</code> can be given, in which case the specified point will be used as the centre of the search neighbourhood; but there is rarely any need to do so, since a centre point can be established automatically by registering the test brain to the reference brain and transforming the reference tract seed point accordingly. The <code>SearchWidth</code> is the width of the search neighbourhood, in voxels, along each dimension. In this case we use a 7 x 7 x 7 voxel region.</p>
+<p>Note that in this case no seed points are specified. (To do so is possible, but there is rarely any need to, since a centre point can be established automatically by registering the test brain to the reference brain and transforming the reference tract seed point accordingly.) The &ldquo;SearchWidth&rdquo; is the width of the search neighbourhood, in voxels, along each dimension. In this case we use a 7 x 7 x 7 voxel region.</p>
 
 <p>Running the commands</p>
 
-<pre><code>tractor -c design.yaml pnt-data
+<pre><code>tractor -c design.yaml pnt-data /data/testsubject
 tractor -c design.yaml pnt-eval ModelName:training_model
 </code></pre>
 
-<p>will then create the test data set (in &ldquo;testing.txt&rdquo;), and the final results file (&ldquo;results.Rdata&rdquo;). The first command will again take longer than the second: this time quite a lot longer, because 7 x 7 x 7 = 343 candidate tracts need to be created and characterised (minus any culled by the FA threshold, which is set to 0.2 by default). Note that the <code>ModelName</code> given must match the model file created by <code>pnt-train</code>.</p>
+<p>will then create the test data set (in &ldquo;testing.txt&rdquo;), and the final results file (&ldquo;genu_results.Rdata&rdquo;). Note that the &ldquo;ModelName&rdquo; given must match the model file created by <code>pnt-train</code>. Since we are testing on just one subject we use <code>tractor</code> rather than <code>plough</code> as the interface to <code>pnt-data</code> in this case.</p>
 
 <h2 id="visualising-and-interpreting-results">Visualising and interpreting results</h2>
 
 <p>The results can be visualised using the <code>pnt-viz</code> script, which is analogous to the <code>hnt-viz</code> script used by the <a href="HNT-tutorial.html">HNT process</a>, and can be used in the same way. For example, we can use</p>
 
-<pre><code>tractor -c design.yaml pnt-viz CreateVolumes:true
+<pre><code>plough -C design.yaml pnt-viz
 </code></pre>
 
 <p>to create Analyze/NIfTI volumes representing the best matching tract in the test brain. An alternative, introduced in TractoR version 1.3.0, is the <code>pnt-prune</code> script, which uses the tract shape model to remove false positive pathways from the final segmentations, thereby producing much cleaner output. The command in this case is</p>
 
-<pre><code>tractor -c design.yaml pnt-prune CreateVolumes:true
+<pre><code>plough -C design.yaml pnt-prune
 </code></pre>
 
-<p>If you use this method, please cite Ref. (3) below. Further details on the theory and implementation of this method can be found in that paper.</p>
+<p>If you use this method, please cite <a href="#references">Ref. (3)</a> below. Further details on the theory and implementation of this method can be found in that paper.</p>
 
 <p>Various pieces of information about the results, including the likelihood log-ratio, a measure of goodness-of-fit for each segmentation, can be calculated using the <code>pnt-interpret</code> script:</p>
 
-<pre><code>tractor -c design.yaml pnt-interpret Mode:ratio
+<pre><code>plough -C design.yaml pnt-interpret Mode:ratio
 </code></pre>
 
 <p>The mean FA along the selected tract can then be calculated using the <code>mean</code> script, as in</p>
 
-<pre><code>tractor mean genu_session1 /data/testsubject Metric:FA
+<pre><code>plough -C mean %Session@FA genu.%%
 </code></pre>
-
-<p>where &ldquo;genu_session1&rdquo; is the tract volume created by <code>pnt-viz</code> for our test session. (Note that, when segmenting tracts for multiple subjects at once, it is usually preferable to use the group-based alternative script <code>gmean</code> instead of <code>mean</code>. Please run <code>tractor -o gmean</code> for details.)</p>
 
 <h2 id="summary">Summary</h2>
 
-<p>This tutorial has demonstrated how to fit a probabilistic model for tract matching, and segment a similar tract in novel data using that model. We have followed the processes laid out in Refs (1), (2) and (3).</p>
+<p>This tutorial has demonstrated how to fit a probabilistic model for tract matching, and segment a similar tract in novel data using that model. We have followed the processes laid out in the references below.</p>
 
 <h2 id="references">References</h2>
 
