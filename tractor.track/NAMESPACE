@@ -1,5 +1,6 @@
 useDynLib(tractor.track)
 
+import(ore)
 import(reportr)
 import(tractor.base)
 importFrom(Rcpp, evalCpp)
