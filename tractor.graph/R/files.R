@@ -27,7 +27,7 @@ readGraphFile <- function (fileName, fileType = NULL)
         close(connection)
         
         matches <- ore.search("^\\s*#\\s*([A-Za-z]+):\\s*(.+)$", lines, simplify=FALSE)
-        if (!is.null(matches))
+        if (!all(sapply(matches,is.null)))
         {
             groups <- groups(matches, simplify=TRUE)
             attribs <- lapply(groups[,2,], function(x) {
