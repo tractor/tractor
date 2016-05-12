@@ -111,21 +111,42 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         newDirectory <- ensureFileSuffix(newDirectory, "xfmb")
         if (.self$directory == newDirectory)
             return (.self)
+        else if (file.exists(newDirectory))
+            unlink(newDirectory, recursive=TRUE)
+        
+        success <- dir.create(newDirectory, recursive=TRUE)
         
         # Symlinks will need updating
         oldSource <- Sys.readlink(identifyImageFileNames(.self$getSourceImagePath(reverse=inverted.))$imageFile)
         oldTarget <- Sys.readlink(identifyImageFileNames(.self$getTargetImagePath(reverse=inverted.))$imageFile)
         
-        if (isTRUE(file.rename(directory, newDirectory)))
+        # This duplicates code from tractor.utils::copyDirectory(), but we don't want to introduce a dependency for now
+        files <- list.files(directory, full.names=FALSE, recursive=TRUE, include.dirs=TRUE)
+        isDirectory <- file.info(file.path(directory,files))$isdir
+        for (dir in files[isDirectory])
+        {
+            if (!success)
+                break
+            success <- dir.create(file.path(newDirectory,dir), recursive=TRUE)
+        }
+        if (any(!isDirectory))
+            success <- file.copy(file.path(directory,files[!isDirectory]), file.path(newDirectory,files[!isDirectory]))
+    
+        if (all(success))
         {
             if (!is.na(oldSource) && oldSource != "")
                 symlinkImageFiles(file.path(directory,oldSource), file.path(newDirectory,"source"), overwrite=TRUE)
             if (!is.na(oldTarget) && oldTarget != "")
                 symlinkImageFiles(file.path(directory,oldTarget), file.path(newDirectory,"target"), overwrite=TRUE)
+            unlink(directory, recursive=TRUE)
             .self$directory <- newDirectory
         }
         else
-            flag(OL$Warning, "Could not move transformation file to directory #{newDirectory}")
+        {
+            report(OL$Warning, "Could not move transformation file to directory #{newDirectory}")
+            unlink(newDirectory, recursive=TRUE)
+        }
+        
         return (.self)
     },
     
