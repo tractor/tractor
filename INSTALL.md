@@ -32,8 +32,9 @@ and is simple to install. It can be obtained from <http://www.r-project.org>.
 
 A C/C++ compiler is also required to build parts of the package. A suitable
 compiler can be installed using an appropriate package manager (`aptitude`,
-`yum`, etc.) on Linux, or with Xcode (from the Mac App Store) on OS X. R
-handles all the details of actually compiling code.
+`yum`, etc.) on Linux, or with
+[Xcode](https://itunes.apple.com/gb/app/xcode/id497799835) (from the Mac App
+Store) on OS X. R handles all the details of actually compiling code.
 
 Once R and the C/C++ compiler are installed, the TractoR R packages can be
 installed by opening a terminal window and running
