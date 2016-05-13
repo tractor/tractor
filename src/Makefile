@@ -8,4 +8,5 @@ tractor.o: tractor.c tractor.h
 
 ## replace $(LIBR) $(LIBS) by $(STATIC_LIBR) if R was build with a static libR
 ../bin/exec/tractor: tractor.o
+	@mkdir -p ../bin/exec
 	$(MAIN_LINK) -o $@ tractor.o $(LIBR) $(LIBS) || $(MAIN_LINK) -o $@ tractor.o $(STATIC_LIBR)
