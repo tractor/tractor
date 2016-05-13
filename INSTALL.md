@@ -20,9 +20,8 @@ Quick installation for knowledgeable users
    "tractor" directory, include `${TRACTOR_HOME}/bin` on the `PATH` and
    `${TRACTOR_HOME}/man` on the `MANPATH`.
 
-4. Consider installing [ImageMagick](http://www.imagemagick.org/) and/or
-   [FSL](http://www.fmrib.ox.ac.uk/fsl/) if they are not already installed. They
-   are used by some elements of TractoR's functionality.
+4. Consider installing [FSL](http://fsl.fmrib.ox.ac.uk/), if it is not
+   already installed. It is used by some elements of TractoR's functionality.
 
 
 Details and step-by-step explanation
@@ -79,7 +78,6 @@ take a look at the man page. To find out what a particular script does, type
 script you are interested in.
 
 Finally, you may want to consider also installing
-[ImageMagick](http://www.imagemagick.org/) and/or
-[FSL](http://www.fmrib.ox.ac.uk/fsl/), if they are not already installed. They
-are used by some elements of TractoR's functionality, so installing both will
-avoid any problems with missing software later.
+[FSL](http://fsl.fmrib.ox.ac.uk/), if it is not already installed. It is used
+by some elements of TractoR's functionality, so installing it now will avoid
+any problems with missing software later.
