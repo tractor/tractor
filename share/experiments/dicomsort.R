@@ -12,8 +12,9 @@ runExperiment <- function ()
     
     deleteOriginals <- getConfigVariable("DeleteOriginals", TRUE)
     sortOn <- getConfigVariable("SortOn", "series")
+    seriesId <- getConfigVariable("SeriesIdentifier", "UID", validValues=c("UID","number","time"))
     
     sortOn <- splitAndConvertString(sortOn, ",", fixed=TRUE)
     
-    sortDicomDirectories(directory, deleteOriginals, sortOn=sortOn)
+    sortDicomDirectories(directory, deleteOriginals, sortOn=sortOn, seriesId=seriesId)
 }

@@ -38,6 +38,9 @@ dropCommonPrefix <- function (strings)
 #' @param sortOn The string \code{"series"}, \code{"subject"} or \code{"date"},
 #'   or any combination in the order desired. This will be the basis of the
 #'   sort, which will be nested if more than one type is specified.
+#' @param seriesId A string describing the kind of series identifier to use for
+#'   sorting by series: \code{"UID"} (DICOM tag 0x0020,0x000e; the default),
+#'   \code{"number"} (0x0020,0x0011) or \code{"time"} (0x0008,0x0031).
 #' @param nested Logical value. If \code{TRUE} and \code{directories} is of
 #'   length 1, subdirectories will be created within the specified original
 #'   directory. Otherwise they will be created in the working directory.
@@ -54,7 +57,7 @@ dropCommonPrefix <- function (strings)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn = "series", nested = TRUE)
+sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn = "series", seriesId = c("UID","number","time"), nested = TRUE)
 {
     invalid <- (!file.exists(directories) | !file.info(directories)$isdir)
     if (any(invalid))
@@ -70,7 +73,10 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
     sortOn <- match.arg(sortOn, c("series","subject","date"), several.ok=TRUE)
     currentSort <- sortOn[1]
     remainingSorts <- sortOn[-1]
-    identifierTag <- switch(currentSort, series=c(0x0020,0x000e), subject=c(0x0010,0x0010), date=c(0x0008,0x0020))
+    seriesId <- match.arg(seriesId)
+    identifierTag <- switch(currentSort, series=switch(seriesId, UID=c(0x0020,0x000e), number=c(0x0020,0x0011), time=c(0x0008,0x0031)),
+                                         subject=c(0x0010,0x0010),
+                                         date=c(0x0008,0x0020))
     
     files <- expandFileName(list.files(directories, full.names=TRUE, recursive=TRUE))
     files <- files[!file.info(files)$isdir]
@@ -145,7 +151,7 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
             unlink(from[!inPlace])
         
         if (length(remainingSorts) > 0)
-            sortDicomDirectories(subdirectory, TRUE, sortOn=remainingSorts, nested=TRUE)
+            sortDicomDirectories(subdirectory, TRUE, sortOn=remainingSorts, seriesId=seriesId, nested=TRUE)
     }
 }
 

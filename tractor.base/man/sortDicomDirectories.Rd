@@ -5,7 +5,7 @@
 \title{Sort a directory of DICOM files into series}
 \usage{
 sortDicomDirectories(directories, deleteOriginals = FALSE,
-  sortOn = "series", nested = TRUE)
+  sortOn = "series", seriesId = c("UID", "number", "time"), nested = TRUE)
 }
 \arguments{
 \item{directories}{A character vector giving the directories to search for
@@ -19,6 +19,10 @@ the copy fails.}
 \item{sortOn}{The string \code{"series"}, \code{"subject"} or \code{"date"},
 or any combination in the order desired. This will be the basis of the
 sort, which will be nested if more than one type is specified.}
+
+\item{seriesId}{A string describing the kind of series identifier to use for
+sorting by series: \code{"UID"} (DICOM tag 0x0020,0x000e; the default),
+\code{"number"} (0x0020,0x0011) or \code{"time"} (0x0008,0x0031).}
 
 \item{nested}{Logical value. If \code{TRUE} and \code{directories} is of
 length 1, subdirectories will be created within the specified original
