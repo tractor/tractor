@@ -45,9 +45,6 @@ while [ $# -gt 0 ]; do
     # Use tractor.base to check if we're in a TractoR directory
     if [ $global_lib -eq 1 ]; then
         "$R" CMD INSTALL --clean "${1}" >>install.log 2>&1
-    elif [ ! -z "${TRACTOR_HOME}" ]; then
-        [ ! -d "${TRACTOR_HOME}/lib/R" ] && mkdir -p "${TRACTOR_HOME}/lib/R"
-        "$R" CMD INSTALL --library="${TRACTOR_HOME}/lib/R" --clean "${1}" >>install.log 2>&1
     elif [ -d tractor.base ]; then
         [ ! -d lib/R ] && mkdir -p lib/R
         "$R" CMD INSTALL --library=lib/R --clean "${1}" >>install.log 2>&1
