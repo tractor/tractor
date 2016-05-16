@@ -8,8 +8,10 @@ There are several sources of documentation available. For installation instructi
 
 Please see below for information on
 
-- [usage from R](#usage-from-r), and
-- [usage outside R](#usage-outside-r).
+- [usage from R](#usage-from-r) and
+- [usage outside R](#usage-outside-r),
+
+depending on your preference.
 
 ## Usage from R
 
