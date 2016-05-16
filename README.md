@@ -6,6 +6,11 @@ TractoR is an [R-based](http://www.r-project.org) platform for medical image pro
 
 There are several sources of documentation available. For installation instructions, please see the `INSTALL.md` file. For general information on the package, its capabilities and conventions, please see the [TractoR paper](http://www.jstatsoft.org/v44/i08/) and/or the [project home page](http://www.tractor-mri.org.uk). The latter is mirrored in the TractoR distribution, and can be found at `share/doc/home.html`. Standard R documentation is available, function by function, for the core `tractor.base` package and all first- and third-party dependency packages (which are included in the main download).
 
+Please see below for information on
+
+- [usage from R](#usage-from-r), and
+- [usage outside R](#usage-outside-r).
+
 ## Usage from R
 
 Users who are already familiar with R can easily incorporate the functionality of TractoR's R packages into their work. For example, an MRI image can be read from a compressed [NIfTI-1](http://nifti.nimh.nih.gov/nifti-1) file, and its key metadata displayed with
