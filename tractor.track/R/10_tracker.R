@@ -16,7 +16,7 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         indices <- which(names(args) != "")
         if (length(indices) > 0)
             .self$filters[names(args)[indices]] <- args[indices]
-        invisible(filters)
+        return (.self)
     },
     
     setMask = function (image)
@@ -32,6 +32,7 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         }
         else
             report(OL$Error, "Mask should be specified as a file name or MriImage object")
+        return (.self)
     },
     
     setOptions = function (...)
@@ -40,7 +41,7 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         indices <- which(names(args) != "")
         if (length(indices) > 0)
             .self$options[names(args)[indices]] <- args[indices]
-        invisible(options)
+        return (.self)
     },
     
     setTargets = function (image, indices = NULL, labels = NULL)
@@ -69,6 +70,7 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
             report(OL$Error, "Index and label vectors should have the same length")
         
         .self$targetInfo <- list(path=path, indices=indices, labels=labels)
+        return (.self)
     },
     
     run = function (seeds, count, basename = threadSafeTempFile(), profileFun = NULL, requireMap = TRUE, requireStreamlines = FALSE, requireMedian = FALSE, terminateAtTargets = FALSE, jitter = TRUE)
