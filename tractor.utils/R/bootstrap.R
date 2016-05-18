@@ -28,7 +28,7 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputL
             report(OL$Warning, "The \"parallel\" package is not installed - code will not be parallelised")
     }
     
-    results <- withReportrHandlers({
+    withReportrHandlers({
         source(scriptFile)
         
         fileConfig <- readYaml(configFiles)
@@ -72,9 +72,6 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputL
         else
             report(OL$Warning, "Configuration variables #{implode(unusedNames,sep=', ',finalSep=' and ')} were not used")
     }
-    
-    if (!standalone)
-        return (results)
 }
 
 describeExperiment <- function (scriptFile, fill = FALSE)
