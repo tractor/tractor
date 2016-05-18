@@ -47,6 +47,16 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="301-2016-05-18">3.0.1 (2016-05-18)</h2>
+
+<ul>
+<li>The <code>dicomsort</code> script&rsquo;s ability to sort by series number or time has been reinstated, although sorting by UID remains the default.</li>
+<li>An updated version of the TractoR paper is now provided <a href="http://www.tractor-mri.org.uk/paper/">online</a> and within the <code>share/doc/paper</code> subdirectory of the package. There is also a more extensive <code>README.md</code> file, and an updated <code>INSTALL.md</code> file.</li>
+<li>Building the <code>tractor</code> executable should no longer fail just because the <code>bin/exec</code> subdirectory does not exist.</li>
+<li>When running <code>make install</code> with the <code>TRACTOR_HOME</code> environment variable pointing to a different TractoR installation, the packages would previously be installed there in error. This has been corrected.</li>
+<li>Creating transformations on a different filesystem to the system&rsquo;s temporary directory should no longer fail.</li>
+</ul>
+
 <h2 id="300-2016-05-09">3.0.0 (2016-05-09)</h2>
 
 <ul>
