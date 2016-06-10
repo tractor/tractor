@@ -216,7 +216,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     {
         defaultsPath <- file.path(Sys.getenv("TRACTOR_HOME"), "etc", "session")
         
-        subdirectories <- readYaml(file.path(defaultsPath, "map.yaml"))
+        subdirectories <- defaultSubdirectories <- readYaml(file.path(defaultsPath, "map.yaml"))
         mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")
         if (file.exists(mapFileName))
             subdirectories <- deduplicate(readYaml(mapFileName), subdirectories)
@@ -225,7 +225,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         maps <- list()
         for (place in .AllSessionDirectories)
         {
-            defaultFileName <- file.path(defaultsPath, subdirectories[[place]], "map.yaml")
+            defaultFileName <- file.path(defaultsPath, defaultSubdirectories[[place]], "map.yaml")
             if (!file.exists(defaultFileName))
                 next
             maps[[place]] <- readYaml(defaultFileName)
