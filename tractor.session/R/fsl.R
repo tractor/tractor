@@ -68,7 +68,7 @@ createAcquisitionParameterFileForSession <- function (session, reversePEVolumes 
         
             kMeansResult <- kmeans(similarities, 2, nstart=3)
             reversePEVolumes <- which(kMeansResult$cluster == which.min(kMeansResult$centers)) + 1L
-            report(OL$Info, "#{pluralise('Volume',reversePEVolumes)} #{implode(reversePEVolumes,',',' and ',ranges=TRUE)} #{pluralise('has',reversePEVolumes,plural='have')} lower similarity to the first b=0 volume")
+            report(OL$Info, "#{pluralise('Volume',reversePEVolumes)} #{implode(bZeroVolumes[reversePEVolumes],',',' and ',ranges=TRUE)} #{pluralise('has',reversePEVolumes,plural='have')} lower similarity to the first b=0 volume")
         }
         else if (!all(reversePEVolumes %in% bZeroVolumes))
         {
