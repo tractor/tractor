@@ -63,12 +63,18 @@ createAcquisitionParameterFileForSession <- function (session, reversePEVolumes 
             report(OL$Info, "Reverse phase-encode volumes not specified - attempting to guess")
             if (is.null(bZeroData))
                 bZeroData <- session$getImageByType("rawdata", "diffusion", volumes=bZeroVolumes)
-            referenceVolume <- extractMriImage(bZeroData, 4, 1)
-            similarities <- sapply(seq_along(bZeroVolumes)[-1], function(i) RNiftyReg::similarity(extractMriImage(bZeroData,4,i), referenceVolume))
-        
-            kMeansResult <- kmeans(similarities, 2, nstart=3)
-            reversePEVolumes <- which(kMeansResult$cluster == which.min(kMeansResult$centers)) + 1L
-            report(OL$Info, "#{pluralise('Volume',reversePEVolumes)} #{implode(bZeroVolumes[reversePEVolumes],',',' and ',ranges=TRUE)} #{pluralise('has',reversePEVolumes,plural='have')} lower similarity to the first b=0 volume")
+            bZeroVolumeData <- lapply(seq_len(nBZeroVolumes), function(i) extractMriImage(bZeroData,4,i))
+            
+            similarities <- matrix(0, nBZeroVolumes, nBZeroVolumes)
+            for (i in 1:nBZeroVolumes)
+            {
+                for (j in 1:i)
+                    similarities[i,j] <- similarities[j,i] <- RNiftyReg::similarity(bZeroVolumeData[[i]], bZeroVolumeData[[j]])
+            }
+            distances <- outer(diag(similarities), diag(similarities), pmin) - similarities
+            classes <- cutree(hclust(as.dist(distances)), 2)
+            reversePEVolumes <- which(classes == which.min(table(classes)))
+            report(OL$Info, "#{pluralise('Volume',reversePEVolumes)} #{implode(bZeroVolumes[reversePEVolumes],',',' and ',ranges=TRUE)} #{pluralise('is',reversePEVolumes,plural='are')} least similar to the other b=0 volumes")
         }
         else if (!all(reversePEVolumes %in% bZeroVolumes))
         {
