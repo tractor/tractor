@@ -1,6 +1,6 @@
 Package: tractor.session
-Version: 3.0.1
-Date: 2016-05-18
+Version: 3.0.2
+Date: 2016-06-10
 Title: Functions for maintaining and working with scan sessions
 Author: Jon Clayden and Kiran Seunarine
 Maintainer: Jon Clayden <code@clayden.org>
@@ -12,3 +12,4 @@ Encoding: UTF-8
 LazyLoad: yes
 License: GPL-2
 URL: http://www.tractor-mri.org.uk
+BugReports: https://github.com/tractor/tractor/issues
