@@ -199,7 +199,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     nFiles <- length(files)
     
     report(OL$Info, "Reading image information from ", nFiles, " files")
-    info <- data.frame(seriesNumber=numeric(nFiles), seriesDescription=character(nFiles), acquisitionNumber=numeric(nFiles), imageNumber=numeric(nFiles), sliceLocation=numeric(nFiles), stringsAsFactors=FALSE)
+    info <- data.frame(seriesNumber=numeric(nFiles), seriesDescription=character(nFiles), acquisitionNumber=numeric(nFiles), imageNumber=numeric(nFiles), echoNumber=numeric(nFiles), sliceLocation=numeric(nFiles), stringsAsFactors=FALSE)
     images <- vector("list", nFiles)
     if (readDiffusionParams)
     {
@@ -242,6 +242,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
         info$seriesDescription[i] <- metadata$getTagValue(0x0008,0x103e)
         info$acquisitionNumber[i] <- metadata$getTagValue(0x0020,0x0012)
         info$imageNumber[i] <- metadata$getTagValue(0x0020,0x0013)
+        info$echoNumber[i] <- metadata$getTagValue(0x0018, 0x0086)
         imagePosition <- metadata$getTagValue(0x0020,0x0032)
         info$sliceLocation[i] <- imagePosition %*% throughSliceOrientation
         
@@ -355,7 +356,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     data <- array(NA, dim=imageDims)
 
     # Sort by series number, then acquisition number, then image number
-    sortOrder <- order(info$seriesNumber, info$acquisitionNumber, info$imageNumber)
+    sortOrder <- order(info$seriesNumber, info$acquisitionNumber, info$echoNumber, info$imageNumber)
     info <- info[sortOrder,]
     images <- images[sortOrder]
     
