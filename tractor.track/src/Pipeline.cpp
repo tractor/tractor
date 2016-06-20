@@ -20,6 +20,8 @@ size_t Pipeline<ElementType>::run ()
     
     while (source->more() && !subsetFinished)
     {
+        Rcpp::checkUserInterrupt();
+        
         // Skip forward to the next element in the subset if necessary
         if (usingSubset && source->seekable())
         {
