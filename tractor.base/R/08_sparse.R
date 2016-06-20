@@ -17,6 +17,8 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
     {
         object <- initFields(...)
         storage.mode(object$coords) <- "integer"
+        if (is.vector(object$data) && length(object$data) != nrow(object$coords))
+            report(OL$Error, "Coordinate matrix and data vector lengths don't agree")
         return (object)
     },
     
@@ -77,6 +79,8 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
     setCoordinatesAndData = function (newCoords, newData)
     {
         "Update the nonzero locations and data values in the array"
+        if (length(newData) != nrow(newCoords))
+            report(OL$Error, "Coordinate matrix and data vector lengths don't agree")
         .self$coords <- newCoords
         .self$data <- newData
     },
@@ -260,11 +264,11 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
     present <- (dataLocs > 0)
     zero <- (value == 0)
     
-    data[which(present & !zero)] <- value[which(present & !zero)]
+    data[dataLocs[present & !zero]] <- value[which(present & !zero)]
     if (any(present & zero))
     {
-        coords <- coords[-which(present & zero),]
-        data <- data[-which(present & zero)]
+        coords <- coords[-dataLocs[present & zero],]
+        data <- data[-dataLocs[present & zero]]
     }
     if (any(!present & !zero))
     {
