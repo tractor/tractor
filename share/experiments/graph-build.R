@@ -21,10 +21,8 @@ runExperiment <- function ()
     targetRegions <- splitAndConvertString(targetRegions, ",", fixed=TRUE)
     
     session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
-    parcellation <- session$getParcellation(type, threshold=parcellationConfidence)
-    
-    targetMatches <- matchRegions(targetRegions, parcellation, labels=TRUE)
-    nRegions <- length(targetMatches)
+    targets <- resolveRegions(targetRegions, session, space=type, parcellationConfidence)
+    nRegions <- length(targets$labels)
     report(OL$Info, "Using #{nRegions} matched target regions")
     
     if (type == "diffusion")
@@ -41,10 +39,10 @@ runExperiment <- function ()
         volume          <- numeric(nRegions)                    # Volume in mm^3
         for (i in seq_len(nRegions))
         {
-            report(OL$Verbose, "Matching region \"#{targetMatches[i]}\"")
-            index <- parcellation$regions$index[which(parcellation$regions$label == targetMatches[i])]
+            report(OL$Verbose, "Matching region \"#{targets$labels[i]}\"")
+            index <- targets$indices[i]
             matchingIndices[[i]] <- streamSource$select(labels=index)$getSelection()
-            regionImage <- parcellation$image$copy()$map(function(x) ifelse(x==index,1,0), sparse=TRUE)
+            regionImage <- targets$image$copy()$map(function(x) ifelse(x==index,1L,0L), sparse=TRUE)
             regionLocations[i,] <- apply(regionImage$getNonzeroIndices(array=TRUE), 2, median)
             regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
             voxelCount[i] <- length(regionImage$getNonzeroIndices(array=FALSE))
@@ -67,7 +65,7 @@ runExperiment <- function ()
         
         for (i in seq_len(nRegions))
         {
-            report(OL$Verbose, "Finding connections for region \"#{targetMatches[i]}\"")
+            report(OL$Verbose, "Finding connections for region \"#{targets$labels[i]}\"")
             
             for (j in seq_len(ifelse(selfConnections,i,i-1)))
             {
@@ -95,7 +93,7 @@ runExperiment <- function ()
         
         report(OL$Info, "Creating and writing graph")
         graph <- asGraph(edgeList, edgeList=TRUE, directed=FALSE, selfConnections=selfConnections, nVertices=nRegions)
-        graph$setVertexAttributes(name=targetMatches, voxelCount=voxelCount, volume=volume)
+        graph$setVertexAttributes(name=targets$labels, voxelCount=voxelCount, volume=volume)
         graph$setVertexLocations(regionLocations, "mm", paste(session$getDirectory(),"diffusion",sep=":"))
         graph$setEdgeAttributes(nStreamlines=nStreamlines, binaryFA=binaryFA, weightedFA=weightedFA, binaryMD=binaryMD, weightedMD=weightedMD, streamlineLength=streamlineLength, uniqueVoxels=uniqueVoxels, voxelVisits=voxelVisits)
         graph$serialise(graphName)
@@ -115,9 +113,9 @@ runExperiment <- function ()
         volume          <- numeric(nRegions)                    # Volume in mm^3
         for (i in seq_len(nRegions))
         {
-            report(OL$Verbose, "Extracting region \"#{targetMatches[i]}\"")
-            index <- parcellation$regions$index[which(parcellation$regions$label == targetMatches[i])]
-            regionImage <- parcellation$image$copy()$map(function(x) ifelse(x==index,1,0), sparse=TRUE)
+            report(OL$Verbose, "Extracting region \"#{targets$labels[i]}\"")
+            index <- targets$indices[i]
+            regionImage <- targets$image$copy()$map(function(x) ifelse(x==index,1L,0L), sparse=TRUE)
             allLocations <- regionImage$getNonzeroIndices(array=TRUE)
             regionLocations[i,] <- apply(allLocations, 2, median)
             regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
@@ -160,12 +158,12 @@ runExperiment <- function ()
         isFiniteAndNonzero <- function(x) is.finite(x) & (x != 0)
         adjacencyMatrix <- as.integer(isFiniteAndNonzero(covariance) & isFiniteAndNonzero(correlation) & isFiniteAndNonzero(precision) & isFiniteAndNonzero(partialCorrelation))
         dim(adjacencyMatrix) <- rep(nRegions, 2)
-        dimnames(adjacencyMatrix) <- list(targetMatches, targetMatches)
+        dimnames(adjacencyMatrix) <- list(targets$labels, targets$labels)
         
         report(OL$Info, "Creating and writing graph")
         graph <- asGraph(adjacencyMatrix, edgeList=FALSE, directed=FALSE, selfConnections=selfConnections)
         edges <- graph$getEdges()
-        graph$setVertexAttributes(name=targetMatches, voxelCount=voxelCount, volume=volume)
+        graph$setVertexAttributes(name=targets$labels, voxelCount=voxelCount, volume=volume)
         graph$setVertexLocations(regionLocations, "mm", paste(session$getDirectory(),"functional",sep=":"))
         graph$setEdgeAttributes(covariance=covariance[edges], correlation=correlation[edges], precision=precision[edges], partialCorrelation=partialCorrelation[edges])
         graph$serialise(graphName)

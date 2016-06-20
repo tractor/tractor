@@ -66,53 +66,6 @@ runExperiment <- function ()
         return (image)
     }
     
-    mergeRegions <- function (regionNames)
-    {
-        indices <- labels <- NULL
-        image <- mask$copy()$fill(0L)
-        areFiles <- imageFileExists(regionNames)
-        
-        if (any(!areFiles))
-        {
-            parcellation <- session$getParcellation("diffusion", threshold=parcellationConfidence)
-            indices <- sort(matchRegions(regionNames[!areFiles], parcellation))
-            labels <- parcellation$regions$label[parcellation$regions$index %in% indices]
-            locs <- which(parcellation$image$getData() %in% indices, arr.ind=TRUE)
-            image[locs] <- parcellation$image[locs]
-        }
-        
-        for (region in regionNames[areFiles])
-        {
-            # This makes "data" a SparseArray object
-            currentImage <- readImageFile(region, sparse=TRUE)
-            data <- currentImage$getData()
-            positive <- (data$getData() > 0)
-            locs <- data$getCoordinates()[positive,,drop=FALSE]
-            currentIndices <- sort(unique(data$getData()[positive]))
-            
-            if (length(currentIndices) == 0)
-                next
-            
-            if (!all(currentIndices == round(currentIndices)))
-                report(OL$Error, "ROI image must be integer-valued")
-            
-            if (any(currentIndices %in% indices))
-                delta <- max(indices)
-            else
-                delta <- 0L
-            
-            image[locs] <- data[locs] + delta
-            indices <- c(indices, as.integer(currentIndices + delta))
-            
-            if (length(currentIndices) == 1)
-                labels <- c(labels, basename(currentImage$getSource()))
-            else
-                labels <- c(labels, paste(basename(currentImage$getSource()),currentIndices,sep="_"))
-        }
-        
-        return (list(image=image, indices=indices, labels=labels))
-    }
-    
     if (wholeBrainSeeding)
         seedInfo <- list(image=mask$copy(), indices=1L, labels="brain")
     else if (length(seedRegions) %% 3 == 0 && isValidAs(seedRegions,"integer"))
@@ -123,7 +76,7 @@ runExperiment <- function ()
         seedInfo <- list(image=seedImage, indices=1L, labels="points")
     }
     else
-        seedInfo <- mergeRegions(seedRegions)
+        seedInfo <- resolveRegions(seedRegions, session, "diffusion", parcellationConfidence)
     
     if (is.null(anisotropyThreshold))
         seedInfo$image <- seedInfo$image * mask
@@ -135,7 +88,7 @@ runExperiment <- function ()
     }
     
     if (!is.null(targetRegions))
-        targetInfo <- mergeRegions(targetRegions)
+        targetInfo <- resolveRegions(targetRegions, session, "diffusion", parcellationConfidence)
     else
         targetInfo <- list(image=NULL, indices=NULL, labels=NULL)
     

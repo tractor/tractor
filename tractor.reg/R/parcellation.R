@@ -88,3 +88,53 @@ matchRegions <- function (regions, parcellation, labels = FALSE)
     else
         return (parcellation$regions$index[matches])
 }
+
+resolveRegions <- function (regions, session, space = "structural", parcellationConfidence = 0.5)
+{
+    if (!is(session, "MriSession"))
+        report(OL$Error, "Specified session is not an MriSession object")
+    
+    image <- session$getRegistrationTarget(space,metadataOnly=TRUE)$fill(0L)
+    indices <- labels <- NULL
+    areFiles <- imageFileExists(regions)
+    
+    if (any(!areFiles))
+    {
+        parcellation <- session$getParcellation(space, threshold=parcellationConfidence)
+        indices <- sort(matchRegions(regions[!areFiles], parcellation))
+        labels <- parcellation$regions$label[parcellation$regions$index %in% indices]
+        locs <- which(parcellation$image$getData() %in% indices, arr.ind=TRUE)
+        image[locs] <- parcellation$image[locs]
+    }
+    
+    for (region in regions[areFiles])
+    {
+        # This makes "data" a SparseArray object
+        currentImage <- readImageFile(region, sparse=TRUE)
+        data <- currentImage$getData()
+        positive <- (data$getData() > 0)
+        locs <- data$getCoordinates()[positive,,drop=FALSE]
+        currentIndices <- sort(unique(data$getData()[positive]))
+        
+        if (length(currentIndices) == 0)
+            next
+        
+        if (!all(currentIndices == round(currentIndices)))
+            report(OL$Error, "ROI image must be integer-valued")
+        
+        if (any(currentIndices %in% indices))
+            delta <- max(indices)
+        else
+            delta <- 0L
+        
+        image[locs] <- data[locs] + delta
+        indices <- c(indices, as.integer(currentIndices + delta))
+        
+        if (length(currentIndices) == 1)
+            labels <- c(labels, basename(currentImage$getSource()))
+        else
+            labels <- c(labels, paste(basename(currentImage$getSource()),currentIndices,sep="_"))
+    }
+    
+    return (list(image=image, indices=indices, labels=labels))
+}
