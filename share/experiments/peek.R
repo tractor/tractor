@@ -5,6 +5,7 @@
 library(tractor.reg)
 library(tractor.session)
 library(tractor.nt)
+library(tractor.graph)
 
 runExperiment <- function ()
 {
