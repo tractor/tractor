@@ -157,6 +157,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         })
         newAttributes <- deduplicate(newAttributes, .self$edgeAttributes)
         .self$edgeAttributes <- newAttributes[!sapply(newAttributes,is.null)]
+        invisible(.self)
     },
     
     setEdgeWeights = function (newWeights)
@@ -169,6 +170,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
             newWeights <- rep(newWeights, length.out=.self$nEdges())
         }
         .self$edgeWeights <- newWeights
+        invisible(.self)
     },
     
     setVertexAttributes = function (...)
@@ -186,6 +188,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         })
         newAttributes <- deduplicate(newAttributes, .self$vertexAttributes)
         .self$vertexAttributes <- newAttributes[!sapply(newAttributes,is.null)]
+        invisible(.self)
     },
     
     setVertexLocations = function (locs, unit, space)
@@ -193,6 +196,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         .self$vertexLocations <- locs
         .self$locationUnit <- unit
         .self$locationSpace <- space
+        invisible(.self)
     },
     
     summarise = function ()
