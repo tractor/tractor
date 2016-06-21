@@ -47,6 +47,16 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="303-2016-06-21">3.0.3 (2016-06-21)</h2>
+
+<ul>
+<li>The <code>dicomread</code> script now respects echo number when reconstructing images, thereby improving results from multiecho sequences.</li>
+<li>Tractography pipelines (notably within <code>track</code>) can now be interrupted, using the standard Ctrl-C command. This can be useful to cancel a long-running operation.</li>
+<li>The <code>track</code> and <code>graph-build</code> scripts are now consistent in their treatment of the &ldquo;TargetRegions&rdquo; option, allowing greater flexibility. Previously, <code>graph-build</code> would only accept parcellation labels; now, named image files may also be used.</li>
+<li>A mistake relating to internal indexing in sparse arrays has been corrected. This could previously have led to errors or incorrect results in <code>track</code> when target or seed regions overlapped, and possibly other scripts.</li>
+<li>Attempting to <code>peek</code> at graph objects could fail under certain circumstances. This has been corrected.</li>
+</ul>
+
 <h2 id="302-2016-06-13">3.0.2 (2016-06-13)</h2>
 
 <ul>
