@@ -508,7 +508,10 @@ levelplot.Graph <- function (x, data = NULL, col = NULL, cex = NULL, order = NUL
     else
         labels <- as.character(activeVertices)
     
-    levelplot(associationMatrix[activeVertices,activeVertices], col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
+    submatrix <- associationMatrix[activeVertices,activeVertices]
+    dimnames(submatrix) <- list(labels, labels)
+    
+    levelplot(submatrix, col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
 }
 
 inducedSubgraph <- function (graph, vertices)
