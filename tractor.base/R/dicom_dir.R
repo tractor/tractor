@@ -276,7 +276,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     if (readDiffusionParams)
     {
         bValues <- bValues[valid]
-        bVectors <- bVectors[,valid]
+        bVectors <- bVectors[,valid,drop=FALSE]
         echoSeparations <- echoSeparations[valid]
     }
     
@@ -363,7 +363,7 @@ readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMos
     if (readDiffusionParams)
     {
         bValues <- bValues[sortOrder]
-        bVectors <- bVectors[,sortOrder]
+        bVectors <- bVectors[,sortOrder,drop=FALSE]
         echoSeparations <- echoSeparations[sortOrder]
         
         # Initialisation
