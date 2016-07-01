@@ -23,6 +23,9 @@ structural2diffusion: [ nonlinear, symmetric ]
 structural2mni: [ nonlinear, symmetric ]
 mni2structural: [ nonlinear, symmetric ]
 
+freesurfer2structural: affine
+structural2freesurfer: [ affine, reverse ]
+
 functional2mni: [ nonlinear, symmetric ]
 mni2functional: [ nonlinear, symmetric, reverse ]
 
