@@ -103,6 +103,9 @@ removeImageFiles <- function (fileName)
 #' @export
 symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE)
 {
+    if (isTRUE(getOption("tractorNoSymlinks")))
+        return (copyImageFiles(from, to, overwrite))
+    
     if (length(from) != length(to))
         report(OL$Error, "The number of source and target file names must match")
     

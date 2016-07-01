@@ -23,4 +23,7 @@ NULL
         else
             options(tractorOutputPrecision="double")
     }
+    
+    if (is.null(getOption("tractorNoSymlinks")) && tolower(Sys.getenv("TRACTOR_NOSYMLINKS")) %in% c("1","yes","true"))
+        options(tractorNoSymlinks=TRUE)
 }
