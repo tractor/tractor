@@ -47,6 +47,17 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="304-2016-07-01">3.0.4 (2016-07-01)</h2>
+
+<ul>
+<li>The new <code>TRACTOR_NOSYMLINKS</code> environment variable may be set to <code>true</code> to turn symlinking operations into copies. This uses more disk space, but is required on certain file systems, notably on some network mounts.</li>
+<li>A transformation strategy between T1-weighted structural space and FreeSurfer space has been added explicitly.</li>
+<li>A problem in the calculation of metadata when writing MGH/MGZ files has been fixed. This should address problems with the results of <code>freesurf</code>.</li>
+<li>The <code>peek</code> script now also works with CSV files representing graphs.</li>
+<li>Graphs without vertex names (notably CSV files from non-TractoR sources) should no longer be mislabelled when visualised using <code>graph-viz MatrixView:true</code>.</li>
+<li>Directories containing only a single DICOM file, and pertaining to a diffusion acquisition, should no longer cause errors.</li>
+</ul>
+
 <h2 id="303-2016-06-21">3.0.3 (2016-06-21)</h2>
 
 <ul>

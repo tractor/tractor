@@ -63,7 +63,9 @@
   [other subdirectories].....unmanaged files, such as DICOM-format files
 </code></pre>
 
-<p>TractoR maintains this structure and expects to find the files it uses in these places. This is arranged by the package itself if the session hierarchy is set up using TractoR preprocessing scripts, but if the preprocessing steps are carried out independently then the hierarchy must be arranged in this way manually.</p>
+<p>TractoR maintains this structure and expects to find the files it uses in these places. This is arranged by the package itself if the session hierarchy is set up using TractoR preprocessing scripts, but if the preprocessing steps are carried out independently then the hierarchy must be arranged in this way manually, or remapped (see below).</p>
+
+<h2 id="session-maps">Session maps</h2>
 
 <p>The reason for using a managed file hierarchy is to avoid the need to specify the locations of several standard image files when using TractoR&rsquo;s core functionality. By establishing standard locations for all such files, only the top-level session directory needs to be specified, since everything else can be found by the code. TractoR therefore favours <a href="http://en.wikipedia.org/wiki/Convention_over_configuration">convention over configuration</a>, but if the names of specific images within a managed directory are not in keeping with the default, there is a mechanism for telling TractoR about this, through so-called &ldquo;session maps&rdquo;. For example, the default map for the <code>diffusion</code> subdirectory, as of TractoR v3.0.0, is</p>
 
@@ -98,6 +100,21 @@ parcellation: parcellation
 </code></pre>
 
 <p>It should, however, be borne in mind that this will make the session less portable. The full default map can be found at <code>$TRACTOR_HOME/etc/session/map.yaml</code>.</p>
+
+<h2 id="implicit-operations">Implicit operations</h2>
+
+<p>Some images within a session hierarchy are created &ldquo;on demand&rdquo;, and coregistration between spaces is also usually performed implicitly. This means that certain files appear as the side effects of running operations that require them. Sometimes this is quite predictable: the <code>tensorfit</code> script, for example, creates diffusion-tensor maps of various kinds, and this is its primary purpose. In other cases, the process is a little less obvious.</p>
+
+<p>A relatively complex example is the <code>parcellation</code> image in diffusion space, which is mentioned in the default map above. When required, for example when trying to seed from a named region using the <code>track</code> script, this is created from the equivalent parcellation in T1 space. The logic is as follows.</p>
+
+<ol>
+<li>TractoR checks whether the <code>parcellation</code> map and associated lookup table exist in the <code>diffusion</code> subdirectory. If so, they are used directly.</li>
+<li>Otherwise, TractoR checks whether a parcellation exists in the <code>structural</code> subdirectory. If not, an error is produced and nothing further happens.</li>
+<li>TractoR checks whether a transformation from structural to diffusion space has been calculated and stored in the <code>transforms</code> subdirectory. If not, the reference T1-weighted image is registered to the reference <em>b</em>=0 image in diffusion space, and the transform is stored for future use.</li>
+<li>The parcellation is transformed from structural to diffusion space, using a non-overlapping binarised trilinear interpolation scheme, whose inclusiveness is determined by <code>track</code>&rsquo;s &ldquo;ParcellationConfidence&rdquo; option.</li>
+</ol>
+
+<p>The details of the registrations performed between spaces are controlled by the &ldquo;transformation strategy&rdquo;, whose defaults can be found at <code>$TRACTOR_HOME/etc/session/transforms/strategy.yaml</code>. This may be overridden per-session, by placing a similar <code>strategy.yaml</code> file into its <code>transforms</code> subdirectory.</p>
 
 <h2 id="file-types">File types</h2>
 
