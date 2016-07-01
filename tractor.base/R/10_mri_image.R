@@ -87,10 +87,10 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             oldFields <- list(...)
             if (is.null(oldFields$voxunit))
                 oldFields$voxunit <- "unknown"
-            object <- initFields(imageDims=as.integer(oldFields$imagedims), voxelDims=as.numeric(oldFields$voxdims), voxelDimUnits=oldFields$voxunit, source=source, origin=origin, storedXform=storedXform, reordered=reordered, tags=tags, data=data)
+            object <- initFields(imageDims=as.integer(oldFields$imagedims), voxelDims=abs(as.numeric(oldFields$voxdims)), voxelDimUnits=oldFields$voxunit, source=source, origin=origin, storedXform=storedXform, reordered=reordered, tags=tags, data=data)
         }
         else
-            object <- initFields(imageDims=as.integer(imageDims), voxelDims=as.numeric(voxelDims), voxelDimUnits=voxelDimUnits, source=source, origin=origin, storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
+            object <- initFields(imageDims=as.integer(imageDims), voxelDims=abs(as.numeric(voxelDims)), voxelDimUnits=voxelDimUnits, source=source, origin=origin, storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
         
         if (length(object$imageDims) != length(object$voxelDims))
             report(OL$Error, "Image and voxel dimensions should have the same length")
