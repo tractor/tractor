@@ -10,25 +10,35 @@ library(tractor.graph)
 runExperiment <- function ()
 {
     requireArguments("file name")
-    fileName <- ensureFileSuffix(Arguments[1], "Rdata")
-    
-    if (!file.exists(fileName))
-        report(OL$Error, "File ", fileName, " does not exist")
+    fileNames <- ensureFileSuffix(Arguments[1], c("Rdata","csv"))
     
     setOutputLevel(OL$Info)
     
-    object <- deserialiseReferenceObject(file=fileName, raw=TRUE)
-    if (is.null(attr(object,"originalClass")))
+    filesExist <- file.exists(fileNames)
+    if (!any(filesExist))
+        report(OL$Error, "No suitable file named #{Arguments[1]} exists")
+    else if (!filesExist[1])
     {
-        elementClasses <- sapply(object, attr, "originalClass")
-        elementClasses <- paste("\"", elementClasses, "\"", sep="")
-        report(OL$Info, "A list of #{length(object)} object(s) of class(es) #{implode(unique(elementClasses),', ')}", prefixFormat="")
+        object <- readGraphFile(fileNames[2])
+        report(OL$Info, "An object of class \"Graph\"", prefixFormat="")
+        cat("---\n")
+        print(object)
     }
     else
     {
-        report(OL$Info, "An object of class \"#{implode(attr(object,'originalClass'),', ')}\"", prefixFormat="")
-        object <- deserialiseReferenceObject(object=object)
-        cat("---\n")
-        print(object)
+        object <- deserialiseReferenceObject(file=fileNames[1], raw=TRUE)
+        if (is.null(attr(object,"originalClass")))
+        {
+            elementClasses <- sapply(object, attr, "originalClass")
+            elementClasses <- paste("\"", elementClasses, "\"", sep="")
+            report(OL$Info, "A list of #{length(object)} object(s) of class(es) #{implode(unique(elementClasses),', ')}", prefixFormat="")
+        }
+        else
+        {
+            report(OL$Info, "An object of class \"#{implode(attr(object,'originalClass'),', ')}\"", prefixFormat="")
+            object <- deserialiseReferenceObject(object=object)
+            cat("---\n")
+            print(object)
+        }
     }
 }
