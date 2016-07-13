@@ -7,6 +7,6 @@ runExperiment <- function ()
     
     maxSize <- getConfigVariable("MaxBytesPerPixel", 2L)
     
-    image <- readImageFile(implode(Arguments, sep=" "))
+    image <- readImageFile(Arguments[1])
     writeImageFile(image, Arguments[nArguments()], maxSize=maxSize)
 }
