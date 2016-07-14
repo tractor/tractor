@@ -35,7 +35,7 @@
     return (transform)
 }
 
-guessSpace <- function (image, session = NULL)
+guessSpace <- function (image, session = NULL, errorIfOutOfSession = TRUE)
 {
     if (image$isInternal())
         return (NULL)
@@ -47,8 +47,10 @@ guessSpace <- function (image, session = NULL)
         {
             if (image$getSource() %~% "^(.+)/tractor")
                 session <- attachMriSession(ore.lastmatch()[,1])
-            else
+            else if (errorIfOutOfSession)
                 report(OL$Error, "Image does not seem to be within a session directory - the session must be specified")
+            else
+                return (NULL)
         }
         
         for (space in setdiff(names(.RegistrationTargets),"mni"))
