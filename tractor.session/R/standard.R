@@ -1,4 +1,4 @@
-getFileNameForStandardImage <- function (name = "brain", errorIfMissing = TRUE)
+getFileNameForStandardImage <- function (name = c("brain","face"), errorIfMissing = TRUE)
 {
     if (is.null(.StandardBrainPath))
     {
@@ -8,14 +8,13 @@ getFileNameForStandardImage <- function (name = "brain", errorIfMissing = TRUE)
             return (NULL)
     }
     
-    # There used to be other options, but for now they have gone
     name <- match.arg(name)
-    fileName <- switch(name, brain="brain")
+    fileName <- switch(name, brain="brain", face="face_mask")
     
     return (file.path(.StandardBrainPath, fileName))
 }
 
-getStandardImage <- function (name, errorIfMissing = TRUE)
+getStandardImage <- function (name, errorIfMissing = TRUE, ...)
 {
-    invisible (readImageFile(getFileNameForStandardImage(name)))
+    invisible (readImageFile(getFileNameForStandardImage(name), ...))
 }
