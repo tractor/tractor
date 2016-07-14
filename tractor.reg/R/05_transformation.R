@@ -94,8 +94,13 @@ Transformation <- setRefClass("Transformation", contains="SerialisableObject", f
         transformTypeNames <- c("affine", "nonlinear", "reverse-nonlinear")
         regularExpressions <- c("^forward\\d+\\.mat$", "^forward\\d+\\.nii.gz$", "^reverse\\d+\\.nii.gz$")
         fileNames <- list.files(directory)
-        availability <- sapply(regularExpressions, function(re) any(fileNames %~% re))
-        return (transformTypeNames[availability])
+        if (length(fileNames) == 0)
+            return (character(0))
+        else
+        {
+            availability <- sapply(regularExpressions, function(re) any(fileNames %~% re))
+            return (transformTypeNames[availability])
+        }
     },
     
     invert = function ()
