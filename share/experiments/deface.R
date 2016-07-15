@@ -32,12 +32,14 @@ runExperiment <- function ()
     # 2. Find a normal to the plane containing those points
     # 3. For each slice below the highest of those points:
     #    a. Find where the normals from each point crosses the slice
-    #    b. Find points within the slice that lie within the quadrilateral containing those points
+    #    b. Narrow down the area of interest to the smallest grid rectangle containing those points (for speed)
+    #    c. Find points within the slice that lie within the quadrilateral with the crossing points as vertices
     # NB: This wouldn't work if reordering had any effect on the MNI images, but they're stored LAS
     report(OL$Info, "Extending below face mask")
     faceMaskLocs <- getStandardImage("face")$getNonzeroIndices()
     ranges <- apply(subset(faceMaskLocs, faceMaskLocs[,3]==1), 2, range)
-    corners <- transformPoints(transform, as.matrix(expand.grid(ranges[,1],ranges[,2],1)), preferAffine=TRUE)[c(1,2,4,3),]
+    mniCorners <- as.matrix(expand.grid(ranges[,1], ranges[,2], 1))[c(1,2,4,3),]
+    corners <- transformPoints(transform, mniCorners, preferAffine=TRUE)
     normal <- vectorCrossProduct(corners[2,]-corners[1,], corners[4,]-corners[1,])
     normal <- normal / vectorLength(normal)
     
@@ -46,13 +48,14 @@ runExperiment <- function ()
     {
         report(OL$Verbose, "Processing slice #{i}...")
         sliceCorners <- t(apply(corners, 1, function(x) x[1:2] + (i-x[3]) * normal[1:2] / normal[3]))
-        remove <- sapply(1:nrow(grid), function(j) {
+        blockIndices <- which(grid[,1] >= min(sliceCorners[,1]) & grid[,1] <= max(sliceCorners[,1]) & grid[,2] >= min(sliceCorners[,2]) & grid[,2] <= max(sliceCorners[,2]))
+        toAdd <- sapply(blockIndices, function(j) {
             # Ref: http://demonstrations.wolfram.com/AnEfficientTestForAPointToBeInAConvexPolygon/
             cc <- t(apply(sliceCorners, 1, "-", grid[j,]))
             signs <- sign(c(cc[2,1]*cc[1,2]-cc[2,2]*cc[1,1], cc[3,1]*cc[2,2]-cc[3,2]*cc[2,1], cc[4,1]*cc[3,2]-cc[4,2]*cc[3,1], cc[1,1]*cc[4,2]-cc[1,2]*cc[4,1]))
             return (all(signs == signs[1]))
         })
-        transformedMask[cbind(grid[remove,],i)] <- 1
+        transformedMask[cbind(grid[blockIndices[toAdd],],i)] <- 1
     }
     
     report(OL$Info, "Applying to image and writing result")
