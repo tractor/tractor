@@ -123,6 +123,11 @@ Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, co
     sphericalCoordsStep[0] = 1.0;
     sphericalCoordsStep[1] = (*theta[closestIndex])[roundedPoint];
     sphericalCoordsStep[2] = (*phi[closestIndex])[roundedPoint];
-    Space<3>::Vector stepVector = Space<3>::sphericalToCartesian(sphericalCoordsStep);
+    
+    Space<3>::Vector stepVector;
+    if (sphericalCoordsStep[1] == 0.0 && sphericalCoordsStep[2] == 0.0)
+        stepVector = Space<3>::zeroVector();
+    else
+        stepVector = Space<3>::sphericalToCartesian(sphericalCoordsStep);
     return stepVector;
 }

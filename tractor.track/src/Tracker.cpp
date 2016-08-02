@@ -138,6 +138,11 @@ Streamline Tracker::run ()
             // Sample a direction for the current step
             Space<3>::Vector currentStep = dataSource->sampleDirection(loc, previousStep);
             logger.debug3.indent() << "Sampled step direction is " << currentStep << endl;
+            if (Space<3>::zeroVector(currentStep))
+            {
+                logger.debug2.indent() << "Terminating: zero step vector" << endl;
+                break;
+            }
             
             // Perform loopcheck if requested: within the current 5x5x5 voxel block, has the streamline been going in the opposite direction?
             if (flags["loopcheck"])
