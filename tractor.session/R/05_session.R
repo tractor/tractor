@@ -1,3 +1,24 @@
+.resolveRegistrationTargets <- function (session, sourceSpace, targetSpace)
+{
+    f <- function (mode, space)
+    {
+        type <- .RegistrationTargets[[space]][[mode]]
+        if (!is.null(type) && session$imageExists(type,space))
+            return (type)
+        else
+            return (character(0))
+    }
+    
+    `%|%` <- function(X,Y) if (length(X) == 2) X else Y
+    
+    # Odd semantics here, to be sure, but it saves some typing
+    # The infix operator separates possible return values, in order of preference
+    c(f("unmasked",sourceSpace), f("unmasked",targetSpace)) %|% c(f("masked",sourceSpace), f("masked",targetSpace)) %|% {
+        flag(OL$Warning, "Coregistering images with and without brain extraction may not produce good results")
+        c(.RegistrationTargets[[sourceSpace]][[1]], .RegistrationTargets[[targetSpace]][[1]])
+    }
+}
+
 MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",caches.="list"), methods=list(
     initialize = function (directory = NULL, ...)
     {
@@ -153,8 +174,9 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             return (.self$getTransformation(targetSpace,sourceSpace)$invert())
         else
         {
-            sourceImageFile <- .self$getRegistrationTargetFileName(sourceSpace)
-            targetImageFile <- .self$getRegistrationTargetFileName(targetSpace)
+            imageTypes <- .resolveRegistrationTargets(.self, sourceSpace, targetSpace)
+            sourceImageFile <- .self$getImageFileNameByType(imageTypes[1], sourceSpace)
+            targetImageFile <- .self$getImageFileNameByType(imageTypes[2], targetSpace)
             
             options <- list(sourceImageFile, targetImageFile, targetMask=NULL, estimateOnly=TRUE)
             options$types <- "affine"
