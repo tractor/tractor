@@ -247,7 +247,7 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
             if (is.null(args[i]))
                 1:dims[i]
             else
-                args[i]
+                args[[i]]
         })
         
         index <- as.matrix(expand.grid(args))

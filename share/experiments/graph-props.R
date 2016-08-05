@@ -26,7 +26,11 @@ runExperiment <- function ()
     meanShortestPath <- graph$getMeanShortestPath(ignoreInfinite=!disconnectedVertices)
     globalEfficiency <- graphEfficiency(graph, type="global", disconnectedVertices=disconnectedVertices)
     localEfficiency <- mean(graphEfficiency(graph, type="local", disconnectedVertices=disconnectedVertices), na.rm=TRUE)
-    meanClusteringCoefficient <- mean(graph$getClusteringCoefficients(), na.rm=TRUE)
+    
+    clusteringCoefficients <- graph$getClusteringCoefficients()
+    if (!disconnectedVertices)
+        clusteringCoefficients <- clusteringCoefficients[graph$getConnectedVertices()]
+    meanClusteringCoefficient <- mean(clusteringCoefficients, na.rm=TRUE)
     
     values <- c(es("#{graph$nVertices()} (#{length(graph$getConnectedVertices())} connected)"),
                 graph$nEdges(),

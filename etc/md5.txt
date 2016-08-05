@@ -2,7 +2,7 @@
 4f220227846670ff74cc3d19a90858f9 INSTALL.md
 b2ed60c7fa7984631a782722e53112f8 Makefile
 ed0143cddb6e6d8f7eb0e94248d7015f README.md
-b51e3092e2cec48132a19db4e11c8ec2 VERSION
+8ea4581d392114552d2cefcf543df9fa VERSION
 6cb894b9f39a2112d8629349a74d1bb8 bin/extra/tractor_Rinstall
 153aebd36cf10abae586d27501ec3004 bin/plough
 3f900f60ca35f194b17c681b81d6006e bin/tractor
@@ -26,12 +26,12 @@ bdacc667fe9afa3babcf84d723775db6 share/doc/TractoR-and-DICOM.html
 37f48d19c2c8879df302e9168ab891f2 share/doc/TractoR-for-R-users.html
 5e82bf5f2a8e65a9fbefa89a9765c2d0 share/doc/box_bottom.gif
 e05a1252b51781ffd6e8a24c7266fcdc share/doc/box_top.gif
-5f8043902d5c330e4bd83e60e7cf65a7 share/doc/changelog.html
+73840cf84117968f408f8d0d331c4669 share/doc/changelog.html
 a27ee24c739ac24904e75d0583ac22d6 share/doc/connectivity-graphs.html
 8a56f4659e6ec99ed4f1c25fff4d6686 share/doc/conventions.html
 3848ce47e1d33c88449e74d2c74ba373 share/doc/diffusion-processing.html
 0d66d29aa7dcadd51f330f04bfe8f919 share/doc/download.png
-be004bb6b6a7e708134ea62bd35300dd share/doc/downloads.html
+9d375ea104f288da98681ed9304e21ed share/doc/downloads.html
 d7f0853dab78e9236a957c344d7cd1db share/doc/genu-point.png
 b905166399828acec7ac831cbad6ade4 share/doc/getting-started.html
 cd8cec91833ffa792d4ad33729f8acbf share/doc/graph-brain.png
@@ -58,7 +58,7 @@ bbe5ef17ed4327566d76e69c35b796c2 share/experiments/binarise.R
 5d4ae86991b59752a2f8d54d0a37d5d1 share/experiments/chfiletype.R
 37cf06ef24c4317d767d122ce12f4b08 share/experiments/clone.R
 859edd6ff66f4b8dd621e48d1554e510 share/experiments/components.R
-a62a507c4f1e3c1085ee01104bc90fff share/experiments/compress.R
+4535d492a72ddc79ef74463d343d1571 share/experiments/compress.R
 b0e4d716123b59f3672fa1f465a8ceab share/experiments/console.R
 8483043558e9e2c4d9b93daeae713818 share/experiments/dicomread.R
 fb256999810e36647594287433519735 share/experiments/dicomsort.R
@@ -73,7 +73,7 @@ b2003e1cf3429182af4c0cdd18db8bb1 share/experiments/gradread.R
 aaaa070d4cbab7cd5f8b4314921d725f share/experiments/graph-build.R
 87bd4d445cf8f50e9308153b020f7fc7 share/experiments/graph-decompose.R
 5931af2027f595194de4eb708b03e13e share/experiments/graph-extract.R
-5eb1e56f63ccb5d72d804f7f954f33a9 share/experiments/graph-props.R
+eafe3387b7a4f46247799ac7f0e25eb0 share/experiments/graph-props.R
 c5b2f28c1a8cafdc3be9b5162591d4a0 share/experiments/graph-reweight.R
 b98c38d212c2f5c8d3ddffaf2b06a32f share/experiments/graph-viz.R
 f4be6c1bf0c87e6f37ebb7025dbad055 share/experiments/graph2csv.R
@@ -243,7 +243,7 @@ dbc7b0eb851301bb19547c7716dcb447 tests/40_Graphs/007_fbuild.save
 910e76cf8a087727925b618bdde0bf0a tests/40_Graphs/007_fbuild.sh
 e4acaeab89d448495787c25a1c03b1ba tests/40_Graphs/010_props.save
 9c65436f2e71442c249790c19e0d33ec tests/40_Graphs/010_props.sh
-1e58a1654a7454007d7a5bed340ecbb1 tests/40_Graphs/015_reweight.save
+096a16da48f63dd47e216d2fe8c971f6 tests/40_Graphs/015_reweight.save
 1482a93eb4a114c18a7ec7e77f43c045 tests/40_Graphs/015_reweight.sh
 d41d8cd98f00b204e9800998ecf8427e tests/40_Graphs/020_decompose.save
 0716e9f45ed88cfd02ee8c79336e0bef tests/40_Graphs/020_decompose.sh
@@ -358,11 +358,11 @@ ea710301bda7777fc785e7bd130ee0f8 tests/scripts/hello-interactive.R
 a853ebf2574020fbd777559eefccdc34 tests/scripts/hello.R
 c508de30be8719c0998bc2eff3fe4f03 tests/scripts/value.R
 55fb21bef3972d7d88d8345ede6802ab tests/scripts/which.R
-47ac1443f7c32fb59a1349b3507b1f7b tractor.base/DESCRIPTION
+ae68e23f50fd778997453a5f31803ffb tractor.base/DESCRIPTION
 e0b9c31556652eb38e81f3f71730e8bd tractor.base/NAMESPACE
 0edc59fd39e9e49b2f7d45131942f8e4 tractor.base/R/00_constants.R
 9fee1eeb86ba6bb456026d8dd6e63e55 tractor.base/R/05_serialise.R
-05c11017e3b372944af1288deb6d2df0 tractor.base/R/08_sparse.R
+bbbb6cc2ea05a25dda9480e170d12689 tractor.base/R/08_sparse.R
 61dd0e29733ecc6c565476c994b69f64 tractor.base/R/10_mri_image.R
 d2c5feee672bb6dba78defd85b0c1a7f tractor.base/R/15_dicom.R
 b2f755a8847e5faa1575cbe1ea37d536 tractor.base/R/analyze.R
@@ -462,10 +462,10 @@ cf971aaf67d7a1f640351e09cd6a6a66 tractor.nt/R/30_results.R
 35533bc1d09298f8550bd10a2b2f07dd tractor.nt/R/similarity.R
 111c068bc77fa365104a5d18a3bdd249 tractor.nt/R/vector.R
 f0cc999eac3380ac70a43274bc47e5b0 tractor.nt/inst/CITATION
-262ddadb039f3bce9936a91f74ac7663 tractor.reg/DESCRIPTION
+8faca0aab91c61b71874b4a5be6da045 tractor.reg/DESCRIPTION
 0b6384e9a8ad9930ff3ae6479365f2ca tractor.reg/NAMESPACE
 61bc37efcb5ffb29dcb7c748cf1258ec tractor.reg/R/02_niftiImage.R
-1439109a4a4cac4b355477d3d1f2fbb1 tractor.reg/R/05_transformation.R
+6ac0789d0ecd2e472c2d9acbe280257a tractor.reg/R/05_transformation.R
 68a7e3f60b8026d9cfbdde5520f0c82a tractor.reg/R/fsl.R
 a86b16ace61db08715feb4522ae5dc78 tractor.reg/R/misc.R
 e942d1e25103ee5c3b9dc6676b3f40a2 tractor.reg/R/niftyreg.R
