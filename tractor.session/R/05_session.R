@@ -326,6 +326,8 @@ updateSessionHierarchy <- function (session)
     
     if (file.exists(oldFdtDirectory) && !file.exists(diffusionDirectory))
     {
+        flag(OL$Warning, "Support for the TractoR 1.x session directory format is deprecated")
+        
         # Assume this is a TractoR 1.x session directory: rename the FDT
         # directory, insert the appropriate map, and move FDT-only files back
         file.rename(oldFdtDirectory, diffusionDirectory)
