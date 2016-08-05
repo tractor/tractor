@@ -17,10 +17,10 @@ runExperiment <- function ()
     else
         runFreesurferForSession(session, options)
     
-    if (!session$imageExists("reft1","structural") && session$imageExists("reft1","freesurfer"))
+    if (!session$imageExists("refT1","structural") && session$imageExists("refT1","freesurfer"))
     {
-        reft1 <- session$getImageByType("reft1", "freesurfer")
-        writeImageFile(reft1, session$getImageFileNameByType("reft1","structural"))
+        refT1 <- session$getImageByType("refT1", "freesurfer")
+        writeImageFile(refT1, session$getImageFileNameByType("refT1","structural"))
     }
     
     if (parcellationName != "none" && !session$imageExists("parcellation","structural"))

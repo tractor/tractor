@@ -1,5 +1,5 @@
 t1: T1w_vol%
 t2: T2w_vol%
 pd: PDw_vol%
-reft1: refT1
+refT1: refT1
 parcellation: parcellation

@@ -92,12 +92,12 @@ runExperiment <- function ()
                 finalImage <- asMriImage(apply(data,1:3,median), reference)
             
             report(OL$Info, "Writing median image")
-            writeImageFile(finalImage, session$getImageFileNameByType("reft1","structural"))
+            writeImageFile(finalImage, session$getImageFileNameByType("refT1","structural"))
         }
         else
         {
             report(OL$Info, "Symlinking volume to reference")
-            symlinkImageFiles(session$getImageFileNameByType("t1","structural",index=1), session$getImageFileNameByType("reft1","structural"))
+            symlinkImageFiles(session$getImageFileNameByType("t1","structural",index=1), session$getImageFileNameByType("refT1","structural"))
         }
     }
 }
