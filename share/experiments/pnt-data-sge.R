@@ -76,7 +76,7 @@ runExperiment <- function ()
     
     report(OL$Info, "Submitting jobs to SGE")
     queueOption <- ifelse(is.null(queueName), "", paste("-q",queueName))
-    qsubArgs <- paste("-terse -V -wd", path.expand(getwd()), queueOption, "-N pnt-data -o", file.path(tempDir,"log"), "-e /dev/null", paste("-t 1-",length(sessionList),sep=""), mainJobOptions, scriptFile)
+    qsubArgs <- paste("-terse -V -wd", path.expand(getwd()), queueOption, "-N pnt-data -o", file.path(tempDir,"log"), "-e /dev/null", paste("-t 1-",length(sessionNumbers),sep=""), mainJobOptions, scriptFile)
     result <- execute("qsub", qsubArgs, intern=TRUE)
     jobNumber <- as.numeric(sub("^(\\d+)\\.?.*$", "\\1", result, perl=TRUE))
     jobNumber <- jobNumber[!is.na(jobNumber)]
