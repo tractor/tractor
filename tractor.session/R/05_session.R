@@ -126,9 +126,9 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         return (parcellation)
     },
     
-    getRegistrationTarget = function (space, ...)  { return (.self$getImageByType(.RegistrationTargets[[space]], space, ...)) },
+    getRegistrationTarget = function (space, ...)  { return (.self$getImageByType(.RegistrationTargets[[space]][[1]], space, ...)) },
     
-    getRegistrationTargetFileName = function (space) { return (.self$getImageFileNameByType(.RegistrationTargets[[space]], space)) },
+    getRegistrationTargetFileName = function (space) { return (.self$getImageFileNameByType(.RegistrationTargets[[space]][[1]], space)) },
     
     getTracker = function (mask = NULL)
     {
