@@ -2,4 +2,5 @@ t1: T1w_vol%
 t2: T2w_vol%
 pd: PDw_vol%
 refT1: refT1
+maskedT1: maskedT1
 parcellation: parcellation
