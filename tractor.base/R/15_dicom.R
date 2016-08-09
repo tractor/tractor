@@ -348,7 +348,8 @@ readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreT
         if (ascii)
         {
             asciiHeader <- ore.search(ore("### ASCCONV BEGIN[^#]+###(.+)### ASCCONV END ###",options="m"), ore.file(fileName,binary=TRUE))[,1]
-            asciiFields <- ore.split(ore("\n",syntax="fixed"), asciiHeader)
+            if (length(asciiHeader) > 0)
+                asciiFields <- ore.split(ore("\n",syntax="fixed"), asciiHeader)
         }
         
         tags <- data.frame(groups=groups, elements=elements, types=types, values=values, stringsAsFactors=FALSE)
