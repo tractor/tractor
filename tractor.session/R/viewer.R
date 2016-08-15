@@ -47,9 +47,10 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
             if (!images[[i]]$isInternal() && file.exists(ensureFileSuffix(images[[i]]$getSource(),"lut")))
             {
                 regions <- read.table(ensureFileSuffix(images[[i]]$getSource(),"lut"), header=TRUE, stringsAsFactors=FALSE)
-                indexRange <- range(regions$index)
-                colours <- rep(NA, indexRange[2]-indexRange[1]+1)
-                colours[regions$index - min(regions$index) + 1] <- regions$colour
+                imageRange <- range(images[[i]], na.rm=TRUE)
+                regions <- subset(regions, index>=imageRange[1] & index<=imageRange[2])
+                colours <- rep(NA, imageRange[2]-imageRange[1]+1)
+                colours[regions$index - imageRange[1] + 1] <- regions$colour
                 colourScales[[i]] <- list(background="#000000", colours=colours)
                 indexNames[[i]] <- structure(regions$label, names=as.character(regions$index))
             }
