@@ -66,14 +66,15 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         {
             type <- tolower(type)
             root <- file.path(directory, "tractor")
+            subdirs <- structure(caches.$subdirectories, names=tolower(names(caches.$subdirectories)))
             
             if (type == "root")
                 requiredDir <- root
-            else if (!(type %in% names(caches.$subdirectories)))
+            else if (!(type %in% names(subdirs)))
                 report(OL$Error, "Directory type \"#{type}\" is not valid")
             else
-                requiredDir <- expandFileName(caches.$subdirectories[[type]], base=root)
-
+                requiredDir <- expandFileName(subdirs[[type]], base=root)
+            
             if (createIfMissing && !file.exists(requiredDir))
                 dir.create(requiredDir, recursive=TRUE)
             return (requiredDir)
@@ -95,26 +96,28 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         else
         {
             type <- tolower(type)
+            maps <- structure(caches.$maps, names=tolower(names(caches.$maps)))
             
             if (is.null(place))
             {
-                locs <- which(sapply(caches.$maps, function(x) type %in% names(x)))
+                locs <- which(sapply(maps, function(x) type %in% tolower(names(x))))
                 if (length(locs) < 1)
                     report(OL$Error, "The specified file type (\"#{type}\") does not have a standard location")
                 else if (length(locs) > 1)
                 {
-                    locs <- names(caches.$maps)[locs]
+                    locs <- names(maps)[locs]
                     if (length(which(locs %in% .PrimarySessionDirectories)) == 1)
                         place <- locs[locs %in% .PrimarySessionDirectories]
                     else
                         report(OL$Error, "The specified file type (\"#{type}\") is ambiguous: it can exist in places #{implode(paste('\"',locs,'\"',sep=''),', ',finalSep=' and ')}")
                 }
                 else
-                    place <- names(caches.$maps)[locs[1]]
+                    place <- names(maps)[locs[1]]
             }
+            else
+                place <- names(maps)[pmatch(tolower(place), names(maps))]
             
-            map <- caches.$maps[[place]]
-            names(map) <- tolower(names(map))
+            map <- structure(maps[[place]], names=tolower(names(maps[[place]])))
             directory <- .self$getDirectory(place)
             
             fileName <- map[[type]]
