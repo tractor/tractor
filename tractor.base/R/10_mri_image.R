@@ -898,11 +898,17 @@ mergeMriImages <- function (...)
     
     dimensionalities <- sapply(images, function(x) x$getDimensionality())
     dimensions <- sapply(seq_along(images), function(i) c(images[[i]]$getDimensions(), rep(NA,max(dimensionalities)-dimensionalities[i])))
-    maxDimensions <- na.omit(apply(dimensions, 1, max))
-    imageSizes <- apply(dimensions, 2, prod)
-    blockSize <- prod(maxDimensions)
+    
+    commonDims <- apply(dimensions, 1, allEqual)
+    if (!commonDims[1])
+        report(OL$Error, "Images must have at least their first dimension in common")
+    commonDims[length(commonDims)] <- FALSE
+    lastCommonDim <- which(!commonDims)[1] - 1L
+    blockDims <- dimensions[1:lastCommonDim,1]
+    
+    imageSizes <- apply(dimensions, 2, prod, na.rm=TRUE)
     data <- do.call("c", lapply(images, as.array))
-    dim(data) <- c(maxDimensions, length(data) %/% blockSize)
+    dim(data) <- c(blockDims, length(data) %/% prod(blockDims))
     
     return (asMriImage(data, images[[which.max(imageSizes)]]))
 }
