@@ -122,7 +122,7 @@ newMriImageByThresholding <- function (image, level, defaultValue = 0)
 newDicomMetadataFromFile <- function (fileName, checkFormat = TRUE, dictionary = NULL, stopTag = NULL, ignoreTransferSyntax = FALSE)
 {
     .Deprecated("readDicomFile", "tractor.base")
-    readDicomFile(fileName, checkFormat, stopTag=stopTag, ignoreTransferSyntax=ignoreTransferSyntax)
+    readDicomFile(fileName, checkFormat, stopTag=stopTag, ignoreTransferSyntax=ignoreTransferSyntax, ascii=FALSE)
 }
 
 #' @rdname tractor.base-deprecated

@@ -88,7 +88,7 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
     report(OL$Info, "Reading #{currentSort} identifiers from #{nFiles} files")
     for (i in 1:nFiles)
     {
-        metadata <- try(readDicomFile(files[i], stopTag=identifierTag), silent=TRUE)
+        metadata <- try(readDicomFile(files[i], stopTag=identifierTag, ascii=FALSE), silent=TRUE)
         if (is.null(metadata) || ("try-error" %in% class(metadata)))
         {
             report(OL$Info, "Skipping #{files[i]}")
@@ -119,7 +119,7 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
         
         if (currentSort == "series")
         {
-            metadata <- readDicomFile(files[matchingFiles[1]], stopTag=c(0x0008,0x103e))
+            metadata <- readDicomFile(files[matchingFiles[1]], stopTag=c(0x0008,0x103e), ascii=FALSE)
             description <- metadata$getTagValue(0x0008, 0x103e)
             subdirectory <- es("#{shortIdentifiers[i]}_#{ore.subst('[^A-Za-z0-9]+','_',description,all=TRUE)}")
             report(OL$Info, "Series #{shortIdentifiers[i]} includes #{length(matchingFiles)} files; description is \"#{description}\"")
