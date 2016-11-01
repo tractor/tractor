@@ -103,22 +103,17 @@ principalNetworks.list <- function (x, components = NULL, eigenvalueThreshold = 
     fullMatrices <- lapply(1:nComponents, function(i) {
         m <- eigensystem$values[i] * (eigensystem$vectors[,i] %o% eigensystem$vectors[,i])
         m[is.na(associationMatrix)] <- NA
-        rownames(m) <- rownames(associationMatrix)
-        colnames(m) <- colnames(associationMatrix)
         return (m)
     })
     
     # Calculate residual association matrices after subtracting out higher components
     residualMatrices <- Reduce("-", fullMatrices, init=associationMatrix, accumulate=TRUE)
     residualMatrices <- residualMatrices[-1]
-    residualGraphs <- lapply(residualMatrices[components], asGraph, edgeList=FALSE)
-    residualGraphs <- lapply(residualGraphs, function(r) { r$setVertexLocations(x[[1]]$getVertexLocations(),x[[1]]$getVertexLocationUnit(),x[[1]]$getVertexLocationSpace()); r })
+    residualGraphs <- lapply(residualMatrices[components], function(m) x[[1]]$copy()$setAssociationMatrix(m))
     names(residualGraphs) <- paste("PN", components, sep="")
     
-    verticesToDrop <- setdiff(seq_len(x[[1]]$nVertices()), attr(loadings,"salient"))
-    matrices <- lapply(components, function(i) { x <- fullMatrices[[i]]; x[verticesToDrop,] <- x[,verticesToDrop] <- 0; x })
-    componentGraphs <- lapply(matrices, asGraph, edgeList=FALSE)
-    componentGraphs <- lapply(componentGraphs, function(r) { r$setVertexLocations(x[[1]]$getVertexLocations(),x[[1]]$getVertexLocationUnit(),x[[1]]$getVertexLocationSpace()); r })
+    verticesToKeep <- attr(loadings, "salient")
+    componentGraphs <- lapply(components, function(i) inducedSubgraph(x[[1]]$copy()$setAssociationMatrix(fullMatrices[[i]]), which(verticesToKeep[,i])))
     names(componentGraphs) <- paste("PN", components, sep="")
     
     loadings <- structure(loadings[,components], salient=attr(loadings,"salient")[,components])
