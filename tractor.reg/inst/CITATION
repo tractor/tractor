@@ -1,4 +1,4 @@
-citHeader("To cite TractoR in publications please use:")
+citHeader("To cite TractoR (of which 'tractor.reg' is part) in publications, please use:")
 
 citEntry(entry = "Article",
   title        = "{TractoR}: Magnetic resonance imaging and tractography with {R}",
