@@ -142,6 +142,33 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     nVertices = function () { return (vertexCount) },
     
+    setAssociationMatrix = function (newMatrix, matchEdges = FALSE)
+    {
+        if (nrow(newMatrix) != .self$nVertices() || ncol(newMatrix) != .self$nVertices())
+            report(OL$Error, "Association matrix size does not match vertex count")
+        
+        if (!.self$isDirected())
+            newMatrix[lower.tri(newMatrix,diag=FALSE)] <- NA
+        newEdges <- which(!is.na(newMatrix) & newMatrix != 0, arr.ind=TRUE)
+        .self$edges <- newEdges
+        .self$edgeWeights <- newMatrix[newEdges]
+        
+        if (matchEdges)
+        {
+            indices <- match(apply(newEdges,1,implode,sep=","), apply(edges,1,implode,sep=","))
+            .self$edgeAttributes <- lapply(edgeAttributes, function (attrib) {
+                if (length(attrib) == nEdges)
+                    return (attrib[indices])
+                else
+                    return (attrib)
+            })
+        }
+        else
+            .self$edgeAttributes <- list()
+        
+        invisible(.self)
+    },
+    
     setEdgeAttributes = function (...)
     {
         newAttributes <- lapply(list(...), function(x) {
