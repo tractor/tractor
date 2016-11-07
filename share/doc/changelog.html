@@ -47,6 +47,14 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="307-2016-11-07">3.0.7 (2016-11-07)</h2>
+
+<ul>
+<li>The 3.0.x series of releases introduced a bug in the implementation of principal networks (accessed via <code>graph-decompose</code>), which could result in nonsense output. This has now been corrected.</li>
+<li>Session map keys are now fully case-insensitive, as intended.</li>
+<li>The speed of the <code>dicomsort</code> script should now be a little better.</li>
+</ul>
+
 <h2 id="306-2016-08-23">3.0.6 (2016-08-23)</h2>
 
 <ul>
@@ -142,6 +150,13 @@
 <li>Camino-specific scripts <code>fsl2camino</code>, <code>camino2fsl</code> and <code>caminofiles</code> have been removed. They were poorly maintained, and largely redundant following Camino&rsquo;s support for NIfTI images.</li>
 <li>The &ldquo;-r&rdquo; flag to the main <code>tractor</code> program is defunct.</li>
 <li>Extensive low-level and upstream package improvements have been incorporated.</li>
+</ul>
+
+<h2 id="264-2016-11-07">2.6.4 (2016-11-07)</h2>
+
+<ul>
+<li>The <code>pnt-data-sge</code> script will no longer specify the wrong number of array jobs to SGE when the <code>SessionNumbers</code> option is used.</li>
+<li>Some minor issues with the <code>RNiftyReg</code> package have been patched.</li>
 </ul>
 
 <h2 id="263-2016-04-27">2.6.3 (2016-04-27)</h2>

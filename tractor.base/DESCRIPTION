@@ -1,6 +1,6 @@
 Package: tractor.base
-Version: 3.0.6
-Date: 2016-08-23
+Version: 3.0.7
+Date: 2016-11-01
 Title: Read, Manipulate and Visualise Magnetic Resonance Images
 Author: Jon Clayden
 Maintainer: Jon Clayden <code@clayden.org>
