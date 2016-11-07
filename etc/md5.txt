@@ -2,7 +2,7 @@
 34db5bbdec11d49778cef3280b0211d8 INSTALL.md
 f25eef6b149bd98c94042aa2445d1348 Makefile
 d68d92be46916fb15ef84d003ef12886 README.md
-794dcdee72506d8c1c1937da380fef42 VERSION
+1133fe275115fd227142ac2fdba5a395 VERSION
 8156fa443b1200ba0eff0bb94e92bc21 bin/tractor
 4f9b42ebc86e56ff7e013ca707c56259 bin/tractor_Rinstall
 41bbdb495cafa8777a74812c63bee5c0 etc/parcellations/desikan-killiany.lut
@@ -16,12 +16,12 @@ d68d92be46916fb15ef84d003ef12886 README.md
 f2a0688a67e316b8ec2339764ea0196f share/doc/TractoR-for-R-users.html
 5e82bf5f2a8e65a9fbefa89a9765c2d0 share/doc/box_bottom.gif
 e05a1252b51781ffd6e8a24c7266fcdc share/doc/box_top.gif
-81de1c1c8b5b6bf66963962e814b304c share/doc/changelog.html
+59cc6d47dfd0dc739fd8f36cfd86c634 share/doc/changelog.html
 1920aa23f0066ec091f0a133e93b9770 share/doc/connectivity-graphs.html
 bcdf9f017ea7419f99ce9f09a3fb3917 share/doc/conventions.html
 700c960ae93ba39a9bf27550d8c0ddc2 share/doc/diffusion-processing.html
 0d66d29aa7dcadd51f330f04bfe8f919 share/doc/download.png
-3d526dbb4dc525b6b8909665a2e1c541 share/doc/downloads.html
+13994e5e172170e487e98e5f5b953204 share/doc/downloads.html
 fe6cd3a90e2ecf534ec95be9a25762a8 share/doc/genu-point.png
 6884e3c15bfd689bde4e249c3a46e6b0 share/doc/getting-started.html
 cd8cec91833ffa792d4ad33729f8acbf share/doc/graph-brain.png
@@ -89,7 +89,7 @@ de72ae8cf00f46d22c6d0a4ac3a3ea25 share/experiments/morph.R
 c9b112925f38f80df55c934d9eaa5699 share/experiments/platform.R
 f460b8c36295453d594b152620e2f1ac share/experiments/plotcorrections.R
 67b29714742ae994ba86c80c59ab2604 share/experiments/pnt-collate.R
-6c0bfc4b3a644a713439329b675f41b2 share/experiments/pnt-data-sge.R
+56b67d0916c4f8dd2ee796fb71759f82 share/experiments/pnt-data-sge.R
 c71fa226d459a222f0e74550e61048c4 share/experiments/pnt-data.R
 e6d4c7c3f5bc600ae877d389a10886d4 share/experiments/pnt-em.R
 f4706b8ac084517f1c0fb46c042cd467 share/experiments/pnt-eval.R
