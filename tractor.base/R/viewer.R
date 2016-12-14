@@ -55,7 +55,7 @@ polarPlotPanel <- function (point, data, imageNames, directions, bValues = NULL)
     data <- data[[which(lengths==nrow(directions))]]
     maxDataValue <- suppressWarnings(max(data[bValues>0],na.rm=T))
         
-    correlations <- abs(cor(cbind(abs(directions), data), method="spearman")[1:3,4])
+    correlations <- abs(cor(cbind(abs(directions), data))[1:3,4])
     axes <- setdiff(1:3, which.min(correlations))
     view <- c("sagittal","coronal","axial")[which.min(correlations)]
     
