@@ -105,6 +105,8 @@ polarPlotPanel <- function (point, data, imageNames, directions, bValues = NULL)
 #'   be of any mode, and will be character mode when \code{indexNames} is not
 #'   \code{NULL}.
 #' @param imageNames A character vector giving a name for each image displayed.
+#' @param directions A matrix of 3D acquisition direction vectors, one per row.
+#' @param bValues A vector of b-values, if the image is diffusion-weighted.
 #' @return These functions are called for their side effects.
 #' 
 #' @note The \code{defaultInfoPanel} and \code{timeSeriesPanel} functions are

@@ -2,6 +2,7 @@
 % Please edit documentation in R/viewer.R
 \name{defaultInfoPanel}
 \alias{defaultInfoPanel}
+\alias{polarPlotPanel}
 \alias{timeSeriesPanel}
 \alias{viewImages}
 \title{A simple interactive viewer for MriImage objects}
@@ -9,6 +10,8 @@
 defaultInfoPanel(point, data, imageNames)
 
 timeSeriesPanel(point, data, imageNames)
+
+polarPlotPanel(point, data, imageNames, directions, bValues = NULL)
 
 viewImages(images, colourScales = NULL, point = NULL, interactive = TRUE,
   crosshairs = TRUE, orientationLabels = TRUE, fixedWindow = TRUE,
@@ -25,6 +28,10 @@ be of any mode, and will be character mode when \code{indexNames} is not
 \code{NULL}.}
 
 \item{imageNames}{A character vector giving a name for each image displayed.}
+
+\item{directions}{A matrix of 3D acquisition direction vectors, one per row.}
+
+\item{bValues}{A vector of b-values, if the image is diffusion-weighted.}
 
 \item{images}{An \code{MriImage} object, or list of \code{MriImage} objects.}
 
