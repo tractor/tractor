@@ -306,7 +306,7 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
     }
 }
 
-compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScale = 2, projectOverlays = NULL, alpha = c("binary","linear","log"), prefix = "image", zoomFactor = 1, windowLimits = NULL, nColumns = NULL, separate = FALSE)
+compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScales = 2, projectOverlays = NULL, alpha = c("binary","linear","log"), prefix = "image", zoomFactor = 1, windowLimits = NULL, nColumns = NULL, separate = FALSE, clip = TRUE)
 {
     if (!is.list(images) || length(images) < 1)
         report(OL$Error, "Images should be specified in a list with at least one element")
@@ -314,6 +314,14 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScale =
         windowLimits <- rep(list(NULL), length(images))
     else if (!is.list(windowLimits) || length(windowLimits) != length(images))
         report(OL$Error, "Window limits should be specified in a list of the same length as the images")
+    
+    nImages <- length(images)
+    if (length(colourScales) == nImages)
+        colourScales <- as.list(colourScales)
+    else if (nImages == 1)
+        colourScales <- list(1L)
+    else
+        colourScales <- c(list(1L), rep(as.list(colourScales),nImages-1))
     
     if (is.character(alpha))
         alpha <- match.arg(alpha)
@@ -365,7 +373,7 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScale =
     
     for (j in seq_len(nPanes))
     {
-        for (i in seq_along(images))
+        for (i in seq_len(nImages))
         {
             if (projectOverlays && i > 1)
                 data <- maximumIntensityProjection(images[[i]], info$axis[j])
@@ -373,14 +381,16 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScale =
                 data <- images[[i]]$getSlice(info$axis[j], info$loc[j])
             
             if (i == 1)
-                currentImage <- colourMap(data, 1, windowLimits[[i]])
+                currentImage <- colourMap(data, colourScales[[i]], windowLimits[[i]])
             else
             {
-                layerImage <- colourMap(data, colourScale, windowLimits[[i]])
+                layerImage <- colourMap(data, colourScales[[i]], windowLimits[[i]])
                 if (projectOverlays)
                     layerAlpha <- maximumIntensityProjection(alphaImages[[i]], info$axis[j])
                 else
                     layerAlpha <- alphaImages[[i]]$getSlice(info$axis[j], info$loc[j])
+                if (!is.null(windowLimits[[i]]) && !clip)
+                    layerAlpha[data < min(windowLimits[[i]]) | data > max(windowLimits[[i]])] <- 0
                 if (is.numeric(alpha))
                     layerAlpha <- colourMap(layerAlpha, 1, c(0,1))
                 else

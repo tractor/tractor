@@ -30,5 +30,5 @@ runExperiment <- function ()
     
     loc <- round(dim(targetImage) / 2)
     prefix <- paste(basename(sourceImage$getSource()), "overlay", sep="_")
-    tractor.base:::compositeImages(list(targetImage,outlineImage), x=loc[1], y=loc[2], z=loc[3], colourScale="red", projectOverlays=FALSE, alpha=0.5, prefix=prefix)
+    tractor.base:::compositeImages(list(targetImage,outlineImage), x=loc[1], y=loc[2], z=loc[3], colourScales="red", projectOverlays=FALSE, alpha=0.5, prefix=prefix)
 }
