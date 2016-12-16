@@ -5,12 +5,7 @@ readYaml <- function (fileName = NULL, text = NULL, init = list())
         if (x %~% "^\\s*$")
             return (NULL)
         else
-        {
-            text <- as.character(x)
-            text <- sub("^\\s*\"?", "", text, perl=TRUE)
-            text <- sub("\"?\\s*$", "", text, perl=TRUE)
-            return (text)
-        }
+            return (ore.subst("^\\s*\"?(.*?)\"?\\s*$", "\\1", as.character(x)))
     }
     
     mapping <- init
@@ -72,22 +67,24 @@ readYaml <- function (fileName = NULL, text = NULL, init = list())
         }
         
         # Everything before the first colon in the line is the key; the rest is the associated value
-        key <- sub("\\s*:\\s*.*$", "", lines[1], perl=TRUE)
-        key <- sub("^\\s+", "", key, perl=TRUE)
-        textValue <- sub("^\\s*[\\w\\-]+\\s*:\\s*", "", lines[1], perl=TRUE)
-        
-        if (key == sub("^\\s+","",lines[1],perl=TRUE))
+        match <- ore.search("^\\s*([\\w-]+)\\s*:\\s*(.*?)\\s*$", lines[1])
+        if (is.null(match))
         {
             if (usingFile)
                 report(OL$Warning, "A line in the YAML file ", fileName, " has no key")
             else
-                unlabelled <- c(unlabelled, textValue)
+                unlabelled <- c(unlabelled, trimWhitespaceAndQuotes(lines[1]))
             
             lines <- lines[-1]
             next
         }
-        report(OL$Debug, "Key is ", key, "; value is ", textValue)
-
+        else
+        {
+            key <- match[,1]
+            textValue <- match[,2]
+            report(OL$Debug, "Key is ", key, "; value is ", textValue)
+        }
+        
         # Values starting with a square bracket are sequences (vectors in R)
         if (regexpr("[", textValue, fixed=TRUE) == 1)
         {
