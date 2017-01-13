@@ -432,6 +432,42 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
         return (isTRUE(all.equal(abs(x), abs(y), ...)))
 }
 
+#' Test whether all elements of a vector are equal
+#' 
+#' This function is a wrapper around \code{all}, testing whether all elements
+#' of the specified vector are equal to each other.
+#' 
+#' @param x A vector of any mode, including a list.
+#' @param ignoreMissing If \code{TRUE}, missing elements will be ignored.
+#'   Otherwise the presence of missing values will result in a return value of
+#'   \code{FALSE}.
+#' @return \code{TRUE} if all elements test (exactly) equal; \code{FALSE}
+#'   otherwise.
+#' @author Jon Clayden
+#' @seealso \code{\link{equivalent}} for elementwise equivalence of two
+#'   vectors.
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @examples
+#' 
+#' allEqual(c(1,1,1))  # TRUE
+#' allEqual(c(1,1,NA))  # FALSE
+#' allEqual(c(1,1,NA), ignoreMissing=TRUE)  # TRUE
+#' 
+#' @export
+allEqual <- function (x, ignoreMissing = FALSE)
+{
+    if (is.list(x))
+        return (isTRUE(all(x==x[[1]], na.rm=ignoreMissing)))
+    else
+        return (isTRUE(all(x==x[1], na.rm=ignoreMissing)))
+}
+
 stripNul <- function (x, method = c("truncate","drop"))
 {
     method <- match.arg(method)
