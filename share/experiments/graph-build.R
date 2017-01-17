@@ -131,7 +131,8 @@ runExperiment <- function ()
             }
             else if (regionTimeSeries == "pc")
             {
-                pca <- prcomp(allTimeSeries, scale.=TRUE)
+                zeroVariance <- (colSums(cov(allTimeSeries)) == 0)
+                pca <- prcomp(allTimeSeries[,!zeroVariance], scale.=TRUE)
                 timeSeries[,i] <- pca$x[,1]
                 variances <- pca$sdev^2
                 report(OL$Verbose, "The first PC captures #{variances[1]/sum(variances)*100}% of the variance", round=2)
