@@ -1,4 +1,4 @@
-bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputLevel = OL$Warning, configFiles = NULL, configText = NULL, parallelisationFactor = 1, profile = FALSE, standalone = TRUE, debug = FALSE)
+bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputLevel = OL$Warning, configFiles = NULL, configText = NULL, parallelisationFactor = 1, profile = FALSE, standalone = TRUE, debug = FALSE, breakpoint = NULL)
 {
     profile <- as.logical(profile)
     
@@ -30,6 +30,9 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputL
     
     withReportrHandlers({
         source(scriptFile)
+        
+        if (!is.null(breakpoint))
+            setBreakpoint(scriptFile, breakpoint, nameonly=FALSE)
         
         fileConfig <- readYaml(configFiles)
         textConfig <- readYaml(text=configText)
@@ -149,9 +152,9 @@ callExperiment <- function (exptName, args = NULL, configFiles = NULL, outputLev
     bootstrapExperiment(scriptFile, outputLevel=outputLevel, configFiles=configFiles, configText=implode(args,sep=" "), standalone=FALSE, ...)
 }
 
-debugExperiment <- function (exptName, args = NULL, configFiles = NULL, ...)
+debugExperiment <- function (exptName, args = NULL, configFiles = NULL, breakpoint = NULL, ...)
 {
     scriptFile <- findExperiment(exptName)
     report(OL$Info, "Debugging experiment script ", scriptFile)
-    bootstrapExperiment(scriptFile, outputLevel=OL$Debug, configFiles=configFiles, configText=implode(args,sep=" "), standalone=FALSE, debug=TRUE, ...)
+    bootstrapExperiment(scriptFile, outputLevel=OL$Debug, configFiles=configFiles, configText=implode(args,sep=" "), standalone=FALSE, debug=is.null(breakpoint), breakpoint=breakpoint, ...)
 }
