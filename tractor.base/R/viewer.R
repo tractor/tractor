@@ -156,7 +156,7 @@ viewImages <- function (images, colourScales = NULL, point = NULL, interactive =
     })
     
     if (fixedWindow)
-        windows <- lapply(images3D, function(x) range(x$getData(),na.rm=TRUE))
+        windows <- lapply(images3D, function(x) range(x$getData(),na.rm=TRUE,finite=TRUE))
     else
         windows <- rep(list(NULL), length(images3D))
     
