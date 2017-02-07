@@ -22,3 +22,9 @@
 [submodule "lib/png"]
 	path = lib/png
 	url = https://github.com/tractor/png.git
+[submodule "lib/RNifti"]
+	path = lib/RNifti
+	url = https://github.com/jonclayden/RNifti.git
+[submodule "lib/divest"]
+	path = lib/divest
+	url = https://github.com/jonclayden/divest.git
