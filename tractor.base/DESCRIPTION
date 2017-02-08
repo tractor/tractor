@@ -6,7 +6,7 @@ Author: Jon Clayden
 Maintainer: Jon Clayden <code@clayden.org>
 Imports: methods, ore (>= 1.3.0), reportr
 Suggests: mmand, png
-Enhances: oro.nifti
+Enhances: oro.nifti, RNifti
 Description: Functions for working with magnetic resonance images. Analyze,
     NIfTI-1, NIfTI-2 and MGH format images can be read and written; DICOM files
     can only be read.
