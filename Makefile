@@ -29,10 +29,10 @@ post-install-info:
 	@$(ECHO)
 	@$(ECHO) "The ~/.bashrc file can be created if it does not already exist."
 
-install-libs:
-	@$(INSTALL) lib/Rcpp lib/RcppEigen lib/corpcor
-	@$(INSTALL) lib/ore lib/reportr lib/mmand lib/RNiftyReg
-	@$(INSTALL) -k lib/png
+lib/.timestamp: lib/ore lib/reportr lib/corpcor lib/png lib/Rcpp lib/RcppEigen lib/mmand lib/RNifti lib/divest lib/RNiftyReg
+	@$(INSTALL) $? && touch lib/.timestamp
+
+install-libs: lib/.timestamp
 
 check-and-install-libs: install-libs
 
