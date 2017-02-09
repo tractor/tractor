@@ -1,8 +1,0 @@
-LIB_OBJECTS = niftilib/nifti1_io.o znzlib/znzlib.o
-
-OBJECTS = $(LIB_OBJECTS) main.o Array.o NiftiImage.o DiffusionModel.o Pipeline.o Streamline.o Tracker.o BinaryStream.o Trackvis.o VisitationMap.o RCallback.o
-
-PKG_LIBS = @LIBS@
-PKG_CPPFLAGS = -Iniftilib -Iznzlib @CPPFLAGS@
-
-# PKG_CXXFLAGS = -Wall -Wextra -pedantic
