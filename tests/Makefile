@@ -37,8 +37,12 @@ create-tests:
 
 %.out: %.sh
 	@$(ECHO_N) "`grep '#@desc' $< | sed 's/#@desc //'`... "
-	@$(TIME) ( $(BASH) $< >$@ 2>&1 ) >tmp/tmp.time 2>&1 || ( $(ECHO) ""; cat tmp/tmp.out; rm -f tmp/tmp.out; exit 1 )
-	@real=`grep '^real' tmp/tmp.time | sed 's/real *//'`; $(DIFF) $*.save $@ >tmp/tmp.diff 2>&1 && ( $(ECHO) "OK ($$real s)"; rm -f tmp/tmp.* ) || ( $(ECHO) "FAIL"; cat tmp/tmp.diff; rm -f tmp/tmp.* $@; exit 1 )
+	@if test -f $*.skip && $(BASH) $*.skip 2>&1; then \
+	 	$(ECHO) "SKIPPED"; \
+	 else \
+	 	$(TIME) ( $(BASH) $< >$@ 2>&1 ) >tmp/tmp.time 2>&1 || ( $(ECHO) ""; cat tmp/tmp.out; rm -f tmp/tmp.out; exit 1 ); \
+		real=`grep '^real' tmp/tmp.time | sed 's/real *//'`; $(DIFF) $*.save $@ >tmp/tmp.diff 2>&1 && ( $(ECHO) "OK ($$real s)"; rm -f tmp/tmp.* ) || ( $(ECHO) "FAIL"; cat tmp/tmp.diff; rm -f tmp/tmp.* $@; exit 1 ) \
+	 fi
 
 %.save: %.sh
 	@$(ECHO_N) "Updating test output for $@... "
