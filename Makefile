@@ -7,6 +7,7 @@ ECHO=/bin/echo
 ECHO_N=/bin/echo -n
 GIT=git
 MD5=md5
+DOCKER=docker
 INSTALL=$(ENV) R=$(R) bin/extra/tractor_Rinstall
 
 default: build post-build-info
@@ -80,7 +81,7 @@ clean:
 	@cd tests && $(MAKE) clean
 
 distclean: clean
-	@rm -f lib/.VERSION
+	@rm -f lib/.timestamp
 	@rm -f bin/exec/tractor src/tractor.o src/build.log install.log
 	@rm -f tractor.track/config.log tractor.track/config.status tractor.track/src/Makevars tractor.track/src/config.h
 
@@ -98,3 +99,7 @@ check-md5:
 	@$(ECHO_N) "Checking MD5 checksums... "
 	@bin/tractor -q -z -i tests/scripts/check-md5 etc/md5.txt >tmp/md5.txt && $(ECHO) "OK" || ( $(ECHO) "FAIL"; sed '$$ d' tmp/md5.txt )
 	@rm -f tmp/md5.txt
+
+docker: uninstall distclean
+	@$(GIT) clean -Xf
+	@minor_version=`cat VERSION | sed 's/\..$$//'` && $(DOCKER) build -t "tractor:$$minor_version" .
