@@ -1,0 +1,12 @@
+language: c
+
+addons:
+  apt:
+    sources:
+    - r-packages-precise
+    packages:
+    - r-base-dev
+
+install: make install
+
+script: make test
