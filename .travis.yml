@@ -6,6 +6,7 @@ addons:
     - r-packages-precise
     packages:
     - r-base-dev
+    - r-cran-matrix
 
 install: make install
 
