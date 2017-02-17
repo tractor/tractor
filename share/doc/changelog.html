@@ -47,6 +47,15 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="308-2017-02-17">3.0.8 (2017-02-17)</h2>
+
+<ul>
+<li>Support has been added for containerised builds of TractoR using <a href="https://hub.docker.com/r/jonclayden/tractor/">Docker</a>.</li>
+<li>Tractography operations could produce &ldquo;bad allocation&rdquo; errors on some platforms. This should now be fixed.</li>
+<li>Tests requiring FSL will now be skipped if FSL doesn&rsquo;t seem to be installed, rather than producing an error.</li>
+<li>The <code>plough</code> self-test should no longer fail with an error about a missing executable if the <code>TRACTOR_HOME</code> environment variable is not set.</li>
+</ul>
+
 <h2 id="307-2016-11-07">3.0.7 (2016-11-07)</h2>
 
 <ul>
