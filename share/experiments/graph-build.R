@@ -17,6 +17,7 @@ runExperiment <- function ()
     useShrinkage <- getConfigVariable("UseShrinkage", FALSE)
     varianceLambda <- getConfigVariable("VarianceShrinkageIntensity", NULL, "numeric")
     correlationLambda <- getConfigVariable("CorrelationShrinkageIntensity", NULL, "numeric")
+    nuisanceRegressorFile <- getConfigVariable("NuisanceRegressorFile", NULL, "character")
     
     targetRegions <- splitAndConvertString(targetRegions, ",", fixed=TRUE)
     
@@ -139,6 +140,24 @@ runExperiment <- function ()
             }
         }
         
+        if (is.null(nuisanceRegressorFile))
+            nNuisanceRegressors <- 0L
+        else
+        {
+            nuisanceRegressors <- as.matrix(read.table(nuisanceRegressorFile))
+            if (nrow(nuisanceRegressors) != nVolumes)
+            {
+                if (ncol(nuisanceRegressors) == nVolumes)
+                    nuisanceRegressors <- t(nuisanceRegressors)
+                else
+                    report(OL$Error, "Nuisance regressor file doesn't match data dimensions")
+            }
+            
+            nNuisanceRegressors <- ncol(nuisanceRegressors)
+            report(OL$Info, "Incorporating #{nNuisanceRegressors} nuisance regressor(s)")
+            timeSeries <- cbind(timeSeries, nuisanceRegressors)
+        }
+        
         report(OL$Info, "Calculating interregional correlations")
         if (useShrinkage)
         {
@@ -158,7 +177,8 @@ runExperiment <- function ()
         
         isFiniteAndNonzero <- function(x) is.finite(x) & (x != 0)
         adjacencyMatrix <- as.integer(isFiniteAndNonzero(covariance) & isFiniteAndNonzero(correlation) & isFiniteAndNonzero(precision) & isFiniteAndNonzero(partialCorrelation))
-        dim(adjacencyMatrix) <- rep(nRegions, 2)
+        dim(adjacencyMatrix) <- rep(nRegions+nNuisanceRegressors, 2)
+        adjacencyMatrix <- adjacencyMatrix[seq_len(nRegions),seq_len(nRegions)]
         dimnames(adjacencyMatrix) <- list(targets$labels, targets$labels)
         
         report(OL$Info, "Creating and writing graph")
