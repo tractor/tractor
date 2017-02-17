@@ -1,0 +1,13 @@
+language: c
+
+addons:
+  apt:
+    sources:
+    - r-packages-precise
+    packages:
+    - r-base-dev
+    - r-cran-matrix
+
+install: make install
+
+script: make test
