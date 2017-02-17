@@ -154,7 +154,7 @@ void MedianTrackvisDataSource::get (Streamline &data)
     if (seedProperty < 0)
         throw runtime_error("A meaningful median can't be recovered without knowing seed indices");
     
-    const Eigen::Array3f &voxelDims = grid.spacings();
+    const Eigen::Array3f voxelDims = grid.spacings();
     vector<int> leftLengths(totalStreamlines), rightLengths(totalStreamlines);
     
     // First pass: find lengths
