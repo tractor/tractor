@@ -138,10 +138,11 @@ maximumIntensityProjection <- function (image, axis)
         data <- image$getData()$getData()
         factors <- lapply(seq_len(nDims-1), function(i) factor(coords[,planeAxes[i]],levels=seq_len(dims[planeAxes[i]])))
         result <- suppressWarnings(tapply(data, factors, max, na.rm=TRUE))
-        result[is.na(result)] <- 0
     }
     else
         result <- suppressWarnings(image$apply(planeAxes, max, na.rm=TRUE))
+    
+    result[!is.finite(result)] <- min(image, na.rm=TRUE)
     
     invisible(result)
 }
