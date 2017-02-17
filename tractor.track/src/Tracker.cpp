@@ -9,11 +9,11 @@ Streamline Tracker::run ()
     if (dataSource == NULL)
         throw std::runtime_error("No diffusion data source has been specified");
     
-    const Eigen::Array3i &imageDims = dataSource->getGrid3D().dimensions();
+    const Eigen::Array3i imageDims = dataSource->getGrid3D().dimensions();
     std::vector<int> spaceDims(3);
     for (int i=0; i<3; i++)
         spaceDims[i] = imageDims(i,0);
-    const Eigen::Array3f &voxelDims = dataSource->getGrid3D().spacings();
+    const Eigen::Array3f voxelDims = dataSource->getGrid3D().spacings();
     
     Rcpp::Rcout << std::fixed;
     Rcpp::Rcout.precision(3);

@@ -1,7 +1,10 @@
+51a53f8c1d6ad0ac656ed6aaa909bfd2 .dockerignore
+d61892140983f17b3df770cf881eaf26 .travis.yml
 389ecd6e2120818c327dc89689b7d88c COPYRIGHT.md
+4bc8d35da25f39f3b05dc6adcd90cd40 Dockerfile
 4f220227846670ff74cc3d19a90858f9 INSTALL.md
-b2ed60c7fa7984631a782722e53112f8 Makefile
-ed0143cddb6e6d8f7eb0e94248d7015f README.md
+1514cf4548d3c2d293e7e11050d08c30 Makefile
+d0e2013df90f2ccad8a8cbe982ac3c29 README.md
 1fd02998571aac3de92a9b380e5cf632 VERSION
 6cb894b9f39a2112d8629349a74d1bb8 bin/extra/tractor_Rinstall
 153aebd36cf10abae586d27501ec3004 bin/plough
@@ -26,12 +29,12 @@ bdacc667fe9afa3babcf84d723775db6 share/doc/TractoR-and-DICOM.html
 37f48d19c2c8879df302e9168ab891f2 share/doc/TractoR-for-R-users.html
 5e82bf5f2a8e65a9fbefa89a9765c2d0 share/doc/box_bottom.gif
 e05a1252b51781ffd6e8a24c7266fcdc share/doc/box_top.gif
-aab96ddbcd9b63b28eb7e37a0a77ccd3 share/doc/changelog.html
+4cb9f77b4643796df9d9cf12dc9b7b14 share/doc/changelog.html
 a27ee24c739ac24904e75d0583ac22d6 share/doc/connectivity-graphs.html
 8a56f4659e6ec99ed4f1c25fff4d6686 share/doc/conventions.html
 3848ce47e1d33c88449e74d2c74ba373 share/doc/diffusion-processing.html
 0d66d29aa7dcadd51f330f04bfe8f919 share/doc/download.png
-829440839a94a32e910009273786c6c3 share/doc/downloads.html
+a134198b7ae55df2aa7b567ab8c8c28a share/doc/downloads.html
 d7f0853dab78e9236a957c344d7cd1db share/doc/genu-point.png
 b905166399828acec7ac831cbad6ade4 share/doc/getting-started.html
 cd8cec91833ffa792d4ad33729f8acbf share/doc/graph-brain.png
@@ -74,7 +77,7 @@ aaaa070d4cbab7cd5f8b4314921d725f share/experiments/graph-build.R
 87bd4d445cf8f50e9308153b020f7fc7 share/experiments/graph-decompose.R
 5931af2027f595194de4eb708b03e13e share/experiments/graph-extract.R
 eafe3387b7a4f46247799ac7f0e25eb0 share/experiments/graph-props.R
-c5b2f28c1a8cafdc3be9b5162591d4a0 share/experiments/graph-reweight.R
+824c751d6740ab976e1eb9ba4f6f2db7 share/experiments/graph-reweight.R
 b98c38d212c2f5c8d3ddffaf2b06a32f share/experiments/graph-viz.R
 f4be6c1bf0c87e6f37ebb7025dbad055 share/experiments/graph2csv.R
 f3a964d6de52217764568bcfc298b94d share/experiments/hnt-eval.R
@@ -251,9 +254,11 @@ e4acaeab89d448495787c25a1c03b1ba tests/40_Graphs/025_csv.save
 314551639e6859b560311578a45fdde1 tests/40_Graphs/025_csv.sh
 6eedf4f7c9850c1534752ad872df985c tests/90_Foreign/005_flirt.save
 a9cff08e5c7d53284ad154607c22063b tests/90_Foreign/005_flirt.sh
+0bfdb98e5a5c37d34f7de376e06f9133 tests/90_Foreign/005_flirt.skip
 464d6db0c86c455f16599067215fc3c2 tests/90_Foreign/010_avscale.save
 82406c0852da7fff7b3341b2a908178f tests/90_Foreign/010_avscale.sh
-0b7cb923e00bec0adfc76916cf7212fc tests/Makefile
+0bfdb98e5a5c37d34f7de376e06f9133 tests/90_Foreign/010_avscale.skip
+0732e253a2a708deba256f386476931e tests/Makefile
 d3a8df59954ee654bef87dec39cd922e tests/data/analyze/maskedb0.hdr.gz
 c5fc2a635d932db7631e1309536f8b85 tests/data/analyze/maskedb0.img.gz
 5a07fbe89ea96ee66a5478454a5ef233 tests/data/dicom/01.dcm
@@ -358,7 +363,7 @@ ea710301bda7777fc785e7bd130ee0f8 tests/scripts/hello-interactive.R
 a853ebf2574020fbd777559eefccdc34 tests/scripts/hello.R
 c508de30be8719c0998bc2eff3fe4f03 tests/scripts/value.R
 55fb21bef3972d7d88d8345ede6802ab tests/scripts/which.R
-a17d26461f80e814707e19ef452b5c8c tractor.base/DESCRIPTION
+813891e852202c9913e198df8eaa32ee tractor.base/DESCRIPTION
 05e3de8a52b159548100fbf73bc56c43 tractor.base/NAMESPACE
 0edc59fd39e9e49b2f7d45131942f8e4 tractor.base/R/00_constants.R
 9fee1eeb86ba6bb456026d8dd6e63e55 tractor.base/R/05_serialise.R
@@ -371,7 +376,7 @@ e10576c3014f59d3f055e9058f02f2bc tractor.base/R/dicom_dir.R
 2e092e5a4c9a582d8ef6872708cd1f83 tractor.base/R/files.R
 cc9d0404fdabe6a7bea39756937dcc3a tractor.base/R/internal.R
 f71d4911b6ca8b3140dab8c287d5fe22 tractor.base/R/mgh.R
-19e2208811da48dc0e3af5898364ced8 tractor.base/R/misc.R
+3e963cc056270b31294f0c5eebe6db00 tractor.base/R/misc.R
 35abdf41839f6a62756d29f19cf65b31 tractor.base/R/neighbourhood.R
 47e5c87c4fe66b2d88ad1141eecca280 tractor.base/R/nifti.R
 2c87a5887743f6238a3e014b00371c96 tractor.base/R/png.R
@@ -489,7 +494,7 @@ a9c33cf0a4cb4657242771d0ea76172b tractor.session/R/fsl.R
 d814c1ef19d3ba7108e3fd92bee59982 tractor.session/R/viewer.R
 2f01ad67ab3bf940ba2f02053d5aa0fc tractor.session/R/zzz.R
 025e1b4539ed977a1d5c92d7569df3b4 tractor.session/inst/CITATION
-9014d648ae0c1c2b336093d40553b31c tractor.track/DESCRIPTION
+4cfd5665e308d1487b0d2002942b6973 tractor.track/DESCRIPTION
 0d780955fae401a1550635e8225e60f5 tractor.track/NAMESPACE
 38370e28d4925d49bf7928d9dac9472d tractor.track/R/05_model.R
 10206f59c6c5269cba1be6beafb5da5a tractor.track/R/10_tracker.R
@@ -502,7 +507,7 @@ f186311c30f51647f6d6857466f68bff tractor.track/src/Array.cpp
 bffc88c07c188f54513bd7cb35177172 tractor.track/src/BinaryStream.cpp
 8e384b72244551a996f1aeff450c995c tractor.track/src/BinaryStream.h
 84dc94b611dda21284ae6528a9f37bb3 tractor.track/src/DataSource.h
-f04746c2a517345b9f6ebaa7bc8eaf29 tractor.track/src/DiffusionModel.cpp
+c58a838dd67fa069919d73cf47691a74 tractor.track/src/DiffusionModel.cpp
 6afd07ed429d5c3a0021279724495f29 tractor.track/src/DiffusionModel.h
 a140851ea7236d0e049c83bc7b5f42ab tractor.track/src/Filter.h
 271c436d96e1fe3e7761fdf020f72687 tractor.track/src/Grid.h
@@ -517,9 +522,9 @@ f5b1dda596c8d3f916a6bf3ba5d05f08 tractor.track/src/RCallback.cpp
 75abf17793ceef2140c0b49be366230e tractor.track/src/Space.h
 74380c2ea3274f589eaa76c070683b73 tractor.track/src/Streamline.cpp
 63496ac46ca304f4ec9b597ded14b460 tractor.track/src/Streamline.h
-b908a4de51411ac6a5de3ea8595678ea tractor.track/src/Tracker.cpp
+8680bb42276daf5a22f7d3ec5b2c887a tractor.track/src/Tracker.cpp
 8763e273d305c5700cb9fd61b253bbc1 tractor.track/src/Tracker.h
-2569f66b6c86a7f0b5673006f0151a4e tractor.track/src/Trackvis.cpp
+e8dee4c51d84f67d17876646ce0cfce6 tractor.track/src/Trackvis.cpp
 3e602dc6ffed4b71b3113b963ebc3768 tractor.track/src/Trackvis.h
 32af722e8956a3a2c68c17abb72357f0 tractor.track/src/VisitationMap.cpp
 2911451120b123edf5894dc796117d17 tractor.track/src/VisitationMap.h
