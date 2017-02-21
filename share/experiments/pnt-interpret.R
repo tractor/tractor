@@ -14,7 +14,7 @@ runExperiment <- function ()
     datasetName <- getConfigVariable("DatasetName", NULL, "character", errorIfMissing=TRUE)
     modelName <- getConfigVariable("ModelName", NULL, "character")
     resultsName <- getConfigVariable("ResultsName", NULL, "character", errorIfMissing=TRUE)
-    sessionList <- getConfigVariable("SessionList", NULL, "character", errorIfMissing=TRUE)
+    sessionList <- getConfigVariable("SessionList", NULL, "character")
     
     originalMaxSeeds <- getConfigVariable("MaximumSeedPoints", 1, "integer")
     minPosterior <- getConfigVariable("MinimumPosterior", 0, "numeric")
@@ -24,7 +24,17 @@ runExperiment <- function ()
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
     
-    nSessions <- length(sessionList)
+    data <- read.table(ensureFileSuffix(datasetName,"txt"))
+    seedsInData <- all(c("x","y","z") %in% colnames(data))
+    subjectsInData <- ("subject" %in% colnames(data)) && (is.integer(data$subject))
+    logLikelihoods <- calculateMatchedLogLikelihoodsForDataTable(data, model)
+    
+    if (!is.null(sessionList))
+        nSessions <- length(sessionList)
+    else if (subjectsInData && equivalent(seq_len(max(data$subject)),sort(unique(data$subject))))
+        nSessions <- max(data$subject)
+    else
+        report(OL$Error, "Session list must be specified if subject numbers are not in the dataset")
     
     results <- getNTResource("results", "pnt", list(resultsName=resultsName))
     if (results$nSessions() != nSessions)
@@ -35,18 +45,19 @@ runExperiment <- function ()
     if (searchWidth^3 != nPoints)
         report(OL$Error, "Results file does not describe a cubic search space")
     
-    data <- read.table(ensureFileSuffix(datasetName,"txt"))
-    seedsInData <- all(c("x","y","z") %in% colnames(data))
-    subjectsInData <- ("subject" %in% colnames(data)) && (is.integer(data$subject))
-    logLikelihoods <- calculateMatchedLogLikelihoodsForDataTable(data, model)
-    
     refData <- createDataTableForSplines(list(reference$getTract()), reference$getTract(), reference$getTractOptions()$pointType)
     refLogLikelihood <- calculateMatchedLogLikelihoodsForDataTable(refData, model)
     
-    for (i in 1:nSessions)
+    for (i in seq_len(nSessions))
     {
-        report(OL$Info, "Current session is ", sessionList[i])
-        currentSession <- newSessionFromDirectory(sessionList[i])
+        if (is.null(sessionList))
+            report(OL$Info, "Current session is number ", i)
+        else
+        {
+            report(OL$Info, "Current session is ", sessionList[i])
+            currentSession <- newSessionFromDirectory(sessionList[i])
+        }
+        
         if (seedsInData)
         {
             if (subjectsInData)
