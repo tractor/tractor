@@ -63,7 +63,12 @@ runExperiment <- function ()
                 currentSession <- newSessionFromDirectory(sessionList[i])
             
             if (exists("seedMatrix"))
-                currentSeed <- round(changePointType(seedMatrix[i,], session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
+            {
+                if (length(sessionList) == 1)
+                    currentSeed <- round(changePointType(drop(seedMatrix), session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
+                else
+                    currentSeed <- round(changePointType(seedMatrix[i,], session$getRegistrationTarget("diffusion",metadataOnly=TRUE), "r", pointType))
+            }
             else
                 currentSeed <- transformPointsToSpace(reference$getStandardSpaceSeedPoint(), currentSession, "diffusion", oldSpace="mni", pointType=reference$getSeedUnit(), outputVoxel=TRUE, nearest=TRUE)
             
