@@ -62,7 +62,6 @@ void VisitationMapDataSink::done ()
 void VisitationMapDataSink::writeToNifti (const RNifti::NiftiImage &reference, const std::string &fileName) const
 {
     RNifti::NiftiImage image = reference;
-    image.changeDatatype(DT_FLOAT64);
-    image.replaceData(values.getData());
+    image.replaceData(values.getData(), DT_FLOAT64);
     image.toFile(fileName);
 }
