@@ -27,7 +27,7 @@ public:
     void done ();
     
     const Array<double> & getArray () const { return values; }
-    void writeToNifti (const NiftiImage &reference, const std::string &fileName) const;
+    void writeToNifti (const RNifti::NiftiImage &reference, const std::string &fileName) const;
 };
 
 #endif

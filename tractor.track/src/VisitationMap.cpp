@@ -1,6 +1,6 @@
 #include <RcppEigen.h>
 
-#include "NiftiImage.h"
+#include "RNifti.h"
 #include "Streamline.h"
 #include "VisitationMap.h"
 
@@ -59,9 +59,10 @@ void VisitationMapDataSink::done ()
         std::transform(values.begin(), values.end(), values.begin(), divider(static_cast<double>(totalStreamlines)));
 }
 
-void VisitationMapDataSink::writeToNifti (const NiftiImage &reference, const std::string &fileName) const
+void VisitationMapDataSink::writeToNifti (const RNifti::NiftiImage &reference, const std::string &fileName) const
 {
-    NiftiImage image = reference;
-    image.setData(values);
-    image.writeToFile(fileName);
+    RNifti::NiftiImage image = reference;
+    image.changeDatatype(DT_FLOAT64);
+    image.replaceData(values.getData());
+    image.toFile(fileName);
 }

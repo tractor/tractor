@@ -1,8 +1,6 @@
 #include <RcppEigen.h>
 
-#include "nifti1_io.h"
-
-#include "NiftiImage.h"
+#include "RNiftiAPI.h"
 #include "Streamline.h"
 #include "BinaryStream.h"
 #include "Trackvis.h"

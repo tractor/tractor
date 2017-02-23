@@ -3,6 +3,8 @@
 
 #include <RcppEigen.h>
 
+#include "RNifti.h"
+
 struct Neighbourhood
 {
     size_t size;
@@ -41,6 +43,13 @@ public:
     Array (const std::vector<int> &dims, const std::vector<DataType> &data)
         : data(data), dims(dims)
     {
+        nDims = dims.size();
+    }
+    
+    Array (const RNifti::NiftiImage &image)
+    {
+        data = image.getData<DataType>();
+        dims = image.dim();
         nDims = dims.size();
     }
     

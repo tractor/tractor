@@ -4,7 +4,7 @@
 #include <RcppEigen.h>
 
 #include "Space.h"
-#include "NiftiImage.h"
+#include "RNifti.h"
 #include "DiffusionModel.h"
 #include "Streamline.h"
 #include "DataSource.h"
@@ -53,10 +53,10 @@ public:
     float getInnerProductThreshold () const { return innerProductThreshold; }
     float getStepLength () const { return stepLength; }
     
-    void setMask (NiftiImage * const mask)
+    void setMask (const RNifti::NiftiImage &mask)
     {
         delete maskData;
-        maskData = mask->getData<short>();
+        maskData = new Array<short>(mask);
     }
     
     void setSeed (const Space<3>::Point &seed, const bool jitter)
@@ -68,10 +68,10 @@ public:
         this->jitter = jitter;
     }
     
-    void setTargets (NiftiImage * const targets)
+    void setTargets (const RNifti::NiftiImage &targets)
     {
         delete targetData;
-        targetData = targets->getData<int>();
+        targetData = new Array<int>(targets);
     }
     
     void setRightwardsVector (const Space<3>::Vector &rightwardsVector)

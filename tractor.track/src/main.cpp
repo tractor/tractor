@@ -1,7 +1,7 @@
 #include <RcppEigen.h>
 
 #include "Space.h"
-#include "NiftiImage.h"
+#include "RNifti.h"
 #include "Streamline.h"
 #include "DiffusionModel.h"
 #include "Tracker.h"
@@ -48,7 +48,7 @@ BEGIN_RCPP
     
     Tracker tracker(model);
     
-    NiftiImage *mask = new NiftiImage(as<std::string>(_maskPath));
+    RNifti::NiftiImage mask(as<std::string>(_maskPath));
     tracker.setMask(mask);
     tracker.setDebugLevel(as<int>(_debugLevel));
     
@@ -71,8 +71,8 @@ BEGIN_RCPP
     List targetInfo(_targetInfo);
     if (!Rf_isNull(targetInfo["path"]))
     {
-        NiftiImage targets(as<std::string>(targetInfo["path"]));
-        tracker.setTargets(&targets);
+        RNifti::NiftiImage targets(as<std::string>(targetInfo["path"]));
+        tracker.setTargets(targets);
     }
     
     RNGScope scope;
@@ -107,7 +107,7 @@ BEGIN_RCPP
     Rcpp::Function *function = NULL;
     if (!Rf_isNull(_mapPath))
     {
-        visitationMap = new VisitationMapDataSink(mask->getDimensions());
+        visitationMap = new VisitationMapDataSink(mask.dim());
         pipeline.addSink(visitationMap);
     }
     if (!Rf_isNull(_trkPath))
@@ -119,16 +119,16 @@ BEGIN_RCPP
             std::map<int,std::string> labelDictionary;
             for (int i=0; i<std::min(indices.size(),labels.size()); i++)
                 labelDictionary[indices[i]] = labels[i];
-            trkFile = new LabelledTrackvisDataSink(as<std::string>(_trkPath), mask->getGrid3D(), labelDictionary);
+            trkFile = new LabelledTrackvisDataSink(as<std::string>(_trkPath), getGrid3D(mask), labelDictionary);
         }
         else
-            trkFile = new BasicTrackvisDataSink(as<std::string>(_trkPath), mask->getGrid3D());
+            trkFile = new BasicTrackvisDataSink(as<std::string>(_trkPath), getGrid3D(mask));
         
         pipeline.addSink(trkFile);
     }
     if (!Rf_isNull(_medianPath))
     {
-        medianFile = new MedianTrackvisDataSink(as<std::string>(_medianPath), mask->getGrid3D());
+        medianFile = new MedianTrackvisDataSink(as<std::string>(_medianPath), getGrid3D(mask));
         pipeline.addSink(medianFile);
         
         // Pipeline must contain all streamlines at once for calculating median
@@ -145,7 +145,7 @@ BEGIN_RCPP
     
     if (visitationMap != NULL)
     {
-        visitationMap->writeToNifti(*mask, as<std::string>(_mapPath));
+        visitationMap->writeToNifti(mask, as<std::string>(_mapPath));
         delete visitationMap;
     }
     
@@ -155,7 +155,6 @@ BEGIN_RCPP
     delete medianFile;
     delete function;
     delete profile;
-    delete mask;
     
     return wrap(nRetained);
 END_RCPP
@@ -286,7 +285,7 @@ BEGIN_RCPP
     
     pipeline.run();
     
-    NiftiImage reference(as<std::string>(_imagePath), false);
+    RNifti::NiftiImage reference(as<std::string>(_imagePath), false);
     map.writeToNifti(reference, as<std::string>(_resultPath));
     
     return R_NilValue;

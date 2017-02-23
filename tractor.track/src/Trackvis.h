@@ -3,6 +3,7 @@
 
 #include <RcppEigen.h>
 
+#include "Grid.h"
 #include "Streamline.h"
 #include "DataSource.h"
 #include "BinaryStream.h"

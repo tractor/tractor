@@ -17,13 +17,13 @@ BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std:
     theta.resize(nCompartments);
     phi.resize(nCompartments);
     
-    grid = NiftiImage(avfFiles[0],false).getGrid3D();
+    grid = ::getGrid3D(RNifti::NiftiImage(avfFiles[0],false));
     
     for (int i=0; i<nCompartments; i++)
     {
-        avf[i] = NiftiImage(avfFiles[i]).getData<float>();
-        theta[i] = NiftiImage(thetaFiles[i]).getData<float>();
-        phi[i] = NiftiImage(phiFiles[i]).getData<float>();
+        avf[i] = new Array<float>(RNifti::NiftiImage(avfFiles[i]));
+        theta[i] = new Array<float>(RNifti::NiftiImage(thetaFiles[i]));
+        phi[i] = new Array<float>(RNifti::NiftiImage(phiFiles[i]));
     }
     
     const std::vector<int> &avfDims = avf[0]->getDimensions();

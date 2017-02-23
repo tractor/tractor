@@ -1,5 +1,0 @@
-OBJECTS = $(LIB_OBJECTS) main.o Array.o DiffusionModel.o Pipeline.o Streamline.o Tracker.o BinaryStream.o Trackvis.o VisitationMap.o RCallback.o
-
-PKG_CPPFLAGS = -DHAVE_ZLIB
-
-# PKG_CXXFLAGS = -Wall -Wextra -pedantic

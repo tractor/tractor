@@ -3,7 +3,7 @@
 
 #include "Space.h"
 #include "Grid.h"
-#include "NiftiImage.h"
+#include "Array.h"
 
 class DiffusionModel : public Griddable3D
 {

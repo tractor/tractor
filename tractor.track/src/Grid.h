@@ -3,6 +3,8 @@
 
 #include <RcppEigen.h>
 
+#include "RNifti.h"
+
 template <int Dimensionality>
 class Grid
 {
@@ -56,5 +58,23 @@ class Griddable3D
 public:
     virtual Grid<3> getGrid3D () const = 0;
 };
+
+inline Grid<3> getGrid3D (const Griddable3D &object)
+{
+    return object.getGrid3D();
+}
+
+inline Grid<3> getGrid3D (const RNifti::NiftiImage &object)
+{
+    Eigen::Array3i dims = Eigen::Array3i::Ones();
+    Eigen::Array3f spacings = Eigen::Array3f::Zero();
+    Eigen::Matrix4f xform = Eigen::Map<Eigen::Matrix4f>(*(object.xform().m)).transpose();
+    for (int i=0; i<std::min(3,object.nDims()); i++)
+    {
+        dims(i,0) = object->dim[i+1];
+        spacings(i,0) = object->pixdim[i+1];
+    }
+    return Grid<3>(dims, spacings, xform);
+}
 
 #endif
