@@ -3,6 +3,7 @@ useDynLib(tractor.track)
 import(ore)
 import(reportr)
 import(tractor.base)
+import(RNifti)
 importFrom(Rcpp, evalCpp)
 
 exportPattern("^[^\\.]")
