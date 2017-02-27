@@ -3,8 +3,8 @@
 \name{asMriImage}
 \alias{asMriImage}
 \alias{extractMriImage}
-\alias{reorderMriImage}
 \alias{trimMriImage}
+\alias{reorderMriImage}
 \title{Creating MriImage objects from data}
 \usage{
 asMriImage(data, templateImage = nilObject(), imageDims = NA,
@@ -58,9 +58,6 @@ the dimensions of the image and thus avoiding the storage of lots of zeroes.
 to the LAS convention, an operation which is usually performed when an
 image is read from file.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -73,4 +70,6 @@ Journal of Statistical Software 44(8):1-18.
 \seealso{
 \code{\linkS4class{MriImage}}
 }
-
+\author{
+Jon Clayden
+}

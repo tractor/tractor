@@ -2,16 +2,16 @@
 % Please edit documentation in R/08_sparse.R, R/10_mri_image.R
 \docType{methods}
 \name{[,SparseArray,ANY,ANY-method}
-\alias{[,MriImage,ANY,ANY-method}
+\alias{[,SparseArray,ANY,ANY-method}
+\alias{[<-,SparseArray,ANY,ANY-method}
+\alias{[,MriImage,missing,missing-method}
 \alias{[,MriImage,ANY,missing-method}
 \alias{[,MriImage,missing,ANY-method}
-\alias{[,MriImage,missing,missing-method}
-\alias{[,SparseArray,ANY,ANY-method}
-\alias{[<-,MriImage,ANY,ANY-method}
+\alias{[,MriImage,ANY,ANY-method}
+\alias{[<-,MriImage,missing,missing-method}
 \alias{[<-,MriImage,ANY,missing-method}
 \alias{[<-,MriImage,missing,ANY-method}
-\alias{[<-,MriImage,missing,missing-method}
-\alias{[<-,SparseArray,ANY,ANY-method}
+\alias{[<-,MriImage,ANY,ANY-method}
 \title{Indexing methods}
 \usage{
 \S4method{[}{SparseArray,ANY,ANY}(x, i, j, ..., drop = TRUE)
@@ -55,4 +55,3 @@ indexing may be blank, or by numeric vector or matrix.
 \author{
 Jon Clayden
 }
-

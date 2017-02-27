@@ -28,9 +28,6 @@ allEqual(c(1,1,NA))  # FALSE
 allEqual(c(1,1,NA), ignoreMissing=TRUE)  # TRUE
 
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -44,4 +41,6 @@ Journal of Statistical Software 44(8):1-18.
 \code{\link{equivalent}} for elementwise equivalence of two
   vectors.
 }
-
+\author{
+Jon Clayden
+}

@@ -39,9 +39,6 @@ description for series, will be used as the name for a new subdirectory, and
 all relevant files will be copied into that subdirectory. Duplicate file
 names are disambiguated if necessary.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -55,4 +52,6 @@ Journal of Statistical Software 44(8):1-18.
 \code{\link{readDicomDirectory}} for reading DICOM files into an
 \code{MriImage} object.
 }
-
+\author{
+Jon Clayden
+}

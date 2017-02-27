@@ -20,9 +20,6 @@ process. This avoids clashes between threads created by functions such as
 \code{mclapply} (in the ``parallel'' package), which can easily occur with
 the standard \code{\link{tempfile}} function.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -35,4 +32,6 @@ Journal of Statistical Software 44(8):1-18.
 \seealso{
 \code{\link{tempfile}}
 }
-
+\author{
+Jon Clayden
+}

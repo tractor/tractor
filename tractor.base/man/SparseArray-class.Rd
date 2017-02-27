@@ -2,8 +2,8 @@
 % Please edit documentation in R/08_sparse.R
 \docType{class}
 \name{SparseArray-class}
-\alias{SparseArray}
 \alias{SparseArray-class}
+\alias{SparseArray}
 \title{The SparseArray class}
 \description{
 This class represents an array with any number of dimensions, in which a
@@ -22,6 +22,7 @@ standard way, using matrix or vector indices; and for coercing between
 
 \item{\code{dims}}{Integer vector of dimensions}
 }}
+
 \section{Methods}{
 
 \describe{

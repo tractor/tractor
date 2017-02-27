@@ -2,8 +2,8 @@
 % Please edit documentation in R/10_mri_image.R
 \docType{class}
 \name{MriImage-class}
-\alias{MriImage}
 \alias{MriImage-class}
+\alias{MriImage}
 \title{The MriImage class}
 \description{
 This class represents an MRI image. An object of this class is made up of
@@ -38,6 +38,7 @@ reordered. See \code{\link{reorderMriImage}}}
 
 \item{\code{data}}{Sparse or dense array of data, or \code{NULL}}
 }}
+
 \section{Methods}{
 
 \describe{

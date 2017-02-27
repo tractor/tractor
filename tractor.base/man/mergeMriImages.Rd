@@ -19,9 +19,6 @@ This function concatenates the data from a series of \code{MriImage}
 objects, and then attempts to work out the final dimensions of the merged
 image and returns it.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -34,4 +31,6 @@ Journal of Statistical Software 44(8):1-18.
 \seealso{
 \code{\linkS4class{MriImage}}
 }
-
+\author{
+Jon Clayden
+}

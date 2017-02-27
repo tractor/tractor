@@ -33,9 +33,6 @@ equivalent(c(-1,1), c(1,1), signMatters=FALSE)  # TRUE
 equivalent(1:2, 2:3, tolerance=2)  # TRUE
 
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -48,4 +45,6 @@ Journal of Statistical Software 44(8):1-18.
 \seealso{
 \code{\link{all.equal}}
 }
-
+\author{
+Jon Clayden
+}

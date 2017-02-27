@@ -2,8 +2,8 @@
 % Please edit documentation in R/15_dicom.R
 \docType{class}
 \name{DicomMetadata-class}
-\alias{DicomMetadata}
 \alias{DicomMetadata-class}
+\alias{DicomMetadata}
 \title{The DicomMetadata class}
 \description{
 This class represents DICOM metadata, which typically contains detailed
@@ -30,6 +30,7 @@ used in the file}
 \item{\code{asciiFields}}{Character vector containing the contents of the ASCII
 header, if requested and present in the file.}
 }}
+
 \section{Methods}{
 
 \describe{

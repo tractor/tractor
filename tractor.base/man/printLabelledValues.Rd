@@ -26,9 +26,6 @@ This function is called for its side effect.
 This is a simple function to print a series of labels and associated data
 values, or key-value pairs.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -41,4 +38,6 @@ Journal of Statistical Software 44(8):1-18.
 \seealso{
 \code{\link{setOutputLevel}} for the reportr output level system.
 }
-
+\author{
+Jon Clayden
+}

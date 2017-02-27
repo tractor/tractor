@@ -2,8 +2,8 @@
 % Please edit documentation in R/viewer.R
 \name{defaultInfoPanel}
 \alias{defaultInfoPanel}
-\alias{polarPlotPanel}
 \alias{timeSeriesPanel}
+\alias{polarPlotPanel}
 \alias{viewImages}
 \title{A simple interactive viewer for MriImage objects}
 \usage{
@@ -75,9 +75,6 @@ The \code{defaultInfoPanel} and \code{timeSeriesPanel} functions are
   not intended to be called directly. They are simple examples of valid
   values for the \code{infoPanel} argument to \code{viewImages}.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -90,4 +87,6 @@ Journal of Statistical Software 44(8):1-18.
 \seealso{
 \code{\link{getColourScale}}
 }
-
+\author{
+Jon Clayden
+}
