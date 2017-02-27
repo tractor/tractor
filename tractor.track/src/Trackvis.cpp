@@ -138,6 +138,8 @@ void LabelledTrackvisDataSource::attach (const std::string &fileStem)
     TrackvisDataSource::attach(fileStem);
     if (!externalLabelList)
         labelList = new StreamlineLabelList(fileStem);
+    if (labelList->size() != totalStreamlines)
+        throw runtime_error("Number of streamlines in .trk and .trkl files do not match");
 }
 
 void LabelledTrackvisDataSource::get (Streamline &data)

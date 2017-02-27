@@ -80,6 +80,7 @@ public:
     
     void read (const std::string &fileStem);
     const std::vector<int> find (const std::vector<int> &labels);
+    size_t size () { return labelList.size(); }
     const std::set<int> & getLabels (const int n) { return labelList[n]; }
     size_t getOffset (const int n) { return offsetList[n]; }
 };
