@@ -40,10 +40,8 @@ runExperiment <- function ()
             
             if (returnCode == 0)
             {
-                report(OL$Info, "Removing old installation")
-                unlink(Sys.getenv("TRACTOR_HOME"), recursive=TRUE)
                 report(OL$Info, "Moving unpacked directory to ", Sys.getenv("TRACTOR_HOME"))
-                success <- copyDirectory(file.path(targetDir,"tractor"), Sys.getenv("TRACTOR_HOME"), deleteOriginal=TRUE)
+                success <- copyDirectory(file.path(targetDir,"tractor"), Sys.getenv("TRACTOR_HOME"), deleteOriginal=TRUE, overwrite=TRUE)
                 if (success)
                     report(OL$Info, "Update complete - you may wish to run \"make install\" or \"make install-local\" from the TractoR home directory now")
                 else
