@@ -216,3 +216,31 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         invisible(.self)
     }
 ))
+
+StreamlineSink <- setRefClass("StreamlineSink", fields=list(file="character"), methods=list(
+    initialize = function (file = NULL, mask = NULL, ...)
+    {
+        if (is.null(file))
+            report(OL$Error, "Streamline source file must be specified")
+        if (!file.exists(ensureFileSuffix(file, "trk", strip=c("trk","trkl"))))
+        {
+            if (is.null(mask))
+                report(OL$Error, "Mask must be specified if the .trk file doesn't yet exist")
+            .Call("trkCreate", file, mask, PACKAGE="tractor.track")
+        }
+        
+        file <- ensureFileSuffix(file, NULL, strip=c("trk","trkl"))
+        return (initFields(file=file))
+    },
+    
+    append = function (streamline)
+    {
+        if (is(streamline, "Streamline"))
+        {
+            fixedSpacings <- all(streamline$getPointSpacings()[1] == streamline$getPointSpacings())
+            .Call("trkAppend", file, streamline$getLine(), streamline$getSeedIndex(), streamline$getCoordinateUnit(), streamline$getVoxelDimensions(), fixedSpacings, PACKAGE="tractor.track")
+        }
+        
+        invisible(.self)
+    }
+))
