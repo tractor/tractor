@@ -282,6 +282,16 @@ void TrackvisDataSink::attach (const std::string &fileStem)
     if (fileStream.is_open())
         fileStream.close();
     
+    if (append)
+    {
+        fileStream.open((fileStem + ".trk").c_str(), ios::binary | ios::app);
+        fileStream.seekg(988, ios::beg);
+        int32_t existingStreamlines;
+        fileStream.read((char *) &existingStreamlines, sizeof(int32_t));
+        totalStreamlines = existingStreamlines;
+        return;
+    }
+    
     fileStream.open((fileStem + ".trk").c_str(), ios::binary);
     
     char magicNumber[6] = { 'T','R','A','C','K','\0' };

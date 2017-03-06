@@ -145,19 +145,29 @@ public:
 class TrackvisDataSink : public DataSink<Streamline>
 {
 protected:
-    std::ofstream fileStream;
+    std::fstream fileStream;
     BinaryOutputStream binaryStream;
     size_t totalStreamlines;
     Grid<3> grid;
+    bool append;
     
     TrackvisDataSink ()
+        : append(false)
     {
         binaryStream.attach(&fileStream);
         binaryStream.swapEndianness(false);
     }
     
-    TrackvisDataSink (const std::string &fileStem, const Grid<3> &grid)
-        : grid(grid)
+    TrackvisDataSink (const std::string &fileStem, const bool append = false)
+        : append(append)
+    {
+        binaryStream.attach(&fileStream);
+        binaryStream.swapEndianness(false);
+        attach(fileStem);
+    }
+    
+    TrackvisDataSink (const std::string &fileStem, const Grid<3> &grid, const bool append = false)
+        : grid(grid), append(append)
     {
         binaryStream.attach(&fileStream);
         binaryStream.swapEndianness(false);
@@ -196,10 +206,18 @@ public:
 class BasicTrackvisDataSink : public TrackvisDataSink
 {
 public:
-    BasicTrackvisDataSink (const std::string &fileStem, const Grid<3> &grid)
-        : TrackvisDataSink(fileStem,grid) {}
+    BasicTrackvisDataSink (const std::string &fileStem, const bool append = false)
+        : TrackvisDataSink(fileStem,append) {}
+    
+    BasicTrackvisDataSink (const std::string &fileStem, const Grid<3> &grid, const bool append = false)
+        : TrackvisDataSink(fileStem,grid,append) {}
     
     void put (const Streamline &data) { writeStreamline(data); }
+    void append (const Streamline &data)
+    {
+        writeStreamline(data);
+        totalStreamlines++;
+    }
 };
 
 class LabelledTrackvisDataSink : public TrackvisDataSink

@@ -20,15 +20,15 @@ public:
 class BinaryInputStream : public BinaryStream
 {
 private:
-    std::ifstream *stream;
+    std::istream *stream;
     
 public:
     BinaryInputStream ()
         : stream(NULL) {}
-    BinaryInputStream (std::ifstream *stream)
+    BinaryInputStream (std::istream *stream)
         : stream(stream) {}
     
-    void attach (std::ifstream *stream) { this->stream = stream; }
+    void attach (std::istream *stream) { this->stream = stream; }
     void detach () { this->stream = NULL; }
     
     template <typename SourceType> SourceType readValue ();
@@ -42,15 +42,15 @@ public:
 class BinaryOutputStream : public BinaryStream
 {
 private:
-    std::ofstream *stream;
+    std::ostream *stream;
     
 public:
     BinaryOutputStream ()
         : stream(NULL) {}
-    BinaryOutputStream (std::ofstream *stream)
+    BinaryOutputStream (std::ostream *stream)
         : stream(stream) {}
     
-    void attach (std::ofstream *stream) { this->stream = stream; }
+    void attach (std::ostream *stream) { this->stream = stream; }
     void detach () { this->stream = NULL; }
     
     template <typename TargetType> void writeValue (const TargetType value);
