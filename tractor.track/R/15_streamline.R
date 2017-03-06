@@ -220,16 +220,12 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
 StreamlineSink <- setRefClass("StreamlineSink", fields=list(file="character"), methods=list(
     initialize = function (file = NULL, mask = NULL, ...)
     {
-        if (is.null(file))
-            report(OL$Error, "Streamline source file must be specified")
-        if (!file.exists(ensureFileSuffix(file, "trk", strip=c("trk","trkl"))))
-        {
-            if (is.null(mask))
-                report(OL$Error, "Mask must be specified if the .trk file doesn't yet exist")
-            .Call("trkCreate", file, mask, PACKAGE="tractor.track")
-        }
+        if (is.null(file) || is.null(mask))
+            report(OL$Error, "Streamline source file and mask must be specified")
         
         file <- ensureFileSuffix(file, NULL, strip=c("trk","trkl"))
+        .Call("trkCreate", file, mask, PACKAGE="tractor.track")
+        
         return (initFields(file=file))
     },
     

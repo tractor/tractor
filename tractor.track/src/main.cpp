@@ -356,8 +356,8 @@ BEGIN_RCPP
     const std::string pointType = as<std::string>(_pointType);
     for (int i=seedIndex; i>=0; i--)
         leftPoints[seedIndex-i] = points.row(i);
-    for (int i=(seedIndex+1); i<points.rows(); i++)
-        rightPoints[i-seedIndex-1] = points.row(i);
+    for (int i=seedIndex; i<points.rows(); i++)
+        rightPoints[i-seedIndex] = points.row(i);
     Streamline streamline(leftPoints, rightPoints, (pointType == "mm") ? Streamline::WorldPointType : Streamline::VoxelPointType, voxelDims, as<bool>(_fixedSpacing));
     sink.append(streamline);
     sink.done();
