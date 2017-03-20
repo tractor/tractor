@@ -1,3 +1,4 @@
+rawdata: rawdata
 data: data
 mean: mean_vol
 mask: mask
