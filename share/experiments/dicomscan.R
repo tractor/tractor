@@ -12,7 +12,20 @@ runExperiment <- function ()
     forceStack <- getConfigVariable("AlwaysStack", FALSE)
     thresholdTR <- getConfigVariable("ThresholdTR", 0.5)
     filenameStyle <- getConfigVariable("Filenames", "folder", "character", validValues=c("folder","metadata","both"))
+    createSession <- getConfigVariable("CreateSession", FALSE)
     anonymise <- getConfigVariable("Anonymise", FALSE)
+    
+    session <- attachMriSession(".")
+    getSessionPath <- function (type)
+    {
+        if (tolower(type) %in% c("t1","t2","pd"))
+        {
+            n <- getImageCountForSession(session, type)
+            session$getImageFileNameByType(type, index=n)
+        }
+        else
+            session$getImageFileNameByType("rawdata", type)
+    }
     
     if (nArguments() == 0)
         paths <- "."
@@ -56,19 +69,42 @@ runExperiment <- function ()
             }
             
             attributes <- attributes(image)
+            type <- ""
             
             if (all(c("bValues","bVectors") %in% names(attributes)))
+            {
                 report(OL$Info, "Image #{outputPaths[i]} appears to be diffusion-weighted")
-            else if (ndim(image) == 4 && dim(image)[4] > 1)
+                type <- "diffusion"
+            }
+            else if (ndim(image) == 4 && dim(image)[4] > 9)
+            {
                 report(OL$Info, "Image #{outputPaths[i]} appears to be a BOLD time series")
+                type <- "functional"
+            }
             else if (isTRUE(attributes$repetitionTime < 500) && isTRUE(attributes$echoTime < 30))
+            {
                 report(OL$Info, "Image #{outputPaths[i]} appears to be T1-weighted")
+                type <- "t1"
+            }
             else if (isTRUE(attributes$repetitionTime > 2000) && isTRUE(attributes$echoTime > 30))
+            {
                 report(OL$Info, "Image #{outputPaths[i]} appears to be T2-weighted")
+                type <- "t2"
+            }
             else if (isTRUE(attributes$repetitionTime > 2000) && isTRUE(attributes$echoTime < 30))
+            {
                 report(OL$Info, "Image #{outputPaths[i]} appears to be proton density-weighted")
+                type <- "pd"
+            }
             else
                 report(OL$Info, "The weighting of image #{outputPaths[i]} is not clear")
+            
+            if (createSession)
+            {
+                outputPaths[i] <- getSessionPath(type)
+                if (!file.exists(dirname(outputPaths[i])))
+                    dir.create(dirname(outputPaths[i]))
+            }
             
             writeNifti(image, ensureFileSuffix(outputPaths[i],"nii.gz"))
             
