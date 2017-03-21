@@ -15,13 +15,15 @@ runExperiment <- function ()
     createSession <- getConfigVariable("CreateSession", FALSE)
     anonymise <- getConfigVariable("Anonymise", FALSE)
     
-    session <- attachMriSession(".")
+    if (createSession)
+        session <- attachMriSession(".")
+    
     getSessionPath <- function (type)
     {
         if (tolower(type) %in% c("t1","t2","pd"))
         {
             n <- getImageCountForSession(session, type)
-            session$getImageFileNameByType(type, index=n)
+            session$getImageFileNameByType(type, index=n+1)
         }
         else
             session$getImageFileNameByType("rawdata", type)
@@ -32,42 +34,23 @@ runExperiment <- function ()
     else
         paths <- Arguments
     
+    divestVerbosity <- switch(names(getOutputLevel()), Debug=3L, Verbose=0L, -1L)
+    
     for (path in paths)
     {
+        # Scan over the DICOM files and convert to "niftiImage" objects
         report(OL$Info, "Looking for DICOM files in directory #{path}...")
-        result <- readDicom(path, interactive=interactive, flipY=flipY, crop=crop, forceStack=forceStack, labelFormat=ifelse(anonymise,"%t_S%3s_%d","%n_%t_S%3s_%d"))
+        result <- readDicom(path, interactive=interactive, flipY=flipY, crop=crop, forceStack=forceStack, labelFormat=ifelse(anonymise,"%t_S%3s_%d","%n_%t_S%3s_%d"), verbosity=divestVerbosity)
         
+        # Create initial file names
         outputPaths <- switch(filenameStyle, folder=rep(basename(path), length(result)),
                                              metadata=sapply(result, as.character),
                                              both=paste(basename(path), sapply(result,as.character), sep="_"))
         
-        if (any(duplicated(outputPaths)))
-        {
-            outputPaths <- unlist(tapply(outputPaths, outputPaths, function(x) {
-                if (length(x) == 1)
-                    x
-                else
-                    paste(x, seq_along(x), sep="_")
-            }))
-        }
-        
+        # Report putative weightings and update file names if required
         for (i in seq_along(result))
         {
             image <- result[[i]]
-            
-            # TR correction for 4D volumes
-            if (ndim(image) == 4 && dim(image)[4] > 1)
-            {
-                storedTR <- pixdim(image)[4]
-                if (storedTR > 0 && storedTR < thresholdTR)
-                {
-                    report(OL$Info, "Reconstructed TR of #{storedTR} s is less than threshold", round=3)
-                    throughPlaneAxis <- abs(tractor.base:::xformToOrientation(xform(image), string=FALSE)[3])
-                    image <- as.array(image)
-                    pixdim(image)[4] <- pixdim(image)[4] * dim(image)[throughPlaneAxis]
-                }
-            }
-            
             attributes <- attributes(image)
             type <- ""
             
@@ -99,15 +82,52 @@ runExperiment <- function ()
             else
                 report(OL$Info, "The weighting of image #{outputPaths[i]} is not clear")
             
-            if (createSession)
+            if (createSession && type != "")
             {
                 outputPaths[i] <- getSessionPath(type)
                 if (!file.exists(dirname(outputPaths[i])))
                     dir.create(dirname(outputPaths[i]))
             }
+        }
+        
+        # Deduplicate file names
+        if (any(duplicated(outputPaths)))
+        {
+            outputPaths <- unlist(tapply(outputPaths, outputPaths, function(x) {
+                if (length(x) == 1)
+                    x
+                else
+                {
+                    report(OL$Verbose, "Deduplicating output path #{x[1]}")
+                    paste(x, seq_along(x), sep="_")
+                }
+            }))
+        }
+        
+        report(OL$Info, "Finalising images and writing them out...")
+        for (i in seq_along(result))
+        {
+            image <- result[[i]]
+            attributes <- attributes(image)
             
+            # TR correction for 4D volumes
+            if (ndim(image) == 4 && dim(image)[4] > 1)
+            {
+                storedTR <- pixdim(image)[4]
+                if (storedTR > 0 && storedTR < thresholdTR)
+                {
+                    report(OL$Info, "Reconstructed TR of #{storedTR} s is less than threshold", round=3)
+                    throughPlaneAxis <- abs(tractor.base:::xformToOrientation(xform(image), string=FALSE)[3])
+                    image <- as.array(image)
+                    pixdim(image)[4] <- pixdim(image)[4] * dim(image)[throughPlaneAxis]
+                }
+            }
+            
+            # Write the image to file
+            report(OL$Verbose, "Writing image #{outputPaths[i]}")
             writeNifti(image, ensureFileSuffix(outputPaths[i],"nii.gz"))
             
+            # Strip unneeded attributes (including for anonymisation, if requested)
             exclusionPattern <- "^\\.|^(dim|imagedim|pixdim|pixunits|class)$"
             if (anonymise)
                 exclusionPattern <- ore(exclusionPattern, "|^patient")
@@ -117,6 +137,7 @@ runExperiment <- function ()
                 exclusionPattern <- ore(exclusionPattern, "|^bV(alues|ectors)$")
             }
             
+            # Finalise and write attributes
             attributes <- attributes[!(names(attributes) %~% exclusionPattern)]
             if (length(attributes) > 0)
                 writeYaml(attributes, ensureFileSuffix(outputPaths[i],"tags"), capitaliseLabels=FALSE)
