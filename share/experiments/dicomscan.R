@@ -34,7 +34,7 @@ runExperiment <- function ()
     else
         paths <- Arguments
     
-    divestVerbosity <- switch(names(getOutputLevel()), Debug=3L, Verbose=0L, -1L)
+    divestVerbosity <- switch(names(getOutputLevel()), Debug=2L, Verbose=0L, -1L)
     
     for (path in paths)
     {
@@ -93,15 +93,13 @@ runExperiment <- function ()
         # Deduplicate file names
         if (any(duplicated(outputPaths)))
         {
-            outputPaths <- unlist(tapply(outputPaths, outputPaths, function(x) {
-                if (length(x) == 1)
-                    x
-                else
+            tapply(seq_along(outputPaths), outputPaths, function(i) {
+                if (length(i) > 1)
                 {
-                    report(OL$Verbose, "Deduplicating output path #{x[1]}")
-                    paste(x, seq_along(x), sep="_")
+                    report(OL$Verbose, "Deduplicating output path #{outputPaths[i[1]]}")
+                    outputPaths[i] <<- paste(outputPaths[i], seq_along(i), sep="_")
                 }
-            }))
+            })
         }
         
         report(OL$Info, "Finalising images and writing them out...")
