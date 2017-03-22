@@ -28,3 +28,6 @@
 [submodule "lib/divest"]
 	path = lib/divest
 	url = https://github.com/jonclayden/divest.git
+[submodule "lib/yaml"]
+	path = lib/yaml
+	url = https://github.com/tractor/yaml.git
