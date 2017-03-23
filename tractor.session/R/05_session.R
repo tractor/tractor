@@ -241,10 +241,10 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     {
         defaultsPath <- file.path(Sys.getenv("TRACTOR_HOME"), "etc", "session")
         
-        subdirectories <- defaultSubdirectories <- readYaml(file.path(defaultsPath, "map.yaml"))
+        subdirectories <- defaultSubdirectories <- yaml.load_file(file.path(defaultsPath, "map.yaml"))
         mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")
         if (file.exists(mapFileName))
-            subdirectories <- deduplicate(readYaml(mapFileName), subdirectories)
+            subdirectories <- deduplicate(yaml.load_file(mapFileName), subdirectories)
         .self$caches.$subdirectories <- subdirectories
         
         maps <- list()
@@ -253,17 +253,17 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             defaultFileName <- file.path(defaultsPath, defaultSubdirectories[[place]], "map.yaml")
             if (!file.exists(defaultFileName))
                 next
-            maps[[place]] <- readYaml(defaultFileName)
+            maps[[place]] <- yaml.load_file(defaultFileName)
             mapFileName <- file.path(.self$getDirectory(place), "map.yaml")
             if (file.exists(mapFileName))
-                maps[[place]] <- deduplicate(readYaml(mapFileName), maps[[place]])
+                maps[[place]] <- deduplicate(yaml.load_file(mapFileName), maps[[place]])
         }
         .self$caches.$maps <- maps
         
-        transformStrategies <- readYaml(file.path(defaultsPath, "transforms", "strategy.yaml"))
+        transformStrategies <- yaml.load_file(file.path(defaultsPath, "transforms", "strategy.yaml"))
         strategyFileName <- file.path(.self$getDirectory("transforms"), "strategy.yaml")
         if (file.exists(strategyFileName))
-            transformStrategies <- deduplicate(readYaml(strategyFileName), transformStrategies)
+            transformStrategies <- deduplicate(yaml.load_file(strategyFileName), transformStrategies)
         .self$caches.$transformStrategies <- transformStrategies
     },
     
@@ -334,7 +334,7 @@ updateSessionHierarchy <- function (session)
         # Assume this is a TractoR 1.x session directory: rename the FDT
         # directory, insert the appropriate map, and move FDT-only files back
         file.rename(oldFdtDirectory, diffusionDirectory)
-        writeYaml(.FdtDiffusionMap, file.path(diffusionDirectory, "map.yaml"), capitaliseLabels=FALSE)
+        writeLines(as.yaml(.FdtDiffusionMap), file.path(diffusionDirectory, "map.yaml"))
         
         filesToMoveBack <- c("bvals", "bvecs", "data.ecclog")
         filesToMoveBack <- filesToMoveBack[file.exists(file.path(diffusionDirectory,filesToMoveBack))]
