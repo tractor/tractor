@@ -34,14 +34,15 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputL
         if (!is.null(breakpoint))
             setBreakpoint(scriptFile, breakpoint, nameonly=FALSE)
         
-        fileConfig <- readYaml(configFiles)
-        textConfig <- readYaml(text=configText)
-        if (!is.null(textConfig[[".unlabelled"]]))
-        {
-            assign("Arguments", textConfig[[".unlabelled"]], envir=globalenv())
-            textConfig[[".unlabelled"]] <- NULL
-        }
-        assign("ConfigVariables", deduplicate(textConfig,fileConfig), envir=globalenv())
+        config <- list()
+        textFragments <- ore.split("\\s+", configText)
+        labelled <- textFragments %~% "^\\s*(\\w+):(.+?)\\s*$"
+        match <- ore.lastmatch(FALSE)
+        for (i in which(labelled))
+            config[[match[i,,1]]] <- match[i,,2]
+            
+        assign("Arguments", textFragments[!labelled], envir=globalenv())
+        assign("ConfigVariables", deduplicate(config,readYaml(configFiles)), envir=globalenv())
         
         setwd(workingDirectory)
         
@@ -67,9 +68,9 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputL
     
     reportFlags()
     
-    if (any(names(ConfigVariables) %in% names(textConfig)))
+    if (any(names(ConfigVariables) %in% names(config)))
     {
-        unusedNames <- paste0("\"", names(ConfigVariables)[names(ConfigVariables) %in% names(textConfig)], "\"")
+        unusedNames <- paste0("\"", names(ConfigVariables)[names(ConfigVariables) %in% names(config)], "\"")
         if (length(unusedNames) == 1)
             report(OL$Warning, "Configuration variable #{unusedNames} was not used")
         else

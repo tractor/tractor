@@ -71,7 +71,7 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
         
         configPrefix <- file.path(tempDir, "config")
         for (i in seq_len(n))
-            writeYaml(as.list(data[i,,drop=FALSE]), es("#{configPrefix}.#{i}.yaml"), capitaliseLabels=FALSE)
+            writeYaml(as.list(data[i,,drop=FALSE]), es("#{configPrefix}.#{i}.yaml"))
         
         qsubScriptFile <- file.path(tempDir, "script")
         qsubScript <- c("#!/bin/sh",
@@ -93,7 +93,7 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
     {
         parallelApply(seq_len(n), function(i) {
             currentFile <- threadSafeTempFile()
-            writeYaml(as.list(data[i,,drop=FALSE]), currentFile, capitaliseLabels=FALSE)
+            writeYaml(as.list(data[i,,drop=FALSE]), currentFile)
             
             execute(tractorPath, es("-c #{currentFile} #{buildArgs(i)}"), env=es("TRACTOR_PLOUGH_ID=#{i}"))
             
