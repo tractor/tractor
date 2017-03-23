@@ -466,7 +466,13 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         origin <- tempOrigin[1:3]
     }
     
-    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, origin=origin, storedXform=info$storageMetadata$xformMatrix, reordered=FALSE, tags=info$imageMetadata$tags, data=data)
+    tagsFileName <- ensureFileSuffix(fileNames$fileStem, "tags")
+    if (file.exists(tagsFileName))
+        tags <- deduplicate(yaml::yaml.load_file(tagsFileName), info$imageMetadata$tags)
+    else
+        tags <- info$imageMetadata$tags
+    
+    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, origin=origin, storedXform=info$storageMetadata$xformMatrix, reordered=FALSE, tags=tags, data=data)
     
     if (reorder)
         image <- reorderMriImage(image)
