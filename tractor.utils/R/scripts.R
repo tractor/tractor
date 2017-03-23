@@ -100,9 +100,3 @@ requireArguments <- function (...)
     else if (is.character(args) && nArguments() < length(args))
         report(OL$Error, "At least ", length(args), " argument(s) must be specified: ", implode(args,", "))
 }
-
-producesError <- function (expr, silent = TRUE)
-{
-    returnValue <- try(expr, silent)
-    return ("try-error" %in% class(returnValue))
-}

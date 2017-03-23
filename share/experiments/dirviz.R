@@ -40,6 +40,23 @@ runExperiment <- function ()
     if (nDirections == 0)
         report(OL$Error, "The \"bedpost\" program has not yet been run for this session")
     
+    insertColumnAt <- function (index, x, colData)
+    {
+        x <- promote(x, byrow=TRUE)
+        end <- ncol(x)
+    
+        if (index == 1)
+            result <- cbind(colData, x)
+        else if (index == end+1)
+            result <- cbind(x, colData)
+        else if (index > 1 && index <= end)
+            result <- cbind(x[,1:(index-1),drop=FALSE], colData, x[,index:end,drop=FALSE])
+        else
+            report(OL$Error, "Index (", index, ") is out of bounds")
+    
+        return (result)
+    }
+    
     for (i in seq_len(nDirections))
     {
         if (source == "bedpost")
