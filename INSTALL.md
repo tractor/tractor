@@ -18,7 +18,7 @@ Quick installation for knowledgeable users
 
 3. Create or update the `TRACTOR_HOME` environment variable to point to the
    "tractor" directory, include `${TRACTOR_HOME}/bin` on the `PATH` and
-   `${TRACTOR_HOME}/man` on the `MANPATH`.
+   `${TRACTOR_HOME}/share/man` on the `MANPATH`.
 
 4. Consider installing [FSL](http://fsl.fmrib.ox.ac.uk/), if it is not
    already installed. It is used by some elements of TractoR's functionality.
@@ -54,7 +54,7 @@ following lines to your `~/.bashrc` (or equivalent for other shells):
 
     export TRACTOR_HOME=/usr/local/tractor
     export PATH=${TRACTOR_HOME}/bin:${PATH}
-    export MANPATH=${TRACTOR_HOME}/man:${MANPATH}
+    export MANPATH=${TRACTOR_HOME}/share/man:${MANPATH}
 
 (Note that the first line may need to be modified to reflect the actual
 location of the uncompressed "tractor" directory on your system. You should get

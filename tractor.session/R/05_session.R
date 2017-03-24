@@ -239,7 +239,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     updateCaches = function ()
     {
-        defaultsPath <- file.path(Sys.getenv("TRACTOR_HOME"), "etc", "session")
+        defaultsPath <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "session")
         
         subdirectories <- defaultSubdirectories <- yaml.load_file(file.path(defaultsPath, "map.yaml"))
         mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")

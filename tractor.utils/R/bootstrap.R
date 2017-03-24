@@ -133,7 +133,7 @@ findExperiment <- function (exptName)
     pathDirs <- c(".",
                   file.path(Sys.getenv("HOME"), ".tractor"),
                   splitAndConvertString(Sys.getenv("TRACTOR_PATH"), ":", fixed=TRUE),
-                  file.path(Sys.getenv("TRACTOR_HOME"), "share", "experiments"))
+                  file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "experiments"))
     possibleLocations <- file.path(pathDirs, exptFile)
     filesExist <- file.exists(possibleLocations)
     

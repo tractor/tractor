@@ -7,7 +7,7 @@ WORKDIR /usr/local/tractor
 RUN make install
 ENV TRACTOR_HOME /usr/local/tractor
 ENV PATH $TRACTOR_HOME/bin:$PATH
-ENV MANPATH $TRACTOR_HOME/man:$MANPATH
+ENV MANPATH $TRACTOR_HOME/share/man:$MANPATH
 
 RUN groupadd -r tractor && useradd -r -g tractor tractor
 RUN chown -R tractor:tractor .

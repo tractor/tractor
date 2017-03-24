@@ -1,5 +1,5 @@
 #@args session directory, segmentation images
-#@desc Read and merge together parcellations for a T1-weighted image. (The "freesurf" script is a simpler alternative if you just want to use Freesurfer.) Labels in segmentations specified later in the command will take priority over duplicates appearing in earlier segmentations. The special symbol '@' can be used to indicate that the session hierarchy should be checked for the parcellation in question. Any existing parcellation will be taken as a starting point unless IgnoreExisting:true is given. A region description file in the format used in $TRACTOR_HOME/etc/parcellations must be provided for any parcellation type which is not specified there.
+#@desc Read and merge together parcellations for a T1-weighted image. (The "freesurf" script is a simpler alternative if you just want to use Freesurfer.) Labels in segmentations specified later in the command will take priority over duplicates appearing in earlier segmentations. The special symbol '@' can be used to indicate that the session hierarchy should be checked for the parcellation in question. Any existing parcellation will be taken as a starting point unless IgnoreExisting:true is given. A region description file in the format used in $TRACTOR_HOME/share/tractor/parcellations must be provided for any parcellation type which is not specified there.
 
 library(tractor.reg)
 library(tractor.session)
@@ -49,8 +49,8 @@ runExperiment <- function ()
         regionFileName <- ensureFileSuffix(types[i], "lut")
         if (file.exists(regionFileName))
             regionFilePath <- regionFileName
-        else if (file.exists(file.path(Sys.getenv("TRACTOR_HOME"), "etc", "parcellations", regionFileName)))
-            regionFilePath <- file.path(Sys.getenv("TRACTOR_HOME"), "etc", "parcellations", regionFileName)
+        else if (file.exists(file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "parcellations", regionFileName)))
+            regionFilePath <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "parcellations", regionFileName)
         else
             report(OL$Error, "No region description file was found for parcellation type \"#{types[i]}\"")
         

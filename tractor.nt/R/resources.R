@@ -10,7 +10,7 @@ getFileNameForNTResource <- function (type, mode, options = NULL, intent = c("re
     if (tractorHome == "" || !file.exists(tractorHome))
         standardRefTractDir <- NULL
     else
-        standardRefTractDir <- file.path(tractorHome, "share", "reftracts", mode)
+        standardRefTractDir <- file.path(tractorHome, "share", "tractor", "reftracts", mode)
     
     if (type == "reference")
     {

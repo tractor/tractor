@@ -26,7 +26,7 @@ post-install-info:
 	@$(ECHO)
 	@$(ECHO) "  export TRACTOR_HOME=`pwd`"
 	@$(ECHO) '  export PATH=$${TRACTOR_HOME}/bin:$${PATH}'
-	@$(ECHO) '  export MANPATH=$${TRACTOR_HOME}/man:$${MANPATH}'
+	@$(ECHO) '  export MANPATH=$${TRACTOR_HOME}/share/man:$${MANPATH}'
 	@$(ECHO)
 	@$(ECHO) "The ~/.bashrc file can be created if it does not already exist."
 
@@ -92,12 +92,12 @@ dtest:
 	@cd tests && $(MAKE) debug-tests R=$(R)
 
 create-md5:
-	@$(GIT) ls-files | grep -v -e '^lib/' -e '^etc/md5.txt' -e '\.git' | xargs $(MD5) -r >etc/md5.txt
+	@$(GIT) ls-files | grep -v -e '^lib/' -e '^md5.txt' -e '\.git' | xargs $(MD5) -r >md5.txt
 
 check-md5:
 	@mkdir -p tmp
 	@$(ECHO_N) "Checking MD5 checksums... "
-	@bin/tractor -q -z -i tests/scripts/check-md5 etc/md5.txt >tmp/md5.txt && $(ECHO) "OK" || ( $(ECHO) "FAIL"; sed '$$ d' tmp/md5.txt )
+	@bin/tractor -q -z -i tests/scripts/check-md5 md5.txt >tmp/md5.txt && $(ECHO) "OK" || ( $(ECHO) "FAIL"; sed '$$ d' tmp/md5.txt )
 	@rm -f tmp/md5.txt
 
 docker: uninstall distclean

@@ -29,7 +29,7 @@ expect_available=$?
 
 usage()
 {
-    echo "tractor (program v3.0.0, distribution v$distribution_version)"
+    echo "tractor (program v3.1.0, distribution v$distribution_version)"
     echo "Run a TractoR experiment script in R and report the results"
     echo
     echo "Usage: tractor [-ldzqfbi] [-v level] [-a architecture] [-w working_dir]"
@@ -61,9 +61,9 @@ usage()
     echo "The script, a text file containing R code, need not be specified with the"
     echo "'.R' extension. The program searches in the current working directory for"
     echo "the specified script first, followed by any directory specified using the"
-    echo "'-w' option, then ~/.tractor, and finally the share/experiments directory"
-    echo "under \$TRACTOR_HOME. The \$TRACTOR_PATH environment variable can be used"
-    echo "to specify additional paths. The man page has details."
+    echo "'-w' option, then ~/.tractor, and finally the share/tractor/experiments"
+    echo "directory under \$TRACTOR_HOME. The \$TRACTOR_PATH environment variable can"
+    echo "be used to specify additional paths. The man page has details."
     echo
     echo "To find out what scripts are available, type \"tractor list\". To find out"
     echo "what a given script does, type \"tractor -o (script name)\"."
@@ -139,7 +139,7 @@ elif [ -f "$HOME/.tractor/$script_file" ]; then
 fi
 
 if [ $file_found -ne 1 ]; then
-    for d in `echo "$TRACTOR_PATH:${TRACTOR_HOME}${TRACTOR_HOME+/share/experiments}" | sed 's/:/ /g'`
+    for d in `echo "$TRACTOR_PATH:${TRACTOR_HOME}${TRACTOR_HOME+/share/tractor/experiments}" | sed 's/:/ /g'`
         do
         if [ -f "$d/$script_file" ]
             then

@@ -5,7 +5,7 @@ library(tractor.base)
 
 runExperiment <- function ()
 {
-    pathDirs <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "experiments")
+    pathDirs <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "experiments")
     pathDirs <- c(pathDirs, unlist(strsplit(Sys.getenv("TRACTOR_PATH"), ":", fixed=TRUE)))
     
     for (pathDir in pathDirs)
