@@ -154,14 +154,27 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getRegistrationTargetFileName = function (space) { return (.self$getImageFileNameByType(.RegistrationTargets[[space]][[1]], space)) },
     
-    getTracker = function (mask = NULL)
+    getTracker = function (mask = NULL, preferredModel = c("bedpost","dti"))
     {
-        if (!("diffusionModel" %in% names(caches.$objects)))
+        preferredModel <- match.arg(preferredModel)
+        availableModels <- c(.self$imageExists("avf", "bedpost"),
+                             .self$imageExists("eigenvector", "diffusion", 1))
+        names(availableModels) <- c("bedpost", "dti")
+        
+        if (!any(availableModels))
+            report(OL$Error, "No diffusion model is available for the session with root directory #{.self$getDirectory()}")
+        else if (!availableModels[preferredModel])
         {
-            if (.self$imageExists("avf", "bedpost"))
+            preferredModel <- names(which(availableModels))
+            flag(OL$Warning, "Preferred diffusion model is not available - reverting to #{toupper(preferredModel)}")
+        }
+        
+        if (!("diffusionModel" %in% names(caches.$objects)) || .self$caches.$objects$diffusionModel$getType() != preferredModel)
+        {
+            if (preferredModel == "bedpost")
                 .self$caches.$objects$diffusionModel <- tractor.track::bedpostDiffusionModel(.self$getDirectory("bedpost"))
             else
-                report(OL$Error, "No diffusion model is available for the session with root directory #{.self$getDirectory()}")
+                .self$caches.$objects$diffusionModel <- tractor.track::dtiDiffusionModel(.self$getImageFileNameByType("eigenvector", "diffusion", 1))
         }
         
         if (is.null(mask))

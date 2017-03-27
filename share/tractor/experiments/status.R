@@ -17,7 +17,7 @@ runExperiment <- function ()
     if (file.exists(session$getDirectory("diffusion")))
     {
         report(OL$Info, "\nDIFFUSION:", prefixFormat="")
-        labels <- c("Preprocessing complete", "Data dimensions", "Voxel dimensions", "Number of shells", "Diffusion b-values", "Number of gradient directions", "Diffusion tensors fitted", "Fibre orientation model")
+        labels <- c("Preprocessing complete", "Data dimensions", "Voxel dimensions", "Number of shells", "Diffusion b-values", "Number of gradient directions", "Fibre orientation model(s)")
         if (session$imageExists("data","diffusion"))
         {
             metadata <- session$getImageByType("data", "diffusion", metadataOnly=TRUE)
@@ -33,13 +33,14 @@ runExperiment <- function ()
         else
             schemeValues <- scheme$summarise()$values
         
+        modelStrings <- NULL
+        if (session$imageExists("eigenvector", "diffusion", 1))
+            modelStrings <- c(modelStrings, "DTI")
         nFibres <- getBedpostNumberOfFibresForSession(session)
-        if (nFibres == 0)
-            modelValue <- "(none)"
-        else
-            modelValue <- es("FSL-BEDPOSTX (#{nFibres} #{pluralise('fibre',n=nFibres)} per voxel)")
+        if (nFibres > 0)
+            modelStrings <- c(modelStrings, es("FSL-BEDPOSTX (#{nFibres} #{pluralise('fibre',n=nFibres)} per voxel)"))
         
-        values <- c(session$imageExists("data","diffusion"), dims, voxelDims, schemeValues, session$imageExists("FA","diffusion"), modelValue)
+        values <- c(session$imageExists("data","diffusion"), dims, voxelDims, schemeValues, ifelse(length(modelStrings)==0, "(none)", implode(modelStrings,sep=", ")))
         printLabelledValues(labels, values, leftJustify=TRUE)
     }
     

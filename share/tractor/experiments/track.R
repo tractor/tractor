@@ -19,10 +19,11 @@ runExperiment <- function ()
     
     strategy <- getConfigVariable("Strategy", "global", validValues=c("global","regionwise","voxelwise"))
     nStreamlines <- getConfigVariable("Streamlines", "100x")
+    preferredModel <- getConfigVariable("PreferredModel", "bedpost", validValues=c("bedpost","dti"))
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL, "numeric")
     parcellationConfidence <- getConfigVariable("ParcellationConfidence", 0.2)
     boundaryManipulation <- getConfigVariable("BoundaryManipulation", "none", validValues=c("none","erode","dilate","inner","outer"))
-    kernelShape <- getConfigVariable("KernelShape", "diamond", "character", validValues=c("box","disc","diamond"))
+    kernelShape <- getConfigVariable("KernelShape", "diamond", validValues=c("box","disc","diamond"))
     jitter <- getConfigVariable("JitterSeeds", TRUE)
     targetRegions <- getConfigVariable("TargetRegions", NULL, "character")
     terminateAtTargets <- getConfigVariable("TerminateAtTargets", FALSE)
@@ -112,9 +113,10 @@ runExperiment <- function ()
     else
         minTargetHits <- as.integer(minTargetHits)
     
-    tracker <- session$getTracker(mask)
+    tracker <- session$getTracker(mask, preferredModel=preferredModel)
     tracker$setTargets(targetInfo)
     tracker$setFilters(minLength=minLength, minTargetHits=minTargetHits)
+    report(OL$Info, "Using #{toupper(tracker$getModel()$getType())} diffusion model")
     
     if (strategy == "global")
     {
