@@ -4,6 +4,55 @@
 #include "Grid.h"
 #include "DiffusionModel.h"
 
+std::vector<int> DiffusionModel::probabilisticRound (const Space<3>::Point &point, const int size) const
+{
+    std::vector<int> result(size, 0);
+    const Eigen::Array3i imageDims = grid.dimensions();
+    
+    // Probabilistic trilinear interpolation: select the sample location with probability in proportion to proximity
+    for (int i=0; i<3; i++)
+    {
+        float pointCeiling = ceil(point[i]);
+        float pointFloor = floor(point[i]);
+        
+        float distance = point[i] - pointFloor;
+        
+        float uniformSample = static_cast<float>(R::unif_rand());
+        if ((uniformSample > distance && pointFloor >= 0.0) || pointCeiling >= static_cast<float>(imageDims(i,0)))
+            result[i] = static_cast<int>(pointFloor);
+        else
+            result[i] = static_cast<int>(pointCeiling);
+    }
+    
+    return result;
+}
+
+DiffusionTensorModel::DiffusionTensorModel (const std::string &pdFile)
+{
+    RNifti::NiftiImage image(pdFile);
+    
+    const std::vector<int> &imageDims = image.dim();
+    if (imageDims.size() != 4 || imageDims[3] != 3)
+        throw std::runtime_error("Principal direction image does not seem to be vector-valued");
+    
+    grid = ::getGrid3D(image);
+    principalDirections = new Array<float>(image);
+}
+
+Space<3>::Vector DiffusionTensorModel::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
+{
+    std::vector<int> roundedPoint = probabilisticRound(point, 4);
+    Space<3>::Vector stepVector;
+    
+    for (int i=0; i<3; i++)
+    {
+        roundedPoint[3] = i;
+        stepVector[i] = (*principalDirections)[roundedPoint];
+    }
+    
+    return stepVector;
+}
+
 BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std::vector<std::string> &thetaFiles, const std::vector<std::string> &phiFiles)
     : avfThreshold(0.05)
 {
@@ -34,26 +83,10 @@ BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std:
 
 Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
 {
-    std::vector<int> newPoint(4);
-    const Eigen::Array3i imageDims = grid.dimensions();
-    
-    // Probabilistic trilinear interpolation: select the sample location with probability in proportion to proximity
-    for (int i=0; i<3; i++)
-    {
-        float pointCeiling = ceil(point[i]);
-        float pointFloor = floor(point[i]);
-        
-        float distance = point[i] - pointFloor;
-        
-        float uniformSample = static_cast<float>(R::unif_rand());
-        if ((uniformSample > distance && pointFloor >= 0.0) || pointCeiling >= static_cast<float>(imageDims(i,0)))
-            newPoint[i] = static_cast<int>(pointFloor);
-        else
-            newPoint[i] = static_cast<int>(pointCeiling);
-    }
+    std::vector<int> roundedPoint = probabilisticRound(point, 4);
     
     // Randomly choose a sample number
-    newPoint[3] = static_cast<int>(round(R::unif_rand() * (nSamples-1)));
+    roundedPoint[3] = static_cast<int>(round(R::unif_rand() * (nSamples-1)));
     
     // NB: Currently assuming always at least one anisotropic compartment
     int closestIndex = 0;
@@ -61,13 +94,13 @@ Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, co
     for (int i=0; i<nCompartments; i++)
     {
         // Check AVF is above threshold
-        float currentAvfSample = (*avf[i])[newPoint];
+        float currentAvfSample = (*avf[i])[roundedPoint];
         if (i == 0 || currentAvfSample >= avfThreshold)
         {
             Space<3>::Vector sphericalCoordsStep;
             sphericalCoordsStep[0] = 1.0;
-            sphericalCoordsStep[1] = (*theta[i])[newPoint];
-            sphericalCoordsStep[2] = (*phi[i])[newPoint];
+            sphericalCoordsStep[1] = (*theta[i])[roundedPoint];
+            sphericalCoordsStep[2] = (*phi[i])[roundedPoint];
             Space<3>::Vector stepVector = Space<3>::sphericalToCartesian(sphericalCoordsStep);
             
             // Use AVF to choose population on first step
@@ -88,8 +121,8 @@ Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, co
     
     Space<3>::Vector sphericalCoordsStep;
     sphericalCoordsStep[0] = 1.0;
-    sphericalCoordsStep[1] = (*theta[closestIndex])[newPoint];
-    sphericalCoordsStep[2] = (*phi[closestIndex])[newPoint];
+    sphericalCoordsStep[1] = (*theta[closestIndex])[roundedPoint];
+    sphericalCoordsStep[2] = (*phi[closestIndex])[roundedPoint];
     Space<3>::Vector stepVector = Space<3>::sphericalToCartesian(sphericalCoordsStep);
     return stepVector;
 }

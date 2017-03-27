@@ -10,6 +10,8 @@ class DiffusionModel : public Griddable3D
 protected:
     Grid<3> grid;
     
+    std::vector<int> probabilisticRound (const Space<3>::Point &point, const int size = 3) const;
+    
 public:
     virtual ~DiffusionModel () {}
     
@@ -19,6 +21,25 @@ public:
     }
     
     Grid<3> getGrid3D () const { return grid; }
+};
+
+class DiffusionTensorModel : public DiffusionModel
+{
+private:
+    Array<float> *principalDirections;
+    
+public:
+    DiffusionTensorModel ()
+        : principalDirections(NULL) {}
+    
+    DiffusionTensorModel (const std::string &pdFile);
+    
+    ~DiffusionTensorModel ()
+    {
+        delete principalDirections;
+    }
+    
+    Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const;
 };
 
 class BedpostModel : public DiffusionModel

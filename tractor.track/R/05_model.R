@@ -16,6 +16,16 @@ is.nilModel <- function (object)
     return (identical(object, .NilModel))
 }
 
+dtiDiffusionModel <- function (directionsPath)
+{
+    if (!imageFileExists(directionsPath))
+        report(OL$Error, "The specified principal directions image does not exist")
+    
+    pointer <- .Call("createDtiModel", directionsPath, PACKAGE="tractor.track")
+    
+    return (DiffusionModel$new(pointer=pointer, type="dti"))
+}
+
 getBedpostNumberOfFibres <- function (bedpostDir)
 {
     i <- 1

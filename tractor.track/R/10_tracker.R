@@ -10,6 +10,8 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         invisible(object)
     },
     
+    getModel = function () { return (model) },
+    
     setFilters = function (...)
     {
         args <- list(...)

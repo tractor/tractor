@@ -16,6 +16,15 @@ using namespace Rcpp;
 typedef std::vector<int> int_vector;
 typedef std::vector<std::string> str_vector;
 
+RcppExport SEXP createDtiModel (SEXP _principalDirectionsPath)
+{
+BEGIN_RCPP
+    DiffusionTensorModel *model = new DiffusionTensorModel(as<std::string>(_principalDirectionsPath));
+    XPtr<DiffusionModel> modelPtr(model);
+    return modelPtr;
+END_RCPP
+}
+
 RcppExport SEXP createBedpostModel (SEXP _parameterMapPaths, SEXP _avfThreshold)
 {
 BEGIN_RCPP
