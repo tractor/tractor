@@ -382,6 +382,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         }
     }
     
+    report(OL$Debug, "Image datatype is #{datatype$size}-byte #{ifelse(datatype$isSigned,'signed','unsigned')} #{datatype$type}")
+    
     if (metadataOnly)
         data <- NULL
     else

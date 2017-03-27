@@ -60,6 +60,7 @@ readNifti <- function (fileNames)
     nonNativeEndian <- setdiff(c("big","little"), .Platform$endian)
     endian <- switch(as.character(size), "348"=.Platform$endian, "540"=.Platform$endian, "1543569408"=nonNativeEndian, "469893120"=nonNativeEndian)
     niftiVersion <- switch(as.character(size), "348"=1, "540"=2, "1543569408"=1, "469893120"=2)
+    report(OL$Debug, "NIfTI-#{niftiVersion} file, #{endian}-endian")
     
     if (is.null(endian))
         report(OL$Error, "#{fileNames$headerFile} does not seem to be a valid NIfTI header file")
