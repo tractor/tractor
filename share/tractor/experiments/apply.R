@@ -1,5 +1,5 @@
 #@args image file(s), R expression
-#@desc Generate a new image by applying an R expression to one or more input images. (The expression should be quoted to prevent it from being interpreted by the shell.) The original images are represented in the expression using the symbols a, b, c, etc. The number of input images is usually guessed, but can be specified explicitly with the Inputs variable. If the Combine option is given then the function will be applied to each image in turn, and then the results combined. If the result is a single value then it will be printed, otherwise a new image is created and written to file. Metadata for the result image will be based on the first image specified.
+#@desc Generate a new image by applying an R expression to one or more input images. (The expression should be quoted to prevent it from being interpreted by the shell.) The original images are represented in the expression using the symbols a, b, c, etc. The number of input images is usually guessed, but can be specified explicitly with the Inputs variable. If the Combine option is given then the function will be applied to each image in turn, and then the results combined. If the result is a single value or a simple vector then it will be printed, otherwise a new image is created and written to file. Metadata for the result image will be based on the first image specified.
 #@example # Create a new image from the log of the voxelwise sum of two others
 #@example tractor apply image1 image2 "log(a+b)"
 #@example # Threshold and binarise two images, then add them together
@@ -24,7 +24,7 @@ runExperiment <- function ()
                 break
         }
         
-        report(OL$Debug, "Guessing that there are #{nInputs} input images")
+        report(OL$Verbose, "Guessing that there are #{nInputs} input images")
     }
     
     if (nInputs < 1)
@@ -51,8 +51,8 @@ runExperiment <- function ()
         result <- apply(data, 1:images[[1]]$getDimensionality(), combine, na.rm=TRUE)
     }
     
-    if (length(result) == 1)
-        cat(paste(result, "\n", sep=""))
+    if (length(result) == 1 || (!is.array(result) && !(length(result) %in% cumprod(dim(images[[1]])))))
+        cat(paste0(implode(result,sep="\n"), "\n"))
     else
     {
         resultImage <- asMriImage(result, images[[1]])
