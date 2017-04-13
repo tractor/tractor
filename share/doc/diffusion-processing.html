@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en-gb">
 
 <head>
   <title>TractoR ~ Diffusion processing</title>
 
   <meta charset="utf-8" />
   <meta name="author" content="Jon Clayden" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   
-  <script type="text/javascript" src="hyphenator.js"></script>
-  
-  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
-  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-563735-7']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
+  <link href="assets/prism.css" rel="stylesheet" />
+  <link href="assets/style.css" rel="stylesheet" />
 </head>
 
 <body>
 
-<div id="main" class="hyphenate">
+<header>
+  <div id="banner">
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+  </div>
+</header>
 
-<table id="tabs">
-  <tr>
-  <td class="tab"><a href="home.html">Home</a></td>
-  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="downloads.html">Downloads</a></td>
-  <td class="tab"><a href="changelog.html">Changelog</a></td>
-  <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
-  </tr>
-</table>
+<div id="navbar">
+  <nav>
+    <div id="links">
+      <span><a href="home.html">Home</a></span>
+      <span><a href="home.html#site-contents">Contents</a></span>
+      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="changelog.html">Changelog</a></span>
+      <span><a href="references.html">References</a></span>
+      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
+      <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+    </div>
+  </nav>
+</div>
+
+<div id="main" class="language-bash">
 
 
 <h1>Diffusion processing</h1>
@@ -72,7 +69,7 @@
 
 <p>A single scan session often comprises a range of image acquisitions of different types, for example including structural and functional imaging as well as a diffusion-weighted sequence. It is therefore a common first step to sort the DICOM files corresponding to the diffusion scan out from everything else. Assuming for present purposes that data sets are stored as subdirectories of <code>/data</code>, and that each data set has its own <code>dicom</code> subdirectory containing all associated DICOM files, this sorting process can be achieved by typing something like</p>
 
-<pre><code>cd /data/subject1/dicom
+<pre><code class="language-bash line-numbers">cd /data/subject1/dicom
 tractor dicomsort
 </code></pre>
 
@@ -82,54 +79,54 @@ tractor dicomsort
 
 <p>With DICOM sorting already performed if necessary, running the preprocessing pipeline for a single session directory is a matter of typing something like</p>
 
-<pre><code>cd /data/subject1
+<pre><code class="language-bash line-numbers">cd /data/subject1
 tractor dpreproc
 </code></pre>
 
 <p>By default, TractoR will assume that all DICOM files it finds under the main session directory, <code>/data/subject1</code>, relate to your DTI acquisition. If in fact your diffusion DICOM files are stored in some subdirectory, perhaps <code>/data/subject1/dicom/dti</code>, you should tell TractoR this by instead using</p>
 
-<pre><code>tractor dpreproc DicomDirectories:dicom/dti
+<pre><code class="language-bash">tractor dpreproc DicomDirectories:dicom/dti
 </code></pre>
 
 <p>Notice that the DICOM subdirectory given is relative to the session directory. More than one directory can be specified if multiple acquisition series are relevant.</p>
 
 <p>The preprocessing can be completed noninteractively by setting the &ldquo;Interactive&rdquo; option to <code>false</code>:</p>
 
-<pre><code>tractor dpreproc Interactive:false
+<pre><code class="language-bash">tractor dpreproc Interactive:false
 </code></pre>
 
 <p>(Note, however, that in this case default parameters will be used, without the chance to check that the results are appropriate. Some parameters can, however, be adjusted using other options to the <code>dpreproc</code> script: run <code>tractor -o dpreproc</code> for details.) By default, TractoR will run all four stages, but will miss out any stage that has already been successfully completed. To run every stage except the final one, type</p>
 
-<pre><code>tractor dpreproc RunStages:1-3
+<pre><code class="language-bash">tractor dpreproc RunStages:1-3
 </code></pre>
 
 <p>or to start from the beginning again even if some stages have already been done, use</p>
 
-<pre><code>tractor dpreproc Force:true
+<pre><code class="language-bash">tractor dpreproc Force:true
 </code></pre>
 
 <p>If you want to find out which stages have already been run, simply give</p>
 
-<pre><code>tractor dpreproc StatusOnly:true
+<pre><code class="language-bash">tractor dpreproc StatusOnly:true
 </code></pre>
 
 <h2 id="checking-and-rotating-gradient-directions">Checking and rotating gradient directions</h2>
 
 <p>The directions of applied diffusion-weighting gradients are determined from the DICOM files if possible, during stage 1 of the <code>dpreproc</code> script. However, if <code>dpreproc</code> is not used, or the gradient directions cannot be found, it may be necessary to specify them manually. To do so, the directions should be put into a plain text file, arranged either one-per-column or one-per-row, normalised or unnormalised, and with or without zeroes for <em>b</em>=0 measurements. The <code>gradread</code> script can then be called, passing the session directory, gradients file and the big and little <em>b</em>-values:</p>
 
-<pre><code>tractor gradread /data/subject1 /data/directions.txt 1000 0
+<pre><code class="language-bash">tractor gradread /data/subject1 /data/directions.txt 1000 0
 </code></pre>
 
 <p>This should normally only be necessary once for a given sequence, since a cache is automatically used to store gradient directions for use with other data sets acquired the same way.</p>
 
 <p>Whichever way the gradients are initially obtained, it is a good idea to check that the signs of the directions are correct. The <code>gradcheck</code> script assists with this by showing the principal directions of diffusion in three representative slices of the brain, for checking against the user&rsquo;s expectations. It can be run from the session directory with</p>
 
-<pre><code>tractor gradcheck
+<pre><code class="language-bash">tractor gradcheck
 </code></pre>
 
 <p>Another step which is commonly performed is gradient rotation, to compensate for the registration performed to correct for eddy current effects in <code>dpreproc</code> stage 4. If required, this <strong>should be the last step</strong> performed on the directions. It is run with simply</p>
 
-<pre><code>tractor gradrotate
+<pre><code class="language-bash">tractor gradrotate
 </code></pre>
 
 <p>The <code>plotcorrections</code> script can be used to see how big the effect of this step will be: run <code>tractor -o plotcorrections</code> for more information.</p>
@@ -138,19 +135,19 @@ tractor dpreproc
 
 <p>Fitting diffusion tensors is a standard processing step for diffusion-weighted data, and results in the creation of a range of derivative images, including maps of fractional anisotropy and mean diffusivity. This fitting can be performed using</p>
 
-<pre><code>tractor tensorfit
+<pre><code class="language-bash">tractor tensorfit
 </code></pre>
 
 <p>There are three alternative approaches to fitting the tensors available, but standard least-squares fitting is the default: see <code>tractor -o tensorfit</code> for details. The <a href="http://www.camino.org.uk">Camino toolkit</a> offers many more methods.</p>
 
 <p>The tractography that TractoR and FSL use is probabilistic, however, and does not use the diffusion tensor. Instead, the FSL <a href="http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX">BEDPOSTX algorithm</a> is used to fit a &ldquo;ball-and-sticks&rdquo; model and generate samples for probabilistic tractography. This typically takes several hours. The command for running this is</p>
 
-<pre><code>tractor bedpost
+<pre><code class="language-bash">tractor bedpost
 </code></pre>
 
 <p>The underlying FSL <code>bedpostx</code> program takes a parameter which determines the maximum number of fibre populations which may be represented for each voxel. The larger this value, the longer <code>bedpostx</code> will take to run, but if set to 1 then no crossing fibre information will be available. The default value is 3, and this can be changed using the <code>NumberOfFibres</code> option:</p>
 
-<pre><code>tractor bedpost NumberOfFibres:2
+<pre><code class="language-bash">tractor bedpost NumberOfFibres:2
 </code></pre>
 
 <p>It is important to note that the number of fibres fitted is <em>a property of the session</em>, and so once set it cannot be changed without processing the data again. If you wish to try different values of this option on a single data set, you will need to duplicate the session hierarchy, since these would be considered two distinct preprocessing pipelines, producing two different data sets.</p>
@@ -159,7 +156,7 @@ tractor dpreproc
 
 <p>To find out information about a particular session directory and the data stored within it, you can use the <code>status</code> script, which produces output like the following:</p>
 
-<pre><code>GENERAL:
+<pre><code class="language-bash line-numbers">GENERAL:
   Session directory        : /usr/local/tractor/tests/data/session
   Working directory exists : TRUE
 
@@ -176,6 +173,23 @@ DIFFUSION:
 
 
 </div>
+
+<script src="assets/jquery-3.2.0.min.js"></script>
+<script src="assets/jquery.hypher.min.js"></script>
+<script src="assets/en-gb.js"></script>
+<script async type="text/javascript">
+  $('p').hyphenate('en-gb');
+</script>
+<script async src="assets/prism.js"></script>
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-563735-7', 'auto');
+  ga('send', 'pageview');
+</script>
 
 </body>
 

@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en-gb">
 
 <head>
   <title>TractoR ~ Guidelines for contributors</title>
 
   <meta charset="utf-8" />
   <meta name="author" content="Jon Clayden" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   
-  <script type="text/javascript" src="hyphenator.js"></script>
-  
-  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
-  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-563735-7']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
+  <link href="assets/prism.css" rel="stylesheet" />
+  <link href="assets/style.css" rel="stylesheet" />
 </head>
 
 <body>
 
-<div id="main" class="hyphenate">
+<header>
+  <div id="banner">
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+  </div>
+</header>
 
-<table id="tabs">
-  <tr>
-  <td class="tab"><a href="home.html">Home</a></td>
-  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="downloads.html">Downloads</a></td>
-  <td class="tab"><a href="changelog.html">Changelog</a></td>
-  <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
-  </tr>
-</table>
+<div id="navbar">
+  <nav>
+    <div id="links">
+      <span><a href="home.html">Home</a></span>
+      <span><a href="home.html#site-contents">Contents</a></span>
+      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="changelog.html">Changelog</a></span>
+      <span><a href="references.html">References</a></span>
+      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
+      <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+    </div>
+  </nav>
+</div>
+
+<div id="main" class="language-bash">
 
 
 <h1>Guidelines for contributors</h1>
@@ -54,7 +51,7 @@
 <h3 id="general-philosophy-and-style">General philosophy and style</h3>
 
 <ul>
-<li>Descriptive function and variable names are strongly favoured, so as to make code as self-documenting as possible. Variables with meaningful names make understanding the effect of a line more obvious, as in <code>spatialUnitCode &lt;- packBits(intToBits(from@xyzt_units) &amp; intToBits(7), &quot;integer&quot;)</code>. It may not be clear what the right hand side of the assignment is doing, but the result is a spatial unit code. This would be much less obvious if the variable was just named <code>s</code>, for example.</li>
+<li>Descriptive function and variable names are strongly favoured, so as to make code as self-documenting as possible. Variables with meaningful names make understanding the effect of a line more obvious, as in <code class="language-r">spatialUnitCode &lt;- packBits(intToBits(from@xyzt_units) &amp; intToBits(7), &quot;integer&quot;)</code>. It may not be clear what the right hand side of the assignment is doing, but the result is a spatial unit code. This would be much less obvious if the variable was just named <code>s</code>, for example.</li>
 <li>Use of vectorised functions, <code>apply()</code> and similar, is almost always preferable to extensive use of <code>for</code> loops, for reasons of both speed and conciseness. R&rsquo;s functional programming features are very powerful, and full advantage should be taken of them.</li>
 <li>TractoR aims to follow the <a href="http://en.wikipedia.org/wiki/Don%27t_Repeat_Yourself">&ldquo;don&rsquo;t repeat yourself&rdquo;</a> principle. Constants and other key pieces of information are stored in one place whenever practical, and there is usually a single point of contact between the code and external software or data. Code duplication should be avoided, except where a large penalty to clarity or speed would result.</li>
 <li>Extensive commenting is not currently required, but counterintuitive or very obscure operations should be explained just before they occur.</li>
@@ -72,26 +69,26 @@
 
 <h2 id="functions-versus-methods">Functions versus methods</h2>
 
-<p>TractoR has historically used top-level functions for creating and manipulating objects. Names of these functions tend to reflect the class being created, and a hint of their effect, as in <code>newMriImageByMasking()</code>, which creates an <code>MriImage</code> object from two other images, a base image and a mask. However, such functions will result in a new object being created, which may be wasteful for large objects such as images. There has therefore been a gradual shift towards using reference class methods to manipulate existing objects where appropriate, and in TractoR 3.0 that function has been deprecated in favour of <code>image$mask()</code>, which modifies the original image object. (The image can duplicated first when necessary, using <code>image$copy()$mask()</code>.) This style should be favoured for new classes.</p>
+<p>TractoR has historically used top-level functions for creating and manipulating objects. Names of these functions tend to reflect the class being created, and a hint of their effect, as in <code>newMriImageByMasking()</code>, which creates an <code>MriImage</code> object from two other images, a base image and a mask. However, such functions will result in a new object being created, which may be wasteful for large objects such as images. There has therefore been a gradual shift towards using reference class methods to manipulate existing objects where appropriate, and in TractoR 3.0 that function has been deprecated in favour of <code class="language-r">image$mask()</code>, which modifies the original image object. (The image can duplicated first when necessary, using <code class="language-r">image$copy()$mask()</code>.) This style should be favoured for new classes.</p>
 
 <h2 id="tests-and-quality-assurance">Tests and quality assurance</h2>
 
 <p>TractoR provides a small test data set and associated set of self-tests to ensure that the package is installed and working properly. These are simple shell scripts with a short self-description, which run one or more TractoR scripts. The output is compared to a stored reference output, and the test fails if they do not match. See <code>tests/Makefile</code> for the exact mechanism, and the contents of <code>tests/00_Basics</code> for example test files. Significant additions to TractoR should be accompanied with one or more new tests, which can be added to the relevant subdirectory of <code>tests</code>, followed by running</p>
 
-<pre><code>cd tests
+<pre><code class="language-bash line-numbers">cd tests
 make create-tests
 </code></pre>
 
 <p>Before the release of a new version of the package, it should be possible to run all of the tests cleanly, without any failures. Since the <code>tractor.base</code> R package is released on <a href="http://cran.r-project.org">CRAN</a>, it should also be possible to run</p>
 
-<pre><code>R CMD check --as-cran tractor.base
+<pre><code class="language-bash">R CMD check --as-cran tractor.base
 </code></pre>
 
 <p>without generating any warnings or errors. Any issues raised by any of these quality assurance processes need to be addressed before release. Typical issues are changes in the output of a particular script, which may result in failure of one of the tests; or changes to the arguments of a function exported from the <code>tractor.base</code> package, which will require a corresponding change to the package documentation.</p>
 
 <p>If a test is failing for reasons which are definitely benign, such as an intended change to the output of a script, the reference output may be regenerated using, for example,</p>
 
-<pre><code>cd tests
+<pre><code class="language-bash line-numbers">cd tests
 make -B 00_Basics/005_hello.save
 </code></pre>
 
@@ -99,6 +96,23 @@ make -B 00_Basics/005_hello.save
 
 
 </div>
+
+<script src="assets/jquery-3.2.0.min.js"></script>
+<script src="assets/jquery.hypher.min.js"></script>
+<script src="assets/en-gb.js"></script>
+<script async type="text/javascript">
+  $('p').hyphenate('en-gb');
+</script>
+<script async src="assets/prism.js"></script>
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-563735-7', 'auto');
+  ga('send', 'pageview');
+</script>
 
 </body>
 

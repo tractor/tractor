@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en-gb">
 
 <head>
   <title>TractoR ~ Upgrading to TractoR 2</title>
 
   <meta charset="utf-8" />
   <meta name="author" content="Jon Clayden" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   
-  <script type="text/javascript" src="hyphenator.js"></script>
-  
-  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
-  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-563735-7']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
+  <link href="assets/prism.css" rel="stylesheet" />
+  <link href="assets/style.css" rel="stylesheet" />
 </head>
 
 <body>
 
-<div id="main" class="hyphenate">
+<header>
+  <div id="banner">
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+  </div>
+</header>
 
-<table id="tabs">
-  <tr>
-  <td class="tab"><a href="home.html">Home</a></td>
-  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="downloads.html">Downloads</a></td>
-  <td class="tab"><a href="changelog.html">Changelog</a></td>
-  <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
-  </tr>
-</table>
+<div id="navbar">
+  <nav>
+    <div id="links">
+      <span><a href="home.html">Home</a></span>
+      <span><a href="home.html#site-contents">Contents</a></span>
+      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="changelog.html">Changelog</a></span>
+      <span><a href="references.html">References</a></span>
+      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
+      <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+    </div>
+  </nav>
+</div>
+
+<div id="main" class="language-bash">
 
 
 <h1>Upgrading to TractoR 2</h1>
@@ -55,12 +52,12 @@
 
 <p>The most visible changes for most users will be the changes to preprocessing. The old <code>preproc</code> script was becoming quite unwieldy, and tried to perform too many functions, only some of which were strictly preprocessing operations. It also used FSL tools for everything by default. The script still exists, although it has been renamed to <code>dpreproc</code> to reflect the fact that it is specific to preprocessing <em>diffusion</em> data; some of its defaults have changed; and some of its functions have been devolved to other (new) scripts. Hence, while you previously may have run simply</p>
 
-<pre><code>tractor preproc
+<pre><code class="language-bash">tractor preproc
 </code></pre>
 
 <p>from a session directory, you will now need several commands to perform the same operations. The closest equivalent to the old five stages would be achieved by running the following commands (in this order).</p>
 
-<pre><code>tractor dpreproc MaskingMethod:bet BetIntensityThreshold:0.5
+<pre><code class="language-bash line-numbers">tractor dpreproc MaskingMethod:bet BetIntensityThreshold:0.5
 tractor gradcheck
 tractor gradrotate  # Only if you previously used RotateGradients:true
 tractor tensorfit Method:fsl
@@ -77,7 +74,7 @@ tractor bedpost
 
 <p>The default options for several scripts have changed, as noted for <code>dpreproc</code> above. However, TractoR now provides a mechanism for overriding defaults on a per-user basis, so if you liked things the way they were, you can do something about it! The mechanism is to create a YAML file in <code>~/.tractor</code> which is named for the script in question, and placing new defaults there. For example, if you create a file called <code>~/.tractor/dpreproc.yaml</code> and put in it the line</p>
 
-<pre><code>MaskingMethod: bet
+<pre><code class="language-bash">MaskingMethod: bet
 </code></pre>
 
 <p>then BET will be used by default in <code>dpreproc</code>, as in TractoR 1.x.</p>
@@ -86,7 +83,7 @@ tractor bedpost
 
 <p>The <code>status</code> script is now both more general and more informative. Example output as of TractoR v2.0.2 is below.</p>
 
-<pre><code>GENERAL:
+<pre><code class="language-bash line-numbers">GENERAL:
   Session directory        : /usr/local/tractor/tests/data/session
   Working directory exists : TRUE
 
@@ -103,7 +100,7 @@ DIFFUSION:
 
 <p>Note that this script is not diffusion-specific. If you simply want to know which stages of <code>dpreproc</code> have been run, you need the command</p>
 
-<pre><code>tractor dpreproc StatusOnly:true
+<pre><code class="language-bash">tractor dpreproc StatusOnly:true
 </code></pre>
 
 <h2 id="miscellaneous-changes">Miscellaneous changes</h2>
@@ -122,39 +119,55 @@ DIFFUSION:
 
 <p>Firstly, create a directory for storing the installed TractoR 2.x R packages. For example,</p>
 
-<pre><code>mkdir ~/tractor2libs
+<pre><code class="language-bash">mkdir ~/tractor2libs
 </code></pre>
 
 <p>Then navigate to the unpacked &ldquo;tractor&rdquo; directory for TractoR 2.x, and install the packages using</p>
 
-<pre><code>R_LIBS_USER=~/tractor2libs make install
+<pre><code class="language-bash line-numbers">R_LIBS_USER=~/tractor2libs make install
 R_LIBS_USER=~/tractor2libs make install-native  # if native packages are required
 </code></pre>
 
 <p>Now, the standard <code>TRACTOR_HOME</code> variable cannot be set up as usual, because it is in use by TractoR 1.x. So instead, we set up an alias to allow us to be able to pick up the new version. In your <code>~/.bashrc</code> file, add the line</p>
 
-<pre><code>alias tractor2=&#39;TRACTOR_HOME=/usr/local/tractor2 R_LIBS_USER=~/tractor2libs /usr/local/tractor2/bin/tractor&#39;
+<pre><code class="language-bash">alias tractor2='TRACTOR_HOME=/usr/local/tractor2 R_LIBS_USER=~/tractor2libs /usr/local/tractor2/bin/tractor'
 </code></pre>
 
 <p>where <code>/usr/local/tractor2</code> is the directory containing the TractoR 2.x installation. You can then run <code>tractor2</code> instead of <code>tractor</code> from the command line when you want to use the new version:</p>
 
-<pre>
-<code>$ </code><kbd>tractor2 -z platform</kbd>
-<code>Starting TractoR environment...
-               Machine : x86_64
-               OS name : Darwin
-            OS release : 11.1.0
-TractoR home directory : /usr/local/tractor2
-       TractoR version : 2.0.2
-             R version : 2.13.0
-      R build platform : x86_64-apple-darwin9.8.0
-           FSL version : 4.1.8
-   ImageMagick version : 6.7.1-1
-Experiment completed with 0 warning(s) and 0 error(s)</code>
-</pre>
+<pre><code class="language-bash line-numbers">tractor2 -z platform</kbd>
+# Starting TractoR environment...
+#                Machine : x86_64
+#                OS name : Darwin
+#             OS release : 11.1.0
+# TractoR home directory : /usr/local/tractor2
+#        TractoR version : 2.0.2
+#              R version : 2.13.0
+#       R build platform : x86_64-apple-darwin9.8.0
+#            FSL version : 4.1.8
+#    ImageMagick version : 6.7.1-1
+# Experiment completed with 0 warning(s) and 0 error(s)
+</code></pre>
 
 
 </div>
+
+<script src="assets/jquery-3.2.0.min.js"></script>
+<script src="assets/jquery.hypher.min.js"></script>
+<script src="assets/en-gb.js"></script>
+<script async type="text/javascript">
+  $('p').hyphenate('en-gb');
+</script>
+<script async src="assets/prism.js"></script>
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-563735-7', 'auto');
+  ga('send', 'pageview');
+</script>
 
 </body>
 

@@ -1,0 +1,147 @@
+html {
+    margin: 0px;
+    padding: 0px;
+}
+
+body {
+    font-family: 'Roboto', arial, sans-serif;
+    font-size: 11pt;
+    color: #444444;
+    background-color: #ffffff;
+    padding: 0px;
+    margin: 0px;
+    line-height: 1.5;
+}
+
+header {
+    background-color: #373449;
+    width: 100%;
+}
+
+div#navbar {
+    height: 79px;
+    width: 100%;
+    background-image: url('graph-stages.jpg');
+    background-size: cover;
+    border-bottom: 3px #373449 solid;
+    margin-bottom: 40px;
+}
+
+nav {
+    position: relative;
+    width: 768px;
+    height: 100%;
+    margin: 0px auto;
+    text-align: right;
+}
+
+div#links {
+    background-color: rgba(55,52,73,0.7);
+    padding: 5px 0px;
+    position: absolute; 
+    bottom: 0px;
+    right: 0px;
+}
+
+nav a {
+    margin: 0px 10px;
+    color: #dddddd;
+    text-decoration: none;
+}
+
+nav a:hover {
+    color: #ffffff;
+}
+
+a {
+	text-decoration: underline;
+	color: #605b80;
+}
+
+a:hover {
+    text-decoration: none;
+	color: #867fb3;
+}
+
+img#logo {
+    height: 200px;
+}
+
+div#banner {
+    width: 768px;
+    margin: 0px auto;
+}
+
+div#main {
+    width: 768px;
+    margin: 0px auto;
+    text-align: justify;
+    padding-bottom: 30px;
+}
+
+@media (max-width: 767px) {
+    nav, div#banner, div#main {
+        width: 100%;
+    }
+    
+    img#logo {
+        width: 95%;
+        height: auto;
+    }
+}
+
+@media (max-width: 787px) {
+    div#main {
+        box-sizing: border-box;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+pre, code, kbd {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10pt;
+}
+
+kbd {
+    font-weight: bold;
+}
+
+table {
+    font-size: 10pt;
+    margin: 0px 20px;
+}
+
+table code {
+    background: none;
+}
+
+th {
+    background: #eeeeee;
+    font-size: 11pt;
+    font-weight: bold;
+    padding: 0 5px;
+}
+
+tr {
+    padding: 0px;
+}
+
+tr:nth-child(even) {
+    background: #eeeeee;
+}
+
+td {
+    padding: 3px 5px;
+    text-align: left;
+    vertical-align: top;
+}
+
+div#download-box {
+    background-color: #f5f2f0;
+    padding: 10px 20px;
+}
+
+span#version {
+    font-weight: bold;
+}

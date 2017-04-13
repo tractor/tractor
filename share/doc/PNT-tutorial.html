@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en-gb">
 
 <head>
   <title>TractoR ~ PNT tutorial</title>
 
   <meta charset="utf-8" />
   <meta name="author" content="Jon Clayden" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   
-  <script type="text/javascript" src="hyphenator.js"></script>
-  
-  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
-  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-563735-7']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
+  <link href="assets/prism.css" rel="stylesheet" />
+  <link href="assets/style.css" rel="stylesheet" />
 </head>
 
 <body>
 
-<div id="main" class="hyphenate">
+<header>
+  <div id="banner">
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+  </div>
+</header>
 
-<table id="tabs">
-  <tr>
-  <td class="tab"><a href="home.html">Home</a></td>
-  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="downloads.html">Downloads</a></td>
-  <td class="tab"><a href="changelog.html">Changelog</a></td>
-  <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
-  </tr>
-</table>
+<div id="navbar">
+  <nav>
+    <div id="links">
+      <span><a href="home.html">Home</a></span>
+      <span><a href="home.html#site-contents">Contents</a></span>
+      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="changelog.html">Changelog</a></span>
+      <span><a href="references.html">References</a></span>
+      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
+      <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+    </div>
+  </nav>
+</div>
+
+<div id="main" class="language-bash">
 
 
 <h1>PNT tutorial</h1>
@@ -63,7 +60,7 @@
 
 <p>Using a so-called &ldquo;unsupervised&rdquo; approach, the matching model can be trained and applied iteratively using a single data set. The <code>pnt-em</code> experiment script is available to perform this function. We begin by creating a <a href="HNT-tutorial.html#using-a-design-file">design file</a>, which tells TractoR where to find our data, and sets the tract of interest. For this tutorial we assume the data are in subdirectories of /data. The design file, &ldquo;design.yaml&rdquo;, will therefore look something like this:</p>
 
-<pre><code>TractName: genu
+<pre><code class="language-yaml line-numbers">TractName: genu
 Session: [ /data/subject1, /data/subject2 ]
 SearchWidth: 7
 DatasetName: genu_data
@@ -74,7 +71,7 @@ ResultsName: genu_results
 
 <p>With the design file created, we can run PNT using the commands</p>
 
-<pre><code>plough -C design.yaml pnt-data %Session
+<pre><code class="language-bash line-numbers">plough -C design.yaml pnt-data %Session
 tractor -c design.yaml pnt-em
 </code></pre>
 
@@ -88,9 +85,9 @@ tractor -c design.yaml pnt-em
 
 <p>Once a number of training tracts have been identified and the corresponding test sessions and seed points are known, they can be put into a design file for use with the <code>pnt-train</code> script. The design file (say &ldquo;training.yaml&rdquo;) will look something like the following:</p>
 
-<pre><code>TractName: genu
+<pre><code class="language-yaml line-numbers">TractName: genu
 Session: [ /data/trainingsubject1, /data/trainingsubject2 ]
-Seed: [ &quot;41,38,23&quot;, &quot;39,41,22&quot; ]
+Seed: [ "41,38,23", "39,41,22" ]
 DatasetName: training
 </code></pre>
 
@@ -100,7 +97,7 @@ DatasetName: training
 
 <p>Training the model is then a matter of running the commands</p>
 
-<pre><code>plough -C training.yaml pnt-data %Session %Seed
+<pre><code class="language-bash line-numbers">plough -C training.yaml pnt-data %Session %Seed
 tractor -c training.yaml pnt-train
 </code></pre>
 
@@ -112,7 +109,7 @@ tractor -c training.yaml pnt-train
 
 <p>Using the model for segmentation of the tract of interest in another subject requires a pair of commands, following a similar pattern to the ones used for training. Our aim is now to generate a series of candidate tracts in the diffusion space of the test subject, calculate the shape characteristics of each tract, and evaluate a likelihood for each under the model. We first need to create another design file, design.yaml. Its contents will be something like the following:</p>
 
-<pre><code>TractName: genu
+<pre><code class="language-yaml line-numbers">TractName: genu
 SearchWidth: 7
 DatasetName: testing
 ResultsName: genu_results
@@ -122,7 +119,7 @@ ResultsName: genu_results
 
 <p>Running the commands</p>
 
-<pre><code>tractor -c design.yaml pnt-data /data/testsubject
+<pre><code class="language-bash line-numbers">tractor -c design.yaml pnt-data /data/testsubject
 tractor -c design.yaml pnt-eval ModelName:training_model
 </code></pre>
 
@@ -132,24 +129,24 @@ tractor -c design.yaml pnt-eval ModelName:training_model
 
 <p>The results can be visualised using the <code>pnt-viz</code> script, which is analogous to the <code>hnt-viz</code> script used by the <a href="HNT-tutorial.html">HNT process</a>, and can be used in the same way. For example, we can use</p>
 
-<pre><code>plough -C design.yaml pnt-viz
+<pre><code class="language-bash">plough -C design.yaml pnt-viz
 </code></pre>
 
 <p>to create Analyze/NIfTI volumes representing the best matching tract in the test brain. An alternative, introduced in TractoR version 1.3.0, is the <code>pnt-prune</code> script, which uses the tract shape model to remove false positive pathways from the final segmentations, thereby producing much cleaner output. The command in this case is</p>
 
-<pre><code>plough -C design.yaml pnt-prune
+<pre><code class="language-bash">plough -C design.yaml pnt-prune
 </code></pre>
 
 <p>If you use this method, please cite <a href="#references">Ref. (3)</a> below. Further details on the theory and implementation of this method can be found in that paper.</p>
 
 <p>Various pieces of information about the results, including the likelihood log-ratio, a measure of goodness-of-fit for each segmentation, can be calculated using the <code>pnt-interpret</code> script:</p>
 
-<pre><code>plough -C design.yaml pnt-interpret Mode:ratio
+<pre><code class="language-bash">plough -C design.yaml pnt-interpret Mode:ratio
 </code></pre>
 
 <p>The mean FA along the selected tract can then be calculated using the <code>mean</code> script, as in</p>
 
-<pre><code>plough -C mean %Session@FA genu.%%
+<pre><code class="language-bash">plough -C mean %Session@FA genu.%%
 </code></pre>
 
 <h2 id="summary">Summary</h2>
@@ -166,6 +163,23 @@ tractor -c design.yaml pnt-eval ModelName:training_model
 
 
 </div>
+
+<script src="assets/jquery-3.2.0.min.js"></script>
+<script src="assets/jquery.hypher.min.js"></script>
+<script src="assets/en-gb.js"></script>
+<script async type="text/javascript">
+  $('p').hyphenate('en-gb');
+</script>
+<script async src="assets/prism.js"></script>
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-563735-7', 'auto');
+  ga('send', 'pageview');
+</script>
 
 </body>
 

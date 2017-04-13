@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en-gb">
 
 <head>
   <title>TractoR ~ Working with structural data</title>
 
   <meta charset="utf-8" />
   <meta name="author" content="Jon Clayden" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   
-  <script type="text/javascript" src="hyphenator.js"></script>
-  
-  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
-  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-563735-7']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
+  <link href="assets/prism.css" rel="stylesheet" />
+  <link href="assets/style.css" rel="stylesheet" />
 </head>
 
 <body>
 
-<div id="main" class="hyphenate">
+<header>
+  <div id="banner">
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+  </div>
+</header>
 
-<table id="tabs">
-  <tr>
-  <td class="tab"><a href="home.html">Home</a></td>
-  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="downloads.html">Downloads</a></td>
-  <td class="tab"><a href="changelog.html">Changelog</a></td>
-  <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
-  </tr>
-</table>
+<div id="navbar">
+  <nav>
+    <div id="links">
+      <span><a href="home.html">Home</a></span>
+      <span><a href="home.html#site-contents">Contents</a></span>
+      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="changelog.html">Changelog</a></span>
+      <span><a href="references.html">References</a></span>
+      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
+      <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+    </div>
+  </nav>
+</div>
+
+<div id="main" class="language-bash">
 
 
 <h1>Working with structural data</h1>
@@ -51,7 +48,7 @@
 
 <p>Structural images relevant to a particular <a href="conventions.html">session</a>, say <code>/data/subject1</code>, may be imported using a command like</p>
 
-<pre><code>tractor import /data/subject1 /data/dicom/subject1/T1W_sequence ImageWeighting:t1
+<pre><code class="language-bash">tractor import /data/subject1 /data/dicom/subject1/T1W_sequence ImageWeighting:t1
 </code></pre>
 
 <p>The <code>ImageWeighting</code> option tells TractoR that this is a T1-weighted volume. This option may also be set to <code>t2</code> for T2-weighted data, <code>pd</code> for proton density weighted data, or <code>diffusion</code> for diffusion-weighted data (although the <code>dpreproc</code> script is <a href="diffusion-processing.html">usually preferable</a> for the latter).</p>
@@ -64,7 +61,7 @@
 
 <p>For example, to run FSL-FLIRT on the reference T1 image for a session and import the parcellation created by it, you might run</p>
 
-<pre><code>cd /data/subject1
+<pre><code class="language-bash line-numbers">cd /data/subject1
 run_first_all -i `tractor -q path . refT1` -o first
 tractor parcellate . first_all_fast_firstseg Types:first
 </code></pre>
@@ -73,13 +70,30 @@ tractor parcellate . first_all_fast_firstseg Types:first
 
 <p>Another alternative is to use Freesurfer, and in this case TractoR does provide a wrapper script, viz.</p>
 
-<pre><code>tractor freesurf /data/subject1 Parcellation:destrieux
+<pre><code class="language-bash">tractor freesurf /data/subject1 Parcellation:destrieux
 </code></pre>
 
 <p>The <code>parcellate</code> script can also handle merging multiple parcellations together: for example, you can run <code>freesurf</code> first to obtain a parcellation from Freesurfer, and then run FIRST and pass the result to <code>parcellate</code>. In that case regions which appear in both parcellations will be overwritten by the FIRST parcellation. A merged parcellation image and lookup table gets written into the session directory.</p>
 
 
 </div>
+
+<script src="assets/jquery-3.2.0.min.js"></script>
+<script src="assets/jquery.hypher.min.js"></script>
+<script src="assets/en-gb.js"></script>
+<script async type="text/javascript">
+  $('p').hyphenate('en-gb');
+</script>
+<script async src="assets/prism.js"></script>
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-563735-7', 'auto');
+  ga('send', 'pageview');
+</script>
 
 </body>
 

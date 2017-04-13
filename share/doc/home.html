@@ -1,51 +1,43 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en-gb">
 
 <head>
-  <title>TractoR ~ Home</title>
+  <title>TractoR ~ home</title>
 
   <meta charset="utf-8" />
   <meta name="author" content="Jon Clayden" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   
-  <script type="text/javascript" src="hyphenator.js"></script>
-  
-  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
-  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-563735-7']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
+  <link href="assets/prism.css" rel="stylesheet" />
+  <link href="assets/style.css" rel="stylesheet" />
 </head>
 
 <body>
 
-<div id="main" class="hyphenate">
+<header>
+  <div id="banner">
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+  </div>
+</header>
 
-<table id="tabs">
-  <tr>
-  <td class="tab"><a href="home.html">Home</a></td>
-  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="downloads.html">Downloads</a></td>
-  <td class="tab"><a href="changelog.html">Changelog</a></td>
-  <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
-  </tr>
-</table>
+<div id="navbar">
+  <nav>
+    <div id="links">
+      <span><a href="home.html">Home</a></span>
+      <span><a href="home.html#site-contents">Contents</a></span>
+      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="changelog.html">Changelog</a></span>
+      <span><a href="references.html">References</a></span>
+      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
+      <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+    </div>
+  </nav>
+</div>
 
-
-<h1>Home</h1>
-
-<p><img class="graphic" src="logo.png" alt="TractoR logo" /></p>
+<div id="main" class="language-bash">
 
 <p>The TractoR (Tractography with R) project includes R packages for reading, writing and visualising magnetic resonance images stored in Analyze, NIfTI and DICOM file formats (DICOM support is read only). It also contains functions specifically designed for working with diffusion MRI and tractography, including a standard implementation of the neighbourhood tractography approach to white matter tract segmentation. A shell script is also provided to run experiments with TractoR without interacting with R. Using TractoR you can easily</p>
 
@@ -64,11 +56,9 @@
 
 <p>If you use TractoR in your work, please cite <a href="#reference">the reference below</a>. For details of research papers underlying the methods implemented in the package, please see the <a href="references.html">references page</a>. If you would like to hear about new releases and other TractoR-related news, we would suggest joining the <a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">users&rsquo; mailing list</a>. General queries or problems may also be raised there, while bugs and other specific issues may be reported using the <a href="https://github.com/jonclayden/tractor/issues">GitHub issue tracker</a>. Please describe any problem as fully as possible.</p>
 
-<p>TractoR is developed primarily by <a href="http://www.homepages.ucl.ac.uk/%7Esejjjd2/">Jonathan D. Clayden</a> and colleagues at <a href="http://www.ucl.ac.uk">University College London</a>, with contributions and collaborations from other groups.</p>
+<p>TractoR is developed primarily by <a href="http://www.homepages.ucl.ac.uk/%7Esejjjd2/">Jon Clayden</a> and colleagues at <a href="http://www.ucl.ac.uk">University College London</a>, with contributions and collaborations from other groups.</p>
 
 <p><strong>Please note that TractoR is research software and has not been approved for clinical use. The software is provided in the hope that it will be useful, but comes with no warranty whatsoever.</strong></p>
-
-<p><img src="principal-directions.png" alt="Diffusion principal directions"></p>
 
 <h2 id="site-contents">Site contents</h2>
 
@@ -88,12 +78,29 @@
 
 <h2 id="reference">Reference</h2>
 
-<p>J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin &amp; C.A. Clark (2011). <a href="paper/index.html">TractoR: Magnetic resonance imaging and tractography with R</a>. <em>Journal of Statistical Software</em> <strong>44</strong>(8):1-18.</p>
+<p>J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin &amp; C.A. Clark (2011). <a href="paper/index.html">TractoR: Magnetic resonance imaging and tractography with R</a>. <em>Journal of Statistical Software</em> <strong>44</strong>(8):1–18.</p>
 
 <p><a href="http://www.nitrc.org/projects/tractor"><img src="nitrc.png" alt="NITRC logo"></a></p>
 
 
 </div>
+
+<script src="assets/jquery-3.2.0.min.js"></script>
+<script src="assets/jquery.hypher.min.js"></script>
+<script src="assets/en-gb.js"></script>
+<script async type="text/javascript">
+  $('p').hyphenate('en-gb');
+</script>
+<script async src="assets/prism.js"></script>
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-563735-7', 'auto');
+  ga('send', 'pageview');
+</script>
 
 </body>
 
