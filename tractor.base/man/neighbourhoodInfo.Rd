@@ -33,9 +33,6 @@ Must have exactly \code{dim} elements.}
 This function calculates information about a cuboidal region of an image,
 with a centre and a fixed voxel width.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -45,4 +42,6 @@ Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 Journal of Statistical Software 44(8):1-18.
 \url{http://www.jstatsoft.org/v44/i08/}.
 }
-
+\author{
+Jon Clayden
+}

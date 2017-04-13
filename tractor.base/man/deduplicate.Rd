@@ -17,9 +17,6 @@ This function returns its arguments, after concatenating them using \code{c}
 and then removing elements with duplicate names. The first element with each
 name will remain. Unnamed elements are retained.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -29,4 +26,6 @@ Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 Journal of Statistical Software 44(8):1-18.
 \url{http://www.jstatsoft.org/v44/i08/}.
 }
-
+\author{
+Jon Clayden
+}

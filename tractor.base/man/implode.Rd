@@ -33,9 +33,6 @@ implode(1:2, ", ", " and ")  # "1 and 2"
 implode(1:3, ", ", ranges=TRUE)  # "1-3"
 
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -48,4 +45,6 @@ Journal of Statistical Software 44(8):1-18.
 \seealso{
 \code{\link{paste}}
 }
-
+\author{
+Jon Clayden
+}

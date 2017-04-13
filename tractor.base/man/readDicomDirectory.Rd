@@ -33,9 +33,6 @@ A list containing elements
 This function scans a directory for files in DICOM format, and converts them
 to a single Analyze/NIfTI-format image of the appropriate dimensionality.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -49,4 +46,6 @@ Journal of Statistical Software 44(8):1-18.
 \code{\linkS4class{DicomMetadata}}, \code{\linkS4class{MriImage}},
 \code{\link{sortDicomDirectories}}.
 }
-
+\author{
+Jon Clayden
+}

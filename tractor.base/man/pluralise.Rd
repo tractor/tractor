@@ -26,9 +26,6 @@ Either \code{singular} or \code{plural}, as appropriate.
 This function chooses the singular or plural form of a word based on the
 length of an associated vector, or an integer.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -38,4 +35,6 @@ Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 Journal of Statistical Software 44(8):1-18.
 \url{http://www.jstatsoft.org/v44/i08/}.
 }
-
+\author{
+Jon Clayden
+}

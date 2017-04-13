@@ -19,9 +19,6 @@ A matrix version of the \code{x} argument.
 The \code{promote} function promotes a vector argument to a single-column or
 single-row matrix. Matrix arguments are returned unmodified.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -34,4 +31,6 @@ Journal of Statistical Software 44(8):1-18.
 \seealso{
 \code{\link{matrix}}
 }
-
+\author{
+Jon Clayden
+}

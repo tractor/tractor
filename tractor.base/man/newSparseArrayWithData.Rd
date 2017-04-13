@@ -21,9 +21,6 @@ A \code{\linkS4class{SparseArray}} object.
 This function creates a \code{\linkS4class{SparseArray}} object from its
 constituent parts.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -33,4 +30,6 @@ Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 Journal of Statistical Software 44(8):1-18.
 \url{http://www.jstatsoft.org/v44/i08/}.
 }
-
+\author{
+Jon Clayden
+}

@@ -15,4 +15,4 @@ LazyLoad: yes
 LazyData: yes
 License: GPL-2
 URL: http://www.tractor-mri.org.uk
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

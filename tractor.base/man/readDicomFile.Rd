@@ -36,9 +36,6 @@ Siemens ASCII header, if one exists.}
 This function reads a DICOM file into a \code{\link{DicomMetadata}} object.
 Only DICOM files from magnetic resonance scanners are supported.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -54,4 +51,6 @@ The DICOM standard, found online at \url{http://dicom.nema.org/}.
   for information on how to create \code{\linkS4class{MriImage}} objects
   from DICOM files.
 }
-
+\author{
+Jon Clayden
+}

@@ -22,9 +22,6 @@ The empty matrix is a standard matrix of dimensions 0 x 0. It is intended to
 be used as a placeholder where a matrix is required but no information is
 stored.
 }
-\author{
-Jon Clayden
-}
 \references{
 Please cite the following reference when using TractoR in your
 work:
@@ -34,4 +31,6 @@ Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 Journal of Statistical Software 44(8):1-18.
 \url{http://www.jstatsoft.org/v44/i08/}.
 }
-
+\author{
+Jon Clayden
+}

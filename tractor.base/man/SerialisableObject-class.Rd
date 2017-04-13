@@ -2,8 +2,8 @@
 % Please edit documentation in R/05_serialise.R
 \docType{class}
 \name{SerialisableObject-class}
-\alias{SerialisableObject}
 \alias{SerialisableObject-class}
+\alias{SerialisableObject}
 \title{The SerialisableObject class}
 \description{
 This reference class extends the standard \code{\linkS4class{envRefClass}}
