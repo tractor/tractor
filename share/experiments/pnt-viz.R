@@ -34,10 +34,11 @@ runExperiment <- function ()
             next
         }
         
-        report(OL$Info, "Generating tract for session #{sessionList[i]}")
+        report(OL$Info, "Generating tract for session #{sessionList[i]}, with index #{attr(sessionList,'indices')[i]}")
         currentSession <- attachMriSession(sessionList[i])
+        currentSessionIndex <- attr(sessionList,"indices")[i]
         currentData <- subset(data, sessionPath==sessionList[i])
-        currentPosteriors <- results$getTractPosteriors(attr(sessionList,"indices")[i])
+        currentPosteriors <- results$getTractPosteriors(currentSessionIndex)
         
         if (length(currentPosteriors) != nrow(currentData))
             report(OL$Error, "Posterior vector length does not match the dataset")
@@ -69,19 +70,19 @@ runExperiment <- function ()
             trackerPath <- currentSession$getTracker()$run(seeds, nStreamlines, requireMap=FALSE, requireStreamlines=TRUE)
             streamSource <- StreamlineSource$new(trackerPath)
             
-            data <- array(0, dim=metadata$getDimensions())
-            for (i in 1:nValidSeeds)
+            visitationData <- array(0, dim=metadata$getDimensions())
+            for (j in 1:nValidSeeds)
             {
-                firstStreamline <- nStreamlines * (i-1) + 1
-                lastStreamline <- i * nStreamlines
+                firstStreamline <- nStreamlines * (j-1) + 1
+                lastStreamline <- j * nStreamlines
                 imageForSeed <- streamSource$select(firstStreamline:lastStreamline)$getVisitationMap(metadata)
-                data <- data + imageForSeed$getData() * currentPosteriors[sequence[i]]
+                visitationData <- visitationData + imageForSeed$getData() * currentPosteriors[sequence[j]]
             }
             
             report(OL$Info, "Creating visitation map")
             normalisationFactor <- sum(currentPosteriors[sequence])
-            resultImage <- asMriImage(data/normalisationFactor, metadata)
-            writeImageFile(resultImage, es("#{tractName}.#{i}"))
+            resultImage <- asMriImage(visitationData/normalisationFactor, metadata)
+            writeImageFile(resultImage, es("#{tractName}.#{currentSessionIndex}"))
         }
         else
             report(OL$Warning, "No seed points above threshold for session number #{i}")
