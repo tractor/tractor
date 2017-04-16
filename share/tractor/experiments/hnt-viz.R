@@ -25,11 +25,12 @@ runExperiment <- function ()
         report(OL$Info, "Generating tract for session ", sessionList[i])
         
         currentSession <- attachMriSession(sessionList[i])
-        currentSeed <- results$getResult(attr(sessionList,"indices")[i])$bestSeed
+        currentSessionIndex <- attr(sessionList,"indices")[i]
+        currentSeed <- results$getResult(currentSessionIndex)$bestSeed
         
         trackerPath <- currentSession$getTracker()$run(currentSeed, nStreamlines, requireMap=TRUE)
         
-        currentTractName <- paste(tractName, i, sep=".")
+        currentTractName <- paste(tractName, currentSessionIndex, sep=".")
         copyImageFiles(trackerPath, currentTractName)
     })
 }

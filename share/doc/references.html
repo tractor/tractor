@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en-gb">
 
 <head>
   <title>TractoR ~ References</title>
 
   <meta charset="utf-8" />
   <meta name="author" content="Jon Clayden" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   
-  <script type="text/javascript" src="hyphenator.js"></script>
-  
-  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
-  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-563735-7']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
+  <link href="assets/prism.css" rel="stylesheet" />
+  <link href="assets/style.css" rel="stylesheet" />
 </head>
 
 <body>
 
-<div id="main" class="hyphenate">
+<header>
+  <div id="banner">
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+  </div>
+</header>
 
-<table id="tabs">
-  <tr>
-  <td class="tab"><a href="home.html">Home</a></td>
-  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="downloads.html">Downloads</a></td>
-  <td class="tab"><a href="changelog.html">Changelog</a></td>
-  <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
-  </tr>
-</table>
+<div id="navbar">
+  <nav>
+    <div id="links">
+      <span><a href="home.html">Home</a></span>
+      <span><a href="home.html#site-contents">Contents</a></span>
+      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="changelog.html">Changelog</a></span>
+      <span><a href="references.html">References</a></span>
+      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
+      <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+    </div>
+  </nav>
+</div>
+
+<div id="main" class="language-bash">
 
 
 <h1>References</h1>
@@ -48,7 +45,7 @@
 <p>If you use TractoR in your work, please cite the following paper, which describes the package in general:</p>
 
 <blockquote>
-<p>J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin &amp; C.A. Clark (2011). <a href="paper/index.html">TractoR: Magnetic resonance imaging and tractography with R</a>. <em>Journal of Statistical Software</em> <strong>44</strong>(8):1-18.</p>
+<p>J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin &amp; C.A. Clark (2011). <a href="paper/index.html">TractoR: Magnetic resonance imaging and tractography with R</a>. <em>Journal of Statistical Software</em> <strong>44</strong>(8):1–18.</p>
 </blockquote>
 
 <p>Additionally, the table below outlines the relevant papers which should be cited when using various parts of the functionality provided by TractoR.</p>
@@ -65,7 +62,7 @@
 </tr>
 <tr>
 <td><code>dpreproc</code> (stage 3, with <code>MaskingMethod:bet</code> only)</td>
-<td>Smith S. (2002). Fast robust automated brain extraction. <em>Human Brain Mapping</em> <strong>17</strong>(3):143-155.</td>
+<td>Smith S. (2002). Fast robust automated brain extraction. <em>Human Brain Mapping</em> <strong>17</strong>(3):143–155.</td>
 </tr>
 <tr>
 <td><code>dpreproc</code> (stage 4, with <code>EddyCorrectionMethod:eddy</code> only)</td>
@@ -73,15 +70,15 @@
 </tr>
 <tr>
 <td><code>bedpost</code></td>
-<td>Behrens T., Johansen-Berg H., Jbabdi S., Rushworth M. &amp; Woolrich M. (2007). Probabilistic diffusion tractography with multiple fibre orientations: What can we gain? <em>NeuroImage</em> <strong>34</strong>(1):144-155.</td>
+<td>Behrens T., Johansen-Berg H., Jbabdi S., Rushworth M. &amp; Woolrich M. (2007). Probabilistic diffusion tractography with multiple fibre orientations: What can we gain? <em>NeuroImage</em> <strong>34</strong>(1):144–155.</td>
 </tr>
 <tr>
 <td><code>track</code>, <code>mtrack</code>, <code>rtrack</code></td>
-<td>Behrens T., Johansen-Berg H., Jbabdi S., Rushworth M. &amp; Woolrich M. (2007). Probabilistic diffusion tractography with multiple fibre orientations: What can we gain? <em>NeuroImage</em> <strong>34</strong>(1):144-155.</td>
+<td>Behrens T., Johansen-Berg H., Jbabdi S., Rushworth M. &amp; Woolrich M. (2007). Probabilistic diffusion tractography with multiple fibre orientations: What can we gain? <em>NeuroImage</em> <strong>34</strong>(1):144–155.</td>
 </tr>
 <tr>
 <td><code>hnt-eval</code>, <code>hnt-interpret</code>, <code>hnt-ref</code>, <code>hnt-viz</code></td>
-<td>Clayden J., Bastin M. &amp; Storkey A. (2006). Improved segmentation reproducibility in group tractography using a quantitative tract similarity measure. <em>NeuroImage</em> <strong>33</strong>(2):482-492.</td>
+<td>Clayden J., Bastin M. &amp; Storkey A. (2006). Improved segmentation reproducibility in group tractography using a quantitative tract similarity measure. <em>NeuroImage</em> <strong>33</strong>(2):482–492.</td>
 </tr>
 <tr>
 <td><code>pnt-ref</code>, <code>pnt-train</code>, <code>pnt-eval</code></td>
@@ -89,15 +86,15 @@
 </tr>
 <tr>
 <td><code>pnt-em</code></td>
-<td>Clayden J., Storkey A., Muñoz Maniega S. &amp; Bastin M. (2009). Reproducibility of tract segmentation between sessions using an unsupervised modelling-based approach. <em>NeuroImage</em> <strong>45</strong>(2):377-385.</td>
+<td>Clayden J., Storkey A., Muñoz Maniega S. &amp; Bastin M. (2009). Reproducibility of tract segmentation between sessions using an unsupervised modelling-based approach. <em>NeuroImage</em> <strong>45</strong>(2):377–385.</td>
 </tr>
 <tr>
 <td><code>pnt-prune</code></td>
-<td>Clayden J., King M. &amp; Clark C. (2009). Shape modelling for tract selection. In Yang G.-Z., Hawkes D., Rueckert D., Noble A. &amp; Taylor C. (eds), <em>Proceedings of the 12th International Conference on Medical Image Computing and Computer Assisted Intervention</em> (MICCAI). <em>Lecture Notes in Computer Science</em>, vol. 5762, pp. 150-157. Springer-Verlag.</td>
+<td>Clayden J., King M. &amp; Clark C. (2009). Shape modelling for tract selection. In Yang G.-Z., Hawkes D., Rueckert D., Noble A. &amp; Taylor C. (eds), <em>Proceedings of the 12th International Conference on Medical Image Computing and Computer Assisted Intervention</em> (MICCAI). <em>Lecture Notes in Computer Science</em>, vol. 5762, pp. 150–157. Springer-Verlag.</td>
 </tr>
 <tr>
 <td><code>reg-linear</code> (with <code>Method:fsl</code>)</td>
-<td>Jenkinson M., Bannister P., Brady J. &amp; Smith S. (2002). Improved optimisation for the robust and accurate linear registration and motion correction of brain images. <em>NeuroImage</em> <strong>17</strong>(2):825-841.</td>
+<td>Jenkinson M., Bannister P., Brady J. &amp; Smith S. (2002). Improved optimisation for the robust and accurate linear registration and motion correction of brain images. <em>NeuroImage</em> <strong>17</strong>(2):825–841.</td>
 </tr>
 <tr>
 <td><code>reg-linear</code> (with <code>Method:niftyreg</code>)</td>
@@ -105,7 +102,7 @@
 </tr>
 <tr>
 <td><code>reg-nonlinear</code></td>
-<td>Modat M., Ridgway G., Taylor Z., Lehmann M., Barnes J., Hawkes D., Fox N. &amp; Ourselin S. (2010). Fast free-form deformation using graphics processing units. <em>Computer Methods and Programs in Biomedicine</em> <strong>98</strong>(3):278-284.</td>
+<td>Modat M., Ridgway G., Taylor Z., Lehmann M., Barnes J., Hawkes D., Fox N. &amp; Ourselin S. (2010). Fast free-form deformation using graphics processing units. <em>Computer Methods and Programs in Biomedicine</em> <strong>98</strong>(3):278–284.</td>
 </tr>
 <tr>
 <td><code>freesurf</code></td>
@@ -125,12 +122,29 @@
 </tr>
 <tr>
 <td><code>graph-decompose</code> (with <code>Method:modularity</code>)</td>
-<td>Newman M. (2006). Modularity and community structure in networks. <em>Proceedings of the National Academy of Sciences of the United States of America</em> <strong>103</strong>:8577-8582.</td>
+<td>Newman M. (2006). Modularity and community structure in networks. <em>Proceedings of the National Academy of Sciences of the United States of America</em> <strong>103</strong>:8577–8582.</td>
 </tr>
 </tbody></table>
 
 
 </div>
+
+<script src="assets/jquery-3.2.0.min.js"></script>
+<script src="assets/jquery.hypher.min.js"></script>
+<script src="assets/en-gb.js"></script>
+<script async type="text/javascript">
+  $('p').hyphenate('en-gb');
+</script>
+<script async src="assets/prism.js"></script>
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-563735-7', 'auto');
+  ga('send', 'pageview');
+</script>
 
 </body>
 

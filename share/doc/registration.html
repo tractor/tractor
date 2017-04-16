@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en-gb">
 
 <head>
   <title>TractoR ~ Registration</title>
 
   <meta charset="utf-8" />
   <meta name="author" content="Jon Clayden" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   
-  <script type="text/javascript" src="hyphenator.js"></script>
-  
-  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
-  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-563735-7']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
+  <link href="assets/prism.css" rel="stylesheet" />
+  <link href="assets/style.css" rel="stylesheet" />
 </head>
 
 <body>
 
-<div id="main" class="hyphenate">
+<header>
+  <div id="banner">
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+  </div>
+</header>
 
-<table id="tabs">
-  <tr>
-  <td class="tab"><a href="home.html">Home</a></td>
-  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="downloads.html">Downloads</a></td>
-  <td class="tab"><a href="changelog.html">Changelog</a></td>
-  <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
-  </tr>
-</table>
+<div id="navbar">
+  <nav>
+    <div id="links">
+      <span><a href="home.html">Home</a></span>
+      <span><a href="home.html#site-contents">Contents</a></span>
+      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="changelog.html">Changelog</a></span>
+      <span><a href="references.html">References</a></span>
+      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
+      <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+    </div>
+  </nav>
+</div>
+
+<div id="main" class="language-bash">
 
 
 <h1>Registration</h1>
@@ -65,17 +62,17 @@
 
 <p>For example, to perform standard affine registration using FSL-FLIRT we would use</p>
 
-<pre><code>tractor reg-linear source target result Method:fsl
+<pre><code class="language-bash">tractor reg-linear source target result Method:fsl
 </code></pre>
 
 <p>Using NiftyReg this would become</p>
 
-<pre><code>tractor reg-linear source target result Method:niftyreg
+<pre><code class="language-bash">tractor reg-linear source target result Method:niftyreg
 </code></pre>
 
 <p>If you want only to estimate the transformation, but not actually resample the image, then the third argument isn&rsquo;t needed, but a name for the transformation directory is.</p>
 
-<pre><code>tractor reg-linear source target Method:niftyreg EstimateOnly:true TransformName:source2target
+<pre><code class="language-bash">tractor reg-linear source target Method:niftyreg EstimateOnly:true TransformName:source2target
 </code></pre>
 
 <p>This will create the transformation directory &ldquo;source2target.xfmb&rdquo;.</p>
@@ -84,20 +81,20 @@
 
 <p>Nonlinear registration, using the <code>reg-nonlinear</code> script, follows a similar principle to linear registration, but in this case only <a href="http://www0.cs.ucl.ac.uk/staff/M.Modat/Marcs_Page/Software.html">NiftyReg</a> can currently be used. <strong>It is recommended that linear registration be performed first.</strong> A nonlinear transformation can be stored in the same directory as a linear one, and if an existing transformation is specified, then it will be used for initialisation and then updated with the final nonlinear transformation. So the recommended process to estimate a nonlinear transformation would be</p>
 
-<pre><code>tractor reg-linear source target Method:niftyreg EstimateOnly:true TransformName:source2target
+<pre><code class="language-bash line-numbers">tractor reg-linear source target Method:niftyreg EstimateOnly:true TransformName:source2target
 tractor reg-nonlinear source target EstimateOnly:true TransformName:source2target
 </code></pre>
 
 <p>By default the nonlinear transformation estimated is not invertible, so images can only be transformed in one direction. If bidirectional transformation is required then a symmetric transformation can be estimated using</p>
 
-<pre><code>tractor reg-nonlinear source target EstimateOnly:true TransformName:source2target Symmetric:true
+<pre><code class="language-bash">tractor reg-nonlinear source target EstimateOnly:true TransformName:source2target Symmetric:true
 </code></pre>
 
 <h2 id="applying-an-existing-transformation">Applying an existing transformation</h2>
 
 <p>The <code>reg-apply</code> script can be used to apply a stored transformation to a new image. If both affine (linear) and nonlinear transformations are available, then nonlinear will take priority unless the &ldquo;PreferAffine&rdquo; option is set to <code>true</code>. The arguments are a new image and the name of the output image.</p>
 
-<pre><code>tractor reg-apply newimage newresult TransformName:source2target
+<pre><code class="language-bash">tractor reg-apply newimage newresult TransformName:source2target
 </code></pre>
 
 <h2 id="visualisation">Visualisation</h2>
@@ -112,6 +109,23 @@ tractor reg-nonlinear source target EstimateOnly:true TransformName:source2targe
 
 
 </div>
+
+<script src="assets/jquery-3.2.0.min.js"></script>
+<script src="assets/jquery.hypher.min.js"></script>
+<script src="assets/en-gb.js"></script>
+<script async type="text/javascript">
+  $('p').hyphenate('en-gb');
+</script>
+<script async src="assets/prism.js"></script>
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-563735-7', 'auto');
+  ga('send', 'pageview');
+</script>
 
 </body>
 

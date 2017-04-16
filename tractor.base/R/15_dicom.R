@@ -299,7 +299,7 @@ readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreT
             
             groups <- c(groups, currentGroup)
             elements <- c(elements, currentElement)
-            types <- c(types, type)
+            types <- c(types, as.character(type))
             
             # Handle sequences of indeterminate length (to date only seen in Philips data)
             if (type == "SQ" && length == -1)

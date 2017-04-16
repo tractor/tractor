@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en-gb">
 
 <head>
   <title>TractoR ~ Upgrading to TractoR 3</title>
 
   <meta charset="utf-8" />
   <meta name="author" content="Jon Clayden" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   
-  <script type="text/javascript" src="hyphenator.js"></script>
-  
-  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
-  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-563735-7']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
+  <link href="assets/prism.css" rel="stylesheet" />
+  <link href="assets/style.css" rel="stylesheet" />
 </head>
 
 <body>
 
-<div id="main" class="hyphenate">
+<header>
+  <div id="banner">
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+  </div>
+</header>
 
-<table id="tabs">
-  <tr>
-  <td class="tab"><a href="home.html">Home</a></td>
-  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="downloads.html">Downloads</a></td>
-  <td class="tab"><a href="changelog.html">Changelog</a></td>
-  <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
-  </tr>
-</table>
+<div id="navbar">
+  <nav>
+    <div id="links">
+      <span><a href="home.html">Home</a></span>
+      <span><a href="home.html#site-contents">Contents</a></span>
+      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="changelog.html">Changelog</a></span>
+      <span><a href="references.html">References</a></span>
+      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
+      <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+    </div>
+  </nav>
+</div>
+
+<div id="main" class="language-bash">
 
 
 <h1>Upgrading to TractoR 3</h1>
@@ -65,7 +62,7 @@
 
 <p>Typical usages of each of TractoR 2.x&rsquo;s tractography scripts are shown below, along with the closest equivalent TractoR 3.0 command. We begin with the simple case of single-seed tractography with 1000 streamlines.</p>
 
-<pre><code># TractoR 2.x
+<pre><code class="language-bash line-numbers"># TractoR 2.x
 tractor track /data/subject1 50,48,33 PointType:R NumberOfSamples:1000
 
 # TractoR 3.x
@@ -76,7 +73,7 @@ tractor track /data/subject1 50,48,33 Streamlines:1000 JitterSeeds:false
 
 <p>Next, we have the mask-based tractography approaches. We&rsquo;ll create a small region of interest and then seed 100 streamlines from each voxel within it, first combining the results into one output and second splitting it by seed point.</p>
 
-<pre><code># TractoR 2.x
+<pre><code class="language-bash line-numbers"># TractoR 2.x
 tractor mkroi /data/subject1 50,48,33 PointType:R Width:3
 tractor mtrack /data/subject1 SeedMaskFile:roi NumberOfSamples:100
 tractor rtrack /data/subject1 SeedMaskFile:roi NumberOfSamples:100
@@ -91,7 +88,7 @@ tractor track /data/subject1 roi Streamlines:100x JitterSeeds:false Strategy:vox
 
 <p>We finally consider parcellation-based tractography with targets, the domain of the old <code>xtrack</code> script. A typical example would be seeding from white matter voxels and tracking until reaching a cortical grey matter region.</p>
 
-<pre><code># TractoR 2.x
+<pre><code class="language-bash line-numbers"># TractoR 2.x
 tractor xtrack /data/subject1 SeedRegions:white_matter TargetRegions:cerebral_cortex NumberOfSamples:100
 
 # TractoR 3.x
@@ -108,7 +105,7 @@ tractor track /data/subject1 white_matter TargetRegions:cerebral_cortex Terminat
 
 <p>The <code>pnt-data</code> script serves as a good illustrative example. In typical previous use one might create a design file, let&rsquo;s say &ldquo;design.yaml&rdquo;, with contents like</p>
 
-<pre><code>TractName: genu
+<pre><code class="language-yaml line-numbers">TractName: genu
 SessionList: [ /data/subject1, /data/subject2 ]
 SearchWidth: 7
 DatasetName: genu_data
@@ -116,14 +113,14 @@ DatasetName: genu_data
 
 <p>The &ldquo;SessionList&rdquo; variable, expected by <code>pnt-data</code> in TractoR 2.x, tells the script where to find several datasets, which it would work through sequentially, in parallel across cores, or using a grid engine, using one of the commands</p>
 
-<pre><code>tractor -c design.yaml pnt-data                       # Sequential
+<pre><code class="language-bash line-numbers">tractor -c design.yaml pnt-data                       # Sequential
 tractor -c design.yaml -p 2 pnt-data                  # Locally parallelised
 tractor -c design.yaml pnt-data-sge QueueName:myq     # Grid engine
 </code></pre>
 
 <p>This worked well enough, for <code>pnt-data</code> in particular, but few other scripts worked with the &rsquo;-p&rsquo; option, and <em>no</em> other scripts had an option to use a grid engine. By contrast, these options are available to every script in TractoR 3.0. The syntax for the above commands would now be</p>
 
-<pre><code>plough -C design.yaml pnt-data %SessionList           # Sequential
+<pre><code class="language-bash line-numbers">plough -C design.yaml pnt-data %SessionList           # Sequential
 plough -C design.yaml -P 2 pnt-data %SessionList      # Locally parallelised
 plough -C design.yaml -G -Q myq pnt-data %SessionList # Grid engine
 </code></pre>
@@ -132,14 +129,14 @@ plough -C design.yaml -G -Q myq pnt-data %SessionList # Grid engine
 
 <p>Using <code>plough</code> not only opens up parallelisation to all the package&rsquo;s scripts, but it also allows for some more complex commands. Let&rsquo;s say we want to run <code>pnt-data</code> for multiple tracts and sessions, all at once. We update our design file first:</p>
 
-<pre><code>TractName: [ genu, splenium ]
+<pre><code class="language-yaml line-numbers">TractName: [ genu, splenium ]
 Session: [ /data/subject1, /data/subject2 ]
 SearchWidth: 7
 </code></pre>
 
 <p>Now, we can construct a more complex call to <code>plough</code>, such as</p>
 
-<pre><code>plough -C design.yaml -X -P 3 -w %TractName pnt-data %Session DatasetName:%TractName_data
+<pre><code class="language-bash">plough -C design.yaml -X -P 3 -w %TractName pnt-data %Session DatasetName:%TractName_data
 </code></pre>
 
 <p>Here, we use the &rsquo;-X&rsquo; flag, which means &ldquo;apply every combination of all variables whose length is greater than one&rdquo;, so we run <code>pnt-data</code> four times, for each combination of tract and subject. We collate data from each tract in a separate working directory (&rsquo;-w&rsquo;), and name the dataset according to the tract (<code>DatasetName:%TractName_data</code>). Of course, there is no obligation to get as complex as this, but this should give a sense of what is possible with relatively little effort.</p>
@@ -164,7 +161,7 @@ SearchWidth: 7
 
 <p>First, navigate to wherever TractoR 2.x is installed; let&rsquo;s say <code>/usr/local/tractor</code>. Then install the packages <em>locally</em>.</p>
 
-<pre><code>cd /usr/local/tractor
+<pre><code class="language-bash line-numbers">cd /usr/local/tractor
 make install-local
 </code></pre>
 
@@ -172,7 +169,7 @@ make install-local
 
 <p>Next, navigate to wherever you have unpacked TractoR 3.x; let&rsquo;s say <code>/usr/local/tractor3</code>. There we do the same thing, but installs are now local by default, so</p>
 
-<pre><code>cd /usr/local/tractor3
+<pre><code class="language-bash line-numbers">cd /usr/local/tractor3
 make install
 </code></pre>
 
@@ -180,28 +177,44 @@ make install
 
 <p>Finally, we need to create an alias for TractoR 3, which sets the <code>TRACTOR_HOME</code> environment variable appropriately. For example, you could add the line</p>
 
-<pre><code>alias tractor3=&#39;TRACTOR_HOME=/usr/local/tractor3 /usr/local/tractor3/bin/tractor&#39;
+<pre><code class="language-bash">alias tractor3='TRACTOR_HOME=/usr/local/tractor3 /usr/local/tractor3/bin/tractor'
 </code></pre>
 
 <p>to the &ldquo;.bashrc&rdquo; file in your home directory. (Note that this is a hidden file and may not be visible from a file browser.) You can then run <code>tractor3</code> instead of <code>tractor</code> from the command line when you want to use the new version:</p>
 
-<pre>
-<code>$ </code><kbd>tractor3 platform</kbd>
-<code>Starting TractoR environment...
-               Machine : x86_64
-               OS name : Darwin
-            OS release : 15.4.0
-TractoR home directory : /usr/local/tractor3
-       TractoR version : 3.0.0
-             R version : 3.3.0
-      R build platform : x86_64-apple-darwin15.4.0
-     R package library : /usr/local/tractor3/lib/R
-           FSL version : 5.0.9
-Experiment completed with 0 warning(s) and 0 error(s)</code>
-</pre>
+<pre><code class="language-bash line-numbers">tractor3 platform
+# Starting TractoR environment...
+#                Machine : x86_64
+#                OS name : Darwin
+#             OS release : 15.4.0
+# TractoR home directory : /usr/local/tractor3
+#        TractoR version : 3.0.0
+#              R version : 3.3.0
+#       R build platform : x86_64-apple-darwin15.4.0
+#      R package library : /usr/local/tractor3/lib/R
+#            FSL version : 5.0.9
+# Experiment completed with 0 warning(s) and 0 error(s)
+</code></pre>
 
 
 </div>
+
+<script src="assets/jquery-3.2.0.min.js"></script>
+<script src="assets/jquery.hypher.min.js"></script>
+<script src="assets/en-gb.js"></script>
+<script async type="text/javascript">
+  $('p').hyphenate('en-gb');
+</script>
+<script async src="assets/prism.js"></script>
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-563735-7', 'auto');
+  ga('send', 'pageview');
+</script>
 
 </body>
 

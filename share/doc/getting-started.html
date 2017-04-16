@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en-gb">
 
 <head>
   <title>TractoR ~ Getting started</title>
 
   <meta charset="utf-8" />
   <meta name="author" content="Jon Clayden" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   
-  <script type="text/javascript" src="hyphenator.js"></script>
-  
-  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
-  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-563735-7']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
+  <link href="assets/prism.css" rel="stylesheet" />
+  <link href="assets/style.css" rel="stylesheet" />
 </head>
 
 <body>
 
-<div id="main" class="hyphenate">
+<header>
+  <div id="banner">
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+  </div>
+</header>
 
-<table id="tabs">
-  <tr>
-  <td class="tab"><a href="home.html">Home</a></td>
-  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="downloads.html">Downloads</a></td>
-  <td class="tab"><a href="changelog.html">Changelog</a></td>
-  <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
-  </tr>
-</table>
+<div id="navbar">
+  <nav>
+    <div id="links">
+      <span><a href="home.html">Home</a></span>
+      <span><a href="home.html#site-contents">Contents</a></span>
+      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="changelog.html">Changelog</a></span>
+      <span><a href="references.html">References</a></span>
+      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
+      <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+    </div>
+  </nav>
+</div>
+
+<div id="main" class="language-bash">
 
 
 <h1>Getting started</h1>
@@ -59,7 +56,7 @@
 
 <p>After downloading the TractoR tarball, installing the R packages should just be a matter of typing the following into a terminal, adjusting the file name in the first line if necessary.</p>
 
-<pre><code>tar -xzf tractor.tar.gz
+<pre><code class="language-bash line-numbers">tar -xzf tractor.tar.gz
 cd tractor
 make install
 </code></pre>
@@ -68,26 +65,26 @@ make install
 
 <p>To check that the TractoR packages have been installed properly and TractoR scripts can be run successfully, you can run the set of tests included with TractoR 1.3.0 and later by typing</p>
 
-<pre><code>make clean test
+<pre><code class="language-bash">make clean test
 </code></pre>
 
 <p>Running these tests will typically take a few minutes, during which time you should see a series of messages confirming the success of each test, and the run time in each case. If any errors arise, something is probably wrong with your installation.</p>
 
 <p>Unless you want to interact with TractoR exclusively through R (which is unlikely in most cases), you will also need to set up your environment so that you can use the <code>tractor</code> shell program and associated script files. To do this - assuming you use the bash shell - add the following lines to the <code>.bashrc</code> file in your home directory:</p>
 
-<pre><code>export TRACTOR_HOME=/usr/local/tractor
+<pre><code class="language-bash line-numbers">export TRACTOR_HOME=/usr/local/tractor
 export PATH=${TRACTOR_HOME}/bin:$PATH
 export MANPATH=${TRACTOR_HOME}/man:$MANPATH
 </code></pre>
 
 <p>(If you have unpacked the tarball somewhere than <code>/usr/local/tractor</code>, you will need to alter the first line accordingly.) In order to test that the environment is set up correctly, try typing</p>
 
-<pre><code>tractor list
+<pre><code class="language-bash">tractor list
 </code></pre>
 
 <p>which should produce output similar to the following:</p>
 
-<pre><code>Starting TractoR environment...
+<pre><code class="language-bash line-numbers">Starting TractoR environment...
 Experiment scripts found in /usr/local/tractor/share/experiments:
  [1] age             bedpost         binarise        camino2fsl     
  [5] caminofiles     chfiletype      clone           contact        
@@ -119,6 +116,23 @@ Experiment completed with 0 warning(s) and 0 error(s)
 
 
 </div>
+
+<script src="assets/jquery-3.2.0.min.js"></script>
+<script src="assets/jquery.hypher.min.js"></script>
+<script src="assets/en-gb.js"></script>
+<script async type="text/javascript">
+  $('p').hyphenate('en-gb');
+</script>
+<script async src="assets/prism.js"></script>
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-563735-7', 'auto');
+  ga('send', 'pageview');
+</script>
 
 </body>
 

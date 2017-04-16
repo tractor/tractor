@@ -1,4 +1,4 @@
-TractoR, its constituent R packages and command-line interface system, are copyright (C) 2005-2007 Jon Clayden, and (C) 2007-2016 University College London.
+TractoR, its constituent R packages and command-line interface system, are copyright (C) 2005-2007 Jon Clayden, and (C) 2007-2017 University College London.
 
 The "ore" package is copyright (C) 2014-2016 University College London.
 

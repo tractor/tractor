@@ -51,10 +51,11 @@ runExperiment <- function ()
             next
         }
         
-        report(OL$Info, "Generating tract for session #{sessionList[i]}")
+        report(OL$Info, "Generating tract for session #{sessionList[i]}, with index #{attr(sessionList,'indices')[i]}")
         currentSession <- attachMriSession(sessionList[i])
+        currentSessionIndex <- attr(sessionList,"indices")[i]
         currentData <- subset(data, sessionPath==sessionList[i])
-        currentPosteriors <- results$getTractPosteriors(attr(sessionList,"indices")[i])
+        currentPosteriors <- results$getTractPosteriors(currentSessionIndex)
         
         if (length(currentPosteriors) != nrow(currentData))
             report(OL$Error, "Posterior vector length does not match the dataset")
@@ -147,6 +148,6 @@ runExperiment <- function ()
         report(OL$Info, "Creating visitation map")
         faPath <- currentSession$getImageFileNameByType("FA", "diffusion")
         visitationMap <- streamSource$getVisitationMap(faPath)
-        writeImageFile(visitationMap, es("#{tractName}.#{i}"))
+        writeImageFile(visitationMap, es("#{tractName}.#{currentSessionIndex}"))
     }
 }

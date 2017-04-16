@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en-gb">
 
 <head>
   <title>TractoR ~ Conventions</title>
 
   <meta charset="utf-8" />
   <meta name="author" content="Jon Clayden" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   
-  <script type="text/javascript" src="hyphenator.js"></script>
-  
-  <script type="text/javascript" src="http://use.typekit.com/hqw1phx.js"></script>
-  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-563735-7']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
+  <link href="assets/prism.css" rel="stylesheet" />
+  <link href="assets/style.css" rel="stylesheet" />
 </head>
 
 <body>
 
-<div id="main" class="hyphenate">
+<header>
+  <div id="banner">
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+  </div>
+</header>
 
-<table id="tabs">
-  <tr>
-  <td class="tab"><a href="home.html">Home</a></td>
-  <td class="tab"><a href="home.html#site-contents">Contents</a></td>
-  <td class="tab"><a href="downloads.html">Downloads</a></td>
-  <td class="tab"><a href="changelog.html">Changelog</a></td>
-  <td class="tab"><a href="references.html">References</a></td>
-  <td class="tab"><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></td>
-  </tr>
-</table>
+<div id="navbar">
+  <nav>
+    <div id="links">
+      <span><a href="home.html">Home</a></span>
+      <span><a href="home.html#site-contents">Contents</a></span>
+      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="changelog.html">Changelog</a></span>
+      <span><a href="references.html">References</a></span>
+      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
+      <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+    </div>
+  </nav>
+</div>
+
+<div id="main" class="language-bash">
 
 
 <h1>Conventions</h1>
@@ -51,11 +48,11 @@
 
 <p>TractoR is designed to work with MRI data sets, each consisting of a series of magnetic resonance images, potentially including structural, diffusion-weighted and functional images. The package stores all images and other files within a managed file hierarchy called a session. The overall layout of a session directory is shown below.</p>
 
-<pre><code>session......................top-level session directory
+<pre><code class="language-bash line-numbers">session......................top-level session directory
   /tractor...................main managed directory
     /transforms..............stored transformations between different spaces
     /diffusion...............diffusion-weighted images and their derivatives (e.g. diffusion tensor components)
-    /fdt.....................images and other files used by FSL&#39;s diffusion toolbox
+    /fdt.....................images and other files used by FSL's diffusion toolbox
     /fdt.bedpostX............images and other files produced by FSL BEDPOSTX
     /structural..............structural (e.g. T1-weighted) images
     /freesurfer..............output from the Freesurfer pipeline
@@ -69,7 +66,7 @@
 
 <p>The reason for using a managed file hierarchy is to avoid the need to specify the locations of several standard image files when using TractoR&rsquo;s core functionality. By establishing standard locations for all such files, only the top-level session directory needs to be specified, since everything else can be found by the code. TractoR therefore favours <a href="http://en.wikipedia.org/wiki/Convention_over_configuration">convention over configuration</a>, but if the names of specific images within a managed directory are not in keeping with the default, there is a mechanism for telling TractoR about this, through so-called &ldquo;session maps&rdquo;. For example, the default map for the <code>diffusion</code> subdirectory, as of TractoR v3.0.0, is</p>
 
-<pre><code>rawdata: rawdata
+<pre><code class="language-yaml line-numbers">rawdata: rawdata
 data: data
 refb0: refb0
 mask: mask
@@ -89,14 +86,13 @@ parcellation: parcellation
 
 <p>The <code>path</code> script (added in TractoR v2.5.0) can be used to obtain the actual full path to the image of a particular type. For example,</p>
 
-<pre>
-<code>$ </code><kbd>tractor -q path /data/subject1 FA</kbd>
-<code>/data/subject1/tractor/diffusion/dti_FA</code>
-</pre>
+<pre><code class="language-bash line-numbers">tractor -q path /data/subject1 FA</kbd>
+# /data/subject1/tractor/diffusion/dti_FA
+</code></pre>
 
 <p>Similarly, the names of the subdirectories within the main <code>tractor</code> directory can be specified in a top-level session map. This mechanism can be used to point to data outside the session directory as well, and this can be useful, for example, when processing a single data set in several different ways. For example, say we want to process the data from a single subject using <code>bedpost</code>, with both 2 and 3 fibre options. We could process the 2 fibres case, and then create a new session, say <code>/data/subject1_3fibres</code>, which points to the same diffusion data. The <code>/data/subject1_3fibres/tractor/map.yaml</code> file would then contain</p>
 
-<pre><code>diffusion: /data/subject1_2fibres/tractor/diffusion
+<pre><code class="language-yaml">diffusion: /data/subject1_2fibres/tractor/diffusion
 </code></pre>
 
 <p>It should, however, be borne in mind that this will make the session less portable. The full default map can be found at <code>$TRACTOR_HOME/etc/session/map.yaml</code>.</p>
@@ -122,8 +118,8 @@ parcellation: parcellation
 
 <p>Tractography streamlines are stored in <a href="http://www.trackvis.org/docs/?subsect=fileformat">TrackVis <strong>.trk</strong> format</a>, which makes it easy to visualise them using the popular TrackVis program. However, TractoR additionally uses an auxiliary file format, with a <strong>.trkl</strong> extension, which stores information about &ldquo;labels&rdquo;, named regions that individual streamlines pass through. The beginning of this file is formatted as follows.</p>
 
-<pre><code>struct trkl_header {
-    char    magic_number[8];        // The string &quot;TRKLABEL&quot; (hex 54 52 4b 4c 41 42 45 4c)
+<pre><code class="language-c line-numbers">struct trkl_header {
+    char    magic_number[8];        // The string "TRKLABEL" (hex 54 52 4b 4c 41 42 45 4c)
     int32_t version;                // Version number; currently 1
     int32_t n_streamlines;          // Number of streamlines; should match the .trk file
     int32_t n_labels;               // Number of labels stored
@@ -139,6 +135,23 @@ parcellation: parcellation
 
 
 </div>
+
+<script src="assets/jquery-3.2.0.min.js"></script>
+<script src="assets/jquery.hypher.min.js"></script>
+<script src="assets/en-gb.js"></script>
+<script async type="text/javascript">
+  $('p').hyphenate('en-gb');
+</script>
+<script async src="assets/prism.js"></script>
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-563735-7', 'auto');
+  ga('send', 'pageview');
+</script>
 
 </body>
 
