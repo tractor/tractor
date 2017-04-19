@@ -59,7 +59,10 @@ polarPlotPanel <- function (point, data, imageNames, directions, bValues = NULL)
     axes <- setdiff(1:3, which.min(correlations))
     view <- c("sagittal","coronal","axial")[which.min(correlations)]
     
-    plot(NA, xlim=c(-maxDataValue,maxDataValue), ylim=c(-maxDataValue,maxDataValue), xlab=quitInstructions, ylab="intensity", col.lab="grey70", bty="n", main=paste("Location: (",implode(point,","),")\nView: ",view,sep=""), asp=1)
+    plot(NA, xlim=c(-maxDataValue,maxDataValue), ylim=c(-maxDataValue,maxDataValue), xlab=quitInstructions, ylab="intensity", col.lab="grey70", bty="n", main=paste("Location: (",implode(point,","),")\nView: ",view,sep=""), xaxt="n", yaxt="n", asp=1)
+    ticks <- list(x=pretty(par("xaxp")[1:2]), y=pretty(par("yaxp")[1:2]))
+    axis(1, ticks$x, abs(ticks$x))
+    axis(2, ticks$y, abs(ticks$y))
     
     for (b in setdiff(sort(unique(bValues)),0))
     {
