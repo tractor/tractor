@@ -67,9 +67,10 @@ runExperiment <- function ()
             
             if (is.null(dicomDirs))
                 dicomDirs <- session$getDirectory()
-
+            
+            # Non-absolute paths are relative to the session directory
             dicomDirs <- splitAndConvertString(dicomDirs, ",", fixed=TRUE)
-            ifelse(dicomDirs %~% "^([A-Za-z]:)?/", dicomDirs, file.path(session$getDirectory(), dicomDirs))
+            dicomDirs <- ifelse(dicomDirs %~% "^([A-Za-z]:)?/", dicomDirs, file.path(session$getDirectory(),dicomDirs))
             
             dicomDirs <- ore.subst("//+", "/", dicomDirs, all=TRUE)
             info <- lapply(dicomDirs, readDicomDirectory, readDiffusionParams=TRUE)
