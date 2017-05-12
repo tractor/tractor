@@ -8,7 +8,10 @@ suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {
-    session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
+    sessionPath <- ifelse(nArguments()==0, ".", Arguments[1])
+    if (!file.exists(sessionPath))
+        dir.create(sessionPath)
+    session <- attachMriSession(sessionPath)
     
     statusOnly <- getConfigVariable("StatusOnly", FALSE)
     interactive <- getConfigVariable("Interactive", TRUE)
