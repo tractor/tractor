@@ -19,9 +19,6 @@
 [submodule "lib/RcppEigen"]
 	path = lib/RcppEigen
 	url = https://github.com/tractor/RcppEigen.git
-[submodule "lib/png"]
-	path = lib/png
-	url = https://github.com/tractor/png.git
 [submodule "lib/RNifti"]
 	path = lib/RNifti
 	url = https://github.com/jonclayden/RNifti.git
@@ -31,3 +28,6 @@
 [submodule "lib/yaml"]
 	path = lib/yaml
 	url = https://github.com/tractor/yaml.git
+[submodule "lib/loder"]
+	path = lib/loder
+	url = https://github.com/jonclayden/loder.git
