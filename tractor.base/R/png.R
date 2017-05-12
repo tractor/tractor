@@ -8,8 +8,5 @@ writePng <- function (data, fileName, aspectRatio = 1)
     else if (length(dim(data)) == 2)
         data <- t(data[,dim(data)[2]:1])
     
-    data[data<0] <- 0
-    data[data>1] <- 1
-    
-    png::writePNG(data, ensureFileSuffix(fileName,"png"), asp=aspectRatio)
+    loder::writePng(structure(data,range=c(0,1),asp=aspectRatio), ensureFileSuffix(fileName,"png"))
 }
