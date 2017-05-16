@@ -14,6 +14,9 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputL
     if (Sys.getenv("COLUMNS") != "")
         options(width=as.integer(Sys.getenv("COLUMNS")))
     
+    # Get the canonical path for TRACTOR_HOME, otherwise changing the working directory may break things
+    Sys.setenv(TRACTOR_HOME=expandFileName(Sys.getenv("TRACTOR_HOME")))
+    
     setOutputLevel(outputLevel)
     options(reportrStackTraceLevel=OL$Warning)
     
