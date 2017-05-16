@@ -15,6 +15,10 @@ TRACTOR_FILETYPE=NIFTI_GZ
 TRACTOR_PATH=scripts
 export COLUMNS TRACTOR PLOUGH TRACTOR_HOME TRACTOR_FILETYPE TRACTOR_PATH
 
+# Tests are run three levels down
+TRACTOR_TEST_DATA=../../../data
+export TRACTOR_TEST_DATA
+
 all: run-tests
 
 clean:
@@ -43,7 +47,7 @@ create-tests:
 	@if test -f $*.skip && $(BASH) $*.skip 2>&1; then \
 	 	$(ECHO) "SKIPPED"; \
 	 else \
-	 	$(TIME) ( TRACTOR="$(TRACTOR) -w tmp/$*" TRACTOR_TEST_DATA=../../../data $(BASH) $< >$@ 2>&1 ) >tmp/$*/.time 2>&1 || ( $(ECHO) "FAIL"; cat $@; rm -f $@; exit 1 ); \
+	 	$(TIME) ( TRACTOR="$(TRACTOR) -w tmp/$*" $(BASH) $< >$@ 2>&1 ) >tmp/$*/.time 2>&1 || ( $(ECHO) "FAIL"; cat $@; rm -f $@; exit 1 ); \
 		real=`grep '^real' tmp/$*/.time | sed 's/real *//'`; $(DIFF) $*.save $@ >tmp/$*/.diff 2>&1 && ( $(ECHO) "OK ($$real s)" ) || ( $(ECHO) "FAIL"; cat tmp/$*/.diff; rm -f $@; exit 1 ); \
 	 fi
 	@rm -rf tmp/$*
