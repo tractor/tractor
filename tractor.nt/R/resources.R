@@ -12,6 +12,9 @@ getFileNameForNTResource <- function (type, mode, options = NULL, intent = c("re
     else
         standardRefTractDir <- file.path(tractorHome, "share", "tractor", mode, "reftracts")
     
+    useNewRefTracts <- tolower(Sys.getenv("TRACTOR_NEW_REFTRACTS")) %in% c("1","yes","true")
+    refTractSubDir <- ifelse(useNewRefTracts, "miua2017", "ismrm2008")
+    
     if (type == "reference")
     {
         if (!("tractName" %in% names(options)))
@@ -20,7 +23,9 @@ getFileNameForNTResource <- function (type, mode, options = NULL, intent = c("re
         fileName <- ensureFileSuffix(paste(options$tractName,"ref",sep="_"), "Rdata")
         if (intent == "write" || file.exists(fileName))
             return (fileName)
-        else if (file.exists(file.path(standardRefTractDir, fileName)))
+        else if (mode == "pnt" && file.exists(file.path(standardRefTractDir, refTractSubDir, fileName)))
+            return (file.path(standardRefTractDir, refTractSubDir, fileName))
+        else if (mode == "hnt" && file.exists(file.path(standardRefTractDir, fileName)))
             return (file.path(standardRefTractDir, fileName))
         else
             report(OL$Error, "No reference for tract name \"#{options$tractName}\" was found")
