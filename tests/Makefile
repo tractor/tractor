@@ -27,6 +27,7 @@ fullclean: clean
 run-tests:
 	@mkdir -p tmp
 	@$(MAKE) `find . -name '*.sh' -print | sort | sed 's/\.sh$$/\.out/'` || exit 1
+	@rm -rf tmp/*
 	@echo "All tests completed"
 
 debug-tests:
@@ -37,12 +38,15 @@ create-tests:
 
 %.out: %.sh
 	@$(ECHO_N) "`grep '#@desc' $< | sed 's/#@desc //'`... "
+	@mkdir -p tmp/$*
+	@test `grep -c "#@data" $<` -eq 0 || cp -R `grep '#@data' $< | sed 's/#@data //'` tmp/$*/
 	@if test -f $*.skip && $(BASH) $*.skip 2>&1; then \
 	 	$(ECHO) "SKIPPED"; \
 	 else \
-	 	$(TIME) ( $(BASH) $< >$@ 2>&1 ) >tmp/tmp.time 2>&1 || ( $(ECHO) ""; cat tmp/tmp.out; rm -f tmp/tmp.out; exit 1 ); \
-		real=`grep '^real' tmp/tmp.time | sed 's/real *//'`; $(DIFF) $*.save $@ >tmp/tmp.diff 2>&1 && ( $(ECHO) "OK ($$real s)"; rm -f tmp/tmp.* ) || ( $(ECHO) "FAIL"; cat tmp/tmp.diff; rm -f tmp/tmp.* $@; exit 1 ) \
+	 	$(TIME) ( TRACTOR="$(TRACTOR) -w tmp/$*" TRACTOR_TEST_DATA=../../../data $(BASH) $< >$@ 2>&1 ) >tmp/$*/.time 2>&1 || ( $(ECHO) "FAIL"; cat $@; rm -f $@; exit 1 ); \
+		real=`grep '^real' tmp/$*/.time | sed 's/real *//'`; $(DIFF) $*.save $@ >tmp/$*/.diff 2>&1 && ( $(ECHO) "OK ($$real s)" ) || ( $(ECHO) "FAIL"; cat tmp/$*/.diff; rm -f $@; exit 1 ); \
 	 fi
+	@rm -rf tmp/$*
 
 %.save: %.sh
 	@$(ECHO_N) "Updating test output for $@... "
