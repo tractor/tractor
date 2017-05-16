@@ -243,8 +243,6 @@ errors=`grep -c ERROR $log_file`
     rm -f "$working_dir/tractor-Rprof.out"
 }
 
-if [ $quiet -eq 0 ]; then
-    echo "Experiment completed with $warnings warning(s) and $errors error(s)" 1>&2
-fi
+[ $quiet -eq 0 ] && echo "Experiment completed with $warnings warning(s) and $errors error(s)" 1>&2
 
 [ $errors -eq 0 ] && status=0
