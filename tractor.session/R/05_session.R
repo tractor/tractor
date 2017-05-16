@@ -193,11 +193,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             return (.self$getTransformation(targetSpace,sourceSpace)$invert())
         else
         {
-            imageTypes <- .resolveRegistrationTargets(.self, sourceSpace, targetSpace)
-            sourceImageFile <- .self$getImageFileNameByType(imageTypes[1], sourceSpace)
-            targetImageFile <- .self$getImageFileNameByType(imageTypes[2], targetSpace)
-            
-            options <- list(sourceImageFile, targetImageFile, targetMask=NULL, estimateOnly=TRUE)
+            options <- list(targetMask=NULL, estimateOnly=TRUE)
             options$types <- "affine"
             if ("fsl" %in% strategy)
                 options$method <- "fsl"
@@ -211,7 +207,6 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             if (all(c("nonlinear","symmetric") %in% strategy))
                 options$types <- c(options$types, "reverse-nonlinear")
             
-            fileHit <- FALSE
             transformDir <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"xfmb"))
             transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"Rdata"))
             if (file.exists(transformFile) && !file.exists(transformDir))
@@ -225,6 +220,11 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
                 if (all(options$types %in% transform$getTypes()))
                     return (transform)
             }
+            
+            imageTypes <- .resolveRegistrationTargets(.self, sourceSpace, targetSpace)
+            sourceImageFile <- .self$getImageFileNameByType(imageTypes[1], sourceSpace)
+            targetImageFile <- .self$getImageFileNameByType(imageTypes[2], targetSpace)
+            options <- c(list(sourceImageFile,targetImageFile), options)
             
             report(OL$Info, "Transformation strategy from #{ifelse(sourceSpace=='mni','MNI',sourceSpace)} to #{ifelse(targetSpace=='mni','MNI',targetSpace)} space is #{implode(strategy,', ',' and ')} - registering images")
             result <- do.call(tractor.reg::registerImages, options)
