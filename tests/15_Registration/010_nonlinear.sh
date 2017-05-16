@@ -1,5 +1,4 @@
 #@desc Checking nonlinear registration
-cp -R data/transform.xfmb tmp/
-${TRACTOR} reg-nonlinear data/transform.xfmb/source data/transform.xfmb/target TransformName:tmp/transform EstimateOnly:true | grep -v orientation | grep -v NiftyReg
-${TRACTOR} reg-info tmp/transform | grep -v orientation | grep -v directory
-rm -rf tmp/transform.xfmb
+#@data data/transform.xfmb
+${TRACTOR} reg-nonlinear $TRACTOR_TEST_DATA/transform.xfmb/source $TRACTOR_TEST_DATA/transform.xfmb/target TransformName:transform EstimateOnly:true | grep -v orientation | grep -v NiftyReg
+${TRACTOR} reg-info transform | grep -v orientation | grep -v directory

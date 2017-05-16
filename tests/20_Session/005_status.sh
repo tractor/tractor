@@ -1,2 +1,2 @@
 #@desc Checking session status report
-${TRACTOR} status data/session | grep -v session
+${TRACTOR} status $TRACTOR_TEST_DATA/session | grep -v session

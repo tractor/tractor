@@ -1,2 +1,2 @@
 #@desc Checking image statistics
-${TRACTOR} imagestats data/session/tractor/diffusion/dti_FA
+${TRACTOR} imagestats $TRACTOR_TEST_DATA/session/tractor/diffusion/dti_FA

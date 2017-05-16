@@ -1,8 +1,7 @@
 #@desc Checking that MGH format reader and writer work
-${TRACTOR} imageinfo data/mgh/maskedb0 | grep -v source
-${TRACTOR} value data/mgh/maskedb0 50 59 33
-cp data/session/tractor/diffusion/maskedb0.* tmp/
-${TRACTOR} chfiletype tmp/maskedb0 MGH_GZ
-${TRACTOR} imageinfo tmp/maskedb0 | grep -v source
-${TRACTOR} value tmp/maskedb0 50 59 33
-rm -f tmp/maskedb0.*
+#@data data/session/tractor/diffusion/maskedb0.*
+${TRACTOR} imageinfo $TRACTOR_TEST_DATA/mgh/maskedb0 | grep -v source
+${TRACTOR} value $TRACTOR_TEST_DATA/mgh/maskedb0 50 59 33
+${TRACTOR} chfiletype maskedb0 MGH_GZ
+${TRACTOR} imageinfo maskedb0 | grep -v source
+${TRACTOR} value maskedb0 50 59 33

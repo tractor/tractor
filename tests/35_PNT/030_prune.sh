@@ -1,5 +1,3 @@
 #@desc Checking streamline pruning
-${TRACTOR} pnt-eval DatasetName:data/pnt/pnt_test_data ModelName:data/pnt/pnt_model ResultsName:tmp/pnt_results
-${TRACTOR} pnt-prune data/session TractName:genu DatasetName:data/pnt/pnt_test_data ModelName:data/pnt/pnt_model ResultsName:tmp/pnt_results Streamlines:50 RandomSeed:1 | grep -v outside | grep -v rejected
-rm -f tmp/pnt_results.Rdata
-rm -f genu.1.*
+${TRACTOR} pnt-eval DatasetName:$TRACTOR_TEST_DATA/pnt/pnt_test_data ModelName:$TRACTOR_TEST_DATA/pnt/pnt_model ResultsName:pnt_results
+${TRACTOR} pnt-prune $TRACTOR_TEST_DATA/session TractName:genu DatasetName:$TRACTOR_TEST_DATA/pnt/pnt_test_data ModelName:$TRACTOR_TEST_DATA/pnt/pnt_model ResultsName:pnt_results Streamlines:50 RandomSeed:1 | grep -v outside | grep -v rejected

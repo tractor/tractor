@@ -1,2 +1,2 @@
 #@desc Checking graph properties
-${TRACTOR} graph-props data/graph/diffusion
+${TRACTOR} graph-props $TRACTOR_TEST_DATA/graph/diffusion

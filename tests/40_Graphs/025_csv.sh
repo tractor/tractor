@@ -1,6 +1,5 @@
 #@desc Checking that we can read and write graphs in CSV format
-cp data/graph/diffusion.Rdata tmp/graph.Rdata
-${TRACTOR} graph2csv tmp/graph
-rm -f tmp/graph.Rdata
-${TRACTOR} graph-props tmp/graph.csv
-rm -f tmp/graph.csv
+#@data data/graph/diffusion.Rdata
+${TRACTOR} graph2csv diffusion
+rm -f diffusion.Rdata
+${TRACTOR} graph-props diffusion.csv

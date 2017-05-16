@@ -1,4 +1,3 @@
 #@desc Checking that we can create a PNT reference tract
-${TRACTOR} pnt-ref data/session 50 59 33 Streamlines:50 TractName:tmp/tract
-${TRACTOR} peek tmp/tract_ref | grep -v session | grep -v spacing | sed '/seed/s/\.[0-9]*//g'
-rm -f tmp/tract_ref.Rdata
+${TRACTOR} pnt-ref $TRACTOR_TEST_DATA/session 50 59 33 Streamlines:50
+${TRACTOR} peek tract_ref | grep -v session | grep -v spacing | sed '/seed/s/\.[0-9]*//g'
