@@ -66,7 +66,10 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         {
             type <- tolower(type)
             root <- file.path(directory, "tractor")
-            subdirs <- structure(caches.$subdirectories, names=tolower(names(caches.$subdirectories)))
+            if (is.null(caches.$subdirectories))
+                subdirs <- list()
+            else
+                subdirs <- structure(caches.$subdirectories, names=tolower(names(caches.$subdirectories)))
             
             if (type == "root")
                 requiredDir <- root
