@@ -42,7 +42,7 @@ runExperiment <- function ()
     {
         combine <- match.fun(combine)
         data <- array(NA_real_, c(dim(images[[1]]),nInputs))
-        args <- alist(x=,y=,z=,t=,u=,v=,w=)[1:images[[1]]$getDimensionality()]
+        args <- alist(i=,j=,k=,t=,u=,v=,w=)[1:images[[1]]$getDimensionality()]
         for (i in seq_len(nInputs))
         {
             values <- do.call(fun, list(images[[i]]$getData()))

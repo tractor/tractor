@@ -214,7 +214,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         }
         else
         {
-            indices <- alist(x=,y=,z=,t=,u=,v=,w=)[seq_along(imageDims)]
+            indices <- alist(i=,j=,k=,t=,u=,v=,w=)[seq_along(imageDims)]
             indices[dim] <- loc
             newData <- do.call("[", c(list(data),indices))
             if (is.vector(newData))

@@ -42,7 +42,7 @@ runExperiment <- function ()
             flips <- which(request[dimPermutation] %~% "^-")
             if (length(flips) > 0)
             {
-                indices <- alist(x=,y=,z=,t=,u=,v=,w=)[1:nDims]
+                indices <- alist(i=,j=,k=,t=,u=,v=,w=)[1:nDims]
                 for (j in flips)
                     indices[[j]] <- dim(data)[j]:1
                 data <- as.array(do.call("[", c(list(data),indices,list(drop=FALSE))))

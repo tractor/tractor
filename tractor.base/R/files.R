@@ -495,7 +495,7 @@ writeImageData <- function (image, connection, type, size, endian = .Platform$en
         nDims <- image$getDimensionality()
         for (i in seq_len(dims[nDims]))
         {
-            indices <- alist(x=,y=,z=,t=,u=,v=,w=)[1:nDims]
+            indices <- alist(i=,j=,k=,t=,u=,v=,w=)[1:nDims]
             indices[[nDims]] <- i
             currentData <- as.array(do.call("[", c(list(data),indices)))
             
