@@ -92,6 +92,13 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
             report(OL$Error, "New dimensions are incompatible with this SparseArray object")
         .self$coords <- vectorToMatrixLocs(matrixToVectorLocs(.self$coords,.self$dims), newDims)
         .self$dims <- as.integer(newDims)
+    },
+    
+    summarise = function ()
+    {
+        labels <- c("Dimensions", "Nonzero elements", "Sparseness")
+        values <- c(implode(dims, sep=" x "), as.character(length(data)), paste0(round(100*(1-length(data)/prod(dims)),2),"%"))
+        return (list(labels=labels, values=values))
     }
 ))
 
