@@ -37,15 +37,20 @@
 
 guessSpace <- function (image, session = NULL, errorIfOutOfSession = TRUE)
 {
-    if (image$isInternal())
+    if (is.character(image))
+        path <- image
+    else if (image$isInternal())
         return (NULL)
-    else if (dirname(image$getSource()) == .StandardBrainPath)
+    else
+        path <- image$getSource()
+    
+    if (dirname(path) == .StandardBrainPath)
         return ("mni")
     else
     {
         if (is.null(session))
         {
-            if (image$getSource() %~% "^(.+)/tractor")
+            if (path %~% "^(.+)/tractor")
                 session <- attachMriSession(ore.lastmatch()[,1])
             else if (errorIfOutOfSession)
                 report(OL$Error, "Image does not seem to be within a session directory - the session must be specified")
@@ -55,7 +60,7 @@ guessSpace <- function (image, session = NULL, errorIfOutOfSession = TRUE)
         
         for (space in setdiff(names(.RegistrationTargets),"mni"))
         {
-            if (dirname(image$getSource()) == session$getDirectory(space))
+            if (dirname(path) == session$getDirectory(space))
                 return (es("#{session$getDirectory()}:#{space}"))
         }
     }
