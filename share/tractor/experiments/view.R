@@ -11,14 +11,43 @@ runExperiment <- function ()
     
     requestedViewer <- getConfigVariable("Viewer", NULL, "character", validValues=c("tractor","fslview","freeview"))
     fixedWindow <- getConfigVariable("FixedWindow", TRUE)
-    timeSeries <- getConfigVariable("TimeSeries", FALSE)
+    plotType <- getConfigVariable("PlotType", NULL, "character", validValues=c("none","time","orientation"))
+    directionsFile <- getConfigVariable("DirectionsFile", NULL, "character")
     
     if (nArguments() > 1)
         lookupTable <- c("greyscale", rep("heat",nArguments()-1))
     else
         lookupTable <- "greyscale"
     
-    viewerArguments <- c(as.list(Arguments), list(wait=TRUE,lookupTable=lookupTable,fixedWindow=fixedWindow,timeSeries=timeSeries))
+    directions <- NULL
+    fileStems <- identifyImageFileNames(Arguments)$fileStem
+    if (!is.null(directionsFile))
+        directions <- as.matrix(read.table(directionsFile))
+    else if (any(file.exists(directionsFile <- ensureFileSuffix(fileStems, "dirs"))))
+        directions <- as.matrix(read.table(directionsFile[file.exists(directionsFile)][1]))
+    else
+    {
+        spaces <- sapply(fileStems, function(stem) {
+            if (is.null(space <- guessSpace(stem,errorIfOutOfSession=FALSE)))
+                return ("unknown")
+            else
+                return (groups(ore.search(":(\\w+)$", space)))
+        })
+        
+        if (any(spaces == "diffusion") && file.exists(directionsFile <- file.path(dirname(fileStems[which(spaces=="diffusion")]), "directions.txt")))
+            directions <- as.matrix(read.table(directionsFile))
+        else if (is.null(plotType) && any(spaces == "functional"))
+            plotType <- "time"
+    }
+    
+    panelOptions <- list()
+    if (is.null(plotType) && !is.null(directions))
+        plotType <- "orientation"
+    if (plotType == "orientation")
+        panelOptions <- list(directions=directions[,1:3], bValues=directions[,4])
+    
+    infoPanel <- switch(plotType, none=defaultInfoPanel, time=timeSeries, orientation=polarPlotPanel)
+    viewerArguments <- c(as.list(Arguments), list(wait=TRUE,lookupTable=lookupTable,fixedWindow=fixedWindow,infoPanel=infoPanel,panelOptions=panelOptions))
     if (!is.null(requestedViewer))
         viewerArguments <- c(viewerArguments, list(viewer=requestedViewer))
     

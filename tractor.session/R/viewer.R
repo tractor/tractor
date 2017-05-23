@@ -1,4 +1,4 @@
-showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), interactive = TRUE, wait = FALSE, lookupTable = NULL, opacity = NULL, timeSeries = FALSE, fixedWindow = TRUE)
+showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), interactive = TRUE, wait = FALSE, lookupTable = NULL, opacity = NULL, infoPanel = defaultInfoPanel, panelOptions = list(), fixedWindow = TRUE)
 {
     viewer <- match.arg(viewer, .Viewers)
     imageList <- list(...)
@@ -66,9 +66,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
             }
         }
         
-        infoPanel <- (if (timeSeries) timeSeriesPanel else defaultInfoPanel)
-        
-        viewImages(images, interactive=interactive, colourScales=colourScales, fixedWindow=fixedWindow, indexNames=indexNames, infoPanel=infoPanel)
+        do.call(viewImages, c(list(images, interactive=interactive, colourScales=colourScales, fixedWindow=fixedWindow, indexNames=indexNames, infoPanel=infoPanel), panelOptions))
     }
     else
     {
