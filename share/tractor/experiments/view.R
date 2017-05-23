@@ -1,5 +1,5 @@
 #@args image file(s)
-#@desc Display one or more image files. The viewer used will be taken from the TRACTOR_VIEWER environment variable if it is not specified explicitly, and will default to "tractor" if this is not set. Note that TractoR's internal viewer uses the R convention for voxel locations (starting at 1), whereas fslview and freeview use the FSL/C convention (starting at 0). This wrapper script will automatically work around a problem with fslview and certain file datatypes.
+#@desc Display one or more image files. The viewer used will be taken from the TRACTOR_VIEWER environment variable if it is not specified explicitly, and will default to "tractor" if this is not set. Note that TractoR's internal viewer uses the R convention for voxel locations (starting at 1), whereas fslview and freeview use the FSL/C convention (starting at 0). For the internal viewer only, the fourth viewer panel can be used to show variation across a 4D series with respect to time or orientation. This wrapper script will automatically work around a problem with fslview and certain file datatypes.
 #@interactive TRUE
 #@nohistory TRUE
 
@@ -20,8 +20,11 @@ runExperiment <- function ()
         lookupTable <- "greyscale"
     
     directions <- NULL
-    fileStems <- identifyImageFileNames(Arguments)$fileStem
-    if (!is.null(directionsFile))
+    metadata <- lapply(Arguments, readImageFile, metadataOnly=TRUE)
+    fileStems <- sapply(metadata, function(x) x$getSource())
+    if (all(sapply(metadata, function(x) x$getDimensionality()) < 4))
+        plotType <- "none"
+    else if (!is.null(directionsFile))
         directions <- as.matrix(read.table(directionsFile))
     else if (any(file.exists(directionsFile <- ensureFileSuffix(fileStems, "dirs"))))
         directions <- as.matrix(read.table(directionsFile[file.exists(directionsFile)][1]))
@@ -37,16 +40,22 @@ runExperiment <- function ()
         if (any(spaces == "diffusion") && file.exists(directionsFile <- file.path(dirname(fileStems[which(spaces=="diffusion")]), "directions.txt")))
             directions <- as.matrix(read.table(directionsFile))
         else if (is.null(plotType) && any(spaces == "functional"))
+        {
+            report(OL$Info, "Image appears to be an fMRI time series; choosing time plot")
             plotType <- "time"
+        }
     }
     
     panelOptions <- list()
     if (is.null(plotType) && !is.null(directions))
+    {
+        report(OL$Info, "Image appears to be diffusion-weighted; choosing orientation plot")
         plotType <- "orientation"
+    }
     if (plotType == "orientation")
         panelOptions <- list(directions=directions[,1:3], bValues=directions[,4])
     
-    infoPanel <- switch(plotType, none=defaultInfoPanel, time=timeSeries, orientation=polarPlotPanel)
+    infoPanel <- switch(plotType, none=defaultInfoPanel, time=timeSeriesPanel, orientation=polarPlotPanel)
     viewerArguments <- c(as.list(Arguments), list(wait=TRUE,lookupTable=lookupTable,fixedWindow=fixedWindow,infoPanel=infoPanel,panelOptions=panelOptions))
     if (!is.null(requestedViewer))
         viewerArguments <- c(viewerArguments, list(viewer=requestedViewer))
