@@ -18,6 +18,7 @@ runExperiment <- function ()
     stages <- getConfigVariable("RunStages", "1-4")
     force <- getConfigVariable("Force", FALSE)
     dicomDirs <- getConfigVariable("DicomDirectories", NULL, "character")
+    dicomReader <- getConfigVariable("DicomReader", "internal", "character", validValues=c("internal","divest"))
     useGradientCache <- getConfigVariable("UseGradientCache", "second", validValues=c("first","second","never"))
     flipAxes <- getConfigVariable("FlipGradientAxes", NULL, "character")
     useTopup <- getConfigVariable("UseTopup", TRUE)
@@ -65,26 +66,77 @@ runExperiment <- function ()
             session$unlinkDirectory("diffusion", ask=interactive)
             workingDir <- session$getDirectory("diffusion", createIfMissing=TRUE)
             
-            if (is.null(dicomDirs))
-                dicomDirs <- session$getDirectory()
+            echoSeparations <- NULL
             
-            # Non-absolute paths are relative to the session directory
-            dicomDirs <- splitAndConvertString(dicomDirs, ",", fixed=TRUE)
-            dicomDirs <- ifelse(dicomDirs %~% "^([A-Za-z]:)?/", dicomDirs, file.path(session$getDirectory(),dicomDirs))
+            # Reconstruct a 4D "rawdata" image from already-converted subsets, or directly from DICOM
+            rawDataPath <- session$getImageFileNameByType("rawdata", "diffusion")
+            if (imageFileExists(es("#{rawDataPath}_1")))
+            {
+                pattern <- ore(ore.escape(basename(rawDataPath)), "_(\\d+)\\.")
+                n <- max(as.integer(groups(ore.search(pattern, list.files(workingDir)))))
+                fileNames <- sapply(seq_len(n), function(i) file.path(workingDir, es("#{rawDataPath}_#{i}")))
+                images <- lapply(fileNames, readImageFile)
+                mergedImage <- do.call(mergeMriImages, images)
+                directions <- do.call(cbind, lapply(seq_len(n), function(i) {
+                    if (file.exists(ensureFileSuffix(fileNames[i], "dirs")))
+                        as.matrix(read.table(ensureFileSuffix(fileNames[i], "dirs")))
+                    else
+                        matrix(NA, nrow=ifelse(images[[i]]$getDimensionality()==4L, dim(images[[i]])[4], 1L), ncol=4L)
+                }))
+                bValues <- directions[,4]
+                bVectors <- directions[,1:3]
+            }
+            else
+            {
+                if (is.null(dicomDirs))
+                    dicomDirs <- session$getDirectory()
+                
+                # Non-absolute paths are relative to the session directory
+                dicomDirs <- splitAndConvertString(dicomDirs, ",", fixed=TRUE)
+                dicomDirs <- ifelse(dicomDirs %~% "^([A-Za-z]:)?/", dicomDirs, file.path(session$getDirectory(),dicomDirs))
+                dicomDirs <- ore.subst("//+", "/", dicomDirs, all=TRUE)
+                
+                if (dicomReader == "internal")
+                {
+                    info <- lapply(dicomDirs, readDicomDirectory, readDiffusionParams=TRUE)
+                    mergedImage <- do.call(mergeMriImages, lapply(info, "[[", "image"))
+                    seriesDescriptions <- do.call(c, lapply(info, "[[", "seriesDescriptions"))
+                    bValues <- do.call(c, lapply(info, "[[", "bValues"))
+                    bVectors <- do.call(cbind, lapply(info, "[[", "bVectors"))
+                    echoSeparations <- do.call(c, lapply(info, "[[", "echoSeparations"))
+                }
+                else
+                {
+                    divestVerbosity <- switch(names(getOutputLevel()), Debug=2L, Verbose=0L, -1L)
+                    if (interactive)
+                        images <- divest::readDicom(dicomDirs, verbosity=divestVerbosity, interactive=TRUE)
+                    else
+                    {
+                        info <- divest::scanDicom(dicomDirs, verbosity=divestVerbosity)
+                        images <- divest::readDicom(info, subset=diffusion, verbosity=divestVerbosity)
+                    }
+                    mergedImage <- do.call(mergeMriImages, lapply(images, as, "MriImage"))
+                    bValues <- do.call(c, lapply(images, function(image) {
+                        if (is.null(attr(image, "bValues")))
+                            rep(NA, ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L))
+                        else
+                            attr(image, "bValues")
+                    }))
+                    bVectors <- do.call(cbind, lapply(images, function(image) {
+                        if (is.null(attr(image, "bVectors")))
+                            matrix(NA, nrow=ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L), ncol=3L)
+                        else
+                            attr(image, "bVectors")
+                    }))
+                }
+            }
             
-            dicomDirs <- ore.subst("//+", "/", dicomDirs, all=TRUE)
-            info <- lapply(dicomDirs, readDicomDirectory, readDiffusionParams=TRUE)
-            mergedImage <- do.call(mergeMriImages, lapply(info, "[[", "image"))
-
             writeImageFile(mergedImage, session$getImageFileNameByType("rawdata","diffusion"))
             print(mergedImage)
 
-            seriesDescriptions <- do.call("c", lapply(info, "[[", "seriesDescriptions"))
             seriesDescriptions <- implode(ore.subst("\\W","_",seriesDescriptions,all=TRUE), ",")
             writeLines(seriesDescriptions, file.path(session$getDirectory("diffusion"),"descriptions.txt"))
             
-            bValues <- do.call("c", lapply(info, "[[", "bValues"))
-            bVectors <- do.call("cbind", lapply(info, "[[", "bVectors"))
             if (any(!is.na(bValues)) && any(!is.na(bVectors)))
             {
                 missing <- (is.na(bValues) | apply(is.na(bVectors),2,any))
@@ -98,8 +150,7 @@ runExperiment <- function ()
                 session$updateDiffusionScheme(scheme)
             }
             
-            echoSeparations <- do.call("c", lapply(info, "[[", "echoSeparations"))
-            if (any(!is.na(echoSeparations)))
+            if (!is.null(echoSeparations) && any(!is.na(echoSeparations)))
                 writeLines(as.character(echoSeparations), file.path(session$getDirectory("diffusion"),"echosep.txt"))
             
             if (useGradientCache == "first" || (useGradientCache == "second" && !gradientDirectionsAvailableForSession(session)))
