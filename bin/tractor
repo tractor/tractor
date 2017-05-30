@@ -168,6 +168,9 @@ if [ $show_options -eq 1 ]; then
     exit
 fi
 
+deprecation_message=`grep '#@deprecation' $script_file | sed 's/#@deprecation //'`
+[ -n "$deprecation_message" -a $quiet -eq 0 ] && echo "NOTE: $deprecation_message" 1>&2
+
 interactive=`grep -ci '#@interactive TRUE' $script_file`
 
 if [ $write_history -eq 1 ]; then

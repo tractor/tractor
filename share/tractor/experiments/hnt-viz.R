@@ -1,5 +1,6 @@
 #@desc Visualise the results of heuristic neighbourhood tractography, creating a visitation map of the "best" matching candidate tract. If a session directory is not specified then an image will be created for each session path stored in the results file.
 #@args [session directory]
+#@deprecation HNT is deprecated in favour of PNT. See <http://www.tractor-mri.org.uk> for details.
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))

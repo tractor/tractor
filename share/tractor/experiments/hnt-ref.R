@@ -1,5 +1,6 @@
 #@args session directory, seed point
 #@desc Create a reference tract for use with heuristic neighbourhood tractography. This is a matter of simply running tractography with an appropriate session and seed point.
+#@deprecation HNT is deprecated in favour of PNT. See <http://www.tractor-mri.org.uk> for details.
 
 library(tractor.reg)
 library(tractor.session)

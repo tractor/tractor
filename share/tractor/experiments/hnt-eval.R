@@ -1,5 +1,6 @@
 #@desc Evaluate a series of candidate tracts for similarity to a reference tract. The specified TractName must match that passed to the "hnt-ref" experiment used to generate the reference tract. If the seed point is omitted then the standard space seed point associated with the reference tract will be used to establish the neighbourhood centre point. Any candidate seed point with anisotropy lower than AnisotropyThreshold will be ignored.
 #@args session directory, [seed point]
+#@deprecation HNT is deprecated in favour of PNT. See <http://www.tractor-mri.org.uk> for details.
 
 library(tractor.reg)
 library(tractor.session)

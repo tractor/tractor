@@ -1,5 +1,6 @@
 #@desc Extract parameters of interest from HNT results. The specified ResultsName must match that given to the "hnt-eval" script. Mode can be "location", for the voxel location of the best seed point (using the R convention); or "similarity" for the value of the similarity score at that point. If a session directory is not specified then a value will be given for each session path stored in the results file.
 #@args [session directory]
+#@deprecation HNT is deprecated in favour of PNT. See <http://www.tractor-mri.org.uk> for details.
 
 suppressPackageStartupMessages(require(tractor.session))
 suppressPackageStartupMessages(require(tractor.nt))
