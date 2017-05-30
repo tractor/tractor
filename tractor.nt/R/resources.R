@@ -12,8 +12,8 @@ getFileNameForNTResource <- function (type, mode, options = NULL, intent = c("re
     else
         standardRefTractDir <- file.path(tractorHome, "share", "tractor", mode, "reftracts")
     
-    useNewRefTracts <- tolower(Sys.getenv("TRACTOR_NEW_REFTRACTS")) %in% c("1","yes","true")
-    refTractSubDir <- ifelse(useNewRefTracts, "miua2017", "ismrm2008")
+    refTractSubDir <- tolower(Sys.getenv("TRACTOR_REFTRACT_SET"))
+    refTractSubDir <- ifelse(refTractSubDir %in% c("miua2017","ismrm2008"), refTractSubDir, "ismrm2008")
     
     if (type == "reference")
     {
