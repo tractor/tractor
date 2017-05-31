@@ -85,7 +85,7 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
         queueOption <- ifelse(queueName=="", "", es("-q #{queueName}"))
         qsubArgs <- es("-terse -V -wd #{path.expand(getwd())} #{queueOption} -N #{scriptName} -o #{file.path(tempDir,'log')} -e /dev/null -t 1-#{n} #{qsubOptions} #{qsubScriptFile}")
         result <- execute("qsub", qsubArgs, stdout=TRUE)
-        jobNumber <- as.numeric(ore.match("^(\\d+)\\.?.*$", result)[,1])
+        jobNumber <- as.numeric(ore.search("^(\\d+)\\.?.*$", result)[,1])
         jobNumber <- jobNumber[!is.na(jobNumber)]
         report(OL$Info, "Job number is #{jobNumber}")
     }
