@@ -54,10 +54,13 @@ RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SE
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
     DiffusionModel *model = modelPtr;
+    const Grid<3> &grid = model->getGrid3D();
+    const std::string gridOrientation = grid3DOrientation(grid);
     
     Tracker tracker(model);
     
     RNifti::NiftiImage mask(as<std::string>(_maskPath));
+    mask.reorient(gridOrientation);
     tracker.setMask(mask);
     tracker.setDebugLevel(as<int>(_debugLevel));
     
@@ -81,7 +84,7 @@ BEGIN_RCPP
     if (!Rf_isNull(targetInfo["path"]))
     {
         RNifti::NiftiImage targets(as<std::string>(targetInfo["path"]));
-        tracker.setTargets(targets);
+        tracker.setTargets(targets.reorient(gridOrientation));
     }
     
     RNGScope scope;
@@ -130,16 +133,16 @@ BEGIN_RCPP
             std::map<int,std::string> labelDictionary;
             for (int i=0; i<std::min(indices.size(),labels.size()); i++)
                 labelDictionary[indices[i]] = labels[i];
-            trkFile = new LabelledTrackvisDataSink(as<std::string>(_trkPath), getGrid3D(mask), labelDictionary);
+            trkFile = new LabelledTrackvisDataSink(as<std::string>(_trkPath), grid, labelDictionary);
         }
         else
-            trkFile = new BasicTrackvisDataSink(as<std::string>(_trkPath), getGrid3D(mask));
+            trkFile = new BasicTrackvisDataSink(as<std::string>(_trkPath), grid);
         
         pipeline.addSink(trkFile);
     }
     if (!Rf_isNull(_medianPath))
     {
-        medianFile = new MedianTrackvisDataSink(as<std::string>(_medianPath), getGrid3D(mask));
+        medianFile = new MedianTrackvisDataSink(as<std::string>(_medianPath), grid);
         pipeline.addSink(medianFile);
         
         // Pipeline must contain all streamlines at once for calculating median

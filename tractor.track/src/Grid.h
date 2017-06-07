@@ -77,4 +77,17 @@ inline Grid<3> getGrid3D (const RNifti::NiftiImage &object)
     return Grid<3>(dims, spacings, xform);
 }
 
+inline std::string grid3DOrientation (const Grid<3> &grid)
+{
+    const Grid<3>::TransformMatrix transform = grid.transform();
+    ::mat44 matrix;
+    for (int i=0; i<4; i++)
+    {
+        for (int j=0; j<4; j++)
+            matrix.m[i][j] = transform(i,j);
+    }
+    
+    return RNifti::NiftiImage::xformToString(matrix);
+}
+
 #endif
