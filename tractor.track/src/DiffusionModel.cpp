@@ -36,7 +36,7 @@ DiffusionTensorModel::DiffusionTensorModel (const std::string &pdFile)
         throw std::runtime_error("Principal direction image does not seem to be vector-valued");
     
     grid = ::getGrid3D(image);
-    principalDirections = new Array<float>(image);
+    principalDirections = getImageArray<float>(image);
 }
 
 Space<3>::Vector DiffusionTensorModel::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
@@ -70,9 +70,9 @@ BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std:
     
     for (int i=0; i<nCompartments; i++)
     {
-        avf[i] = new Array<float>(RNifti::NiftiImage(avfFiles[i]));
-        theta[i] = new Array<float>(RNifti::NiftiImage(thetaFiles[i]));
-        phi[i] = new Array<float>(RNifti::NiftiImage(phiFiles[i]));
+        avf[i] = getImageArray<float>(RNifti::NiftiImage(avfFiles[i]));
+        theta[i] = getImageArray<float>(RNifti::NiftiImage(thetaFiles[i]));
+        phi[i] = getImageArray<float>(RNifti::NiftiImage(phiFiles[i]));
     }
     
     const std::vector<int> &avfDims = avf[0]->getDimensions();

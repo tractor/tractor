@@ -46,13 +46,6 @@ public:
         nDims = dims.size();
     }
     
-    Array (const RNifti::NiftiImage &image)
-    {
-        data = image.getData<DataType>();
-        dims = image.dim();
-        nDims = dims.size();
-    }
-    
     size_t size () const { return data.size(); }
     bool empty () const { return (data.size() == 0); }
     
@@ -98,5 +91,13 @@ public:
     void flattenIndex (const std::vector<int> &loc, size_t &result) const;
     void expandIndex (const size_t &loc, std::vector<int> &result) const;
 };
+
+template <typename DataType>
+inline Array<DataType> * getImageArray (const RNifti::NiftiImage &image)
+{
+    const std::vector<DataType> data = image.getData<DataType>();
+    const std::vector<int> dims = image.dim();
+    return new Array<DataType>(dims, data);
+}
 
 #endif

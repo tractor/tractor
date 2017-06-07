@@ -56,7 +56,7 @@ public:
     void setMask (const RNifti::NiftiImage &mask)
     {
         delete maskData;
-        maskData = new Array<short>(mask);
+        maskData = getImageArray<short>(mask);
     }
     
     void setSeed (const Space<3>::Point &seed, const bool jitter)
@@ -71,7 +71,7 @@ public:
     void setTargets (const RNifti::NiftiImage &targets)
     {
         delete targetData;
-        targetData = new Array<int>(targets);
+        targetData = getImageArray<int>(targets);
     }
     
     void setRightwardsVector (const Space<3>::Vector &rightwardsVector)
