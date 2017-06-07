@@ -49,7 +49,7 @@ FinalType increment (OriginalType x)
     return static_cast<FinalType>(x + OriginalType(1));
 }
 
-RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetInfo, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _medianPath, SEXP _profileFunction, SEXP _debugLevel)
+RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetInfo, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _maxLength, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _medianPath, SEXP _profileFunction, SEXP _debugLevel)
 {
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
@@ -103,9 +103,11 @@ BEGIN_RCPP
     }
     
     const double minLength = as<double>(_minLength);
-    if (minLength > 0.0)
+    double maxLength = as<double>(_maxLength);
+    maxLength = (maxLength == R_PosInf ? 0.0 : maxLength);
+    if (minLength > 0.0 || maxLength > 0.0)
     {
-        lengthFilter = new LengthFilter(minLength);
+        lengthFilter = new LengthFilter(minLength, maxLength);
         pipeline.addManipulator(lengthFilter);
     }
     
