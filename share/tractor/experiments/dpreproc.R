@@ -128,6 +128,12 @@ runExperiment <- function ()
                         else
                             attr(image, "bVectors")
                     }))
+                    echoSeparations <- do.call(c, lapply(images, function(image) {
+                        if (is.null(attr(image,"echoSpacing")) || is.null(attr(image,"epiFactor")))
+                            rep(NA, ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L))
+                        else
+                            attr(image,"echoSpacing") / 1e6 * (attr(image,"epiFactor") - 1)
+                    }))
                 }
             }
             
