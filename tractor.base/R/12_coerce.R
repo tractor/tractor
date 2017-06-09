@@ -13,8 +13,6 @@ setOldClass(c("niftiImage", "internalImage"))
     }
     
     data <- as.array(from)
-    if (metadata$scl_slope != 1 || metadata$scl_inter != 0)
-        data <- data * metadata$scl_slope + metadata$scl_inter
     
     image <- asMriImage(unclass(data), imageDims=dim(from), voxelDims=RNifti::pixdim(from), voxelDimUnits=RNifti::pixunits(from), origin=RNifti::origin(from), tags=tags, reordered=FALSE)
     image$setXform(RNifti::xform(from))
