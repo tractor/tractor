@@ -21,24 +21,25 @@ runExperiment <- function ()
     if (edgeWeightThreshold != 0 || !ignoreSign || binarise)
         graph <- thresholdEdges(graph, edgeWeightThreshold, ignoreSign=ignoreSign, binarise=binarise)
     
+    nVertices <- graph$nVertices()
+    nConnectedVertices <- length(graph$getConnectedVertices())
+    if (!disconnectedVertices)
+        graph <- inducedSubgraph(graph)
+    
     meanAbsEdgeWeight <- mean(abs(graph$getEdgeWeights()), na.rm=TRUE)
     edgeWeightRange <- range(graph$getEdgeWeights(), na.rm=TRUE)
-    meanShortestPath <- graph$getMeanShortestPath(ignoreInfinite=!disconnectedVertices)
-    globalEfficiency <- graphEfficiency(graph, type="global", disconnectedVertices=disconnectedVertices)
-    localEfficiency <- mean(graphEfficiency(graph, type="local", disconnectedVertices=disconnectedVertices), na.rm=TRUE)
+    meanShortestPath <- graph$getMeanShortestPath(ignoreInfinite=TRUE)
+    globalEfficiency <- graphEfficiency(graph, type="global")
+    localEfficiency <- mean(graphEfficiency(graph, type="local"), na.rm=TRUE)
+    meanClusteringCoefficient <- mean(graph$getClusteringCoefficients(), na.rm=TRUE)
     
-    clusteringCoefficients <- graph$getClusteringCoefficients()
-    if (!disconnectedVertices)
-        clusteringCoefficients <- clusteringCoefficients[graph$getConnectedVertices()]
-    meanClusteringCoefficient <- mean(clusteringCoefficients, na.rm=TRUE)
-    
-    values <- c(es("#{graph$nVertices()} (#{length(graph$getConnectedVertices())} connected)"),
+    values <- c(es("#{nVertices} (#{nConnectedVertices} connected)"),
                 graph$nEdges(),
-                es("#{graph$getEdgeDensity(disconnectedVertices=disconnectedVertices)*100}%",round=2),
+                es("#{graph$getEdgeDensity()*100}%",round=2),
                 es("#{meanAbsEdgeWeight} (range: #{edgeWeightRange[1]} to #{edgeWeightRange[2]})",signif=3),
                 es("#{meanShortestPath} #{ifelse(graph$isWeighted(),'(inverse weight)','steps')}",signif=3),
                 signif(c(globalEfficiency, localEfficiency, meanClusteringCoefficient),3))
-    labels <- c("Number of vertices", "Number of edges", "Edge density", "Mean absolute edge weight", "Mean shortest path", "Global efficiency", "Mean local efficiency", "Mean clustering coefficient")
+    labels <- c("Number of vertices", "Number of edges", "Edge density", "Mean absolute edge weight", "Mean finite shortest path", "Global efficiency", "Mean local efficiency", "Mean clustering coefficient")
     
     if (getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
