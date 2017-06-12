@@ -541,7 +541,7 @@ levelplot.Graph <- function (x, data = NULL, col = NULL, cex = NULL, order = NUL
     levelplot(submatrix, col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
 }
 
-inducedSubgraph <- function (graph, vertices)
+inducedSubgraph <- function (graph, vertices = graph$getConnectedVertices())
 {
     if (!is(graph, "Graph"))
         report(OL$Error, "Specified graph is not a valid Graph object")
