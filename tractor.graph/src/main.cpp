@@ -16,12 +16,13 @@ struct RGraph
     SmartDigraph graph;
     IndexMap indices;
     WeightMap weights;
+    WeightMap distances;
     bool directed;
     bool weighted;
     bool negativeWeights;
     
     RGraph ()
-        : indices(graph), weights(graph), directed(false), weighted(false), negativeWeights(false) {}
+        : indices(graph), weights(graph), distances(graph), directed(false), weighted(false), negativeWeights(false) {}
 };
 
 void createGraph (const int nVertices, const IntegerMatrix &edges, const NumericVector &weights, const bool directed, RGraph &g)
@@ -65,13 +66,19 @@ void createGraph (const int nVertices, const IntegerMatrix &edges, const Numeric
         
         SmartDigraph::Arc arc = g.graph.addArc(nodes[edges(i,0)-1], nodes[edges(i,1)-1]);
         if (g.weighted)
+        {
             g.weights[arc] = weight;
+            g.distances[arc] = 1.0 / weight;
+        }
         
         if (!g.directed)
         {
             SmartDigraph::Arc arc = g.graph.addArc(nodes[edges(i,1)-1], nodes[edges(i,0)-1]);
             if (g.weighted)
+            {
                 g.weights[arc] = weight;
+                g.distances[arc] = 1.0 / weight;
+            }
         }
     }
 }
@@ -108,12 +115,12 @@ BEGIN_RCPP
     }
     else if (!g.negativeWeights)
     {
-        Dijkstra<SmartDigraph,WeightMap> dijkstra(g.graph, g.weights);
+        Dijkstra<SmartDigraph,WeightMap> dijkstra(g.graph, g.distances);
         searchPaths(g, dijkstra, result);
     }
     else
     {
-        BellmanFord<SmartDigraph,WeightMap> bellmanFord(g.graph, g.weights);
+        BellmanFord<SmartDigraph,WeightMap> bellmanFord(g.graph, g.distances);
         searchPaths(g, bellmanFord, result);
     }
     
@@ -167,10 +174,11 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP clusteringCoefficients (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed)
+RcppExport SEXP clusteringCoefficients (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed, SEXP _method)
 {
 BEGIN_RCPP
     const int nVertices = as<int>(_nVertices);
+    const std::string method = as<std::string>(_method);
     
     RGraph g;
     createGraph(nVertices, IntegerMatrix(_edges), NumericVector(_weights), as<bool>(_directed), g);
@@ -196,9 +204,11 @@ BEGIN_RCPP
         else
         {
             // Calculate the number of triangles around the node
+            double strength = 0.0;
             double triangles = 0.0;
             for (std::set<SmartDigraph::Node>::const_iterator neighbour1=neighbours.begin(); neighbour1 != neighbours.end(); neighbour1++)
             {
+                strength += g.weights[arcs(node,*neighbour1)];
                 for (std::set<SmartDigraph::Node>::const_iterator neighbour2=neighbours.begin(); neighbour2 != neighbours.end(); neighbour2++)
                 {
                     if (*neighbour1 == *neighbour2)
@@ -209,17 +219,25 @@ BEGIN_RCPP
                         triangles += static_cast<double>(arcs(*neighbour1,*neighbour2) != INVALID) + static_cast<double>(arcs(*neighbour2,*neighbour1) != INVALID);
                     else if (g.weighted && g.directed)
                         throw std::domain_error("Clustering coefficient is not implemented for directed, weighted graphs");
-                    else
+                    else if (method == "onnela")
                     {
-                        // Weighted triangle value is the geometric mean of the weights of the edges
+                        // Onnela method: weighted triangle value is the geometric mean of the weights of the edges
                         SmartDigraph::Arc arc = arcs(*neighbour1, *neighbour2);
                         if (arc != INVALID)
                             triangles += R_pow(g.weights[arc] * g.weights[arcs(node,*neighbour1)] * g.weights[arcs(node,*neighbour2)], 1.0/3.0);
                     }
+                    else
+                    {
+                        // Barratt method: proportion of node strength associated with links to neighbours in triangles
+                        triangles += static_cast<double>(arcs(*neighbour1,*neighbour2) != INVALID) * (g.weights[arcs(node,*neighbour1)] + g.weights[arcs(node,*neighbour2)]) / 2.0;
+                    }
                 }
             }
             
-            result[g.indices[node]] = (g.directed ? 0.5 : 1.0) * triangles / static_cast<double>(nNeighbours * (nNeighbours - 1));
+            if (g.weighted && method == "barratt")
+                result[g.indices[node]] = triangles / (strength * static_cast<double>(nNeighbours - 1));
+            else
+                result[g.indices[node]] = (g.directed ? 0.5 : 1.0) * triangles / static_cast<double>(nNeighbours * (nNeighbours - 1));
         }
     }
     

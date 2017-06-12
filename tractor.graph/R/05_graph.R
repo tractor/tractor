@@ -37,9 +37,10 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         return (associationMatrix)
     },
     
-    getClusteringCoefficients = function ()
+    getClusteringCoefficients = function (method = c("onnela","barratt"), normalise = FALSE)
     {
-        .Call("clusteringCoefficients", vertexCount, edges, 1/edgeWeights, directed, PACKAGE="tractor.graph")
+        method <- match.arg(method)
+        .Call("clusteringCoefficients", vertexCount, edges, edgeWeights, directed, method, PACKAGE="tractor.graph")
     },
         
     getEdge = function (i)
@@ -103,7 +104,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         else if (is.character(vertices))
             vertices <- match(vertices, vertexAttributes$name)
         
-        neighbourhoods <- .Call("neighbourhoods", vertexCount, edges, 1/edgeWeights, directed, vertices, type, PACKAGE="tractor.graph")
+        neighbourhoods <- .Call("neighbourhoods", vertexCount, edges, edgeWeights, directed, vertices, type, PACKAGE="tractor.graph")
         
         if (simplify && length(neighbourhoods) == 1)
             return (neighbourhoods[[1]])
@@ -113,7 +114,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     getShortestPathMatrix = function ()
     {
-        .Call("shortestPaths", vertexCount, edges, 1/edgeWeights, directed, PACKAGE="tractor.graph")
+        .Call("shortestPaths", vertexCount, edges, edgeWeights, directed, PACKAGE="tractor.graph")
     },
     
     getVertexAttributes = function (attributes = NULL)
@@ -141,6 +142,13 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     nEdges = function () { return (nrow(edges)) },
     
     nVertices = function () { return (vertexCount) },
+    
+    normaliseEdgeWeights = function ()
+    {
+        if (.self$isWeighted())
+            .self$edgeWeights <- .self$edgeWeights / max(.self$edgeWeights,na.rm=TRUE)
+        invisible (.self)
+    },
     
     setAssociationMatrix = function (newMatrix, matchEdges = FALSE)
     {

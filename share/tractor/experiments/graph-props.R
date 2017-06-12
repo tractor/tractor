@@ -13,6 +13,8 @@ runExperiment <- function ()
     ignoreSign <- getConfigVariable("IgnoreSign", NULL, "logical")
     binarise <- getConfigVariable("Binarise", TRUE)
     disconnectedVertices <- getConfigVariable("DisconnectedVertices", FALSE)
+    normalise <- getConfigVariable("Normalise", FALSE)
+    wccMethod <- getConfigVariable("WeightedClusteringCoefficient", "onnela", validValues=c("onnela","barratt"))
     
     graph <- readGraphFile(implode(Arguments, " "))
     
@@ -26,12 +28,15 @@ runExperiment <- function ()
     if (!disconnectedVertices)
         graph <- inducedSubgraph(graph)
     
+    if (normalise)
+        graph$normaliseEdgeWeights()
+    
     meanAbsEdgeWeight <- mean(abs(graph$getEdgeWeights()), na.rm=TRUE)
     edgeWeightRange <- range(graph$getEdgeWeights(), na.rm=TRUE)
     meanShortestPath <- graph$getMeanShortestPath(ignoreInfinite=TRUE)
     globalEfficiency <- graphEfficiency(graph, type="global")
     localEfficiency <- mean(graphEfficiency(graph, type="local"), na.rm=TRUE)
-    meanClusteringCoefficient <- mean(graph$getClusteringCoefficients(), na.rm=TRUE)
+    meanClusteringCoefficient <- mean(graph$getClusteringCoefficients(method=wccMethod), na.rm=TRUE)
     
     values <- c(es("#{nVertices} (#{nConnectedVertices} connected)"),
                 graph$nEdges(),
