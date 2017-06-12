@@ -54,5 +54,8 @@ create-tests:
 
 %.save: %.sh
 	@$(ECHO_N) "Updating test output for $@... "
-	@$(BASH) $< >$@ 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
+	@mkdir -p tmp/$*
+	@test `grep -c "#@data" $<` -eq 0 || cp -R `grep '#@data' $< | sed 's/#@data //'` tmp/$*/
+	@TRACTOR="$(TRACTOR) -w tmp/$*" $(BASH) $< >$@ 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
 	@$(ECHO) "done"
+	@rm -rf tmp/$*
