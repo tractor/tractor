@@ -1,19 +1,18 @@
-#@args session directory, text file, large b-value, [small b-value]
-#@desc Read diffusion gradient directions from a text file, and update the specified session directory. The text file should contain the diffusion gradient vectors applied to the data set, given either one-per-column or one-per-row, normalised or unnormalised, and with or without zeroes for b=0 measurements. The small b-value is assumed to be zero if it is not explicitly specified. This script currently does not support multiple "large" b-values.
+#@args session directory, text file, b-values
+#@desc Read diffusion gradient directions from a text file, and update the specified session directory. The text file should contain the diffusion gradient vectors applied to the data set, given either one-per-column or one-per-row, normalised or unnormalised, and with or without zeroes for b=0 measurements. If exactly one b-value is given then zero is assumed to be used in addition; otherwise all b-values must be given.
 
 suppressPackageStartupMessages(require(tractor.session))
 
 runExperiment <- function ()
 {
-    requireArguments("session directory", "text file", "large b-value")
+    requireArguments("session directory", "text file", "nonzero b-value")
     session <- attachMriSession(Arguments[1])
     fileName <- Arguments[2]
-    largeBValue <- as.numeric(Arguments[3])
+    bValues <- sort(as.numeric(Arguments[-(1:2)]))
     
-    if (nArguments() > 3)
-        smallBValue <- as.numeric(Arguments[4])
-    else
-        smallBValue <- 0
+    if (length(bValues) == 1)
+        bValues <- c(0, bValues)
+    nBValues <- length(unique(bValues))
     
     metadata <- session$getImageByType("rawdata", "diffusion", metadataOnly=TRUE)
     
@@ -31,61 +30,53 @@ runExperiment <- function ()
     
     nVectorsFile <- ncol(bvecs)
     nVectorsImage <- metadata$getDimensions()[4]
-    report(OL$Info, "Gradient vector matrix has ", nVectorsFile, " columns; data image contains ", nVectorsImage, " volumes")
+    report(OL$Info, "Gradient vector matrix has #{nVectorsFile} columns; data image contains #{nVectorsImage} volumes")
     
     bvals <- rep(NA, nVectorsImage)
+    report(OL$Info, "Loading raw data image")
+    dataImage <- session$getImageByType("rawdata", "diffusion")
     
-    if (nVectorsFile == nVectorsImage && smallBValue == 0)
+    meanIntensities <- dataImage$apply(4, mean, na.rm=TRUE)
+    kMeansResult <- kmeans(meanIntensities, nBValues, nstart=3)
+    
+    if (nVectorsFile != nVectorsImage)
     {
-        lowBValueIndices <- which(bvecs[1,]==0 & bvecs[2,]==0 & bvecs[3,]==0)
-        highBValueIndices <- setdiff(1:nVectorsFile, lowBValueIndices)
-    }
-    else
-    {
-        report(OL$Info, "Loading data image for more information")
-        dataImage <- session$getImageByType("rawdata", "diffusion")
-        
-        meanIntensities <- numeric(nVectorsImage)
-        for (i in seq_len(nVectorsImage))
-            meanIntensities[i] <- mean(dataImage[,,,i])
-        
-        kMeansResult <- kmeans(meanIntensities, 2, nstart=3)
-        
-        if (nVectorsFile != nVectorsImage)
-        {
-            if (!(nVectorsFile %in% kMeansResult$size))
-                report(OL$Error, "K-means cluster sizes are ", kMeansResult$size[1], " and ", kMeansResult$size[2], " - neither matches your text file")
-            else
-            {
-                highBValueCluster <- which(kMeansResult$size == nVectorsFile)
-                lowBValueCluster <- ifelse(highBValueCluster==1, 2, 1)
-                if (kMeansResult$centers[highBValueCluster] > kMeansResult$centers[lowBValueCluster])
-                    report(OL$Warning, "High b-value images seem to have higher mean signal")
-            }
-        }
+        if (min(bValues) != 0 || nBValues > 2)
+            report(OL$Error, "Partial gradient vector matrices can only be used when there is one nonzero b-value")
+        else if (!(nVectorsFile %in% kMeansResult$size))
+            report(OL$Error, "K-means cluster sizes are #{kMeansResult$size[1]} and #{kMeansResult$size[2]} - neither matches your text file")
         else
         {
-            highBValueCluster <- which.min(kMeansResult$centers)
-            lowBValueCluster <- which.max(kMeansResult$centers)
-        }
-        
-        highBValueIndices <- which(kMeansResult$cluster == highBValueCluster)
-        lowBValueIndices <- which(kMeansResult$cluster == lowBValueCluster)
-        report(OL$Info, "Image volume(s) ", implode(lowBValueIndices,sep=", ",finalSep=" and "), " appear(s) to have lower diffusion weighting")
-        
-        if (nVectorsFile != nVectorsImage)
-        {
+            highBValueCluster <- which(kMeansResult$size == nVectorsFile)
+            lowBValueCluster <- ifelse(highBValueCluster==1, 2, 1)
+            if (kMeansResult$centers[highBValueCluster] > kMeansResult$centers[lowBValueCluster])
+                report(OL$Warning, "High b-value images seem to have higher mean signal")
+            
+            highBValueIndices <- which(kMeansResult$cluster == highBValueCluster)
+            lowBValueIndices <- which(kMeansResult$cluster == lowBValueCluster)
+            report(OL$Info, "Image volume(s) ", implode(lowBValueIndices,sep=", ",finalSep=" and "), " appear(s) to have lower diffusion weighting")
+            
             newBVecs <- matrix(NA, nrow=3, ncol=nVectorsImage)
             newBVecs[,highBValueIndices] <- bvecs
             newBVecs[,lowBValueIndices] <- 0
             bvecs <- newBVecs
+            bvals[highBValueIndices] <- max(bValues)
+            bvals[lowBValueIndices] <- 0
         }
     }
-    
-    bvals[highBValueIndices] <- largeBValue
-    bvals[lowBValueIndices] <- smallBValue
+    else
+    {
+        clusterOrder <- order(kMeansResult$centers, decreasing=TRUE)
+        for (i in seq_len(nBValues))
+        {
+            indices <- which(kMeansResult$cluster == clusterOrder[i])
+            bvals[indices] <- bValues[i]
+        }
+    }
     
     report(OL$Info, "Writing gradient direction files")
     scheme <- SimpleDiffusionScheme$new(bvals, t(bvecs))
     session$updateDiffusionScheme(scheme)
+    
+    print(scheme)
 }
