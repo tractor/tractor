@@ -8,9 +8,12 @@ getFileNameForNTResource <- function (type, mode, options = NULL, intent = c("re
     
     tractorHome <- Sys.getenv("TRACTOR_HOME")
     if (tractorHome == "" || !file.exists(tractorHome))
-        standardRefTractDir <- NULL
+        standardRefTractDir <- standardModelDir <- NULL
     else
+    {
         standardRefTractDir <- file.path(tractorHome, "share", "tractor", mode, "reftracts")
+        standardModelDir <- file.path(tractorHome, "share", "tractor", "pnt", "models")
+    }
     
     refTractSubDir <- tolower(Sys.getenv("TRACTOR_REFTRACT_SET"))
     refTractSubDir <- ifelse(refTractSubDir %in% c("miua2017","ismrm2008"), refTractSubDir, "ismrm2008")
@@ -65,18 +68,21 @@ getFileNameForNTResource <- function (type, mode, options = NULL, intent = c("re
             if (intent == "write" || file.exists(fileName))
                 return (fileName)
         }
-        else if (!any(c("datasetName","tractName") %in% names(options)))
-            report(OL$Error, "Model or dataset and tract names must be specified")
-        
-        fileName <- ensureFileSuffix(paste(options$datasetName,"model",sep="_"), "Rdata")
-        if (intent == "write" || file.exists(fileName))
-            return (fileName)
-        
-        fileName <- ensureFileSuffix(paste(options$tractName,"model",sep="_"), "Rdata")
-        if (file.exists(fileName))
-            return (fileName)
-        else
-            report(OL$Error, "No suitable model was found")
+        if ("datasetName" %in% names(options))
+        {
+            fileName <- ensureFileSuffix(paste(options$datasetName,"model",sep="_"), "Rdata")
+            if (intent == "write" || file.exists(fileName))
+                return (fileName)
+        }
+        if ("tractName" %in% names(options))
+        {
+            fileName <- ensureFileSuffix(paste(options$tractName,"model",sep="_"), "Rdata")
+            if (file.exists(fileName))
+                return (fileName)
+            else if (intent == "read" && file.exists(file.path(standardModelDir, fileName)))
+                return (fileName)
+        }
+        report(OL$Error, "No suitable model was found")
     }
 }
 
