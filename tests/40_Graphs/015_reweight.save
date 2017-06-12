@@ -13,4 +13,22 @@ Mean clustering coefficient : 0.428
   Mean finite shortest path : 7.16 (inverse weight)
           Global efficiency : 0.175
       Mean local efficiency : 0.261
-Mean clustering coefficient : 1.28
+Mean clustering coefficient : 0.179
+---
+         Number of vertices : 68 (68 connected)
+            Number of edges : 300
+               Edge density : 10.18%
+  Mean absolute edge weight : 0.637 (range: 0.15 to 1)
+  Mean finite shortest path : 4.47 (inverse weight)
+          Global efficiency : 0.28
+      Mean local efficiency : 0.418
+Mean clustering coefficient : 0.287
+---
+         Number of vertices : 68 (68 connected)
+            Number of edges : 300
+               Edge density : 10.18%
+  Mean absolute edge weight : 0.398 (range: 0.094 to 0.625)
+  Mean finite shortest path : 7.16 (inverse weight)
+          Global efficiency : 0.175
+      Mean local efficiency : 0.261
+Mean clustering coefficient : 0.477
