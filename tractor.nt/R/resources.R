@@ -80,7 +80,7 @@ getFileNameForNTResource <- function (type, mode, options = NULL, intent = c("re
             if (file.exists(fileName))
                 return (fileName)
             else if (intent == "read" && file.exists(file.path(standardModelDir, fileName)))
-                return (fileName)
+                return (file.path(standardModelDir, fileName))
         }
         report(OL$Error, "No suitable model was found")
     }
