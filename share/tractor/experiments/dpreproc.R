@@ -63,21 +63,20 @@ runExperiment <- function ()
     {
         if (runStages[1] && (force || !stagesComplete[1]))
         {
-            session$unlinkDirectory("diffusion", ask=interactive)
-            workingDir <- session$getDirectory("diffusion", createIfMissing=TRUE)
-            
-            echoSeparations <- NULL
+            echoSeparations <- seriesDescriptions <- NULL
             
             # Reconstruct a 4D "rawdata" image from already-converted subsets, or directly from DICOM
             rawDataPath <- session$getImageFileNameByType("rawdata", "diffusion")
             if (imageFileExists(es("#{rawDataPath}_1")))
             {
                 pattern <- ore(ore.escape(basename(rawDataPath)), "_(\\d+)\\.")
-                n <- max(as.integer(groups(ore.search(pattern, list.files(workingDir)))))
-                fileNames <- sapply(seq_len(n), function(i) file.path(workingDir, es("#{rawDataPath}_#{i}")))
+                n <- max(as.integer(groups(ore.search(pattern, list.files(dirname(rawDataPath))))))
+                fileNames <- sapply(seq_len(n), function(i) es("#{rawDataPath}_#{i}"))
+                
+                report(OL$Info, "Merging #{n} raw data series")
                 images <- lapply(fileNames, readImageFile)
                 mergedImage <- do.call(mergeMriImages, images)
-                directions <- do.call(cbind, lapply(seq_len(n), function(i) {
+                directions <- do.call(rbind, lapply(seq_len(n), function(i) {
                     if (file.exists(ensureFileSuffix(fileNames[i], "dirs")))
                         as.matrix(read.table(ensureFileSuffix(fileNames[i], "dirs")))
                     else
@@ -85,9 +84,18 @@ runExperiment <- function ()
                 }))
                 bValues <- directions[,4]
                 bVectors <- directions[,1:3]
+                echoSeparations <- do.call(c, lapply(images, function(image) {
+                    if (is.null(image$getTags("echoSpacing")) || is.null(image$getTags("epiFactor")))
+                        rep(NA, ifelse(image$getDimensionality()==4L, dim(image)[4], 1L))
+                    else
+                        image$getTags("echoSpacing") / 1e6 * (image$getTags("epiFactor") - 1)
+                }))
             }
             else
             {
+                session$unlinkDirectory("diffusion", ask=interactive)
+                session$getDirectory("diffusion", createIfMissing=TRUE)
+                
                 if (is.null(dicomDirs))
                     dicomDirs <- session$getDirectory()
                 
@@ -102,11 +110,12 @@ runExperiment <- function ()
                     mergedImage <- do.call(mergeMriImages, lapply(info, "[[", "image"))
                     seriesDescriptions <- do.call(c, lapply(info, "[[", "seriesDescriptions"))
                     bValues <- do.call(c, lapply(info, "[[", "bValues"))
-                    bVectors <- do.call(cbind, lapply(info, "[[", "bVectors"))
+                    bVectors <- t(do.call(cbind, lapply(info, "[[", "bVectors")))
                     echoSeparations <- do.call(c, lapply(info, "[[", "echoSeparations"))
                 }
                 else
                 {
+                    report(OL$Info, "Searching for DICOM series using \"divest\" reader")
                     divestVerbosity <- switch(names(getOutputLevel()), Debug=2L, Verbose=0L, -1L)
                     if (interactive)
                         images <- divest::readDicom(dicomDirs, verbosity=divestVerbosity, interactive=TRUE)
@@ -122,7 +131,7 @@ runExperiment <- function ()
                         else
                             attr(image, "bValues")
                     }))
-                    bVectors <- do.call(cbind, lapply(images, function(image) {
+                    bVectors <- do.call(rbind, lapply(images, function(image) {
                         if (is.null(attr(image, "bVectors")))
                             matrix(NA, nrow=ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L), ncol=3L)
                         else
@@ -139,21 +148,26 @@ runExperiment <- function ()
             
             writeImageFile(mergedImage, session$getImageFileNameByType("rawdata","diffusion"))
             print(mergedImage)
-
-            seriesDescriptions <- implode(ore.subst("\\W","_",seriesDescriptions,all=TRUE), ",")
-            writeLines(seriesDescriptions, file.path(session$getDirectory("diffusion"),"descriptions.txt"))
+            
+            if (!is.null(seriesDescriptions))
+            {
+                seriesDescriptions <- implode(ore.subst("\\W","_",seriesDescriptions,all=TRUE), ",")
+                writeLines(seriesDescriptions, file.path(session$getDirectory("diffusion"),"descriptions.txt"))
+            }
             
             if (any(!is.na(bValues)) && any(!is.na(bVectors)))
             {
-                missing <- (is.na(bValues) | apply(is.na(bVectors),2,any))
+                missing <- (is.na(bValues) | apply(is.na(bVectors),1,any))
                 if (any(missing))
                 {
                     report(OL$Warning, "Gradient information for #{pluralise('volume',n=sum(missing))} #{implode(which(missing),',',' and ',ranges=TRUE)} is missing - treating as zero")
                     bValues[missing] <- 0
-                    bVectors[,missing] <- 0
+                    bVectors[missing,] <- 0
                 }
-                scheme <- SimpleDiffusionScheme$new(bValues, t(bVectors))
+                report(OL$Info, "Constructing acquisition scheme")
+                scheme <- SimpleDiffusionScheme$new(bValues, bVectors)
                 session$updateDiffusionScheme(scheme)
+                print(scheme)
             }
             
             if (!is.null(echoSeparations) && any(!is.na(echoSeparations)))
