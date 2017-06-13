@@ -99,14 +99,14 @@ createAcquisitionParameterFileForSession <- function (session, reversePEVolumes 
                 echoSeparation <- as.numeric(readLines(echoSeparationFile))[bZeroVolumes]
                 invalid <- (is.na(echoSeparation) | echoSeparation == 0)
                 if (all(invalid))
-                    echoSeparation <- rep(0, nBZeroVolumes)
+                    echoSeparation <- rep(0.01, nBZeroVolumes)
                 else if (all(echoSeparation[!invalid] == echoSeparation[!invalid][1]))
                     echoSeparation[invalid] <- echoSeparation[!invalid][1]
                 else
-                    echoSeparation[invalid] <- 0
+                    echoSeparation[invalid] <- 0.01
             }
             else
-                echoSeparation <- rep(0, nBZeroVolumes)
+                echoSeparation <- rep(0.01, nBZeroVolumes)
         }
     
         lines <- apply(cbind(phaseEncoding,echoSeparation), 1, implode, sep=" ")
