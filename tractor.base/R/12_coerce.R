@@ -60,7 +60,7 @@ setAs("MriImage", "nifti", function(from) {
     return (new(structure("nifti",package="oro.nifti"), .Data=data, dim_=fullDims, datatype=datatype$code, bitpix=8*datatype$size, pixdim=fullVoxelDims, xyzt_units=unitCode, qform_code=xformCode, sform_code=xformCode, quatern_b=quaternion$q[2], quatern_c=quaternion$q[3], quatern_d=quaternion$q[4], qoffset_x=quaternion$offset[1], qoffset_y=quaternion$offset[2], qoffset_z=quaternion$offset[3], srow_x=sformRows[1:4], srow_y=sformRows[5:8], srow_z=sformRows[9:12], cal_min=min(data), cal_max=max(data)))
 })
 
-setAs("nifti", "MriImage", function(from) as(RNifti::retrieveImage(from), "MriImage"))
+setAs("nifti", "MriImage", function(from) as(RNifti::retrieveNifti(from), "MriImage"))
 
 # MriImage methods for RNifti generics
 pixdim.MriImage <- function (object)

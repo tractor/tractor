@@ -1,7 +1,7 @@
 #' @import methods ore reportr
-#' @importFrom grDevices col2rgb colorRamp dev.cur dev.off gray heat.colors rainbow
-#' @importFrom graphics image layout lines locator par plot strwidth text
-#' @importFrom stats na.omit
+#' @importFrom grDevices col2rgb colorRamp dev.cur dev.off gray heat.colors rainbow rgb
+#' @importFrom graphics image layout lines locator par plot strwidth text axis polygon
+#' @importFrom stats na.omit cor
 NULL
 
 .onLoad <- function (libname, pkgname)
