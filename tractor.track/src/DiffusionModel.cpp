@@ -111,7 +111,7 @@ Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, co
                 innerProd = static_cast<float>(fabs(stepVector.dot(referenceDirection)));
             
             // If this direction is closer to the reference direction, choose it
-            if (innerProd > highestInnerProd)
+            if (innerProd > highestInnerProd && (sphericalCoordsStep[1] != 0.0 || sphericalCoordsStep[2] != 0.0))
             {
                 highestInnerProd = innerProd;
                 closestIndex = i;
