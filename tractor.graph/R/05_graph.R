@@ -37,7 +37,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         return (associationMatrix)
     },
     
-    getClusteringCoefficients = function (method = c("onnela","barratt"), normalise = FALSE)
+    getClusteringCoefficients = function (method = c("onnela","barrat"), normalise = FALSE)
     {
         method <- match.arg(method)
         .Call("clusteringCoefficients", vertexCount, edges, edgeWeights, directed, method, PACKAGE="tractor.graph")

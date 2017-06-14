@@ -14,7 +14,7 @@ runExperiment <- function ()
     binarise <- getConfigVariable("Binarise", TRUE)
     disconnectedVertices <- getConfigVariable("DisconnectedVertices", FALSE)
     normalise <- getConfigVariable("Normalise", FALSE)
-    wccMethod <- getConfigVariable("WeightedClusteringCoefficient", "onnela", validValues=c("onnela","barratt"))
+    wccMethod <- getConfigVariable("WeightedClusteringCoefficient", "onnela", validValues=c("onnela","barrat"))
     
     graph <- readGraphFile(implode(Arguments, " "))
     

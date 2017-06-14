@@ -228,13 +228,13 @@ BEGIN_RCPP
                     }
                     else
                     {
-                        // Barratt method: proportion of node strength associated with links to neighbours in triangles
+                        // Barrat method: proportion of node strength associated with links to neighbours in triangles
                         triangles += static_cast<double>(arcs(*neighbour1,*neighbour2) != INVALID) * (g.weights[arcs(node,*neighbour1)] + g.weights[arcs(node,*neighbour2)]) / 2.0;
                     }
                 }
             }
             
-            if (g.weighted && method == "barratt")
+            if (g.weighted && method == "barrat")
                 result[g.indices[node]] = triangles / (strength * static_cast<double>(nNeighbours - 1));
             else
                 result[g.indices[node]] = (g.directed ? 0.5 : 1.0) * triangles / static_cast<double>(nNeighbours * (nNeighbours - 1));

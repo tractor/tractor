@@ -7,4 +7,4 @@ ${TRACTOR} graph-props diffusion Binarise:false
 echo "---"
 ${TRACTOR} graph-props diffusion Binarise:false Normalise:true
 echo "---"
-${TRACTOR} graph-props diffusion Binarise:false WeightedClusteringCoefficient:barratt
+${TRACTOR} graph-props diffusion Binarise:false WeightedClusteringCoefficient:barrat
