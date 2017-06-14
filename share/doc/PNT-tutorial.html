@@ -46,19 +46,53 @@
 
 <p>This tutorial covers the use of TractoR to perform model-based tract segmentation as described in <a href="#references">Ref. (1)</a> below. Like the simpler <a href="HNT-tutorial.html">heuristic approach</a>, probabilistic neighbourhood tractography (PNT) is based on the idea of using a reference tract as a topological guide to the tract required. The model-based approach is considerably more robust but takes longer to run. If you use this method in your studies please cite <a href="#references">Ref. (1)</a>.</p>
 
-<p>TractoR experiment scripts that may be used in a typical PNT-based study generally start with the prefix &ldquo;pnt-&rdquo;, but there are other, more general purpose scripts which are often used, such as <code>mean</code> or <code>gmean</code>. Details of the relevant scripts are given in each section below.</p>
+<p>TractoR experiment scripts that may be used in a typical PNT-based study generally start with the prefix &ldquo;pnt-&rdquo;, but there are other, more general purpose scripts which are often used, such as <code>mean</code> or <code>apply</code>. Details of the relevant scripts are given in each section below.</p>
 
 <h2 id="reference-tracts-and-matching-models">Reference tracts and matching models</h2>
 
 <p>As with the heuristic approach to NT, the probabilistic approach requires some <a href="diffusion-processing.html">fully preprocessed</a> diffusion MR data and a <a href="reference-tracts.html">reference tract</a> representing the pathway we wish to segment in those data.</p>
 
-<p>In addition, however, PNT makes use of a <em>matching model</em>, which must be &ldquo;trained&rdquo; from the data. The model captures information about the typical deviations that acceptable tract segmentations make from the reference tract. The easiest way to create the model is to use the <code>pnt-em</code> script, which uses a single data set and fits the model while simultaneously finding suitable tracts. This approach, which is described in <a href="#references">Ref. (2)</a> and was introduced in TractoR version 1.0.0, is now the recommended one for most purposes. It also requires less work from the user than the alternative, which is to split your data set into a training set and a testing set, and use <code>pnt-train</code> and <code>pnt-eval</code>, respectively, to first train the model and then use it for tract matching.</p>
+<p>In addition, however, PNT makes use of a <em>matching model</em>, which must be &ldquo;trained&rdquo; from the data. The model captures information about the typical deviations that acceptable tract segmentations make from the reference tract. The easiest way to get starting with PNT is to use a pretrained model, a set of which are provided with TractoR version 3.1.0 and later. A second option is to use the <code>pnt-em</code> script, which uses a single data set and fits the model while simultaneously finding suitable tracts. This approach, which is described in <a href="#references">Ref. (2)</a> and was introduced in TractoR version 1.0.0, is the recommended one when the pretrained models are unsuitable or a study-specific model is required. It also requires less work from the user than the third alternative, which is to split your data set into a training set and a testing set, and use <code>pnt-train</code> and <code>pnt-eval</code>, respectively, to first train the model and then use it for tract matching.</p>
 
-<p>Whether <code>pnt-train</code> and <code>pnt-eval</code> or <code>pnt-em</code> are used to produce results, the results themselves take essentially the same form. Both routes are outlined below.</p>
+<p>Whether <code>pnt-train</code>, <code>pnt-eval</code> or <code>pnt-em</code> are used to produce results, the results themselves take essentially the same form. All three routes are outlined below.</p>
+
+<h2 id="using-pretrained-models">Using pretrained models</h2>
+
+<p>This is the simplest approach, and will be appropriate for many datasets. In particular, it can be used on individual cases. Here we will illustrate the principle by segmenting the forceps minor (corpus callosum genu) in a copy of TractoR&rsquo;s test dataset.</p>
+
+<p>We begin by cloning the session into a new directory, just to separate it from the main installation.</p>
+
+<pre><code class="language-bash">tractor clone $TRACTOR_HOME/tests/data/session .
+</code></pre>
+
+<p>Now, we need to select the reference tracts that the standard models have been trained against, and then generate candidate tracts in our test subject and evaluate them against the model.</p>
+
+<pre><code class="language-bash line-numbers">export TRACTOR_REFTRACT_SET=miua2017
+tractor pnt-data session TractName:genu DatasetName:genu_data SearchWidth:7
+tractor pnt-eval TractName:genu DatasetName:genu_data ResultsName:genu_results
+</code></pre>
+
+<p>This should take around a minute to run. At this point we have a text file, genu_data.txt, which contains information about the candidate tracts, and a binary file, genu_results.Rdata, which contains the results of evaluating the data against the model.</p>
+
+<p>We can now visualise the best-matching tract, either with</p>
+
+<pre><code class="language-bash line-numbers">tractor pnt-viz TractName:genu DatasetName:genu_data ResultsName:genu_results
+tractor slice session@FA genu.1 Z:max Alpha:log
+</code></pre>
+
+<p>which creates a tract visitation map, and subsequently a PNG image, based on 1000 streamlines from the best-matching candidate tract, or</p>
+
+<pre><code class="language-bash line-numbers">tractor pnt-prune TractName:genu DatasetName:genu_data ResultsName:genu_results
+tractor slice session@FA genu.1 Z:max Alpha:log
+</code></pre>
+
+<p>which does the same, but after first pruning streamlines which deviate from the reference tract substantially more than the centroid of the tract, thereby producing a more even result (see <a href="#references">Ref. (3)</a> below for more details).</p>
+
+<p>The process can then be repeated for any other tracts of interest.</p>
 
 <h2 id="training-and-segmenting-in-one-step">Training and segmenting in one step</h2>
 
-<p>Using a so-called &ldquo;unsupervised&rdquo; approach, the matching model can be trained and applied iteratively using a single data set. The <code>pnt-em</code> experiment script is available to perform this function. We begin by creating a <a href="HNT-tutorial.html#using-a-design-file">design file</a>, which tells TractoR where to find our data, and sets the tract of interest. For this tutorial we assume the data are in subdirectories of /data. The design file, &ldquo;design.yaml&rdquo;, will therefore look something like this:</p>
+<p>Using a so-called &ldquo;unsupervised&rdquo; approach, a study-specific matching model can be trained and applied iteratively using a group of datasets. The <code>pnt-em</code> experiment script is available to perform this function. We begin by creating a <a href="HNT-tutorial.html#using-a-design-file">design file</a>, which tells TractoR where to find our data, and sets the tract of interest. For this tutorial we assume the data are in subdirectories of /data. (In this case you will need to provide your own data, since one session is not enough.) The design file, &ldquo;design.yaml&rdquo;, will therefore look something like this:</p>
 
 <pre><code class="language-yaml line-numbers">TractName: genu
 Session: [ /data/subject1, /data/subject2 ]
@@ -81,7 +115,7 @@ tractor -c design.yaml pnt-em
 
 <h2 id="manual-training">Manual training</h2>
 
-<p>To create a matching model manually, it is necessary to select a number of additional tracts which represent suitable segmentations of the tract of interest. These will be used to train the model. The training tracts can be generated using the same combination of the <code>mkroi</code> and <code>rtrack</code> scripts as a <a href="reference-tracts.html">custom reference tract</a>, or they could even be selected using the HNT method. Either way, the data used for training should be checked by hand, and kept separate from the data that will be used for testing later.</p>
+<p>To create a matching model manually, it is necessary to select a number of additional tracts which represent suitable segmentations of the tract of interest. These will be used to train the model. The training tracts can be generated using the same combination of the <code>mkroi</code> and <code>track</code> scripts as a <a href="reference-tracts.html">custom reference tract</a>, or they could even be selected using the HNT method. Either way, the data used for training should be checked by hand, and kept separate from the data that will be used for testing later.</p>
 
 <p>Once a number of training tracts have been identified and the corresponding test sessions and seed points are known, they can be put into a design file for use with the <code>pnt-train</code> script. The design file (say &ldquo;training.yaml&rdquo;) will look something like the following:</p>
 
@@ -146,7 +180,7 @@ tractor -c design.yaml pnt-eval ModelName:training_model
 
 <p>The mean FA along the selected tract can then be calculated using the <code>mean</code> script, as in</p>
 
-<pre><code class="language-bash">plough -C mean %Session@FA genu.%%
+<pre><code class="language-bash">plough -C design.yaml mean %Session@FA genu.%%
 </code></pre>
 
 <h2 id="summary">Summary</h2>

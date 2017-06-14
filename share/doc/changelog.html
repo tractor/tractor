@@ -44,6 +44,31 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="310-2017-06-14">3.1.0 (2017-06-14)</h2>
+
+<ul>
+<li>A more robust alternative to TractoR&rsquo;s internal DICOM-handling code is now available in the form of <code>divest</code>, a new first-party R package wrapped around the popular tool <a href="https://github.com/rordenlab/dcm2niix"><code>dcm2niix</code></a>. Although the internal method remains the default in <code>dicomread</code> for backwards compatibility, using <code>divest</code> offers several advantages, such as removal of the need to pre-sort DICOM directories, interactive selection of series, and semi-automatic session construction. The internal code is still used by <code>dicomtags</code>.</li>
+<li>Tags, representing general and extensible image metadata, may now be written to auxiliary .tags files in YAML format &ndash; and key metadata from DICOM files is now written out in this way by <code>dicomread</code> with <code>Method:divest</code>. These will automatically be read back in with the associated image, allowing acquisition parameters and other useful information to be kept with images.</li>
+<li>A totally new set of <a href="reference-tracts.html">reference tracts</a> have been added for use with <a href="PNT-tutorial.html">probabilistic neighbourhood tractography</a>, based on manual selection of tracts from 80 healthy adults aged 25–64. In addition, a series of pretrained models for each tract are available, based on the same cohort, to simplify usage in new datasets. Further details may be found in a paper at MIUA 2017. To use these reference tracts, the <code>TRACTOR_REFTRACT_SET</code> environment variable should be set to <code>miua2017</code>.</li>
+<li>Tractography may now be performed using the diffusion tensor as the underlying signal model. Although less sophisticated than FSL-BEDPOSTX, the tensor model is much quicker to fit, and may be of interest for comparison. The <code>track</code> script gains a &ldquo;PreferredModel&rdquo; option, which may be set to <code>dti</code> if required.</li>
+<li>The <code>track</code> script also gains &ldquo;StepLength&rdquo; and &ldquo;MaxLength&rdquo; options.</li>
+<li>The new <code>deface</code> script can be used to mask out the face area of high-resolution structural images to prevent face reconstruction and preserve anonymity.</li>
+<li>The internal viewer accessed through the <code>view</code> script gains a polar plot panel for orientational data, notably diffusion data. This will be used by default for viewing 4D diffusion-weighted images in a session. The viewer now also ignores infinite values when calculating the intensity window.</li>
+<li>The <code>slice</code> script now allows different colour scales to be used for each overlay, and allows out-of-window voxels to be masked out rather than clipped to the extremes. It is also less affected by nonfinite data values.</li>
+<li>TractoR is now aware of masked (i.e., brain-extracted) and unmasked reference images in each space, and when performing implicit registration, it will attempt to register masked images to masked images and unmasked images to unmasked images. This should improve registration accuracy.</li>
+<li>Voxels with zero variance will now be ignored when performing PCA in <code>graph-build</code>. There is also tentative support for nuisance regressors when calculating functional connectivity matrices.</li>
+<li>The <code>graph-props</code> script gains an option to normalise graph weights, fixing the maximum at 1 (as the <a href="https://sites.google.com/site/bctnet/">Brain Connectivity Toolbox</a> does for certain properties). A correction to weighted clustering coefficients has been added, and two weighted generalisations of the mean clustering coefficient are now available.</li>
+<li>The <code>apply</code> script will now print out simple vectors as well as scalar results.</li>
+<li>The performance of <code>pnt-prune</code> has been substantially improved.</li>
+<li>The <code>platform</code> script now also lists the R packages installed in TractoR&rsquo;s package library, along with their version numbers.</li>
+<li>The <code>loder</code> package is now used instead of <code>png</code> for writing PNG files. As a result, no external <code>libpng</code> library is required.</li>
+<li>The third-party <code>yaml</code> package now handles reading and writing YAML files.</li>
+<li>TractoR may now be installed using <a href="https://brew.sh">Homebrew</a>. Partly to support this, the TractoR directory structure now more closely follows the <a href="https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard">Filesystem Hierarchy Standard</a>.</li>
+<li>Each test is now run in a separate temporary directory, which allows them to be run in parallel. Tests requiring FSL will now be skipped if it is not installed, rather than failing.</li>
+<li><a href="HNT-tutorial.html">Heuristic neighbourhood tractography</a> is now deprecated in favour of <a href="PNT-tutorial.html">probabilistic neighbourhood tractography</a>.</li>
+<li>Support for the session directory format used in TractoR 1.x is now deprecated, and will be removed in a future release.</li>
+</ul>
+
 <h2 id="309-2017-04-13">3.0.9 (2017-04-13)</h2>
 
 <ul>

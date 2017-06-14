@@ -48,6 +48,8 @@
 
 <p>Since version 1.0.0, TractoR has been supplied with a set of standard reference tracts for both heuristic and probabilistic neighbourhood tractography (NT). These reference tracts are based on a white matter tract atlas kindly made available by Dr Susumu Mori&rsquo;s lab at Johns Hopkins University. Further information about the atlas can be found at <a href="http://cmrm.med.jhmi.edu/">http://cmrm.med.jhmi.edu/</a> and in <a href="#references">Ref. (1)</a> below. If you use these reference tracts in your work, please cite <a href="#references">Ref. (2)</a> below.</p>
 
+<p>In version 3.1.0, a new set of reference tracts was added, based on manual selection of tracts from 80 healthy adults aged 25–64. These will be used if the <code>TRACTOR_REFTRACT_SET</code> environment variable is set to <code>miua2017</code>, and this is recommended for new studies. If you do use these reference tracts in your work, please cite <a href="#references">Ref. (3)</a> below.</p>
+
 <p>Using these standard references is by far the easiest way to start using NT. TractoR &ldquo;knows&rdquo; where to find them, so you need only to specify the tract name when running the <code>hnt-eval</code> or <code>pnt-data</code> experiment scripts. Available tract names as of TractoR 2.1.0 are:</p>
 
 <table><thead>
@@ -149,6 +151,7 @@ cd /expts/hnt-genu
 <ol>
 <li>K. Hua et al., <em>Neuroimage</em> <strong>39</strong>(1):336-347, 2008.</li>
 <li>S. Muñoz Maniega et al., <em>Proceedings of the ISMRM</em> <strong>16</strong>:3318, 2008.</li>
+<li>S. Muñoz Maniega et al., <em>Communications in Computer and Information Science</em>, vol. 723, pp. 1–11, 2017.</li>
 </ol>
 
 
