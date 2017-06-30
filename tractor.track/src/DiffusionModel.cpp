@@ -35,6 +35,7 @@ DiffusionTensorModel::DiffusionTensorModel (const std::string &pdFile)
     if (imageDims.size() != 4 || imageDims[3] != 3)
         throw std::runtime_error("Principal direction image does not seem to be vector-valued");
     
+    image.reorient("LAS");
     grid = ::getGrid3D(image);
     principalDirections = getImageArray<float>(image);
 }
@@ -66,13 +67,13 @@ BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std:
     theta.resize(nCompartments);
     phi.resize(nCompartments);
     
-    grid = ::getGrid3D(RNifti::NiftiImage(avfFiles[0],false));
+    grid = ::getGrid3D(RNifti::NiftiImage(avfFiles[0],false).reorient("LAS"));
     
     for (int i=0; i<nCompartments; i++)
     {
-        avf[i] = getImageArray<float>(RNifti::NiftiImage(avfFiles[i]));
-        theta[i] = getImageArray<float>(RNifti::NiftiImage(thetaFiles[i]));
-        phi[i] = getImageArray<float>(RNifti::NiftiImage(phiFiles[i]));
+        avf[i] = getImageArray<float>(RNifti::NiftiImage(avfFiles[i]).reorient("LAS"));
+        theta[i] = getImageArray<float>(RNifti::NiftiImage(thetaFiles[i]).reorient("LAS"));
+        phi[i] = getImageArray<float>(RNifti::NiftiImage(phiFiles[i]).reorient("LAS"));
     }
     
     const std::vector<int> &avfDims = avf[0]->getDimensions();
