@@ -1,0 +1,16 @@
+imageType: ORIGINAL_PRIMARY_M_ND_NORM
+fieldStrength: 1.494
+flipAngle: 15.0
+echoTime: 4.9400001
+repetitionTime: 11.0
+phaseEncodingDirection: i
+phaseEncodingSign: 1
+
+imageType: ORIGINAL_PRIMARY_M_ND_NORM
+fieldStrength: 1.494
+flipAngle: 90.0
+echoTime: 112.0
+repetitionTime: 4100.0
+phaseEncodingDirection: j
+phaseEncodingSign: 1
+
