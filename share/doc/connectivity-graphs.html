@@ -113,6 +113,8 @@
 <pre><code class="language-bash">tractor graph-props graph.Rdata
 </code></pre>
 
+<p>By default, the latter script will binarise the graph and report binary versions of the various metrics. It will also ignore any vertices which are not connected to any others, excluding them from all calculations. However, there are a number of options to control whether or not the graph is binarised and at what edge weight threshold, how to handle negative weights and disconnected vertices, and whether to renormalise the edge weights. See <code>tractor -o graph-props</code> for details.</p>
+
 <h2 id="graph-visualisation">Graph visualisation</h2>
 
 <p>The <code>graph-viz</code> script can be used to visualise graphs, either as an association matrix or in traditional topological form.</p>
@@ -148,7 +150,7 @@
 <script src="assets/jquery.hypher.min.js"></script>
 <script src="assets/en-gb.js"></script>
 <script async type="text/javascript">
-  $('p').hyphenate('en-gb');
+  $('p,li').hyphenate('en-gb');
 </script>
 <script async src="assets/prism.js"></script>
 <script type="text/javascript">

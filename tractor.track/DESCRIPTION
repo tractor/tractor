@@ -1,6 +1,6 @@
 Package: tractor.track
-Version: 3.1.0
-Date: 2017-06-14
+Version: 3.1.1
+Date: 2017-06-30
 Title: Diffusion tractography in TractoR
 Author: Jon Clayden and Fani Deligianni
 Maintainer: Jon Clayden <code@clayden.org>

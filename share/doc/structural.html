@@ -57,7 +57,7 @@
 
 <h2 id="parcellation">Parcellation</h2>
 
-<p>Anatomical parcellation of a structural image is a prerequisite for some kinds of analysis, and must be performed before the parcellation can be propagated to any other space, such as diffusion. The key script for this is <code>parcellate</code>. It is passed a parcellated image, of the same dimensions as the averaged reference T1-weighted image but with coherent regions labelled with an integer index. A lookup table is required to convert between numerical indices and region names, and some examples for typical atlases are included in <code>$TRACTOR_HOME/etc/parcellations</code>.</p>
+<p>Anatomical parcellation of a structural image is a prerequisite for some kinds of analysis, and must be performed before the parcellation can be propagated to any other space, such as diffusion. The key script for this is <code>parcellate</code>. It is passed a parcellated image, of the same dimensions as the averaged reference T1-weighted image but with coherent regions labelled with an integer index. A lookup table is required to convert between numerical indices and region names, and some examples for typical atlases are included in <code>$TRACTOR_HOME/share/tractor/parcellations</code>.</p>
 
 <p>For example, to run FSL-FLIRT on the reference T1 image for a session and import the parcellation created by it, you might run</p>
 
@@ -82,7 +82,7 @@ tractor parcellate . first_all_fast_firstseg Types:first
 <script src="assets/jquery.hypher.min.js"></script>
 <script src="assets/en-gb.js"></script>
 <script async type="text/javascript">
-  $('p').hyphenate('en-gb');
+  $('p,li').hyphenate('en-gb');
 </script>
 <script async src="assets/prism.js"></script>
 <script type="text/javascript">

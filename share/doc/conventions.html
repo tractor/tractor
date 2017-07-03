@@ -82,11 +82,11 @@ sse: dti_SSE
 parcellation: parcellation
 </code></pre>
 
-<p>This map is stored at <code>$TRACTOR_HOME/etc/session/diffusion/map.yaml</code>, and any or all of the default names can be overridden by placing a file called <code>map.yaml</code> in the <code>diffusion</code> subdirectory of a given session, using the format above. Note that the <code>%</code> symbol is used to indicate an index, so the first eigenvalue image will be called <code>dti_eigval1</code>, the second <code>dti_eigval2</code>, and so on. No image format suffix (e.g. <code>.nii</code>) should be given.</p>
+<p>This map is stored at <code>$TRACTOR_HOME/share/tractor/session/diffusion/map.yaml</code>, and any or all of the default names can be overridden by placing a file called <code>map.yaml</code> in the <code>diffusion</code> subdirectory of a given session, using the format above. Note that the <code>%</code> symbol is used to indicate an index, so the first eigenvalue image will be called <code>dti_eigval1</code>, the second <code>dti_eigval2</code>, and so on. No image format suffix (e.g. <code>.nii</code>) should be given.</p>
 
 <p>The <code>path</code> script (added in TractoR v2.5.0) can be used to obtain the actual full path to the image of a particular type. For example,</p>
 
-<pre><code class="language-bash line-numbers">tractor -q path /data/subject1 FA</kbd>
+<pre><code class="language-bash line-numbers">tractor -q path /data/subject1 FA
 # /data/subject1/tractor/diffusion/dti_FA
 </code></pre>
 
@@ -95,7 +95,7 @@ parcellation: parcellation
 <pre><code class="language-yaml">diffusion: /data/subject1_2fibres/tractor/diffusion
 </code></pre>
 
-<p>It should, however, be borne in mind that this will make the session less portable. The full default map can be found at <code>$TRACTOR_HOME/etc/session/map.yaml</code>.</p>
+<p>It should, however, be borne in mind that this will make the session less portable. The full default map can be found at <code>$TRACTOR_HOME/share/tractor/session/map.yaml</code>.</p>
 
 <h2 id="implicit-operations">Implicit operations</h2>
 
@@ -110,11 +110,13 @@ parcellation: parcellation
 <li>The parcellation is transformed from structural to diffusion space, using a non-overlapping binarised trilinear interpolation scheme, whose inclusiveness is determined by <code>track</code>&rsquo;s &ldquo;ParcellationConfidence&rdquo; option.</li>
 </ol>
 
-<p>The details of the registrations performed between spaces are controlled by the &ldquo;transformation strategy&rdquo;, whose defaults can be found at <code>$TRACTOR_HOME/etc/session/transforms/strategy.yaml</code>. This may be overridden per-session, by placing a similar <code>strategy.yaml</code> file into its <code>transforms</code> subdirectory.</p>
+<p>The details of the registrations performed between spaces are controlled by the &ldquo;transformation strategy&rdquo;, whose defaults can be found at <code>$TRACTOR_HOME/share/tractor/session/transforms/strategy.yaml</code>. This may be overridden per-session, by placing a similar <code>strategy.yaml</code> file into its <code>transforms</code> subdirectory.</p>
 
 <h2 id="file-types">File types</h2>
 
-<p>TractoR&rsquo;s preferred file format for images is the <a href="http://nifti.nimh.nih.gov/nifti-1">NIfTI-1</a> format, although NIfTI-2, the legacy Analyze format and Freesurfer&rsquo;s <a href="https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/MghFormat">MGH/MGZ</a> format are also supported. Compression with gzip is fully supported, and recommended to save disk space, although it does incur a modest computational overhead. Reading from DICOM files <a href="TractoR-and-DICOM.html">is supported</a>, but due to the complexity of the format, support is by no means comprehensive.</p>
+<p>TractoR&rsquo;s preferred file format for images is the <a href="http://nifti.nimh.nih.gov/nifti-1">NIfTI-1</a> format, although NIfTI-2, the legacy Analyze format and Freesurfer&rsquo;s <a href="https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/MghFormat">MGH/MGZ</a> format are also supported. Compression with gzip is fully supported, and recommended to save disk space, although it does incur a modest computational overhead. Auxiliary <strong>.tags</strong> files may be used to store additional metadata associated with an image, in <a href="http://yaml.org">YAML format</a>. Reading from DICOM files <a href="TractoR-and-DICOM.html">is supported</a>, but TractoR cannot write to DICOM format.</p>
+
+<p>Images may be stored on disk in any voxel order supported by their format, but internally, TractoR standardises on &ldquo;LAS&rdquo; voxel order, i.e., moving through images first in the right-to-left direction, then posterior-to-anterior, then inferior-to-superior. This is the <em>radiological</em> convention. Images are usually reordered in memory when they are read into TractoR, voxel coordinates are based on this reordered system, and TractoR&rsquo;s internal viewer shows images this way.</p>
 
 <p>Tractography streamlines are stored in <a href="http://www.trackvis.org/docs/?subsect=fileformat">TrackVis <strong>.trk</strong> format</a>, which makes it easy to visualise them using the popular TrackVis program. However, TractoR additionally uses an auxiliary file format, with a <strong>.trkl</strong> extension, which stores information about &ldquo;labels&rdquo;, named regions that individual streamlines pass through. The beginning of this file is formatted as follows.</p>
 
@@ -140,7 +142,7 @@ parcellation: parcellation
 <script src="assets/jquery.hypher.min.js"></script>
 <script src="assets/en-gb.js"></script>
 <script async type="text/javascript">
-  $('p').hyphenate('en-gb');
+  $('p,li').hyphenate('en-gb');
 </script>
 <script async src="assets/prism.js"></script>
 <script type="text/javascript">

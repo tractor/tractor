@@ -57,7 +57,7 @@
 <p>Whichever method is used to perform them, the requisite steps are as follows.</p>
 
 <ol>
-<li>Convert DICOM files from an MR scanner into a 4D data set file in Analyze or NIfTI format. TractoR can perform this conversion for a number of types of DICOM files, but users may prefer to use their own site tools for this step. (Please bear in mind that TractoR&rsquo;s DICOM support has <a href="TractoR-and-DICOM.html">some limitations</a>.) The result is an image called <code>rawdata</code> (with appropriate suffix depending on the file type) in the <code>diffusion</code> subdirectory of the TractoR session hierarchy. The file <code>directions.txt</code>, which describes the diffusion weighting applied to the images, will also be created if possible. <strong>If the relevant information is not available, this latter file must be created manually</strong>—if this is the case then TractoR will produce a warning.</li>
+<li>Convert DICOM files from an MR scanner into a 4D data set file in Analyze or NIfTI format. The result is an image called <code>rawdata</code> (with appropriate suffix depending on the file type) in the <code>diffusion</code> subdirectory of the TractoR session hierarchy. The file <code>directions.txt</code>, which describes the diffusion weighting applied to the images, will also be created if possible. <strong>If the relevant information is not available, this latter file must be created manually</strong>—if this is the case then TractoR will produce a warning.</li>
 <li>Optionally correct for susceptibility-induced distortions with FSL <a href="http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TOPUP"><code>topup</code></a>, then identify an image volume with little or no diffusion weighting, to be used as an anatomical reference. By default this file will be called <code>refb0</code> and stored in the <code>diffusion</code> subdirectory.</li>
 <li>Create a mask which covers only that part of the <code>refb0</code> volume which is within the brain. Skull and other nonbrain tissue is left outside this mask. The image file <code>mask</code> is created in the <code>diffusion</code> subdirectory, as well as a masked version of the anatomical reference image, called <code>maskedb0</code>.</li>
 <li>Correct for eddy current-induced distortion effects in the data, using the anatomical reference volume as a registration target. This step currently uses one of the FSL tools <code>eddy</code> or <code>eddy_correct</code>, or the internal NiftyReg interface, and produces a file called <code>data</code> in the <code>diffusion</code> subdirectory.</li>
@@ -89,6 +89,11 @@ tractor dpreproc
 </code></pre>
 
 <p>Notice that the DICOM subdirectory given is relative to the session directory. More than one directory can be specified if multiple acquisition series are relevant.</p>
+
+<p>Alternatively, the newer <a href="TractoR-and-DICOM.html#the-divest-back-end"><code>divest</code> back-end</a> can be used to select the relevant series interactively, using</p>
+
+<pre><code class="language-bash">tractor dpreproc DicomReader:divest
+</code></pre>
 
 <p>The preprocessing can be completed noninteractively by setting the &ldquo;Interactive&rdquo; option to <code>false</code>:</p>
 
@@ -140,7 +145,7 @@ tractor dpreproc
 
 <p>There are three alternative approaches to fitting the tensors available, but standard least-squares fitting is the default: see <code>tractor -o tensorfit</code> for details. The <a href="http://www.camino.org.uk">Camino toolkit</a> offers many more methods.</p>
 
-<p>The tractography that TractoR and FSL use is probabilistic, however, and does not use the diffusion tensor. Instead, the FSL <a href="http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX">BEDPOSTX algorithm</a> is used to fit a &ldquo;ball-and-sticks&rdquo; model and generate samples for probabilistic tractography. This typically takes several hours. The command for running this is</p>
+<p>The diffusion tensor is a very limited model, however, particularly for tractography. It is therefore recommended to run FSL <a href="http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX">BEDPOSTX algorithm</a> to fit a &ldquo;ball-and-sticks&rdquo; model and generate samples for probabilistic tractography. This typically takes several hours. The command for running this is</p>
 
 <pre><code class="language-bash">tractor bedpost
 </code></pre>
@@ -178,7 +183,7 @@ DIFFUSION:
 <script src="assets/jquery.hypher.min.js"></script>
 <script src="assets/en-gb.js"></script>
 <script async type="text/javascript">
-  $('p').hyphenate('en-gb');
+  $('p,li').hyphenate('en-gb');
 </script>
 <script async src="assets/prism.js"></script>
 <script type="text/javascript">

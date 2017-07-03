@@ -44,6 +44,15 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="311-2017-07-03">3.1.1 (2017-07-03)</h2>
+
+<ul>
+<li>Tractography results could previously be wrong if a session used a mixture of images stored in different orientations. This has been corrected.</li>
+<li>The <code>track</code> script now reports the time spent tracking.</li>
+<li>A disparity between TractoR and NiftyReg in the assumed orientation of ANALYZE-format files has been corrected. This should resolve failed registration of these files.</li>
+<li>Further package tests have been added, to check some recently added features.</li>
+</ul>
+
 <h2 id="310-2017-06-14">3.1.0 (2017-06-14)</h2>
 
 <ul>
@@ -769,7 +778,7 @@
 <script src="assets/jquery.hypher.min.js"></script>
 <script src="assets/en-gb.js"></script>
 <script async type="text/javascript">
-  $('p').hyphenate('en-gb');
+  $('p,li').hyphenate('en-gb');
 </script>
 <script async src="assets/prism.js"></script>
 <script type="text/javascript">
