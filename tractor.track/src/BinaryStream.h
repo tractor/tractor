@@ -36,7 +36,8 @@ public:
     template <typename SourceType, typename FinalType, int Rows> void readVector (Eigen::Matrix<FinalType,Rows,1> &values, size_t n = Rows);
     template <typename SourceType, typename FinalType, int Rows> void readVector (Eigen::Array<FinalType,Rows,1> &values, size_t n = Rows);
     template <typename SourceType, typename FinalType, int Rows, int Cols> void readMatrix (Eigen::Matrix<FinalType,Rows,Cols> &values, size_t n = Rows, size_t m = Cols);
-    std::string readString (size_t n = 0);
+    std::string readString (const std::string delim = "\0");
+    std::string readString (const size_t n);
 };
 
 class BinaryOutputStream : public BinaryStream

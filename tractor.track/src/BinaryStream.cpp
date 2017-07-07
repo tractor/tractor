@@ -99,22 +99,19 @@ void BinaryInputStream::readMatrix (Eigen::Matrix<FinalType,Rows,Cols> &values, 
     }
 }
 
-std::string BinaryInputStream::readString (size_t n)
+std::string BinaryInputStream::readString (const std::string delim)
 {
-    if (n == 0)
-    {
-        std::string finalValue;
-        std::getline(*stream, finalValue, '\0');
-        return finalValue;
-    }
-    else
-    {
-        char *value = new char[n];
-        stream->read(value, n);
-        std::string finalValue(value, n);
-        delete[] value;
-        return finalValue;
-    }
+    std::string finalValue;
+    std::getline(*stream, finalValue, delim[0]);
+    return finalValue;
+}
+
+std::string BinaryInputStream::readString (const size_t n)
+{
+    char value[n];
+    stream->read(value, n);
+    std::string finalValue(value, n);
+    return finalValue;
 }
 
 template <typename TargetType>

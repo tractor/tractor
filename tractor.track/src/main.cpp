@@ -7,6 +7,7 @@
 #include "Tracker.h"
 #include "Filter.h"
 #include "Trackvis.h"
+#include "Mrtrix.h"
 #include "VisitationMap.h"
 #include "RCallback.h"
 #include "Pipeline.h"
@@ -375,6 +376,24 @@ BEGIN_RCPP
     Streamline streamline(leftPoints, rightPoints, (pointType == "mm") ? Streamline::WorldPointType : Streamline::VoxelPointType, voxelDims, as<bool>(_fixedSpacing));
     sink.append(streamline);
     sink.done();
+    
+    return R_NilValue;
+END_RCPP
+}
+
+RcppExport SEXP tck2trk (SEXP _tckPath, SEXP _image)
+{
+BEGIN_RCPP
+    const std::string path = as<std::string>(_tckPath);
+    RNifti::NiftiImage image(_image, false);
+    const Grid<3> grid = getGrid3D(image);
+    
+    MrtrixDataSource tckFile(path, grid);
+    Pipeline<Streamline> pipeline(&tckFile);
+    BasicTrackvisDataSink trkFile(path, grid);
+    pipeline.addSink(&trkFile);
+    
+    pipeline.run();
     
     return R_NilValue;
 END_RCPP
