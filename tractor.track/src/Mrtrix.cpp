@@ -22,9 +22,9 @@ void MrtrixDataSource::readStreamline (Streamline &data)
             points.push_back(point);
     }
     
-    data = Streamline(vector<Space<3>::Point>(points.begin(), points.begin()),
+    data = Streamline(vector<Space<3>::Point>(points.begin(), points.begin()+1),
                       points,
-                      Streamline::VoxelPointType,
+                      Streamline::WorldPointType,
                       grid.spacings(),
                       true);
     
