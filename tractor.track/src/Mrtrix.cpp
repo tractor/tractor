@@ -50,6 +50,6 @@ void MrtrixDataSource::attach (const std::string &fileStem)
             totalStreamlines = static_cast<size_t>(atol(str.substr(7).c_str()));
     }
     
-    fileStream.seekg(1000);
+    fileStream.seekg(dataOffset);
     currentStreamline = 0;
 }
