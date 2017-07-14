@@ -47,10 +47,18 @@ runExperiment <- function ()
     }
     
     panelOptions <- list()
-    if (is.null(plotType) && !is.null(directions))
+    if (is.null(plotType))
     {
-        report(OL$Info, "Image appears to be diffusion-weighted; choosing orientation plot")
-        plotType <- "orientation"
+        if (!is.null(directions))
+        {
+            report(OL$Info, "Image appears to be diffusion-weighted; choosing orientation plot")
+            plotType <- "orientation"
+        }
+        else
+        {
+            report(OL$Info, "Defaulting to time plot")
+            plotType <- "time"
+        }
     }
     if (plotType == "orientation")
         panelOptions <- list(directions=directions[,1:3], bValues=directions[,4])
