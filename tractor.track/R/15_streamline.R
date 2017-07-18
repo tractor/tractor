@@ -126,6 +126,28 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         return (initFields(file=file, selection=integer(0), count.=count, labelsPtr.=labelsPtr))
     },
     
+    apply = function (fun, ..., simplify = TRUE)
+    {
+        fun <- match.fun(fun)
+        n <- ifelse(length(selection) == 0, count., length(selection))
+        results <- vector("list", n)
+        i <- 1
+        
+        .applyFunction <- function (points, seedIndex, voxelDims, coordUnit)
+        {
+            streamline <- Streamline$new(points, seedIndex, voxelDims, coordUnit)
+            results[[i]] <<- fun(streamline, ...)
+            i <<- i + 1
+        }
+        
+        .Call("trkApply", file, selection, .applyFunction, PACKAGE="tractor.track")
+        
+        if (simplify && n == 1)
+            return (results[[1]])
+        else
+            return (results)
+    },
+    
     extractAndTruncate = function (leftLength, rightLength)
     {
         tempFile <- threadSafeTempFile()
