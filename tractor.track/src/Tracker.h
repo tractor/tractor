@@ -15,7 +15,7 @@
 class Tracker
 {
 private:
-    DiffusionModel *dataSource;
+    DiffusionModel *model;
     
     Array<short> *maskData;
     Array<int> *targetData;
@@ -37,8 +37,8 @@ private:
     
 public:
     Tracker () {}
-    Tracker (DiffusionModel * const dataSource)
-        : dataSource(dataSource), maskData(NULL), targetData(NULL), loopcheck(NULL), visited(NULL) {}
+    Tracker (DiffusionModel * const model)
+        : model(model), maskData(NULL), targetData(NULL), loopcheck(NULL), visited(NULL) {}
     
     ~Tracker ()
     {

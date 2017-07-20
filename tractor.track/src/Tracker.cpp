@@ -6,14 +6,14 @@ using namespace std;
 
 Streamline Tracker::run ()
 {
-    if (dataSource == NULL)
-        throw std::runtime_error("No diffusion data source has been specified");
+    if (model == NULL)
+        throw std::runtime_error("No diffusion model has been specified");
     
-    const Eigen::Array3i imageDims = dataSource->getGrid3D().dimensions();
+    const Eigen::Array3i imageDims = model->getGrid3D().dimensions();
     std::vector<int> spaceDims(3);
     for (int i=0; i<3; i++)
         spaceDims[i] = imageDims(i,0);
-    const Eigen::Array3f voxelDims = dataSource->getGrid3D().spacings();
+    const Eigen::Array3f voxelDims = model->getGrid3D().spacings();
     
     Rcpp::Rcout << std::fixed;
     Rcpp::Rcout.precision(3);
@@ -136,7 +136,7 @@ Streamline Tracker::run ()
             }
             
             // Sample a direction for the current step
-            Space<3>::Vector currentStep = dataSource->sampleDirection(loc, previousStep);
+            Space<3>::Vector currentStep = model->sampleDirection(loc, previousStep);
             logger.debug3.indent() << "Sampled step direction is " << currentStep << endl;
             if (Space<3>::zeroVector(currentStep))
             {
