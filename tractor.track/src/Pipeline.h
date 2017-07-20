@@ -21,6 +21,15 @@ public:
     Pipeline (DataSource<ElementType> * const source = NULL, const size_t blockSize = 1000)
         : source(source), blockSize(blockSize) {}
     
+    ~Pipeline ()
+    {
+        size_t i;
+        for (i=0; i<manipulators.size(); i++)
+            delete manipulators[i];
+        for (i=0; i<sinks.size(); i++)
+            delete sinks[i];
+    }
+    
     void setBlockSize (const size_t blockSize) { this->blockSize = blockSize; }
     void setSource (DataSource<ElementType> * const source) { this->source = source; }
     

@@ -95,29 +95,17 @@ BEGIN_RCPP
     TractographyDataSource dataSource(&tracker, seeds.array(), as<size_t>(_count), as<bool>(_jitter));
     Pipeline<Streamline> pipeline(&dataSource);
     
-    LabelCountFilter *hitFilter = NULL;
-    LengthFilter *lengthFilter = NULL;
-    
     const int minTargetHits = as<int>(_minTargetHits);
     if (minTargetHits > 0)
-    {
-        hitFilter = new LabelCountFilter(minTargetHits);
-        pipeline.addManipulator(hitFilter);
-    }
+        pipeline.addManipulator(new LabelCountFilter(minTargetHits));
     
     const double minLength = as<double>(_minLength);
     double maxLength = as<double>(_maxLength);
     maxLength = (maxLength == R_PosInf ? 0.0 : maxLength);
     if (minLength > 0.0 || maxLength > 0.0)
-    {
-        lengthFilter = new LengthFilter(minLength, maxLength);
-        pipeline.addManipulator(lengthFilter);
-    }
+        pipeline.addManipulator(new LengthFilter(minLength, maxLength));
     
     VisitationMapDataSink *visitationMap = NULL;
-    TrackvisDataSink *trkFile = NULL;
-    MedianTrackvisDataSink *medianFile = NULL;
-    ProfileMatrixDataSink *profile = NULL;
     Rcpp::Function *function = NULL;
     if (!Rf_isNull(_mapPath))
     {
@@ -126,6 +114,8 @@ BEGIN_RCPP
     }
     if (!Rf_isNull(_trkPath))
     {
+        TrackvisDataSink *trkFile;
+        
         if (!Rf_isNull(targetInfo["indices"]) && !Rf_isNull(targetInfo["labels"]))
         {
             IntegerVector indices = targetInfo["indices"];
@@ -142,8 +132,7 @@ BEGIN_RCPP
     }
     if (!Rf_isNull(_medianPath))
     {
-        medianFile = new MedianTrackvisDataSink(as<std::string>(_medianPath), grid);
-        pipeline.addSink(medianFile);
+        pipeline.addSink(new MedianTrackvisDataSink(as<std::string>(_medianPath), grid));
         
         // Pipeline must contain all streamlines at once for calculating median
         pipeline.setBlockSize(as<size_t>(_count));
@@ -151,24 +140,15 @@ BEGIN_RCPP
     if (!Rf_isNull(_profileFunction))
     {
         function = new Rcpp::Function(_profileFunction);
-        profile = new ProfileMatrixDataSink(*function);
-        pipeline.addSink(profile);
+        pipeline.addSink(new ProfileMatrixDataSink(*function));
     }
     
     size_t nRetained = pipeline.run();
     
     if (visitationMap != NULL)
-    {
         visitationMap->writeToNifti(mask, as<std::string>(_mapPath));
-        delete visitationMap;
-    }
     
-    delete hitFilter;
-    delete lengthFilter;
-    delete trkFile;
-    delete medianFile;
     delete function;
-    delete profile;
     
     return wrap(nRetained);
 END_RCPP

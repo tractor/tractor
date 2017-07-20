@@ -19,6 +19,8 @@ protected:
     typedef typename std::list<ElementType>::const_iterator const_iterator;
     
 public:
+    virtual ~DataSink () {}
+    
     virtual void setup (const size_type &count, const_iterator begin, const_iterator end) {}
     virtual void put (const ElementType &data) {}
     virtual void finish () {}
@@ -29,6 +31,8 @@ public:
 template <class ElementType> class DataManipulator
 {
 public:
+    virtual ~DataManipulator () {}
+    
     // If the return value is false, the element will be removed
     virtual bool process (ElementType &data) { return true; }
 };
