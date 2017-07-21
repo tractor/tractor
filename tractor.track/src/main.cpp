@@ -163,8 +163,7 @@ BEGIN_RCPP
     std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
     pipeline.setSubset(indices);
     Function function(_function);
-    RCallbackDataSink sink(function);
-    pipeline.addSink(&sink);
+    pipeline.addSink(new RCallbackDataSink(function));
     
     pipeline.run();
     
@@ -200,18 +199,18 @@ BEGIN_RCPP
     int_vector dims(3);
     const Grid<3> &grid = trkFile.getGrid3D();
     std::copy(grid.dimensions().data(), grid.dimensions().data()+3, dims.begin());
-    VisitationMapDataSink map(dims);
-    pipeline.addSink(&map);
+    VisitationMapDataSink *map = new VisitationMapDataSink(dims);
+    pipeline.addSink(map);
     
-    StreamlineLengthsDataSink lengths;
-    pipeline.addSink(&lengths);
+    StreamlineLengthsDataSink *lengths = new StreamlineLengthsDataSink;
+    pipeline.addSink(lengths);
     
     pipeline.run();
     
-    const Array<double> &array = map.getArray();
+    const Array<double> &array = map->getArray();
     NumericVector arrayR = wrap(array.getData());
     arrayR.attr("dim") = array.getDimensions();
-    List result = List::create(Named("map")=arrayR, Named("lengths")=lengths.getLengths());
+    List result = List::create(Named("map")=arrayR, Named("lengths")=lengths->getLengths());
     return result;
 END_RCPP
 }
@@ -253,12 +252,13 @@ BEGIN_RCPP
     int_vector indices = as<int_vector>(_indices);
     std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
     pipeline.setSubset(indices);
-    StreamlineLengthsDataSink sink;
-    pipeline.addSink(&sink);
+    
+    StreamlineLengthsDataSink *sink = new StreamlineLengthsDataSink;
+    pipeline.addSink(sink);
     
     pipeline.run();
     
-    return wrap(sink.getLengths());
+    return wrap(sink->getLengths());
 END_RCPP
 }
 
@@ -274,13 +274,13 @@ BEGIN_RCPP
     int_vector dims(3);
     const Grid<3> &grid = trkFile.getGrid3D();
     std::copy(grid.dimensions().data(), grid.dimensions().data()+3, dims.begin());
-    VisitationMapDataSink map(dims);
-    pipeline.addSink(&map);
+    VisitationMapDataSink *map = new VisitationMapDataSink(dims);
+    pipeline.addSink(map);
     
     pipeline.run();
     
     RNifti::NiftiImage reference(as<std::string>(_imagePath), false);
-    map.writeToNifti(reference, as<std::string>(_resultPath));
+    map->writeToNifti(reference, as<std::string>(_resultPath));
     
     return R_NilValue;
 END_RCPP
@@ -295,8 +295,8 @@ BEGIN_RCPP
     int_vector indices = as<int_vector>(_indices);
     std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
     pipeline.setSubset(indices);
-    MedianTrackvisDataSink medianFile(as<std::string>(_resultPath), trkFile.getGrid3D(), as<double>(_quantile));
-    pipeline.addSink(&medianFile);
+    MedianTrackvisDataSink *medianFile = new MedianTrackvisDataSink(as<std::string>(_resultPath), trkFile.getGrid3D(), as<double>(_quantile));
+    pipeline.addSink(medianFile);
     
     pipeline.run();
     
@@ -313,10 +313,10 @@ BEGIN_RCPP
     int_vector indices = as<int_vector>(_indices);
     std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
     pipeline.setSubset(indices);
-    StreamlineTruncator truncator(as<double>(_leftLength), as<double>(_rightLength));
-    pipeline.addManipulator(&truncator);
-    BasicTrackvisDataSink resultFile(as<std::string>(_resultPath), trkFile.getGrid3D());
-    pipeline.addSink(&resultFile);
+    StreamlineTruncator *truncator = new StreamlineTruncator(as<double>(_leftLength), as<double>(_rightLength));
+    pipeline.addManipulator(truncator);
+    BasicTrackvisDataSink *resultFile = new BasicTrackvisDataSink(as<std::string>(_resultPath), trkFile.getGrid3D());
+    pipeline.addSink(resultFile);
     
     pipeline.run();
     
