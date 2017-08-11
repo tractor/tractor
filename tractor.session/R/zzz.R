@@ -14,15 +14,15 @@
     }
     
     # Assume path separator (.Platform$file.sep) is "/"
-    registerPathHandler("^(.+)@(\\w+)(/(\\w+))?", function(path) {
+    registerPathHandler("^(.+)@(\\w+)(/(\\w+))?", function(path,index=1) {
         # The match has to have been done just before calling this function (although this is not thread-safe)
         groups <- groups(ore.lastmatch())
         nGroups <- sum(!is.na(groups))
         if (nGroups < 2)
             return (NULL)
         else if (nGroups < 3)
-            attachMriSession(groups[1])$getImageFileNameByType(groups[2])
+            attachMriSession(groups[1])$getImageFileNameByType(groups[2], index=index)
         else
-            attachMriSession(groups[1])$getImageFileNameByType(groups[4], groups[2])
+            attachMriSession(groups[1])$getImageFileNameByType(groups[4], groups[2], index=index)
     })
 }
