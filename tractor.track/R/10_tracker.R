@@ -92,10 +92,7 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         
         seeds <- promote(seeds, byrow=TRUE)
         
-        startTime <- Sys.time()
         nRetained <- .Call("track", model$getPointer(), seeds, as.integer(count), maskPath, .self$targetInfo, options$rightwardsVector, as.integer(options$maxSteps), as.double(options$stepLength), as.double(options$curvatureThreshold), isTRUE(options$useLoopcheck), isTRUE(terminateAtTargets), as.integer(filters$minTargetHits), as.numeric(filters$minLength), as.numeric(filters$maxLength), isTRUE(jitter), mapPath, streamlinePath, medianPath, profileFun, 0L, PACKAGE="tractor.track")
-        endTime <- Sys.time()
-        report(OL$Info, "Tracking completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
         
         if (nRetained < nrow(seeds) * count)
             report(OL$Info, "#{nRetained} streamlines (#{signif(nRetained/(nrow(seeds)*count)*100,3)}%) were retained after filtering")
