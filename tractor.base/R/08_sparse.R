@@ -115,8 +115,10 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
 #' 
 #' Indexing methods for \code{\link{SparseArray}} and \code{\link{MriImage}}
 #' objects. For the latter class, arguments are passed to the equivalents for
-#' \code{array} or \code{\link{SparseArray}}. For \code{\link{SparseArray}},
-#' indexing may be blank, or by numeric vector or matrix.
+#' \code{array} or \code{\link{SparseArray}}, except where \code{i} is another
+#' \code{\link{MriImage}} object, where its nonzero region will be used to
+#' provide the indices. For \code{\link{SparseArray}}, indexing may be blank,
+#' or by numeric vector or matrix.
 #' 
 #' @param x An object of the appropriate type.
 #' @param i,j,\dots Indexing objects.

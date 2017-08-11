@@ -498,6 +498,13 @@ setMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., 
 
 #' @rdname index
 #' @export
+setMethod("[", signature(x="MriImage",i="MriImage",j="missing"), function (x, i, j, ..., drop = TRUE) {
+    .warnIfIndexingUnreorderedImage(x)
+    return (x[i$getNonzeroIndices(array=TRUE,...), drop=drop])
+})
+
+#' @rdname index
+#' @export
 setReplaceMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - 1
