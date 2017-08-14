@@ -68,7 +68,7 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
                 previousSumOfSquares <- sum(voxelResiduals^2, na.rm=TRUE)
                 sumOfSquaresChange <- Inf
                 tempSolution <- NULL
-            
+                
                 while (sumOfSquaresChange > convergenceLevel)
                 {
                     # Weights are simply the predicted signals; nonpositive data values get zero weight
@@ -76,8 +76,11 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
                     weights[is.na(weights)] <- 0
                     tempSolution <- suppressWarnings(lsfit(bMatrix, voxelLogData, wt=weights))
                     voxelResiduals <- tempSolution$residuals
-                
+                    
                     sumOfSquares <- sum(tempSolution$residuals^2, na.rm=TRUE)
+                    # Exact fit: probably precisely seven valid directions
+                    if (sumOfSquares < sqrt(.Machine$double.eps))
+                        break
                     sumOfSquaresChange <- abs((previousSumOfSquares - sumOfSquares) / previousSumOfSquares)
                     previousSumOfSquares <- sumOfSquares
                 }
