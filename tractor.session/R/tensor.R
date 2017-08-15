@@ -79,9 +79,14 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
                     voxelResiduals <- tempSolution$residuals
                     
                     weightedSumOfSquares <- sum(tempSolution$residuals^2 * weights, na.rm=TRUE)
-                    # Exact fit (probably precisely seven valid directions) or iteration limit reached
-                    if (weightedSumOfSquares < sqrt(.Machine$double.eps) || iteration == 30)
+                    # Exact fit: probably precisely seven valid directions
+                    if (weightedSumOfSquares < sqrt(.Machine$double.eps))
                         break
+                    if (iteration == 30)
+                    {
+                        flag(OL$Warning, "Iteration limit reached")
+                        break
+                    }
                     sumOfSquaresChange <- abs((previousSumOfSquares - weightedSumOfSquares) / previousSumOfSquares)
                     previousSumOfSquares <- weightedSumOfSquares
                     iteration <- iteration + 1
