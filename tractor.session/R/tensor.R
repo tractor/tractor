@@ -5,7 +5,7 @@ createDiffusionTensorFromComponents <- function (components)
     return (tensor)
 }
 
-estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), requireMetrics = TRUE, convergenceLevel = 1e-2)
+estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), requireMetrics = TRUE, convergenceLevel = 1e-3)
 {
     if (!is(scheme, "SimpleDiffusionScheme") && !is.matrix(scheme))
         report(OL$Error, "The specified scheme object is not valid")
@@ -69,6 +69,7 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
                 sumOfSquaresChange <- Inf
                 tempSolution <- NULL
                 
+                iteration <- 1
                 while (sumOfSquaresChange > convergenceLevel)
                 {
                     # Weights are simply the predicted signals; nonpositive data values get zero weight
@@ -77,12 +78,13 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
                     tempSolution <- suppressWarnings(lsfit(bMatrix, voxelLogData, wt=weights))
                     voxelResiduals <- tempSolution$residuals
                     
-                    sumOfSquares <- sum(tempSolution$residuals^2, na.rm=TRUE)
-                    # Exact fit: probably precisely seven valid directions
-                    if (sumOfSquares < sqrt(.Machine$double.eps))
+                    weightedSumOfSquares <- sum(tempSolution$residuals^2 * weights, na.rm=TRUE)
+                    # Exact fit (probably precisely seven valid directions) or iteration limit reached
+                    if (weightedSumOfSquares < sqrt(.Machine$double.eps) || iteration == 30)
                         break
-                    sumOfSquaresChange <- abs((previousSumOfSquares - sumOfSquares) / previousSumOfSquares)
-                    previousSumOfSquares <- sumOfSquares
+                    sumOfSquaresChange <- abs((previousSumOfSquares - weightedSumOfSquares) / previousSumOfSquares)
+                    previousSumOfSquares <- weightedSumOfSquares
+                    iteration <- iteration + 1
                 }
             
                 return (c(tempSolution$coefficients, tempSolution$residuals))
