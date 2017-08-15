@@ -248,7 +248,7 @@ createFdtFilesForSession <- function (session, overwriteExisting = FALSE)
     }
 }
 
-runDtifitWithSession <- function (session)
+runDtifitWithSession <- function (session, weightedLeastSquares = FALSE)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
@@ -257,7 +257,7 @@ runDtifitWithSession <- function (session)
     createFdtFilesForSession(session)
     
     report(OL$Info, "Running dtifit to do tensor fitting...")
-    paramString <- paste("-k", session$getImageFileNameByType("data","fdt"), "-m", session$getImageFileNameByType("mask","fdt"), "-r", file.path(targetDir,"bvecs"), "-b", file.path(targetDir,"bvals"), "-o", file.path(targetDir,"dti"), "--sse", sep=" ")
+    paramString <- paste("-k", session$getImageFileNameByType("data","fdt"), "-m", session$getImageFileNameByType("mask","fdt"), "-r", file.path(targetDir,"bvecs"), "-b", file.path(targetDir,"bvals"), "-o", file.path(targetDir,"dti"), "--sse", ifelse(weightedLeastSquares,"-w",""), sep=" ")
     execute("dtifit", paramString, errorOnFail=TRUE)
     
     names <- c("s0", "fa", "md", "eigenvalue", "eigenvalue", "eigenvalue", "eigenvector", "eigenvector", "eigenvector", "sse")
