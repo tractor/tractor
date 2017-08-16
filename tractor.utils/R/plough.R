@@ -10,7 +10,12 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
     variables <- splitAndConvertString(variables, ",", fixed=TRUE)
     variables <- variables[variables != ""]
     if (length(variables) == 0)
-        variables <- names(config)[variableLengths > 1]
+    {
+        if (any(variableLengths > 1))
+            variables <- names(config)[variableLengths > 1]
+        else
+            variables <- names(config)[variableLengths == 1]
+    }
     else if (!all(variables %in% names(config)))
         report(OL$Error, "Specified variable(s) #{implode(variables[!(variables %in% names(config))],sep=', ',finalSep=' and ')} are not mentioned in the config files")
     

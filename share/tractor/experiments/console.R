@@ -3,7 +3,7 @@
 
 library(ore)
 library(reportr)
-library(RNiftyReg)
+library(loder)
 library(mmand)
 library(tractor.reg)
 library(tractor.session)

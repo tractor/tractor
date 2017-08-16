@@ -44,6 +44,16 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="312-2017-08-15">3.1.2 (2017-08-15)</h2>
+
+<ul>
+<li>A warning about a namespace clash will no longer be seen when starting the TractoR console. A side effect of this change is that the <code>RNiftyReg</code> package&rsquo;s functions are no longer directly visible. The <code>tractor.reg</code> interface can be used instead.</li>
+<li>TractoR&rsquo;s diffusion tensor fitting routine, used by <code>tensorfit</code>, is now more robust. In particular, it will handle exact fits and impose a limit on the iteration count when using iterative weighted least-squares.</li>
+<li>The trivial case for <code>plough</code>, where the design file contains no variables of length greater than one, now works as expected.</li>
+<li>The <code>view</code> script will now use the time series plot type by default, for 4D volumes whose interpretation cannot be guessed.</li>
+<li>Scripts using tractography other than <code>track</code>, such as <code>pnt-data</code>, will no longer report the tractography run-time, to avoid producing overly verbose output.</li>
+</ul>
+
 <h2 id="311-2017-07-03">3.1.1 (2017-07-03)</h2>
 
 <ul>

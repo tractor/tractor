@@ -121,6 +121,8 @@ runExperiment <- function ()
     tracker$setFilters(minLength=minLength, maxLength=maxLength, minTargetHits=minTargetHits)
     report(OL$Info, "Using #{toupper(tracker$getModel()$getType())} diffusion model")
     
+    startTime <- Sys.time()
+    
     if (strategy == "global")
     {
         seedImage <- applyBoundaryManipulation(seedInfo$image$copy()$binarise())
@@ -180,6 +182,9 @@ runExperiment <- function ()
         if (!is.null(profileFun))
             rownames(profile) <- labels
     }
+    
+    endTime <- Sys.time()
+    report(OL$Info, "Tracking completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
     
     if (!is.null(profileFun))
         write.csv(profile, ensureFileSuffix(paste(tractName,"profile",sep="_"),"csv"))
