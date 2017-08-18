@@ -31,6 +31,7 @@ runExperiment <- function ()
     if (normalise)
         graph$normaliseEdgeWeights()
     
+    nSelfConnections <- sum(graph$getEdges()[,1] == graph$getEdges()[,2])
     meanAbsEdgeWeight <- mean(abs(graph$getEdgeWeights()), na.rm=TRUE)
     edgeWeightRange <- range(graph$getEdgeWeights(), na.rm=TRUE)
     meanShortestPath <- graph$getMeanShortestPath(ignoreInfinite=TRUE)
@@ -39,7 +40,7 @@ runExperiment <- function ()
     meanClusteringCoefficient <- mean(graph$getClusteringCoefficients(method=wccMethod), na.rm=TRUE)
     
     values <- c(es("#{nVertices} (#{nConnectedVertices} connected)"),
-                graph$nEdges(),
+                es("#{graph$nEdges()} (#{nSelfConnections} self-connections)"),
                 es("#{graph$getEdgeDensity(disconnectedVertices=TRUE)*100}%",round=2),
                 es("#{meanAbsEdgeWeight} (range: #{edgeWeightRange[1]} to #{edgeWeightRange[2]})",signif=3),
                 es("#{meanShortestPath} #{ifelse(graph$isWeighted(),'(inverse weight)','steps')}",signif=3),
