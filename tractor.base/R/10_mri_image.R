@@ -569,6 +569,15 @@ setReplaceMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j
     return (x)
 })
 
+#' @rdname index
+#' @export
+setReplaceMethod("[", signature(x="MriImage",i="MriImage",j="missing"), function (x, i, j, ..., value) {
+    .warnIfIndexingUnreorderedImage(x)
+    x$data[i$getNonzeroIndices(array=TRUE,...)] <- value
+    x$setSource(NULL)
+    return (x)
+})
+
 # setMethod("Math", "MriImage", Math.MriImage)
 
 setMethod("Ops", "MriImage", Ops.MriImage)
