@@ -1,0 +1,69 @@
+#! /bin/bash
+
+status=1
+tmpdir=${TMPDIR:-/tmp}
+trap 'exit $status' 0 1 2 15
+
+session_dir="."
+
+usage()
+{
+    echo "furrow (program v3.2.0, distribution v$distribution_version)"
+    echo "Channel a command through TractoR's shorthand"
+    echo
+    echo "Usage: furrow [-s dir] command [arg1 [arg2 ...]]"
+    echo "       furrow -h"
+    echo
+    echo "  -h          Display this usage information and exit"
+    echo "  -s dir      Use the session based in the specified directory as a"
+    echo "              default for path expansions"
+    echo
+    echo "Run the specified command, which can be any standard program or script on"
+    echo "the PATH, after first expanding TractoR's image-path shorthand, such as"
+    echo "@FA for the fractional anisotropy map in the current session directory,"
+    echo "or /data/subject1@diffusion/data for the diffusion data series from the"
+    echo "session rooted at /data/subject1."
+    echo
+}
+
+[ -z "${TRACTOR_HOME}" ] && {
+    echo "Note: The TRACTOR_HOME environment variable is not set; it will be guessed"
+    export TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
+}
+
+[ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
+
+[ "$1" = "-h" ] && {
+    usage
+    status=0
+    exit
+}
+
+[ "$1" = "-s" ] && {
+    shift
+    session_dir="$1"
+    shift
+}
+
+[ $# -eq 0 ] && {
+    echo "Error: No command given. Type \"furrow -h\" for help" 1>&2
+    exit
+}
+
+command="$1"
+shift
+
+[ -z "$R" ] && R=R
+
+[ -d "${TRACTOR_HOME}/lib/R" ] && export R_LIBS="${TRACTOR_HOME}/lib/R"
+
+args=`echo "library(utils); library(tractor.utils); expandArguments('$*', '$session_dir')" | "$R" --slave --vanilla`
+
+[ $? -ne 0 ] && {
+    status=$?
+    exit
+}
+
+$command "$args"
+
+status=$?

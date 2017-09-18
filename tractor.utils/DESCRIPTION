@@ -6,7 +6,7 @@ Author: Jon Clayden
 Maintainer: Jon Clayden <code@clayden.org>
 Depends: R (>= 2.12.1), utils
 Imports: ore, reportr, tractor.base
-Suggests: parallel, yaml
+Suggests: parallel, yaml, tractor.session
 Description: The tractor.utils package primarily provides functions that facilitate the interaction between the TractoR shell script and R, but some other utility functions are also included.
 Encoding: UTF-8
 LazyLoad: yes
