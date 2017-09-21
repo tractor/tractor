@@ -489,10 +489,11 @@ writeImageData <- function (image, connection, type, size, endian = .Platform$en
         report(OL$Error, "The specified image is not an MriImage object")
     
     data <- image$getData()
+    dims <- image$getDimensions()
     
-    if (image$isSparse())
+    # writeBin() can only write 2^31 - 1 bytes, so work blockwise if necessary
+    if (image$isSparse() || prod(dims) * size >= 2^31)
     {
-        dims <- image$getDimensions()
         nDims <- image$getDimensionality()
         for (i in seq_len(dims[nDims]))
         {
