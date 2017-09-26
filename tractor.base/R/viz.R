@@ -342,6 +342,9 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScales 
         else
         {
             validExpression <- switch(alpha, binary="1", linear="x", log="log(x)")
+            # If the original image is binary, fix the expression to be likewise (otherwise the result may be zero everywhere)
+            if (mmand::binary(as.array(images[[i]])))
+                validExpression <- "1"
             images[[i]]$copy()$map(eval(parse(text=es("function(x) ifelse(!is.na(x) & x>0, #{validExpression}, 0)"))))
         }
     })
