@@ -44,6 +44,15 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="313-2017-09-27">3.1.3 (2017-09-27)</h2>
+
+<ul>
+<li>The <code>graph-props</code> script should now properly respect the &ldquo;DisconnectedVertices&rdquo; option for all properties. The number of self-connections present in the graph is also reported separately for clarity.</li>
+<li>Scripts which perform an operation on a subset of streamlines stored in a .trk file, notably <code>pnt-prune</code>, would often include one additional streamline that should not be in the selection. This has been corrected.</li>
+<li>The slice script now fixes &ldquo;Alpha&rdquo; to &ldquo;binary&rdquo; for masking images that are themselves binary, to avoid masking out everything and producing an empty layer.</li>
+<li>The <code>view</code> script will no longer produce an error when multiple images from a session&rsquo;s diffusion directory are specified.</li>
+</ul>
+
 <h2 id="312-2017-08-15">3.1.2 (2017-08-15)</h2>
 
 <ul>

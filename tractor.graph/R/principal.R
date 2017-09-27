@@ -24,7 +24,7 @@ principalNetworks <- function (x, ...)
 principalNetworks.matrix <- function (x, ...)
 {
     graph <- asGraph(cor(x), edgeList=FALSE, directed=FALSE)
-    principalGraphs <- calculatePrincipalGraphsForGraphs(graph, ...)
+    principalGraphs <- principalNetworks.list(list(graph), ...)
     principalGraphs$scores <- scale(x) %*% principalGraphs$eigenvectors
     
     return(principalGraphs)

@@ -31,16 +31,17 @@ runExperiment <- function ()
     if (normalise)
         graph$normaliseEdgeWeights()
     
+    nSelfConnections <- sum(graph$getEdges()[,1] == graph$getEdges()[,2])
     meanAbsEdgeWeight <- mean(abs(graph$getEdgeWeights()), na.rm=TRUE)
     edgeWeightRange <- range(graph$getEdgeWeights(), na.rm=TRUE)
     meanShortestPath <- graph$getMeanShortestPath(ignoreInfinite=TRUE)
-    globalEfficiency <- graphEfficiency(graph, type="global")
-    localEfficiency <- mean(graphEfficiency(graph, type="local"), na.rm=TRUE)
+    globalEfficiency <- graphEfficiency(graph, type="global", disconnectedVertices=TRUE)
+    localEfficiency <- mean(graphEfficiency(graph, type="local", disconnectedVertices=TRUE), na.rm=TRUE)
     meanClusteringCoefficient <- mean(graph$getClusteringCoefficients(method=wccMethod), na.rm=TRUE)
     
     values <- c(es("#{nVertices} (#{nConnectedVertices} connected)"),
-                graph$nEdges(),
-                es("#{graph$getEdgeDensity()*100}%",round=2),
+                es("#{graph$nEdges()} (#{nSelfConnections} self-connections)"),
+                es("#{graph$getEdgeDensity(disconnectedVertices=TRUE)*100}%",round=2),
                 es("#{meanAbsEdgeWeight} (range: #{edgeWeightRange[1]} to #{edgeWeightRange[2]})",signif=3),
                 es("#{meanShortestPath} #{ifelse(graph$isWeighted(),'(inverse weight)','steps')}",signif=3),
                 signif(c(globalEfficiency, localEfficiency, meanClusteringCoefficient),3))

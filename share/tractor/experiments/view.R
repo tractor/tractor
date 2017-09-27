@@ -37,7 +37,7 @@ runExperiment <- function ()
                 return (groups(ore.search(":(\\w+)$", space)))
         })
         
-        if (any(spaces == "diffusion") && file.exists(directionsFile <- file.path(dirname(fileStems[which(spaces=="diffusion")]), "directions.txt")))
+        if (any(spaces == "diffusion") && file.exists(directionsFile <- file.path(dirname(fileStems[which(spaces=="diffusion")[1]]), "directions.txt")))
             directions <- as.matrix(read.table(directionsFile))
         else if (is.null(plotType) && any(spaces == "functional"))
         {

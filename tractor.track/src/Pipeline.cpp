@@ -23,6 +23,7 @@ size_t Pipeline<ElementType>::run ()
         Rcpp::checkUserInterrupt();
         
         // Skip forward to the next element in the subset if necessary
+        // FIXME: What if we're using a subset and the source isn't seekable?
         if (usingSubset && source->seekable())
         {
             if (subsetIndex >= subset.size())
@@ -34,9 +35,13 @@ size_t Pipeline<ElementType>::run ()
         }
         
         // Get the next element and insert it into the working set
-        ElementType element;
-        source->get(element);
-        workingSet.push_back(element);
+        // If the subset is finished we don't want any more elements, so skip this
+        if (!subsetFinished)
+        {
+            ElementType element;
+            source->get(element);
+            workingSet.push_back(element);
+        }
         
         // Process the data when the working set is full or there's nothing more incoming
         if (workingSet.size() == blockSize || !source->more() || subsetFinished)
