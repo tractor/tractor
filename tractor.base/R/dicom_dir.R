@@ -44,6 +44,7 @@ dropCommonPrefix <- function (strings)
 #' @param nested Logical value. If \code{TRUE} and \code{directories} is of
 #'   length 1, subdirectories will be created within the specified original
 #'   directory. Otherwise they will be created in the working directory.
+#' @param ... Additional arguments to pass to \code{\link{readDicomFile}}.
 #' @return This function is called for its side effect.
 #' 
 #' @author Jon Clayden
@@ -57,7 +58,7 @@ dropCommonPrefix <- function (strings)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn = "series", seriesId = c("UID","number","time"), nested = TRUE)
+sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn = "series", seriesId = c("UID","number","time"), nested = TRUE, ...)
 {
     invalid <- (!file.exists(directories) | !file.info(directories)$isdir)
     if (any(invalid))
@@ -88,7 +89,7 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
     report(OL$Info, "Reading #{currentSort} identifiers from #{nFiles} files")
     for (i in 1:nFiles)
     {
-        metadata <- try(readDicomFile(files[i], stopTag=identifierTag, ascii=FALSE), silent=TRUE)
+        metadata <- try(readDicomFile(files[i], stopTag=identifierTag, ascii=FALSE, ...), silent=TRUE)
         if (is.null(metadata) || ("try-error" %in% class(metadata)))
         {
             report(OL$Info, "Skipping #{files[i]}")
@@ -119,7 +120,7 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
         
         if (currentSort == "series")
         {
-            metadata <- readDicomFile(files[matchingFiles[1]], stopTag=c(0x0008,0x103e), ascii=FALSE)
+            metadata <- readDicomFile(files[matchingFiles[1]], stopTag=c(0x0008,0x103e), ascii=FALSE, ...)
             description <- metadata$getTagValue(0x0008, 0x103e)
             subdirectory <- es("#{shortIdentifiers[i]}_#{ore.subst('[^A-Za-z0-9]+','_',description,all=TRUE)}")
             report(OL$Info, "Series #{shortIdentifiers[i]} includes #{length(matchingFiles)} files; description is \"#{description}\"")
