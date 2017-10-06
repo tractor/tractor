@@ -13,9 +13,11 @@
 #' @field endian String naming the endianness of the file
 #' @field asciiFields Character vector containing the contents of the ASCII
 #'   header, if requested and present in the file.
+#' @field transferSyntax Transfer syntax string, if specified in the file;
+#'   otherwise the empty string.
 #' 
 #' @export
-DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(source="character",tags="data.frame",tagOffset="integer",dataOffset="integer",dataLength="integer",explicitTypes="logical",endian="character",asciiFields="character"), methods=list(
+DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(source="character",tags="data.frame",tagOffset="integer",dataOffset="integer",dataLength="integer",explicitTypes="logical",endian="character",asciiFields="character",transferSyntax="character"), methods=list(
     getAsciiFields = function (regex = NULL)
     {
         "Retrieve the value of one or more fields in the ASCII header. Returns NA if no fields match"
@@ -65,7 +67,9 @@ DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fie
                 return (value)
         }
     },
-
+    
+    getTransferSyntax = function () { return (transferSyntax) },
+    
     nTags = function () { return (nrow(tags)) }
 ))
 
@@ -161,7 +165,8 @@ readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreT
     isDicomFile <- !checkFormat
     endian <- "little"
     explicitTypes <- TRUE
-    deferredTransferSyntax <- NULL
+    transferSyntax <- ""
+    transferSyntaxDeferred <- FALSE
     tagOffset <- 0
     dataOffset <- dataLength <- NA
     asciiFields <- NULL
@@ -233,11 +238,20 @@ readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreT
             currentElement <- readBin(connection, "integer", n=1, size=2, signed=FALSE, endian=endian)
             
             # Group 2 should always be explicit little-endian; the transfer syntax applies after that
-            if (!ignoreTransferSyntax && !is.null(deferredTransferSyntax) && currentGroup > 2)
+            if (transferSyntaxDeferred && !ignoreTransferSyntax && currentGroup > 2)
             {
-                endian <- .Dicom$transferSyntaxes[[deferredTransferSyntax]]$endian
-                explicitTypes <- .Dicom$transferSyntaxes[[deferredTransferSyntax]]$explicitTypes
-                deferredTransferSyntax <- NULL
+                if (transferSyntax %in% names(.Dicom$transferSyntaxes))
+                {
+                    endian <- .Dicom$transferSyntaxes[[transferSyntax]]$endian
+                    explicitTypes <- .Dicom$transferSyntaxes[[transferSyntax]]$explicitTypes
+                }
+                else
+                {
+                    # All compressed pixel data transfer syntaxes are explicit little-endian, so assume that
+                    endian <- "little"
+                    explicitTypes <- TRUE
+                }
+                transferSyntaxDeferred <- FALSE
             }
             
             # Sequence related tags are always untyped
@@ -333,9 +347,8 @@ readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreT
             
             if (!ignoreTransferSyntax && currentGroup == 0x0002 && currentElement == 0x0010)
             {
-                deferredTransferSyntax <- values[length(values)]
-                if (!(deferredTransferSyntax %in% names(.Dicom$transferSyntaxes)))
-                    report(OL$Error, "Transfer syntax ", deferredTransferSyntax, " is not supported")
+                transferSyntax <- values[length(values)]
+                transferSyntaxDeferred <- TRUE
             }
             
             if (!is.null(stopTag) && currentGroup == stopTag[1] && currentElement == stopTag[2])
@@ -353,7 +366,7 @@ readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreT
         }
         
         tags <- data.frame(groups=groups, elements=elements, types=types, values=values, stringsAsFactors=FALSE)
-        invisible (DicomMetadata$new(source=fileName, tags=tags, tagOffset=as.integer(tagOffset), dataOffset=as.integer(dataOffset), dataLength=as.integer(dataLength), explicitTypes=explicitTypes, endian=endian, asciiFields=as.character(asciiFields)))
+        invisible (DicomMetadata$new(source=fileName, tags=tags, tagOffset=as.integer(tagOffset), dataOffset=as.integer(dataOffset), dataLength=as.integer(dataLength), explicitTypes=explicitTypes, endian=endian, asciiFields=as.character(asciiFields), transferSyntax=as.character(transferSyntax)))
     }
     else
         invisible (NULL)

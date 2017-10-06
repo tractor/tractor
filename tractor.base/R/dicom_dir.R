@@ -532,6 +532,10 @@ readImageParametersFromMetadata <- function (metadata, untileMosaics = TRUE, met
         data <- NULL
     else
     {
+        transferSyntax <- metadata$getTransferSyntax()
+        if (transferSyntax != "" && !(transferSyntax %in% names(.Dicom$transferSyntaxes)))
+            report(OL$Error, "Transfer syntax #{transferSyntax} is not supported")
+        
         bitsAllocated <- metadata$getTagValue(0x0028, 0x0100)
         if ((bitsAllocated %% 8) != 0)
             report(OL$Error, "Number of bits allocated per pixel doesn't correspond to an integral number of bytes")
