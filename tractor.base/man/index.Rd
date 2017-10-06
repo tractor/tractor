@@ -13,6 +13,7 @@
 \alias{[<-,MriImage,ANY,missing-method}
 \alias{[<-,MriImage,missing,ANY-method}
 \alias{[<-,MriImage,ANY,ANY-method}
+\alias{[<-,MriImage,MriImage,missing-method}
 \title{Indexing methods}
 \usage{
 \S4method{[}{SparseArray,ANY,ANY}(x, i, j, ..., drop = TRUE)
@@ -36,6 +37,8 @@
 \S4method{[}{MriImage,missing,ANY}(x, i, j, ...) <- value
 
 \S4method{[}{MriImage,ANY,ANY}(x, i, j, ...) <- value
+
+\S4method{[}{MriImage,MriImage,missing}(x, i, j, ...) <- value
 }
 \arguments{
 \item{x}{An object of the appropriate type.}

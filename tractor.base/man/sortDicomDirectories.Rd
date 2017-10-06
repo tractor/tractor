@@ -5,7 +5,7 @@
 \title{Sort a directory of DICOM files into series}
 \usage{
 sortDicomDirectories(directories, deleteOriginals = FALSE,
-  sortOn = "series", seriesId = c("UID", "number", "time"), nested = TRUE
+  sortOn = "series", seriesId = c("UID", "number", "time"), nested = TRUE,
   ...)
 }
 \arguments{
