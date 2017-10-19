@@ -44,8 +44,8 @@ runExperiment <- function ()
         return (w)
     }
     
-    brain <- RNifti::readNifti(getFileNameForStandardImage("brain"))
-    voxelDims <- RNifti::pixdim(brain)
+    brain <- getStandardImage("brain")
+    voxelDims <- brain$getVoxelDimensions()
     sink <- getRefClass("StreamlineSink")$new(basename(tractName), brain)
     
     for (i in seq_len(nSamples))
