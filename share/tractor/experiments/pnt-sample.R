@@ -4,13 +4,13 @@ library(splines)
 runExperiment <- function ()
 {
     tractName <- getConfigVariable("TractName", NULL, "character", errorIfMissing=TRUE)
-    modelName <- getConfigVariable("ModelName", NULL, "character", errorIfMissing=TRUE)
+    modelName <- getConfigVariable("ModelName", NULL, "character")
     nSamples <- getConfigVariable("Samples", 1000)
     jitterSeed <- getConfigVariable("JitterSeed", TRUE)
     pointSeparation <- getConfigVariable("PointSeparation", 0.5)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
-    model <- getNTResource("model", "pnt", list(modelName=modelName))
+    model <- getNTResource("model", "pnt", list(modelName=modelName,tractName=tractName))
     
     if (!reference$inStandardSpace() || reference$getSeedUnit() != "mm")
         report(OL$Error, "Reference must be in standard space and specified in millimetres")
