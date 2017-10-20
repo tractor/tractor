@@ -328,34 +328,54 @@ RcppExport SEXP trkCreate (SEXP _trkPath, SEXP _mask)
 {
 BEGIN_RCPP
     RNifti::NiftiImage mask(_mask);
-    BasicTrackvisDataSink trkFile(as<std::string>(_trkPath), getGrid3D(mask));
-    trkFile.done();
+    BasicTrackvisDataSink *sink = new BasicTrackvisDataSink(as<std::string>(_trkPath), getGrid3D(mask));
+    XPtr<BasicTrackvisDataSink> sinkPtr(sink);
+    return sinkPtr;
+END_RCPP
+}
+
+RcppExport SEXP trkAppend (SEXP _sink, SEXP _points, SEXP _seedIndex, SEXP _pointType, SEXP _fixedSpacing)
+{
+BEGIN_RCPP
+    XPtr<BasicTrackvisDataSink> sinkPtr(_sink);
+    BasicTrackvisDataSink *sink = sinkPtr;
+    
+    Rcpp::NumericMatrix pointsR(_points);
+    const Streamline::PointType pointType = (as<std::string>(_pointType) == "mm" ? Streamline::WorldPointType : Streamline::VoxelPointType);
+    const int seedIndex = as<int>(_seedIndex) - 1;
+    
+    std::vector<Space<3>::Point> leftPoints(seedIndex+1), rightPoints(pointsR.rows()-seedIndex);
+    for (int i=seedIndex; i>=0; i--)
+    {
+        Space<3>::Point point;
+        point[0] = pointsR(i,0) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        point[1] = pointsR(i,1) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        point[2] = pointsR(i,2) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        leftPoints[seedIndex-i] = point;
+    }
+    for (int i=seedIndex; i<pointsR.rows(); i++)
+    {
+        Space<3>::Point point;
+        point[0] = pointsR(i,0) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        point[1] = pointsR(i,1) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        point[2] = pointsR(i,2) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        rightPoints[i-seedIndex] = point;
+    }
+    
+    Streamline streamline(leftPoints, rightPoints, pointType, sink->getGrid3D().spacings(), as<bool>(_fixedSpacing));
+    std::list<Streamline> list;
+    list.push_back(streamline);
+    sink->setup(1, list.begin(), list.end());
+    sink->put(streamline);
+    
     return R_NilValue;
 END_RCPP
 }
 
-RcppExport SEXP trkAppend (SEXP _trkPath, SEXP _points, SEXP _seedIndex, SEXP _pointType, SEXP _voxelDims, SEXP _fixedSpacing)
+RcppExport SEXP trkClose (SEXP _sink)
 {
-BEGIN_RCPP
-    const std::string path = as<std::string>(_trkPath);
-    BasicTrackvisDataSink sink(path, true);
-    
-    Eigen::VectorXf voxelDims = as<Eigen::VectorXf>(_voxelDims);
-    // if (!(voxelDims.array() == grid.spacings()).all())
-    //     throw std::runtime_error("Voxel dimensions do not match the existing .trk file");
-    
-    Eigen::MatrixXf points = as<Eigen::MatrixXf>(_points);
-    const int seedIndex = as<int>(_seedIndex) - 1;
-    std::vector<Space<3>::Point> leftPoints(seedIndex+1), rightPoints(points.rows()-seedIndex);
-    const std::string pointType = as<std::string>(_pointType);
-    for (int i=seedIndex; i>=0; i--)
-        leftPoints[seedIndex-i] = points.row(i);
-    for (int i=seedIndex; i<points.rows(); i++)
-        rightPoints[i-seedIndex] = points.row(i);
-    Streamline streamline(leftPoints, rightPoints, (pointType == "mm") ? Streamline::WorldPointType : Streamline::VoxelPointType, voxelDims, as<bool>(_fixedSpacing));
-    sink.append(streamline);
-    sink.done();
-    
+    XPtr<BasicTrackvisDataSink> sinkPtr(_sink);
+    BasicTrackvisDataSink *sink = sinkPtr;
+    sink->done();
     return R_NilValue;
-END_RCPP
 }
