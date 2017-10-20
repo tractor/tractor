@@ -1,3 +1,4 @@
+library(tractor.reg)
 library(tractor.nt)
 library(splines)
 
@@ -81,10 +82,11 @@ runExperiment <- function ()
         # lines(interpolatedPoints[,axes[1]]-seed[axes[1]], interpolatedPoints[,axes[2]]-seed[axes[2]], col=rgb(1,0,0,0.1))
         
         seedIndex <- which.min(abs(indices - seedIndex))
-        interpolatedPoints <- RNifti::worldToVoxel(interpolatedPoints,brain) - 1
-        streamline <- getRefClass("Streamline")$new(interpolatedPoints, seedIndex, voxelDims, coordUnit="mm")
+        interpolatedPoints <- transformWorldToVoxel(interpolatedPoints, brain)
+        streamline <- getRefClass("Streamline")$new(interpolatedPoints, seedIndex, voxelDims, coordUnit="vox")
         sink$append(streamline)
     }
     
-    ask("Press Enter to exit:")
+    sink$close()
+    # ask("Press Enter to exit:")
 }
