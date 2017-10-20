@@ -36,7 +36,7 @@ runExperiment <- function ()
         # 2. Sample a rotation angle
         t <- runif(1, 0, 2*pi)
         # 3. Rotate the initial vector about the normal by the required angle
-        w <- w * cos(t) + vectorCrossProduct(v,w) * sin(t) + v * (v %*% w) * (1 - cos(t))
+        w <- w * cos(t) + vectorCrossProduct(v,w) * sin(t) + v * as.vector(v %*% w) * (1 - cos(t))
         # 4. Scale the vector to the required length
         w <- w * tractOptions$knotSpacing * sin(a) / vectorLength(w)
         # 5. Translate the centre to the truncated target vector
