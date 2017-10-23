@@ -377,5 +377,6 @@ RcppExport SEXP trkClose (SEXP _sink)
     XPtr<BasicTrackvisDataSink> sinkPtr(_sink);
     BasicTrackvisDataSink *sink = sinkPtr;
     sink->done();
+    sinkPtr.release();
     return R_NilValue;
 }
