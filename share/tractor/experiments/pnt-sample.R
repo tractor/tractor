@@ -21,8 +21,8 @@ runExperiment <- function ()
     seed <- reference$getStandardSpaceSeedPoint()
     
     steps <- calculateSplineStepVectors(tract, "knot")
-    leftSteps <- t(apply(steps$left, 1, function(x) x/vectorLength(x)))
-    rightSteps <- t(apply(steps$right, 1, function(x) x/vectorLength(x)))
+    leftSteps <- t(apply(steps$left, 1, function(x) x*c(-1,1,1)/vectorLength(x)))
+    rightSteps <- t(apply(steps$right, 1, function(x) x*c(-1,1,1)/vectorLength(x)))
     
     # axes <- plot(tract)
     
