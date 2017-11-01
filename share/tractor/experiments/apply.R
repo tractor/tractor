@@ -32,7 +32,7 @@ runExperiment <- function ()
     
     images <- lapply(Arguments[1:nInputs], readImageFile)
     expression <- implode(Arguments[-(1:nInputs)], sep=" ")
-    funString <- paste("function(", implode(letters[1:nInputs],sep=","), ") { ", expression, " }", sep="")
+    funString <- paste("function(", implode(letters[1:min(26,nInputs)],sep=","), ") { ", expression, " }", sep="")
     report(OL$Debug, "Function string is `", funString, "`")
     fun <- eval(parse(text=funString))
     
