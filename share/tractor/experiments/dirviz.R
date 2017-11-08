@@ -14,12 +14,17 @@ runExperiment <- function ()
     z <- getConfigVariable("Z", NA, "numeric", errorIfInvalid=TRUE)
     source <- getConfigVariable("Source", "tensor", validValues=c("bedpost","tensor"))
     thresholdLevel <- getConfigVariable("ThresholdLevel", 0.2)
+    maskFile <- getConfigVariable("MaskFile", NULL, "character")
     windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
     scaleComponents <- getConfigVariable("ScaleComponents", TRUE)
     scaleFactor <- getConfigVariable("ScaleFactor", 16)
     
     faImage <- session$getImageByType("fa", "diffusion")
-    maskImage <- session$getImageByType("mask", "diffusion")
+    
+    if (is.null(maskFile))
+        maskImage <- session$getImageByType("mask", "diffusion")
+    else
+        maskImage <- readImageFile(maskFile)
     
     if (!is.null(windowLimits))
     {
