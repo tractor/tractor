@@ -307,7 +307,7 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
     }
 }
 
-compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScales = 2, projectOverlays = NULL, alpha = c("binary","linear","log"), prefix = "image", zoomFactor = 1, windowLimits = NULL, nColumns = NULL, separate = FALSE, clip = TRUE)
+compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScales = 2, projectOverlays = NULL, alpha = c("binary","linear","log"), prefix = "image", zoomFactor = 1, windowLimits = NULL, nColumns = NULL, separate = FALSE, clip = TRUE, interpolationKernel = mmand::mnKernel())
 {
     if (!is.list(images) || length(images) < 1)
         report(OL$Error, "Images should be specified in a list with at least one element")
@@ -404,9 +404,9 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScales 
         }
         
         paneAxes <- setdiff(1:3, info$axis[j])
-        red <- mmand::rescale(currentImage[,,1], abs(voxelDims[paneAxes] * zoomFactor), mmand::mnKernel())
-        green <- mmand::rescale(currentImage[,,2], abs(voxelDims[paneAxes] * zoomFactor), mmand::mnKernel())
-        blue <- mmand::rescale(currentImage[,,3], abs(voxelDims[paneAxes] * zoomFactor), mmand::mnKernel())
+        red <- mmand::rescale(currentImage[,,1], abs(voxelDims[paneAxes] * zoomFactor), interpolationKernel)
+        green <- mmand::rescale(currentImage[,,2], abs(voxelDims[paneAxes] * zoomFactor), interpolationKernel)
+        blue <- mmand::rescale(currentImage[,,3], abs(voxelDims[paneAxes] * zoomFactor), interpolationKernel)
         currentImage <- c(red, green, blue)
         
         if (separate)

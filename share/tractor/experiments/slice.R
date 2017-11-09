@@ -27,6 +27,7 @@ runExperiment <- function ()
     colourScales <- getConfigVariable("ColourScale", "heat")
     projectOverlays <- getConfigVariable("ProjectOverlays", NULL, "logical")
     alpha <- getConfigVariable("Alpha", "binary", validValues=c("binary","linear","log"))
+    interpolation <- getConfigVariable("Interpolation", "spline", validValues=c("nearestneighbour","trilinear","spline"))
     zoomFactor <- getConfigVariable("ZoomFactor", 1)
     clip <- getConfigVariable("Clip", TRUE)
     separate <- getConfigVariable("Separate", FALSE)
@@ -37,6 +38,8 @@ runExperiment <- function ()
     
     colourScales <- splitAndConvertString(colourScales, ",", fixed=TRUE)
     colourScales <- lapply(colourScales, function(scale) switch(scale, greyscale=1L, grayscale=1L, heat=2L, rainbow=3L, "blue-red"=4L, reds=5L, blues=6L, "yellow-red"=7L, scale))
+    
+    interpolationKernel <- switch(interpolation, nearestneighbour=mmand::boxKernel(), trilinear=mmand::triangleKernel(), spline=mmand::mnKernel())
     
     if (!is.null(windowLimits))
     {
@@ -79,5 +82,5 @@ runExperiment <- function ()
     }
     
     report(OL$Info, "Creating graphics")
-    tractor.base:::compositeImages(images, resolveLocs(1,x), resolveLocs(2,y), resolveLocs(3,z), colourScales=colourScales, projectOverlays=projectOverlays, alpha=alpha, prefix=outputPrefix, zoomFactor=zoomFactor, windowLimits=windowLimits, nColumns=nColumns, separate=separate, clip=clip)
+    tractor.base:::compositeImages(images, resolveLocs(1,x), resolveLocs(2,y), resolveLocs(3,z), colourScales=colourScales, projectOverlays=projectOverlays, alpha=alpha, prefix=outputPrefix, zoomFactor=zoomFactor, windowLimits=windowLimits, nColumns=nColumns, separate=separate, clip=clip, interpolationKernel=interpolationKernel)
 }
