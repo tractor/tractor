@@ -6,7 +6,7 @@ a5391c7555bd912343ae34a4ebf8ba89 Dockerfile
 10b634d9e14144c8b6aa3562b4877ede LICENSE
 ac11a8b8fc6a166a6d0e46a09f53b7bb Makefile
 d0e2013df90f2ccad8a8cbe982ac3c29 README.md
-1be748c6bb7224c7a6b917563e12ad8c VERSION
+e722be9e123050178f7ae714199805e6 VERSION
 6cb894b9f39a2112d8629349a74d1bb8 bin/extra/tractor_Rinstall
 153aebd36cf10abae586d27501ec3004 bin/plough
 af401f1f6f490a3fef4a949973190c68 bin/tractor
@@ -22,12 +22,12 @@ d4162c9d7e520a5de05001be6e741899 share/doc/assets/jquery-3.2.0.min.js
 ce088d53ef9561c4dd85577f4c4e10ba share/doc/assets/prism.css
 cdca90be556c2e5f8dfb1482e0fc09e9 share/doc/assets/prism.js
 7df7e835c118fa33ba2f3432dd911dc2 share/doc/assets/style.css
-d2682386be4a8f3e1fa75987e71668ae share/doc/changelog.html
-27e2a073a139752c485a7fd0d33cf05c share/doc/connectivity-graphs.html
+fc1160afbb99682adc505c2281f73eaf share/doc/changelog.html
+1288eab58331fd3daa1884088a49c5d7 share/doc/connectivity-graphs.html
 877bd4d3f02848d72275e481b1e2fb00 share/doc/conventions.html
 018eb1455cdaff3457c13870aed3849c share/doc/diffusion-processing.html
 0d66d29aa7dcadd51f330f04bfe8f919 share/doc/download.png
-4c1b406a3bde2deb9d2edb607d042cff share/doc/downloads.html
+d93f9f1f685fc3f00feefeb1a48fa774 share/doc/downloads.html
 d7f0853dab78e9236a957c344d7cd1db share/doc/genu-point.png
 625da84fdd8d9872dff7d673930aa473 share/doc/getting-started.html
 cd8cec91833ffa792d4ad33729f8acbf share/doc/graph-brain.png
@@ -47,7 +47,7 @@ feb686fd02a1536dbfe45570a85375b8 share/doc/upgrading-to-TractoR-3.html
 c7fde708e98f0bd2f75bce56f4e5cec6 share/man/man1/plough.1
 5390d0205cb08f004bc44436b3a58ef5 share/man/man1/tractor.1
 17ae916720b8455178588686fc105bbc share/tractor/experiments/age.R
-515a11c91fb87ee811a210fa24d4b81c share/tractor/experiments/apply.R
+d36a5d97265f876f71ef969f5c1c4613 share/tractor/experiments/apply.R
 491ea18c68ee4611549872415e49e72c share/tractor/experiments/bedpost.R
 bbe5ef17ed4327566d76e69c35b796c2 share/tractor/experiments/binarise.R
 5d4ae86991b59752a2f8d54d0a37d5d1 share/tractor/experiments/chfiletype.R
@@ -93,7 +93,7 @@ c5e1bb939ef4d0b7626715eed236b95d share/tractor/experiments/imagestats.R
 c512fb4d02573b8d3ac63afce21c8e36 share/tractor/experiments/pnt-em.R
 7a25b76db94b2e64dd7522a4613630eb share/tractor/experiments/pnt-eval.R
 48228cd3a86346216050dffc0c3596f5 share/tractor/experiments/pnt-interpret.R
-9a0c5c62152bb6ed6baaee0da7ac74f5 share/tractor/experiments/pnt-prune.R
+889b3bc5521488019aaa44565584991e share/tractor/experiments/pnt-prune.R
 10a95ab6f26e320258cfd4616e3c9e75 share/tractor/experiments/pnt-ref.R
 c255ff79f59932874004f25cf0a8c30c share/tractor/experiments/pnt-train.R
 c4b2fac2df909db32ca566db3aff3dc5 share/tractor/experiments/pnt-viz.R
@@ -411,7 +411,7 @@ a853ebf2574020fbd777559eefccdc34 tests/scripts/hello.R
 c68d631627611094667e79563f8ac9dd tests/scripts/passthrough.R
 10ce57fe87a77b5a50263fc517880bf0 tests/scripts/value.R
 55fb21bef3972d7d88d8345ede6802ab tests/scripts/which.R
-37b589296708887cf93372bc9dfe056a tractor.base/DESCRIPTION
+6eca515451b502fb51ed0f0b7d92732f tractor.base/DESCRIPTION
 f29a531ea9dc92db7f2fbd937facace6 tractor.base/NAMESPACE
 0edc59fd39e9e49b2f7d45131942f8e4 tractor.base/R/00_constants.R
 9fee1eeb86ba6bb456026d8dd6e63e55 tractor.base/R/05_serialise.R
@@ -422,7 +422,7 @@ e31f60311a3b43636c4d9a435bac57c7 tractor.base/R/12_coerce.R
 b2f755a8847e5faa1575cbe1ea37d536 tractor.base/R/analyze.R
 beeadbc56d2d01ce66f253c81b562f45 tractor.base/R/deprecated.R
 97b2f70d24d7981716450983cff13c0c tractor.base/R/dicom_dir.R
-62027ffa36608441899cd19450776ce0 tractor.base/R/files.R
+79ef3e92ecbf14453570329dc5f4618c tractor.base/R/files.R
 cc9d0404fdabe6a7bea39756937dcc3a tractor.base/R/internal.R
 f71d4911b6ca8b3140dab8c287d5fe22 tractor.base/R/mgh.R
 3e963cc056270b31294f0c5eebe6db00 tractor.base/R/misc.R
