@@ -113,7 +113,7 @@ runExperiment <- function ()
         if (length(toAccept) == 0)
         {
             report(OL$Warning, "All streamlines rejected for session #{i} - using median line")
-            streamSource <- StreamlineSource$new(streamSource$getMedian(options$lengthQuantile, pathOnly=TRUE))
+            streamSource <- StreamlineSource$new(streamSource$select(NULL)$getMedian(options$lengthQuantile, pathOnly=TRUE))
         }
         else
         {
