@@ -355,6 +355,11 @@ as.matrix.Graph <- function (x, ...)
     as(x, "matrix")
 }
 
+dim.Graph <- function (x)
+{
+    rep(x$nVertices(), 2L)
+}
+
 setMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,,drop=drop]))
 setMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,,drop=drop]))
 setMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,j,drop=drop]))
