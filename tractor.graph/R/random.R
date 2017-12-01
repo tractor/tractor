@@ -32,9 +32,12 @@ randomGraph <- function (n, M, p, weights = NULL, directed = FALSE, selfConnecti
     }
     
     if (!directed)
-        associationMatrix <- associationMatrix + t(associationMatrix)
+    {
+        lowerTriangle <- lower.tri(associationMatrix)
+        associationMatrix[lowerTriangle] <- t(associationMatrix)[lowerTriangle]
+    }
     
-    return (asGraph(associationMatrix))
+    return (asGraph(associationMatrix, edgeList=FALSE, directed=directed, selfConnections=selfConnections))
 }
 
 # Flatten upper triangular matrix
