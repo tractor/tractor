@@ -19,7 +19,8 @@ test_that("Graphs are saved and loaded successfully", {
     names <- c("a","b","c","d","e","f","g","h","i","j")
     
     t_graph$setVertexAttributes("voxelCount"=voxelCount, "volume"=volume, "names"=names)
-    writeGraphFile(t_graph, "test_graph", fileType = "csv")
-    t_retrieved <- readGraphFile("test_graph")
+    fileName <- tempfile()
+    writeGraphFile(t_graph, fileName, fileType = "csv")
+    t_retrieved <- readGraphFile(fileName)
     expect_equivalent(t_retrieved, t_graph)
 })
