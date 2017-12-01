@@ -1,3 +1,42 @@
+randomGraph <- function (n, M, p, weights = NULL, directed = FALSE, selfConnections = FALSE)
+{
+    associationMatrix <- matrix(0L, ncol=n, nrow=n)
+    if (missing(M) && missing(p))
+        M <- length(weights)
+    
+    eligibilityMatrix <- matrix(TRUE, ncol=n, nrow=n)
+    if (!directed)
+        eligibilityMatrix[lower.tri(eligibilityMatrix)] <- FALSE
+    if (!selfConnections)
+        diag(eligibilityMatrix) <- FALSE
+    
+    eligibleEdges <- which(eligibilityMatrix, arr.ind=TRUE)
+    nEligibleEdges <- sum(eligibilityMatrix)
+    
+    if (missing(M))
+    {
+        associationMatrix[eligibleEdges] <- as.integer(runif(nEligibleEdges) < p)
+        M <- sum(associationMatrix)
+    }
+    else
+    {
+        selected <- sample(seq_len(nEligibleEdges), M)
+        associationMatrix[eligibleEdges[selected,,drop=FALSE]] <- 1L
+    }
+    
+    if (!is.null(weights))
+    {
+        if (length(weights) != M)
+            weights <- rep(weights, length.out=M)
+        associationMatrix[which(associationMatrix != 0)] <- sample(weights)
+    }
+    
+    if (!directed)
+        associationMatrix <- associationMatrix + t(associationMatrix)
+    
+    return (asGraph(associationMatrix))
+}
+
 # Flatten upper triangular matrix
 flattenUpperTri <- function(X) t(X)[upper.tri(X,diag=FALSE)]
 
@@ -8,7 +47,7 @@ getStrength <- function (weight_matrix)
     return (strength)
 }
 
-randomNetworks <- function (graph)
+randomiseGraph <- function (graph)
 {
     #Association Matrix
     weight_matrix <- graph$getAssociationMatrix()
