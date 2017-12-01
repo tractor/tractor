@@ -1,3 +1,45 @@
+graphEfficiency <- function (graph, type = c("global","local"), disconnectedVertices = FALSE)
+{
+    if (!is(graph, "Graph"))
+        report(OL$Error, "Specified graph is not a valid Graph object")
+    
+    type <- match.arg(type)
+    
+    v <- graph$getConnectedVertices()
+    if (length(v) < 2)
+    {
+        if (type == "global")
+            return (0)
+        else
+            return (rep(0,length(v)))
+    }
+    
+    if (!disconnectedVertices)
+        graph <- inducedSubgraph(graph, v)
+    
+    if (type == "global")
+    {
+        sp <- graph$getShortestPathMatrix()
+        ge <- mean(1/sp[upper.tri(sp) | lower.tri(sp)])
+        return (ge)
+    }
+    else
+    {
+        n <- graph$getNeighbourhoods()
+        le <- sapply(n, function (cn) {
+            if (length(cn) < 2)
+                return (0)
+            else
+            {
+                subgraph <- inducedSubgraph(graph, cn)
+                sp <- subgraph$getShortestPathMatrix()
+                return (mean(1/sp[upper.tri(sp) | lower.tri(sp)]))
+            }
+        })
+        return (le)
+    }
+}
+
 betweennessCentrality <- function (weight_matrix)
 {
     # Convert weight matrix in connection-length matrix
