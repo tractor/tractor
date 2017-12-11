@@ -44,7 +44,7 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
     test_that("clustering coefficients and efficiencies match", {
         expect_equal(t_graph$getClusteringCoefficients(), igraph::transitivity(i_graph,"barrat"))
         
-        i_eff <- 1 / igraph::shortest_paths(i_graph)
+        i_eff <- 1 / igraph::distances(i_graph)
         i_eff[!is.finite(i_eff)] <- 0
         i_global_eff <- mean(i_eff, na.rm=TRUE) 
         expect_equivalent(graphEfficiency(t_graph,type="global"), i_global_eff)
