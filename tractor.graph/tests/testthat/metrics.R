@@ -35,31 +35,39 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
             igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
         
         # Shortest Path
-        expect_equivalent(t_graph$getShortestPathMatrix(), igraph::distances(i_graph))
+        i_shortest_paths <- igraph::distances(i_graph)
+        expect_equivalent(t_graph$getShortestPathMatrix(), i_shortest_paths)
         
         # Mean Shortest Path
-        expect_equal(t_graph$getMeanShortestPath(), igraph::mean_distance(i_graph))
+        nonzero <- (i_shortest_paths > 0)
+        i_mean_shortest <- sum(i_shortest_paths[nonzero]) / sum(nonzero)
+        expect_equal(t_graph$getMeanShortestPath(), i_mean_shortest)
     })
     
     test_that("clustering coefficients and efficiencies match", {
-        expect_equal(t_graph$getClusteringCoefficients(), igraph::transitivity(i_graph,"barrat"))
+        # igraph returns NaN when there are no triangles
+        i_clustering <- igraph::transitivity(i_graph, "barrat")
+        expect_equal(t_graph$getClusteringCoefficients(method="barrat"), ifelse(is.nan(i_clustering),0,i_clustering))
         
-        i_eff <- 1 / igraph::distances(i_graph)
-        i_eff[!is.finite(i_eff)] <- 0
-        i_global_eff <- mean(i_eff, na.rm=TRUE) 
+        if (t_graph$isWeighted())
+            igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
+        
+        connected <- which(igraph::degree(i_graph) > 0)
+        i_eff <- 1 / igraph::distances(i_graph, connected)
+        i_global_eff <- mean(i_eff[upper.tri(i_eff) | lower.tri(i_eff)], na.rm=TRUE)
         expect_equivalent(graphEfficiency(t_graph,type="global"), i_global_eff)
-    })
-    
-    test_that("Laplacian matrices match", {
-        expect_equivalent(t_graph$getLaplacianMatrix(), igraph::laplacian_matrix(i_graph,sparse=FALSE))
     })
     
     test_that("betweenness centrality matches", {
         if (t_graph$isWeighted())
             igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
         
-        t_bc <- betweennessCentrality(t_graph$getAssociationMatrix())
+        t_bc <- structure(betweennessCentrality(t_graph$getAssociationMatrix()), dim=NULL)
         i_bc <- igraph::betweenness(i_graph)
         expect_equal(t_bc, 2*i_bc)
+    })
+    
+    test_that("Laplacian matrices match", {
+        expect_equivalent(t_graph$getLaplacianMatrix(), igraph::laplacian_matrix(i_graph,sparse=FALSE))
     })
 }
