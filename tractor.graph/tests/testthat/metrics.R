@@ -68,6 +68,9 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
     })
     
     test_that("Laplacian matrices match", {
+        if (t_graph$isDirected())
+            skip("Laplacian matrix calculation is not supported for directed matrices")
+        
         expect_equivalent(t_graph$getLaplacianMatrix(), igraph::laplacian_matrix(i_graph,sparse=FALSE))
     })
 }

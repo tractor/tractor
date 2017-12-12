@@ -1,4 +1,4 @@
-context("Weighted graphs")
+context("Fuzz (weighted)")
 
 source("metrics.R")
 
