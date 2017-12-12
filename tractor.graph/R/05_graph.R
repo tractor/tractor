@@ -139,6 +139,16 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     isWeighted = function () { return (!all(is.na(edgeWeights) | (edgeWeights %in% c(0,1)))) },
     
+    map = function (fun, ..., matchEdges = FALSE)
+    {
+        fun <- match.fun(fun)
+        originalMatrix <- .self$getAssociationMatrix()
+        modifiedMatrix <- fun(originalMatrix, ...)
+        if (equivalent(dim(originalMatrix), dim(modifiedMatrix)))
+            .self$setAssociationMatrix(modifiedMatrix, matchEdges=matchEdges)
+        invisible (.self)
+    },
+    
     nEdges = function () { return (nrow(edges)) },
     
     nVertices = function () { return (vertexCount) },
@@ -364,6 +374,11 @@ setMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, 
 setMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,,drop=drop]))
 setMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,j,drop=drop]))
 setMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,j,drop=drop]))
+
+setReplaceMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, ..., value) return (x$map("[<-", value=value)))
+setReplaceMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., value) return (x$map("[<-", i=i, value=value)))
+setReplaceMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., value) return (x$map("[<-", j=j, value=value)))
+setReplaceMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., value) return (x$map("[<-", i, j, value)))
 
 setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useNames = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
