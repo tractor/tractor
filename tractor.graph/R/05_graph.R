@@ -1,24 +1,26 @@
 Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexCount="integer",vertexAttributes="list",vertexLocations="matrix",locationUnit="character",locationSpace="character",edges="matrix",edgeAttributes="list",edgeWeights="numeric",directed="logical"), methods=list(
     initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = emptyMatrix(), locationUnit = "", locationSpace = "", edges = emptyMatrix(), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
     {
+        object <- initFields(vertexCount=as.integer(vertexCount), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=locationUnit, locationSpace=locationSpace, edges=edges, edgeAttributes=edgeAttributes, edgeWeights=as.numeric(edgeWeights), directed=directed)
+        
         # Backwards compatibility
         oldFields <- list(...)
         if ("vertexNames" %in% names(oldFields))
-            vertexAttributes <- list(name=as.character(oldFields$vertexNames))
+            object$vertexAttributes <- list(name=as.character(oldFields$vertexNames))
         if ("edgeNames" %in% names(oldFields))
-            edgeAttributes <- list(name=as.character(oldFields$edgeNames))
+            object$edgeAttributes <- list(name=as.character(oldFields$edgeNames))
         if ("names" %in% names(vertexAttributes))
         {
             index <- match("names", names(vertexAttributes))
-            names(vertexAttributes)[index] <- "name"
+            names(object$vertexAttributes)[index] <- "name"
         }
         if ("names" %in% names(edgeAttributes))
         {
             index <- match("names", names(edgeAttributes))
-            names(edgeAttributes)[index] <- "name"
+            names(object$edgeAttributes)[index] <- "name"
         }
         
-        return (initFields(vertexCount=as.integer(vertexCount), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=locationUnit, locationSpace=locationSpace, edges=edges, edgeAttributes=edgeAttributes, edgeWeights=as.numeric(edgeWeights), directed=directed))
+        return (object)
     },
     
     getConnectedVertices = function () { return (sort(unique(as.vector(edges)))) },
@@ -37,7 +39,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         return (associationMatrix)
     },
     
-    getClusteringCoefficients = function (method = c("onnela","barrat"), normalise = FALSE)
+    getClusteringCoefficients = function (method = c("onnela","barrat"))
     {
         method <- match.arg(method)
         .Call("clusteringCoefficients", vertexCount, edges, edgeWeights, directed, method, PACKAGE="tractor.graph")

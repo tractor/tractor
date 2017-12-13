@@ -23,7 +23,7 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
         expect_equal(t_graph$nVertices(), igraph::gorder(i_graph))
     
         # Connected Vertices
-        i_connectedVertices <- which(igraph::components(i_graph)$membership > 0)
+        i_connectedVertices <- which(igraph::degree(i_graph) > 0)
         expect_equivalent(t_graph$getConnectedVertices(), i_connectedVertices)
         
         # Edge Density
@@ -35,7 +35,7 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
             igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
         
         # Shortest Path
-        i_shortest_paths <- igraph::distances(i_graph)
+        i_shortest_paths <- igraph::distances(i_graph, mode="out")
         expect_equivalent(t_graph$getShortestPathMatrix(), i_shortest_paths)
         
         # Mean Shortest Path
@@ -53,12 +53,14 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
             igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
         
         connected <- which(igraph::degree(i_graph) > 0)
-        i_eff <- 1 / igraph::distances(i_graph, connected)
+        i_eff <- 1 / igraph::distances(i_graph, connected, mode="out")
         i_global_eff <- mean(i_eff[upper.tri(i_eff) | lower.tri(i_eff)], na.rm=TRUE)
         expect_equivalent(graphEfficiency(t_graph,type="global"), i_global_eff)
     })
     
     test_that("betweenness centrality matches", {
+        if (t_graph$isDirected())
+            skip("Betweenness centrality is not supported for directed graphs")
         if (t_graph$isWeighted())
             igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
         
@@ -69,7 +71,7 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
     
     test_that("Laplacian matrices match", {
         if (t_graph$isDirected())
-            skip("Laplacian matrix calculation is not supported for directed matrices")
+            skip("Laplacian matrix calculation is not supported for directed graphs")
         
         expect_equivalent(t_graph$getLaplacianMatrix(), igraph::laplacian_matrix(i_graph,sparse=FALSE))
     })
