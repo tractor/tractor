@@ -187,12 +187,23 @@ BEGIN_RCPP
     NumericVector result(nVertices);
     for (SmartDigraph::NodeIt node(g.graph); node != INVALID; ++node)
     {
+        double inDegree = 0.0, outDegree = 0.0, reciprocal = 0.0;
+        
         // Find all neighbours of the current node
         std::set<SmartDigraph::Node> neighbours;
         for (SmartDigraph::InArcIt arc(g.graph,node); arc != INVALID; ++arc)
+        {
+            inDegree += 1.0;
             neighbours.insert(g.graph.source(arc));
+        }
         for (SmartDigraph::OutArcIt arc(g.graph,node); arc != INVALID; ++arc)
-            neighbours.insert(g.graph.target(arc));
+        {
+            outDegree += 1.0;
+            if (neighbours.count(g.graph.target(arc)) == 1)
+                reciprocal += 1.0;
+            else
+                neighbours.insert(g.graph.target(arc));
+        }
         neighbours.erase(node);
         
         int nNeighbours = neighbours.size();
@@ -216,7 +227,7 @@ BEGIN_RCPP
                     else if (!g.weighted && !g.directed)
                         triangles += static_cast<double>(arcs(*neighbour1,*neighbour2) != INVALID);
                     else if (!g.weighted && g.directed)
-                        triangles += static_cast<double>(arcs(*neighbour1,*neighbour2) != INVALID) + static_cast<double>(arcs(*neighbour2,*neighbour1) != INVALID);
+                        triangles += static_cast<double>(((arcs(node,*neighbour1) != INVALID) + (arcs(*neighbour1,node) != INVALID)) * ((arcs(*neighbour1,*neighbour2) != INVALID) + (arcs(*neighbour2,*neighbour1) != INVALID)) * ((arcs(node,*neighbour2) != INVALID) + (arcs(*neighbour2,node) != INVALID)));
                     else if (g.weighted && g.directed)
                         throw std::domain_error("Clustering coefficient is not implemented for directed, weighted graphs");
                     else if (method == "onnela")
@@ -236,8 +247,10 @@ BEGIN_RCPP
             
             if (g.weighted && method == "barrat")
                 result[g.indices[node]] = triangles / (strength * static_cast<double>(nNeighbours - 1));
+            else if (g.directed)
+                result[g.indices[node]] = 0.5 * triangles / static_cast<double>((inDegree + outDegree) * (inDegree + outDegree - 1) - 2 * reciprocal);
             else
-                result[g.indices[node]] = (g.directed ? 0.5 : 1.0) * triangles / static_cast<double>(nNeighbours * (nNeighbours - 1));
+                result[g.indices[node]] = triangles / static_cast<double>(nNeighbours * (nNeighbours - 1));
         }
     }
     
