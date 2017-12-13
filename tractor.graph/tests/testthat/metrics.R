@@ -27,7 +27,9 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
         expect_equivalent(t_graph$getConnectedVertices(), i_connectedVertices)
         
         # Edge Density
-        expect_equal(t_graph$getEdgeDensity(), igraph::graph.density(i_graph))
+        t_density <- t_graph$getEdgeDensity(selfConnections=t_graph$isSelfConnected())
+        i_density <- igraph::edge_density(i_graph, loops=t_graph$isSelfConnected())
+        expect_equal(t_density, i_density)
     })
     
     test_that("shortest paths match", {
@@ -44,11 +46,17 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
         expect_equal(t_graph$getMeanShortestPath(), i_mean_shortest)
     })
     
-    test_that("clustering coefficients and efficiencies match", {
-        # igraph returns NaN when there are no triangles
-        i_clustering <- igraph::transitivity(i_graph, "barrat", isolates="zero")
-        expect_equal(t_graph$getClusteringCoefficients(method="barrat"), i_clustering)
-        
+    test_that("clustering coefficients match", {
+        # Directed clustering coefficients are not supported by igraph
+        if (!t_graph$isDirected())
+        {
+            # igraph returns NaN when there are no triangles
+            i_clustering <- igraph::transitivity(i_graph, "barrat", isolates="zero")
+            expect_equal(t_graph$getClusteringCoefficients(method="barrat"), i_clustering)
+        }
+    })
+    
+    test_that("global efficiency matches", {
         if (t_graph$isWeighted())
             igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
         
@@ -59,20 +67,21 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
     })
     
     test_that("betweenness centrality matches", {
-        if (t_graph$isDirected())
-            skip("Betweenness centrality is not supported for directed graphs")
-        if (t_graph$isWeighted())
-            igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
+        # Betweenness centrality is not supported for directed graphs
+        if (!t_graph$isDirected())
+        {
+            if (t_graph$isWeighted())
+                igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
         
-        t_bc <- structure(betweennessCentrality(t_graph$getAssociationMatrix()), dim=NULL)
-        i_bc <- igraph::betweenness(i_graph)
-        expect_equal(t_bc, 2*i_bc)
+            t_bc <- structure(betweennessCentrality(t_graph$getAssociationMatrix()), dim=NULL)
+            i_bc <- igraph::betweenness(i_graph)
+            expect_equal(t_bc, 2*i_bc)
+        }
     })
     
     test_that("Laplacian matrices match", {
-        if (t_graph$isDirected())
-            skip("Laplacian matrix calculation is not supported for directed graphs")
-        
-        expect_equivalent(t_graph$getLaplacianMatrix(), igraph::laplacian_matrix(i_graph,sparse=FALSE))
+        # Laplacian matrix calculation is not supported for directed graphs
+        if (!t_graph$isDirected())
+            expect_equivalent(t_graph$getLaplacianMatrix(), igraph::laplacian_matrix(i_graph,sparse=FALSE))
     })
 }
