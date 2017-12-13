@@ -46,8 +46,8 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
     
     test_that("clustering coefficients and efficiencies match", {
         # igraph returns NaN when there are no triangles
-        i_clustering <- igraph::transitivity(i_graph, "barrat")
-        expect_equal(t_graph$getClusteringCoefficients(method="barrat"), ifelse(is.nan(i_clustering),0,i_clustering))
+        i_clustering <- igraph::transitivity(i_graph, "barrat", isolates="zero")
+        expect_equal(t_graph$getClusteringCoefficients(method="barrat"), i_clustering)
         
         if (t_graph$isWeighted())
             igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
