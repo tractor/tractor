@@ -139,6 +139,14 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     isDirected = function () { return (directed) },
     
+    isSelfConnected = function ()
+    {
+        if (nrow(edges) == 0)
+            return (FALSE)
+        else
+            return (any(edges[,1] == edges[,2]))
+    },
+    
     isWeighted = function () { return (!all(is.na(edgeWeights) | (edgeWeights %in% c(0,1)))) },
     
     map = function (fun, ..., matchEdges = FALSE)
