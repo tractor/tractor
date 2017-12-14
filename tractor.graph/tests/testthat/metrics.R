@@ -41,7 +41,7 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
         expect_equivalent(t_graph$getShortestPathMatrix(), i_shortest_paths)
         
         # Mean Shortest Path
-        nonzero <- (i_shortest_paths > 0)
+        nonzero <- is.finite(i_shortest_paths) & (i_shortest_paths != 0)
         i_mean_shortest <- sum(i_shortest_paths[nonzero]) / sum(nonzero)
         expect_equal(t_graph$getMeanShortestPath(), i_mean_shortest)
     })
