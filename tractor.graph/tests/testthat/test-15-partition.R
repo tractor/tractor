@@ -4,20 +4,25 @@ reportr::setOutputLevel(Warning)
 
 test_that("partitioning works as expected", {
     graph <- readGraphFile("graph")
-    graph$map(function(x) ifelse(x==0,0L,1L))
+    graph$binarise()
     
-    membershipMatches <- function (l, v) {
-        all(sapply(l, function(i) allEqual(v[i])))
+    membershipMatches <- function (a, b) {
+        all(sapply(unique(a), function(x) allEqual(b[a==x])))
     }
     
     t_partition <- partitionGraph(graph)
+    expect_equal(t_partition$getMethod(), "modularity")
+    expect_equal(t_partition$nCommunities(), 3L)
+    expect_true(all(t_partition$getVertexWeights() %in% 0:1))
     i_partition <- igraph::cluster_leading_eigen(as(graph, "igraph"))
-    expect_true(membershipMatches(t_partition, i_partition$membership))
+    expect_true(membershipMatches(t_partition$getVertexMemberships(), i_partition$membership))
+    expect_equal(modularity(graph,t_partition), igraph::modularity(i_partition))
     
     graph <- randomGraph(10, M=20)
     t_partition <- partitionGraph(graph)
     i_partition <- igraph::cluster_leading_eigen(as(graph, "igraph"))
-    expect_true(membershipMatches(t_partition, i_partition$membership))
+    expect_true(membershipMatches(t_partition$getVertexMemberships(), i_partition$membership))
+    expect_equal(modularity(graph,t_partition), igraph::modularity(i_partition))
 })
 
 test_that("principal network decomposition works", {

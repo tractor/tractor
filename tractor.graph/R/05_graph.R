@@ -23,7 +23,11 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         return (object)
     },
     
+    binarise = function () { .self$map(function(x) ifelse(x==0, 0L, 1L)) },
+    
     getConnectedVertices = function () { return (sort(unique(as.vector(edges)))) },
+    
+    getAdjacencyMatrix = function () { return (ifelse(.self$getAssociationMatrix()==0, 0L, 1L)) },
     
     getAssociationMatrix = function ()
     {
@@ -308,6 +312,11 @@ setAs("matrix", "Graph", function (from) asGraph(from))
 asGraph <- function (x, ...)
 {
     UseMethod("asGraph")
+}
+
+asGraph.Graph <- function (x, ...)
+{
+    return (x)
 }
 
 asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections = TRUE, nVertices = NULL, ...)
