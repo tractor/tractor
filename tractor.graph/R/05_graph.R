@@ -397,7 +397,7 @@ setMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., dro
 setReplaceMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, ..., value) return (x$map("[<-", value=value)))
 setReplaceMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., value) return (x$map("[<-", i=i, value=value)))
 setReplaceMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., value) return (x$map("[<-", j=j, value=value)))
-setReplaceMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., value) return (x$map("[<-", i, j, value)))
+setReplaceMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., value) return (x$map("[<-", i, j, value=value)))
 
 setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useNames = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
