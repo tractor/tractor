@@ -10,19 +10,18 @@ test_that("partitioning works as expected", {
         all(sapply(unique(a), function(x) allEqual(b[a==x])))
     }
     
-    t_partition <- partitionGraph(graph)
-    expect_equal(t_partition$getMethod(), "modularity")
-    expect_equal(t_partition$nCommunities(), 3L)
-    expect_true(all(t_partition$getVertexWeights() %in% 0:1))
-    i_partition <- igraph::cluster_leading_eigen(as(graph, "igraph"))
-    expect_true(membershipMatches(t_partition$getVertexMemberships(), i_partition$membership))
-    expect_equal(modularity(graph,t_partition), igraph::modularity(i_partition))
+    t_partitioned <- partitionGraph(graph, method="modularity")
+    expect_equal(t_partitioned$nCommunities(), 3L)
+    expect_true(all(t_partitioned$getVertexWeights() %in% 0:1))
+    i_partitioned <- igraph::cluster_leading_eigen(as(graph, "igraph"))
+    expect_true(membershipMatches(t_partitioned$getVertexMemberships(), i_partitioned$membership))
+    expect_equal(modularity(t_partitioned), igraph::modularity(i_partitioned))
     
     graph <- randomGraph(10, M=20)
-    t_partition <- partitionGraph(graph)
-    i_partition <- igraph::cluster_leading_eigen(as(graph, "igraph"))
-    expect_true(membershipMatches(t_partition$getVertexMemberships(), i_partition$membership))
-    expect_equal(modularity(graph,t_partition), igraph::modularity(i_partition))
+    t_partitioned <- partitionGraph(graph, method="modularity")
+    i_partitioned <- igraph::cluster_leading_eigen(as(graph, "igraph"))
+    expect_true(membershipMatches(t_partitioned$getVertexMemberships(), i_partitioned$membership))
+    expect_equal(modularity(t_partitioned), igraph::modularity(i_partitioned))
 })
 
 test_that("principal network decomposition works", {

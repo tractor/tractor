@@ -1,14 +1,38 @@
-GraphPartition <- setRefClass("GraphPartition", contains="SerialisableObject", fields=list(method="character",communityCount="integer",vertexWeights="matrix",communityWeights="numeric"), methods=list(
-    initialize = function (method = "none", communityCount = 0, vertexWeights = emptyMatrix(), communityWeights = numeric(0), ...)
+PartitionedGraph <- setRefClass("PartitionedGraph", contains="Graph", fields=list(vertexWeights="matrix",communityWeights="numeric"), methods=list(
+    initialize = function (graph = NULL, vertexWeights = emptyMatrix(), communityWeights = numeric(0), ...)
     {
-        initFields(method=method, communityCount=communityCount, vertexWeights=vertexWeights, communityWeights=communityWeights)
+        if (!is.null(graph))
+            import(graph, "Graph")
+        else
+            callSuper(...)
+        
+        if (nrow(vertexWeights) != vertexCount)
+            report(OL$Error, "Vertex weight matrix should have #{vertexCount} rows (one per vertex)")
+        if (length(communityWeights) > 0 && length(communityWeights) != ncol(vertexWeights))
+            report(OL$Error, "Inputs don't agree on the number of communities")
+        
+        initFields(vertexWeights=vertexWeights, communityWeights=communityWeights)
+    },
+    
+    getCommunities = function (i = NULL)
+    {
+        if (is.null(i))
+            lapply(seq_len(1:ncol(vertexWeights)), function(j) which(communityWeights[,j] != 0))
+        else if (length(i) == 1)
+            which(communityWeights[,i] != 0)
+        else
+            lapply(i, function(j) which(communityWeights[,j] != 0))
     },
     
     getCommunitySizes = function () { return (colSums(vertexWeights != 0)) },
     
-    getCommunityWeights = function () { return (communityWeights) },
-    
-    getMethod = function () { return (method) },
+    getCommunityWeights = function ()
+    {
+        if (length(communityWeights) == 0)
+            return (rep(1, communityCount))
+        else
+            return (communityWeights)
+    },
     
     getVertexMemberships = function ()
     {
@@ -28,27 +52,41 @@ GraphPartition <- setRefClass("GraphPartition", contains="SerialisableObject", f
     
     getVertexWeights = function () { return (vertexWeights) },
     
-    nCommunities = function () { return (communityCount) },
-    
-    nVertices = function () { return (nrow(vertexWeights)) }
+    nCommunities = function () { return (ncol(vertexWeights)) }
 ))
 
-asGraphPartition <- function (x, ...)
+asPartitionedGraph <- function (x, ...)
 {
-    UseMethod("asGraphPartition")
+    UseMethod("asPartitionedGraph")
 }
 
-asGraphPartition.list <- function (x, method = "unknown", ...)
+asPartitionedGraph.PartitionedGraph <- function (x, ...)
 {
-    nVertices <- do.call(max, c(x, list(na.rm=TRUE)))
-    communityCount <- length(x)
-    vertexWeights <- do.call(cbind, lapply(seq_along(x), function(i) {
-        column <- rep(0L, nVertices)
-        column[x[[i]]] <- 1L
-        return (column)
-    }))
+    return (x)
+}
+
+asPartitionedGraph.Graph <- function (x, vertexWeights, communities, communityWeights = numeric(0), ...)
+{
+    if (missing(vertexWeights) && missing(communities))
+        vertexWeights <- matrix(1, nrow=x$nVertices(), ncol=1L)
+    else if (missing(vertexWeights) && !missing(communities))
+    {
+        vertexWeights <- do.call(cbind, lapply(seq_along(communities), function(i) {
+            column <- rep(0L, x$nVertices())
+            column[communities[[i]]] <- 1L
+            return (column)
+        }))
+    }
     
-    GraphPartition$new(method=method, communityCount=communityCount, vertexWeights=vertexWeights, communityWeights=numeric(0))
+    PartitionedGraph$new(x, vertexWeights=vertexWeights, communityWeights=communityWeights)
+}
+
+asGraph.PartitionedGraph <- function (x, strict = FALSE, ...)
+{
+    if (strict)
+        return (x$export("Graph"))
+    else
+        return (x)
 }
 
 modularityMatrix <- function (graph)
@@ -64,15 +102,11 @@ modularityMatrix <- function (graph)
     return (modularityMatrix)
 }
 
-modularity <- function (graph, partition)
+modularity <- function (graph, ...)
 {
-    graph <- asGraph(graph)
-    partition <- as(partition, "GraphPartition")
+    graph <- asPartitionedGraph(graph, ...)
     
-    if (graph$nVertices() != partition$nVertices())
-        report(OL$Error, "Number of vertices is not the same in the graph and partition objects")
-    
-    memberships <- partition$getVertexMemberships()
+    memberships <- graph$getVertexMemberships()
     modularity <- sum(modularityMatrix(graph) * outer(memberships, memberships, function(x,y) ifelse(x==y,1,0))) / (2 * graph$nEdges())
     
     return (modularity)
@@ -80,9 +114,7 @@ modularity <- function (graph, partition)
 
 partitionGraph <- function (graph, method = "modularity")
 {
-    if (!is(graph, "Graph"))
-        report(OL$Error, "The specified graph is not a valid Graph object")
-    
+    graph <- asGraph(graph, strict=TRUE)
     method <- match.arg(method)
     
     if (method == "modularity")
@@ -108,9 +140,9 @@ partitionGraph <- function (graph, method = "modularity")
                 return (list(indices))
         }
         
-        partitionList <- findPartition(graph$getConnectedVertices())
+        communities <- findPartition(graph$getConnectedVertices())
         report(OL$Info, "Graph has been partitioned into #{length(partition)} parts, containing #{implode(sapply(partition,length),sep=', ',finalSep=' and ')} vertices")
         
-        return (asGraphPartition(partitionList, method=method))
+        return (asPartitionedGraph(graph, communities=communities))
     }
 }
