@@ -29,7 +29,7 @@ runExperiment <- function ()
             graph <- thresholdEdges(graph, edgeWeightThreshold, ignoreSign=TRUE)
         
         partition <- partitionGraph(graph, method=method)
-        subgraphs <- lapply(partition, function(x) inducedSubgraph(graph,x))
+        subgraphs <- lapply(partition$getCommunities(), function(x) inducedSubgraph(graph,x))
         serialiseReferenceObject(subgraphs, outputFileName)
     }
 }

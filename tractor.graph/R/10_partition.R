@@ -17,11 +17,11 @@ PartitionedGraph <- setRefClass("PartitionedGraph", contains="Graph", fields=lis
     getCommunities = function (i = NULL)
     {
         if (is.null(i))
-            lapply(seq_len(1:ncol(vertexWeights)), function(j) which(communityWeights[,j] != 0))
+            lapply(seq_len(ncol(vertexWeights)), function(j) which(vertexWeights[,j] != 0))
         else if (length(i) == 1)
-            which(communityWeights[,i] != 0)
+            which(vertexWeights[,i] != 0)
         else
-            lapply(i, function(j) which(communityWeights[,j] != 0))
+            lapply(i, function(j) which(vertexWeights[,j] != 0))
     },
     
     getCommunitySizes = function () { return (colSums(vertexWeights != 0)) },
@@ -79,6 +79,11 @@ asPartitionedGraph.Graph <- function (x, vertexWeights, communities, communityWe
     }
     
     PartitionedGraph$new(x, vertexWeights=vertexWeights, communityWeights=communityWeights)
+}
+
+asPartitionedGraph.matrix <- function (x, ...)
+{
+    asPartitionedGraph.Graph(asGraph.matrix(x), ...)
 }
 
 asGraph.PartitionedGraph <- function (x, strict = FALSE, ...)
@@ -141,7 +146,7 @@ partitionGraph <- function (graph, method = "modularity")
         }
         
         communities <- findPartition(graph$getConnectedVertices())
-        report(OL$Info, "Graph has been partitioned into #{length(partition)} parts, containing #{implode(sapply(partition,length),sep=', ',finalSep=' and ')} vertices")
+        report(OL$Info, "Graph has been partitioned into #{length(communities)} parts, containing #{implode(sapply(communities,length),sep=', ',finalSep=' and ')} vertices")
         
         return (asPartitionedGraph(graph, communities=communities))
     }
