@@ -94,6 +94,13 @@ asGraph.PartitionedGraph <- function (x, strict = FALSE, ...)
         return (x)
 }
 
+setMethod("[[", signature(x="PartitionedGraph",i="ANY"), function (x,i) {
+    index <- as.integer(i)
+    if (length(index) != 1)
+        report(OL$Error, "Index must be a single integer")
+    return (inducedSubgraph(x, vertices=x$getCommunities(index)))
+})
+
 modularityMatrix <- function (graph)
 {
     graph <- asGraph(graph)
@@ -150,4 +157,18 @@ partitionGraph <- function (graph, method = "modularity")
         
         return (asPartitionedGraph(graph, communities=communities))
     }
+}
+
+applyPartition <- function (partition, graph)
+{
+    partition <- asPartitionedGraph(partition)
+    graph <- asGraph(graph, strict=TRUE)
+    
+    if (partition$nVertices() != graph$nVertices())
+        report(OL$Error, "Number of vertices must match the partitioned graph")
+    
+    # Community weights are the eigenvalues for principal networks, or the sum of vertex strengths within communities
+    vertexWeights <- partition$getVertexWeights()
+    communityWeights <- t(vertexWeights) %*% graph$getAssociationMatrix() %*% vertexWeights
+    return (asPartitionedGraph(graph, vertexWeights=vertexWeights, communityWeights=communityWeights))
 }
