@@ -29,7 +29,7 @@ PartitionedGraph <- setRefClass("PartitionedGraph", contains="Graph", fields=lis
     getCommunityWeights = function ()
     {
         if (length(communityWeights) == 0)
-            return (rep(1, communityCount))
+            return (rep(1, .self$nCommunities()))
         else
             return (communityWeights)
     },
