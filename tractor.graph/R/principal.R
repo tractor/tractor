@@ -1,20 +1,3 @@
-.averageAndDecomposeGraphs <- function (graphs, setDiagonal = TRUE)
-{
-    nGraphs <- length(graphs)
-    if (nGraphs == 1)
-        meanConnectionMatrix <- graphs[[1]]$getAssociationMatrix()
-    else
-        meanConnectionMatrix <- Reduce("+", lapply(graphs, function(x) x$getAssociationMatrix())) / nGraphs
-    
-    if (setDiagonal)
-        diag(meanConnectionMatrix) <- pmax(apply(meanConnectionMatrix,1,max,na.rm=TRUE), apply(meanConnectionMatrix,2,max,na.rm=TRUE))
-    
-    eigensystem <- eigen(meanConnectionMatrix)
-    eigensystem$matrix <- meanConnectionMatrix
-    
-    return (eigensystem)
-}
-
 principalNetworks <- function (x, ...)
 {
     UseMethod("principalNetworks")
@@ -37,88 +20,58 @@ principalNetworks.Graph <- function (x, ...)
 }
 
 # One or more graphs in a list
-principalNetworks.list <- function (x, components = NULL, eigenvalueThreshold = NULL, loadingThreshold = 0.1, iterations = 0, confidence = 0.95, edgeWeightThreshold = 0.2, dropTrivial = TRUE, setDiagonal = TRUE)
+principalNetworks.list <- function (x, components = NULL, replicates = 0L, reference = NULL)
 {
-    if (!is(x[[1]], "Graph"))
-        report(OL$Error, "The specified list does not seem to contain Graph objects")
-    if (length(x) == 1 && iterations > 0)
+    if (length(x) == 1 && replicates > 0)
     {
         flag(OL$Warning, "Bootstrapping cannot be performed with only one graph")
-        iterations <- 0
+        replicates <- 0
     }
     
     nGraphs <- length(x)
-    eigensystem <- .averageAndDecomposeGraphs(x)
-    associationMatrix <- eigensystem$matrix
-    nComponents <- length(eigensystem$values)
+    if (!is.null(reference))
+        reference <- asPartitionedGraph(reference)
+    if (is.null(components))
+    {
+        if (is.null(reference))
+            components <- x[[1]]$nVertices()
+        else
+            components <- reference$nCommunities()
+    }
+    components <- seq_len(components)
+    nComponents <- length(components)
+    
+    meanAssociationMatrix <- Reduce("+", lapply(x,as.matrix)) / nGraphs
+    eigensystem <- eigen(meanAssociationMatrix)
     
     # Check for substantially negative eigenvalues
     if (any(eigensystem$values < -sqrt(.Machine$double.eps)))
         flag(OL$Warning, "Connection matrix is not positive semidefinite")
     
-    # If no eigenvalue threshold is given, choose an "equal share" threshold
-    if (is.null(eigenvalueThreshold))
-        eigenvalueThreshold <- mean(eigensystem$values, na.rm=TRUE)
-    
-    if (iterations > 0)
-    {
-        report(OL$Info, "Bootstrapping loading matrix with threshold ", signif(loadingThreshold,3), " and confidence ", confidence)
-        bootstrapResult <- bootstrapLoadings(x, iterations, loadingThreshold, eigenvalueThreshold, confidence)
-        if (is.null(components))
-            components <- which(bootstrapResult$values$salient)
-        loadings <- structure(bootstrapResult$vectors$estimate, salient=bootstrapResult$vectors$salient)
-    }
+    if (is.null(reference))
+        permutation <- components
     else
     {
-        report(OL$Info, "Using fixed loading threshold of ", signif(loadingThreshold,3))
-        if (is.null(components))
-            components <- which(eigensystem$values > eigenvalueThreshold)
-        loadings <- structure(eigensystem$vectors, salient=abs(eigensystem$vectors)>loadingThreshold)
+        match <- matchLoadings(eigensystem$vectors[,components], reference$getVertexWeights()[,components])
+        permutation <- attr(match, "permutation")
     }
     
-    # Arrange for the eigenvector components to always sum to a positive value over salient elements
-    for (i in seq_len(ncol(loadings)))
-        loadings[,i] <- loadings[,i] * ifelse(sum(loadings[attr(loadings,"salient")[,i],i]) < 0, -1, 1)
+    partitionedGraph <- PartitionedGraph$new(asGraph(meanAssociationMatrix), vertexWeights=eigensystem$vectors[,components[permutation]], communityWeights=eigensystem$values[components[permutation]])
+    result <- list(graph=partitionedGraph)
     
-    rownames(loadings) <- x[[1]]$getVertexAttributes("name")
-    colnames(loadings) <- paste("PN", 1:nComponents, sep="")
-    
-    report(OL$Info, "Component graphs ", implode(components,sep=", ",finalSep=" and ",ranges=TRUE), " have eigenvalues above threshold")
-    
-    # Keep components which contain at least one connection between vertices
-    if (dropTrivial)
+    if (replicates > 0)
     {
-        nontrivial <- sapply(components, function(i) {
-            m <- eigensystem$values[i] * (loadings[,i] %o% loadings[,i])
-            v <- which(attr(loadings,"salient")[,i])
-            m <- m[v,v]
-            return (any(m >= edgeWeightThreshold & (upper.tri(m) | lower.tri(m))))
-        })
+        bootstrap <- boot::boot(x, function (data,indices) {
+            current <- principalNetworks.list(data[indices], components=nComponents, reference=result$graph)
+            return (c(partitionedGraph$getCommunityWeights(), as.vector(partitionedGraph$getVertexWeights())))
+        }, replicates)
         
-        report(OL$Info, "Component graphs ", implode(components[!nontrivial],sep=", ",finalSep=" and ",ranges=TRUE), " are trivial and will be discarded")
-        components <- components[nontrivial]
+        # Bootstrapped community and vertex weights
+        result$bcw <- bootstrap$t[,components]
+        result$bvw <- structure(bootstrap$t[,-components], dim=c(replicates,nrow(meanAssociationMatrix),nComponents))
     }
     
-    # Calculate the connection matrices for each component (including ones to be discarded later)
-    fullMatrices <- lapply(1:nComponents, function(i) {
-        m <- eigensystem$values[i] * (eigensystem$vectors[,i] %o% eigensystem$vectors[,i])
-        m[is.na(associationMatrix)] <- NA
-        return (m)
-    })
-    
-    # Calculate residual association matrices after subtracting out higher components
-    residualMatrices <- Reduce("-", fullMatrices, init=associationMatrix, accumulate=TRUE)
-    residualMatrices <- residualMatrices[-1]
-    residualGraphs <- lapply(residualMatrices[components], function(m) x[[1]]$copy()$setAssociationMatrix(m))
-    names(residualGraphs) <- paste("PN", components, sep="")
-    
-    verticesToKeep <- attr(loadings, "salient")
-    componentGraphs <- lapply(components, function(i) inducedSubgraph(x[[1]]$copy()$setAssociationMatrix(fullMatrices[[i]]), which(verticesToKeep[,i])))
-    names(componentGraphs) <- paste("PN", components, sep="")
-    
-    loadings <- structure(loadings[,components], salient=attr(loadings,"salient")[,components])
-    
-    return (list(eigenvalues=eigensystem$values, eigenvectors=eigensystem$vectors, loadings=loadings, eigenvalueThreshold=eigenvalueThreshold, loadingThreshold=loadingThreshold, edgeWeightThreshold=edgeWeightThreshold, components=components, componentGraphs=componentGraphs, residualGraphs=residualGraphs, scores=NULL))
+    return (result)
 }
 
 printLoadings <- function (loadings, threshold = 0.1, ignoreAttribute = FALSE)
@@ -179,40 +132,4 @@ matchLoadings <- function (newLoadings, refLoadings)
     finalLoadings[,toNegate] <- (-finalLoadings[,toNegate])
     
     return (structure(finalLoadings, permutation=permutation, cosines=abs(finalCosines)))
-}
-
-bootstrapLoadings <- function (graphs, iterations = 1000, loadingThreshold = 0, eigenvalueThreshold = 1, confidence = 0.95)
-{
-    if (!is.list(graphs))
-        report(OL$Error, "Graphs must be specified in a list")
-    if (length(graphs) < 2)
-        report(OL$Error, "At least two graphs must be specified")
-    
-    reference <- .averageAndDecomposeGraphs(graphs)
-    allValues <- array(NA, dim=c(length(reference$values),iterations))
-    allVectors <- array(NA, dim=c(dim(reference$vectors),iterations))
-    
-    for (i in 1:iterations)
-    {
-        sample <- sample(seq_along(graphs), replace=TRUE)
-        current <- .averageAndDecomposeGraphs(graphs[sample])
-        match <- matchLoadings(current$vectors, reference$vectors)
-        allValues[,i] <- current$values[attr(match,"permutation")]
-        allVectors[,,i] <- match
-        
-        if (i %% 100 == 0)
-            report(OL$Verbose, "Done ", i)
-    }
-    
-    quantiles <- c(0,confidence) + (1-confidence)/2
-    
-    limits <- apply(allValues, 1, quantile, quantiles, na.rm=TRUE, names=FALSE)
-    salient <- limits[1,] > eigenvalueThreshold | limits[2,] < (-eigenvalueThreshold)
-    values <- list(estimate=reference$values, limits=t(limits), salient=salient)
-    
-    limits <- apply(allVectors, 1:2, quantile, quantiles, na.rm=TRUE, names=FALSE)
-    salient <- limits[1,,] > loadingThreshold | limits[2,,] < (-loadingThreshold)
-    vectors <- list(estimate=reference$vectors, limits=aperm(limits,c(2,3,1)), salient=salient)
-    
-    return (list(values=values, vectors=vectors))
 }

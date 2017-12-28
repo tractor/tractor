@@ -6,7 +6,7 @@ Author: Jon Clayden, Lena Dorfschmidt and Fani Deligianni
 Maintainer: Jon Clayden <code@clayden.org>
 Depends: R (>= 2.12.1), graphics, grDevices, methods, stats, utils
 Imports: ore, reportr, tractor.base, Rcpp
-Suggests: lattice, igraph, testthat
+Suggests: lattice, boot, igraph, testthat
 LinkingTo: Rcpp
 Description: The tractor.graph package provides methods for creating and manipulating graphs based on information derived from medical images.
 Encoding: UTF-8
