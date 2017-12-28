@@ -37,6 +37,9 @@ PartitionedGraph <- setRefClass("PartitionedGraph", contains="Graph", fields=lis
     getVertexMemberships = function ()
     {
         memberships <- apply(vertexWeights, 1, function(x) {
+            if (all(x == 0))
+                return (NA)
+            
             maxWeight <- which(x == max(x,na.rm=TRUE))
             if (length(maxWeight) > 1)
             {
@@ -52,7 +55,31 @@ PartitionedGraph <- setRefClass("PartitionedGraph", contains="Graph", fields=lis
     
     getVertexWeights = function () { return (vertexWeights) },
     
-    nCommunities = function () { return (ncol(vertexWeights)) }
+    mask = function (vertices = NULL, communities = NULL)
+    {
+        if (!is.null(vertices))
+            .self$vertexWeights <- .self$vertexWeights * as.logical(vertices)
+        if (!is.null(communities))
+            .self$communityWeights <- .self$communityWeights * as.logical(communities)
+        
+        zeroWeightCommunities <- which(.self$communityWeights == 0)
+        if (length(zeroWeightCommunities) > 0)
+        {
+            .self$vertexWeights <- .self$vertexWeights[,-zeroWeightCommunities]
+            .self$communityWeights <- .self$communityWeights[-zeroWeightCommunities]
+        }
+        
+        invisible(.self)
+    },
+    
+    nCommunities = function () { return (ncol(vertexWeights)) },
+    
+    summarise = function ()
+    {
+        values <- c(callSuper(), "Number of communities"=.self$nCommunities(),
+                                 "Community coverage"=es("#{(1-sum(is.na(.self$getVertexMemberships()))/.self$nVertices())*100}%", round=2))
+        return (values)
+    }
 ))
 
 asPartitionedGraph <- function (x, ...)
