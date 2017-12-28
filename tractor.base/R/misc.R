@@ -189,6 +189,39 @@ deduplicate <- function (...)
     return (x)
 }
 
+#' Extract one or more elements from a list
+#' 
+#' Given a list-like first argument, this function extracts one or more of its
+#' elements. Numeric and character indexing are allowed.
+#' 
+#' @param list A list-like object, with a \code{[[} indexing method.
+#' @param index A vector of integers or strings, or \code{NULL}.
+#' @return If \code{index} is \code{NULL}, the whole list is returned.
+#'   Otherwise, if \code{index} has length one, the corresponding element is
+#'   extracted and returned. Otherwise a list containing the requested subset
+#'   is returned.
+#' 
+#' @note This function is not type-safe, in the sense that its return type
+#'   depends on its arguments. It should therefore be used with care.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
+indexList <- function (list, index = NULL)
+{
+    if (is.null(index))
+        return (list)
+    else if (length(index) == 1)
+        return (list[[index]])
+    else
+        return (list[index])
+}
+
 #' Functions for file name and path manipulation
 #' 
 #' Functions for expanding file paths, finding relative paths and ensuring that
