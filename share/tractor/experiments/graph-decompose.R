@@ -19,9 +19,11 @@ runExperiment <- function ()
     
     if (method == "principal-networks")
     {
-        decomposition <- principalNetworks(graph, eigenvalueThreshold=eigenvalueThreshold, loadingThreshold=loadingThreshold, edgeWeightThreshold=edgeWeightThreshold)
-        printLoadings(decomposition$loadings)
-        serialiseReferenceObject(decomposition$componentGraphs, outputFileName)
+        partition <- principalNetworks(graph)
+        partition$graph$mask(vertices=fx(abs(x) >= loadingThreshold), communities=fx(x >= eigenvalueThreshold))
+        printLoadings(partition$graph$getVertexWeights())
+        componentGraphs <- lapply(seq_len(partition$graph$nCommunities()), fi(thresholdEdges(partition$graph[[i]], edgeWeightThreshold, ignoreSign=TRUE)))
+        serialiseReferenceObject(componentGraphs, outputFileName)
     }
     else
     {
