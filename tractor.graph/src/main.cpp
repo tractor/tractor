@@ -99,6 +99,16 @@ void searchPaths (const RGraph &g, Algorithm &algorithm, NumericMatrix &result)
     }
 }
 
+RcppExport SEXP graphPointer (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed)
+{
+BEGIN_RCPP
+    RGraph *graph = new RGraph();
+    createGraph(as<int>(_nVertices), IntegerMatrix(_edges), NumericVector(_weights), as<bool>(_directed), *graph);
+    XPtr<RGraph> graphPtr(graph);
+    return graphPtr;
+END_RCPP
+}
+
 RcppExport SEXP shortestPaths (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed)
 {
 BEGIN_RCPP
