@@ -5,7 +5,7 @@
 }
 
 Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexCount="integer",vertexAttributes="list",vertexLocations="matrix",locationUnit="character",locationSpace="character",edges="matrix",edgeAttributes="list",edgeWeights="numeric",directed="logical"), methods=list(
-    initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = emptyMatrix(), locationUnit = "", locationSpace = "", edges = emptyMatrix(), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
+    initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = emptyMatrix(), locationUnit = "", locationSpace = "", edges = matrix(NA,0,2), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
     {
         object <- initFields(vertexCount=as.integer(vertexCount), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=locationUnit, locationSpace=locationSpace, edges=edges, edgeAttributes=edgeAttributes, edgeWeights=as.numeric(edgeWeights), directed=directed)
         
@@ -60,7 +60,15 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     getVertexAttributes = function (attributes = NULL) { indexList(vertexAttributes,attributes) },
     
-    getVertexLocations = function () { return (structure(vertexLocations, unit=locationUnit, space=locationSpace)) },
+    getVertexLocations = function ()
+    {
+        locs <- vertexLocations
+        if (locationUnit != "")
+            attr(locs, "unit") <- locationUnit
+        if (locationSpace != "")
+            attr(locs, "space") <- locationSpace
+        return (locs)
+    },
     
     getVertexLocationUnit = function () { return (locationUnit) },
     
@@ -264,6 +272,8 @@ asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections
     if (is.null(edgeList))
         edgeList <- (ncol(x) == 2)
     
+    vertexAttributes <- list()
+    
     if (edgeList)
     {
         if (is.null(directed))
@@ -312,9 +322,12 @@ asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections
         edges <- which(!is.na(x) & x != 0, arr.ind=TRUE)
         edgeWeights <- x[edges]
         dimnames(edges) <- NULL
+        
+        if (!is.null(colnames(x)) && !is.null(rownames(x)) && all(colnames(x) == rownames(x)))
+            vertexAttributes$name <- colnames(x)
     }
     
-    graph <- Graph$new(vertexCount=nVertices, edges=edges, edgeWeights=edgeWeights, directed=directed)
+    graph <- Graph$new(vertexCount=nVertices, edges=edges, edgeWeights=edgeWeights, directed=directed, vertexAttributes=vertexAttributes)
     
     return (graph)
 }
@@ -528,10 +541,10 @@ levelplot.Graph <- function (x, data = NULL, col = NULL, cex = NULL, order = NUL
     levelplot(submatrix, col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
 }
 
-inducedSubgraph <- function (graph, vertices = graph$getConnectedVertices())
+inducedSubgraph <- function (graph, vertices = connectedVertices(graph))
 {
-    if (!is(graph, "Graph"))
-        report(OL$Error, "Specified graph is not a valid Graph object")
+    graph <- asGraph(graph)
+    
     if (length(vertices) == 0)
         report(OL$Error, "At least one vertex must be retained")
     
@@ -566,8 +579,7 @@ inducedSubgraph <- function (graph, vertices = graph$getConnectedVertices())
 
 thresholdEdges <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted = TRUE, binarise = FALSE)
 {
-    if (!is(graph, "Graph"))
-        report(OL$Error, "Specified graph is not a valid Graph object")
+    graph <- asGraph(graph)
     
     nEdges <- graph$nEdges()
     edgeWeights <- graph$getEdgeWeights()

@@ -7,7 +7,7 @@ edgeDensity <- function (graph, selfConnections = FALSE)
     nEdges <- graph$nEdges() - ifelse(selfConnections, 0, sum(edges[,1]==edges[,2]))
     nPossibleEdges <- ifelse(graph$isDirected(), nVertices^2, nVertices*(nVertices+1)/2) - ifelse(selfConnections, 0, nVertices)
     
-    return (nEdges / nPossibleEdges)
+    return (ifelse(nPossibleEdges==0, NA, nEdges/nPossibleEdges))
 }
 
 vertexDegree <- function (graph, type = c("all","in","out"))
@@ -99,9 +99,7 @@ clusteringCoefficients <- function (graph, method = c("onnela","barrat"))
 
 graphEfficiency <- function (graph, type = c("global","local"))
 {
-    if (!is(graph, "Graph"))
-        report(OL$Error, "Specified graph is not a valid Graph object")
-    
+    graph <- asGraph(graph)
     type <- match.arg(type)
     
     v <- connectedVertices(graph)
