@@ -16,18 +16,18 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
         # Number of Edges
         expect_equal(t_graph$nEdges(), igraph::gsize(i_graph))
         
-        # First edge
-        expect_equivalent(t_graph$getEdge(1), drop(igraph::ends(i_graph,1)))
+        # First Edge
+        expect_equivalent(t_graph$getEdges(1), drop(igraph::ends(i_graph,1)))
         
         # Number of Vertices
         expect_equal(t_graph$nVertices(), igraph::gorder(i_graph))
     
-        # Connected Vertices
-        i_connectedVertices <- which(igraph::degree(i_graph) > 0)
-        expect_equivalent(t_graph$getConnectedVertices(), i_connectedVertices)
+        # Vertex Degree and Stength
+        expect_equivalent(vertexDegree(t_graph), igraph::degree(i_graph))
+        expect_equivalent(vertexStrength(t_graph), igraph::strength(i_graph))
         
         # Edge Density
-        t_density <- t_graph$getEdgeDensity(selfConnections=t_graph$isSelfConnected())
+        t_density <- edgeDensity(t_graph, selfConnections=t_graph$isSelfConnected())
         i_density <- igraph::edge_density(i_graph, loops=t_graph$isSelfConnected())
         expect_equal(t_density, i_density)
     })
@@ -38,12 +38,12 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
         
         # Shortest Path
         i_shortest_paths <- igraph::distances(i_graph, mode="out")
-        expect_equivalent(t_graph$getShortestPathMatrix(), i_shortest_paths)
+        expect_equivalent(shortestPaths(t_graph), i_shortest_paths)
         
         # Mean Shortest Path
         nonzero <- is.finite(i_shortest_paths) & (i_shortest_paths != 0)
         i_mean_shortest <- sum(i_shortest_paths[nonzero]) / sum(nonzero)
-        expect_equal(t_graph$getMeanShortestPath(), i_mean_shortest)
+        expect_equal(meanShortestPath(t_graph), i_mean_shortest)
     })
     
     test_that("clustering coefficients match", {
@@ -51,7 +51,7 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
         
         # igraph returns NaN when there are no triangles
         i_clustering <- igraph::transitivity(i_graph, "barrat", isolates="zero")
-        expect_equal(t_graph$getClusteringCoefficients(method="barrat"), i_clustering)
+        expect_equal(clusteringCoefficients(t_graph,method="barrat"), i_clustering)
     })
     
     test_that("global efficiency matches", {
@@ -77,6 +77,6 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
     
     test_that("Laplacian matrices match", {
         skip_if(t_graph$isDirected(), "Laplacian matrix calculation is not supported for directed graphs")
-        expect_equivalent(t_graph$getLaplacianMatrix(), igraph::laplacian_matrix(i_graph,sparse=FALSE))
+        expect_equivalent(laplacianMatrix(t_graph), igraph::laplacian_matrix(i_graph,sparse=FALSE))
     })
 }
