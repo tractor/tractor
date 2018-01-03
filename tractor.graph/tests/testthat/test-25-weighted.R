@@ -1,6 +1,6 @@
 context("Fuzz (weighted)")
 
-source("metrics.R")
+source("properties.R")
 
 graph <- randomGraph(10, weights=runif(20))
 

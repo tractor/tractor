@@ -1,6 +1,6 @@
 context("Fuzz (binary)")
 
-source("metrics.R")
+source("properties.R")
 
 graph <- randomGraph(10, M=20)
 

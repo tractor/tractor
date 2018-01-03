@@ -1,6 +1,6 @@
 context("Fuzz (disconnected)")
 
-source("metrics.R")
+source("properties.R")
 
 graph <- randomGraph(10, weights=runif(20))
 graph[,1] <- 0

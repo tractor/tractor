@@ -1,6 +1,6 @@
 context("Fuzz (directed)")
 
-source("metrics.R")
+source("properties.R")
 
 graph <- randomGraph(10, M=60, directed=TRUE)
 
