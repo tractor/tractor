@@ -1,3 +1,9 @@
+.graphPointer <- function (graph)
+{
+    graph <- asGraph(graph)
+    .Call("graphPointer", graph$nVertices(), graph$getEdges(), graph$getEdgeWeights(), graph$isDirected(), PACKAGE="tractor.graph")
+}
+
 Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexCount="integer",vertexAttributes="list",vertexLocations="matrix",locationUnit="character",locationSpace="character",edges="matrix",edgeAttributes="list",edgeWeights="numeric",directed="logical"), methods=list(
     initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = emptyMatrix(), locationUnit = "", locationSpace = "", edges = emptyMatrix(), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
     {
@@ -25,121 +31,51 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     binarise = function () { .self$map(function(x) ifelse(x==0, 0L, 1L)) },
     
-    getConnectedVertices = function () { return (sort(unique(as.vector(edges)))) },
-    
     getAdjacencyMatrix = function () { return (ifelse(.self$getAssociationMatrix()==0, 0L, 1L)) },
     
     getAssociationMatrix = function ()
     {
         associationMatrix <- matrix(0, nrow=vertexCount, ncol=vertexCount)
         if (!is.null(vertexAttributes$name))
-        {
-            rownames(associationMatrix) <- vertexAttributes$name
-            colnames(associationMatrix) <- vertexAttributes$name
-        }
+            dimnames(associationMatrix) <- list(vertexAttributes$name, vertexAttributes$name)
         associationMatrix[edges] <- edgeWeights
         if (!directed)
             associationMatrix[edges[,2:1]] <- edgeWeights
         return (associationMatrix)
     },
     
-    getClusteringCoefficients = function (method = c("onnela","barrat"))
+    getConnectedVertices = function () { return (sort(unique(as.vector(edges)))) },
+    
+    getEdges = function (expr)
     {
-        method <- match.arg(method)
-        .Call("clusteringCoefficients", vertexCount, edges, edgeWeights, directed, method, PACKAGE="tractor.graph")
-    },
-        
-    getEdge = function (i)
-    {
-        if (i < 0 || i > .self$nEdges())
-            return (NA)
-        else
-            return (edges[i,])
+        if (missing(expr))
+            return (edges)
+        result <- eval(substitute(expr), edgeAttributes, parent.frame())
+        return (edges[result,,drop=FALSE])
     },
     
-    getEdges = function () { return (edges) },
-    
-    getEdgeAttributes = function (attributes = NULL)
-    {
-        if (is.null(attributes))
-            return (edgeAttributes)
-        else if (length(attributes) == 1)
-            return (edgeAttributes[[attributes]])
-        else
-            return (edgeAttributes[attributes])
-    },
-    
-    getEdgeDensity = function (disconnectedVertices = FALSE, selfConnections = FALSE)
-    {
-        if (!disconnectedVertices)
-            nConnectedVertices <- length(.self$getConnectedVertices())
-        else
-            nConnectedVertices <- .self$nVertices()
-        
-        nEdges <- .self$nEdges() - ifelse(selfConnections, 0, sum(edges[,1]==edges[,2]))
-        nPossibleEdges <- ifelse(.self$isDirected(), nConnectedVertices^2, nConnectedVertices*(nConnectedVertices+1)/2) - ifelse(selfConnections, 0, nConnectedVertices)
-        
-        return (nEdges / nPossibleEdges)
-    },
+    getEdgeAttributes = function (attributes = NULL) { indexList(edgeAttributes,attributes) },
     
     getEdgeWeights = function () { return (edgeWeights) },
     
-    getLaplacianMatrix = function ()
-    {
-        if (directed)
-            report(OL$Error, "Laplacian matrix calculation for directed graphs is not yet implemented")
-        
-        associationMatrix <- .self$getAssociationMatrix()
-        degreeMatrix <- diag(colSums(associationMatrix))
-        return (degreeMatrix - associationMatrix)
-    },
+    getVertexAttributes = function (attributes = NULL) { indexList(vertexAttributes,attributes) },
     
-    getMeanShortestPath = function (ignoreInfinite = TRUE)
-    {
-        shortestPaths <- .self$getShortestPathMatrix()
-        if (ignoreInfinite)
-            shortestPaths[is.infinite(shortestPaths)] <- NA
-        return (mean(shortestPaths[!diag(vertexCount)], na.rm=TRUE))
-    },
-    
-    getNeighbourhoods = function (vertices = NULL, type = c("all","in","out"), simplify = TRUE)
-    {
-        type <- match.arg(type)
-        if (is.null(vertices))
-            vertices <- seq_len(vertexCount)
-        else if (is.character(vertices))
-            vertices <- match(vertices, vertexAttributes$name)
-        
-        neighbourhoods <- .Call("neighbourhoods", vertexCount, edges, edgeWeights, directed, vertices, type, PACKAGE="tractor.graph")
-        
-        if (simplify && length(neighbourhoods) == 1)
-            return (neighbourhoods[[1]])
-        else
-            return (neighbourhoods)
-    },
-    
-    getShortestPathMatrix = function ()
-    {
-        .Call("shortestPaths", vertexCount, edges, edgeWeights, directed, PACKAGE="tractor.graph")
-    },
-    
-    getVertexAttributes = function (attributes = NULL)
-    {
-        if (is.null(attributes))
-            return (vertexAttributes)
-        else if (length(attributes) == 1)
-            return (vertexAttributes[[attributes]])
-        else
-            return (vertexAttributes[attributes])
-    },
-    
-    getVertexDegree = function () { return (table(factor(edges, levels=1:vertexCount))) },
-    
-    getVertexLocations = function () { return (vertexLocations) },
+    getVertexLocations = function () { return (structure(vertexLocations, unit=locationUnit, space=locationSpace)) },
     
     getVertexLocationUnit = function () { return (locationUnit) },
     
     getVertexLocationSpace = function () { return (locationSpace) },
+    
+    getVertices = function (expr)
+    {
+        if (missing(expr))
+            return (seq_len(vertexCount))
+        result <- eval(substitute(expr), vertexAttributes, parent.frame())
+        if (is.logical(result) && length(result) == vertexCount)
+            return (which(result))
+        else
+            return (sort(as.integer(result)))
+    },
     
     isDirected = function () { return (directed) },
     
@@ -166,13 +102,6 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     nEdges = function () { return (nrow(edges)) },
     
     nVertices = function () { return (vertexCount) },
-    
-    normaliseEdgeWeights = function ()
-    {
-        if (.self$isWeighted())
-            .self$edgeWeights <- .self$edgeWeights / max(.self$edgeWeights,na.rm=TRUE)
-        invisible (.self)
-    },
     
     setAssociationMatrix = function (newMatrix, matchEdges = FALSE)
     {
@@ -253,8 +182,15 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     setVertexLocations = function (locs, unit, space)
     {
         .self$vertexLocations <- locs
-        .self$locationUnit <- unit
-        .self$locationSpace <- space
+        if (missing(unit) && !is.null(attr(locs,"unit")))
+            .self$locationUnit <- attr(locs, "unit")
+        else
+            .self$locationUnit <- unit
+        if (missing(space) && !is.null(attr(locs,"space")))
+            .self$locationSpace <- attr(locs, "space")
+        else
+            .self$locationSpace <- space
+        
         invisible(.self)
     },
     
@@ -269,8 +205,12 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         if (length(edgeAttribNames) == 0)
             edgeAttribNames <- "(none)"
         
-        values <- c(implode(properties,sep=", "), .self$nVertices(), .self$nEdges(), es("#{.self$getEdgeDensity()*100}%",round=2), implode(vertexAttribNames,sep=", "), implode(edgeAttribNames,sep=", "))
-        names(values) <- c("Graph properties", "Number of vertices", "Number of edges", "Edge density", "Vertex attributes", "Edge attributes")
+        values <- c("Graph properties"=implode(properties,sep=", "),
+                    "Number of vertices"=.self$nVertices(),
+                    "Number of edges"=.self$nEdges(),
+                    "Edge density"=es("#{edgeDensity(.self)*100}%",round=2),
+                    "Vertex attributes"=implode(vertexAttribNames,sep=", "),
+                    "Edge attributes"=implode(edgeAttribNames,sep=", "))
         return (values)
     }
 ))

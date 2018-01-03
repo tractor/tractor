@@ -140,7 +140,7 @@ modularityMatrix <- function (graph)
     
     adjacencyMatrix <- graph$getAdjacencyMatrix()
     diag(adjacencyMatrix) <- diag(adjacencyMatrix) * 2
-    degree <- graph$getVertexDegree()
+    degree <- vertexDegree(graph)
     nEdges <- graph$nEdges()
     modularityMatrix <- adjacencyMatrix - (degree %o% degree) / (2 * nEdges)
     
@@ -185,7 +185,7 @@ partitionGraph <- function (graph, method = "modularity")
                 return (list(indices))
         }
         
-        communities <- findPartition(graph$getConnectedVertices())
+        communities <- findPartition(connectedVertices(graph))
         report(OL$Info, "Graph has been partitioned into #{length(communities)} parts, containing #{implode(sapply(communities,length),sep=', ',finalSep=' and ')} vertices")
         
         return (asPartitionedGraph(graph, communities=communities))
