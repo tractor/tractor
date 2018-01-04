@@ -40,6 +40,9 @@ check-and-install-libs: install-libs
 lib/R/testthat:
 	@$(INSTALL) -c testthat
 
+lib/R/igraph:
+	@$(INSTALL) -c igraph
+
 install-base:
 	@$(INSTALL) tractor.base
 
@@ -94,7 +97,7 @@ test:
 dtest:
 	@cd tests && $(MAKE) debug-tests R=$(R)
 
-deeptest: lib/R/testthat
+deeptest: lib/R/testthat lib/R/igraph
 	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.graph
 	@$(MAKE) test
 
