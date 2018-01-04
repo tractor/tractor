@@ -37,6 +37,9 @@ install-libs: lib/.timestamp
 
 check-and-install-libs: install-libs
 
+lib/R/testthat:
+	@$(INSTALL) -c testthat
+
 install-base:
 	@$(INSTALL) tractor.base
 
