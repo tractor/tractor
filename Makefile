@@ -95,7 +95,7 @@ dtest:
 	@cd tests && $(MAKE) debug-tests R=$(R)
 
 deeptest: lib/R/testthat
-	@bin/tractor -i -v0 tests/scripts/unit-test tractor.graph
+	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.graph
 	@$(MAKE) test
 
 create-md5:
