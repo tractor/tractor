@@ -138,11 +138,10 @@ modularityMatrix <- function (graph)
 {
     graph <- asGraph(graph)
     
-    adjacencyMatrix <- graph$getAdjacencyMatrix()
-    diag(adjacencyMatrix) <- diag(adjacencyMatrix) * 2
-    degree <- vertexDegree(graph)
-    nEdges <- graph$nEdges()
-    modularityMatrix <- adjacencyMatrix - (degree %o% degree) / (2 * nEdges)
+    associationMatrix <- graph$getAssociationMatrix()
+    diag(associationMatrix) <- diag(associationMatrix) * 2
+    totalWeight <- sum(associationMatrix, na.rm=TRUE)
+    modularityMatrix <- associationMatrix - (vertexStrength(graph,"in") %o% vertexStrength(graph,"out")) / totalWeight
     
     return (modularityMatrix)
 }
@@ -152,7 +151,8 @@ modularity <- function (graph, ...)
     graph <- asPartitionedGraph(graph, ...)
     
     memberships <- graph$getVertexMemberships()
-    modularity <- sum(modularityMatrix(graph) * outer(memberships, memberships, function(x,y) ifelse(x==y,1,0))) / (2 * graph$nEdges())
+    matchingMembershipMatrix <- outer(memberships, memberships, fxy(ifelse(x==y,1,0)))
+    modularity <- sum(modularityMatrix(graph) * matchingMembershipMatrix) / (2 * sum(graph$getEdgeWeights(), na.rm=TRUE))
     
     return (modularity)
 }
@@ -164,8 +164,8 @@ partitionGraph <- function (graph, method = "modularity")
     
     if (method == "modularity")
     {
-        # Following Newman (PNAS, 2006)
-        nEdges <- graph$nEdges()
+        # Following Newman (PNAS, 2006), generalised to weighted graphs
+        totalWeight <- 2 * sum(graph$getEdgeWeights(), na.rm=TRUE)
         modularityMatrix <- modularityMatrix(graph)
         
         findPartition <- function (indices)
@@ -174,10 +174,10 @@ partitionGraph <- function (graph, method = "modularity")
             diag(modularitySubmatrix) <- diag(modularitySubmatrix) - rowSums(modularitySubmatrix)
             eigensystem <- eigen(modularitySubmatrix)
             
-            groupMembership <- sign(sign(eigensystem$vectors[,1]) + 0.5)
+            groupMembership <- ifelse(eigensystem$vectors[,1] >= 0, 1, -1)
             firstGroupIndices <- indices[which(groupMembership < 0)]
             secondGroupIndices <- indices[which(groupMembership >= 0)]
-            modularityIncrease <- (matrix(groupMembership,nrow=1) %*% modularitySubmatrix %*% matrix(groupMembership,ncol=1)) / (4 * nEdges)
+            modularityIncrease <- (matrix(groupMembership,nrow=1) %*% modularitySubmatrix %*% matrix(groupMembership,ncol=1)) / (2 * totalWeight)
             
             if (length(firstGroupIndices) > 0 && length(secondGroupIndices) > 0 && modularityIncrease > 0)
                 return (c(findPartition(firstGroupIndices), findPartition(secondGroupIndices)))

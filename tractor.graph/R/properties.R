@@ -17,13 +17,13 @@ vertexDegree <- function (graph, type = c("all","in","out"))
     
     type <- match.arg(type)
     if (!graph$isDirected())
-        return (rowSums(adjacencyMatrix) + diag(adjacencyMatrix))
+        return (rowSums(adjacencyMatrix,na.rm=TRUE) + diag(adjacencyMatrix))
     else if (type == "all")
-        return (rowSums(adjacencyMatrix) + colSums(adjacencyMatrix))
+        return (rowSums(adjacencyMatrix,na.rm=TRUE) + colSums(adjacencyMatrix,na.rm=TRUE))
     else if (type == "out")
-        return (rowSums(adjacencyMatrix))
+        return (rowSums(adjacencyMatrix,na.rm=TRUE))
     else
-        return (colSums(adjacencyMatrix))
+        return (colSums(adjacencyMatrix,na.rm=TRUE))
 }
 
 vertexStrength <- function (graph, type = c("all","in","out"))
@@ -33,13 +33,13 @@ vertexStrength <- function (graph, type = c("all","in","out"))
     
     type <- match.arg(type)
     if (!graph$isDirected())
-        return (rowSums(associationMatrix) + diag(associationMatrix))
+        return (rowSums(associationMatrix,na.rm=TRUE) + diag(associationMatrix))
     else if (type == "all")
-        return (rowSums(associationMatrix) + colSums(associationMatrix))
+        return (rowSums(associationMatrix,na.rm=TRUE) + colSums(associationMatrix,na.rm=TRUE))
     else if (type == "out")
-        return (rowSums(associationMatrix))
+        return (rowSums(associationMatrix,na.rm=TRUE))
     else
-        return (colSums(associationMatrix))
+        return (colSums(associationMatrix,na.rm=TRUE))
 }
 
 connectedVertices <- function (graph, type = c("all","in","out"))
