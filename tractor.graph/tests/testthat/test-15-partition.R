@@ -26,6 +26,9 @@ test_that("partitioning works as expected", {
 
 test_that("principal network decomposition works", {
     graph <- readGraphFile("graph")
-    pn <- principalNetworks(graph)
-    expect_equal(pn$graph$serialise(), deserialiseReferenceObject("principal.Rdata",raw=TRUE))
+    pn <- principalNetworks(graph)$graph$serialise()
+    ref <- deserialiseReferenceObject("principal.Rdata", raw=TRUE)
+    
+    expect_equal(abs(pn$vertexWeights), abs(ref$vertexWeights))
+    expect_equal(pn$communityWeights, ref$communityWeights)
 })
