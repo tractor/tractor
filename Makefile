@@ -97,9 +97,10 @@ test:
 dtest:
 	@cd tests && $(MAKE) debug-tests R=$(R)
 
-deeptest: lib/R/testthat lib/R/igraph
+utest: lib/R/testthat lib/R/igraph
 	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.graph
-	@$(MAKE) test
+
+deeptest: utest test
 
 create-md5:
 	@$(GIT) ls-files | grep -v -e '^lib/' -e '^md5.txt' -e '\.git' | xargs $(MD5) -r >md5.txt
