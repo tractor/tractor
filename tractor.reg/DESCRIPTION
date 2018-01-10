@@ -9,4 +9,5 @@ Description: The tractor.reg package provides functions for performing image reg
 Encoding: UTF-8
 LazyLoad: yes
 License: GPL-2
-URL: http://www.tractor-mri.org.uk
+URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
+BugReports: https://github.com/tractor/tractor/issues

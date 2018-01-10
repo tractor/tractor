@@ -14,5 +14,6 @@ Encoding: UTF-8
 LazyLoad: yes
 LazyData: yes
 License: GPL-2
-URL: http://www.tractor-mri.org.uk
+URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
+BugReports: https://github.com/tractor/tractor/issues
 RoxygenNote: 6.0.1
