@@ -1,40 +1,25 @@
-#' @rdname colourScales
-#' @export
-interpolatePalette <- function (colours, n, ...)
-{
-    rampFunction <- colorRamp(colours, ...)
-    colourMatrix <- round(rampFunction(0:(n-1)/(n-1)))
-    rgbStrings <- apply(colourMatrix, 1, function (x) sprintf("#%02X%02X%02X",x[1],x[2],x[3]))
-    return (rgbStrings)
-}
-
-#' Functions for working with colour scales or palettes
+#' Obtaining colour scales
 #' 
 #' The \code{getColourScale} function can be used to obtain a standard or
 #' customised colour scale for use in the package's image visualisation
-#' functions. A graded palette of colours between two or more key colours can
-#' be obtained using \code{interpolatePalette}.
+#' functions.
 #' 
 #' Colour scales can be specified in any of three ways. Firstly, by a single
 #' number, representing a predefined colour scale. Currently valid values are 1
 #' (greyscale, black background), 2 (red to yellow heat scale, red background),
 #' 3 (blue to red rainbow scale, blue background), 4 (blue to white to red
-#' diverging scale, white background), 5 (white to red, white background) and 6
-#' (white to blue, white background). Secondly, a single colour name can be
-#' given (see \code{\link{colours}}); in this case the background will be
-#' black. This is useful for binary images. Thirdly and most flexibly, a list
-#' with two named elements can be given: \code{colours}, a vector of colours
-#' representing the colour scale, perhaps created using \code{\link{rgb}}; and
-#' \code{background}, a single colour representing the background.
+#' diverging scale, white background), 5 (white to red, white background), 6
+#' (white to blue, white background) and 7 (yellow to orange to red). Secondly,
+#' a single colour name can be given (see \code{\link{colours}}); in this case
+#' the background will be black. This is useful for binary images. Thirdly, and
+#' most flexibly, a list with two named elements can be given: \code{colours},
+#' a vector of colours representing the colour scale, perhaps created using
+#' using the \code{shades} package; and \code{background}, a single colour
+#' representing the background.
 #' 
-#' @aliases getColourScale interpolatePalette
-#' @param n For \code{getColourScale}, a number, colour name or list (see
-#'   Details). For \code{interpolatePalette}, a single integer specifying the
-#'   length of the interpolated palette.
-#' @param colours A vector of colours to interpolate between, using any format
-#'   recognised by \code{\link{colours}}.
-#' @param \dots Additional arguments to \code{\link{colorRamp}}.
-#' @return For \code{getColourScale}, a list with elements
+#' @aliases getColourScale
+#' @param n A number, colour name or list (see Details).
+#' @return A list with elements
 #'   \describe{
 #'     \item{colours}{A character-mode vector representing the colours in the
 #'       scale, usually of length 100. This can be passed as a colour scale to
@@ -42,10 +27,9 @@ interpolatePalette <- function (colours, n, ...)
 #'     \item{background}{A single character string representing the background
 #'       colour.}
 #'   }
-#' The \code{interpolatePalette} function returns a character-mode vector
-#' representing the colours in the interpolated scale.
 #' @author Jon Clayden
-#' @seealso \code{\link{colours}}, \code{\link{rgb}}, \code{\link{colorRamp}}
+#' @seealso \code{\link{colours}}, \code{\link{rgb}}, \code{\link{colorRamp}},
+#'   and the \code{shades} package for colour manipulation.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -54,10 +38,7 @@ interpolatePalette <- function (colours, n, ...)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @examples
-#' 
 #' getColourScale(1)
-#' 
-#' interpolatePalette(c("red","yellow"), 10)
 #' 
 #' @rdname colourScales
 #' @export
@@ -72,15 +53,11 @@ getColourScale <- function (n)
         colours <- list(gray(0:99/99),
                         heat.colors(100),
                         rainbow(100, start=0.7, end=0.1),
-                        # ColorBrewer "RdBu" diverging palette
-                        interpolatePalette(c("#053061", "#2166AC", "#4393C3", "#92C5DE", "#D1E5F0", "#F7F7F7", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B", "#67001F"), 100),
-                        # Just the red part of "RdBu"
-                        interpolatePalette(c("#F7F7F7", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B", "#67001F"), 100),
-                        # Just the blue part of "RdBu"
-                        interpolatePalette(c("#F7F7F7", "#D1E5F0", "#92C5DE", "#4393C3", "#2166AC", "#053061"), 100),
-                        # ColorBrewer "YlOrRd" sequential palette
-                        interpolatePalette(c("#800026", "#BD0026", "#E31A1C", "#FC4E2A", "#FD8D3C", "#FEB24C", "#FED976", "#FFEDA0", "#FFFFCC"), 100))
-    
+                        shades::gradient("RdBu", 100),
+                        shades::gradient("Reds", 100),
+                        shades::gradient("Blues", 100),
+                        shades::gradient("YlOrRd", 100))
+        
         if (n < 0)
             scale <- list(colours=rev(colours[[-n]]))
         else
