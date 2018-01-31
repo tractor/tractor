@@ -182,22 +182,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     
     getStreamlines = function (simplify = TRUE)
     {
-        n <- ifelse(length(selection) == 0, count., length(selection))
-        streamlines <- vector("list", n)
-        i <- 1
-        
-        .addStreamline <- function (points, seedIndex, voxelDims, coordUnit)
-        {
-            streamlines[[i]] <<- Streamline$new(points, seedIndex, voxelDims, coordUnit)
-            i <<- i + 1
-        }
-        
-        .Call("trkApply", file, selection, .addStreamline, PACKAGE="tractor.track")
-        
-        if (simplify && n == 1)
-            return (streamlines[[1]])
-        else
-            return (streamlines)
+        .self$apply(fx(x), simplify=simplify)
     },
     
     getVisitationMap = function (reference = NULL)
