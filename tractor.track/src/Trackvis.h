@@ -142,7 +142,7 @@ public:
     void get (Streamline &data);
 };
 
-class TrackvisDataSink : public DataSink<Streamline>
+class TrackvisDataSink : public Griddable3D, public DataSink<Streamline>
 {
 protected:
     std::fstream fileStream;
@@ -201,6 +201,7 @@ public:
     virtual void attach (const std::string &fileStem);
     void setup (const size_type &count, const_iterator begin, const_iterator end);
     void done ();
+    Grid<3> getGrid3D () const { return grid; }
 };
 
 class BasicTrackvisDataSink : public TrackvisDataSink

@@ -333,8 +333,12 @@ void TrackvisDataSink::attach (const std::string &fileStem)
     float qb, qc, qd, qfac;
     nifti_mat44_to_quatern(xformStruct, &qb, &qc, &qd, NULL, NULL, NULL, NULL, NULL, NULL, &qfac);
     ::mat44 rotationMatrix = nifti_quatern_to_mat44(qb, qc, qd, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, qfac);
-    binaryStream.writeArray<float>(rotationMatrix.m[0], 3);
-    binaryStream.writeArray<float>(rotationMatrix.m[1], 3);
+    binaryStream.writeValue<float>(-rotationMatrix.m[0][0]);
+    binaryStream.writeValue<float>(-rotationMatrix.m[0][1]);
+    binaryStream.writeValue<float>(rotationMatrix.m[0][2]);
+    binaryStream.writeValue<float>(-rotationMatrix.m[1][0]);
+    binaryStream.writeValue<float>(-rotationMatrix.m[1][1]);
+    binaryStream.writeValue<float>(rotationMatrix.m[1][2]);
     binaryStream.writeValues<char>(0, 8);
     
     binaryStream.writeValue<int32_t>(0);
