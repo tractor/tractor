@@ -130,21 +130,29 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     {
         fun <- match.fun(fun)
         n <- ifelse(length(selection) == 0, count., length(selection))
-        results <- vector("list", n)
-        i <- 1
+        if (!is.na(simplify))
+        {
+            results <- vector("list", n)
+            i <- 1
+        }
         
         .applyFunction <- function (points, seedIndex, voxelDims, coordUnit)
         {
             streamline <- Streamline$new(points, seedIndex, voxelDims, coordUnit)
-            results[[i]] <<- fun(streamline, ...)
-            i <<- i + 1
+            if (is.na(simplify))
+                fun(streamline, ...)
+            else
+            {
+                results[[i]] <<- fun(streamline, ...)
+                i <<- i + 1
+            }
         }
         
         .Call("trkApply", file, selection, .applyFunction, PACKAGE="tractor.track")
         
-        if (simplify && n == 1)
+        if (isTRUE(simplify) && n == 1)
             return (results[[1]])
-        else
+        else if (!is.na(simplify))
             return (results)
     },
     
