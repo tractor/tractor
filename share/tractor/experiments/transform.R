@@ -18,12 +18,27 @@ runExperiment <- function ()
         targetSpace <- sourceSpace
     
     session <- attachMriSession(Arguments[1])
-    if (imageFileExists(implode(Arguments[-1], sep=" ")))
+    fileStem <- implode(Arguments[-1], sep=" ")
+    if (imageFileExists(fileStem))
     {
         image <- readImageFile(implode(Arguments[-1], sep=" "))
         interpolation <- switch(interpolation, nearestneighbour=0, trilinear=1, spline=3)
         newImage <- transformImageToSpace(image, session, tlc(targetSpace), tlc(sourceSpace), preferAffine=preferAffine, interpolation=interpolation)
         writeImageFile(newImage, paste(basename(image$getSource()),targetSpace,sep="_"))
+    }
+    else if (file.exists(ensureFileSuffix(fileStem, "trk")))
+    {
+        if (is.null(sourceSpace))
+        {
+            report(OL$Info, "Source space was not specified - assuming diffusion")
+            sourceSpace <- "diffusion"
+        }
+        source <- getRefClass("StreamlineSource",asNamespace("tractor.track"))$new(fileStem)
+        xfm <- session$getTransformation(tlc(sourceSpace), tlc(targetSpace))
+        resultStem <- paste(ensureFileSuffix(basename(fileStem),NULL,strip="trk"), targetSpace, sep="_")
+        sink <- getRefClass("StreamlineSink",asNamespace("tractor.track"))$new(resultStem, session$getRegistrationTarget(tlc(targetSpace)))
+        source$apply(function(x) sink$append(x$transform(xfm)), simplify=NA)
+        sink$close()
     }
     else
     {
