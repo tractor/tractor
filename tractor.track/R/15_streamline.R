@@ -18,7 +18,21 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     
     getCoordinateUnit = function () { return (coordUnit) },
     
-    getLine = function () { return (line) },
+    getLine = function (unit = NULL)
+    {
+        if (is.null(unit))
+            return (line)
+        else
+        {
+            unit <- match.arg(unit, c("vox","mm"))
+            if (unit == "vox" && .self$coordUnit == "mm")
+                return (t(apply(line, 1, "/", abs(voxelDims))) + 1)
+            else if (unit == "mm" && .self$coordUnit == "vox")
+                return (t(apply(line-1, 1, "*", abs(voxelDims))))
+            else
+                return (line)
+        }
+    },
     
     getLineLength = function () { return (sum(pointSpacings)) },
     
@@ -35,10 +49,7 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     setCoordinateUnit = function (newUnit = c("vox","mm"))
     {
         newUnit <- match.arg(newUnit)
-        if (newUnit == "vox" && .self$coordUnit == "mm")
-            .self$line <- t(apply(line, 1, "/", abs(voxelDims))) + 1
-        else if (newUnit == "mm" && .self$coordUnit == "vox")
-            .self$line <- t(apply(line-1, 1, "*", abs(voxelDims)))
+        .self$line <- .self$getLine(newUnit)
         
         if (newUnit != .self$coordUnit)
         {
