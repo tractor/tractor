@@ -16,6 +16,8 @@ runExperiment <- function ()
     subgroupSize <- getConfigVariable("SubgroupSize", 500)
     truncate <- getConfigVariable("TruncateToReference", TRUE)
     randomSeed <- getConfigVariable("RandomSeed", NULL, "integer")
+    requireMap <- getConfigVariable("RequireMap", TRUE)
+    requireStreamlines <- getConfigVariable("RequirePaths", FALSE)
     
     reference <- getNTResource("reference", "pnt", list(tractName=tractName))
     refSession <- reference$getSourceSession()
@@ -145,9 +147,18 @@ runExperiment <- function ()
             streamSource <- streamSource$extractAndTruncate(refLeftLength, refRightLength)
         }
         
-        report(OL$Info, "Creating visitation map")
-        faPath <- currentSession$getImageFileNameByType("FA", "diffusion")
-        visitationMap <- streamSource$getVisitationMap(faPath)
-        writeImageFile(visitationMap, es("#{tractName}.#{currentSessionIndex}"))
+        report(OL$Info, "Creating outputs")
+        outputStem <- es("#{tractName}.#{currentSessionIndex}")
+        if (requireMap)
+        {
+            faPath <- currentSession$getImageFileNameByType("FA", "diffusion")
+            visitationMap <- streamSource$getVisitationMap(faPath)
+            writeImageFile(visitationMap, outputStem)
+        }
+        if (requireStreamlines)
+        {
+            sourceFile <- ensureFileSuffix(streamSource$getFileStem(), "trk")
+            file.copy(sourceFile, ensureFileSuffix(outputStem,"trk"))
+        }
     }
 }
