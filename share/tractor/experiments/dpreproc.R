@@ -85,10 +85,12 @@ runExperiment <- function ()
                 bValues <- directions[,4]
                 bVectors <- directions[,1:3]
                 echoSeparations <- do.call(c, lapply(images, function(image) {
-                    if (is.null(image$getTags("echoSpacing")) || is.null(image$getTags("epiFactor")))
-                        rep(NA, ifelse(image$getDimensionality()==4L, dim(image)[4], 1L))
-                    else
+                    if (image$hasTags("effectiveReadoutTime"))
+                        image$getTags("effectiveReadoutTime")
+                    else if (all(image$hasTags(c("echoSpacing", "epiFactor"))))
                         image$getTags("echoSpacing") / 1e6 * (image$getTags("epiFactor") - 1)
+                    else
+                        rep(NA, image$nVolumes())
                 }))
             }
             else
@@ -138,10 +140,12 @@ runExperiment <- function ()
                             attr(image, "bVectors")
                     }))
                     echoSeparations <- do.call(c, lapply(images, function(image) {
-                        if (is.null(attr(image,"echoSpacing")) || is.null(attr(image,"epiFactor")))
-                            rep(NA, ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L))
-                        else
+                        if (!is.null(attr(image, "effectiveReadoutTime")))
+                            attrs(image, "effectiveReadoutTime")
+                        else if (!is.null(attr(image,"echoSpacing")) && !is.null(attr(image,"epiFactor")))
                             attr(image,"echoSpacing") / 1e6 * (attr(image,"epiFactor") - 1)
+                        else
+                            rep(NA, ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L))
                     }))
                 }
             }
