@@ -240,12 +240,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     getTags = function (keys = NULL)
     {
         "Retrieve some or all of the tags stored with the image"
-        if (is.null(keys))
-            return (tags)
-        else if (length(keys) == 1)
-            return (tags[[keys]])
-        else
-            return (tags[keys])
+        indexList(tags, keys)
     },
     
     getVoxelDimensions = function () { return (voxelDims) },
