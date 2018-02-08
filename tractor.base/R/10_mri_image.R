@@ -278,6 +278,8 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             return (emptyMatrix())
     },
     
+    hasTags = function (keys) { return (sapply(keys, function(key) !is.null(tags[[key]]))) },
+    
     isEmpty = function () { return (is.null(data)) },
     
     isInternal = function () { return (source == "") },
@@ -315,7 +317,11 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         .self$map(function(x,y) ifelse(y==0,0,x), maskImage)
     },
     
+    nSlices = function () { return (ifelse(length(imageDims) > 2, imageDims[3], 1L)) },
+    
     nTags = function () { return (length(tags)) },
+    
+    nVolumes = function () { return (ifelse(length(imageDims) > 3, prod(imageDims[-(1:3)]), 1L)) },
     
     setOrigin = function (newOrigin)
     {
