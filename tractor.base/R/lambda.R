@@ -19,6 +19,7 @@ fx <- function (expr)
 {
     f <- function(x) {}
     body(f) <- substitute(expr)
+    environment(f) <- parent.frame()
     return (f)
 }
 
@@ -28,6 +29,7 @@ fxy <- function (expr)
 {
     f <- function(x,y) {}
     body(f) <- substitute(expr)
+    environment(f) <- parent.frame()
     return (f)
 }
 
@@ -37,6 +39,7 @@ fxyz <- function (expr)
 {
     f <- function(x,y,z) {}
     body(f) <- substitute(expr)
+    environment(f) <- parent.frame()
     return (f)
 }
 
@@ -46,5 +49,6 @@ fi <- function (expr)
 {
     f <- function(i) {}
     body(f) <- substitute(expr)
+    environment(f) <- parent.frame()
     return (f)
 }
