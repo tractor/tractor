@@ -204,8 +204,10 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         .self$apply(fx(x), simplify=simplify)
     },
     
-    getVisitationMap = function (reference = NULL)
+    getVisitationMap = function (reference = NULL, scope = c("full","seed","ends"), normalise = FALSE)
     {
+        scope <- match.arg(scope)
+        
         if (is(reference, "MriImage"))
         {
             if (reference$isInternal())
@@ -221,7 +223,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
             report(OL$Error, "A reference image or path must be provided")
         
         resultFile <- threadSafeTempFile()
-        .Call("trkMap", file, selection, reference, resultFile, PACKAGE="tractor.track")
+        .Call("trkMap", file, selection, reference, scope, normalise, resultFile, PACKAGE="tractor.track")
         
         return (readImageFile(resultFile))
     },

@@ -262,7 +262,7 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP trkMap (SEXP _trkPath, SEXP _indices, SEXP _imagePath, SEXP _resultPath)
+RcppExport SEXP trkMap (SEXP _trkPath, SEXP _indices, SEXP _imagePath, SEXP _scope, SEXP _normalise, SEXP _resultPath)
 {
 BEGIN_RCPP
     BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
@@ -271,10 +271,17 @@ BEGIN_RCPP
     std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
     pipeline.setSubset(indices);
     
+    const std::string scopeString = as<std::string>(_scope);
+    VisitationMapDataSink::MappingScope scope = VisitationMapDataSink::FullMappingScope;
+    if (scopeString == "seed")
+        scope = VisitationMapDataSink::SeedMappingScope;
+    else if (scopeString == "ends")
+        scope = VisitationMapDataSink::EndsMappingScope;
+    
     int_vector dims(3);
     const Grid<3> &grid = trkFile.getGrid3D();
     std::copy(grid.dimensions().data(), grid.dimensions().data()+3, dims.begin());
-    VisitationMapDataSink *map = new VisitationMapDataSink(dims);
+    VisitationMapDataSink *map = new VisitationMapDataSink(dims, scope, as<bool>(_normalise));
     pipeline.addSink(map);
     
     pipeline.run();
