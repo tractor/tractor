@@ -113,7 +113,7 @@ expandArguments <- function (arguments, sessionPath)
             fileName <- identifyImageFileNames(arguments[i], errorIfMissing=FALSE)
         
         if (!is.null(fileName))
-            arguments[i] <- fileName$fileStem
+            arguments[i] <- fileName$imageFile
     }
     
     cat(implode(arguments, sep=" "))
