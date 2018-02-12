@@ -59,10 +59,8 @@ shift
 
 args=`echo "library(utils); library(tractor.utils); expandArguments('$*', '$session_dir')" | "$R" --slave --vanilla`
 
-[ $? -ne 0 ] && {
-    status=$?
-    exit
-}
+status=$?
+[ $status -ne 0 ] && exit
 
 $command "$args"
 
