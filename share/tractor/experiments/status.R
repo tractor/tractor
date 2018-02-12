@@ -18,9 +18,15 @@ runExperiment <- function ()
     {
         report(OL$Info, "\nDIFFUSION:", prefixFormat="")
         labels <- c("Preprocessing complete", "Data dimensions", "Voxel dimensions", "Number of shells", "Diffusion b-values", "Number of gradient directions", "Fibre orientation model(s)")
-        if (session$imageExists("data","diffusion"))
-        {
+        
+        metadata <- NULL
+        if (session$imageExists("data", "diffusion"))
             metadata <- session$getImageByType("data", "diffusion", metadataOnly=TRUE)
+        else if (session$imageExists("rawdata", "diffusion"))
+            metadata <- session$getImageByType("rawdata", "diffusion", metadataOnly=TRUE)
+        
+        if (!is.null(metadata))
+        {
             metadataSummary <- metadata$summarise()
             dims <- metadataSummary$values[2]
             voxelDims <- metadataSummary$values[3]
@@ -49,9 +55,14 @@ runExperiment <- function ()
         report(OL$Info, "\nFUNCTIONAL:", prefixFormat="")
         labels <- c("Data dimensions", "Voxel dimensions", "Sampling frequency", "Total time")
         
-        if (session$imageExists("data","functional"))
-        {
+        metadata <- NULL
+        if (session$imageExists("data", "functional"))
             metadata <- session$getImageByType("data", "functional", metadataOnly=TRUE)
+        else if (session$imageExists("rawdata", "functional"))
+            metadata <- session$getImageByType("rawdata", "functional", metadataOnly=TRUE)
+        
+        if (!is.null(metadata))
+        {
             metadataSummary <- metadata$summarise()
             dims <- metadataSummary$values[2]
             voxelDims <- metadataSummary$values[3]
