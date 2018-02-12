@@ -286,7 +286,7 @@ matchPaths <- function (path, referencePath)
 #' @export
 expandFileName <- function (fileName, base = getwd())
 {
-    fileName <- path.expand(fileName)
+    fileName <- path.expand(as.character(fileName))
     
     # A leading slash, with (Windows) or without (Unix) a letter and colon, indicates an absolute path
     fileName <- ifelse(fileName %~% "^([A-Za-z]:)?/", fileName, file.path(base,fileName))
