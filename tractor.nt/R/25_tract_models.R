@@ -146,7 +146,7 @@ createDataTableForSplines <- function (splines, refSpline, pointType, sessionPat
 readPntDataTable <- function (datasetName)
 {
     if (file.exists(ensureFileSuffix(datasetName, "txt")))
-        data <- read.table(ensureFileSuffix(datasetName,"txt"), stringsAsFactors=FALSE)
+        data <- read.table(ensureFileSuffix(datasetName,"txt"), colClasses=c(sessionPath="character"), stringsAsFactors=FALSE)
     else
     {
         # Dataset will have been created piecemeal by plough, so we need to collect the pieces
@@ -156,7 +156,7 @@ readPntDataTable <- function (datasetName)
         indices <- as.integer(groups(match, simplify=FALSE))
         fileNames <- fileNames[!is.na(indices)]
         indices <- indices[!is.na(indices)]
-        data <- Reduce(rbind, lapply(fileNames[order(indices)], read.table, stringsAsFactors=FALSE))
+        data <- Reduce(rbind, lapply(fileNames[order(indices)], read.table, colClasses=c(sessionPath="character"), stringsAsFactors=FALSE))
         write.table(data, ensureFileSuffix(datasetName,"txt"))
         unlink(fileNames)
     }
