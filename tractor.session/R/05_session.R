@@ -47,15 +47,25 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             fileName <- file.path(diffusionDir, "directions-orig.txt")
         else
             fileName <- file.path(diffusionDir, "directions.txt")
-    
+        
+        scheme <- NULL
         if (file.exists(fileName))
         {
             gradientSet <- unname(as.matrix(read.table(fileName)))
             scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
-            return (scheme)
         }
         else
-            return (NULL)
+        {
+            bvalsFile <- ensureFileSuffix(.self$getImageFileNameByType("rawdata","diffusion"), "bval")
+            bvecsFile <- ensureFileSuffix(.self$getImageFileNameByType("rawdata","diffusion"), "bvec")
+            if (all(file.exists(c(bvalsFile, bvecsFile))))
+            {
+                bvals <- drop(as.matrix(read.table(bvalsFile)))
+                bvecs <- t(as.matrix(read.table(bvecsFile)))
+                scheme <- SimpleDiffusionScheme$new(bvals, bvecs)
+            }
+        }
+        return (scheme)
     },
     
     getDirectory = function (type = NULL, createIfMissing = FALSE)
@@ -129,6 +139,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             
             if (fileName %~% "\\%")
                 fileName <- sapply(index, function(i) sub("%",as.character(i),fileName,fixed=TRUE))
+            if (fileName %~% "@")
+                fileName <- ore.subst("@", basename(.self$getDirectory()), fileName)
             
             return (file.path(directory, fileName))
         }
@@ -255,7 +267,11 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     updateCaches = function ()
     {
-        defaultsPath <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "session", "default")
+        bidsDescription <- file.path(directory, "..", "dataset_description.json")
+        if (file.exists(bidsDescription) && ore.file(bidsDescription) %~% "BIDSVersion")
+            defaultsPath <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "session", "bids")
+        else
+            defaultsPath <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "session", "default")
         
         subdirectories <- defaultSubdirectories <- yaml.load_file(file.path(defaultsPath, "map.yaml"))
         mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")
@@ -266,7 +282,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         maps <- list()
         for (place in .AllSessionDirectories)
         {
-            defaultFileName <- file.path(defaultsPath, defaultSubdirectories[[place]], "map.yaml")
+            defaultFileName <- file.path(defaultsPath, basename(defaultSubdirectories[[place]]), "map.yaml")
             if (!file.exists(defaultFileName))
                 next
             maps[[place]] <- yaml.load_file(defaultFileName)

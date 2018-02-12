@@ -1,0 +1,6 @@
+t1: "@_run-0%_T1w"
+t2: "@_run-0%_T2w"
+pd: "@_run-0%_PD"
+refT1: "@_T1w"
+maskedT1: maskedT1
+parcellation: parcellation
