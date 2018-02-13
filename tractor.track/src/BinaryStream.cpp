@@ -111,7 +111,7 @@ std::string BinaryInputStream::readString (size_t n)
     {
         char *value = new char[n];
         stream->read(value, n);
-        std::string finalValue(value, n);
+        std::string finalValue(value, std::min(n,strlen(value)));
         delete[] value;
         return finalValue;
     }
