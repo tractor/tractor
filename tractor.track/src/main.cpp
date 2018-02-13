@@ -235,6 +235,17 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP trkInfo (SEXP _trkPath)
+{
+BEGIN_RCPP
+    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
+    std::vector<std::string> properties = trkFile.getPropertyNames();
+    if (properties.size() == 0)
+        properties.push_back("(none)");
+    return wrap(properties);
+END_RCPP
+}
+
 RcppExport SEXP trkLabels (SEXP _trkPath)
 {
 BEGIN_RCPP

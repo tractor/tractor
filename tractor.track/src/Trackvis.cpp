@@ -118,11 +118,10 @@ void TrackvisDataSource::attach (const std::string &fileStem)
     nProperties = binaryStream.readValue<int16_t>();
     for (int i=0; i<std::min(nProperties,10); i++)
     {
-        if (binaryStream.readString(20).compare(0,4,"seed") == 0)
-        {
+        const std::string propertyName = binaryStream.readString(20);
+        propertyNames.push_back(propertyName);
+        if (propertyName.compare(0,4,"seed") == 0)
             seedProperty = i;
-            break;
-        }
     }
     fileStream.seekg(440, ios::beg);
     binaryStream.readMatrix<float>(grid.transform());

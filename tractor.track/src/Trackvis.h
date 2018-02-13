@@ -15,6 +15,7 @@ protected:
     std::ifstream fileStream;
     BinaryInputStream binaryStream;
     int nScalars, nProperties, seedProperty;
+    std::vector<std::string> propertyNames;
     size_t totalStreamlines, currentStreamline;
     Grid<3> grid;
     
@@ -41,6 +42,7 @@ public:
     
     virtual void attach (const std::string &fileStem);
     Grid<3> getGrid3D () const { return grid; }
+    const std::vector<std::string> & getPropertyNames () const { return propertyNames; }
 };
 
 // Basic Trackvis reader: read all streamlines, including seed property

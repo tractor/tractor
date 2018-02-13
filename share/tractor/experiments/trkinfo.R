@@ -1,0 +1,14 @@
+#@desc Print basic information about a streamline file in .trk format, including the number of streamlines stored and associated properties.
+#@args streamline file
+#@nohistory TRUE
+
+library(tractor.track)
+
+runExperiment <- function ()
+{
+    requireArguments("streamline file")
+    
+    streamSource <- StreamlineSource$new(implode(Arguments, sep=" "))
+    summary <- streamSource$summarise()
+    printLabelledValues(names(summary), as.character(summary))
+}
