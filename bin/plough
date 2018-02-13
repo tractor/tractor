@@ -64,10 +64,14 @@ set -- `getopt "HGXDC:V:Q:O:P:hldozqfbiv:a:w:c:" "$@"` || {
     exit
 }
 
-[ -z "${TRACTOR_HOME}" ] && {
+if [ -z "${TRACTOR_HOME}" ]; then
     echo "Note: The TRACTOR_HOME environment variable is not set; it will be guessed"
-    export TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
-}
+    TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
+else
+    # Replace the specified path with a fully-qualified version
+    TRACTOR_HOME=`unset CDPATH; cd "$TRACTOR_HOME" && pwd`
+fi
+export TRACTOR_HOME
 
 [ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
 
