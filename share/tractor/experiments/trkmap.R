@@ -11,7 +11,7 @@ runExperiment <- function ()
     normalise <- getConfigVariable("Normalise", FALSE)
     
     streamSource <- StreamlineSource$new(Arguments[1])
-    map <- streamSource$getVisitationMap(Arguments[2], scope, normalise)
+    map <- streamSource$getVisitationMap(identifyImageFileNames(Arguments[2])$fileStem, scope, normalise)
     
     outputStem <- ensureFileSuffix(basename(Arguments[1]), NULL, strip="trk")
     if (scope != "full")

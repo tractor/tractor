@@ -11,7 +11,7 @@ runExperiment <- function ()
                   "Visualisation"="^(slice|view)$",
                   "Registration"="^reg-",
                   "Working with sessions"="^(clone|import|status|transform)$",
-                  "Diffusion processing"="dpreproc|(^dir)|(^grad)|bedpost|tensor|track|plotcorrections",
+                  "Diffusion processing"="dpreproc|(^dir)|(^grad)|(^trk)|bedpost|tensor|track|plotcorrections",
                   "Structural processing"="^(deface|parcellate|freesurf)$",
                   "Heuristic neighbourhood tractography (deprecated)"="^hnt-",
                   "Probabilistic neighbourhood tractography"="^pnt-",
@@ -42,7 +42,7 @@ runExperiment <- function ()
     {
         files <- list.files(pathDir, "\\.R$")
         filesWithoutExtensions <- ensureFileSuffix(files, NULL, strip="R")
-        cat(es("Additional scripts found in #{pathDir}:\n  "), fill=TRUE)
+        cat(es("Additional scripts found in #{pathDir}:\n  "))
         cat(filesWithoutExtensions, sep=", ", fill=TRUE)
         cat("\n")
     }
