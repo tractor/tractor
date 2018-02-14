@@ -30,13 +30,14 @@ number, representing a predefined colour scale. Currently valid values are 1
 (greyscale, black background), 2 (red to yellow heat scale, red background),
 3 (blue to red rainbow scale, blue background), 4 (blue to white to red
 diverging scale, white background), 5 (white to red, white background), 6
-(white to blue, white background) and 7 (yellow to orange to red). Secondly,
-a single colour name can be given (see \code{\link{colours}}); in this case
-the background will be black. This is useful for binary images. Thirdly, and
-most flexibly, a list with two named elements can be given: \code{colours},
-a vector of colours representing the colour scale, perhaps created using
-using the \code{shades} package; and \code{background}, a single colour
-representing the background.
+(white to blue, white background), 7 (yellow to orange to red) and 8 (purple
+to green to yellow, perceptually uniform). Secondly, a single colour name
+can be given (see \code{\link{colours}}); in this case the background will
+be black. This is useful for binary images. Thirdly, and most flexibly, a
+list with two named elements can be given: \code{colours}, a vector of
+colours representing the colour scale, perhaps created using using the
+\code{shades} package; and \code{background}, a single colour representing
+the background.
 }
 \examples{
 getColourScale(1)
