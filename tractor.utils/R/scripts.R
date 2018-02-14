@@ -101,20 +101,15 @@ requireArguments <- function (...)
         report(OL$Error, "At least ", length(args), " argument(s) must be specified: ", implode(args,", "))
 }
 
-expandArguments <- function (arguments, sessionPath)
+expandArguments <- function (arguments, workingDirectory = getwd())
 {
-    session <- tractor.session::attachMriSession(sessionPath)
+    setwd(workingDirectory)
     arguments <- ore.split("\\s+", arguments)
     for (i in seq_along(arguments))
     {
-        if (arguments[i] %~% "^@")
-            fileName <- identifyImageFileNames(es("#{sessionPath}#{arguments[i]}"), errorIfMissing=FALSE)
-        else
-            fileName <- identifyImageFileNames(arguments[i], errorIfMissing=FALSE)
-        
+        fileName <- identifyImageFileNames(arguments[i], errorIfMissing=FALSE)
         if (!is.null(fileName))
             arguments[i] <- fileName$imageFile
     }
-    
     cat(implode(arguments, sep=" "))
 }

@@ -4,19 +4,22 @@ status=1
 tmpdir=${TMPDIR:-/tmp}
 trap 'exit $status' 0 1 2 15
 
-session_dir="."
+full_command="$0 $*"
+write_history=1
+working_dir="."
 
 usage()
 {
     echo "furrow (program v3.2.0, distribution v$distribution_version)"
     echo "Channel a command through TractoR's shorthand"
     echo
-    echo "Usage: furrow [-s dir] command [arg1 [arg2 ...]]"
+    echo "Usage: furrow [-z] [-w working_dir] command [arg1 [arg2 ...]]"
     echo "       furrow -h"
     echo
     echo "  -h          Display this usage information and exit"
-    echo "  -s dir      Use the session based in the specified directory as a"
-    echo "              default for path expansions"
+    echo "  -z          Do not write the command line used into a history log file"
+    echo "  -w dir      Specify the working directory, which will be created if"
+    echo "              necessary. Default is '.', the current directory"
     echo
     echo "Run the specified command, which can be any standard program or script on"
     echo "the PATH, after first expanding TractoR's image-path shorthand, such as"
@@ -33,22 +36,30 @@ usage()
 
 [ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
 
-[ "$1" = "-h" ] && {
-    usage
-    status=0
+args=`getopt hzw: $*`
+[ $? -eq 0 ] || {
+    usage 1>&2
     exit
 }
+set -- $args
 
-[ "$1" = "-s" ] && {
+while [ $# -gt 0 ]
+    do
+    case "$1" in
+        -h) usage; status=0; exit ;;
+        -z) write_history=0 ;;
+        -w) shift; working_dir=`echo $1 | sed 's/\/$//'` ;;
+        --) shift; break ;;
+    esac
     shift
-    session_dir="$1"
-    shift
-}
+done
 
 [ $# -eq 0 ] && {
     echo "Error: No command given. Type \"furrow -h\" for help" 1>&2
     exit
 }
+
+[ ! -e $working_dir ] && mkdir -p $working_dir
 
 command="$1"
 shift
@@ -57,11 +68,14 @@ shift
 
 [ -d "${TRACTOR_HOME}/lib/R" ] && export R_LIBS="${TRACTOR_HOME}/lib/R"
 
-args=`echo "library(utils); library(tractor.utils); expandArguments('$*', '$session_dir')" | "$R" --slave --vanilla`
+args=`echo "library(utils); library(tractor.utils); library(tractor.session); expandArguments('$*','$working_dir')" | "$R" --slave --vanilla`
 
 status=$?
 [ $status -ne 0 ] && exit
 
-$command "$args"
+cd $working_dir && $command "$args"
 
 status=$?
+
+# We are now in the working directory, so don't preface the log filename with it
+[ $write_history -eq 1 ] && echo "[`date`] $full_command [${status}S]" >> tractor-history.log

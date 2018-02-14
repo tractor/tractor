@@ -4,7 +4,7 @@
 furrow \- Preprocessor for TractoR's session shorthand
 
 .SH SYNOPSIS
-.B furrow [\fB\-s \fIdir\fR] \fIcommand\fR [\fIarguments\fR]\fB
+.B furrow \fR[\fB\-z\fR] [\fB\-w \fIworking_dir\fR] \fIcommand\fR [\fIarguments\fR]\fB
 .br
 .B furrow \-h
 
@@ -16,19 +16,22 @@ The \fBfurrow\fR program is a simple wrapper around the specified \fIcommand\fR,
 .B \-h
 Display usage information and quit.
 .TP
-.B \-s \fIdir\fB
-Use the TractoR session hierarchy based in the specified directory, \fIdir\fR, as a default for path expansions. This allows 'dir@FA' to be abbreviated to just '@FA', which results in a more concise command when more than one image is referenced. The default is the current directory.
+.B \-z
+Do not write the command line used into a history log file.
+.TP
+.B \-w \fIworking_dir\fB
+Specify the working directory for the \fIcommand\fR, which will be created if necessary. If \fIworking_dir\fR is a session directory, this allows 'working_dir@FA' to be abbreviated to just '@FA', which results in a more concise command when more than one image is referenced. The default is the current directory.
 
 .SH EXAMPLES
 This simple example prints the full path to the FA map within the test dataset shipped with TractoR.
 .TP
 .PP
-furrow \-s $TRACTOR_HOME/tests/data/session echo @FA
+furrow \-w $TRACTOR_HOME/tests/data/session echo @FA
 .PP
 Notice that certain shorthand, such as '@data', is ambiguous. In these cases subdirectory syntax is used to disambiguate, as in
 .TP
 .PP
-furrow \-s $TRACTOR_HOME/tests/data/session echo @diffusion/data
+furrow \-w $TRACTOR_HOME/tests/data/session echo @diffusion/data
 .PP
 Images that are not present in the session hierarchy will not currently be substituted for.
 
