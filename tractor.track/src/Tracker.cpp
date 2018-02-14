@@ -35,7 +35,7 @@ Streamline Tracker::run ()
         logger.debug2.indent() << "Creating loopcheck vector field" << endl;
         std::vector<int> loopcheckDims(3);
         for (int i=0; i<3; i++)
-            loopcheckDims[i] = static_cast<int>(round(spaceDims[i] / LOOPCHECK_RATIO)) + 1;
+            loopcheckDims[i] = static_cast<int>(ceil(spaceDims[i] / LOOPCHECK_RATIO));
         loopcheck = new Array<Space<3>::Vector>(loopcheckDims, Space<3>::zeroVector());
     }
     
@@ -148,7 +148,7 @@ Streamline Tracker::run ()
             if (flags["loopcheck"])
             {
                 for (int i=0; i<3; i++)
-                    loopcheckLoc[i] = static_cast<int>(round(loc[i]/LOOPCHECK_RATIO));
+                    loopcheckLoc[i] = static_cast<int>(round((loc[i] + 0.5) / LOOPCHECK_RATIO - 0.5));
                 
                 float loopcheckInnerProduct = (*loopcheck)[loopcheckLoc].dot(previousStep);
                 if (loopcheckInnerProduct < 0.0)
