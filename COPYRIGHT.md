@@ -1,4 +1,4 @@
-TractoR, its constituent R packages and command-line interface system, are copyright (C) 2005-2007 Jon Clayden, and (C) 2007-2017 University College London.
+TractoR, its constituent R packages and command-line interface system, are copyright (C) 2005-2007 Jon Clayden, and (C) 2007-2018 University College London.
 
 The "ore" package is copyright (C) 2014-2017 University College London.
 
@@ -6,11 +6,13 @@ The "reportr" package is copyright (C) 2011-2016 University College London.
 
 The "loder" package is copyright (C) 2017 University College London.
 
+The "shades" package is copyright (C) 2015-2018 University College London.
+
 The "mmand" package is copyright (C) 2012-2017 University College London.
 
 The "RNifti" package is copyright (C) 2016-2017 University College London.
 
-The "divest" package is copyright (C) 2016-2017 University College London.
+The "divest" package is copyright (C) 2016-2018 University College London.
 
 The "RNiftyReg" package is copyright (C) 2009-2017 University College London.
 

@@ -136,7 +136,7 @@
 <pre><code class="language-bash">tractor graph-decompose graph Method:principal-networks EdgeWeightThreshold:0.2
 </code></pre>
 
-<p>The principal networks approach uses a matrix factoring approach akin to principal component analysis, while modularity maximisation tries to separate the graph into subnetworks whose overall <a href="https://en.wikipedia.org/wiki/Modularity_(networks)">modularity</a> is maximised. These and other approaches to graph decomposition, their strengths and weaknesses, are discussed in the <a href="http://dx.doi.org/10.1371/journal.pone.0060997">principal networks paper</a>. Either way, the result is a file called &ldquo;graph_decomposed.Rdata&rdquo;, which contains a series of smaller graphs. This file can be split into its parts using the <code>split</code> script, viz.</p>
+<p>The principal networks approach uses a matrix factoring approach akin to principal component analysis, while modularity maximisation tries to separate the graph into subnetworks whose overall <a href="https://en.wikipedia.org/wiki/Modularity_(networks)">modularity</a> is maximised. These and other approaches to graph decomposition, their strengths and weaknesses, are discussed in the <a href="http://dx.doi.org/10.1371/journal.pone.0060997">principal networks paper</a>. Either way, the results are files called &ldquo;graph_partitioned.Rdata&rdquo;, which contains a version of the original graph with additional information on the final partition, and &ldquo;graph_decomposed.Rdata&rdquo;, which contains a series of smaller graphs. This file can be split into its parts using the <code>split</code> script, viz.</p>
 
 <pre><code class="language-bash">tractor split graph_decomposed.Rdata
 </code></pre>

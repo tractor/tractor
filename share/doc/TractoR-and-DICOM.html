@@ -133,7 +133,7 @@
 
 <h2 id="the-divest-back-end">The divest back-end</h2>
 
-<p>In TractoR version 3.1.0 a new DICOM back-end based on <a href="https://github.com/rordenlab/dcm2niix">Chris Rorden&rsquo;s <code>dcm2niix</code></a> (via the <a href="https://github.com/jonclayden/divest"><code>divest</code> R package</a>) was added. As well as being more robust and more extensively tested, this route handles multiple series at once and interactively, removing the need to pre-sort DICOM directories. It also extracts more metadata from the DICOM files, storing it in auxiliary .tags files. For example,</p>
+<p>In TractoR version 3.1.0 a new DICOM back-end based on <a href="https://github.com/rordenlab/dcm2niix">Chris Rorden&rsquo;s <code>dcm2niix</code></a> (via the <a href="https://github.com/jonclayden/divest"><code>divest</code> R package</a>) was added. As well as being more robust and more extensively tested, this route handles multiple series at once and interactively, removing the need to pre-sort DICOM directories. (Sorting files using <code>divest</code> is possible as of TractoR 3.2.0, however.) It also extracts more metadata from the DICOM files, storing it in auxiliary .tags files. For example,</p>
 
 <pre><code class="language-bash line-numbers">tractor dicomread $TRACTOR_HOME/tests/data/dicom Method:divest FileNames:metadata
 # Starting TractoR environment...

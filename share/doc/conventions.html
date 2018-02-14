@@ -95,7 +95,7 @@ parcellation: parcellation
 <pre><code class="language-yaml">diffusion: /data/subject1_2fibres/tractor/diffusion
 </code></pre>
 
-<p>It should, however, be borne in mind that this will make the session less portable. The full default map can be found at <code>$TRACTOR_HOME/share/tractor/session/map.yaml</code>.</p>
+<p>It should, however, be borne in mind that this will make the session less portable. The full default map can be found at <code>$TRACTOR_HOME/share/tractor/session/default/map.yaml</code>.</p>
 
 <h2 id="implicit-operations">Implicit operations</h2>
 
@@ -118,7 +118,7 @@ parcellation: parcellation
 
 <p>Images may be stored on disk in any voxel order supported by their format, but internally, TractoR standardises on &ldquo;LAS&rdquo; voxel order, i.e., moving through images first in the right-to-left direction, then posterior-to-anterior, then inferior-to-superior. This is the <em>radiological</em> convention. Images are usually reordered in memory when they are read into TractoR, voxel coordinates are based on this reordered system, and TractoR&rsquo;s internal viewer shows images this way.</p>
 
-<p>Tractography streamlines are stored in <a href="http://www.trackvis.org/docs/?subsect=fileformat">TrackVis <strong>.trk</strong> format</a>, which makes it easy to visualise them using the popular TrackVis program. However, TractoR additionally uses an auxiliary file format, with a <strong>.trkl</strong> extension, which stores information about &ldquo;labels&rdquo;, named regions that individual streamlines pass through. The beginning of this file is formatted as follows.</p>
+<p>Tractography streamlines are stored in <a href="http://www.trackvis.org/docs/?subsect=fileformat">TrackVis <strong>.trk</strong> format</a>, which makes it easy to visualise them using the popular TrackVis program. The <code>trkinfo</code> script can be used to obtain basic information about these files, such as how many streamlines they contain. TractoR additionally uses an auxiliary file format, with a <strong>.trkl</strong> extension, which stores information about &ldquo;labels&rdquo;, named regions that individual streamlines pass through. The beginning of this file is formatted as follows.</p>
 
 <pre><code class="language-c line-numbers">struct trkl_header {
     char    magic_number[8];        // The string "TRKLABEL" (hex 54 52 4b 4c 41 42 45 4c)

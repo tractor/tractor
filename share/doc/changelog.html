@@ -44,6 +44,34 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="320-2018-02-14">3.2.0 (2018-02-14)</h2>
+
+<ul>
+<li>The new <code>pnt-sample</code> script allows one to sample synthetic streamlines from a PNT model. There is <a href="http://dx.doi.org/10.3390/jimaging4010008">a new paper</a> with the full details.</li>
+<li>There is now basic support for the <a href="http://bids.neuroimaging.io">BIDS format</a>, a session-like hierarchy structure for multimodal acquisitions.</li>
+<li>The new top-level command <code>furrow</code> can be used to call any third-party program after substituting TractoR&rsquo;s session path shorthand for the canonical image paths. This is useful for compatibility with other software.</li>
+<li>TractoR&rsquo;s graph-handling code has been substantially refactored, and detailed unit tests have been added.</li>
+<li>Streamline seed points and end points can now be mapped, using the new <code>trkmap</code> script.</li>
+<li>The new <code>trkinfo</code> script provides basic information on the streamlines stored in a .trk file.</li>
+<li>A new make target, <code>deeptest</code>, installs additional packages from CRAN and then runs package unit tests (currently only for <code>tractor.graph</code>) before running the main integration tests.</li>
+<li>The <code>dicomsort</code> script can now use the more robust <code>divest</code> back-end, and gains the ability to clean up empty subdirectories. Additional metadata is now extracted by <code>dicomread</code> with <code>Method:divest</code>.</li>
+<li>A partitioned graph object is now also produced by <code>graph-decompose</code>, which contains the original graph and information about the partition. This may also be used as a reference partition for new graphs.</li>
+<li>Generation of colour scales is now handled by the <code>shades</code> package. The <code>slice</code> script now additionally supports the &ldquo;viridis&rdquo; colour scale, which is perceptually uniform and interpretable by viewers with a colour vision deficiency (colour blindness).</li>
+<li>The <code>tensorfit</code> script now support FSL <code>dtifit</code>&rsquo;s weighted-least squares option, as <code>Method:fsl-wls</code>.</li>
+<li>The <code>extract</code> script now accepts named regions, for extraction from parcellations.</li>
+<li>A file containing <em>b</em>-values may now be given as the third argument to the <code>gradread</code> script.</li>
+<li>It is now possible to create a .trk file containing the streamlines selected by <code>pnt-prune</code>.</li>
+<li>Streamlines stored in .trk files may now also be transformed between spaces by the <code>transform</code> script, although this is currently very slow for nonlinear transformations.</li>
+<li>The <code>list</code> script now arranges its output into categories.</li>
+<li>The <code>dicomtags</code> script now tries harder to read metadata from files using an unsupported transfer syntax.</li>
+<li>The <code>status</code> script now examines raw data files if processed ones are not yet available.</li>
+<li>A user-defined mask can now be passed to the <code>dirviz</code> script.</li>
+<li>The <code>slice</code> script now offers some control over the interpolation kernel used.</li>
+<li>The polar plots used by TractoR&rsquo;s internal image viewer for diffusion data now use different colour shades for each <em>b</em>-value shell.</li>
+<li>The loop-checking logic in the tractography code has been tweaked to correct the boundaries between logical blocks.</li>
+<li>Session paths stored in PNT data files should now always be interpreted as strings, avoiding potential errors.</li>
+</ul>
+
 <h2 id="314-2017-11-09">3.1.4 (2017-11-09)</h2>
 
 <ul>
