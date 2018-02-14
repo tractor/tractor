@@ -59,11 +59,6 @@ usage()
     echo
 }
 
-set -- `getopt "HGXDC:V:Q:O:P:hldozqfbiv:a:w:c:" "$@"` || {
-    usage 1>&2
-    exit
-}
-
 if [ -z "${TRACTOR_HOME}" ]; then
     echo "Note: The TRACTOR_HOME environment variable is not set; it will be guessed"
     TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
@@ -74,6 +69,13 @@ fi
 export TRACTOR_HOME
 
 [ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
+
+args=`getopt HGXDC:V:Q:O:P:hldozqfbiv:a:w:c: $*`
+[ $? -eq 0 ] || {
+    usage 1>&2
+    exit
+}
+set -- $args
 
 while [ $# -gt 0 ]
     do

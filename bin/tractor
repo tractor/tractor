@@ -70,11 +70,6 @@ usage()
     echo
 }
 
-set -- `getopt "hldozqfbiv:p:a:w:c:" "$@"` || {
-    usage 1>&2
-    exit
-}
-
 if [ -z "${TRACTOR_HOME}" ]; then
     echo "Note: The TRACTOR_HOME environment variable is not set; it will be guessed"
     TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
@@ -85,6 +80,13 @@ fi
 export TRACTOR_HOME
 
 [ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
+
+args=`getopt hldozqfbiv:p:a:w:c: $*`
+[ $? -eq 0 ] || {
+    usage 1>&2
+    exit
+}
+set -- $args
 
 supress_config=`echo "$@" | grep -c '\-i' -`
 [ $supress_config -eq 0 -a -f "$HOME/.tractor/config" ] && source "$HOME/.tractor/config"
