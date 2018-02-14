@@ -1,3 +1,12 @@
+.colourScales <- list(gray(0:99/99),
+                      heat.colors(100),
+                      rainbow(100, start=0.7, end=0.1),
+                      shades::gradient("RdBu", 100),
+                      shades::gradient("Reds", 100),
+                      shades::gradient("Blues", 100),
+                      shades::gradient("YlOrRd", 100),
+                      shades::gradient("viridis", 100))
+
 #' Obtaining colour scales
 #' 
 #' The \code{getColourScale} function can be used to obtain a standard or
@@ -9,13 +18,14 @@
 #' (greyscale, black background), 2 (red to yellow heat scale, red background),
 #' 3 (blue to red rainbow scale, blue background), 4 (blue to white to red
 #' diverging scale, white background), 5 (white to red, white background), 6
-#' (white to blue, white background) and 7 (yellow to orange to red). Secondly,
-#' a single colour name can be given (see \code{\link{colours}}); in this case
-#' the background will be black. This is useful for binary images. Thirdly, and
-#' most flexibly, a list with two named elements can be given: \code{colours},
-#' a vector of colours representing the colour scale, perhaps created using
-#' using the \code{shades} package; and \code{background}, a single colour
-#' representing the background.
+#' (white to blue, white background), 7 (yellow to orange to red) and 8 (purple
+#' to green to yellow, perceptually uniform). Secondly, a single colour name
+#' can be given (see \code{\link{colours}}); in this case the background will
+#' be black. This is useful for binary images. Thirdly, and most flexibly, a
+#' list with two named elements can be given: \code{colours}, a vector of
+#' colours representing the colour scale, perhaps created using using the
+#' \code{shades} package; and \code{background}, a single colour representing
+#' the background.
 #' 
 #' @aliases getColourScale
 #' @param n A number, colour name or list (see Details).
@@ -50,18 +60,10 @@ getColourScale <- function (n)
         return (list(colours=c("black",n,n), background="black"))
     else
     {
-        colours <- list(gray(0:99/99),
-                        heat.colors(100),
-                        rainbow(100, start=0.7, end=0.1),
-                        shades::gradient("RdBu", 100),
-                        shades::gradient("Reds", 100),
-                        shades::gradient("Blues", 100),
-                        shades::gradient("YlOrRd", 100))
-        
         if (n < 0)
-            scale <- list(colours=rev(colours[[-n]]))
+            scale <- list(colours=rev(.colourScales[[-n]]))
         else
-            scale <- list(colours=colours[[n]])
+            scale <- list(colours=.colourScales[[n]])
         
         scale$background <- scale$colours[1]
         return (scale)

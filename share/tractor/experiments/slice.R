@@ -37,7 +37,7 @@ runExperiment <- function ()
         report(OL$Error, "At least one of X, Y and Z should be specified")
     
     colourScales <- splitAndConvertString(colourScales, ",", fixed=TRUE)
-    colourScales <- lapply(colourScales, function(scale) switch(scale, greyscale=1L, grayscale=1L, heat=2L, rainbow=3L, "blue-red"=4L, reds=5L, blues=6L, "yellow-red"=7L, scale))
+    colourScales <- lapply(colourScales, function(scale) switch(scale, greyscale=1L, grayscale=1L, heat=2L, rainbow=3L, "blue-red"=4L, reds=5L, blues=6L, "yellow-red"=7L, viridis=8L, scale))
     
     interpolationKernel <- switch(interpolation, nearestneighbour=mmand::boxKernel(), trilinear=mmand::triangleKernel(), spline=mmand::mnKernel())
     
