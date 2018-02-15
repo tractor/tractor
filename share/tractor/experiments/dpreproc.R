@@ -141,7 +141,7 @@ runExperiment <- function ()
                     }))
                     echoSeparations <- do.call(c, lapply(images, function(image) {
                         if (!is.null(attr(image, "effectiveReadoutTime")))
-                            attrs(image, "effectiveReadoutTime")
+                            attr(image, "effectiveReadoutTime")
                         else if (!is.null(attr(image,"echoSpacing")) && !is.null(attr(image,"epiFactor")))
                             attr(image,"echoSpacing") / 1e6 * (attr(image,"epiFactor") - 1)
                         else
