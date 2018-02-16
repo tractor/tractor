@@ -281,6 +281,8 @@ chooseDataTypeForImage <- function (image, format)
 #'   use when storing the data. This can lead to a substantial loss of
 #'   precision, and is usually not desirable. Only used when writing to the
 #'   NIfTI file format.
+#' @param writeTags Logical value: should tags be written in YAML format to an
+#'   auxiliary file?
 #' @param errorIfMissing Logical value: raise an error if no suitable files
 #'   were found?
 #' @param deleteOriginals Logical value: if \code{TRUE}, \code{copyImageFiles}
@@ -516,7 +518,7 @@ writeImageData <- function (image, connection, type, size, endian = .Platform$en
 
 #' @rdname files
 #' @export
-writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE, maxSize = NULL)
+writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE, maxSize = NULL, writeTags = FALSE)
 {
     if (!is(image, "MriImage"))
         report(OL$Error, "The specified image is not an MriImage object")
@@ -556,6 +558,9 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
         writeNifti(image, fileNames, gzipped=params$gzipped, maxSize=maxSize)
     else if (params$format == "Mgh")
         writeMgh(image, fileNames, gzipped=params$gzipped)
+    
+    if (writeTags && image$nTags() > 0)
+        writeLines(yaml::as.yaml(image$getTags()), ensureFileSuffix(fileStem,"tags"))
     
     invisible (fileNames)
 }

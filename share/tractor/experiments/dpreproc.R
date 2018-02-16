@@ -150,7 +150,7 @@ runExperiment <- function ()
                 }
             }
             
-            writeImageFile(mergedImage, session$getImageFileNameByType("rawdata","diffusion"))
+            writeImageFile(mergedImage, session$getImageFileNameByType("rawdata","diffusion"), writeTags=TRUE)
             print(mergedImage)
             
             if (!is.null(seriesDescriptions))

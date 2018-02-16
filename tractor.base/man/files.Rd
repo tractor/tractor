@@ -26,7 +26,7 @@ readImageFile(fileName, fileType = NULL, metadataOnly = FALSE,
   volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
 
 writeImageFile(image, fileName = NULL, fileType = NA, overwrite = TRUE,
-  maxSize = NULL)
+  maxSize = NULL, writeTags = FALSE)
 
 registerPathHandler(regex, handler)
 }
@@ -78,6 +78,9 @@ This is recommended in most circumstances.}
 use when storing the data. This can lead to a substantial loss of
 precision, and is usually not desirable. Only used when writing to the
 NIfTI file format.}
+
+\item{writeTags}{Logical value: should tags be written in YAML format to an
+auxiliary file?}
 
 \item{regex}{A regular expression.}
 
