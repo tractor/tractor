@@ -10,11 +10,11 @@ runExperiment <- function ()
     tractName <- getConfigVariable("TractName", NULL, "character")
     resultsName <- getConfigVariable("ResultsName", "results")
     
-    model <- getNTResource("model", "pnt", list(modelName=modelName,tractName=tractName))
+    model <- getNTResource("model", list(modelName=modelName,tractName=tractName))
     
     data <- readPntDataTable(datasetName)
     
     results <- calculatePosteriorsForDataTable(data, model)
     resultsObject <- newProbabilisticNTResultsFromPosteriors(results$tp, results$np, results$mm, NULL)
-    writeNTResource(resultsObject, "results", "pnt", list(resultsName=resultsName))
+    writeNTResource(resultsObject, "results", list(resultsName=resultsName))
 }

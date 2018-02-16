@@ -36,7 +36,7 @@ runExperiment <- function ()
     requireArguments("session directory")
     session <- attachMriSession(Arguments[1])
     
-    reference <- getNTResource("reference", "pnt", list(tractName=tractName))
+    reference <- getNTResource("reference", list(tractName=tractName))
     
     if (isValidAs(Sys.getenv("TRACTOR_PLOUGH_ID"), "integer"))
         fileName <- ensureFileSuffix(paste(datasetName,Sys.getenv("TRACTOR_PLOUGH_ID"),sep="."), "txt")
