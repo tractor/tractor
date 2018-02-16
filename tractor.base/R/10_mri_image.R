@@ -857,5 +857,20 @@ mergeMriImages <- function (...)
     data <- do.call("c", lapply(images, as.array))
     dim(data) <- c(blockDims, length(data) %/% prod(blockDims))
     
-    return (asMriImage(data, images[[which.max(imageSizes)]]))
+    tags <- Reduce(function(x,y) {
+        sapply(intersect(names(x$getTags()),names(y$getTags())), function(n) {
+            tx <- x$getTags(n)
+            ty <- y$getTags(n)
+            if (equivalent(tx, ty))
+                tx
+            else if (length(dim(data)) == 3 && length(tx) == x$nSlices() && length(ty) == y$nSlices())
+                c(tx, ty)
+            else if (length(dim(data)) == 4 && length(tx) == x$nVolumes() && length(ty) == y$nVolumes())
+                c(tx, ty)
+            else
+                NULL
+        }, simplify=FALSE, USE.NAMES=TRUE)
+    }, images)
+    
+    return (asMriImage(data, images[[which.max(imageSizes)]], tags=tags[!sapply(tags,is.null)]))
 }
