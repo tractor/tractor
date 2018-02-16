@@ -5,6 +5,6 @@ import(tractor.base)
 import(tractor.track)
 import(tractor.session)
 
-exportClasses(FieldTract, BSplineTract, ReferenceTract, UninformativeTractModel, MatchingTractModel, HeuristicNTResults, ProbabilisticNTResults)
+exportClasses(BSplineTract, ReferenceTract, UninformativeTractModel, MatchingTractModel, ProbabilisticNTResults)
 
 exportPattern("^[^\\.]")

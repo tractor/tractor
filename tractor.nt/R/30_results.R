@@ -1,23 +1,3 @@
-HeuristicNTResults <- setRefClass("HeuristicNTResults", contains="SerialisableObject", fields=list(results="list",sessionPaths="character"), methods=list(
-    initialize = function (results = list(), sessionPaths = character(0), ...)
-    {
-        if (length(sessionPaths) > 0 && length(sessionPaths) != length(results))
-            report(OL$Error, "Session path length does not match the results list")
-        
-        initFields(results=results, sessionPaths=sessionPaths)
-    },
-    
-    getResult = function (pos) { return (results[[pos]]) },
-    
-    getResults = function () { return (results) },
-    
-    getSessionPaths = function () { return (sessionPaths) },
-    
-    nSessions = function () { return (length(results)) },
-    
-    summarise = function () { return (list(labels="Number of sessions", values=.self$nSessions())) }
-))
-
 setClassUnion("UninformativeTractModelOrNull", c("UninformativeTractModel","NULL"))
 
 ProbabilisticNTResults <- setRefClass("ProbabilisticNTResults", contains="SerialisableObject", fields=list(tractPosteriors="list",nullPosteriors="list",matchingModel="MatchingTractModel",uninformativeModel="UninformativeTractModelOrNull"), methods=list(
