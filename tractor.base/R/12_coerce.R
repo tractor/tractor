@@ -2,10 +2,18 @@ setOldClass(c("niftiImage", "internalImage"))
 
 .convertNiftiImage <- function (from)
 {
+    # Pick up divest attributes and convert to tags (excl. patient info)
+    attribs <- attributes(from)
+    attribs <- attribs[!(names(attribs) %~% "^\\.|^(dim|imagedim|pixdim|pixunits|class|bValues|bVectors)$|^patient")]
+    if (length(attribs) > 0)
+        tags <- attribs
+    else
+        tags <- list()
+    
     metadata <- RNifti::dumpNifti(from)
     defaults <- list(dim_info=0, intent_p1=0, intent_p2=0, intent_p3=0, intent_code=0, intent_name="", slice_start=0, slice_end=0, slice_code=0, cal_min=0, cal_max=0, slice_duration=0, toffset=0, aux_file="")
     
-    tags <- list()
+    # Add NIfTI attributes that are set to something other than the defaults
     for (key in names(defaults))
     {
         if (metadata[[key]] != defaults[[key]])
