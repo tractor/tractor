@@ -74,7 +74,7 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
                 {
                     # Weights are simply the predicted signals; nonpositive data values get zero weight
                     weights <- exp(voxelLogData - voxelResiduals)
-                    weights[is.na(weights)] <- 0
+                    weights[!is.finite(weights)] <- 0
                     tempSolution <- suppressWarnings(lsfit(bMatrix, voxelLogData, wt=weights))
                     voxelResiduals <- tempSolution$residuals
                     
