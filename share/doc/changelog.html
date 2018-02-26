@@ -44,6 +44,15 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="321-2018-02-26">3.2.1 (2018-02-26)</h2>
+
+<ul>
+<li>Running <code>dpreproc</code> with <code>DicomReader:divest</code> on a session directory containing DICOM files from different series will now also combine metadata from those series (where appropriate), and write it to an auxiliary .tags file.</li>
+<li>Recent minor updates to supporting packages <code>RNifti</code>, <code>RNiftyReg</code>, <code>mmand</code>, <code>yaml</code> and <code>corpcor</code> have now been incorporated.</li>
+<li>Infinite weights could rarely occur in <code>tensorfit</code>, when using the IWLS method. These are now detected and ignored.</li>
+<li>A spurious error in <code>dpreproc</code> due to a typo has been corrected.</li>
+</ul>
+
 <h2 id="320-2018-02-14">3.2.0 (2018-02-14)</h2>
 
 <ul>
