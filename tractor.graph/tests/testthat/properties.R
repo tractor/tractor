@@ -59,7 +59,7 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
             igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
         
         connected <- which(igraph::degree(i_graph) > 0)
-        i_eff <- 1 / igraph::distances(i_graph, connected, mode="out")
+        i_eff <- 1 / igraph::distances(i_graph, connected, connected, mode="out")
         i_global_eff <- mean(i_eff[upper.tri(i_eff) | lower.tri(i_eff)], na.rm=TRUE)
         expect_equivalent(graphEfficiency(t_graph,type="global"), i_global_eff)
     })
