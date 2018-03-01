@@ -1,5 +1,7 @@
 testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
 {
+    # info <- paste0("Matrix was matrix(c(", paste(signif(as.matrix(t_graph),4),collapse=","), "), ", t_graph$nVertices(), ", ", t_graph$nVertices(), ")")
+    
     test_that("TractoR and igraph objects match", {
         expect_equal(t_graph$isWeighted(), igraph::is_weighted(i_graph))
         expect_equal(t_graph$isDirected(), igraph::is_directed(i_graph))
@@ -58,8 +60,7 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
         if (t_graph$isWeighted())
             igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
         
-        connected <- which(igraph::degree(i_graph) > 0)
-        i_eff <- 1 / igraph::distances(i_graph, connected, connected, mode="out")
+        i_eff <- 1 / igraph::distances(i_graph, mode="out")
         i_global_eff <- mean(i_eff[upper.tri(i_eff) | lower.tri(i_eff)], na.rm=TRUE)
         expect_equivalent(graphEfficiency(t_graph,type="global"), i_global_eff)
     })
