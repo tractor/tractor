@@ -43,6 +43,7 @@ principalNetworks.list <- function (x, components = NULL, replicates = 0L, refer
     
     meanAssociationMatrix <- Reduce("+", lapply(x,as.matrix)) / nGraphs
     eigensystem <- eigen(meanAssociationMatrix)
+    colnames(eigensystem$vectors) <- paste0("PN", components)
     
     # Check for substantially negative eigenvalues
     if (any(eigensystem$values < -sqrt(.Machine$double.eps)))

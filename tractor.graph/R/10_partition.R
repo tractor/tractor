@@ -11,6 +11,8 @@ PartitionedGraph <- setRefClass("PartitionedGraph", contains="Graph", fields=lis
         if (length(communityWeights) > 0 && length(communityWeights) != ncol(vertexWeights))
             report(OL$Error, "Inputs don't agree on the number of communities")
         
+        rownames(vertexWeights) <- .self$getVertexAttributes("name")
+        
         initFields(vertexWeights=vertexWeights, communityWeights=communityWeights)
     },
     
