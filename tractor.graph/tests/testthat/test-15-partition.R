@@ -32,10 +32,11 @@ test_that("partitioning works as expected", {
     
     # Random graph
     graph <- randomGraph(10, M=20)
+    info <- paste0("Matrix was matrix(c(", paste(signif(as.matrix(graph),4),collapse=","), "), ", graph$nVertices(), ", ", graph$nVertices(), ")")
     t_partitioned <- partitionGraph(graph, method="modularity")
     i_partitioned <- igraph::cluster_leading_eigen(as(graph, "igraph"))
-    expect_true(membershipMatches(t_partitioned$getVertexMemberships(), i_partitioned$membership))
-    expect_equal(modularity(t_partitioned), igraph::modularity(i_partitioned))
+    expect_true(membershipMatches(t_partitioned$getVertexMemberships(), i_partitioned$membership), info=info)
+    expect_equal(modularity(t_partitioned), igraph::modularity(i_partitioned), info=info)
 })
 
 test_that("principal network decomposition works", {
