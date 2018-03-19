@@ -153,7 +153,7 @@ modularity <- function (graph, ...)
     graph <- asPartitionedGraph(graph, ...)
     
     memberships <- graph$getVertexMemberships()
-    matchingMembershipMatrix <- outer(memberships, memberships, fxy(ifelse(x==y,1,0)))
+    matchingMembershipMatrix <- outer(memberships, memberships, fxy(ifelse(!is.na(x) & !is.na(y) & x==y, 1, 0)))
     modularity <- sum(modularityMatrix(graph) * matchingMembershipMatrix) / (2 * sum(graph$getEdgeWeights(), na.rm=TRUE))
     
     return (modularity)
