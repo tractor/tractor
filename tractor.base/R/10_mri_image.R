@@ -140,7 +140,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         
         dim <- getDimensionality()
         loc <- resolveVector(len=dim, ...)
-        if (is.null(loc) || (length(...) != dim))
+        if (is.null(loc) || (length(loc) != dim))
             report(OL$Error, "Point must be specified as a ", dim, "-vector")
             
         if (all(loc >= 1) && all(loc <= getDimensions()))
