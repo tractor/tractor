@@ -98,6 +98,7 @@ dtest:
 	@cd tests && $(MAKE) debug-tests R=$(R)
 
 utest: lib/R/testthat lib/R/igraph
+	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.base
 	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.graph
 
 deeptest: utest test
