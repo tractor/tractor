@@ -60,43 +60,56 @@ setClassUnion("MriImageData", c("SparseArray","array","NULL"))
 MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",storedXform="matrix",reordered="logical",tags="list",data="MriImageData"), methods=list(
     initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, storedXform = emptyMatrix(), reordered = TRUE, tags = list(), data = NULL, ...)
     {
-        if (is.null(voxelDimUnits))
-            voxelDimUnits <- "unknown"
+        oldFields <- list(...)
         
-        # For backwards compatibility
-        if (source == "internal")
-            source <- ""
-        
-        # For backwards compatibility
-        if (length(tags) == 2 && all(c("keys","values") %in% names(tags)))
-            tags <- structure(as.list(tags$values), names=tags$keys)
-        
-        if (!is.null(imageDims) && !is.null(data) && !equivalent(imageDims,dim(data)))
-            dim(data) <- imageDims
-        else if (is.null(imageDims))
-            imageDims <- dim(data)
-        
-        if (length(origin) < 3)
-            origin <- c(as.numeric(origin), rep(0,3-length(origin)))
-        else
-            origin <- as.numeric(origin)[1:3]
-        
-        # For backwards compatibility
-        if (is.null(voxelDims) && "voxdims" %in% names(list(...)))
+        # Resolve image dimensions
+        .dims <- imageDims
+        if (is.null(imageDims))
         {
-            oldFields <- list(...)
-            if (is.null(oldFields$voxunit))
-                oldFields$voxunit <- "unknown"
-            object <- initFields(imageDims=as.integer(oldFields$imagedims), voxelDims=abs(as.numeric(oldFields$voxdims)), voxelDimUnits=oldFields$voxunit, source=source, origin=origin, storedXform=storedXform, reordered=reordered, tags=tags, data=data)
+            if ("imagedims" %in% names(oldFields))
+                .dims <- oldFields$imagedims
+            else
+                .dims <- dim(data)
         }
-        else
-            object <- initFields(imageDims=as.integer(imageDims), voxelDims=abs(as.numeric(voxelDims)), voxelDimUnits=voxelDimUnits, source=source, origin=origin, storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
         
-        if (length(object$imageDims) != length(object$voxelDims))
+        # Sanity checking
+        if (is.null(.dims) || length(.dims) < 2)
+            report(OL$Error, "Image must be multidimensional")
+        if (!is.null(data) && !is.null(dim(data)) && !equivalent(.dims,dim(data)))
+            flag(OL$Warning, "Data dimensions do not match the specified image dimensions")
+        
+        # Resolve voxel dimensions and associated units
+        .voxdims <- voxelDims
+        .voxunits <- voxelDimUnits
+        if (is.null(voxelDims) && "voxdims" %in% names(oldFields))
+            .voxdims <- oldFields$voxdims
+        if (is.null(voxelDimUnits) && "voxunit" %in% names(oldFields))
+            .voxunits <- oldFields$voxunit
+        
+        # Name voxel units
+        names(.voxunits)[.voxunits %~% "m$"] <- "spatial"
+        names(.voxunits)[.voxunits %~% "s$"] <- "temporal"
+        
+        if (length(.dims) != length(.voxdims))
             report(OL$Error, "Image and voxel dimensions should have the same length")
         
-        names(object$voxelDimUnits)[object$voxelDimUnits %~% "m$"] <- "spatial"
-        names(object$voxelDimUnits)[object$voxelDimUnits %~% "s$"] <- "temporal"
+        object <- initFields(imageDims=as.integer(.dims), voxelDims=abs(as.numeric(.voxdims)), voxelDimUnits=as.character(.voxunits), source=as.character(source), origin=origin, storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
+        
+        # Make sure the data dimensions are right
+        if (!is.null(object$data))
+            dim(object$data) <- .dims
+        
+        # Various fix-ups for backwards compatibility
+        if (length(object$voxelDimUnits) == 0)
+            object$voxelDimUnits <- "unknown"
+        if (length(object$source) != 1 || object$source == "internal")
+            object$source <- ""
+        if (length(object$tags) == 2 && all(c("keys","values") %in% names(object$tags)))
+            object$tags <- structure(as.list(object$tags$values), names=object$tags$keys)
+        if (length(object$origin) < 3)
+            object$origin <- c(as.numeric(object$origin), rep(0,3-length(object$origin)))
+        else
+            object$origin <- as.numeric(object$origin)[1:3]
         
         return (object)
     },
