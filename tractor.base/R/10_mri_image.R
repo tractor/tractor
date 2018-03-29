@@ -80,11 +80,11 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         
         # Resolve voxel dimensions and associated units
         .voxdims <- voxelDims
-        .voxunits <- voxelDimUnits
+        .voxunits <- as.character(voxelDimUnits)
         if (is.null(voxelDims) && "voxdims" %in% names(oldFields))
             .voxdims <- oldFields$voxdims
         if (is.null(voxelDimUnits) && "voxunit" %in% names(oldFields))
-            .voxunits <- oldFields$voxunit
+            .voxunits <- as.character(oldFields$voxunit)
         
         # Name voxel units
         names(.voxunits)[.voxunits %~% "m$"] <- "spatial"
@@ -93,7 +93,8 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         if (length(.dims) != length(.voxdims))
             report(OL$Error, "Image and voxel dimensions should have the same length")
         
-        object <- initFields(imageDims=as.integer(.dims), voxelDims=abs(as.numeric(.voxdims)), voxelDimUnits=as.character(.voxunits), source=as.character(source), origin=origin, storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
+        # Don't call as.character() on .voxunits here, as it will drop names
+        object <- initFields(imageDims=as.integer(.dims), voxelDims=abs(as.numeric(.voxdims)), voxelDimUnits=.voxunits, source=as.character(source), origin=origin, storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
         
         # Make sure the data dimensions are right
         if (!is.null(object$data))
