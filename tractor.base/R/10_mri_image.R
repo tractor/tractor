@@ -73,7 +73,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         }
         
         # Sanity checking
-        if (is.null(.dims) || length(.dims) < 2)
+        if (!is.null(.dims) && length(.dims) < 2)
             report(OL$Error, "Image must be multidimensional")
         if (!is.null(data) && !is.null(dim(data)) && !equivalent(.dims,dim(data)))
             flag(OL$Warning, "Data dimensions do not match the specified image dimensions")
@@ -94,7 +94,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             report(OL$Error, "Image and voxel dimensions should have the same length")
         
         # Don't call as.character() on .voxunits here, as it will drop names
-        object <- initFields(imageDims=as.integer(.dims), voxelDims=abs(as.numeric(.voxdims)), voxelDimUnits=.voxunits, source=as.character(source), origin=origin, storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
+        object <- initFields(imageDims=as.integer(.dims), voxelDims=abs(as.numeric(.voxdims)), voxelDimUnits=.voxunits, source=as.character(source), origin=as.numeric(origin), storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
         
         # Make sure the data dimensions are right
         if (!is.null(object$data))
@@ -108,9 +108,9 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         if (length(object$tags) == 2 && all(c("keys","values") %in% names(object$tags)))
             object$tags <- structure(as.list(object$tags$values), names=object$tags$keys)
         if (length(object$origin) < 3)
-            object$origin <- c(as.numeric(object$origin), rep(0,3-length(object$origin)))
+            object$origin <- c(object$origin, rep(0,3-length(object$origin)))
         else
-            object$origin <- as.numeric(object$origin)[1:3]
+            object$origin <- object$origin[1:3]
         
         return (object)
     },
