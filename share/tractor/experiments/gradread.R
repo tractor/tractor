@@ -23,8 +23,6 @@ runExperiment <- function ()
         nBValues <- length(unique(bValues))
     }
     
-    metadata <- session$getImageByType("rawdata", "diffusion", metadataOnly=TRUE)
-    
     bvecs <- as.matrix(read.table(fileName))
     if (nrow(bvecs) != 3)
     {
@@ -37,16 +35,16 @@ runExperiment <- function ()
             report(OL$Error, "The gradient vector matrix must have one dimension equal to 3")
     }
     
-    nVectorsFile <- ncol(bvecs)
-    nVectorsImage <- metadata$getDimensions()[4]
-    report(OL$Info, "Gradient vector matrix has #{nVectorsFile} columns; data image contains #{nVectorsImage} volumes")
-    
     if (!bValueFile)
     {
-        bvals <- rep(NA, nVectorsImage)
         report(OL$Info, "Loading raw data image")
         dataImage <- session$getImageByType("rawdata", "diffusion")
-    
+        
+        nVectorsFile <- ncol(bvecs)
+        nVectorsImage <- dataImage$getDimensions()[4]
+        bvals <- rep(NA, nVectorsImage)
+        report(OL$Info, "Gradient vector matrix has #{nVectorsFile} columns; data image contains #{nVectorsImage} volumes")
+        
         meanIntensities <- dataImage$apply(4, mean, na.rm=TRUE)
         kMeansResult <- kmeans(meanIntensities, nBValues, nstart=3)
     
