@@ -843,8 +843,8 @@ mergeMriImages <- function (...)
     if (length(images) == 1)
         return (images[[1]])
     
-    dimensionalities <- sapply(images, function(x) x$getDimensionality())
-    dimensions <- sapply(seq_along(images), function(i) c(images[[i]]$getDimensions(), rep(NA,max(dimensionalities)-dimensionalities[i])))
+    dimensionalities <- sapply(images, fx(x$getDimensionality()))
+    dimensions <- sapply(seq_along(images), fi(c(images[[i]]$getDimensions(), rep(1L,max(dimensionalities)-dimensionalities[i]))))
     
     commonDims <- apply(dimensions, 1, allEqual)
     if (!commonDims[1])
@@ -852,25 +852,28 @@ mergeMriImages <- function (...)
     commonDims[length(commonDims)] <- FALSE
     lastCommonDim <- which(!commonDims)[1] - 1L
     blockDims <- dimensions[1:lastCommonDim,1]
+    blockCounts <- apply(dimensions[-(1:lastCommonDim),,drop=FALSE], 2, prod)
     
     imageSizes <- apply(dimensions, 2, prod, na.rm=TRUE)
     data <- do.call("c", lapply(images, as.array))
     dim(data) <- c(blockDims, length(data) %/% prod(blockDims))
     
+    tags <- lapply(seq_along(images), fi(c(list(.blocks=blockCounts[i]), images[[i]]$getTags())))
+    tagNames <- Reduce(intersect, lapply(tags, names))
     tags <- Reduce(function(x,y) {
-        sapply(intersect(names(x$getTags()),names(y$getTags())), function(n) {
-            tx <- x$getTags(n)
-            ty <- y$getTags(n)
-            if (equivalent(tx, ty))
-                tx
-            else if (length(dim(data)) == 3 && length(tx) == x$nSlices() && length(ty) == y$nSlices())
-                c(tx, ty)
-            else if (length(dim(data)) == 4 && length(tx) == x$nVolumes() && length(ty) == y$nVolumes())
-                c(tx, ty)
+        sapply(tagNames, function(n) {
+            if (n == ".blocks")
+                x[[n]] + y[[n]]
+            else if (equivalent(x[[n]], y[[n]]))
+                x[[n]]
+            else if (length(x[[n]]) == x$.blocks && length(y[[n]]) == y$.blocks)
+                c(x[[n]], y[[n]])
             else
                 NULL
         }, simplify=FALSE, USE.NAMES=TRUE)
-    }, images)
+    }, tags)
+    
+    tags$.blocks <- NULL
     
     return (asMriImage(data, images[[which.max(imageSizes)]], tags=tags[!sapply(tags,is.null)]))
 }
