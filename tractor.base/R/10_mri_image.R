@@ -128,6 +128,40 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         .self$setSource(NULL)
     },
     
+    find = function (fun = NULL, array = TRUE)
+    {
+        "Find voxels whose values are not zero, or satisfy a function"
+        .warnIfIndexingUnreorderedImage(.self)
+        
+        if (.self$isEmpty())
+            return (integer(0))
+        else if (is.null(fun))
+        {
+            if (.self$isSparse())
+            {
+                locs <- data$getCoordinates()
+                if (array)
+                    return (locs)
+                else
+                    return (matrixToVectorLocs(locs, imageDims))
+            }
+            else
+                return (which(data != 0, arr.ind=array))
+        }
+        else
+        {
+            if (is.numeric(fun) && length(fun) == 1)
+                locs <- which(as.array(data) == fun)
+            else
+                locs <- which(as.logical(do.call(fun, list(as.array(data)))))
+            
+            if (array)
+                return (vectorToMatrixLocs(locs, imageDims))
+            else
+                return (locs)
+        }
+    },
+    
     getData = function () { return (data) },
     
     getDataAtPoint = function (...)
