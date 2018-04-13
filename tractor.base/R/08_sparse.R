@@ -271,7 +271,7 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
     
     dataLocs <- match(index, matrixToVectorLocs(coords,dims), 0L)
     present <- (dataLocs > 0)
-    zero <- (value == 0)
+    zero <- (!is.na(value) & value == 0)
     
     data[dataLocs[present & !zero]] <- value[which(present & !zero)]
     if (any(present & zero))
