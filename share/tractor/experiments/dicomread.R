@@ -45,7 +45,7 @@ runExperiment <- function ()
     
     divestVerbosity <- switch(names(getOutputLevel()), Debug=2L, Verbose=0L, -1L)
     
-    for (path in paths)
+    for (path in expandFileName(paths))
     {
         # Scan over the DICOM files and convert to "niftiImage" objects
         report(OL$Info, "Looking for DICOM files in directory #{path}...")

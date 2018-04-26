@@ -6,7 +6,7 @@ a5391c7555bd912343ae34a4ebf8ba89 Dockerfile
 10b634d9e14144c8b6aa3562b4877ede LICENSE
 a09487369567b9de2d28a6422040690d Makefile
 d0e2013df90f2ccad8a8cbe982ac3c29 README.md
-943c99b8c92b7401b69d72ec2673bec4 VERSION
+dfb3b6750d510d4ef1dff619c47b6f1f VERSION
 f13a73bd17fbe0f54870413c386c301a bin/extra/tractor_Rinstall
 d76b57fca00a953da23e081909c5226e bin/furrow
 d5c5dc998cbe4276ce52c2fa2eedada6 bin/plough
@@ -23,7 +23,7 @@ d4162c9d7e520a5de05001be6e741899 share/doc/assets/jquery-3.2.0.min.js
 ce088d53ef9561c4dd85577f4c4e10ba share/doc/assets/prism.css
 cdca90be556c2e5f8dfb1482e0fc09e9 share/doc/assets/prism.js
 7df7e835c118fa33ba2f3432dd911dc2 share/doc/assets/style.css
-68b97c7d717ea0b07406781c40e8049a share/doc/changelog.html
+f3cd830f9d9318029ad4c1a58ffad455 share/doc/changelog.html
 7627b8434c56066e77e4a42914f09fc3 share/doc/connectivity-graphs.html
 f66f021426a88d35b07c2941c3e62ad0 share/doc/conventions.html
 93d052eb4f5761ba11b033200c8fb4f0 share/doc/diffusion-processing.html
@@ -60,7 +60,7 @@ bbe5ef17ed4327566d76e69c35b796c2 share/tractor/experiments/binarise.R
 4535d492a72ddc79ef74463d343d1571 share/tractor/experiments/compress.R
 89e6cab08e962c248fbd77efa5a1189c share/tractor/experiments/console.R
 d206f9f190825a87351372b30eadedfd share/tractor/experiments/deface.R
-ddf908938fb6cb75aea9365ccbc1709f share/tractor/experiments/dicomread.R
+0ce467875f30a7927338c27b374f0970 share/tractor/experiments/dicomread.R
 e007db0ce9d2bf8299d8f5aeb5376f3b share/tractor/experiments/dicomsort.R
 7b02a0e2c27d53dfe1c09ea33f3d901e share/tractor/experiments/dicomtags.R
 747f2029d90106bf301b63b3dec67aee share/tractor/experiments/dirviz.R
@@ -580,7 +580,7 @@ e942d1e25103ee5c3b9dc6676b3f40a2 tractor.reg/R/niftyreg.R
 e617612a87e2e5d5b899bedcd3838e3b tractor.reg/R/transform.R
 e051927aed3d1fff6913b72a22baafc2 tractor.reg/R/zzz.R
 0728501ca81c0b667fd58a0253950469 tractor.reg/inst/CITATION
-a9a3775d78e6c686ad70af313882fdb6 tractor.session/DESCRIPTION
+176c42110adf4dd920fc7aa77a2345f3 tractor.session/DESCRIPTION
 f75df8af437952efae2473fa0e19ec2c tractor.session/NAMESPACE
 ba344dc0b0f15d8eedb55718a62136f9 tractor.session/R/00_constants.R
 e1ad05aa099958d45434b0605d7d1290 tractor.session/R/03_scheme.R
@@ -626,12 +626,12 @@ c4bcd9b3b3a004de81bdd2c32289c822 tractor.track/src/Tracker.cpp
 2f1f2901193f18fe244ff4b6c6bc73ac tractor.track/src/VisitationMap.h
 87b22c0fb789b5ae0e58211bdc4b8e2f tractor.track/src/config.h.in
 6060658aabcf393f21696bac8ee823d0 tractor.track/src/main.cpp
-5691781903ca2ae3f3d2e96863aca8f2 tractor.utils/DESCRIPTION
+3b2c54d69186eaf8c9cd51bbfecd6d69 tractor.utils/DESCRIPTION
 9561708bbffcd50e57b2fb8cc54b5cbd tractor.utils/NAMESPACE
 e4e78bedb73cfa50b505f8a895d19f31 tractor.utils/R/bootstrap.R
 210a124fe5226c56e9015f6cb09d8ab2 tractor.utils/R/files.R
 f9c7fb182e443fd4cf61d4480de34217 tractor.utils/R/parallel.R
-6b5b3c15a15c8fd65949b6d4423d4a2e tractor.utils/R/plough.R
+b712ffe14b34e322fedb88d5644d6030 tractor.utils/R/plough.R
 86479ac6b4ef961fd0c26f5045d70373 tractor.utils/R/scripts.R
 baa8863b489d403be4c014a8bf2b2bd8 tractor.utils/R/yaml.R
 a6233716480412e224c803958935423e tractor.utils/inst/CITATION

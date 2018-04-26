@@ -48,7 +48,7 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
     }
     
     for (name in setdiff(names(config), c(variables,"")))
-        data[[name]] <- config[[name]]
+        data[[name]] <- rep(config[[name]], length.out=n)
     
     report(OL$Info, "Scheduling #{n} jobs")
     

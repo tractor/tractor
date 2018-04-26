@@ -44,6 +44,14 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="324-2018-04-26">3.2.4 (2018-04-26)</h2>
+
+<ul>
+<li>The <code>Rcpp</code> package has been updated for compatibility with the recently released R 3.5.0.</li>
+<li>Paths are now expanded by <code>dicomread</code>, so that filenames beginning with &ldquo;._&rdquo; are no longer created when reading from the current working directory. (Such files are generally invisible.)</li>
+<li>The code behind <code>plough</code> is now more careful to avoid spurious errors when non-loop variables have length greater than one.</li>
+</ul>
+
 <h2 id="323-2018-04-10">3.2.3 (2018-04-10)</h2>
 
 <ul>
