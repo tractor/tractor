@@ -337,7 +337,10 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScales 
     
     # Use projections, unless multiple slices on the same axis were requested
     if (is.null(projectOverlays))
+    {
         projectOverlays <- !any(duplicated(info$axis))
+        report(OL$Info, "Overlays will use a maximum-intensity projection")
+    }
     
     if (!separate)
     {
