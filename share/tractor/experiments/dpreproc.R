@@ -126,7 +126,7 @@ runExperiment <- function ()
                         info <- divest::scanDicom(dicomDirs, verbosity=divestVerbosity)
                         images <- divest::readDicom(info, subset=diffusion, verbosity=divestVerbosity)
                     }
-                    mergedImage <- do.call(mergeMriImages, lapply(images, as, "MriImage"))
+                    mergedImage <- do.call(mergeMriImages, lapply(images, fx(reorderMriImage(as(x,"MriImage")))))
                     bValues <- do.call(c, lapply(images, function(image) {
                         if (is.null(attr(image, "bValues")))
                             rep(NA, ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L))
