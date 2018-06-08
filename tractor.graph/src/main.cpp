@@ -193,6 +193,13 @@ BEGIN_RCPP
     XPtr<RGraph> graphPtr(_graph);
     RGraph *g = graphPtr;
     
+    // Catch the unsupported case before calculations begin
+    if (g->weighted && g->directed)
+    {
+        Rf_warning("Clustering coefficient is not implemented for directed, weighted graphs");
+        return NumericVector(g->order, NA_REAL);
+    }
+    
     ArcLookUp<SmartDigraph> arcs(g->graph);
     NumericVector result(g->order);
     for (SmartDigraph::NodeIt node(g->graph); node != INVALID; ++node)
@@ -239,7 +246,10 @@ BEGIN_RCPP
                     else if (!g->weighted && g->directed)
                         triangles += static_cast<double>(((arcs(node,*neighbour1) != INVALID) + (arcs(*neighbour1,node) != INVALID)) * ((arcs(*neighbour1,*neighbour2) != INVALID) + (arcs(*neighbour2,*neighbour1) != INVALID)) * ((arcs(node,*neighbour2) != INVALID) + (arcs(*neighbour2,node) != INVALID)));
                     else if (g->weighted && g->directed)
-                        throw std::domain_error("Clustering coefficient is not implemented for directed, weighted graphs");
+                    {
+                        // This point should never be reached, because this case is caught at the beginning of the function, but it's present for clarity
+                        triangles = NA_REAL;
+                    }
                     else if (method == "onnela")
                     {
                         // Onnela method: weighted triangle value is the geometric mean of the weights of the edges
