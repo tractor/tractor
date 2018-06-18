@@ -10,6 +10,6 @@ addons:
     - r-base-dev
     - r-cran-matrix
 
-install: make install
+install: make install-local
 
 script: make test
