@@ -28,6 +28,11 @@ run-tests:
 	@$(MAKE) `find . -name '*.sh' -print | sort | sed 's/\.sh$$/\.out/'` || exit 1
 	@echo "All tests completed"
 
+run-ci-tests:
+	@mkdir -p tmp data/session/tractor/fdt.track
+	@$(MAKE) `find . -name '*.sh' -print | grep -v '90_Foreign' | sort | sed 's/\.sh$$/\.out/'` || exit 1
+	@echo "All tests completed"
+
 debug-tests:
 	@$(MAKE) run-tests TRACTOR="$(TRACTOR) -d"
 

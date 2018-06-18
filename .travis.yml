@@ -12,4 +12,4 @@ addons:
 
 install: make install-local
 
-script: make test
+script: make test-ci

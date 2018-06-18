@@ -83,6 +83,9 @@ distclean: clean
 test:
 	@cd tests && $(MAKE) run-tests
 
+test-ci:
+	@cd tests && $(MAKE) run-ci-tests
+
 dtest:
 	@cd tests && $(MAKE) debug-tests
 
