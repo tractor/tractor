@@ -173,7 +173,7 @@ writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL, maxS
             # NAs are typically not preserved when the data type is changed, so we replace them with zeros
             # The original image is replaced by its approximation; its source will be (re)set below
             dataImage <- image$copy()$map(function(x) as.integer(round((ifelse(is.na(x),0,x)-intercept)/slope)))
-            image$map(function(x,y) y * slope + intercept, dataImage)
+            image$map(function(x,y) y * slope + intercept, dataImage, sparse=image$isSparse())
             newData <- as.array(image)
             meanRelativeDifference <- mean(abs((newData-originalData) / originalData), na.rm=TRUE)
             if (meanRelativeDifference > 1e-4)
