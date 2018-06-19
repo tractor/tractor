@@ -37,6 +37,10 @@ test_that("we can read and write NIfTI-1 files", {
     expect_flag(unreorderedImage[50,59,33], "no consistent meaning")
     expect_equal(tractor.base:::xformToOrientation(unreorderedImage$getXform()), "LIA")
     
+    expect_output(writePath <- image$writeToFile(tempfile(),"NIFTI_GZ",maxSize=1), "relative error in compressed image")
+    rereadImage <- readImageFile(writePath$fileStem)
+    expect_equal(image[50,59,33], rereadImage[50,59,33], tolerance=0.1)
+    
     writePath <- writeImageFile(image, tempfile(), "NIFTI_GZ")
     rereadImage <- readImageFile(writePath$fileStem)
     # The next line may seem like a no-op, but getXform() gives the effective
