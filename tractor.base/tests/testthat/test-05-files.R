@@ -33,6 +33,8 @@ test_that("we can read and write NIfTI-1 files", {
     expect_equal(image$getDataAtPoint(50,59,33), 264)
     expect_equal(tractor.base:::xformToOrientation(image$getXform()), "LAS")
     
+    expect_null(show(image))
+    
     expect_false(unreorderedImage$isReordered())
     expect_flag(unreorderedImage[50,59,33], "no consistent meaning")
     expect_equal(tractor.base:::xformToOrientation(unreorderedImage$getXform()), "LIA")
@@ -97,6 +99,11 @@ test_that("we can sort and read DICOM files", {
     sortDicomDirectories(path, deleteOriginals=TRUE)
     expect_equal(length(list.files(path)), 2L)
     expect_true(all(c("4630_DTIb3000s5","6157_fl3D_t1_sag") %in% list.files(path)))
+    
+    files <- list.files(file.path(path,"6157_fl3D_t1_sag"), full.names=TRUE)
+    dicom <- readDicomFile(files[1])
+    expect_length(dicom$getAsciiFields("Version"), 1)
+    expect_output(print(dicom), "GROUP")
     
     image <- readDicomDirectory(file.path(path,"6157_fl3D_t1_sag"))$image
     expect_equal(image$getDimensions(), c(2,224,256))
