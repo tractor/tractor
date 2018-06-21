@@ -71,21 +71,25 @@ setAs("MriImage", "nifti", function(from) {
 setAs("nifti", "MriImage", function(from) as(RNifti::retrieveNifti(from), "MriImage"))
 
 # MriImage methods for RNifti generics
+#' @export
 pixdim.MriImage <- function (object)
 {
     object$getVoxelDimensions()
 }
 
+#' @export
 "pixdim<-.MriImage" <- function (object, value)
 {
     report(OL$Error, "MriImage voxel dimensions cannot be changed at present")
 }
 
+#' @export
 pixunits.MriImage <- function (object)
 {
     object$getVoxelUnits()
 }
 
+#' @export
 "pixunits<-.MriImage" <- function (object, value)
 {
     report(OL$Error, "MriImage voxel units cannot be changed at present")

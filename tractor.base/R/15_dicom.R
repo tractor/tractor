@@ -30,7 +30,7 @@ DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fie
             return (NA)
         
         values <- groups[,ncol(groups),]
-        if (all(values %~% ore(number)))
+        if (all(values %~% ore("^",number,"$")))
             values <- as.numeric(values)
         names(values) <- groups[,ncol(groups)-1,]
         return (values)
