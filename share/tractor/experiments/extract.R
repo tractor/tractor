@@ -11,6 +11,9 @@ runExperiment <- function ()
     exclusions <- getConfigVariable("Exclude", NULL, "character")
     regionName <- getConfigVariable("RegionName", "region")
     
+    if (!is.null(exclusions))
+        exclusions <- splitAndConvertString(exclusions, ",", fixed=TRUE)
+    
     namedValues <- !isValidAs(values, "numeric")
     namedExclusions <- !is.null(exclusions) && !isValidAs(exclusions,"numeric")
     if (namedValues || namedExclusions)
