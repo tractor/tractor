@@ -52,6 +52,8 @@ runExperiment <- function ()
             report(OL$Verbose, "Processing slice #{i}...")
             sliceCorners <- t(apply(corners, 1, function(x) x[1:2] + (i-x[3]) * normal[1:2] / normal[3]))
             blockIndices <- which(grid[,1] >= min(sliceCorners[,1]) & grid[,1] <= max(sliceCorners[,1]) & grid[,2] >= min(sliceCorners[,2]) & grid[,2] <= max(sliceCorners[,2]))
+            if (length(blockIndices) == 0)
+                next
             toAdd <- sapply(blockIndices, function(j) {
                 # Ref: http://demonstrations.wolfram.com/AnEfficientTestForAPointToBeInAConvexPolygon/
                 cc <- t(apply(sliceCorners, 1, "-", grid[j,]))
