@@ -12,6 +12,9 @@ readMgh <- function (fileNames)
     if (version != 1)
         report(OL$Error, "Only version 1 MGH/MGZ files are supported")
     
+    # Create a default header
+    header <- RNifti::niftiHeader()
+    
     dims <- readBin(connection, "integer", n=4, size=4, endian="big")
     typeCode <- readBin(connection, "integer", n=1, size=4, endian="big")
     readBin(connection, "raw", n=4)
@@ -28,29 +31,20 @@ readMgh <- function (fileNames)
     
     close(connection)
     
-    absRotationMatrix <- abs(xformMatrix[1:3,1:3])
-    tolerance <- 1e-3 * max(abs(voxelDims))
-    
-    # The rotation matrix should have exactly one nonzero element per row and column
-    if (!equivalent(rowSums(absRotationMatrix > tolerance), c(1,1,1)) || !equivalent(colSums(absRotationMatrix > tolerance), c(1,1,1)))
-        report(OL$Error, "The image is stored in a rotated frame of reference")
-    
-    # Locate the nonzero elements of the rotation matrix
-    indices <- cbind(1:3, apply(absRotationMatrix > tolerance, 1, which))
-    xformMatrix[indices] <- xformMatrix[indices] * abs(voxelDims)
-    xformMatrix[1:3,4] <- xformMatrix[1:3,4] - c(dims[1]/2,dims[2]/2,dims[3]/2)[indices[,2]] * xformMatrix[indices]
+    nDims <- max(which(dims > 1))
+    if (nDims < 2)
+        report(OL$Error, "MGH image appears to have less than two non-unitary dimensions")
+    header$dim[seq_len(nDims+1)] <- c(nDims, dims[1:nDims])
+    RNifti::qform(header) <- structure(xformMatrix, code=2L)
+    header$pixdim[seq_len(nDims)+1] <- voxelDims[1:nDims]
     
     typeIndex <- which(.Mgh$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
         report(OL$Error, "The MGH data type code is not valid")
     datatype <- list(code=typeCode, type=.Mgh$datatypes$rTypes[typeIndex], size=.Mgh$datatypes$sizes[typeIndex], isSigned=.Mgh$datatypes$isSigned[typeIndex])
     
-    dimsToKeep <- 1:max(which(dims > 1))
-    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep], voxelUnit=NULL, source=fileNames$fileStem, tags=list())
-    
-    storageMetadata <- list(dataOffset=284, dataScalingSlope=1, dataScalingIntercept=0, xformMatrix=xformMatrix, datatype=datatype, endian="big")
-    
-    invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
+    storage <- list(offset=284, slope=1, intercept=0, datatype=datatype, endian="big")
+    invisible (list(image=NULL, header=header, storage=storage))
 }
 
 writeMgh <- function (image, fileNames, gzipped = FALSE)

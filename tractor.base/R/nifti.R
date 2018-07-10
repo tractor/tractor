@@ -17,120 +17,72 @@ niftiDatatype <- function (typeCode)
     return (datatype)
 }
 
-readNifti <- function (fileNames)
+readNifti <- function (fileNames, volumes = NULL)
 {
-    getXformMatrix <- function ()
-    {
-        # With no information, assume Analyze orientation and zero origin
-        if (qformCode <= 0 && sformCode <= 0)
-        {
-            report(OL$Warning, "Nifti qform and sform codes are both zero in file ", fileNames$headerFile, " - orientation can only be guessed")
-            return (diag(c(-abs(voxelDims[2]), abs(voxelDims[3]), ifelse(voxelDims[4]==0,1,abs(voxelDims[4])), 1)))
-        }
-        else if (qformCode > 0)
-        {
-            report(OL$Debug, "Using qform (code ", qformCode, ") for origin")
-            matrix <- quaternionToXform(quaternionParams[1:3])
-            matrix[1:3,4] <- quaternionParams[4:6]
-            
-            # The qfactor should be stored as 1 or -1, but the NIfTI standard says
-            # 0 should be treated as 1; this does that (the 0.1 is arbitrary)
-            qfactor <- sign(voxelDims[1] + 0.1)
-            matrix[1:3,1:3] <- matrix[1:3,1:3] * rep(c(abs(voxelDims[2:3]), qfactor*abs(voxelDims[4])), each=3)
-
-            return (matrix)
-        }
-        else
-        {
-            report(OL$Debug, "Using sform (code ", sformCode, ") for origin")
-            return (rbind(affine, c(0,0,0,1)))
-        }
-    }
-    
     if (!is.list(fileNames))
         fileNames <- identifyImageFileNames(fileNames)
     if (!file.exists(fileNames$headerFile))
-        report(OL$Error, "Header file ", fileNames$headerFile, " not found")
-        
-    # The gzfile function can handle uncompressed files too
-    connection <- gzfile(fileNames$headerFile, "rb")
+        report(OL$Error, "Header file #{fileNames$headerFile} not found")
     
-    size <- readBin(connection, "integer", n=1, size=4)
+    # Return value
+    result <- list(image=NULL, header=NULL, storage=NULL)
     
-    nonNativeEndian <- setdiff(c("big","little"), .Platform$endian)
-    endian <- switch(as.character(size), "348"=.Platform$endian, "540"=.Platform$endian, "1543569408"=nonNativeEndian, "469893120"=nonNativeEndian)
-    niftiVersion <- switch(as.character(size), "348"=1, "540"=2, "1543569408"=1, "469893120"=2)
-    report(OL$Debug, "NIfTI-#{niftiVersion} file, #{endian}-endian")
-    
-    if (is.null(endian))
+    version <- RNifti::niftiVersion(fileNames$headerFile)
+    if (version < 0)
         report(OL$Error, "#{fileNames$headerFile} does not seem to be a valid NIfTI header file")
-
-    if (niftiVersion == 1)
+    else if (version == 2)
     {
-        readBin(connection, "raw", n=36)
-        dims <- readBin(connection, "integer", n=8, size=2, endian=endian)
-        readBin(connection, "raw", n=14)
-        typeCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
-        readBin(connection, "raw", n=4)
-        voxelDims <- readBin(connection, "double", n=8, size=4, endian=endian)
-        dataOffset <- readBin(connection, "double", n=1, size=4, endian=endian)
-        slopeAndIntercept <- readBin(connection, "double", n=2, size=4, endian=endian)
-        readBin(connection, "raw", n=3)
-        unitCode <- readBin(connection, "integer", n=1, size=1, endian=endian)
-        readBin(connection, "raw", n=128)
-        qformCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
-        sformCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
-        quaternionParams <- readBin(connection, "double", n=6, size=4, endian=endian)
-        affine <- matrix(readBin(connection, "double", n=12, size=4, endian=endian), nrow=3, byrow=TRUE)
-        readBin(connection, "raw", n=16)
+        # The gzfile function can handle uncompressed files too
+        connection <- gzfile(fileNames$headerFile, "rb")
+        
+        # Read header size and check endianness
+        size <- readBin(connection, "integer", n=1, size=4)
+        nonNativeEndian <- setdiff(c("big","little"), .Platform$endian)
+        endian <- switch(as.character(size), "540"=.Platform$endian, "469893120"=nonNativeEndian)
+        if (is.null(endian))
+            report(OL$Error, "#{fileNames$headerFile} does not seem to be a valid NIfTI header file")
+        else
+            report(OL$Debug, "NIfTI-2 file, #{endian}-endian")
+        
+        # Read and check magic number
         magicString <- readBin(connection, "raw", n=4)
-    }
-    else
-    {
-        magicString <- readBin(connection, "raw", n=4)
-        readBin(connection, "raw", n=4)
+        if (sum(sapply(.Nifti$magicStrings[[2]], identical, magicString)) != 1)
+            report(OL$Error, "The file #{fileNames$headerFile} does not have a valid NIfTI-2 magic number")
+        
+        readBin(connection, "raw", n=4)     # last 4 bytes of the magic number
         typeCode <- readBin(connection, "integer", n=1, size=2, endian=endian)
-        readBin(connection, "raw", n=2)
+        readBin(connection, "raw", n=2)     # bits per pixel - we determine this from the datatype
         dims <- readBin(connection, "integer", n=8, size=8, endian=endian)
-        readBin(connection, "raw", n=24)
+        intentParams <- readBin(connection, "double", n=3, size=8, endian=endian)
         voxelDims <- readBin(connection, "double", n=8, size=8, endian=endian)
         dataOffset <- readBin(connection, "integer", n=1, size=8, endian=endian)
         slopeAndIntercept <- readBin(connection, "double", n=2, size=8, endian=endian)
-        readBin(connection, "raw", n=152)
+        windowLimits <- readBin(connection, "double", n=2, size=8, endian=endian)
+        sliceDuration <- readBin(connection, "double", n=1, size=8, endian=endian)
+        timeOffset <- readBin(connection, "double", n=1, size=8, endian=endian)
+        firstAndLastSlice <- readBin(connection, "integer", n=2, size=8, endian=endian)
+        description <- rawToChar(stripNul(readBin(connection, "raw", n=80)))
+        auxFile <- rawToChar(stripNul(readBin(connection, "raw", n=24)))
         qformCode <- readBin(connection, "integer", n=1, size=4, endian=endian)
         sformCode <- readBin(connection, "integer", n=1, size=4, endian=endian)
-        quaternionParams <- readBin(connection, "double", n=6, size=8, endian=endian)
-        affine <- matrix(readBin(connection, "double", n=12, size=8, endian=endian), nrow=3, byrow=TRUE)
-        readBin(connection, "raw", n=4)
+        quatern <- readBin(connection, "double", n=6, size=8, endian=endian)
+        sformRows <- readBin(connection, "double", n=12, size=8, endian=endian)
+        sliceCode <- readBin(connection, "integer", n=1, size=4, endian=endian)
         unitCode <- readBin(connection, "integer", n=1, size=4, endian=endian)
+        intentCode <- readBin(connection, "integer", n=1, size=4, endian=endian)
+        intentName <- rawToChar(stripNul(readBin(connection, "raw", n=16)))
+        dimInfo <- readBin(connection, "integer", n=1, size=1, endian=endian)
+        
+        close(connection)
+        
+        result$header <- list(dim=dims, intent_p1=intentParams[1], intent_p2=intentParams[2], intent_p3=intentParams[3], pixdim=voxelDims, cal_max=windowLimits[1], cal_min=windowLimits[2], slice_duration=sliceDuration, toffset=timeOffset, slice_start=firstAndLastSlice[1], slice_end=firstAndLastSlice[2], descrip=description, aux_file=auxFile, qform_code=qformCode, sform_code=sformCode, quatern_b=quatern[1], quatern_c=quatern[2], quatern_d=quatern[3], qoffset_x=quatern[4], qoffset_y=quatern[5], qoffset_z=quatern[6], srow_x=sformRows[1:4], srow_y=sformRows[5:8], srow_z=sformRows[9:12], slice_code=sliceCode, xyzt_units=unitCode, intent_code=intentCode, intent_name=intentName, dim_info=dimInfo)
+        
+        result$storage <- list(datatype=niftiDatatype(typeCode), endian=endian, offset=dataOffset, slope=slopeAndIntercept[1], intercept=slopeAndIntercept[2])
     }
+    else
+        result$image <- RNifti::readNifti(fileNames$headerFile, volumes=volumes)
     
-    close(connection)
-    
-    # Require exactly one match to a magic string suitable to the NIfTI version
-    if (sum(sapply(.Nifti$magicStrings[[niftiVersion]], identical, magicString)) != 1)
-        report(OL$Error, "The file ", fileNames$headerFile, " is not a valid NIfTI file")
-    
-    ndims <- dims[1]
-    dims <- dims[1:ndims + 1]
-    
-    xformMatrix <- getXformMatrix()
-    datatype <- niftiDatatype(typeCode)
-    
-    # We're only interested in the bottom 5 bits (spatial and temporal units)
-    spatialUnitCode <- packBits(intToBits(unitCode) & intToBits(7), "integer")
-    temporalUnitCode <- packBits(intToBits(unitCode) & intToBits(24), "integer")
-    voxelUnit <- names(.Nifti$units)[.Nifti$units %in% c(spatialUnitCode,temporalUnitCode)]
-    if (length(voxelUnit) == 0)
-        voxelUnit <- NULL
-    
-    dimsToKeep <- 1:max(which(dims > 1))
-    
-    imageMetadata <- list(imageDims=dims[dimsToKeep], voxelDims=voxelDims[dimsToKeep+1], voxelUnit=voxelUnit, source=fileNames$fileStem, tags=list())
-    
-    storageMetadata <- list(dataOffset=dataOffset, dataScalingSlope=slopeAndIntercept[1], dataScalingIntercept=slopeAndIntercept[2], xformMatrix=xformMatrix, datatype=datatype, endian=endian)
-    
-    invisible (list(imageMetadata=imageMetadata, storageMetadata=storageMetadata))
+    invisible (result)
 }
 
 writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL, maxSize = NULL)

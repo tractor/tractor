@@ -323,166 +323,146 @@ chooseDataTypeForImage <- function (image, format)
 #' @export
 readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
 {
+    # Find the relevant files
     fileNames <- identifyImageFileNames(fileName, fileType, ...)
     
-    readFun <- switch(fileNames$format, Analyze=readAnalyze, Nifti=readNifti, Mgh=readMgh)
-    info <- readFun(fileNames)
+    # Parse the files
+    # These functions should return either a complete image or a NIfTI-like
+    # header and information on the type and location of the data
+    if (fileNames$format %in% c("Analyze","Nifti"))
+        info <- readNifti(fileNames, volumes=volumes)
+    else if (fileNames$format == "Mgh")
+        info <- readMgh(fileNames)
+    else
+        report(OL$Error, "Unknown image file format: #{fileNames$format}")
     
-    datatype <- info$storageMetadata$datatype
-    endian <- info$storageMetadata$endian
-    dims <- info$imageMetadata$imageDims
-    voxelDims <- info$imageMetadata$voxelDims
+    # Create a niftiImage object from the image and/or header information
+    if (!is.null(info$image))
+        image <- RNifti::updateNifti(info$image, info$header)
+    else if (!is.null(info$header))
+        image <- RNifti::retrieveNifti(info$header)
+    else
+        report(OL$Error, "No image information is available")
+    
+    # Extract some metadata
+    nDims <- RNifti::ndim(image)
+    dims <- dim(image)
+    fullDims <- c(dims, rep(1,max(0,7-nDims)))
     nVoxels <- prod(dims)
-    nDims <- length(dims)
     
-    if (sparse && !is.null(mask))
+    # Extract the datatype if the information is available
+    if (!is.null(info$storage))
     {
-        if (mask$getDimensionality() > nDims || mask$getDimensionality() < (nDims-1))
-            report(OL$Error, "Mask must have the same number of dimensions as the image, or one fewer")
-        else if (mask$getDimensionality() == nDims && !equivalent(mask$getDimensions(),dims))
-            report(OL$Error, "Mask and image dimensions do not match")
-        else if (mask$getDimensionality() == (nDims-1) && !equivalent(mask$getDimensions(),dims[-nDims]))
-            report(OL$Error, "Mask and image dimensions do not match")
+        datatype <- info$storage$datatype
+        report(OL$Debug, "Image datatype is #{datatype$size}-byte #{ifelse(datatype$isSigned,'signed','unsigned')} #{datatype$type}")
     }
+    report(OL$Debug, "Image orientation is #{RNifti::orientation(image)}")
     
-    if (!is.null(volumes))
+    # Check that the mask is compatible, if it was specified
+    if (sparse && !is.null(mask) && !equivalent(dim(mask),dims[seq_along(dim(mask))]))
+        report(OL$Error, "Mask and image dimensions do not match")
+    
+    # Check whether we need to read data and/or reorder the image
+    data <- NULL
+    willReadData <- (!metadataOnly && !is.array(image))
+    willReorderImage <- (reorder && RNifti::orientation(image) != "LAS")
+    
+    # Data has not already been read, so do it here
+    if (willReadData)
     {
-        if (metadataOnly)
+        # Jump to the data offset position
+        connection <- gzfile(fileNames$imageFile, "rb")
+        if (fileNames$imageFile == fileNames$headerFile)
+            readBin(connection, "raw", n=info$storage$offset)
+        
+        # Work out how many blocks (3D volumes) we're reading, and the gaps between them
+        blockSize <- prod(fullDims[1:3])
+        if (!is.null(volumes) && nDims > 3)
         {
-            flag(OL$Warning, "Volumes specified when reading only metadata from an image file will be ignored")
-            volumes <- NULL
-        }
-        else if (nDims != 4)
-        {
-            flag(OL$Warning, "Volumes specified for images with dimensionality other than 4 will be ignored")
-            volumes <- NULL
+            blocks <- volumes
+            jumps <- (diff(c(0, sort(volumes))) - 1) * blockSize
         }
         else
         {
-            if (any(volumes < 1 || volumes > prod(dims[4:nDims])))
-                report(OL$Error, "Some of the specified volume numbers (", implode(volumes,","), ") are out of bounds")
-            
-            volumeSize <- prod(dims[1:3])
-            jumps <- (diff(c(0, sort(volumes))) - 1) * volumeSize
-            
-            if (length(volumes) == 1)
-            {
-                dims <- dims[1:3]
-                nDims <- 3
-                voxelDims <- voxelDims[1:3]
-            }
-            else
-            {
-                matrixLocs <- vectorToMatrixLocs(volumes, dims[4:nDims])
-                remainingVolumeDims <- apply(matrixLocs, 2, function (x) length(unique(x)))
-                dims <- c(dims[1:3], remainingVolumeDims)
-                
-                dimsToKeep <- 1:max(which(dims > 1))
-                dims <- dims[dimsToKeep]
-                nDims <- length(dimsToKeep)
-                voxelDims <- voxelDims[dimsToKeep]
-            }
+            blocks <- prod(fullDims[4:7])
+            jumps <- rep(0, length(blocks))
         }
-    }
-    
-    report(OL$Debug, "Image datatype is #{datatype$size}-byte #{ifelse(datatype$isSigned,'signed','unsigned')} #{datatype$type}")
-    
-    if (metadataOnly)
-        data <- NULL
-    else
-    {
-        connection <- gzfile(fileNames$imageFile, "rb")
-        if (fileNames$imageFile == fileNames$headerFile)
-            readBin(connection, "raw", n=info$storageMetadata$dataOffset)
         
-        if (sparse)
+        willRescaleData <- (info$storage$slope != 0 && !equivalent(c(info$storage$slope,info$storage$intercept), 1:0))
+        coords <- values <- NULL
+        for (i in seq_along(blocks))
         {
-            if (!is.null(volumes))
+            # Jump over blocks being ignored, if necessary
+            if (jumps[i] > 0)
+                readBin(connection, "raw", n=jumps[i]*datatype$size)
+            
+            # Read the current block
+            currentData <- array(readBin(connection, what=datatype$type, n=blockSize, size=datatype$size, signed=datatype$isSigned, endian=info$storage$endian), dim=fullDims[1:3])
+            
+            # Rescale and reorder if necessary
+            # Reordering is a purely spatial operation, so we can do it blockwise
+            if (willRescaleData)
+                currentData <- currentData * info$storage$slope + info$storage$intercept
+            if (willReorderImage)
             {
-                blocks <- volumes
-                blockSize <- volumeSize
-            }
-            else
-            {
-                blocks <- 1:dims[nDims]
-                jumps <- rep(0, length(blocks))
-                blockSize <- prod(dims[-nDims])
+                currentData <- RNifti::updateNifti(currentData, image)
+                RNifti::orientation(currentData) <- "LAS"
             }
             
-            coords <- NULL
-            values <- NULL
-            for (i in blocks)
+            if (sparse)
             {
-                if (jumps[i] > 0)
-                    readBin(connection, "raw", n=jumps[i]*datatype$size)
-                currentData <- readBin(connection, what=datatype$type, n=blockSize, size=datatype$size, signed=datatype$isSigned, endian=endian)
-                
+                # A sparse result was requested, so identify nonzero and/or within-mask voxels
                 toKeep <- which(currentData != 0)
-                if (!is.null(mask) && mask$getDimensionality() == (nDims-1))
-                    toKeep <- intersect(toKeep, which(mask$getData() > 0))
+                if (!is.null(mask))
+                    toKeep <- intersect(toKeep, mask$find(array=FALSE))
+                
                 if (length(toKeep) > 0)
                 {
-                    coords <- rbind(coords, cbind(vectorToMatrixLocs(toKeep,dims[-nDims]),i))
+                    coords <- rbind(coords, cbind(vectorToMatrixLocs(toKeep,fullDims[1:3]),blocks[i]))
                     values <- c(values, currentData[toKeep])
                 }
             }
-            
-            if (!is.null(mask) && mask$getDimensionality() == nDims)
+            else
             {
-                toKeep <- which(matrixToVectorLocs(coords,dims) %in% which(mask$getData() > 0))
-                coords <- coords[toKeep,]
-                values <- values[toKeep]
+                # Create an array for the data if it doesn't yet exist, then insert the block
+                if (is.null(data))
+                    data <- array(as(0,datatype$type), dim=c(fullDims[1:3],length(blocks)))
+                data[,,,i] <- currentData
             }
-            
-            data <- newSparseArrayWithData(values, coords, dims)
-        }
-        else if (!is.null(volumes))
-        {
-            data <- array(as(0,datatype$type), dim=c(dims[1:3],length(volumes)))
-            for (i in seq_along(volumes))
-            {
-                if (jumps[i] > 0)
-                    readBin(connection, "raw", n=jumps[i]*datatype$size)
-                data[,,,i] <- readBin(connection, what=datatype$type, n=volumeSize, size=datatype$size, signed=datatype$isSigned, endian=endian)
-            }
-            dim(data) <- dims
-        }
-        else
-        {
-            voxels <- readBin(connection, what=datatype$type, n=nVoxels, size=datatype$size, signed=datatype$isSigned, endian=endian)
-            data <- array(voxels, dim=dims)
         }
         
+        # Create the sparse matrix from its components, if requested
+        if (sparse)
+            data <- newSparseArrayWithData(values, coords, dims)
+        
+        # Update the dimensions to match the image metadata
+        dim(data) <- dims
         close(connection)
-
-        slope <- info$storageMetadata$dataScalingSlope
-        intercept <- info$storageMetadata$dataScalingIntercept
-        if (slope != 0 && !equivalent(c(slope,intercept), 1:0))
-            data <- data * slope + intercept
     }
     
-    report(OL$Debug, "Image orientation is ", xformToOrientation(info$storageMetadata$xformMatrix))
+    # Reorder the image if requested (as opposed to the data to be associated with it)
+    if (willReorderImage)
+        RNifti::orientation(image) <- "LAS"
     
-    # The origin is world position (0,0,0); the xform is a voxel-to-world affine matrix
-    origin <- rep(1,3)
-    if (equivalent(dim(info$storageMetadata$xformMatrix), c(4,4)))
-    {
-        tempOrigin <- (solve(info$storageMetadata$xformMatrix) %*% c(0,0,0,1)) + 1
-        origin <- tempOrigin[1:3]
-    }
+    # Convert to an MriImage
+    attr(image, "reordered") <- reorder
+    image <- as(image, "MriImage")
     
+    # Strip or update the data, as required
+    if (metadataOnly)
+        image$setData(NULL)
+    else if (willReadData)
+        image$setData(data)
+    
+    # Set the source
+    image$setSource(fileNames$fileStem)
+    
+    # Read the auxiliary tags file, if one exists
     tagsFileName <- ensureFileSuffix(fileNames$fileStem, "tags")
     if (file.exists(tagsFileName))
-        tags <- deduplicate(yaml::yaml.load_file(tagsFileName), info$imageMetadata$tags)
-    else
-        tags <- info$imageMetadata$tags
+        do.call(image$setTags, yaml::yaml.load_file(tagsFileName))
     
-    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, origin=origin, storedXform=info$storageMetadata$xformMatrix, reordered=FALSE, tags=tags, data=data)
-    
-    if (reorder)
-        image <- reorderMriImage(image)
-    
-    invisible (image)
+    return (image)
 }
 
 writeImageData <- function (image, connection, type, size, endian = .Platform$endian)
