@@ -136,13 +136,12 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     {
         "Fill the image with a particular value"
         if (value == 0)
-            .self$data <- newSparseArrayWithData(vector(class(value),0), matrix(NA,0,length(imageDims)), imageDims)
+            .self$setData(newSparseArrayWithData(vector(class(value),0), matrix(NA,0,length(imageDims)), imageDims))
         else
-            .self$data <- array(value, dim=imageDims)
-        .self$setSource(NULL)
+            .self$setData(array(value, dim=imageDims))
     },
     
-    find = function (fun = NULL, array = TRUE)
+    find = function (fun = NULL, ..., array = TRUE)
     {
         "Find voxels whose values are not zero, or satisfy a function"
         .warnIfIndexingUnreorderedImage(.self)
@@ -167,7 +166,10 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             if (is.numeric(fun) && length(fun) == 1)
                 locs <- which(as.array(data) == fun)
             else
-                locs <- which(as.logical(do.call(fun, list(as.array(data)))))
+            {
+                fun <- match.fun(fun)
+                locs <- which(as.logical(fun(as.array(data), ...)))
+            }
             
             if (array)
                 return (vectorToMatrixLocs(locs, imageDims))
@@ -217,25 +219,10 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         "Find voxels whose values are not zero"
         .warnIfIndexingUnreorderedImage(.self)
         
-        if (.self$isEmpty())
-            report(OL$Error, "The image contains no data")
-        else if (.self$isSparse())
-        {
-            locs <- data$getCoordinates()
-            if (positiveOnly)
-                locs <- locs[data$getData() > 0,]
-            if (array)
-                return (locs)
-            else
-                return (matrixToVectorLocs(locs, data$getDimensions()))
-        }
+        if (positiveOnly)
+            return (.self$find(fx(x > 0), array=array))
         else
-        {
-            if (positiveOnly)
-                return (which(data > 0, arr.ind=array))
-            else
-                return (which(data != 0, arr.ind=array))
-        }
+            return (.self$find(array=array))
     },
     
     getOrigin = function () { return (origin) },
@@ -350,8 +337,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         if (isTRUE(sparse))
             result <- as(result, "SparseArray")
         
-        .self$data <- result
-        .self$setSource(NULL)
+        .self$setData(result)
     },
     
     mask = function (maskImage)
@@ -365,6 +351,19 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     nTags = function () { return (length(tags)) },
     
     nVolumes = function () { return (ifelse(length(imageDims) > 3, prod(imageDims[-(1:3)]), 1L)) },
+    
+    setData = function (newData)
+    {
+        "Replace the data in the image"
+        if (is.null(newData) || equivalent(dim(newData),imageDims))
+        {
+            .self$data <- newData
+            .self$setSource(NULL)
+        }
+        else
+            flag(OL$Warning, "New data does not match the image dimensions")
+        invisible(.self)
+    },
     
     setOrigin = function (newOrigin)
     {
@@ -384,6 +383,14 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
             .self$source <- ""
         else if (is.character(newSource) && (length(newSource) == 1))
             .self$source <- newSource
+        invisible(.self)
+    },
+    
+    setTags = function (...)
+    {
+        "Add or replace metadata tags"
+        newTags <- deduplicate(list(...), .self$tags)
+        .self$tags <- newTags[!sapply(newTags,is.null)]
         invisible(.self)
     },
     
