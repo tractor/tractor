@@ -4,14 +4,25 @@ setOldClass(c("niftiImage", "internalImage"))
 {
     # Pick up divest attributes and convert to tags (excl. patient info)
     attribs <- attributes(from)
-    attribs <- attribs[!(names(attribs) %~% "^\\.|^(dim|imagedim|pixdim|pixunits|class|bValues|bVectors)$|^patient")]
+    attribs <- attribs[!(names(attribs) %~% "^\\.|^(dim|imagedim|pixdim|pixunits|class|bValues|bVectors|reordered)$|^patient")]
     if (length(attribs) > 0)
         tags <- attribs
     else
         tags <- list()
     
+    if (RNifti:::hasData(from))
+    {
+        data <- as.array(from)
+        window <- range(data, na.rm=TRUE)
+    }
+    else
+    {
+        data <- NULL
+        window <- c(0, 0)
+    }
+    
     metadata <- RNifti::dumpNifti(from)
-    defaults <- list(dim_info=0, intent_p1=0, intent_p2=0, intent_p3=0, intent_code=0, intent_name="", slice_start=0, slice_end=0, slice_code=0, cal_min=0, cal_max=0, slice_duration=0, toffset=0, aux_file="")
+    defaults <- list(dim_info=0, intent_p1=0, intent_p2=0, intent_p3=0, intent_code=0, intent_name="", slice_start=0, slice_end=0, slice_code=0, cal_min=window[1], cal_max=window[2], slice_duration=0, toffset=0, aux_file="")
     
     # Add NIfTI attributes that are set to something other than the defaults
     for (key in names(defaults))
@@ -20,12 +31,11 @@ setOldClass(c("niftiImage", "internalImage"))
             tags[[key]] <- metadata[[key]]
     }
     
-    data <- as.array(from)
+    reordered <- attr(from, "reordered")
+    if (is.null(reordered))
+        reordered <- FALSE
     
-    image <- asMriImage(unclass(data), imageDims=dim(from), voxelDims=RNifti::pixdim(from), voxelDimUnits=RNifti::pixunits(from), origin=RNifti::origin(from), tags=tags, reordered=FALSE)
-    image$setXform(RNifti::xform(from))
-    
-    return (image)
+    return (MriImage$new(imageDims=dim(from), RNifti::pixdim(from), voxelDimUnits=RNifti::pixunits(from), origin=RNifti::origin(from), storedXform=RNifti::xform(from), reordered=reordered, tags=tags, data=unclass(data)))
 }
 
 setAs("niftiImage", "MriImage", .convertNiftiImage)
