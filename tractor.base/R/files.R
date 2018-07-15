@@ -338,14 +338,14 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     
     # Create a niftiImage object from the image and/or header information
     if (!is.null(info$image))
-        image <- RNifti::updateNifti(info$image, info$header)
+        image <- updateNifti(info$image, info$header)
     else if (!is.null(info$header))
-        image <- RNifti::retrieveNifti(info$header)
+        image <- retrieveNifti(info$header)
     else
         report(OL$Error, "No image information is available")
     
     # Extract some metadata
-    nDims <- RNifti::ndim(image)
+    nDims <- ndim(image)
     dims <- dim(image)
     fullDims <- c(dims, rep(1,max(0,7-nDims)))
     nVoxels <- prod(dims)
@@ -356,7 +356,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         datatype <- info$storage$datatype
         report(OL$Debug, "Image datatype is #{datatype$size}-byte #{ifelse(datatype$isSigned,'signed','unsigned')} #{datatype$type}")
     }
-    report(OL$Debug, "Image orientation is #{RNifti::orientation(image)}")
+    report(OL$Debug, "Image orientation is #{orientation(image)}")
     
     # Check that the mask is compatible, if it was specified
     if (sparse && !is.null(mask) && !equivalent(dim(mask),dims[seq_along(dim(mask))]))
@@ -364,8 +364,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     
     # Check whether we need to read data and/or reorder the image
     data <- NULL
-    willReadData <- (!metadataOnly && !is.array(image))
-    willReorderImage <- (reorder && RNifti::orientation(image) != "LAS")
+    willReadData <- (!metadataOnly && !RNifti:::hasData(image))
+    willReorderImage <- (reorder && orientation(image) != "LAS")
     
     # Data has not already been read, so do it here
     if (willReadData)
@@ -405,8 +405,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
                 currentData <- currentData * info$storage$slope + info$storage$intercept
             if (willReorderImage)
             {
-                currentData <- RNifti::updateNifti(currentData, image)
-                RNifti::orientation(currentData) <- "LAS"
+                currentData <- updateNifti(currentData, image)
+                orientation(currentData) <- "LAS"
             }
             
             if (sparse)
@@ -442,7 +442,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     
     # Reorder the image if requested (as opposed to the data to be associated with it)
     if (willReorderImage)
-        RNifti::orientation(image) <- "LAS"
+        orientation(image) <- "LAS"
     
     # Convert to an MriImage
     attr(image, "reordered") <- reorder

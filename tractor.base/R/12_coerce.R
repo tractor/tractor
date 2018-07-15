@@ -21,7 +21,7 @@ setOldClass(c("niftiImage", "internalImage"))
         window <- c(0, 0)
     }
     
-    metadata <- RNifti::dumpNifti(from)
+    metadata <- dumpNifti(from)
     defaults <- list(dim_info=0, intent_p1=0, intent_p2=0, intent_p3=0, intent_code=0, intent_name="", slice_start=0, slice_end=0, slice_code=0, cal_min=window[1], cal_max=window[2], slice_duration=0, toffset=0, aux_file="")
     
     # Add NIfTI attributes that are set to something other than the defaults
@@ -35,7 +35,7 @@ setOldClass(c("niftiImage", "internalImage"))
     if (is.null(reordered))
         reordered <- FALSE
     
-    return (MriImage$new(imageDims=dim(from), RNifti::pixdim(from), voxelDimUnits=RNifti::pixunits(from), origin=RNifti::origin(from), storedXform=RNifti::xform(from), reordered=reordered, tags=tags, data=unclass(data)))
+    return (MriImage$new(imageDims=dim(from), pixdim(from), voxelDimUnits=pixunits(from), origin=origin(from), storedXform=xform(from), reordered=reordered, tags=tags, data=unclass(data)))
 }
 
 setAs("niftiImage", "MriImage", .convertNiftiImage)
@@ -78,7 +78,7 @@ setAs("MriImage", "nifti", function(from) {
     return (new(structure("nifti",package="oro.nifti"), .Data=data, dim_=fullDims, datatype=datatype$code, bitpix=8*datatype$size, pixdim=fullVoxelDims, xyzt_units=unitCode, qform_code=xformCode, sform_code=xformCode, quatern_b=quaternion$q[2], quatern_c=quaternion$q[3], quatern_d=quaternion$q[4], qoffset_x=quaternion$offset[1], qoffset_y=quaternion$offset[2], qoffset_z=quaternion$offset[3], srow_x=sformRows[1:4], srow_y=sformRows[5:8], srow_z=sformRows[9:12], cal_min=min(data), cal_max=max(data)))
 })
 
-setAs("nifti", "MriImage", function(from) as(RNifti::retrieveNifti(from), "MriImage"))
+setAs("nifti", "MriImage", function(from) as(retrieveNifti(from), "MriImage"))
 
 # MriImage methods for RNifti generics
 #' @export

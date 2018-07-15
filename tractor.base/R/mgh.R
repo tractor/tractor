@@ -13,7 +13,7 @@ readMgh <- function (fileNames)
         report(OL$Error, "Only version 1 MGH/MGZ files are supported")
     
     # Create a default header
-    header <- RNifti::niftiHeader()
+    header <- niftiHeader()
     
     dims <- readBin(connection, "integer", n=4, size=4, endian="big")
     typeCode <- readBin(connection, "integer", n=1, size=4, endian="big")
@@ -35,7 +35,7 @@ readMgh <- function (fileNames)
     if (nDims < 2)
         report(OL$Error, "MGH image appears to have less than two non-unitary dimensions")
     header$dim[seq_len(nDims+1)] <- c(nDims, dims[1:nDims])
-    RNifti::qform(header) <- structure(xformMatrix, code=2L)
+    qform(header) <- structure(xformMatrix, code=2L)
     header$pixdim[seq_len(nDims)+1] <- voxelDims[1:nDims]
     
     typeIndex <- which(.Mgh$datatypes$codes == typeCode)

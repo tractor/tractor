@@ -27,7 +27,7 @@ readNifti <- function (fileNames, volumes = NULL)
     # Return value
     result <- list(image=NULL, header=NULL, storage=NULL)
     
-    version <- RNifti::niftiVersion(fileNames$headerFile)
+    version <- niftiVersion(fileNames$headerFile)
     if (version < 0)
         report(OL$Error, "#{fileNames$headerFile} does not seem to be a valid NIfTI header file")
     else if (version == 2)
