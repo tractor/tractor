@@ -121,7 +121,15 @@ Streamline Tracker::run ()
             if (dir == 0)
                 rightPoints.push_back(loc);
             else
+            {
                 leftPoints.push_back(loc);
+                
+                if (flags["one-way"])
+                {
+                    logger.debug2.indent() << "Terminating: one-way tracking" << endl;
+                    break;
+                }
+            }
             
             // Add label if we're in a target area; terminate if required and we've left the starting region
             if (targetData != NULL && (*targetData)[vectorLoc] > 0)
@@ -184,7 +192,7 @@ Streamline Tracker::run ()
             // Store the first step to ensure that subsequent samples go the same way
             if (starting)
             {
-                if (!rightwardsVectorValid)
+                if (!rightwardsVectorValid && !flags["one-way"])
                 {
                     // The choice of sign above makes this always towards the right
                     rightwardsVector = previousStep;
