@@ -274,6 +274,10 @@ void TrackvisDataSink::writeStreamline (const Streamline &data)
     if (seedIndex > 16777216)
         Rf_warning("Seed index %lu is not representable exactly as a 32-bit floating point value\n", seedIndex);
     binaryStream.writeValue<float>(seedIndex);
+    
+    // Store termination reasons
+    binaryStream.writeValue(static_cast<float>(data.getLeftTerminationReason()));
+    binaryStream.writeValue(static_cast<float>(data.getRightTerminationReason()));
 }
 
 void TrackvisDataSink::attach (const std::string &fileStem)
@@ -304,9 +308,13 @@ void TrackvisDataSink::attach (const std::string &fileStem)
     
     binaryStream.writeValue<int16_t>(0);
     binaryStream.writeValues<char>(0, 200);
-    binaryStream.writeValue<int16_t>(1);
+    binaryStream.writeValue<int16_t>(3);
     fileStream.write("seed", 4);
-    binaryStream.writeValues<char>(0, 196);
+    binaryStream.writeValues<char>(0, 16);
+    fileStream.write("Ltermcode", 9);
+    binaryStream.writeValues<char>(0, 11);
+    fileStream.write("Rtermcode", 9);
+    binaryStream.writeValues<char>(0, 151);
     
     const Eigen::Matrix4f xform = grid.transform();
     binaryStream.writeMatrix<float>(xform);

@@ -10,6 +10,7 @@ class Streamline
 {
 public:
     enum PointType { VoxelPointType, WorldPointType };
+    enum TerminationReason { UnknownReason, BoundsReason, MaskReason, OneWayReason, TargetReason, NoDataReason, LoopReason, CurvatureReason };
     
 private:
     // A list of points along the streamline; the path is considered
@@ -28,6 +29,9 @@ private:
     // example, the anatomical regions that the streamline passes through
     std::set<int> labels;
     
+    // Reasons for termination on each side
+    Streamline::TerminationReason leftTerminationReason, rightTerminationReason;
+    
 protected:
     // A boolean value indicating whether or not the points are equally spaced
     // (in real-world terms)
@@ -39,7 +43,7 @@ protected:
 public:
     Streamline () {}
     Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const Streamline::PointType pointType, const Eigen::VectorXf &voxelDims, const bool fixedSpacing)
-        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), voxelDims(voxelDims), fixedSpacing(fixedSpacing) {}
+        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), voxelDims(voxelDims), fixedSpacing(fixedSpacing), leftTerminationReason(UnknownReason), rightTerminationReason(UnknownReason) {}
     
     size_t nPoints () const { return std::max(static_cast<size_t>(leftPoints.size()+rightPoints.size())-1, size_t(0)); }
     size_t getSeedIndex () const { return std::max(static_cast<size_t>(leftPoints.size())-1, size_t(0)); }
@@ -64,6 +68,14 @@ public:
     const std::set<int> & getLabels () const        { return labels; }
     void setLabels (const std::set<int> &labels)    { this->labels = labels; }
     void clearLabels ()                             { labels.clear(); }
+    
+    TerminationReason getLeftTerminationReason () const     { return leftTerminationReason; }
+    TerminationReason getRightTerminationReason () const    { return rightTerminationReason; }
+    void setTerminationReasons (const TerminationReason left, const TerminationReason right)
+    {
+        leftTerminationReason = left;
+        rightTerminationReason = right;
+    }
     
     size_t concatenatePoints (Eigen::ArrayX3f &points) const;
 };

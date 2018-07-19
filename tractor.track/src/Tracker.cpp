@@ -67,6 +67,7 @@ Streamline Tracker::run ()
     }
     
     // We go right first (dir=0), then left (dir=1)
+    Streamline::TerminationReason terminationReasons[2] = { Streamline::UnknownReason, Streamline::UnknownReason };
     for (int dir=0; dir<2; dir++)
     {
         logger.debug2.indent() << "Tracking " << (dir==0 ? "\"right\"" : "\"left\"") << endl;
@@ -97,6 +98,7 @@ Streamline Tracker::run ()
             }
             if (!inBounds)
             {
+                terminationReasons[dir] = Streamline::BoundsReason;
                 logger.debug2.indent() << "Terminating: stepped out of bounds" << endl;
                 break;
             }
@@ -107,6 +109,7 @@ Streamline Tracker::run ()
             // Stop if we've stepped outside the mask, possibly deferring termination if required
             if ((*maskData)[vectorLoc] == 0 && previouslyInsideMask == 1)
             {
+                terminationReasons[dir] = Streamline::MaskReason;
                 logger.debug2.indent() << "Terminating: stepped outside tracking mask" << endl;
                 break;
             }
@@ -126,6 +129,7 @@ Streamline Tracker::run ()
                 
                 if (flags["one-way"])
                 {
+                    terminationReasons[dir] = Streamline::OneWayReason;
                     logger.debug2.indent() << "Terminating: one-way tracking" << endl;
                     break;
                 }
@@ -138,6 +142,7 @@ Streamline Tracker::run ()
                 
                 if (flags["terminate-targets"] && (*targetData)[vectorLoc] != startTarget)
                 {
+                    terminationReasons[dir] = Streamline::TargetReason;
                     logger.debug2.indent() << "Terminating: target hit" << endl;
                     break;
                 }
@@ -148,6 +153,7 @@ Streamline Tracker::run ()
             logger.debug3.indent() << "Sampled step direction is " << currentStep << endl;
             if (Space<3>::zeroVector(currentStep))
             {
+                terminationReasons[dir] = Streamline::NoDataReason;
                 logger.debug2.indent() << "Terminating: zero step vector" << endl;
                 break;
             }
@@ -161,6 +167,7 @@ Streamline Tracker::run ()
                 float loopcheckInnerProduct = (*loopcheck)[loopcheckLoc].dot(previousStep);
                 if (loopcheckInnerProduct < 0.0)
                 {
+                    terminationReasons[dir] = Streamline::LoopReason;
                     logger.debug2.indent() << "Terminating: loop detected" << endl;
                     break;
                 }
@@ -178,6 +185,7 @@ Streamline Tracker::run ()
                 float innerProduct = previousStep.dot(currentStep);
                 if (fabs(innerProduct) < innerProductThreshold)
                 {
+                    terminationReasons[dir] = Streamline::CurvatureReason;
                     logger.debug2.indent() << "Terminating: curvature too high" << endl;
                     break;
                 }
@@ -208,6 +216,7 @@ Streamline Tracker::run ()
     logger.debug1.indent() << "Tracking finished" << endl;
     
     Streamline streamline(leftPoints, rightPoints, Streamline::VoxelPointType, voxelDims, true);
+    streamline.setTerminationReasons(terminationReasons[0], terminationReasons[1]);
     streamline.setLabels(labels);
     return streamline;
 }
