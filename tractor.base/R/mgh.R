@@ -21,13 +21,23 @@ readMgh <- function (fileNames)
     orientationStored <- as.logical(readBin(connection, "integer", n=1, size=2, endian="big"))
     voxelDims <- readBin(connection, "double", n=3, size=4, endian="big")
     
+    scaleMatrix <- diag(c(abs(voxelDims[1:3]), 1))
     if (orientationStored)
     {
-        xformMatrix <- matrix(readBin(connection, "double", n=12, size=4, endian="big"), nrow=3)
-        xformMatrix <- rbind(xformMatrix, c(0,0,0,1))
+        # The stored xform is not scaled by the voxel dimensions
+        xform <- matrix(readBin(connection, "double", n=12, size=4, endian="big"), nrow=3)
+        xform <- rbind(xform, c(0,0,0,1)) %*% scaleMatrix
     }
     else
-        xformMatrix <- matrix(c(-1,0,0,0,0,0,-1,0,0,1,0,0,0,0,0,1), nrow=4)
+    {
+        # Default orientation is LIA
+        xform <- scaleMatrix
+        orientation(xform) <- "LIA"
+    }
+    
+    # Whether the information is stored or not, an origin adjustment is needed,
+    # because MGH format uses the image centre as a reference point
+    xform[1:3,4] <- xform[1:3,4] - (xform[1:3,1:3] %*% (dims[1:3] / 2))
     
     close(connection)
     
@@ -35,7 +45,7 @@ readMgh <- function (fileNames)
     if (nDims < 2)
         report(OL$Error, "MGH image appears to have less than two non-unitary dimensions")
     header$dim[seq_len(nDims+1)] <- c(nDims, dims[1:nDims])
-    qform(header) <- structure(xformMatrix, code=2L)
+    qform(header) <- structure(xform, code=2L)
     header$pixdim[seq_len(nDims)+1] <- voxelDims[1:nDims]
     
     typeIndex <- which(.Mgh$datatypes$codes == typeCode)
