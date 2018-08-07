@@ -44,38 +44,12 @@ setAs("internalImage", "MriImage", .convertNiftiImage)
 setAs("MriImage", "nifti", function(from) {
     if (is.null(getOption("niftiAuditTrail")))
         options(niftiAuditTrail=FALSE)
-    loadNamespace("oro.nifti")
     
-    if (from$isEmpty())
-    {
-        datatype <- list(code=2, type="integer", size=1, isSigned=FALSE)
-        data <- array(0L, dim=from$getDimensions())
-    }
-    else
-    {
-        datatype <- chooseDataTypeForImage(from, "Nifti")
-        data <- as(from$getData(), "array")
-    }
+    nifti <- as.array(retrieveNifti(from))
+    if (RNifti:::hasData(nifti))
+        nifti <- updateNifti(nifti, list(cal_min=min(nifti,na.rm=TRUE), cal_max=max(nifti,na.rm=TRUE)))
     
-    # We default to 10 (mm and s)
-    unitName <- from$getVoxelUnits()
-    unitCode <- as.numeric(.Nifti$units[names(.Nifti$units) %in% unitName])
-    if (length(unitCode) == 0)
-        unitCode <- 10
-    else
-        unitCode <- sum(unitCode)
-    
-    nDims <- from$getDimensionality()
-    fullDims <- c(nDims, abs(from$getDimensions()), rep(1,7-nDims))
-    fullVoxelDims <- c(-1, abs(from$getVoxelDimensions()), rep(0,7-nDims))
-    
-    xform <- from$getXform()
-    sformRows <- c(xform[1,], xform[2,], xform[3,])
-    quaternion <- xformToQuaternion(xform)
-    fullVoxelDims[1] <- quaternion$handedness
-    xformCode <- ifelse(from$getDimensionality() == 2, 0, 2)
-    
-    return (new(structure("nifti",package="oro.nifti"), .Data=data, dim_=fullDims, datatype=datatype$code, bitpix=8*datatype$size, pixdim=fullVoxelDims, xyzt_units=unitCode, qform_code=xformCode, sform_code=xformCode, quatern_b=quaternion$q[2], quatern_c=quaternion$q[3], quatern_d=quaternion$q[4], qoffset_x=quaternion$offset[1], qoffset_y=quaternion$offset[2], qoffset_z=quaternion$offset[3], srow_x=sformRows[1:4], srow_y=sformRows[5:8], srow_z=sformRows[9:12], cal_min=min(data), cal_max=max(data)))
+    return (oro.nifti::nii2oro(nifti))
 })
 
 setAs("nifti", "MriImage", function(from) as(retrieveNifti(from), "MriImage"))
