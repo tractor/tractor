@@ -453,6 +453,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         image$setData(NULL)
     else if (willReadData)
         image$setData(data)
+    else if (sparse && !image$isSparse())
+        image$setData(as(image$getData(), "SparseArray"))
     
     # Set the source
     image$setSource(fileNames$fileStem)
