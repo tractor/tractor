@@ -62,7 +62,7 @@ test_that("we can read a NIfTI-2 file", {
 
 test_that("we can read and write ANALYZE files", {
     path <- system.file("extdata", "analyze", "maskedb0.img.gz", package="tractor.base")
-    image <- readImageFile(path)
+    expect_flag(image <- readImageFile(path), "Image orientation for ANALYZE format is inconsistently interpreted")
     
     expect_equal(image$getDimensions(), c(96,96,60))
     expect_equal(image$getVoxelDimensions(), rep(2.5,3L))
