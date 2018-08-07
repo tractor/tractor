@@ -247,7 +247,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     summarise = function ()
     {
         properties <- .Call("trkInfo", file, PACKAGE="tractor.track")
-        values <- c("Number of streamlines"=count., "Streamline properties"=properties, "Auxiliary label file"=!is.null(labelsPtr.))
+        values <- c("Number of streamlines"=count., "Streamline properties"=implode(properties,sep=", "), "Auxiliary label file"=!is.null(labelsPtr.))
         return (values)
     }
 ))
