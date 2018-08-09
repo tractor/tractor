@@ -73,7 +73,7 @@ args=`echo "library(utils); library(tractor.utils); library(tractor.session); ex
 status=$?
 [ $status -ne 0 ] && exit
 
-cd $working_dir && $command "$args"
+cd $working_dir && eval $command "$args"
 
 status=$?
 

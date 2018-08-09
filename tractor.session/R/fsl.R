@@ -28,7 +28,7 @@ showImagesInFslview <- function (imageFileNames, wait = FALSE, lookupTable = NUL
         imageFileNames <- paste(imageFileNames, "-t", opacity, sep=" ")
     }
     
-    if (!is.null(locateExecutable("fslview_deprecated")))
+    if (!is.null(locateExecutable("fslview_deprecated", errorIfMissing=FALSE)))
         execute("fslview_deprecated", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait, silent=TRUE)
     else
         execute("fslview", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait, silent=TRUE)
