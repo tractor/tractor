@@ -49,16 +49,16 @@ setClassUnion("MriImageData", c("SparseArray","array","NULL"))
 #' @field source String naming the file(s) that the image was read from. This
 #'   is reset to the empty string if the image is modified
 #' @field origin Numeric vector giving the spatial coordinate origin
-#' @field storedXform Numeric matrix giving the NIfTI xform matrix read from
-#'   file, if any
+#' @field xform Numeric matrix giving the NIfTI-style xform matrix associated
+#'   with the image, which indicates its orientation
 #' @field reordered Logical value indicating whether the image has been
 #'   reordered. See \code{\link{reorderMriImage}}
 #' @field tags Named list of arbitrary DICOM-style tags
 #' @field data Sparse or dense array of data, or \code{NULL}
 #' 
 #' @export
-MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",storedXform="matrix",reordered="logical",tags="list",data="MriImageData"), methods=list(
-    initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, storedXform = emptyMatrix(), reordered = TRUE, tags = list(), data = NULL, ...)
+MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",xform="matrix",reordered="logical",tags="list",data="MriImageData"), methods=list(
+    initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, xform = emptyMatrix(), reordered = TRUE, tags = list(), data = NULL, ...)
     {
         oldFields <- list(...)
         
@@ -90,11 +90,16 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         names(.voxunits)[.voxunits %~% "m$"] <- "spatial"
         names(.voxunits)[.voxunits %~% "s$"] <- "temporal"
         
+        # Resolve xform
+        .xform <- xform
+        if (is.emptyMatrix(xform) && "storedXform" %in% names(oldFields))
+            .xform <- oldFields$storedXform
+        
         if (length(.dims) != length(.voxdims))
             report(OL$Error, "Image and voxel dimensions should have the same length")
         
         # Don't call as.character() on .voxunits here, as it will drop names
-        object <- initFields(imageDims=as.integer(.dims), voxelDims=abs(as.numeric(.voxdims)), voxelDimUnits=.voxunits, source=as.character(source), origin=as.numeric(origin), storedXform=as.matrix(storedXform), reordered=reordered, tags=tags, data=data)
+        object <- initFields(imageDims=as.integer(.dims), voxelDims=abs(as.numeric(.voxdims)), voxelDimUnits=.voxunits, source=as.character(source), origin=as.numeric(origin), xform=as.matrix(.xform), reordered=reordered, tags=tags, data=data)
         
         # Make sure the data dimensions are right
         if (!is.null(object$data))
@@ -211,7 +216,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         if (.self$isEmpty())
             return (.self$copy())
         else
-            return (MriImage$new(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, source=source, origin=origin, storedXform=storedXform, reordered=reordered, tags=tags, data=NULL))
+            return (MriImage$new(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, source=source, origin=origin, xform=xform, reordered=reordered, tags=tags, data=NULL))
     },
     
     getNonzeroIndices = function (array = TRUE, positiveOnly = FALSE)
@@ -285,27 +290,25 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     getXform = function (implicit = TRUE)
     {
         "Retrieve the stored or implicit xform matrix"
-        if (!.self$isReordered() && equivalent(dim(storedXform),c(4,4)))
-            return (storedXform)
-        else if (implicit)
+        if (is.emptyMatrix(.self$xform) && .self$isReordered() && implicit)
         {
-            xform <- diag(4)
+            implicitXform <- diag(4)
             zeroBasedOrigin <- pmax(origin-1, c(0,0,0))
             if (.self$getDimensionality() == 2)
             {
-                xform[c(1,6)] <- c(-1,1) * abs(voxelDims)
+                implicitXform[c(1,6)] <- c(-1,1) * abs(voxelDims)
                 zeroBasedOrigin[1:2] <- zeroBasedOrigin[1:2] * abs(voxelDims)
             }
             else
             {
-                xform[c(1,6,11)] <- c(-1,1,1) * abs(voxelDims[1:3])
+                implicitXform[c(1,6,11)] <- c(-1,1,1) * abs(voxelDims[1:3])
                 zeroBasedOrigin <- zeroBasedOrigin * abs(voxelDims[1:3])
             }
-            xform[1:3,4] <- c(1,-1,-1) * zeroBasedOrigin
-            return (xform)
+            implicitXform[1:3,4] <- c(1,-1,-1) * zeroBasedOrigin
+            return (implicitXform)
         }
         else
-            return (emptyMatrix())
+            return (.self$xform)
     },
     
     hasTags = function (keys) { return (sapply(keys, function(key) !is.null(tags[[key]]))) },
@@ -399,7 +402,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         "Update the xform matrix associated with the image"
         if (is.matrix(newXform) && equivalent(dim(newXform),c(4,4)))
         {
-            .self$storedXform  <- newXform
+            .self$xform  <- newXform
             .self$setSource(NULL)
         }
         invisible(.self)
@@ -445,7 +448,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
 
 # Register deserialiser for MriImageMetadata legacy class
 registerDeserialiser("MriImageMetadata", function (fields) {
-    object <- MriImage$new(imageDims=fields$imagedims, voxelDims=fields$voxdims, voxelDimUnits=fields$voxunit, source=fields$source, origin=fields$origin, storedXform=fields$storedXform, tags=fields$tags, data=NULL)
+    object <- MriImage$new(imageDims=fields$imagedims, voxelDims=fields$voxdims, voxelDimUnits=fields$voxunit, source=fields$source, origin=fields$origin, xform=fields$storedXform, tags=fields$tags, data=NULL)
     return (object)
 })
 
@@ -715,14 +718,14 @@ asMriImage <- function (data, templateImage = nilObject(), imageDims = NA, voxel
     else
         report(OL$Error, "No information on image dimensions is available")
     
-    defaults <- list(voxelDims=rep(1,nDims), voxelDimUnits="unknown", origin=c(1,1,1), storedXform=emptyMatrix(), tags=list(), reordered=TRUE)
+    defaults <- list(voxelDims=rep(1,nDims), voxelDimUnits="unknown", origin=c(1,1,1), xform=emptyMatrix(), tags=list(), reordered=TRUE)
     template <- templateImage$serialise()
     params <- list(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, origin=origin, tags=tags, reordered=reordered)
     params <- params[!is.na(params)]
     
     composite <- deduplicate(params, template, defaults)
     
-    image <- MriImage$new(imageDims=composite$imageDims[1:nDims], voxelDims=composite$voxelDims[1:nDims], voxelDimUnits=composite$voxelDimUnits, origin=composite$origin, storedXform=composite$storedXform, reordered=composite$reordered, tags=composite$tags, data=data)
+    image <- MriImage$new(imageDims=composite$imageDims[1:nDims], voxelDims=composite$voxelDims[1:nDims], voxelDimUnits=composite$voxelDimUnits, origin=composite$origin, xform=composite$xform, reordered=composite$reordered, tags=composite$tags, data=data)
     invisible (image)
 }
 
@@ -736,7 +739,7 @@ extractMriImage <- function (image, dim, loc)
     newData <- image$getSlice(dim, loc)
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
     
-    image <- MriImage$new(imageDims=image$getDimensions()[dimsToKeep], voxelDims=image$getVoxelDimensions()[dimsToKeep], voxelDimUnits=image$getVoxelUnits(), origin=image$getOrigin(), storedXform=image$getXform(implicit=FALSE), reordered=image$isReordered(), tags=image$getTags(), data=newData)
+    image <- MriImage$new(imageDims=image$getDimensions()[dimsToKeep], voxelDims=image$getVoxelDimensions()[dimsToKeep], voxelDimUnits=image$getVoxelUnits(), origin=image$getOrigin(), xform=image$getXform(implicit=FALSE), reordered=image$isReordered(), tags=image$getTags(), data=newData)
     return (image)
 }
 
@@ -864,7 +867,7 @@ reorderMriImage <- function (image)
         }
     }
     
-    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=image$getVoxelUnits(), source=image$getSource(), origin=origin, storedXform=xformMatrix, reordered=TRUE, tags=image$getTags(), data=data)
+    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=image$getVoxelUnits(), source=image$getSource(), origin=origin, xform=xformMatrix, reordered=TRUE, tags=image$getTags(), data=data)
     
     return (image)
 }

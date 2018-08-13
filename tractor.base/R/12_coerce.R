@@ -35,7 +35,7 @@ setOldClass(c("niftiImage", "internalImage"))
     if (is.null(reordered))
         reordered <- FALSE
     
-    return (MriImage$new(imageDims=dim(from), pixdim(from), voxelDimUnits=pixunits(from), origin=origin(from), storedXform=xform(from), reordered=reordered, tags=tags, data=unclass(data)))
+    return (MriImage$new(imageDims=dim(from), pixdim(from), voxelDimUnits=pixunits(from), origin=origin(from), xform=xform(from), reordered=reordered, tags=tags, data=unclass(data)))
 }
 
 setAs("niftiImage", "MriImage", .convertNiftiImage)
