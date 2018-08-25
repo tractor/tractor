@@ -190,6 +190,7 @@ chooseDataTypeForImage <- function (image, format)
         
         isSigned <- TRUE
         code <- datatypes$codes[datatypes$rTypes == "double" & datatypes$sizes == size]
+        name <- datatypes$names[datatypes$codes == code]
     }
     else
     {
@@ -212,9 +213,10 @@ chooseDataTypeForImage <- function (image, format)
         code <- datatypes$codes[which.min(maximumValues)]
         size <- datatypes$sizes[datatypes$codes == code]
         isSigned <- datatypes$isSigned[datatypes$codes == code]
+        name <- datatypes$names[datatypes$codes == code]
     }
     
-    return (list(code=code, type=rType, size=size, isSigned=isSigned))
+    return (list(code=code, type=rType, size=size, isSigned=isSigned, name=name))
 }
 
 #' Working with MRI images stored in NIfTI, Analyze and MGH formats
