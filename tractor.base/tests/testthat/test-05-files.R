@@ -39,16 +39,13 @@ test_that("we can read and write NIfTI-1 files", {
     expect_flag(unreorderedImage[50,59,33], "no consistent meaning")
     expect_equal(tractor.base:::xformToOrientation(unreorderedImage$getXform()), "LIA")
     
-    expect_output(writePath <- image$writeToFile(tempfile(),"NIFTI_GZ",maxSize=1), "relative error in compressed image")
+    writePath <- image$writeToFile(tempfile(), "NIFTI_GZ", maxSize=1)
+    expect_lt(file.size(writePath$imageFile), file.size(path))
     rereadImage <- readImageFile(writePath$fileStem)
     expect_equal(image[50,59,33], rereadImage[50,59,33], tolerance=0.1)
     
     writePath <- writeImageFile(image, tempfile(), "NIFTI_GZ")
     rereadImage <- readImageFile(writePath$fileStem)
-    # The next line may seem like a no-op, but getXform() gives the effective
-    # xform after reordering, while setXform() sets the "stored" xform, usually
-    # taken from the source file
-    image$setXform(image$getXform())
     expect_equal(image$setSource(NULL)$serialise(), rereadImage$setSource(NULL)$serialise(), check.attributes=FALSE)
 })
 
@@ -60,7 +57,7 @@ test_that("we can read a NIfTI-2 file", {
     expect_equal(image$getOrigin(), c(46,64,37))
 })
 
-test_that("we can read and write ANALYZE files", {
+test_that("we can read ANALYZE files", {
     path <- system.file("extdata", "analyze", "maskedb0.img.gz", package="tractor.base")
     expect_flag(image <- readImageFile(path), "Image orientation for ANALYZE format is inconsistently interpreted")
     
@@ -69,11 +66,6 @@ test_that("we can read and write ANALYZE files", {
     expect_equal(image$getOrigin(), c(49,39,23))
     expect_equal(image[50,59,33], 264)
     expect_equal(tractor.base:::xformToOrientation(image$getXform()), "LAS")
-    
-    writePath <- writeImageFile(image, tempfile(), "ANALYZE")
-    rereadImage <- readImageFile(writePath$fileStem)
-    rereadImage$setTags(cal_max=NULL)   # Remove this tag for now (FIXME: remove need for this)
-    expect_equal(image$setSource(NULL)$serialise(), rereadImage$setSource(NULL)$serialise(), check.attributes=FALSE)
 })
 
 test_that("we can read and write MGH files", {
