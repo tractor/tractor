@@ -459,7 +459,7 @@ setAs("array", "MriImage", function (from) asMriImage(from))
 .warnIfIndexingUnreorderedImage <- function (image)
 {
     # The argument is an unreordered image and contains a non-LAS xform
-    if (is(image,"MriImage") && !image$isReordered() && xformToOrientation(image$getXform()) != "LAS")
+    if (is(image,"MriImage") && !image$isReordered() && orientation(image) != "LAS")
         flag(OL$Warning, "Indexing into an image which is not reordered has no consistent meaning")
 }
 

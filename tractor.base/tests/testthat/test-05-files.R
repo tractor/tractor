@@ -31,13 +31,13 @@ test_that("we can read and write NIfTI-1 files", {
     expect_equal(round(image$getOrigin()), c(50,39,23))
     expect_equal(image[50,59,33], 264)
     expect_equal(image$getDataAtPoint(50,59,33), 264)
-    expect_equal(tractor.base:::xformToOrientation(image$getXform()), "LAS")
+    expect_equal(RNifti:::orientation(image$getXform()), "LAS")
     
     expect_null(show(image))
     
     expect_false(unreorderedImage$isReordered())
     expect_flag(unreorderedImage[50,59,33], "no consistent meaning")
-    expect_equal(tractor.base:::xformToOrientation(unreorderedImage$getXform()), "LIA")
+    expect_equal(RNifti:::orientation(unreorderedImage$getXform()), "LIA")
     
     writePath <- image$writeToFile(tempfile(), "NIFTI_GZ", maxSize=1)
     expect_lt(file.size(writePath$imageFile), file.size(path))
@@ -65,7 +65,7 @@ test_that("we can read ANALYZE files", {
     expect_equal(image$getVoxelDimensions(), rep(2.5,3L))
     expect_equal(image$getOrigin(), c(49,39,23))
     expect_equal(image[50,59,33], 264)
-    expect_equal(tractor.base:::xformToOrientation(image$getXform()), "LAS")
+    expect_equal(RNifti:::orientation(image$getXform()), "LAS")
 })
 
 test_that("we can read and write MGH files", {
@@ -76,7 +76,7 @@ test_that("we can read and write MGH files", {
     expect_equal(image$getVoxelDimensions(), rep(2.5,3L))
     expect_equal(round(image$getOrigin()), c(50,39,23))
     expect_equal(image[50,59,33], 264)
-    expect_equal(tractor.base:::xformToOrientation(image$getXform()), "LAS")
+    expect_equal(RNifti:::orientation(image$getXform()), "LAS")
     
     writePath <- writeImageFile(image, tempfile(), "MGH_GZ")
     rereadImage <- readImageFile(writePath$fileStem)

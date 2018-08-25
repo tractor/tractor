@@ -240,8 +240,9 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
 {
     reorderPoints <- function (points, image)
     {
-        xform <- image$getXform()
-        orientation <- tractor.base:::xformToOrientation(xform, string=FALSE)
+        rotationMatrix <- RNifti::rotation(image$getXform())
+        orientation <- apply(abs(rotationMatrix) > 0.5, 2, which)
+        orientation <- directions * sign(rotationMatrix[cbind(directions,1:3)]) * c(-1,1,1)
         dimPermutation <- match(1:3, abs(orientation))
         points <- points[,dimPermutation,drop=FALSE]
         
