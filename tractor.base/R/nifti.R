@@ -98,117 +98,14 @@ readNifti <- function (fileNames, volumes = NULL)
     invisible (result)
 }
 
-writeNifti <- function (image, fileNames, gzipped = FALSE, datatype = NULL, maxSize = NULL)
+writeNifti <- function (image, fileNames, maxSize = NULL)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
-    
-    description <- "TractoR NIfTI writer v3.0.0"
-    fileFun <- (if (gzipped) gzfile else file)
-    
-    slope <- 1
-    intercept <- 0
-    dataRange <- range(image, na.rm=TRUE)
-    dataImage <- image
     datatype <- chooseDataTypeForImage(image, "Nifti")
-    if (!is.null(maxSize) && maxSize < datatype$size)
-    {
-        if (maxSize >= 4)
-            datatype <- niftiDatatype(16)
-        else
-        {
-            originalData <- as.array(image)
-            if (any(is.na(originalData)))
-                dataRange <- range(0, dataRange)
-            
-            datatype <- niftiDatatype(ifelse(maxSize >= 2, 4, 2))
-            if (datatype$isSigned)
-            {
-                typeRange <- 2^(datatype$size*8-1) * c(-1,1) - c(0,1)
-                slope <- diff(dataRange) / diff(typeRange)
-                intercept <- -typeRange[1] * slope
-            }
-            else
-            {
-                typeRange <- c(0, 2^(datatype$size*8) - 1)
-                slope <- diff(dataRange) / typeRange[2]
-                intercept <- dataRange[1]
-            }
-            
-            # NAs are typically not preserved when the data type is changed, so we replace them with zeros
-            # The original image is replaced by its approximation; its source will be (re)set below
-            dataImage <- image$copy()$map(function(x) as.integer(round((ifelse(is.na(x),0,x)-intercept)/slope)))
-            image$map(function(x,y) y * slope + intercept, dataImage, sparse=image$isSparse())
-            newData <- as.array(image)
-            meanRelativeDifference <- mean(abs((newData-originalData) / originalData), na.rm=TRUE)
-            if (meanRelativeDifference > 1e-4)
-                report(OL$Warning, "Mean relative error in compressed image is #{meanRelativeDifference*100}%", round=2)
-        }
-    }
+    if (!is.null(maxSize))
+        datatype <- niftiDatatype(ifelse(maxSize >= 4, 16L, ifelse(maxSize >= 2, 4L, 2L)))
     
-    ndims <- image$getDimensionality()
-    fullDims <- c(ndims, image$getDimensions(), rep(1,7-ndims))
-    fullVoxelDims <- c(-1, abs(image$getVoxelDimensions()), rep(0,7-ndims))
+    image <- retrieveNifti(image)
+    image <- updateNifti(image, list(descrip="TractoR NIfTI writer v3.3.0"))
     
-    # We default to 10 (mm and s)
-    unitName <- image$getVoxelUnits()
-    unitCode <- as.numeric(.Nifti$units[names(.Nifti$units) %in% unitName])
-    if (length(unitCode) == 0)
-        unitCode <- 10
-    else
-        unitCode <- sum(unitCode)
-    
-    xform <- image$getXform()
-    sformRows <- c(xform[1,], xform[2,], xform[3,])
-    quaternion <- xformToQuaternion(xform)
-    fullVoxelDims[1] <- quaternion$handedness
-    
-    connection <- fileFun(fileNames$headerFile, "w+b")
-    
-    writeBin(as.integer(348), connection, size=4)
-    writeBin(raw(36), connection)
-    writeBin(as.integer(fullDims), connection, size=2)
-    writeBin(raw(14), connection)
-    writeBin(as.integer(datatype$code), connection, size=2)
-    writeBin(as.integer(8*datatype$size), connection, size=2)
-    writeBin(raw(2), connection)
-    writeBin(fullVoxelDims, connection, size=4)
-    
-    # Voxel offset, data scaling slope and intercept
-    writeBin(as.double(c(352,slope,intercept)), connection, size=4)
-    
-    writeBin(raw(3), connection)
-    writeBin(as.integer(unitCode), connection, size=1)
-    writeBin(as.double(rev(dataRange)), connection, size=4)
-    writeBin(raw(16), connection)
-    writeBin(charToRaw(description), connection, size=1)
-    writeBin(raw(24+80-nchar(description)), connection)
-    
-    # NIfTI xform block: sform and qform codes are hardcoded to 2 here unless the image is 2D
-    if (ndims == 2)
-        writeBin(as.integer(c(0,0)), connection, size=2)
-    else
-        writeBin(as.integer(c(2,2)), connection, size=2)
-    writeBin(quaternion$q[2:4], connection, size=4)
-    writeBin(quaternion$offset, connection, size=4)
-    writeBin(sformRows, connection, size=4)
-    
-    writeBin(raw(16), connection)
-    if (fileNames$imageFile == fileNames$headerFile)
-    {
-        writeBin(c(charToRaw("n+1"),as.raw(0)), connection, size=1)
-        writeBin(raw(4), connection)
-    }
-    else
-    {
-        writeBin(c(charToRaw("ni1"),as.raw(0)), connection, size=1)
-        close(connection)
-        connection <- fileFun(fileNames$imageFile, "w+b")
-    }
-    
-    writeImageData(dataImage, connection, datatype$type, datatype$size)
-    close(connection)
-    
-    if (image$isInternal())
-        image$setSource(expandFileName(fileNames$fileStem))
+    RNifti::writeNifti(image, fileNames$headerFile, datatype=datatype$name)
 }

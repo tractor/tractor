@@ -539,12 +539,15 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
     if (params$format == "Analyze")
         report(OL$Error, "Writing to ANALYZE format is no longer supported")
     else if (params$format == "Nifti")
-        writeNifti(image, fileNames, gzipped=params$gzipped, maxSize=maxSize)
+        writeNifti(image, fileNames, maxSize=maxSize)
     else if (params$format == "Mgh")
         writeMgh(image, fileNames, gzipped=params$gzipped)
     
     if (writeTags && image$nTags() > 0)
         writeLines(yaml::as.yaml(image$getTags()), ensureFileSuffix(fileStem,"tags"))
+    
+    if (image$isInternal())
+        image$setSource(expandFileName(fileStem))
     
     invisible (fileNames)
 }
