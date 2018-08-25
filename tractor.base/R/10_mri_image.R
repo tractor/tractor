@@ -779,97 +779,14 @@ trimMriImage <- function (image, clearance = 4, indices = NULL)
 #' @export
 reorderMriImage <- function (image)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
-    
-    # Image is already reordered
-    if (image$isReordered())
+    if (is(image,"MriImage") && image$isReordered())
         return (image)
-    
-    xformMatrix <- image$getXform(implicit=FALSE)
-    
-    # There is no xform matrix stored with the image - we can't do anything
-    if (!equivalent(dim(xformMatrix), c(4,4)))
-        return (image)
-    
-    data <- image$getData()
-    dims <- image$getDimensions()
-    voxelDims <- abs(image$getVoxelDimensions())
-    nDims <- image$getDimensionality()
-    origin <- image$getOrigin()
-    
-    # Extract the 3x3 matrix which relates to rotation
-    rotationMatrix <- extractRotationMatrixFromXform(xformMatrix)
-    absRotationMatrix <- abs(rotationMatrix)
-    tolerance <- 1e-3
-    
-    # The rotation matrix should have exactly one nonzero element per row and column
-    # If not, warn but try to figure out the closest primary orientation
-    if (!equivalent(rowSums(absRotationMatrix > tolerance), c(1,1,1)) || !equivalent(colSums(absRotationMatrix > tolerance), c(1,1,1)))
+    else
     {
-        flag(OL$Warning, "The image is stored in a rotated frame of reference")
-        tolerance <- 0.5
-        if (!equivalent(rowSums(absRotationMatrix > tolerance), c(1,1,1)) || !equivalent(colSums(absRotationMatrix > tolerance), c(1,1,1)))
-            report(OL$Error, "Cannot work out the primary orientation of the image")
+        image <- retrieveNifti(image)
+        orientation(image) <- "LAS"
+        return (as(structure(image,reordered=TRUE), "MriImage"))
     }
-    
-    # Work out the permutation required to get to LAS, and apply it
-    dimPermutation <- apply(absRotationMatrix > tolerance, 1, which)
-    if (nDims > 3)
-        dimPermutation <- c(dimPermutation, 4:nDims)
-    else if (nDims < 3)
-        dimPermutation <- dimPermutation[1:nDims]
-    if (!identical(dimPermutation, seq_len(nDims)))
-    {
-        dims <- dims[dimPermutation]
-        voxelDims <- voxelDims[dimPermutation]
-        origin <- origin[dimPermutation]
-        
-        if (!image$isEmpty())
-        {
-            if (image$isSparse())
-                data$aperm(dimPermutation)
-            else
-                data <- aperm(data, dimPermutation)
-        }
-    }
-    
-    # Figure out which dimensions need to be flipped
-    # We sum by row because the data dimensions have already been permuted
-    ordering <- sign(rowSums(rotationMatrix))
-    ordering <- ordering * c(-1, 1, 1)
-    
-    # Flip data and origin as required
-    indices <- 1:min(3,nDims)
-    if (any(ordering[indices] < 0))
-    {
-        origin[indices] <- ifelse(ordering[indices] < 0, dims[indices]-origin[indices]+1, origin[indices])
-        
-        if (!image$isEmpty())
-        {
-            if (image$isSparse())
-                data$flip(which(ordering[indices] < 0))
-            else
-            {
-                orderX <- (if (ordering[1] == 1) seq_len(dims[1]) else rev(seq_len(dims[1])))
-                orderY <- (if (ordering[2] == 1) seq_len(dims[2]) else rev(seq_len(dims[2])))
-                if (nDims > 2)
-                    orderZ <- (if (ordering[3] == 1) seq_len(dims[3]) else rev(seq_len(dims[3])))
-                dimsToKeep <- setdiff(1:nDims, 1:3)
-
-                if (nDims == 2)
-                    data <- data[orderX, orderY]
-                else if (nDims == 3)
-                    data <- data[orderX, orderY, orderZ]
-                else
-                    data <- array(apply(data, dimsToKeep, "[", orderX, orderY, orderZ), dim=dim(data))
-            }
-        }
-    }
-    
-    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=image$getVoxelUnits(), source=image$getSource(), origin=origin, xform=xformMatrix, reordered=TRUE, tags=image$getTags(), data=data)
-    
-    return (image)
 }
 
 #' Merging MriImage objects
