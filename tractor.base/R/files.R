@@ -535,7 +535,7 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
         report(OL$Error, "An unreordered image can only be written to NIfTI format")
     
     if (params$format == "Analyze")
-        writeAnalyze(image, fileNames, gzipped=params$gzipped)
+        report(OL$Error, "Writing to ANALYZE format is no longer supported")
     else if (params$format == "Nifti")
         writeNifti(image, fileNames, gzipped=params$gzipped, maxSize=maxSize)
     else if (params$format == "Mgh")
