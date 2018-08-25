@@ -31,6 +31,10 @@ setOldClass(c("niftiImage", "internalImage"))
             tags[[key]] <- metadata[[key]]
     }
     
+    # Special case: don't preserve a zero cal_max
+    if (!is.null(tags$cal_max) && tags$cal_max == 0)
+        tags$cal_max <- NULL
+    
     reordered <- attr(from, "reordered")
     if (is.null(reordered))
         reordered <- FALSE
