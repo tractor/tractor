@@ -446,15 +446,18 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     if (willReorderImage)
         orientation(image) <- "LAS"
     
+    # Attach the data if necessary
+    # NB: this must happen before conversion to MriImage, otherwise cal_min and cal_max won't be checked against the data
+    if (willReadData)
+        image <- updateNifti(data, image)
+    
     # Convert to an MriImage
     attr(image, "reordered") <- reorder
     image <- as(image, "MriImage")
     
-    # Strip or update the data, as required
+    # Ensure the data has the required form
     if (metadataOnly)
         image$setData(NULL)
-    else if (willReadData)
-        image$setData(data)
     else if (sparse && !image$isSparse())
         image$setData(as(image$getData(), "SparseArray"))
     

@@ -11,18 +11,12 @@ setOldClass(c("niftiImage", "internalImage"))
         tags <- list()
     
     if (RNifti:::hasData(from))
-    {
         data <- as.array(from)
-        window <- range(data, na.rm=TRUE)
-    }
     else
-    {
         data <- NULL
-        window <- c(0, 0)
-    }
     
-    metadata <- dumpNifti(from)
-    defaults <- list(dim_info=0, intent_p1=0, intent_p2=0, intent_p3=0, intent_code=0, intent_name="", slice_start=0, slice_end=0, slice_code=0, cal_min=window[1], cal_max=window[2], slice_duration=0, toffset=0, aux_file="")
+    metadata <- niftiHeader(from)
+    defaults <- list(dim_info=0, intent_p1=0, intent_p2=0, intent_p3=0, intent_code=0, intent_name="", slice_start=0, slice_end=0, slice_code=0, cal_min=0, cal_max=0, slice_duration=0, toffset=0, aux_file="")
     
     # Add NIfTI attributes that are set to something other than the defaults
     for (key in names(defaults))
@@ -31,8 +25,10 @@ setOldClass(c("niftiImage", "internalImage"))
             tags[[key]] <- metadata[[key]]
     }
     
-    # Special case: don't preserve a zero cal_max
-    if (!is.null(tags$cal_max) && tags$cal_max == 0)
+    # Special cases: don't store cal_min and cal_max if they match the range of the data
+    if (!is.null(tags$cal_min) && !is.null(data) && abs(min(data,na.rm=TRUE)-tags$cal_min) < 1e-6)
+        tags$cal_min <- NULL
+    if (!is.null(tags$cal_max) && !is.null(data) && abs(max(data,na.rm=TRUE)-tags$cal_max) < 1e-6)
         tags$cal_max <- NULL
     
     reordered <- attr(from, "reordered")
