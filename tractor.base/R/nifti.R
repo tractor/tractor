@@ -17,7 +17,7 @@ niftiDatatype <- function (typeCode)
     return (datatype)
 }
 
-readNifti <- function (fileNames, volumes = NULL)
+readNifti <- function (fileNames, metadataOnly = FALSE, volumes = NULL)
 {
     if (!is.list(fileNames))
         fileNames <- identifyImageFileNames(fileNames)
@@ -92,6 +92,8 @@ readNifti <- function (fileNames, volumes = NULL)
         
         result$storage <- list(datatype=niftiDatatype(typeCode), endian=endian, offset=dataOffset, slope=slopeAndIntercept[1], intercept=slopeAndIntercept[2])
     }
+    else if (metadataOnly)
+        result$header <- niftiHeader(fileNames$headerFile)
     else
         result$image <- RNifti::readNifti(fileNames$headerFile, volumes=volumes)
     

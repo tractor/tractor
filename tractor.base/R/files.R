@@ -332,7 +332,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     # These functions should return either a complete image or a NIfTI-like
     # header and information on the type and location of the data
     if (fileNames$format %in% c("Analyze","Nifti"))
-        info <- readNifti(fileNames, volumes=volumes)
+        info <- readNifti(fileNames, metadataOnly=metadataOnly, volumes=volumes)
     else if (fileNames$format == "Mgh")
         info <- readMgh(fileNames)
     else
