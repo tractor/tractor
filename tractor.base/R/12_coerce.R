@@ -25,12 +25,6 @@ setOldClass(c("niftiImage", "internalImage"))
             tags[[key]] <- metadata[[key]]
     }
     
-    # Special cases: don't store cal_min and cal_max if they match the range of the data
-    if (!is.null(tags$cal_min) && !is.null(data) && abs(min(data,na.rm=TRUE)-tags$cal_min) < 1e-6)
-        tags$cal_min <- NULL
-    if (!is.null(tags$cal_max) && !is.null(data) && abs(max(data,na.rm=TRUE)-tags$cal_max) < 1e-6)
-        tags$cal_max <- NULL
-    
     reordered <- attr(from, "reordered")
     if (is.null(reordered))
         reordered <- FALSE
