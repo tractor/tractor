@@ -316,6 +316,8 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScales 
     alphaImages <- lapply(seq_along(images), function(i) {
         if (i == 1)
             NULL
+        else if (is(alpha, "MriImage"))
+            return (alpha)
         else if (is.numeric(alpha))
             images[[i]]$copy()$map(function(x) ifelse(!is.na(x) & x>0, alpha, 0))
         else
