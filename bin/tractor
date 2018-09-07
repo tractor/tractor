@@ -29,7 +29,7 @@ expect_available=$?
 
 usage()
 {
-    echo "tractor (program v3.1.0, distribution v$distribution_version)"
+    echo "tractor (program v3.3.0, distribution v$distribution_version)"
     echo "Run a TractoR experiment script in R and report the results"
     echo
     echo "Usage: tractor [-ldzqfbi] [-v level] [-a architecture] [-w working_dir]"
@@ -201,10 +201,12 @@ fi
     rprofile_backed_up=1
 }
 
+[ -t 1 -a -t 2 -a -z "$TRACTOR_NOCOLOUR" -a -z "$TRACTOR_NOCOLOR" ] || command_flags="-m $command_flags"
+
 [ $quiet -eq 0 ] && echo "Starting TractoR environment..." 1>&2
 
 if [ -x "$TRACTOR_HOME/bin/exec/tractor" ]; then
-    "$R" --vanilla CMD "$TRACTOR_HOME/bin/exec/tractor" -w "$working_dir" -l "$output_level" -c "$config_file" -p "$parallelisation_factor" -g "$log_file" $command_flags "$script_file" $args 2>&1
+    "$R" --vanilla CMD "$TRACTOR_HOME/bin/exec/tractor" $command_flags -w "$working_dir" -l "$output_level" -c "$config_file" -p "$parallelisation_factor" -g "$log_file" "$script_file" $args 2>&1
 elif [ $batch_mode -eq 1 ]; then
     cat >"$expect_file" <<EOF
 library(utils)
