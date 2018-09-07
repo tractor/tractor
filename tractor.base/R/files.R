@@ -474,9 +474,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
 
 writeImageData <- function (image, connection, type, size, endian = .Platform$endian)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
-    
+    image <- as(image, "MriImage")
     data <- image$getData()
     dims <- image$getDimensions()
     
@@ -507,8 +505,7 @@ writeImageData <- function (image, connection, type, size, endian = .Platform$en
 #' @export
 writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE, maxSize = NULL, writeTags = FALSE)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
+    image <- as(image, "MriImage")
     
     if (!is.null(fileName))
         fileName <- expandFileName(fileName)

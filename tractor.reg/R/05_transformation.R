@@ -360,10 +360,10 @@ registerImages <- function (sourceImage, targetImage, transform = NULL, sourceMa
 
 resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, interpolation = 1)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "Specified image is not a valid MriImage object")
     if (is.null(voxelDims) && is.null(imageDims))
         report(OL$Error, "Image or voxel dimensions must be given")
+    
+    image <- as(image, "MriImage")
     
     if (is.null(voxelDims))
         voxelDims <- image$getFieldOfView() / imageDims

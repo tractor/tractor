@@ -733,8 +733,7 @@ asMriImage <- function (data, templateImage = nilObject(), imageDims = NA, voxel
 #' @export
 extractMriImage <- function (image, dim, loc)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
+    image <- as(image, "MriImage")
     
     newData <- image$getSlice(dim, loc)
     dimsToKeep <- setdiff(1:image$getDimensionality(), dim)
@@ -747,8 +746,8 @@ extractMriImage <- function (image, dim, loc)
 #' @export
 trimMriImage <- function (image, clearance = 4, indices = NULL)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
+    image <- as(image, "MriImage")
+    
     if (length(clearance) == 1)
         clearance <- rep(clearance, image$getDimensionality())
     
@@ -812,9 +811,7 @@ reorderMriImage <- function (image)
 #' @export
 mergeMriImages <- function (...)
 {
-    images <- list(...)
-    if (any(!sapply(images, is, "MriImage")))
-        report(OL$Error, "All arguments must be MriImage objects")
+    images <- lapply(list(...), as, "MriImage")
     if (length(images) == 1)
         return (images[[1]])
     

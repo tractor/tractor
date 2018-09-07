@@ -59,8 +59,7 @@ readMgh <- function (fileNames)
 
 writeMgh <- function (image, fileNames, gzipped = FALSE)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
+    image <- as(image, "MriImage")
     
     fileFun <- (if (gzipped) gzfile else file)
     

@@ -130,10 +130,10 @@ polarPlotPanel <- function (point, data, imageNames, directions, bValues = NULL)
 #' @export
 viewImages <- function (images, colourScales = NULL, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, fixedWindow = TRUE, indexNames = NULL, infoPanel = defaultInfoPanel, ...)
 {
-    if (is(images, "MriImage"))
-        images <- list(images)
-    if (!is.list(images))
-        report(OL$Error, "Images must be specified in a list")
+    if (is.list(images))
+        images <- lapply(images, as, "MriImage")
+    else
+        images <- list(as(images, "MriImage"))
     
     nImages <- length(images)
     
