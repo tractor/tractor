@@ -17,6 +17,14 @@ splitAndConvertString <- function (string, split = "", mode = "character", error
         return (values)
 }
 
+# Custom character-to-logical coercion to allow for more TRUE and FALSE values
+setAs("character", "logical", function(from) {
+    result <- rep(NA, length(from))
+    result[tolower(from) %in% c("t","true","1","yes","yup","yep","yeah","hellyeah")] <- TRUE
+    result[tolower(from) %in% c("f","false","0","no","nope","hellno")] <- FALSE
+    return (result)
+})
+
 isValidAs <- function (value, mode)
 {
     coercedValue <- suppressWarnings(as(value, mode))
