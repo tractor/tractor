@@ -100,9 +100,7 @@ colourMap <- function (image, scale, zlim = NULL)
 
 maximumIntensityProjection <- function (image, axis)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
-    
+    image <- as(image, "MriImage")
     nDims <- image$getDimensionality()
     if (!(axis %in% 1:nDims))
         report(OL$Error, "Specified axis is not relevant for this image")
@@ -176,9 +174,7 @@ maximumIntensityProjection <- function (image, axis)
 #' @export
 createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, windowLimits = NULL)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
-    
+    image <- as(image, "MriImage")
     device <- match.arg(device)
     
     if (image$getDimensionality() == 2)
@@ -217,9 +213,7 @@ createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("inter
 #' @export
 createProjectionGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, windowLimits = NULL)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
-    
+    image <- as(image, "MriImage")
     device <- match.arg(device)
     projection <- maximumIntensityProjection(image, axis)
     imageAxes <- !(1:3 %in% axis)
@@ -238,8 +232,7 @@ createProjectionGraphic <- function (image, axis, device = c("internal","png"), 
 #' @export
 createContactSheetGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, windowLimits = NULL, clearance = NULL, nColumns = NULL)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
+    image <- as(image, "MriImage")
     if (image$getDimensionality() != 3)
         report(OL$Error, "The \"createContactSheetGraphic\" function only handles 3D images")
     

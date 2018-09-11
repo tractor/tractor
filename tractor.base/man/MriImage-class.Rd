@@ -48,6 +48,8 @@ reordered. See \code{\link{reorderMriImage}}}
 
 \item{\code{fill(value)}}{Fill the image with a particular value}
 
+\item{\code{find(fun = NULL, ..., array = TRUE)}}{Find voxels whose values are not zero, or satisfy a function}
+
 \item{\code{getDataAtPoint(...)}}{Obtain the value of the image at a particular point}
 
 \item{\code{getMetadata()}}{Obtain a version of the image with any data removed}
@@ -66,9 +68,13 @@ reordered. See \code{\link{reorderMriImage}}}
 
 \item{\code{mask(maskImage)}}{Mask the image, setting zero voxels in the mask to zero}
 
+\item{\code{setData(newData)}}{Replace the data in the image}
+
 \item{\code{setOrigin(newOrigin)}}{Update the origin of the image}
 
 \item{\code{setSource(newSource)}}{Update the source of the image}
+
+\item{\code{setTags(...)}}{Add or replace metadata tags}
 
 \item{\code{setXform(newXform)}}{Update the xform matrix associated with the image}
 

@@ -240,8 +240,9 @@ plot.Transformation <- function (x, y = NULL, xLoc = NA, yLoc = NA, zLoc = NA, s
 {
     reorderPoints <- function (points, image)
     {
-        xform <- image$getXform()
-        orientation <- tractor.base:::xformToOrientation(xform, string=FALSE)
+        rotationMatrix <- RNifti::rotation(image$getXform())
+        orientation <- apply(abs(rotationMatrix) > 0.5, 2, which)
+        orientation <- directions * sign(rotationMatrix[cbind(directions,1:3)]) * c(-1,1,1)
         dimPermutation <- match(1:3, abs(orientation))
         points <- points[,dimPermutation,drop=FALSE]
         
@@ -359,10 +360,10 @@ registerImages <- function (sourceImage, targetImage, transform = NULL, sourceMa
 
 resampleImage <- function (image, voxelDims = NULL, imageDims = NULL, interpolation = 1)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "Specified image is not a valid MriImage object")
     if (is.null(voxelDims) && is.null(imageDims))
         report(OL$Error, "Image or voxel dimensions must be given")
+    
+    image <- as(image, "MriImage")
     
     if (is.null(voxelDims))
         voxelDims <- image$getFieldOfView() / imageDims

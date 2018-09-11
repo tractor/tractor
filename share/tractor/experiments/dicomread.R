@@ -138,7 +138,7 @@ runExperiment <- function ()
                 if (storedTR > 0 && storedTR < thresholdTR)
                 {
                     report(OL$Info, "Reconstructed TR of #{storedTR} s is less than threshold", round=3)
-                    throughPlaneAxis <- abs(tractor.base:::xformToOrientation(xform(image), string=FALSE)[3])
+                    throughPlaneAxis <- which(abs(rotation(image))[,3] > 0.5)
                     image <- as.array(image)
                     pixdim(image)[4] <- pixdim(image)[4] * dim(image)[throughPlaneAxis]
                 }

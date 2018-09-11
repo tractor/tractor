@@ -16,5 +16,5 @@ test_that("images can be serialised and deserialised", {
     expect_true(isDeserialisable(raw))
     expect_type(raw, "list")
     expect_false(is.nilObject(object))
-    expect_true(is(object, "MriImage"))
+    expect_s4_class(object, "MriImage")
 })
