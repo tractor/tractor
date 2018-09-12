@@ -35,12 +35,10 @@ runExperiment <- function ()
         targetSessionDir <- targetDir
     
     success <- dir.create(targetSessionDir, showWarnings=FALSE)
-    if (!success)
-        report(OL$Error, "Could not create new session directory")
+    assert(success, "Could not create new session directory")
     
     success <- copyDirectory(session$getDirectory("root"), file.path(targetSessionDir,basename(session$getDirectory("root"))), allFiles=copyHidden, deleteOriginal=deleteOriginal)
-    if (!success)
-        report(OL$Error, "Directory copy failed")
+    assert(success, "Directory copy failed")
     
     return (invisible(NULL))
 }

@@ -180,8 +180,7 @@ chooseDataTypeForImage <- function (image, format)
     {
         singleTypeExists <- sum(datatypes$rTypes == "double" & datatypes$sizes == 4) == 1
         doubleTypeExists <- sum(datatypes$rTypes == "double" & datatypes$sizes == 8) == 1
-        if (!singleTypeExists && !doubleTypeExists)
-            report(OL$Error, "Floating-point data cannot be stored using the specified file format")
+        assert(singleTypeExists || doubleTypeExists, "Floating-point data cannot be stored using the specified file format")
         
         if (singleTypeExists && (isTRUE(getOption("tractorOutputPrecision") == "single") || !doubleTypeExists))
             size <- 4
@@ -206,8 +205,7 @@ chooseDataTypeForImage <- function (image, format)
         if (format == "Nifti" && any(compatible[datatypes$codes <= 64]))
             compatible <- compatible & (datatypes$codes <= 64)
         
-        if (!any(compatible))
-            report(OL$Error, "No compatible data type exists for the specified image and file format")
+        assert(any(compatible), "No compatible data type exists for the specified image and file format")
         
         maximumValues[!compatible] <- Inf
         code <- datatypes$codes[which.min(maximumValues)]

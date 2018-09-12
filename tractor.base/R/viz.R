@@ -74,8 +74,7 @@ colourMap <- function (image, scale, zlim = NULL)
 {
     if (!is.matrix(image))
         image <- as.matrix(image)
-    if (!is.numeric(image))
-        report(OL$Error, "Image to display should be a 2D numeric matrix")
+    assert(is.numeric(image), "Image to display should be a 2D numeric matrix")
     
     scale <- getColourScale(scale)
     nColours <- length(scale$colours)
@@ -102,8 +101,7 @@ maximumIntensityProjection <- function (image, axis)
 {
     image <- as(image, "MriImage")
     nDims <- image$getDimensionality()
-    if (!(axis %in% 1:nDims))
-        report(OL$Error, "Specified axis is not relevant for this image")
+    assert(axis %in% 1:nDims, "Specified axis is not relevant for this image")
     
     planeAxes <- setdiff(1:nDims, axis)
     

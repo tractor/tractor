@@ -819,8 +819,7 @@ mergeMriImages <- function (...)
     dimensions <- sapply(seq_along(images), fi(c(images[[i]]$getDimensions(), rep(1L,max(dimensionalities)-dimensionalities[i]))))
     
     commonDims <- apply(dimensions, 1, allEqual)
-    if (!commonDims[1])
-        report(OL$Error, "Images must have at least their first dimension in common")
+    assert(commonDims[1], "Images must have at least their first dimension in common")
     commonDims[length(commonDims)] <- FALSE
     lastCommonDim <- which(!commonDims)[1] - 1L
     blockDims <- dimensions[1:lastCommonDim,1]

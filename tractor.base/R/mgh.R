@@ -77,8 +77,7 @@ writeMgh <- function (image, fileNames, gzipped = FALSE)
     
     fullVoxelDims <- c(image$getVoxelDimensions(), rep(0,3-ndims))[1:3]
     
-    if (!image$isReordered())
-        report(OL$Error, "Unreordered images cannot currently be written to MGH/MGZ format")
+    assert(image$isReordered(), "Unreordered images cannot currently be written to MGH/MGZ format")
     
     # We can assume the image is reordered here
     origin <- image$getXform()[1:3,4] + fullDims[1:3]/2 * fullVoxelDims * c(-1,1,1)

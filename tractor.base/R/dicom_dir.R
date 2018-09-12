@@ -587,8 +587,7 @@ maskPixels <- function (pixels, metadata)
 {
     if (!is.numeric(pixels) || !is.vector(pixels))
         report(OL$Error, "Pixels must be specified as a numeric vector")
-    if (!is(metadata, "DicomMetadata"))
-        report(OL$Error, "Specified metadata is not a valid DicomMetadata object")
+    assert(is(metadata, "DicomMetadata"), "Specified metadata is not a valid DicomMetadata object")
     
     bitsAllocated <- metadata$getTagValue(0x0028, 0x0100)
     bitsStored <- metadata$getTagValue(0x0028, 0x0101)
@@ -612,8 +611,7 @@ maskPixels <- function (pixels, metadata)
 
 readDiffusionParametersFromMetadata <- function (metadata)
 {
-    if (!is(metadata, "DicomMetadata"))
-        report(OL$Error, "The specified metadata is not a valid DicomMetadata object")
+    assert(is(metadata, "DicomMetadata"), "The specified metadata is not a valid DicomMetadata object")
     
     bval <- metadata$getTagValue(0x0018, 0x9087)
     bvec <- metadata$getTagValue(0x0018, 0x9089)

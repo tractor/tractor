@@ -157,9 +157,7 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired)
 readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreTransferSyntax = FALSE, ascii = TRUE)
 {
     fileName <- expandFileName(fileName)
-    
-    if (!file.exists(fileName))
-        report(OL$Error, "DICOM file ", fileName, " not found")
+    assert(file.exists(fileName), "DICOM file #{fileName} not found")
     
     # DICOM is sufficiently complicated that this can really only be interpreted to mean "probably" or "probably not"
     isDicomFile <- !checkFormat
