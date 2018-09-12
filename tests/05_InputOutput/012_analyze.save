@@ -1,11 +1,11 @@
-[33mWARNING: Image orientation for ANALYZE format is inconsistently interpreted[0m
+WARNING: Image orientation for ANALYZE format is inconsistently interpreted
  Image dimensions : 96 x 96 x 60 voxels
  Voxel dimensions : 2.5 x 2.5 x 2.5
 Coordinate origin : (49,39,23)
   Additional tags : cal_max
 Value of image "maskedb0" at location (50,59,33) is 264
-[33mWARNING: Image orientation for ANALYZE format is inconsistently interpreted[0m
-[33mWARNING: Image orientation for ANALYZE format is inconsistently interpreted[0m
+WARNING: Image orientation for ANALYZE format is inconsistently interpreted
+WARNING: Image orientation for ANALYZE format is inconsistently interpreted
  Image dimensions : 96 x 96 x 60 voxels
  Voxel dimensions : 2.5 x 2.5 x 2.5
 Coordinate origin : (49,39,23)
