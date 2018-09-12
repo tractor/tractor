@@ -26,8 +26,7 @@ runExperiment <- function ()
     
     plot(transform, xLoc=x, yLoc=y, zLoc=z, sourceImage=sourceImage, preferAffine=preferAffine, reverse=reverse)
     
-    ans <- ask("Copy figure to pdf file? [yn]")
-    if (tolower(ans) == "y")
+    if (ask("Copy figure to pdf file? [yn]", valid=c("y","n")) == "y")
         dev.print(pdf, file=ensureFileSuffix(transformName,"pdf",strip="Rdata"))
     
     invisible(NULL)

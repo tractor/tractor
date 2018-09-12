@@ -56,12 +56,8 @@ runExperiment <- function ()
         print(xyplot(x + y + z ~ index, data, allow.multiple=TRUE, type="l", lwd=2, xlab="volume number", ylab=ylab, auto.key=list(space="right",text=legend,lines=TRUE,points=FALSE)), more=(i<nModes), split=c(1,i,1,nModes))
     }
     
-    if (interactive)
-    {
-        ans <- ask("Copy figure to pdf file? [yn]")
-        if (tolower(ans) == "y")
-            dev.print(pdf, file="corrections.pdf")
-    }
+    if (interactive && ask("Copy figure to pdf file? [yn]", valid=c("y","n")) == "y")
+        dev.print(pdf, file="corrections.pdf")
     else
         dev.off()
     

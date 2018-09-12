@@ -257,12 +257,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         
         if (regexpr(rootDir, dirToRemove, fixed=TRUE) != 1)
             report(OL$Error, "Existing externally-mapped directory #{dirToRemove} will not be overwritten")
-        else
-        {
-            ans <- (if (ask) ask("Directory #{dirToRemove} already exists. Delete it? [yn]") else "y")
-            if (tolower(ans) == "y")
-                unlink(dirToRemove, recursive=TRUE)
-        }
+        else if (!ask || reportr::ask("Directory #{dirToRemove} already exists. Delete it? [yn]", valid=c("y","n")) == "y")
+            unlink(dirToRemove, recursive=TRUE)
     },
     
     updateCaches = function ()

@@ -60,14 +60,14 @@ runExperiment <- function ()
 
             repeat
             {
-                done <- tolower(ask("Are the principal directions appropriate? [yn; s to show full images in fslview]"))
-                if (done %in% c("y","n"))
-                    break
-                else if (done == "s")
+                done <- ask("Are the principal directions appropriate? [yn; s to show full images in fslview]", valid=c("y","n","s"))
+                if (done == "s")
                 {
                     runDtifitWithSession(session)
                     showImagesInViewer(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1), viewer="fslview")
                 }
+                else
+                    break
             }
 
             if (done == "y")
@@ -90,11 +90,11 @@ runExperiment <- function ()
             
             repeat
             {
-                done <- tolower(ask("Are the principal directions appropriate? [yn; s to show images in fslview]"))
-                if (done %in% c("y","n"))
-                    break
-                else if (done == "s")
+                done <- ask("Are the principal directions appropriate? [yn; s to show images in fslview]", valid=c("y","n","s"))
+                if (done == "s")
                     showImagesInViewer(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1), viewer="fslview")
+                else
+                    break
             }
 
             if (done == "y")
