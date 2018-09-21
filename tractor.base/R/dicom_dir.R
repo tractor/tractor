@@ -58,7 +58,7 @@ dropCommonPrefix <- function (strings)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn = "series", seriesId = c("UID","number","time"), nested = TRUE, ...)
+sortDicomDirectories <- function (directories, method = c("internal","divest"), deleteOriginals = FALSE, sortOn = "series", seriesId = c("UID","number","time"), nested = TRUE, ...)
 {
     invalid <- (!file.exists(directories) | !file.info(directories)$isdir)
     if (any(invalid))
@@ -71,89 +71,95 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
     else if (nested && length(directories) > 1)
         nested <- FALSE
     
-    sortOn <- match.arg(sortOn, c("series","subject","date"), several.ok=TRUE)
-    currentSort <- sortOn[1]
-    remainingSorts <- sortOn[-1]
-    seriesId <- match.arg(seriesId)
-    identifierTag <- switch(currentSort, series=switch(seriesId, UID=c(0x0020,0x000e), number=c(0x0020,0x0011), time=c(0x0008,0x0031)),
-                                         subject=c(0x0010,0x0010),
-                                         date=c(0x0008,0x0020))
-    
-    files <- expandFileName(list.files(directories, full.names=TRUE, recursive=TRUE))
-    files <- files[!file.info(files)$isdir]
-    nFiles <- length(files)
-
-    count <- 0
-    identifiers <- character(nFiles)
-    
-    report(OL$Info, "Reading #{currentSort} identifiers from #{nFiles} files")
-    for (i in 1:nFiles)
+    method <- match.arg(method)
+    if (method == "internal")
     {
-        metadata <- try(readDicomFile(files[i], stopTag=identifierTag, ascii=FALSE, ...), silent=TRUE)
-        if (is.null(metadata) || ("try-error" %in% class(metadata)))
+        sortOn <- match.arg(sortOn, c("series","subject","date"), several.ok=TRUE)
+        currentSort <- sortOn[1]
+        remainingSorts <- sortOn[-1]
+        seriesId <- match.arg(seriesId)
+        identifierTag <- switch(currentSort, series=switch(seriesId, UID=c(0x0020,0x000e), number=c(0x0020,0x0011), time=c(0x0008,0x0031)),
+                                             subject=c(0x0010,0x0010),
+                                             date=c(0x0008,0x0020))
+    
+        files <- expandFileName(list.files(directories, full.names=TRUE, recursive=TRUE))
+        files <- files[!file.info(files)$isdir]
+        nFiles <- length(files)
+
+        count <- 0
+        identifiers <- character(nFiles)
+    
+        report(OL$Info, "Reading #{currentSort} identifiers from #{nFiles} files")
+        for (i in 1:nFiles)
         {
-            report(OL$Info, "Skipping #{files[i]}")
-            identifiers[i] <- NA_character_
+            metadata <- try(readDicomFile(files[i], stopTag=identifierTag, ascii=FALSE, ...), silent=TRUE)
+            if (is.null(metadata) || ("try-error" %in% class(metadata)))
+            {
+                report(OL$Info, "Skipping #{files[i]}")
+                identifiers[i] <- NA_character_
+            }
+            else
+            {
+                identifiers[i] <- as.character(metadata$getTagValue(identifierTag[1], identifierTag[2]))
+                count <- count + 1
+                if (count %% 100 == 0)
+                    report(OL$Verbose, "Done ", count)
+            }
         }
-        else
+
+        nDicomFiles <- count
+        if (nDicomFiles == 0)
+            report(OL$Error, "No readable DICOM files were found")
+    
+        uniqueIdentifiers <- na.omit(sort(unique(identifiers)))
+        shortIdentifiers <- dropCommonPrefix(uniqueIdentifiers)
+        report(OL$Info, "Found ", switch(currentSort,series="series",subject="subjects",date="dates"), " ", implode(shortIdentifiers,", "), "; creating subdirectories")
+    
+        identifierWidth <- max(nchar(uniqueIdentifiers))
+    
+        for (i in seq_along(uniqueIdentifiers))
         {
-            identifiers[i] <- as.character(metadata$getTagValue(identifierTag[1], identifierTag[2]))
-            count <- count + 1
-            if (count %% 100 == 0)
-                report(OL$Verbose, "Done ", count)
+            matchingFiles <- which(identifiers == uniqueIdentifiers[i])
+        
+            if (currentSort == "series")
+            {
+                metadata <- readDicomFile(files[matchingFiles[1]], stopTag=c(0x0008,0x103e), ascii=FALSE, ...)
+                description <- metadata$getTagValue(0x0008, 0x103e)
+                subdirectory <- es("#{shortIdentifiers[i]}_#{ore.subst('[^A-Za-z0-9]+','_',description,all=TRUE)}")
+                report(OL$Info, "Series #{shortIdentifiers[i]} includes #{length(matchingFiles)} files; description is \"#{description}\"")
+            }
+            else
+            {
+                subdirectory <- ore.subst("[^A-Za-z0-9]+", "_", shortIdentifiers[i], all=TRUE)
+                report(OL$Info, "#{ore.subst('^.',toupper,currentSort)} #{shortIdentifiers[i]} includes #{length(matchingFiles)} files")
+            }
+        
+            if (nested)
+                subdirectory <- file.path(directories, subdirectory)
+            if (!file.exists(subdirectory))
+                dir.create(subdirectory)
+        
+            currentIdFiles <- basename(files[matchingFiles])
+            duplicates <- duplicated(currentIdFiles)
+            if (any(duplicates))
+                currentIdFiles[duplicates] <- paste(currentIdFiles[duplicates], seq_len(sum(duplicates)), sep="_")
+        
+            from <- files[matchingFiles]
+            to <- file.path(subdirectory,currentIdFiles)
+            inPlace <- from == to
+            success <- file.copy(from[!inPlace], to[!inPlace])
+        
+            if (!all(success))
+                report(OL$Warning, "Not all files copied successfully for #{currentSort} #{shortIdentifiers[i]} - nothing will be deleted")
+            else if (deleteOriginals)
+                unlink(from[!inPlace])
+        
+            if (length(remainingSorts) > 0)
+                sortDicomDirectories(subdirectory, TRUE, sortOn=remainingSorts, seriesId=seriesId, nested=TRUE)
         }
     }
-
-    nDicomFiles <- count
-    if (nDicomFiles == 0)
-        report(OL$Error, "No readable DICOM files were found")
-    
-    uniqueIdentifiers <- na.omit(sort(unique(identifiers)))
-    shortIdentifiers <- dropCommonPrefix(uniqueIdentifiers)
-    report(OL$Info, "Found ", switch(currentSort,series="series",subject="subjects",date="dates"), " ", implode(shortIdentifiers,", "), "; creating subdirectories")
-    
-    identifierWidth <- max(nchar(uniqueIdentifiers))
-    
-    for (i in seq_along(uniqueIdentifiers))
-    {
-        matchingFiles <- which(identifiers == uniqueIdentifiers[i])
-        
-        if (currentSort == "series")
-        {
-            metadata <- readDicomFile(files[matchingFiles[1]], stopTag=c(0x0008,0x103e), ascii=FALSE, ...)
-            description <- metadata$getTagValue(0x0008, 0x103e)
-            subdirectory <- es("#{shortIdentifiers[i]}_#{ore.subst('[^A-Za-z0-9]+','_',description,all=TRUE)}")
-            report(OL$Info, "Series #{shortIdentifiers[i]} includes #{length(matchingFiles)} files; description is \"#{description}\"")
-        }
-        else
-        {
-            subdirectory <- ore.subst("[^A-Za-z0-9]+", "_", shortIdentifiers[i], all=TRUE)
-            report(OL$Info, "#{ore.subst('^.',toupper,currentSort)} #{shortIdentifiers[i]} includes #{length(matchingFiles)} files")
-        }
-        
-        if (nested)
-            subdirectory <- file.path(directories, subdirectory)
-        if (!file.exists(subdirectory))
-            dir.create(subdirectory)
-        
-        currentIdFiles <- basename(files[matchingFiles])
-        duplicates <- duplicated(currentIdFiles)
-        if (any(duplicates))
-            currentIdFiles[duplicates] <- paste(currentIdFiles[duplicates], seq_len(sum(duplicates)), sep="_")
-        
-        from <- files[matchingFiles]
-        to <- file.path(subdirectory,currentIdFiles)
-        inPlace <- from == to
-        success <- file.copy(from[!inPlace], to[!inPlace])
-        
-        if (!all(success))
-            report(OL$Warning, "Not all files copied successfully for #{currentSort} #{shortIdentifiers[i]} - nothing will be deleted")
-        else if (deleteOriginals)
-            unlink(from[!inPlace])
-        
-        if (length(remainingSorts) > 0)
-            sortDicomDirectories(subdirectory, TRUE, sortOn=remainingSorts, seriesId=seriesId, nested=TRUE)
-    }
+    else if (method == "divest")
+        divest::sortDicom(directories, nested=nested, keepUnsorted=!deleteOriginals, ...)
 }
 
 #' Read a directory of DICOM files
@@ -189,260 +195,268 @@ sortDicomDirectories <- function (directories, deleteOriginals = FALSE, sortOn =
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-readDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
+readDicomDirectory <- function (dicomDir, method = c("internal","divest"), readDiffusionParams = FALSE, untileMosaics = TRUE, ...)
 {
     if (!file.exists(dicomDir) || !file.info(dicomDir)$isdir)
         report(OL$Error, "The specified path (", dicomDir, ") does not point to a directory")
     
-    report(OL$Info, "Looking for DICOM files in directory ", dicomDir)
-    files <- expandFileName(list.files(dicomDir, full.names=TRUE, recursive=TRUE))
-    files <- files[!file.info(files)$isdir]
-    nFiles <- length(files)
-    
-    report(OL$Info, "Reading image information from ", nFiles, " files")
-    info <- data.frame(seriesNumber=numeric(nFiles), seriesDescription=character(nFiles), acquisitionNumber=numeric(nFiles), imageNumber=numeric(nFiles), echoNumber=numeric(nFiles), sliceLocation=numeric(nFiles), stringsAsFactors=FALSE)
-    images <- vector("list", nFiles)
-    if (readDiffusionParams)
+    method <- match.arg(method)
+    if (method == "internal")
     {
-        bValues <- echoSeparations <- numeric(nFiles)
-        bVectors <- matrix(NA, nrow=3, ncol=nFiles)
-    }
+        report(OL$Info, "Looking for DICOM files in directory ", dicomDir)
+        files <- expandFileName(list.files(dicomDir, full.names=TRUE, recursive=TRUE))
+        files <- files[!file.info(files)$isdir]
+        nFiles <- length(files)
     
-    valid <- rep(TRUE, nFiles)
-    seenValidFile <- FALSE
-    sliceDim <- sliceOrientation <- throughSliceOrientation <- NULL
-    repetitionTime <- 1
-    count <- 0
-    for (i in seq_along(files))
-    {
-        metadata <- readDicomFile(files[i])
-        if (is.null(metadata))
-        {
-            # Not a DICOM file - skip it
-            report(OL$Verbose, "Skipping ", files[i])
-            valid[i] <- FALSE
-            next
-        }
-        else if (!seenValidFile)
-        {
-            # Read slice dimensions and orientation once - these are assumed not to vary across files
-            sliceDim <- metadata$getTagValue(0x0018,0x0088)
-            if (is.na(sliceDim))
-                sliceDim <- metadata$getTagValue(0x0018,0x0050)
-            sliceOrientation <- metadata$getTagValue(0x0020,0x0037)
-            
-            # Calculate through-slice orientation (in LPS convention)
-            throughSliceOrientation <- vectorCrossProduct(sliceOrientation[1:3], sliceOrientation[4:6])
-            
-            # Read TR for temporal dimension
-            repetitionTime <- metadata$getTagValue(0x0018,0x0080) / 1000
-        }
-        
-        # Read in metadata specific to this file
-        info$seriesNumber[i] <- metadata$getTagValue(0x0020,0x0011)
-        info$seriesDescription[i] <- metadata$getTagValue(0x0008,0x103e)
-        info$acquisitionNumber[i] <- metadata$getTagValue(0x0020,0x0012)
-        info$imageNumber[i] <- metadata$getTagValue(0x0020,0x0013)
-        info$echoNumber[i] <- metadata$getTagValue(0x0018, 0x0086)
-        imagePosition <- metadata$getTagValue(0x0020,0x0032)
-        info$sliceLocation[i] <- imagePosition %*% throughSliceOrientation
-        
-        # Read in the pixel data and usual MriImage metadata
-        images[[i]] <- readImageParametersFromMetadata(metadata, untileMosaics=untileMosaics)
-        
-        # Check for diffusion metadata if requested
+        report(OL$Info, "Reading image information from ", nFiles, " files")
+        info <- data.frame(seriesNumber=numeric(nFiles), seriesDescription=character(nFiles), acquisitionNumber=numeric(nFiles), imageNumber=numeric(nFiles), echoNumber=numeric(nFiles), sliceLocation=numeric(nFiles), stringsAsFactors=FALSE)
+        images <- vector("list", nFiles)
         if (readDiffusionParams)
         {
-            diffusion <- readDiffusionParametersFromMetadata(metadata)
-            if (!seenValidFile && diffusion$defType != "none")
-                report(OL$Info, "Attempting to read diffusion parameters using ", diffusion$defType, " DICOM convention")
-            bValues[i] <- diffusion$bval
-            bVectors[,i] <- diffusion$bvec
-            echoSeparations[i] <- ifelse(is.null(diffusion$echoSeparation), NA, diffusion$echoSeparation)
+            bValues <- echoSeparations <- numeric(nFiles)
+            bVectors <- matrix(NA, nrow=3, ncol=nFiles)
         }
-        
-        if (!seenValidFile)
-            seenValidFile <- TRUE
-        
-        if (i %% 100 == 0)
-            report(OL$Verbose, "Done ", count)
-    }
     
-    nDicomFiles <- sum(valid)
-    if (nDicomFiles == 0)
-        report(OL$Error, "No readable DICOM files were found")
-    
-    info <- info[valid,]
-    images <- images[valid]
-    if (readDiffusionParams)
-    {
-        bValues <- bValues[valid]
-        bVectors <- bVectors[,valid,drop=FALSE]
-        echoSeparations <- echoSeparations[valid]
-    }
-    
-    if (length(unique(info$seriesDescription)) > 1)
-        report(OL$Warning, "DICOM directory contains more than one unique series description - merging them may not make sense")
-    
-    # Slice orientations are the in-plane X and Y and through plane direction vectors, in that order
-    # Slice directions are 1, 2 and 3 for X, Y and Z in the LPS reference system; sign indicates flip
-    # NB: The sum() function recovers the sign in the sapply() call here
-    sliceOrientation <- list(sliceOrientation[1:3], sliceOrientation[4:6], throughSliceOrientation)
-    sliceDirections <- sapply(sliceOrientation, function (x) round(which(abs(x) == 1) * sum(x)))
-    
-    # Oblique slices case: look for the closest reference orientations and warn
-    if (!is.numeric(sliceDirections) || length(sliceDirections) != 3)
-    {
-        sliceDirections <- sapply(sliceOrientation, function (x) {
-            currentSliceDirection <- which.max(abs(x))
-            currentSliceDirection * sign(x[currentSliceDirection])
-        })
-        
-        if (sliceDirections[1] == sliceDirections[2])
-            report(OL$Error, "DICOM slice orientation information is complex or nonsensical")
-        else
+        valid <- rep(TRUE, nFiles)
+        seenValidFile <- FALSE
+        sliceDim <- sliceOrientation <- throughSliceOrientation <- NULL
+        repetitionTime <- 1
+        count <- 0
+        for (i in seq_along(files))
         {
-            angles <- sapply(1:2, function (i) acos(abs(sliceOrientation[[i]][abs(sliceDirections[i])]) / sqrt(sum(sliceOrientation[[i]]^2))))
-            angles <- round(angles / pi * 180, 2)
-            report(OL$Warning, "Slices appear to be oblique: rotations from axes are ", implode(angles," and "), " deg")
-        }
-    }
-    
-    report(OL$Info, "Image orientation is ", implode(c("I","A","R","","L","P","S")[sliceDirections+4],sep=""))
-    absoluteSliceDirections <- abs(sliceDirections)
-    
-    # Find all unique slice positions and find the index corresponding to each image
-    uniqueSlices <- sort(unique(info$sliceLocation))
-    info$sliceIndex <- match(info$sliceLocation, uniqueSlices)
-    
-    # Is there a volume stored in each DICOM file? Is the image a mosaic?
-    volumePerDicomFile <- (length(images[[1]]$imageDims) == 3)
-    mosaic <- images[[1]]$mosaic
-    
-    if (!volumePerDicomFile && length(uniqueSlices) < 2)
-        report(OL$Error, "Reading a single 2D image from DICOM is not supported at present")
-    
-    # Work out the image and voxel dimensions of the unpermuted image
-    if (volumePerDicomFile)
-    {
-        nSlices <- images[[1]]$imageDims[3]
-        nVolumes <- nDicomFiles
-        imageDims <- c(images[[1]]$imageDims, nVolumes)
+            metadata <- readDicomFile(files[i])
+            if (is.null(metadata))
+            {
+                # Not a DICOM file - skip it
+                report(OL$Verbose, "Skipping ", files[i])
+                valid[i] <- FALSE
+                next
+            }
+            else if (!seenValidFile)
+            {
+                # Read slice dimensions and orientation once - these are assumed not to vary across files
+                sliceDim <- metadata$getTagValue(0x0018,0x0088)
+                if (is.na(sliceDim))
+                    sliceDim <- metadata$getTagValue(0x0018,0x0050)
+                sliceOrientation <- metadata$getTagValue(0x0020,0x0037)
+            
+                # Calculate through-slice orientation (in LPS convention)
+                throughSliceOrientation <- vectorCrossProduct(sliceOrientation[1:3], sliceOrientation[4:6])
+            
+                # Read TR for temporal dimension
+                repetitionTime <- metadata$getTagValue(0x0018,0x0080) / 1000
+            }
         
-        # Some mosaic files store the per-slice TR, but we want the per-volume TR
-        # Assume that a TR below 500 ms must be per-slice
-        if (mosaic && repetitionTime < 0.5)
-            repetitionTime <- repetitionTime * nSlices
-        voxelDims <- c(images[[1]]$voxelDims, repetitionTime)
-    }
-    else
-    {
-        if (!equivalent((uniqueSlices[2] - uniqueSlices[1]) / sliceDim, 1, tolerance=1e-3))
+            # Read in metadata specific to this file
+            info$seriesNumber[i] <- metadata$getTagValue(0x0020,0x0011)
+            info$seriesDescription[i] <- metadata$getTagValue(0x0008,0x103e)
+            info$acquisitionNumber[i] <- metadata$getTagValue(0x0020,0x0012)
+            info$imageNumber[i] <- metadata$getTagValue(0x0020,0x0013)
+            info$echoNumber[i] <- metadata$getTagValue(0x0018, 0x0086)
+            imagePosition <- metadata$getTagValue(0x0020,0x0032)
+            info$sliceLocation[i] <- imagePosition %*% throughSliceOrientation
+        
+            # Read in the pixel data and usual MriImage metadata
+            images[[i]] <- readImageParametersFromMetadata(metadata, untileMosaics=untileMosaics)
+        
+            # Check for diffusion metadata if requested
+            if (readDiffusionParams)
+            {
+                diffusion <- readDiffusionParametersFromMetadata(metadata)
+                if (!seenValidFile && diffusion$defType != "none")
+                    report(OL$Info, "Attempting to read diffusion parameters using ", diffusion$defType, " DICOM convention")
+                bValues[i] <- diffusion$bval
+                bVectors[,i] <- diffusion$bvec
+                echoSeparations[i] <- ifelse(is.null(diffusion$echoSeparation), NA, diffusion$echoSeparation)
+            }
+        
+            if (!seenValidFile)
+                seenValidFile <- TRUE
+        
+            if (i %% 100 == 0)
+                report(OL$Verbose, "Done ", count)
+        }
+    
+        nDicomFiles <- sum(valid)
+        if (nDicomFiles == 0)
+            report(OL$Error, "No readable DICOM files were found")
+    
+        info <- info[valid,]
+        images <- images[valid]
+        if (readDiffusionParams)
         {
-            report(OL$Warning, "Slice thickness and slice separation do not match - the latter will be used")
-            sliceDim <- uniqueSlices[2] - uniqueSlices[1]
+            bValues <- bValues[valid]
+            bVectors <- bVectors[,valid,drop=FALSE]
+            echoSeparations <- echoSeparations[valid]
         }
-        
-        nSlices <- length(uniqueSlices)
-        nVolumes <- nDicomFiles / nSlices
-        if (floor(nVolumes) != nVolumes)
-            report(OL$Error, "Number of files (", nDicomFiles, ") is not a multiple of the number of slices detected (", nSlices, ")")
-        
-        # Dimensions of initial image, to be permuted later if necessary
-        imageDims <- c(images[[1]]$imageDims, nSlices, nVolumes)
-        voxelDims <- c(images[[1]]$voxelDims, sliceDim, repetitionTime)
-    }
-
-    report(OL$Info, "Data set contains ", nVolumes, " volume(s); ", nSlices, " slice(s) per volume")
-    data <- array(NA, dim=imageDims)
-
-    # Sort by series number, then acquisition number, then image number
-    sortOrder <- order(info$seriesNumber, info$acquisitionNumber, info$echoNumber, info$imageNumber)
-    info <- info[sortOrder,]
-    images <- images[sortOrder]
     
-    if (readDiffusionParams)
-    {
-        bValues <- bValues[sortOrder]
-        bVectors <- bVectors[,sortOrder,drop=FALSE]
-        echoSeparations <- echoSeparations[sortOrder]
-        
-        # Initialisation
-        volumeBValues <- rep(NA, nVolumes)
-        volumeBVectors <- matrix(NA, nrow=3, ncol=nVolumes)
-        volumeEchoSeparations <- rep(NA, nVolumes)
-    }
+        if (length(unique(info$seriesDescription)) > 1)
+            report(OL$Warning, "DICOM directory contains more than one unique series description - merging them may not make sense")
     
-    # Insert data into the appropriate places
-    for (i in 1:nrow(info))
-    {
+        # Slice orientations are the in-plane X and Y and through plane direction vectors, in that order
+        # Slice directions are 1, 2 and 3 for X, Y and Z in the LPS reference system; sign indicates flip
+        # NB: The sum() function recovers the sign in the sapply() call here
+        sliceOrientation <- list(sliceOrientation[1:3], sliceOrientation[4:6], throughSliceOrientation)
+        sliceDirections <- sapply(sliceOrientation, function (x) round(which(abs(x) == 1) * sum(x)))
+    
+        # Oblique slices case: look for the closest reference orientations and warn
+        if (!is.numeric(sliceDirections) || length(sliceDirections) != 3)
+        {
+            sliceDirections <- sapply(sliceOrientation, function (x) {
+                currentSliceDirection <- which.max(abs(x))
+                currentSliceDirection * sign(x[currentSliceDirection])
+            })
+        
+            if (sliceDirections[1] == sliceDirections[2])
+                report(OL$Error, "DICOM slice orientation information is complex or nonsensical")
+            else
+            {
+                angles <- sapply(1:2, function (i) acos(abs(sliceOrientation[[i]][abs(sliceDirections[i])]) / sqrt(sum(sliceOrientation[[i]]^2))))
+                angles <- round(angles / pi * 180, 2)
+                report(OL$Warning, "Slices appear to be oblique: rotations from axes are ", implode(angles," and "), " deg")
+            }
+        }
+    
+        report(OL$Info, "Image orientation is ", implode(c("I","A","R","","L","P","S")[sliceDirections+4],sep=""))
+        absoluteSliceDirections <- abs(sliceDirections)
+    
+        # Find all unique slice positions and find the index corresponding to each image
+        uniqueSlices <- sort(unique(info$sliceLocation))
+        info$sliceIndex <- match(info$sliceLocation, uniqueSlices)
+    
+        # Is there a volume stored in each DICOM file? Is the image a mosaic?
+        volumePerDicomFile <- (length(images[[1]]$imageDims) == 3)
+        mosaic <- images[[1]]$mosaic
+    
+        if (!volumePerDicomFile && length(uniqueSlices) < 2)
+            report(OL$Error, "Reading a single 2D image from DICOM is not supported at present")
+    
+        # Work out the image and voxel dimensions of the unpermuted image
         if (volumePerDicomFile)
         {
-            volume <- i
-            data[,,,volume] <- images[[i]]$data
+            nSlices <- images[[1]]$imageDims[3]
+            nVolumes <- nDicomFiles
+            imageDims <- c(images[[1]]$imageDims, nVolumes)
+        
+            # Some mosaic files store the per-slice TR, but we want the per-volume TR
+            # Assume that a TR below 500 ms must be per-slice
+            if (mosaic && repetitionTime < 0.5)
+                repetitionTime <- repetitionTime * nSlices
+            voxelDims <- c(images[[1]]$voxelDims, repetitionTime)
         }
         else
         {
-            slice <- info$sliceIndex[i]
-            volume <- ((i-1) %/% nSlices) + 1
-            data[,,slice,volume] <- images[[i]]$data
-        }
+            if (!equivalent((uniqueSlices[2] - uniqueSlices[1]) / sliceDim, 1, tolerance=1e-3))
+            {
+                report(OL$Warning, "Slice thickness and slice separation do not match - the latter will be used")
+                sliceDim <- uniqueSlices[2] - uniqueSlices[1]
+            }
         
-        # Insert diffusion parameters once per volume
-        if (readDiffusionParams && is.na(volumeBValues[volume]))
+            nSlices <- length(uniqueSlices)
+            nVolumes <- nDicomFiles / nSlices
+            if (floor(nVolumes) != nVolumes)
+                report(OL$Error, "Number of files (", nDicomFiles, ") is not a multiple of the number of slices detected (", nSlices, ")")
+        
+            # Dimensions of initial image, to be permuted later if necessary
+            imageDims <- c(images[[1]]$imageDims, nSlices, nVolumes)
+            voxelDims <- c(images[[1]]$voxelDims, sliceDim, repetitionTime)
+        }
+
+        report(OL$Info, "Data set contains ", nVolumes, " volume(s); ", nSlices, " slice(s) per volume")
+        data <- array(NA, dim=imageDims)
+
+        # Sort by series number, then acquisition number, then image number
+        sortOrder <- order(info$seriesNumber, info$acquisitionNumber, info$echoNumber, info$imageNumber)
+        info <- info[sortOrder,]
+        images <- images[sortOrder]
+    
+        if (readDiffusionParams)
         {
-            volumeBValues[volume] <- bValues[i]
-            volumeBVectors[,volume] <- bVectors[,i]
-            volumeEchoSeparations[volume] <- echoSeparations[i]
+            bValues <- bValues[sortOrder]
+            bVectors <- bVectors[,sortOrder,drop=FALSE]
+            echoSeparations <- echoSeparations[sortOrder]
+        
+            # Initialisation
+            volumeBValues <- rep(NA, nVolumes)
+            volumeBVectors <- matrix(NA, nrow=3, ncol=nVolumes)
+            volumeEchoSeparations <- rep(NA, nVolumes)
+        }
+    
+        # Insert data into the appropriate places
+        for (i in 1:nrow(info))
+        {
+            if (volumePerDicomFile)
+            {
+                volume <- i
+                data[,,,volume] <- images[[i]]$data
+            }
+            else
+            {
+                slice <- info$sliceIndex[i]
+                volume <- ((i-1) %/% nSlices) + 1
+                data[,,slice,volume] <- images[[i]]$data
+            }
+        
+            # Insert diffusion parameters once per volume
+            if (readDiffusionParams && is.na(volumeBValues[volume]))
+            {
+                volumeBValues[volume] <- bValues[i]
+                volumeBVectors[,volume] <- bVectors[,i]
+                volumeEchoSeparations[volume] <- echoSeparations[i]
+            }
+        }
+
+        if (mosaic)
+        {
+            # The image position in plane is stored wrongly for mosaic images, so we need to correct it
+            inPlaneDims <- absoluteSliceDirections[1:2]
+            imagePosition[inPlaneDims] <- imagePosition[inPlaneDims] + abs(voxelDims[inPlaneDims]) * ((images[[1]]$mosaicDims-imageDims[inPlaneDims]) / 2)
+        }
+    
+        # Permute the data dimensions as required
+        dimPermutation <- c(match(1:3,absoluteSliceDirections), 4)
+        if (!equivalent(dimPermutation, 1:4))
+        {
+            data <- aperm(data, dimPermutation)
+            imageDims <- imageDims[dimPermutation]
+            voxelDims <- abs(voxelDims[dimPermutation]) * c(-1,1,1,1)
+        }
+    
+        # Check for any flips required to achieve LAS orientation
+        ordering <- sign(sliceDirections[dimPermutation])[1:3] * c(1,-1,1)
+        orderX <- (if (ordering[1] == 1) seq_len(imageDims[1]) else rev(seq_len(imageDims[1])))
+        orderY <- (if (ordering[2] == 1) seq_len(imageDims[2]) else rev(seq_len(imageDims[2])))
+        orderZ <- (if (ordering[3] == 1) seq_len(imageDims[3]) else rev(seq_len(imageDims[3])))
+        data <- data[orderX,orderY,orderZ,,drop=TRUE]
+    
+        dimsToKeep <- which(imageDims > 1)
+        imageDims <- imageDims[dimsToKeep]
+        voxelDims <- voxelDims[dimsToKeep]
+    
+        # Set the image position in the through-slice direction to the location of the first slice
+        imagePosition[absoluteSliceDirections[3]] <- info$sliceLocation[info$sliceIndex == 1][1]
+    
+        # Invert position for Y direction due to switch to LAS convention
+        imagePosition[2] <- -imagePosition[2]
+    
+        # For origin, use the image position (which is the centre of the first voxel stored)
+        origin <- 1 - ordering[1:3] * (imagePosition / voxelDims[1:3])
+        origin <- ifelse(ordering[1:3] == c(1,1,1), origin, imageDims[1:3]-origin+1)
+    
+        # Create the final image
+        image <- asMriImage(data, imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), origin=origin, tags=list())
+    
+        returnValue <- list(image=image, seriesDescriptions=unique(info$seriesDescription))
+        if (readDiffusionParams)
+        {
+            # Invert Y direction again
+            volumeBVectors[2,] <- -volumeBVectors[2,]
+            returnValue <- c(returnValue, list(bValues=volumeBValues, bVectors=volumeBVectors, echoSeparations=volumeEchoSeparations))
         }
     }
-
-    if (mosaic)
+    else if (method == "divest")
     {
-        # The image position in plane is stored wrongly for mosaic images, so we need to correct it
-        inPlaneDims <- absoluteSliceDirections[1:2]
-        imagePosition[inPlaneDims] <- imagePosition[inPlaneDims] + abs(voxelDims[inPlaneDims]) * ((images[[1]]$mosaicDims-imageDims[inPlaneDims]) / 2)
-    }
-    
-    # Permute the data dimensions as required
-    dimPermutation <- c(match(1:3,absoluteSliceDirections), 4)
-    if (!equivalent(dimPermutation, 1:4))
-    {
-        data <- aperm(data, dimPermutation)
-        imageDims <- imageDims[dimPermutation]
-        voxelDims <- abs(voxelDims[dimPermutation]) * c(-1,1,1,1)
-    }
-    
-    # Check for any flips required to achieve LAS orientation
-    ordering <- sign(sliceDirections[dimPermutation])[1:3] * c(1,-1,1)
-    orderX <- (if (ordering[1] == 1) seq_len(imageDims[1]) else rev(seq_len(imageDims[1])))
-    orderY <- (if (ordering[2] == 1) seq_len(imageDims[2]) else rev(seq_len(imageDims[2])))
-    orderZ <- (if (ordering[3] == 1) seq_len(imageDims[3]) else rev(seq_len(imageDims[3])))
-    data <- data[orderX,orderY,orderZ,,drop=TRUE]
-    
-    dimsToKeep <- which(imageDims > 1)
-    imageDims <- imageDims[dimsToKeep]
-    voxelDims <- voxelDims[dimsToKeep]
-    
-    # Set the image position in the through-slice direction to the location of the first slice
-    imagePosition[absoluteSliceDirections[3]] <- info$sliceLocation[info$sliceIndex == 1][1]
-    
-    # Invert position for Y direction due to switch to LAS convention
-    imagePosition[2] <- -imagePosition[2]
-    
-    # For origin, use the image position (which is the centre of the first voxel stored)
-    origin <- 1 - ordering[1:3] * (imagePosition / voxelDims[1:3])
-    origin <- ifelse(ordering[1:3] == c(1,1,1), origin, imageDims[1:3]-origin+1)
-    
-    # Create the final image
-    image <- asMriImage(data, imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), origin=origin, tags=list())
-    
-    returnValue <- list(image=image, seriesDescriptions=unique(info$seriesDescription))
-    if (readDiffusionParams)
-    {
-        # Invert Y direction again
-        volumeBVectors[2,] <- -volumeBVectors[2,]
-        returnValue <- c(returnValue, list(bValues=volumeBValues, bVectors=volumeBVectors, echoSeparations=volumeEchoSeparations))
+        
     }
     
     invisible (returnValue)
