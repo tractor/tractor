@@ -155,7 +155,7 @@ sortDicomDirectories <- function (directories, method = c("internal","divest"), 
                 unlink(from[!inPlace])
         
             if (length(remainingSorts) > 0)
-                sortDicomDirectories(subdirectory, TRUE, sortOn=remainingSorts, seriesId=seriesId, nested=TRUE)
+                sortDicomDirectories(subdirectory, deleteOriginals=TRUE, sortOn=remainingSorts, seriesId=seriesId, nested=TRUE)
         }
     }
     else if (method == "divest")

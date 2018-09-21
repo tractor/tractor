@@ -21,7 +21,7 @@ runExperiment <- function ()
     if (method == "internal")
     {
         sortOn <- splitAndConvertString(sortOn, ",", fixed=TRUE)
-        sortDicomDirectories(directory, deleteOriginals, sortOn=sortOn, seriesId=seriesId, nested=nested)
+        sortDicomDirectories(directory, deleteOriginals=deleteOriginals, sortOn=sortOn, seriesId=seriesId, nested=nested)
     }
     else if (method == "divest")
     {

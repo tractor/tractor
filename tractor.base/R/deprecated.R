@@ -11,7 +11,7 @@
 newMriImageFromDicomDirectory <- function (dicomDir, readDiffusionParams = FALSE, untileMosaics = TRUE)
 {
     .Deprecated("readDicomDirectory", "tractor.base")
-    readDicomDirectory(dicomDir, readDiffusionParams, untileMosaics)
+    readDicomDirectory(dicomDir, readDiffusionParams=readDiffusionParams, untileMosaics=untileMosaics)
 }
 
 #' @rdname tractor.base-deprecated
