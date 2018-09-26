@@ -275,7 +275,7 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
         report(OL$Error, "Specified session is not an MriSession object")
     
     if (!imageFileExists(session$getImageFileNameByType("refb0")))
-        report(OL$Error, "A reference b=0 image file has not yet been created - run eddy_correct first")
+        report(OL$Error, "A reference b=0 image file has not yet been created")
     
     report(OL$Info, "Running FSL's brain extraction tool...")
     paramString <- paste(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("maskedb0"), "-m -f", intensityThreshold, "-g", verticalGradient, sep=" ")
