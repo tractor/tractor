@@ -198,7 +198,7 @@ sortDicomDirectories <- function (directories, method = c("internal","divest"), 
 readDicomDirectory <- function (dicomDir, method = c("internal","divest"), readDiffusionParams = FALSE, untileMosaics = TRUE, ...)
 {
     if (!file.exists(dicomDir) || !file.info(dicomDir)$isdir)
-        report(OL$Error, "The specified path (", dicomDir, ") does not point to a directory")
+        report(OL$Error, "The specified path (#{dicomDir}) does not point to a directory")
     
     method <- match.arg(method)
     if (method == "internal")
@@ -442,21 +442,47 @@ readDicomDirectory <- function (dicomDir, method = c("internal","divest"), readD
         # For origin, use the image position (which is the centre of the first voxel stored)
         origin <- 1 - ordering[1:3] * (imagePosition / voxelDims[1:3])
         origin <- ifelse(ordering[1:3] == c(1,1,1), origin, imageDims[1:3]-origin+1)
-    
-        # Create the final image
-        image <- asMriImage(data, imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), origin=origin, tags=list())
-    
-        returnValue <- list(image=image, seriesDescriptions=unique(info$seriesDescription))
+        
+        tags <- list()
         if (readDiffusionParams)
         {
             # Invert Y direction again
             volumeBVectors[2,] <- -volumeBVectors[2,]
-            returnValue <- c(returnValue, list(bValues=volumeBValues, bVectors=volumeBVectors, echoSeparations=volumeEchoSeparations))
+            tags <- list(bValues=volumeBValues, bVectors=volumeBVectors)
         }
+        
+        # Create the final image
+        image <- asMriImage(data, imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=c("mm","s"), origin=origin, tags=tags)
+    
+        returnValue <- list(image=image, seriesDescriptions=unique(info$seriesDescription))
+        if (readDiffusionParams)
+            returnValue$echoSeparations <- volumeEchoSeparations
     }
     else if (method == "divest")
     {
+        images <- divest::readDicom(dicomDir, labelFormat="%d", ...)
+        attribs <- lapply(images, attributes)
         
+        if (length(images) == 0)
+        {
+            flag(OL$Warning, "No images converted")
+            return (NULL)
+        }
+        else if (length(images) > 1)
+            image <- do.call(mergeMriImages, c(images, list(bindDim=4L, padTags=TRUE)))
+        else
+            image <- as(images[[1]], "MriImage")
+        
+        returnValue <- list(image=image, seriesDescriptions=unique(unlist(images)))
+        if (readDiffusionParams)
+        {
+            if (image$hasTags("effectiveReadoutTime"))
+                returnValue$echoSeparations <- image$getTag("effectiveReadoutTime")
+            else if (all(image$hasTags("echoSpacing", "epiFactor")))
+                returnValue$echoSeparations <- image$getTag("echoSpacing") / 1e6 * (image$getTags("epiFactor") - 1)
+            else
+                returnValue$echoSeparations <- rep(NA, image$nVolumes())
+        }
     }
     
     invisible (returnValue)
