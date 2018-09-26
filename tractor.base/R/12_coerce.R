@@ -4,7 +4,7 @@ setOldClass(c("niftiImage", "internalImage"))
 {
     # Pick up divest attributes and convert to tags (excl. patient info)
     attribs <- attributes(from)
-    attribs <- attribs[!(names(attribs) %~% "^\\.|^(dim|imagedim|pixdim|pixunits|class|bValues|bVectors|reordered)$|^patient")]
+    attribs <- attribs[!(names(attribs) %~% "^\\.|^(dim|imagedim|pixdim|pixunits|class|reordered)$|^patient")]
     if (length(attribs) > 0)
         tags <- attribs
     else

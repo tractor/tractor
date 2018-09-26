@@ -467,6 +467,17 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     if (file.exists(tagsFileName))
         do.call(image$setTags, yaml::yaml.load_file(tagsFileName))
     
+    # Read diffusion directions, if present
+    dirsFileName <- ensureFileSuffix(fileNames$fileStem, "dirs")
+    if (file.exists(dirsFileName))
+    {
+        dirs <- as.matrix(read.table(dirsFileName))
+        if (ncol(dirs) == 4 && nrow(dirs) == image$nVolumes())
+            image$setTags(bVectors=dirs[,1:3,drop=FALSE], bValues=dirs[,4])
+        else
+            flag(OL$Warning, "Auxiliary directions file does not match image - ignoring")
+    }
+    
     return (image)
 }
 
@@ -542,7 +553,18 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
         writeMgh(image, fileNames, gzipped=params$gzipped)
     
     if (writeTags && image$nTags() > 0)
-        writeLines(yaml::as.yaml(image$getTags()), ensureFileSuffix(fileStem,"tags"))
+    {
+        tags <- image$getTags()
+        if (all(c("bVectors","bValues") %in% names(tags)))
+        {
+            dirs <- cbind(image$getTags("bVectors"), image$getTags("bValues"))
+            dirs <- ore.subst("\\.0+\\s*$", "", apply(format(dirs,scientific=FALSE),1,implode,sep="  "))
+            writeLines(dirs, ensureFileSuffix(fileStem,"dirs"))
+        }
+        tags <- tags[!(names(tags) %in% c("bVectors","bValues"))]
+        if (length(tags) > 0)
+            writeLines(yaml::as.yaml(tags), ensureFileSuffix(fileStem,"tags"))
+    }
     
     if (image$isInternal())
         image$setSource(expandFileName(fileStem))
