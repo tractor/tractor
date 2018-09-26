@@ -795,10 +795,19 @@ reorderMriImage <- function (image)
 #' image and returns it.
 #' 
 #' @param ... \code{MriImage} objects. They do not need to have the same
-#'   dimensionality, but they would usually not vary by more than one
-#'   dimension.
+#'   dimensionality.
+#' @param bindDim An integer specifying the dimension along which to bind the
+#'   data, or \code{NULL} (the default). The latter case resolves to one number
+#'   higher than the last dimension common to all images.
+#' @param padTags Logical value. If \code{TRUE}, \code{NA}s will be used to pad
+#'   tags which appear to be partially missing in the merged dataset. If
+#'   \code{FALSE}, incomplete tags will be dropped.
 #' @return A merged image.
 #' 
+#' @note Tags are retained as-is if they are identical in each image. Otherwise
+#'   they are concatenated if their lengths match the number of blocks in each
+#'   image, or concatenated with NAs for missing values if \code{padTags} is
+#'   \code{TRUE}.
 #' @author Jon Clayden
 #' @seealso \code{\linkS4class{MriImage}}
 #' @references Please cite the following reference when using TractoR in your
@@ -809,21 +818,28 @@ reorderMriImage <- function (image)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @export
-mergeMriImages <- function (...)
+mergeMriImages <- function (..., bindDim = NULL, padTags = FALSE)
 {
     images <- lapply(list(...), as, "MriImage")
     if (length(images) == 1)
         return (images[[1]])
+    if (!allEqual(sapply(images, orientation)))
+        images <- lapply(images, reorderMriImage)
+    if (!allEqual(lapply(images, xform)))
+        report(OL$Warning, "Merging images with nonequal xforms - this is probably unwise")
     
     dimensionalities <- sapply(images, fx(x$getDimensionality()))
-    dimensions <- sapply(seq_along(images), fi(c(images[[i]]$getDimensions(), rep(1L,max(dimensionalities)-dimensionalities[i]))))
+    lastDim <- max(dimensionalities, bindDim)
+    dimensions <- sapply(seq_along(images), fi(c(images[[i]]$getDimensions(), rep(1L,lastDim-dimensionalities[i]))))
     
     commonDims <- apply(dimensions, 1, allEqual)
     assert(commonDims[1], "Images must have at least their first dimension in common")
-    commonDims[length(commonDims)] <- FALSE
-    lastCommonDim <- which(!commonDims)[1] - 1L
-    blockDims <- dimensions[1:lastCommonDim,1]
-    blockCounts <- apply(dimensions[-(1:lastCommonDim),,drop=FALSE], 2, prod)
+    if (is.null(bindDim))
+        bindDim <- max(which(commonDims)) + 1L
+    if (bindDim > lastDim)
+        dimensions <- rbind(dimensions, matrix(1,nrow=(bindDim-lastDim),ncol=ncol(dimensions)))
+    blockDims <- dimensions[seq_len(bindDim-1),1]
+    blockCounts <- apply(dimensions[bindDim:lastDim,,drop=FALSE], 2, prod)
     
     imageSizes <- apply(dimensions, 2, prod, na.rm=TRUE)
     data <- do.call("c", lapply(images, as.array))
@@ -839,6 +855,12 @@ mergeMriImages <- function (...)
                 x[[n]]
             else if (length(x[[n]]) == x$.blocks && length(y[[n]]) == y$.blocks)
                 c(x[[n]], y[[n]])
+            else if (nrow(promote(x[[n]],TRUE)) == x$.blocks && nrow(promote(y[[n]],TRUE)) == y$.blocks)
+                rbind(x[[n]], y[[n]])
+            else if (padTags && length(x[[n]]) == x$.blocks)
+                c(x[[n]], rep(NA,y$.blocks))
+            else if (padTags && length(y[[n]]) == y$.blocks)
+                c(rep(NA,x$.blocks), y[[n]])
             else
                 NULL
         }, simplify=FALSE, USE.NAMES=TRUE)
