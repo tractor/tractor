@@ -4,8 +4,8 @@
 \alias{readDicomDirectory}
 \title{Read a directory of DICOM files}
 \usage{
-readDicomDirectory(dicomDir, readDiffusionParams = FALSE,
-  untileMosaics = TRUE)
+readDicomDirectory(dicomDir, method = c("internal", "divest"),
+  readDiffusionParams = FALSE, untileMosaics = TRUE, ...)
 }
 \arguments{
 \item{dicomDir}{Character vector of length one giving the name of a

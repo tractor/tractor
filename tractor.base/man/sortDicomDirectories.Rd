@@ -4,9 +4,9 @@
 \alias{sortDicomDirectories}
 \title{Sort a directory of DICOM files into series}
 \usage{
-sortDicomDirectories(directories, deleteOriginals = FALSE,
-  sortOn = "series", seriesId = c("UID", "number", "time"), nested = TRUE,
-  ...)
+sortDicomDirectories(directories, method = c("internal", "divest"),
+  deleteOriginals = FALSE, sortOn = "series", seriesId = c("UID",
+  "number", "time"), nested = TRUE, ...)
 }
 \arguments{
 \item{directories}{A character vector giving the directories to search for

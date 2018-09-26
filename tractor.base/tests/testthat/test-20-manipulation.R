@@ -18,7 +18,7 @@ test_that("we can manipulate images", {
     expect_equal(image$summarise(), asMriImage(image$getData(),image)$summarise())
     expect_equal(dim(extractMriImage(image,3,33)), c(96,96))
     expect_equal(dim(trimMriImage(image,clearance=4)), c(64,83,60))
-    expect_equal(dim(mergeMriImages(image,image)), c(96,96,120))
+    expect_equal(dim(mergeMriImages(image,image)), c(96,96,60,2))
     
     copy <- image$copy()
     boxes <- readImageFile(system.file("extdata", "nifti", "boxes.nii.gz", package="tractor.base"), sparse=TRUE)

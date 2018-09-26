@@ -18,8 +18,9 @@ Otherwise the presence of missing values will result in a return value of
   otherwise.
 }
 \description{
-This function is a wrapper around \code{all}, testing whether all elements
-of the specified vector are equal to each other.
+This function tests whether all elements of the specified vector are equal
+to each other, i.e., whether the vector contains only a single unique value.
+For lists, equality is determined using \code{\link{equivalent}}.
 }
 \examples{
 

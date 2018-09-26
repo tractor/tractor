@@ -28,8 +28,8 @@ is reset to the empty string if the image is modified}
 
 \item{\code{origin}}{Numeric vector giving the spatial coordinate origin}
 
-\item{\code{storedXform}}{Numeric matrix giving the NIfTI xform matrix read from
-file, if any}
+\item{\code{xform}}{Numeric matrix giving the NIfTI-style xform matrix associated
+with the image, which indicates its orientation}
 
 \item{\code{reordered}}{Logical value indicating whether the image has been
 reordered. See \code{\link{reorderMriImage}}}
