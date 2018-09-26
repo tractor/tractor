@@ -467,8 +467,9 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
 
 #' Test whether all elements of a vector are equal
 #' 
-#' This function is a wrapper around \code{all}, testing whether all elements
-#' of the specified vector are equal to each other.
+#' This function tests whether all elements of the specified vector are equal
+#' to each other, i.e., whether the vector contains only a single unique value.
+#' For lists, equality is determined using \code{\link{equivalent}}.
 #' 
 #' @param x A vector of any mode, including a list.
 #' @param ignoreMissing If \code{TRUE}, missing elements will be ignored.
@@ -496,7 +497,7 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
 allEqual <- function (x, ignoreMissing = FALSE)
 {
     if (is.list(x))
-        return (isTRUE(all(x==x[[1]], na.rm=ignoreMissing)))
+        return (isTRUE(all(sapply(x, equivalent, x[[1]]), na.rm=ignoreMissing)))
     else
         return (isTRUE(all(x==x[1], na.rm=ignoreMissing)))
 }
