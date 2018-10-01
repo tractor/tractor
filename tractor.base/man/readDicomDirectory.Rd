@@ -11,13 +11,19 @@ readDicomDirectory(dicomDir, method = c("internal", "divest"),
 \item{dicomDir}{Character vector of length one giving the name of a
 directory containing DICOM files.}
 
-\item{readDiffusionParams}{Logical value: should diffusion MRI parameters
+\item{method}{Character string specifying whether to use the internal DICOM
+reading code or use the \code{divest} package.}
+
+\item{readDiffusionParams}{Logical value. Should diffusion MRI parameters
 (b-values and gradient directions) be retrieved from the files if
 possible?}
 
-\item{untileMosaics}{Logical value: should Siemens mosaic images be
+\item{untileMosaics}{Logical value. Should Siemens mosaic images be
 converted into 3D volumes? This may occasionally be performed in error,
 which can be prevented by setting this value to \code{FALSE}.}
+
+\item{...}{Additional arguments to \code{readDicom}, if the \code{divest}
+method is used.}
 }
 \value{
 A list containing elements

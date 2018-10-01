@@ -7,9 +7,9 @@
 \alias{createContactSheetGraphic}
 \title{Visualise MriImage objects}
 \usage{
-createSliceGraphic(image, x = NA, y = NA, z = NA, device = c("internal",
-  "png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1,
-  windowLimits = NULL)
+createSliceGraphic(image, x = NA, y = NA, z = NA,
+  device = c("internal", "png"), colourScale = 1, add = FALSE,
+  file = NULL, zoomFactor = 1, windowLimits = NULL)
 
 createProjectionGraphic(image, axis, device = c("internal", "png"),
   colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1,

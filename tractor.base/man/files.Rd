@@ -11,8 +11,8 @@
 \alias{registerPathHandler}
 \title{Working with MRI images stored in NIfTI, Analyze and MGH formats}
 \usage{
-identifyImageFileNames(fileName, fileType = NULL, errorIfMissing = TRUE,
-  ...)
+identifyImageFileNames(fileName, fileType = NULL,
+  errorIfMissing = TRUE, ...)
 
 imageFileExists(fileName, fileType = NULL)
 
@@ -25,8 +25,8 @@ copyImageFiles(from, to, overwrite = FALSE, deleteOriginals = FALSE)
 readImageFile(fileName, fileType = NULL, metadataOnly = FALSE,
   volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
 
-writeImageFile(image, fileName = NULL, fileType = NA, overwrite = TRUE,
-  maxSize = NULL, writeTags = FALSE)
+writeImageFile(image, fileName = NULL, fileType = NA,
+  overwrite = TRUE, maxSize = NULL, writeTags = FALSE)
 
 registerPathHandler(regex, handler)
 }

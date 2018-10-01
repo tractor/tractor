@@ -12,6 +12,9 @@ sortDicomDirectories(directories, method = c("internal", "divest"),
 \item{directories}{A character vector giving the directories to search for
 DICOM files. Subdirectories will also be searched.}
 
+\item{method}{Character string specifying whether to use the internal DICOM
+reading code or use the \code{divest} package.}
+
 \item{deleteOriginals}{A single logical value. If \code{TRUE}, then the
 source files will be deleted after being copied to their new locations,
 making the operation a move rather than a copy. Nothing will be deleted if

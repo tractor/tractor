@@ -7,8 +7,8 @@
 \usage{
 locateExecutable(fileName, errorIfMissing = TRUE)
 
-execute(executable, params = NULL, errorOnFail = TRUE, silent = FALSE,
-  ...)
+execute(executable, params = NULL, errorOnFail = TRUE,
+  silent = FALSE, ...)
 }
 \arguments{
 \item{executable, fileName}{Name of the executable to run.}
