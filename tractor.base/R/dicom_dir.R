@@ -31,6 +31,8 @@ dropCommonPrefix <- function (strings)
 #' 
 #' @param directories A character vector giving the directories to search for
 #'   DICOM files. Subdirectories will also be searched.
+#' @param method Character string specifying whether to use the internal DICOM
+#'   reading code or use the \code{divest} package.
 #' @param deleteOriginals A single logical value. If \code{TRUE}, then the
 #'   source files will be deleted after being copied to their new locations,
 #'   making the operation a move rather than a copy. Nothing will be deleted if
@@ -155,7 +157,7 @@ sortDicomDirectories <- function (directories, method = c("internal","divest"), 
                 unlink(from[!inPlace])
         
             if (length(remainingSorts) > 0)
-                sortDicomDirectories(subdirectory, deleteOriginals=TRUE, sortOn=remainingSorts, seriesId=seriesId, nested=TRUE)
+                sortDicomDirectories(subdirectory, method="internal", deleteOriginals=TRUE, sortOn=remainingSorts, seriesId=seriesId, nested=TRUE)
         }
     }
     else if (method == "divest")
@@ -169,12 +171,16 @@ sortDicomDirectories <- function (directories, method = c("internal","divest"), 
 #' 
 #' @param dicomDir Character vector of length one giving the name of a
 #'   directory containing DICOM files.
-#' @param readDiffusionParams Logical value: should diffusion MRI parameters
+#' @param method Character string specifying whether to use the internal DICOM
+#'   reading code or use the \code{divest} package.
+#' @param readDiffusionParams Logical value. Should diffusion MRI parameters
 #'   (b-values and gradient directions) be retrieved from the files if
 #'   possible?
-#' @param untileMosaics Logical value: should Siemens mosaic images be
+#' @param untileMosaics Logical value. Should Siemens mosaic images be
 #'   converted into 3D volumes? This may occasionally be performed in error,
 #'   which can be prevented by setting this value to \code{FALSE}.
+#' @param ... Additional arguments to \code{readDicom}, if the \code{divest}
+#'   method is used.
 #' @return A list containing elements
 #'   \describe{
 #'     \item{image}{An \code{\linkS4class{MriImage}} object.}
@@ -460,8 +466,7 @@ readDicomDirectory <- function (dicomDir, method = c("internal","divest"), readD
     }
     else if (method == "divest")
     {
-        images <- divest::readDicom(dicomDir, labelFormat="%d", ...)
-        attribs <- lapply(images, attributes)
+        images <- divest::readDicom(dicomDir, ...)
         
         if (length(images) == 0)
         {
@@ -473,7 +478,7 @@ readDicomDirectory <- function (dicomDir, method = c("internal","divest"), readD
         else
             image <- as(images[[1]], "MriImage")
         
-        returnValue <- list(image=image, seriesDescriptions=unique(unlist(images)))
+        returnValue <- list(image=image, seriesDescriptions=unique(image$getTags("seriesDescription")))
         if (readDiffusionParams)
         {
             if (image$hasTags("effectiveReadoutTime"))

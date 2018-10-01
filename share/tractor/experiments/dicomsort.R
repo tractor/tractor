@@ -21,12 +21,12 @@ runExperiment <- function ()
     if (method == "internal")
     {
         sortOn <- splitAndConvertString(sortOn, ",", fixed=TRUE)
-        sortDicomDirectories(directory, deleteOriginals=deleteOriginals, sortOn=sortOn, seriesId=seriesId, nested=nested)
+        sortDicomDirectories(directory, method="internal", deleteOriginals=deleteOriginals, sortOn=sortOn, seriesId=seriesId, nested=nested)
     }
     else if (method == "divest")
     {
         divestVerbosity <- switch(names(getOutputLevel()), Debug=2L, Verbose=0L, -1L)
-        divest::sortDicom(directory, forceStack=forceStack, verbosity=divestVerbosity, labelFormat="%n_%t_S%3s_%d", nested=nested, keepUnsorted=!deleteOriginals)
+        sortDicomDirectories(directory, method="divest", deleteOriginals=deleteOriginals, nested=nested, forceStack=forceStack, verbosity=divestVerbosity, labelFormat="%n_%t_S%3s_%d")
     }
     
     if (cleanEmpty)

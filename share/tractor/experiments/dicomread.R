@@ -3,7 +3,6 @@
 #@interactive TRUE
 
 library(RNifti)
-library(divest)
 library(tractor.base)
 
 runExperiment <- function ()
@@ -52,7 +51,7 @@ runExperiment <- function ()
         
         if (method == "internal")
         {
-            info <- readDicomDirectory(path, untileMosaics=untileMosaics)
+            info <- readDicomDirectory(path, method="internal", untileMosaics=untileMosaics)
             reportFlags()
             
             outputPath <- switch(filenameStyle, argument2=Arguments[2], folder=basename(path), report(OL$Error,"Metadata is not available for the internal method"))
@@ -62,7 +61,7 @@ runExperiment <- function ()
         }
         
         # From here on the divest back-end is assumed
-        result <- readDicom(path, interactive=interactive, flipY=flipY, crop=crop, forceStack=forceStack, labelFormat=ifelse(anonymise,"%t_S%3s_%d","%n_%t_S%3s_%d"), verbosity=divestVerbosity)
+        result <- divest::readDicom(path, interactive=interactive, flipY=flipY, crop=crop, forceStack=forceStack, labelFormat=ifelse(anonymise,"%t_S%3s_%d","%n_%t_S%3s_%d"), verbosity=divestVerbosity)
         
         # Create initial file names
         outputPaths <- switch(filenameStyle, argument2=rep(Arguments[2], length(result)),
@@ -137,7 +136,7 @@ runExperiment <- function ()
                 storedTR <- pixdim(image)[4]
                 if (storedTR > 0 && storedTR < thresholdTR)
                 {
-                    report(OL$Info, "Reconstructed TR of #{storedTR} s is less than threshold", round=3)
+                    report(OL$Info, "Reconstructed TR of #{storedTR} s is less than threshold - multiplying by slice count", round=3)
                     throughPlaneAxis <- which(abs(rotation(image))[,3] > 0.5)
                     image <- as.array(image)
                     pixdim(image)[4] <- pixdim(image)[4] * dim(image)[throughPlaneAxis]
@@ -146,25 +145,7 @@ runExperiment <- function ()
             
             # Write the image to file
             report(OL$Verbose, "Writing image #{outputPaths[i]}")
-            writeNifti(image, ensureFileSuffix(outputPaths[i],"nii.gz"))
-            
-            # Strip unneeded attributes (including for anonymisation, if requested)
-            exclusionPattern <- "^\\.|^(dim|imagedim|pixdim|pixunits|class)$"
-            if (anonymise)
-                exclusionPattern <- ore(exclusionPattern, "|^patient")
-            if (all(c("bValues","bVectors") %in% names(attributes)))
-            {
-                write.table(cbind(attributes$bVectors,attributes$bValues), ensureFileSuffix(outputPaths[i],"dirs"), row.names=FALSE, col.names=FALSE)
-                exclusionPattern <- ore(exclusionPattern, "|^bV(alues|ectors)$")
-            }
-            
-            # Finalise and write attributes
-            attributes <- attributes[!(names(attributes) %~% exclusionPattern)]
-            if (length(attributes) > 0)
-            {
-                yaml <- yaml::as.yaml(attributes, handlers=list(Date=format.Date))
-                writeLines(yaml, ensureFileSuffix(outputPaths[i],"tags"))
-            }
+            writeImageFile(structure(image,anonymise=anonymise), outputPaths[i], writeTags=TRUE)
         }
     }
 }
