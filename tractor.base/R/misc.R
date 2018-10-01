@@ -542,3 +542,31 @@ threadSafeTempFile <- function (pattern = "file")
         dir.create(tempDir)
     return (tempfile(pattern=pattern, tmpdir=tempDir))
 }
+
+#' Resolve a variable to a default when NULL
+#' 
+#' This is a very simple wrapper function for the common TractoR idiom whereby
+#' \code{NULL} is used as a default argument value, but later needs to be
+#' resolved to a meaningful value if not overridden in the call. It returns its
+#' first argument unless it is \code{NULL}, in which case it falls back on the
+#' second argument.
+#' 
+#' @param x Any object.
+#' @param default A default value.
+#' @return \code{x}, if it is not \code{NULL}; otherwise \code{default}.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
+resolve <- function (x, default = NULL)
+{
+    if (!is.null(x))
+        x
+    else
+        default
+}
