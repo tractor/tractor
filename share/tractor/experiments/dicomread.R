@@ -161,7 +161,10 @@ runExperiment <- function ()
             # Finalise and write attributes
             attributes <- attributes[!(names(attributes) %~% exclusionPattern)]
             if (length(attributes) > 0)
-                writeLines(yaml::as.yaml(attributes), ensureFileSuffix(outputPaths[i],"tags"))
+            {
+                yaml <- yaml::as.yaml(attributes, handlers=list(Date=format.Date))
+                writeLines(yaml, ensureFileSuffix(outputPaths[i],"tags"))
+            }
         }
     }
 }
