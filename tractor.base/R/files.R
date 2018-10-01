@@ -563,7 +563,7 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
         }
         tags <- tags[!(names(tags) %in% c("bVectors","bValues"))]
         if (length(tags) > 0)
-            writeLines(yaml::as.yaml(tags), ensureFileSuffix(fileStem,"tags"))
+            writeLines(yaml::as.yaml(tags,handlers=list(Date=format.Date)), ensureFileSuffix(fileStem,"tags"))
     }
     
     if (image$isInternal())
