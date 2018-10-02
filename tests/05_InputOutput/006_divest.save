@@ -4,23 +4,36 @@
 [dcm2niix WARNING] Skipping 7FE0,0010: assuming it refers to icon not image
 modality: MR
 imageType: ORIGINAL_PRIMARY_M_ND_NORM
+seriesNumber: 8
+seriesDescription: DTIb3000s5
+sequenceName: ep_b2000#16
+protocolName: DTIb3000s5
 fieldStrength: 1.494
 flipAngle: 90.0
 echoTime: 112.0
 repetitionTime: 4100.0
+sliceThickness: 5.0
+sliceSpacing: 5.0
 phaseEncodingSteps: 72
 phaseEncodingLines: 96
 pixelBandwidth: 900.0
 phaseEncodingDirection: j
 phaseEncodingSign: -1
+dim_info: 57
 
 modality: MR
 imageType: ORIGINAL_PRIMARY_M_ND_NORM
+seriesNumber: 9
+seriesDescription: fl3D_t1_sag
+sequenceName: _fl3d1
+protocolName: fl3D_t1_sag
 fieldStrength: 1.494
 flipAngle: 15.0
 echoTime: 4.9400001
 repetitionTime: 11.0
+sliceThickness: 1.0
 phaseEncodingSteps: 196
 phaseEncodingLines: 224
 pixelBandwidth: 140.0
+dim_info: 54
 
