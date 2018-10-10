@@ -322,6 +322,8 @@ ensureFileSuffix <- function (fileName, suffix, strip = NULL)
     
     if (is.null(suffix))
         return (fileStem)
+    else if (length(suffix) == 0)
+        return (character(0))
     else
     {
         fileName <- paste(fileStem, suffix, sep=".")
