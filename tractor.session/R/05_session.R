@@ -102,7 +102,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         return (readImageFile(fileName, ...))
     },
     
-    getImageFileNameByType = function (type, place = NULL, index = 1)
+    getImageFileNameByType = function (type, place = NULL, index = 1, fallback = FALSE)
     {
         if (!is.null(place) && tolower(place) == "mni")
             return (getFileNameForStandardImage(type))
@@ -135,7 +135,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             
             fileName <- map[[type]]
             if (is.null(fileName))
-                report(OL$Error, "Image type \"#{type}\" is not valid")
+            {
+                if (fallback)
+                    return (file.path(directory, type))
+                else
+                    report(OL$Error, "Image type \"#{type}\" is not valid")
+            }
             
             if (fileName %~% "\\%")
                 fileName <- sapply(index, function(i) sub("%",as.character(i),fileName,fixed=TRUE))
