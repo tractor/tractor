@@ -25,14 +25,15 @@ getParametersForFileType <- function (fileType = NA, format = NA, singleFile = N
 
 #' @rdname files
 #' @export
-identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = TRUE, ...)
+identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
 {
-    suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)
+    suffixes <- unique(c(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes, auxiliaries))
     fileName <- expandFileName(fileName)
     files <- ensureFileSuffix(fileName, suffixes)
     exist <- file.exists(files)
     headersExist <- intersect(unique(.FileTypes$headerSuffixes), suffixes[exist])
     imagesExist <- intersect(unique(.FileTypes$imageSuffixes), suffixes[exist])
+    auxiliariesExist <- intersect(unique(auxiliaries), suffixes[exist])
     
     if (length(headersExist) < 1 || length(imagesExist) < 1)
     {
@@ -67,6 +68,7 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     fileStem <- ensureFileSuffix(fileName, NULL, strip=suffixes)
     headerFile <- ensureFileSuffix(fileStem, headersExist)
     imageFile <- ensureFileSuffix(fileStem, imagesExist)
+    auxiliaryFiles <- ensureFileSuffix(fileStem, auxiliariesExist)
     
     # ANALYZE and NIFTI_PAIR file types use the same filename suffixes
     if (length(typeIndices) == 1)
@@ -76,7 +78,7 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     else
         format <- ifelse(hasNiftiMagicString(headerFile), "Nifti", "Analyze")
     
-    fileNames <- list(fileStem=fileStem, headerFile=headerFile, imageFile=imageFile, format=format, headerSuffix=headersExist, imageSuffix=imagesExist)
+    fileNames <- list(fileStem=fileStem, headerFile=headerFile, imageFile=imageFile, auxiliaryFiles=auxiliaryFiles, format=format, headerSuffix=headersExist, imageSuffix=imagesExist, auxiliarySuffixes=auxiliariesExist)
     return (fileNames)
 }
 
@@ -91,20 +93,23 @@ imageFileExists <- function (fileName, fileType = NULL)
 
 #' @rdname files
 #' @export
-removeImageFiles <- function (fileName)
+removeImageFiles <- function (fileName, ...)
 {
-    fileName <- expandFileName(fileName)
-    suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)    
-    files <- ensureFileSuffix(fileName, suffixes)
-    unlink(files)
+    info <- identifyImageFileNames(fileName, ...)
+    if (!is.null(info))
+    {
+        files <- union(info$headerFile, info$imageFile, info$auxiliaryFiles)
+        report(OL$Debug, "Unlinking files #{implode(files,', ')}")
+        unlink(files)
+    }
 }
 
 #' @rdname files
 #' @export
-symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE)
+symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...)
 {
     if (isTRUE(getOption("tractorNoSymlinks")))
-        return (copyImageFiles(from, to, overwrite))
+        return (copyImageFiles(from, to, overwrite, ...))
     
     if (length(from) != length(to))
         report(OL$Error, "The number of source and target file names must match")
@@ -113,11 +118,11 @@ symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE)
     
     for (i in seq_along(from))
     {
-        info <- identifyImageFileNames(from[i])
-        currentSource <- unique(c(info$headerFile, info$imageFile))
-        currentTarget <- unique(ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix), strip=suffixes))
+        info <- identifyImageFileNames(from[i], ...)
+        currentSource <- unique(c(info$headerFile, info$imageFile, info$auxiliaryFiles))
+        currentTarget <- unique(ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix,info$auxiliarySuffixes), strip=suffixes))
         
-        # NB: file.exists() requires the target of an existing link to exist
+        # NB: file.exists() requires the target of an existing link to exist, but we want to know whether the link itself exists
         if (overwrite && any(!is.na(Sys.readlink(currentTarget))))
             unlink(currentTarget)
         if (relative)
@@ -126,13 +131,14 @@ symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE)
                 currentSource[j] <- relativePath(currentSource[j], currentTarget[j])
         }
         
+        report(OL$Verbose, "Linking #{implode(currentSource,',')} => #{implode(currentTarget,',')}")
         file.symlink(currentSource, currentTarget)
     }
 }
 
 #' @rdname files
 #' @export
-copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE)
+copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE, ...)
 {
     if (length(from) != length(to))
         report(OL$Error, "The number of source and target file names must match")
@@ -141,7 +147,7 @@ copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE
     
     for (i in seq_along(from))
     {
-        info <- identifyImageFileNames(from[i])
+        info <- identifyImageFileNames(from[i], ...)
         currentSource <- c(info$headerFile, info$imageFile)
         currentTarget <- ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix), strip=suffixes)
         
@@ -149,6 +155,7 @@ copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE
         if (all(currentSource == currentTarget))
             next
         
+        report(OL$Verbose, "#{ifelse(deleteOriginals,'Moving','Copying')} #{implode(unique(currentSource),',')} => #{implode(unique(currentTarget),',')}")
         success <- file.copy(unique(currentSource), unique(currentTarget), overwrite=overwrite)
         
         if (all(success) && deleteOriginals)
@@ -273,7 +280,9 @@ chooseDataTypeForImage <- function (image, format)
 #'   image is of interest. Ignored if \code{sparse} is not \code{TRUE}.
 #' @param reorder Logical value: should the image data be reordered to LAS?
 #'   This is recommended in most circumstances.
-#' @param \dots Additional arguments to custom path handlers.
+#' @param \dots For \code{identifyImageFileNames}, additional arguments to
+#'   custom path handlers. Elsewhere, additional arguments to
+#'   \code{identifyImageFileNames}.
 #' @param overwrite Logical value: overwrite an existing image file? For
 #'   \code{writeImageFile}, an error will be raised if there is an existing
 #'   file and this is set to FALSE.
