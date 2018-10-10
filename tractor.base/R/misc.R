@@ -547,15 +547,14 @@ threadSafeTempFile <- function (pattern = "file")
 
 #' Resolve a variable to a default when NULL
 #' 
-#' This is a very simple wrapper function for the common TractoR idiom whereby
+#' This is a very simple infix function for the common TractoR idiom whereby
 #' \code{NULL} is used as a default argument value, but later needs to be
 #' resolved to a meaningful value if not overridden in the call. It returns its
 #' first argument unless it is \code{NULL}, in which case it falls back on the
 #' second argument.
 #' 
-#' @param x Any object.
-#' @param default A default value.
-#' @return \code{x}, if it is not \code{NULL}; otherwise \code{default}.
+#' @param X,Y R objects, possibly \code{NULL}.
+#' @return \code{X}, if it is not \code{NULL}; otherwise \code{Y}.
 #' @author Jon Clayden
 #' @references Please cite the following reference when using TractoR in your
 #' work:
@@ -564,11 +563,9 @@ threadSafeTempFile <- function (pattern = "file")
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @rdname infix
 #' @export
-resolve <- function (x, default = NULL)
+"%||%" <- function (X, Y)
 {
-    if (!is.null(x))
-        x
-    else
-        default
+    if (is.null(X)) Y else X
 }

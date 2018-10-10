@@ -12,15 +12,16 @@
 \title{Working with MRI images stored in NIfTI, Analyze and MGH formats}
 \usage{
 identifyImageFileNames(fileName, fileType = NULL,
-  errorIfMissing = TRUE, ...)
+  errorIfMissing = TRUE, auxiliaries = c("dirs", "lut", "tags"), ...)
 
 imageFileExists(fileName, fileType = NULL)
 
-removeImageFiles(fileName)
+removeImageFiles(fileName, ...)
 
-symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE)
+symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE, ...)
 
-copyImageFiles(from, to, overwrite = FALSE, deleteOriginals = FALSE)
+copyImageFiles(from, to, overwrite = FALSE, deleteOriginals = FALSE,
+  ...)
 
 readImageFile(fileName, fileType = NULL, metadataOnly = FALSE,
   volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
@@ -41,7 +42,9 @@ Details.}
 \item{errorIfMissing}{Logical value: raise an error if no suitable files
 were found?}
 
-\item{\dots}{Additional arguments to custom path handlers.}
+\item{\dots}{For \code{identifyImageFileNames}, additional arguments to
+custom path handlers. Elsewhere, additional arguments to
+\code{identifyImageFileNames}.}
 
 \item{overwrite}{Logical value: overwrite an existing image file? For
 \code{writeImageFile}, an error will be raised if there is an existing

@@ -4,7 +4,7 @@ setOldClass(c("niftiImage", "internalImage"))
 {
     # Pick up divest attributes and convert to tags (anonymising by default)
     attribs <- attributes(from)
-    anonymise <- resolve(attr(from,"anonymise"), TRUE)
+    anonymise <- attr(from, "anonymise") %||% TRUE
     attribs <- attribs[!(names(attribs) %~% "^\\.|^(dim|imagedim|pixdim|pixunits|class|reordered|anonymise)$")]
     if (anonymise)
         attribs <- attribs[!(names(attribs) %~% "^patient")]
@@ -29,7 +29,7 @@ setOldClass(c("niftiImage", "internalImage"))
             tags[[key]] <- metadata[[key]]
     }
     
-    reordered <- resolve(attr(from,"reordered"), FALSE)
+    reordered <- attr(from, "reordered") %||% FALSE
     
     return (MriImage$new(imageDims=dim(from), pixdim(from), voxelDimUnits=pixunits(from), origin=origin(from), xform=xform(from), reordered=reordered, tags=tags, data=unclass(data)))
 }
