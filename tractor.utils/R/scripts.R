@@ -25,13 +25,25 @@ setAs("character", "logical", function(from) {
     return (result)
 })
 
+# Custom character-to-integer coercion to handle ranges
+setAs("character", "integer", function(from) {
+    result <- unlist(lapply(from, function(x) {
+        match <- ore.search("^(\\d+)[:-](\\d+)$", x)
+        if (!is.null(match))
+            as.integer(match[,,1]):as.integer(match[,,2])
+        else
+            suppressWarnings(as.integer(x))
+    }))
+    return (result)
+})
+
 isValidAs <- function (value, mode)
 {
     coercedValue <- suppressWarnings(as(value, mode))
     return (!any(is.na(coercedValue)))
 }
 
-getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL, deprecated = FALSE)
+getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL, deprecated = FALSE, multiple = FALSE)
 {
     reportInvalid <- function ()
     {
@@ -75,6 +87,8 @@ getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMi
         
         loc <- which(tolower(name) == tolower(names(ConfigVariables)))
         value <- ConfigVariables[[loc]]
+        if (multiple)
+            value <- ore.split(",", value)
         ConfigVariables[[loc]] <<- NULL
         if (is.null(mode) || mode == "NULL")
             return (matchAgainstValidValues(value))
