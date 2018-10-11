@@ -125,13 +125,8 @@ requireArguments <- function (...)
 
 expandArguments <- function (arguments, workingDirectory = getwd())
 {
+    setOutputLevel(OL$Warning)
     setwd(workingDirectory)
-    arguments <- ore.split("\\s+", arguments)
-    for (i in seq_along(arguments))
-    {
-        fileName <- identifyImageFileNames(arguments[i], errorIfMissing=FALSE)
-        if (!is.null(fileName))
-            arguments[i] <- fileName$imageFile
-    }
+    arguments <- resolvePath(ore.split("\\s+", arguments))
     cat(implode(arguments, sep=" "))
 }

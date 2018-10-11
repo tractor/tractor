@@ -227,24 +227,33 @@ indexList <- function (list, index = NULL)
 #' Functions for expanding file paths, finding relative paths and ensuring that
 #' a file name has the required suffix.
 #' 
+#' The \code{resolvePath} function passes its arguments elementwise through any
+#' matching path handler, and returns the resolved paths. Nonmatching elements
+#' are returned as-is. \code{registerPathHandler} registers a new path handler
+#' for special syntaxes, and is for advanced use only. \code{relativePath}
+#' returns the specified \code{path}, expressed relative to
+#' \code{referencePath}. \code{matchPaths} resolves a vector of paths against a
+#' vector of reference paths. \code{expandFileName} returns the full path to
+#' the specified file name, collapsing \code{".."} elements if appropriate.
+#' \code{ensureFileSuffix} returns the specified file names with the requested
+#' suffixes appended (if they are not already).
+#' 
+#' @param path,referencePath Character vectors whose elements represent file
+#'   paths (which may or may not currently exist).
+#' @param \dots Additional arguments to custom path handlers.
+#' @param regex A Ruby-style regular expression.
+#' @param handler A function taking and returning a string.
 #' @param fileName A character vector of file names.
+#' @param base If \code{fileName} is a relative path, this option gives the
+#'   base directory which the path is relative to. If \code{fileName} is an
+#'   absolute path, this argument is ignored.
 #' @param suffix A character vector of file suffixes, which will be recycled if
 #'   shorter than \code{fileName}.
 #' @param strip A character vector of suffixes to remove before appending
 #'   \code{suffix}. The intended suffix does not need to be given here, as the
 #'   function will not append it if the specified file name already has the
 #'   correct suffix.
-#' @param base If \code{fileName} is a relative path, this option gives the
-#'   base directory which the path is relative to. If \code{fileName} is an
-#'   absolute path, this argument is ignored.
-#' @param path,referencePath Character vectors whose elements represent file
-#'   paths.
-#' @return The \code{ensureFileSuffix} function returns the specified file
-#'   names with the requested suffixes appended. \code{expandFileName} returns
-#'   the full path to the specified file name, collapsing \code{".."} elements
-#'   if appropriate. \code{relativePath} returns the specified \code{path},
-#'   expressed relative to \code{referencePath}. \code{matchPaths} resolves a
-#'   a vector of paths against a vector of reference paths.
+#' @return A character vector.
 #' 
 #' @author Jon Clayden
 #' @seealso \code{\link{path.expand}} performs some of what
@@ -257,6 +266,27 @@ indexList <- function (list, index = NULL)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @aliases paths
+#' @rdname paths
+#' @export
+resolvePath <- function (path, ...)
+{
+    sapply(path, function(p) {
+        for (i in seq_along(.Workspace$pathHandlers))
+        {
+            if (p %~% names(.Workspace$pathHandlers)[i])
+            {
+                result <- .Workspace$pathHandlers[[i]](p, ...)
+                if (!is.null(result))
+                {
+                    report(OL$Debug, "Resolving #{p} to #{result}")
+                    return (result)
+                }
+            }
+        }
+        return (p)
+    })
+}
+
 #' @rdname paths
 #' @export
 relativePath <- function (path, referencePath)
@@ -280,6 +310,19 @@ matchPaths <- function (path, referencePath)
     indices <- match(expandedPath, expandedReferencePath)
     result <- structure(referencePath[indices], indices=indices)
     return (result)
+}
+
+#' @rdname paths
+#' @export
+registerPathHandler <- function (regex, handler)
+{
+    if (!is.character(regex) || length(regex) != 1)
+        report(OL$Error, "Regular expression should be specified as a character string")
+    
+    handler <- match.fun(handler)
+    .Workspace$pathHandlers[[regex]] <- handler
+    
+    invisible(NULL)
 }
 
 #' @rdname paths

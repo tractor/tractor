@@ -37,24 +37,21 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     
     if (length(headersExist) < 1 || length(imagesExist) < 1)
     {
-        for (i in seq_along(.Workspace$pathHandlers))
-        {
-            if (fileName %~% names(.Workspace$pathHandlers)[i])
-            {
-                fileName <- .Workspace$pathHandlers[[i]](fileName, ...)
-                if (is.null(fileName))
-                    report(OL$Error, "Custom path handler could not resolve file name: #{fileName}")
-                else
-                    return (identifyImageFileNames(fileName, fileType=fileType, errorIfMissing=errorIfMissing))
-            }
-        }
+        originalFileName <- fileName
+        fileName <- resolvePath(originalFileName, ...)
         
-        if (errorIfMissing)
-            report(OL$Error, "Complete image file does not exist: #{fileName}")
+        # The image does not exist, because we have already tried the unresolved path
+        if (all(fileName == originalFileName))
+        {
+            if (errorIfMissing)
+                report(OL$Error, "Complete image file does not exist: #{fileName}")
+            else
+                return (NULL)
+        }
         else
-            return (NULL)
+            return (identifyImageFileNames(fileName, fileType=fileType, errorIfMissing=errorIfMissing, auxiliaries=auxiliaries))
     }
-    if (length(headersExist) > 1 || length(imagesExist) > 1)
+    else if (length(headersExist) > 1 || length(imagesExist) > 1)
     {
         if (errorIfMissing)
             report(OL$Error, "Multiple compatible image files exist: #{fileName}")
@@ -258,15 +255,14 @@ chooseDataTypeForImage <- function (image, format)
 #' wrappers around the standard functions \code{\link{file.copy}} and
 #' \code{\link{file.symlink}} which handle this complexity.
 #' 
-#' \code{registerPathHandler} allows special syntaxes to be used for image
-#' paths, and is for advanced use only.
-#' 
 #' @param fileName,from,to File names, with or without appropriate extension.
 #' @param image An \code{\linkS4class{MriImage}} object.
 #' @param fileType A character vector of length one, giving the file type
 #'   required or expected. If this option is missing, the file type used for
 #'   writing images will be taken from the \code{tractorFileType} option. See
 #'   Details.
+#' @param auxiliaries A character vector of auxiliary file suffixes to search
+#'   for.
 #' @param metadataOnly Logical value: if \code{TRUE}, only metadata are read
 #'   into the object.
 #' @param volumes An optional integer vector specifying a subset of volumes to
@@ -281,7 +277,7 @@ chooseDataTypeForImage <- function (image, format)
 #' @param reorder Logical value: should the image data be reordered to LAS?
 #'   This is recommended in most circumstances.
 #' @param \dots For \code{identifyImageFileNames}, additional arguments to
-#'   custom path handlers. Elsewhere, additional arguments to
+#'   \code{\link{resolvePath}}. Elsewhere, additional arguments to
 #'   \code{identifyImageFileNames}.
 #' @param overwrite Logical value: overwrite an existing image file? For
 #'   \code{writeImageFile}, an error will be raised if there is an existing
@@ -299,8 +295,6 @@ chooseDataTypeForImage <- function (image, format)
 #' @param relative Logical value: if \code{TRUE}, the path stored in the
 #'   symlink will be relative (e.g. \code{"../some_dir/some_image.nii"}) rather
 #'   than absolute (e.g. \code{"/path/to/some_dir/some_image.nii"}).
-#' @param regex A regular expression.
-#' @param handler A function taking and returning a string.
 #' @return \code{readImageFile} returns an \code{\linkS4class{MriImage}}
 #'   object. \code{imageFileExists} returns \code{TRUE} if an existing file
 #'   with the specified name exists (all file extensions are checked), and
@@ -579,17 +573,4 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
         image$setSource(expandFileName(fileStem))
     
     invisible (fileNames)
-}
-
-#' @rdname files
-#' @export
-registerPathHandler <- function (regex, handler)
-{
-    if (!is.character(regex) || length(regex) != 1)
-        report(OL$Error, "Regular expression should be specified as a character string")
-    
-    handler <- match.fun(handler)
-    .Workspace$pathHandlers[[regex]] <- handler
-    
-    invisible(NULL)
 }

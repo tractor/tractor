@@ -2,6 +2,7 @@
 #' @importFrom grDevices col2rgb colorRamp dev.cur dev.off gray heat.colors rainbow rgb
 #' @importFrom graphics image layout lines locator par plot strwidth text axis polygon
 #' @importFrom stats na.omit cor
+#' @importFrom utils read.table
 NULL
 
 .onLoad <- function (libname, pkgname)
