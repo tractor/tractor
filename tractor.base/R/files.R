@@ -98,7 +98,7 @@ removeImageFiles <- function (fileName, ...)
     info <- identifyImageFileNames(fileName, ...)
     if (!is.null(info))
     {
-        files <- union(info$headerFile, info$imageFile, info$auxiliaryFiles)
+        files <- unique(c(info$headerFile, info$imageFile, info$auxiliaryFiles))
         report(OL$Debug, "Unlinking files #{implode(files,', ')}")
         unlink(files)
     }
