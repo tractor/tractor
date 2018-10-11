@@ -308,12 +308,7 @@ expandFileName <- function (fileName, base = getwd())
 ensureFileSuffix <- function (fileName, suffix, strip = NULL)
 {
     if (is.null(strip))
-    {
-        if (is.null(suffix))
-            strip <- "\\w+"
-        else
-            strip <- suffix
-    }
+        strip <- suffix %||% "\\w+"
     else
         strip <- c(strip, suffix)
     
