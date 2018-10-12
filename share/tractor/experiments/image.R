@@ -15,7 +15,7 @@ runExperiment <- function ()
     subcommand <- match.arg(Arguments[1], c("cp","copy","mv","move","rename","rm","remove","delete","ln","link"))
     
     if (subcommand %in% c("rm","remove","delete"))
-        removeImageFiles(Arguments[-1])
+        removeImageFiles(Arguments[-1], auxiliaries=auxiliaries)
     else if (nArguments() < 3)
         report(OL$Error, "All operations except deletion require two or more arguments")
     else

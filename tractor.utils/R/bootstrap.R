@@ -86,7 +86,7 @@ describeExperiment <- function (scriptFile, fill = FALSE)
     inputLines <- readLines(scriptFile)
     outputLines <- paste("OPTIONS for script", scriptFile, "(* required)", sep=" ")
     
-    getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL, deprecated = FALSE)
+    getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL, deprecated = FALSE, multiple = FALSE)
     {
         # Don't show deprecated config variables
         if (!deprecated)

@@ -77,6 +77,8 @@ getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMi
     {
         if (errorIfMissing)
             report(OL$Error, "The configuration variable \"#{name}\" must be specified")
+        else if (multiple)
+            return (ore.split(",", defaultValue))
         else
             return (defaultValue)
     }

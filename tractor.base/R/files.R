@@ -145,8 +145,8 @@ copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE
     for (i in seq_along(from))
     {
         info <- identifyImageFileNames(from[i], ...)
-        currentSource <- c(info$headerFile, info$imageFile)
-        currentTarget <- ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix), strip=suffixes)
+        currentSource <- c(info$headerFile, info$imageFile, info$auxiliaryFiles)
+        currentTarget <- ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix,info$auxiliarySuffixes), strip=suffixes)
         
         # Don't try to copy an image onto itself
         if (all(currentSource == currentTarget))
@@ -156,7 +156,7 @@ copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE
         success <- file.copy(unique(currentSource), unique(currentTarget), overwrite=overwrite)
         
         if (all(success) && deleteOriginals)
-            removeImageFiles(from[i])
+            removeImageFiles(from[i], ...)
     }
 }
 
