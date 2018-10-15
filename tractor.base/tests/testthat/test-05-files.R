@@ -103,6 +103,7 @@ test_that("we can sort and read DICOM files", {
     expect_equal(image$getVoxelDimensions(), rep(1,3L))
     expect_equal(round(image$getOrigin()), c(19,95,135))
     
+    reportr::setOutputLevel(OL$Verbose)
     expect_output(image <- readDicomDirectory(file.path(path,"6157_fl3D_t1_sag"), method="divest", interactive=FALSE)$image, "Found 2 DICOM")
     expect_equal(image$getDimensions(), c(2,224,256))
     expect_equal(image$getVoxelDimensions(), rep(1,3L))
