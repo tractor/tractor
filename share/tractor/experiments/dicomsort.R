@@ -24,10 +24,7 @@ runExperiment <- function ()
         sortDicomDirectories(directory, method="internal", deleteOriginals=deleteOriginals, sortOn=sortOn, seriesId=seriesId, nested=nested)
     }
     else if (method == "divest")
-    {
-        divestVerbosity <- switch(names(getOutputLevel()), Debug=2L, Verbose=0L, -1L)
-        sortDicomDirectories(directory, method="divest", deleteOriginals=deleteOriginals, nested=nested, forceStack=forceStack, verbosity=divestVerbosity, labelFormat="%n_%t_S%3s_%d")
-    }
+        sortDicomDirectories(directory, method="divest", deleteOriginals=deleteOriginals, nested=nested, forceStack=forceStack, labelFormat="%n_%t_S%3s_%d")
     
     if (cleanEmpty)
     {

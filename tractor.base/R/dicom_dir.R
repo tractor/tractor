@@ -161,7 +161,10 @@ sortDicomDirectories <- function (directories, method = c("internal","divest"), 
         }
     }
     else if (method == "divest")
-        divest::sortDicom(directories, nested=nested, keepUnsorted=!deleteOriginals, ...)
+    {
+        verbosity <- switch(names(getOutputLevel()), Debug=2L, Verbose=0L, -1L)
+        divest::sortDicom(directories, verbosity=verbosity, nested=nested, keepUnsorted=!deleteOriginals, ...)
+    }
 }
 
 #' Read a directory of DICOM files
@@ -466,7 +469,8 @@ readDicomDirectory <- function (dicomDir, method = c("internal","divest"), readD
     }
     else if (method == "divest")
     {
-        images <- divest::readDicom(dicomDir, ...)
+        verbosity <- switch(names(getOutputLevel()), Debug=2L, Verbose=0L, -1L)
+        images <- divest::readDicom(dicomDir, verbosity=verbosity, ...)
         
         if (length(images) == 0)
         {
