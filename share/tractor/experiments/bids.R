@@ -12,6 +12,9 @@ runExperiment <- function ()
     diffusion <- getConfigVariable("Diffusion", NULL, "character", multiple=TRUE)
     merge <- getConfigVariable("Merge", FALSE)
     
+    if (merge)
+        report(OL$Warning, "The 'merge' option is not yet implemented")
+    
     subjectId <- sessionId <- NULL
     if (sessionPath %~% "/sub-(\\w+)(/ses-(\\w+))?/?")
     {
@@ -25,6 +28,7 @@ runExperiment <- function ()
     
     copyAndConvert <- function (from, to)
     {
+        # If the source is a directory, assume it contains DICOM files
         if (isTRUE(file.info(from)$isdir))
         {
             report(OL$Info, "#{from} is a directory - searching for DICOM files")
@@ -36,11 +40,13 @@ runExperiment <- function ()
             }
             else
             {
+                # Write converted image to a temporary file to simplify the logic
                 from <- tempfile()
                 writeImageFile(info$image, from, writeTags=TRUE)
             }
         }
         
+        # Check whether the source image is present (and with which auxiliaries)
         info <- identifyImageFiles(from, auxiliaries=c("bval","bvec","dirs","json","tags"), errorIfMissing=FALSE)
         if (is.null(info))
         {
@@ -56,6 +62,7 @@ runExperiment <- function ()
                 es("#{info$imageStem}_acq-#{i}")
         }
         
+        # Handle multiple files with the same target name by adding to the "acq" label
         if (imageFileExists(imageIndex(1L)))
         {
             i <- 2L
@@ -69,18 +76,36 @@ runExperiment <- function ()
             to <- imageIndex(2L)
         }
         
+        # Create the target directory if necessary
         dir <- dirname(to)
         if (!file.exists(dir))
             dir.create(dir, recursive=TRUE)
         
+        # If there's a source JSON file, copy it directly...
+        if ("json" %in% info$auxiliarySuffixes)
+            copyImageFiles(from, to, auxiliaries=c("bval","bvec","json"))
+        else
+        {
+            # Otherwise read tag metadata and produce .bval, .bvec and .json files as needed
+            # No anonymisation is done here - whatever's in the source files will be kept
+            copyImageFiles(from, to, auxiliaries=NULL)
+            tags <- readImageFile(from, metadataOnly=TRUE)$getTags()
+            if ("bValues" %in% names(tags))
+                write.table(promote(tags$bValues,byrow=TRUE), ensureFileSuffix(to,"bval"), row.names=FALSE, col.names=FALSE)
+            if ("bVectors" %in% names(tags))
+                write.table(t(tags$bVectors), ensureFileSuffix(to,"bvec"), row.names=FALSE, col.names=FALSE)
+            tags <- tags[!(names(tags) %~% "^(toffset|bValues|bVectors)$|_")]
+            if (length(tags) > 0)
+                writeLines(convertTagsToJson(tags), ensureFileSuffix(to,"json"))
+        }
+        
+        # If the source file was not in NIfTI format (which BIDS requires), read and rewrite it
         if (info$format != "Nifti")
         {
             report(OL$Warning, "Image #{from} is not in NIfTI format, so needs to be converted")
-            image <- readImageFile(from, reorder=FALSE)
+            image <- readImageFile(to, reorder=FALSE)
             writeImageFile(image, to, "NIFTI_GZ", writeTags=FALSE)
         }
-        
-        
     }
     
     if (!file.exists(sessionPath))

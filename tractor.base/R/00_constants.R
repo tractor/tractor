@@ -38,6 +38,12 @@
                    isSigned=c(  FALSE,      TRUE,       TRUE,       TRUE   ),
                    names=c(    "uint8",    "int16",    "int32",    "float" )))
 
+.Bids <- list(
+    mappingFromJson=c(MagneticFieldStrength="fieldStrength", ManufacturersModelName="scannerModelName", SpacingBetweenSlices="sliceSpacing", TotalReadoutTime="effectiveReadoutTime", MultibandAccelerationFactor="multibandFactor", ImageComments="comments"),
+    mappingToJson=c(fieldStrength="MagneticFieldStrength", scannerModelName="ManufacturersModelName", sliceSpacing="SpacingBetweenSlices", effectiveReadoutTime="TotalReadoutTime", multibandFactor="MultibandAccelerationFactor", comments="ImageComments"),
+    toIgnore="^[iI]mageType$",
+    toScale="^(Echo|Repetition)Time$")
+
 .FileTypes <- list(
     typeNames=c(       "ANALYZE",  "NIFTI",    "NIFTI_PAIR",   "ANALYZE_GZ",   "NIFTI_GZ", "NIFTI_PAIR_GZ", "MGH",  "MGH_GZ"),
     formatNames=c(     "Analyze",  "Nifti",    "Nifti",        "Analyze",      "Nifti",    "Nifti",         "Mgh",  "Mgh"),
