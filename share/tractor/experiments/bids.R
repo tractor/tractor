@@ -10,10 +10,7 @@ runExperiment <- function ()
     functional <- getConfigVariable("Functional", NULL, "character", multiple=TRUE)
     tasks <- getConfigVariable("FunctionalTasks", "rest", "character", multiple=TRUE)
     diffusion <- getConfigVariable("Diffusion", NULL, "character", multiple=TRUE)
-    merge <- getConfigVariable("Merge", FALSE)
-    
-    if (merge)
-        report(OL$Warning, "The 'merge' option is not yet implemented")
+    patternMatch <- getConfigVariable("PatternMatch", FALSE)
     
     subjectId <- sessionId <- NULL
     if (sessionPath %~% "/sub-(\\w+)(/ses-(\\w+))?/?")
@@ -25,6 +22,20 @@ runExperiment <- function ()
     }
     else
         report(OL$Error, "The specified session path does not seem to fit the BIDS naming convention")
+    
+    matchSources <- function (paths)
+    {
+        if (!patternMatch)
+            return (paths)
+        else
+        {
+            suffixPattern <- implode(unique(tractor.base:::.FileTypes$imageSuffixes), "|")
+            return (Reduce(c, function(path) {
+                pattern <- ore(ore.escape(basename(path)), ".+", suffixPattern, "$")
+                list.files(dirname(path), full.names=TRUE) %~|% pattern
+            }))
+        }
+    }
     
     copyAndConvert <- function (from, to)
     {
@@ -115,16 +126,17 @@ runExperiment <- function ()
     if (!is.null(sessionId))
         fileStem <- paste(fileStem, es("ses-#{sessionId}"), sep="_")
     
+    functional <- matchSources(functional)
     tasks <- rep(tasks, length.out=length(functional))
     
-    for (imagePath in t1w)
+    for (imagePath in matchSources(t1w))
         copyAndConvert(imagePath, file.path(sessionPath, "anat", es("#{fileStem}_T1w")))
-    for (imagePath in t2w)
+    for (imagePath in matchSources(t2w))
         copyAndConvert(imagePath, file.path(sessionPath, "anat", es("#{fileStem}_T2w")))
-    for (imagePath in pdw)
+    for (imagePath in matchSources(pdw))
         copyAndConvert(imagePath, file.path(sessionPath, "anat", es("#{fileStem}_PD")))
     for (i in seq_along(functional))
         copyAndConvert(functional[i], file.path(sessionPath, "func", es("#{fileStem}_task-#{tasks[i]}_bold")))
-    for (imagePath in diffusion)
-        copyAndConvert(imagePath, file.path(sessionPath, "dwi", ))
+    for (imagePath in matchSources(diffusion))
+        copyAndConvert(imagePath, file.path(sessionPath, "dwi", es("#{fileStem}_dwi")))
 }
