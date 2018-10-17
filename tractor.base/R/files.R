@@ -96,7 +96,7 @@ removeImageFiles <- function (fileName, ...)
     if (!is.null(info))
     {
         files <- unique(c(info$headerFile, info$imageFile, info$auxiliaryFiles))
-        report(OL$Debug, "Unlinking files #{implode(files,', ')}")
+        report(OL$Debug, "Unlinking files #{embrace(files)}")
         unlink(files)
     }
 }
@@ -128,7 +128,7 @@ symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...
                 currentSource[j] <- relativePath(currentSource[j], currentTarget[j])
         }
         
-        report(OL$Verbose, "Linking #{implode(currentSource,',')} => #{implode(currentTarget,',')}")
+        report(OL$Verbose, "Linking #{embrace(currentSource)} => #{embrace(currentTarget)}")
         file.symlink(currentSource, currentTarget)
     }
 }
@@ -152,7 +152,7 @@ copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE
         if (all(currentSource == currentTarget))
             next
         
-        report(OL$Verbose, "#{ifelse(deleteOriginals,'Moving','Copying')} #{implode(unique(currentSource),',')} => #{implode(unique(currentTarget),',')}")
+        report(OL$Verbose, "#{ifelse(deleteOriginals,'Moving','Copying')} #{embrace(unique(currentSource))} => #{embrace(unique(currentTarget))}")
         success <- file.copy(unique(currentSource), unique(currentTarget), overwrite=overwrite)
         
         if (all(success) && deleteOriginals)

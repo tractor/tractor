@@ -103,11 +103,11 @@ convertTagsToJson <- function (tags)
         
         # BIDS always uses seconds for time fields, but we use milliseconds in some places
         if (bidsName %~% .Bids$toScale)
-            value <- value * 1e3
+            value <- value / 1e3
         bids[[bidsName]] <- value
     }
     
-    return (jsonlite::toJSON(bids))
+    return (jsonlite::toJSON(bids, digits=NA, pretty=TRUE))
 }
 
 convertJsonToTags <- function (bids)
@@ -136,7 +136,7 @@ convertJsonToTags <- function (bids)
         
         # BIDS always uses seconds for time fields, but we use milliseconds in some places
         if (bidsName %~% .Bids$toScale)
-            value <- value / 1e3
+            value <- value * 1e3
         tags[[tagName]] <- value
     }
     

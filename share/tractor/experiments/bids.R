@@ -30,10 +30,10 @@ runExperiment <- function ()
         else
         {
             suffixPattern <- implode(unique(tractor.base:::.FileTypes$imageSuffixes), "|")
-            return (Reduce(c, function(path) {
-                pattern <- ore(ore.escape(basename(path)), ".+", suffixPattern, "$")
+            return (unlist(lapply(paths, function(path) {
+                pattern <- ore(ore.escape(basename(path)), ".+(", suffixPattern, ")$")
                 list.files(dirname(path), full.names=TRUE) %~|% pattern
-            }))
+            })))
         }
     }
     
@@ -58,7 +58,7 @@ runExperiment <- function ()
         }
         
         # Check whether the source image is present (and with which auxiliaries)
-        info <- identifyImageFiles(from, auxiliaries=c("bval","bvec","dirs","json","tags"), errorIfMissing=FALSE)
+        info <- identifyImageFileNames(from, auxiliaries=c("bval","bvec","dirs","json","tags"), errorIfMissing=FALSE)
         if (is.null(info))
         {
             report(OL$Warning, "Skipping #{from} (source image not found)")
@@ -67,10 +67,10 @@ runExperiment <- function ()
         
         imageIndex <- function (i)
         {
-            if (from %~% "_(bold|dwi)$")
-                ore.subst("_(\\w+)$", es("_acq-#{i}_\\1"), info$imageStem)
+            if (to %~% "_(bold|dwi)$")
+                ore.subst("_(\\w+)$", es("_acq-#{i}_\\1"), to)
             else
-                es("#{info$imageStem}_acq-#{i}")
+                es("#{to}_acq-#{i}")
         }
         
         # Handle multiple files with the same target name by adding to the "acq" label
@@ -107,7 +107,7 @@ runExperiment <- function ()
                 write.table(t(tags$bVectors), ensureFileSuffix(to,"bvec"), row.names=FALSE, col.names=FALSE)
             tags <- tags[!(names(tags) %~% "^(toffset|bValues|bVectors)$|_")]
             if (length(tags) > 0)
-                writeLines(convertTagsToJson(tags), ensureFileSuffix(to,"json"))
+                writeLines(tractor.base:::convertTagsToJson(tags), ensureFileSuffix(to,"json"))
         }
         
         # If the source file was not in NIfTI format (which BIDS requires), read and rewrite it

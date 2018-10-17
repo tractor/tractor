@@ -140,11 +140,11 @@ embrace <- function (strings)
     {
         forwardCodepoints <- sapply(codepoints, function(x) x[seq_len(sharedLength)], simplify="array")
         forwardMatches <- apply(forwardCodepoints, 1, allEqual)
-        prefixLength <- ifelse(!any(forwardMatches), 0L, max(which(forwardMatches)))
+        prefixLength <- ifelse(all(forwardMatches), sharedLength, which(!forwardMatches)[1] - 1L)
         
         reverseCodepoints <- sapply(codepoints, function(x) rev(x)[seq_len(sharedLength)], simplify="array")
         reverseMatches <- apply(reverseCodepoints, 1, allEqual)
-        suffixLength <- ifelse(!any(reverseMatches), 0L, max(which(reverseMatches)))
+        suffixLength <- ifelse(all(reverseMatches), sharedLength, which(!reverseMatches)[1] - 1L)
         
         prefix <- intToUtf8(codepoints[[1]][seq_len(prefixLength)])
         suffix <- intToUtf8(rev(rev(codepoints[[1]])[seq_len(suffixLength)]))
