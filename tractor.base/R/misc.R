@@ -121,6 +121,41 @@ pluralise <- function (singular, x = NULL, n = NULL, plural = NULL)
     return (ifelse(n==1L, singular, plural))
 }
 
+#' @export
+embrace <- function (strings)
+{
+    strings <- as.character(strings)
+    
+    if (length(strings) < 1)
+        return (structure("", prefix="", suffix=""))
+    else if (length(strings) < 2)
+        return (structure(strings, prefix="", suffix=""))
+    
+    codepoints <- lapply(enc2utf8(strings), utf8ToInt)
+    lengths <- sapply(codepoints, length)
+    sharedLength <- min(lengths)
+    if (sharedLength == 0)
+        return (structure(paste0("{",implode(strings,","),"}"), prefix="", suffix=""))
+    else
+    {
+        forwardCodepoints <- sapply(codepoints, function(x) x[seq_len(sharedLength)], simplify="array")
+        forwardMatches <- apply(forwardCodepoints, 1, allEqual)
+        prefixLength <- ifelse(!any(forwardMatches), 0L, max(which(forwardMatches)))
+        
+        reverseCodepoints <- sapply(codepoints, function(x) rev(x)[seq_len(sharedLength)], simplify="array")
+        reverseMatches <- apply(reverseCodepoints, 1, allEqual)
+        suffixLength <- ifelse(!any(reverseMatches), 0L, max(which(reverseMatches)))
+        
+        prefix <- intToUtf8(codepoints[[1]][seq_len(prefixLength)])
+        suffix <- intToUtf8(rev(rev(codepoints[[1]])[seq_len(suffixLength)]))
+        uniqueParts <- sapply(seq_along(codepoints), function(i) {
+            indices <- setdiff(seq_len(lengths[i]), c(seq_len(prefixLength), seq_len(suffixLength)+lengths[i]-suffixLength))
+            intToUtf8(codepoints[[i]][indices])
+        })
+        return (structure(es("#{prefix}{#{implode(uniqueParts,',')}}#{suffix}"), prefix=prefix, suffix=suffix))
+    }
+}
+
 #' Pretty print labelled information
 #' 
 #' This is a simple function to print a series of labels and associated data
