@@ -56,7 +56,7 @@ runExperiment <- function ()
     
     fslVersionFile <- file.path(Sys.getenv("FSLDIR"), "etc", "fslversion")
     if (file.exists(fslVersionFile))
-        values <- c(values, readLines(fslVersionFile)[1])
+        values <- c(values, suppressWarnings(readLines(fslVersionFile)[1]))
     else
         values <- c(values, "N/A (not found)")
     
