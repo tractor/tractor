@@ -34,3 +34,6 @@
 [submodule "lib/shades"]
 	path = lib/shades
 	url = https://github.com/jonclayden/shades.git
+[submodule "lib/jsonlite"]
+	path = lib/jsonlite
+	url = https://github.com/tractor/jsonlite.git
