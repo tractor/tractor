@@ -1,5 +1,3 @@
-library(jsonlite)
-
 runExperiment <- function ()
 {
     sessionPath <- expandFileName(ifelse(nArguments()==0, ".", Arguments[1]))
@@ -10,6 +8,8 @@ runExperiment <- function ()
     functional <- getConfigVariable("Functional", NULL, "character", multiple=TRUE)
     tasks <- getConfigVariable("FunctionalTasks", "rest", "character", multiple=TRUE)
     diffusion <- getConfigVariable("Diffusion", NULL, "character", multiple=TRUE)
+    fieldMap <- getConfigVariable("FieldMap", NULL, "character", multiple)
+    fieldMapType <- getConfigVariable("FieldMapType", "dmm", validValues=c("dmm","ppmm"))
     patternMatch <- getConfigVariable("PatternMatch", FALSE)
     
     subjectId <- sessionId <- NULL
@@ -65,13 +65,7 @@ runExperiment <- function ()
             return (NULL)
         }
         
-        imageIndex <- function (i)
-        {
-            if (to %~% "_(bold|dwi)$")
-                ore.subst("_(\\w+)$", es("_acq-#{i}_\\1"), to)
-            else
-                es("#{to}_acq-#{i}")
-        }
+        imageIndex <- function (i) ore.subst("_(\\w+)$", es("_acq-#{i}_\\1"), to)
         
         # Handle multiple files with the same target name by adding to the "acq" label
         if (imageFileExists(imageIndex(1L)))
@@ -139,4 +133,23 @@ runExperiment <- function ()
         copyAndConvert(functional[i], file.path(sessionPath, "func", es("#{fileStem}_task-#{tasks[i]}_bold")))
     for (imagePath in matchSources(diffusion))
         copyAndConvert(imagePath, file.path(sessionPath, "dwi", es("#{fileStem}_dwi")))
+    
+    if (!is.null(fieldMap))
+    {
+        if (length(fieldMap) != ifelse(fieldMapType=="dmm",3L,4L))
+            report(OL$Error, "Field map does not have the correct number of parts")
+        if (fieldMapType == "dmm")
+        {
+            copyAndConvert(fieldMap[1], file.path(sessionPath, "fmap", es("#{fileStem}_phasediff")))
+            copyAndConvert(fieldMap[2], file.path(sessionPath, "fmap", es("#{fileStem}_magnitude1")))
+            copyAndConvert(fieldMap[3], file.path(sessionPath, "fmap", es("#{fileStem}_magnitude2")))
+        }
+        else if (fieldMapType == "ppmm")
+        {
+            copyAndConvert(fieldMap[1], file.path(sessionPath, "fmap", es("#{fileStem}_phase1")))
+            copyAndConvert(fieldMap[2], file.path(sessionPath, "fmap", es("#{fileStem}_phase2")))
+            copyAndConvert(fieldMap[3], file.path(sessionPath, "fmap", es("#{fileStem}_magnitude1")))
+            copyAndConvert(fieldMap[4], file.path(sessionPath, "fmap", es("#{fileStem}_magnitude2")))
+        }
+    }
 }
