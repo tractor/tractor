@@ -11,7 +11,7 @@ parallelApply <- function (x, fun, ..., preschedule = TRUE, setSeed = TRUE, sile
         else
             options(reportrPrefixFormat=paste("[%p]",oldOption))
         
-        returnValue <- mclapply(x, fun, ..., mc.preschedule=preschedule, mc.set.seed=setSeed, mc.silent=silent, mc.cores=cores)
+        returnValue <- mclapply(x, fun, ..., mc.preschedule=preschedule, mc.set.seed=setSeed, mc.silent=silent, mc.cores=cores, mc.cleanup=TRUE)
         
         options(reportrPrefixFormat=oldOption)
         

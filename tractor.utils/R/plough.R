@@ -99,10 +99,11 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
         parallelApply(seq_len(n), function(i) {
             currentFile <- threadSafeTempFile()
             writeYaml(as.list(data[i,,drop=FALSE]), currentFile)
+            on.exit(unlink(currentFile))
             
+            # FIXME: Using callExperiment() would be preferable, to allow interrupts, but flags will need to be parsed
+            # callExperiment(exptName, args = NULL, configFiles = NULL, outputLevel = getOutputLevel(), ...)
             execute(tractorPath, es("-c #{currentFile} #{buildArgs(i)}"), env=es("TRACTOR_PLOUGH_ID=#{i}"))
-            
-            unlink(currentFile)
         })
     }
     

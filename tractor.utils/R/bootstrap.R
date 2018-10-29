@@ -152,7 +152,6 @@ findExperiment <- function (exptName)
 callExperiment <- function (exptName, args = NULL, configFiles = NULL, outputLevel = getOutputLevel(), ...)
 {
     scriptFile <- findExperiment(exptName)
-    report(OL$Info, "Running experiment script ", scriptFile)
     bootstrapExperiment(scriptFile, outputLevel=outputLevel, configFiles=configFiles, configText=implode(args,sep=" "), standalone=FALSE, ...)
 }
 
