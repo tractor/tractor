@@ -136,10 +136,20 @@ runExperiment <- function ()
                 storedTR <- pixdim(image)[4]
                 if (storedTR > 0 && storedTR < thresholdTR)
                 {
-                    report(OL$Info, "Reconstructed TR of #{storedTR} s is less than threshold - multiplying by slice count", round=3)
-                    throughPlaneAxis <- which(abs(rotation(image))[,3] > 0.5)
-                    image <- as.array(image)
-                    pixdim(image)[4] <- pixdim(image)[4] * dim(image)[throughPlaneAxis]
+                    # This section can fail, for example for RGB images, which RNifti does not handle
+                    try({
+                        throughPlaneAxis <- which(abs(rotation(image))[,3] > 0.5)
+                        image <- as.array(image)
+                        pixdim(image)[4] <- pixdim(image)[4] * dim(image)[throughPlaneAxis]
+                        flag(OL$Info, "Reconstructed TR of #{storedTR} s is less than threshold - correcting to #{pixdim(image)[4]} s", round=3)
+                    
+                        if ("repetitionTime" %in% names(attributes) && equivalent(attributes$repetitionTime, storedTR*1000, tolerance=1e-4))
+                            attributes$repetitionTime <- round(pixdim(image)[4] * 1000)
+                    
+                        secondaryAttributes <- attributes[!(names(attributes) %~% "^\\.|^(dim|imagedim|pixdim|pixunits|class)$")]
+                        if (length(secondaryAttributes) > 0)
+                            image <- do.call(structure, c(list(image), secondaryAttributes))
+                    })
                 }
             }
             
