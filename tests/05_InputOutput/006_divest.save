@@ -1,7 +1,3 @@
-[dcm2niix WARNING] Skipping 7FE0,0010: assuming it refers to icon not image
-[dcm2niix WARNING] Skipping 7FE0,0010: assuming it refers to icon not image
-[dcm2niix WARNING] Skipping 7FE0,0010: assuming it refers to icon not image
-[dcm2niix WARNING] Skipping 7FE0,0010: assuming it refers to icon not image
 modality: MR
 imageType: ORIGINAL_PRIMARY_M_ND_NORM
 seriesNumber: 8
