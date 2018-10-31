@@ -8,7 +8,7 @@ runExperiment <- function ()
     functional <- getConfigVariable("Functional", NULL, "character", multiple=TRUE)
     tasks <- getConfigVariable("FunctionalTasks", "rest", "character", multiple=TRUE)
     diffusion <- getConfigVariable("Diffusion", NULL, "character", multiple=TRUE)
-    fieldMap <- getConfigVariable("FieldMap", NULL, "character", multiple)
+    fieldMap <- getConfigVariable("FieldMap", NULL, "character", multiple=TRUE)
     fieldMapType <- getConfigVariable("FieldMapType", "dmm", validValues=c("dmm","ppmm"))
     patternMatch <- getConfigVariable("PatternMatch", FALSE)
     

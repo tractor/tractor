@@ -78,7 +78,7 @@ runExperiment <- function ()
     if (birthMonth != 1)
         monthDays <- monthDays[c(birthMonth:12, 1:(birthMonth-1))]
     
-    years <- as.numeric(lastBirthdate - dateOfBirth) %/% 365.2425
+    years <- as.numeric(format(lastBirthdate,"%Y")) - as.numeric(format(dateOfBirth,"%Y"))
     remainingDays <- as.numeric(studyDate - lastBirthdate)
     fractionalYears <- years + (remainingDays / 365.2425)
     
