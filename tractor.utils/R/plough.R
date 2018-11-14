@@ -95,7 +95,9 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
         writeLines(args, argsFile)
         
         configPrefix <- file.path(tempDir, "config")
-        if (repetitions == 0)
+        if (repetitions > 0)
+            file.copy(configFile, es("#{configPrefix}.yaml"))
+        else
         {
             for (i in seq_len(n))
                 writeYaml(as.list(data[i,,drop=FALSE]), es("#{configPrefix}.#{i}.yaml"))
@@ -107,7 +109,7 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
                         es("TRACTOR_PLOUGH_ID=${SGE_TASK_ID}"),
                         es("TRACTOR_ARGS=`sed \"${SGE_TASK_ID}q;d\" #{argsFile}`"),
                         ifelse(repetitions > 0,
-                            es("#{tractorPath} -c #{configFile} ${TRACTOR_ARGS}"),
+                            es("#{tractorPath} -c #{configPrefix}.yaml ${TRACTOR_ARGS}"),
                             es("#{tractorPath} -c #{configPrefix}.${SGE_TASK_ID}.yaml ${TRACTOR_ARGS}")))
         writeLines(qsubScript, qsubScriptFile)
         execute("chmod", es("+x #{qsubScriptFile}"))
