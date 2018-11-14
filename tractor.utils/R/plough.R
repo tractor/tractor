@@ -106,7 +106,7 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
         qsubScriptFile <- file.path(tempDir, "script")
         qsubScript <- c("#!/bin/sh",
                         "#$ -S /bin/bash",
-                        es("TRACTOR_PLOUGH_ID=${SGE_TASK_ID}"),
+                        es("export TRACTOR_PLOUGH_ID=${SGE_TASK_ID}"),
                         es("TRACTOR_ARGS=`sed \"${SGE_TASK_ID}q;d\" #{argsFile}`"),
                         ifelse(repetitions > 0,
                             es("#{tractorPath} -c #{configPrefix}.yaml ${TRACTOR_ARGS}"),
