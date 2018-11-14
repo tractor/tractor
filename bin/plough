@@ -74,32 +74,24 @@ export TRACTOR_HOME
 
 [ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
 
-args=`getopt HGXDC:V:R:Q:O:P:hldozqfbiv:a:w:c: $*`
-[ $? -eq 0 ] || {
-    usage 1>&2
-    exit
-}
-set -- $args
-
-while [ $# -gt 0 ]
-    do
-    case "$1" in
-        -[Hh]) usage; status=0; exit ;;
-        -G) use_grid_engine=1 ;;
-        -X) cross_apply=1 ;;
-        -D) debug=1 ;;
-        -[Cc]) shift; config_file="$config_file:$1" ;;
-        -V) shift; variables="$variables,$1" ;;
-        -R) shift; repetitions=$1 ;;
-        -Q) shift; queue=$1 ;;
-        -O) shift; options="$options $1" ;;
-        -P) shift; parallelisation_factor=$1 ;;
-        -[vaw]) tractor_flags="$tractor_flags $1 $2"; shift ;;
-        --) shift; break ;;
-        -*) tractor_flags="$tractor_flags $1" ;;
+while getopts ":HhGXDC:c:V:R:Q:O:P:v:a:w:" opt; do
+    case "$opt" in
+        [Hh]) usage; status=0; exit ;;
+        G) use_grid_engine=1 ;;
+        X) cross_apply=1 ;;
+        D) debug=1 ;;
+        [Cc]) config_file="$config_file:$OPTARG" ;;
+        V) variables="$variables,$OPTARG" ;;
+        R) repetitions=$OPTARG ;;
+        Q) queue=$OPTARG ;;
+        O) options="$options $OPTARG" ;;
+        P) parallelisation_factor=$OPTARG ;;
+        [vaw]) tractor_flags="$tractor_flags -$opt $OPTARG" ;;
+        ?) tractor_flags="$tractor_flags -$OPTARG" ;;
     esac
-    shift
 done
+
+shift "$(($OPTIND-1))"
 
 [ $# -eq 0 ] && {
     echo "Error: No script name given. Type \"plough -H\" for help" 1>&2
