@@ -85,7 +85,7 @@ ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, 
     
     if (useGridEngine)
     {
-        tempDir <- expandFileName("getmp")
+        tempDir <- expandFileName(paste("getmp", implode(sample(c(0:9,letters[1:6]),6),""), sep="_"))
         if (file.exists(tempDir))
             unlink(tempDir, recursive=TRUE)
         dir.create(file.path(tempDir,"log"), recursive=TRUE)
