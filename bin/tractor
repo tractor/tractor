@@ -94,6 +94,7 @@ while getopts "hldozqfbiv:p:a:w:c:" opt; do
         q) quiet=1 ;;
         f) profile_performance=1; command_flags="-f ${command_flags}" ;;
         b) batch_mode=1 ;;
+        i) supress_config=1 ;;
         v) verbose_level=$OPTARG ;;
         p) parallelisation_factor=$OPTARG; echo "The '-p' option is deprecated; use \"plough\" instead" 1>&2 ;;
         a) architecture=$OPTARG ;;
