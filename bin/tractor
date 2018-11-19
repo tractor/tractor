@@ -81,36 +81,29 @@ export TRACTOR_HOME
 
 [ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
 
-args=`getopt hldozqfbiv:p:a:w:c: $*`
-[ $? -eq 0 ] || {
-    usage 1>&2
-    exit
-}
-set -- $args
-
 supress_config=`echo "$@" | grep -c '\-i' -`
 [ $supress_config -eq 0 -a -f "$HOME/.tractor/config" ] && source "$HOME/.tractor/config"
 
-while [ $# -gt 0 ]
-    do
-    case "$1" in
-        -h) usage; status=0; exit ;;
-        -l) keep_log=1 ;;
-        -d) verbose_level=3 ;;
-        -o) show_options=1 ;;
-        -z) write_history=0 ;;
-        -q) quiet=1 ;;
-        -f) profile_performance=1; command_flags="-f ${command_flags}" ;;
-        -b) batch_mode=1 ;;
-        -v) shift; verbose_level=$1 ;;
-        -p) shift; parallelisation_factor=$1; echo "The '-p' option is deprecated; use \"plough\" instead" 1>&2 ;;
-        -a) shift; architecture=$1 ;;
-        -w) shift; working_dir=`echo $1 | sed 's/\/$//'` ;;
-        -c) shift; config_file="$config_file:$1" ;;
-        --) shift; break ;;
+while getopts "hldozqfbiv:p:a:w:c:" opt; do
+    case "$opt" in
+        h) usage; status=0; exit ;;
+        l) keep_log=1 ;;
+        d) verbose_level=3 ;;
+        o) show_options=1 ;;
+        z) write_history=0 ;;
+        q) quiet=1 ;;
+        f) profile_performance=1; command_flags="-f ${command_flags}" ;;
+        b) batch_mode=1 ;;
+        v) verbose_level=$OPTARG ;;
+        p) parallelisation_factor=$OPTARG; echo "The '-p' option is deprecated; use \"plough\" instead" 1>&2 ;;
+        a) architecture=$OPTARG ;;
+        w) working_dir=`echo $OPTARG | sed 's/\/$//'` ;;
+        c) config_file="$config_file:$OPTARG" ;;
+        ?) usage 1>&2; exit ;;
     esac
-    shift
 done
+
+shift "$(($OPTIND-1))"
 
 [ $# -eq 0 ] && {
     echo "Error: No script name given. Type \"tractor -h\" for help" 1>&2
