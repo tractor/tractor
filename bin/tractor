@@ -85,6 +85,7 @@ supress_config=`echo "$@" | grep -c '\-i' -`
 [ $supress_config -eq 0 -a -f "$HOME/.tractor/config" ] && source "$HOME/.tractor/config"
 
 while getopts "hldozqfbiv:p:a:w:c:" opt; do
+    TRACTOR_FLAGS="$TRACTOR_FLAGS -$opt $OPTARG"
     case "$opt" in
         h) usage; status=0; exit ;;
         l) keep_log=1 ;;
@@ -105,6 +106,7 @@ while getopts "hldozqfbiv:p:a:w:c:" opt; do
 done
 
 shift "$(($OPTIND-1))"
+export TRACTOR_FLAGS
 
 [ $# -eq 0 ] && {
     echo "Error: No script name given. Type \"tractor -h\" for help" 1>&2

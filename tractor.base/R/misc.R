@@ -82,6 +82,8 @@ implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
         }
         return (result)
     }
+    else
+        return ("")
 }
 
 #' Number agreement with a vector
@@ -487,9 +489,9 @@ execute <- function (executable, params = NULL, errorOnFail = TRUE, silent = FAL
     {
         report(OL$Debug, "#{execLoc} #{implode(params,sep=' ')}")
         if (silent && getOutputLevel() > OL$Debug)
-            system2(execLoc, params, stdout=FALSE, stderr=FALSE, ...)
+            system2(execLoc, as.character(params), stdout=FALSE, stderr=FALSE, ...)
         else
-            system2(execLoc, params, ...)
+            system2(execLoc, as.character(params), ...)
     }
 }
 
