@@ -102,8 +102,9 @@ readNifti <- function (fileNames, metadataOnly = FALSE, volumes = NULL)
 
 writeNifti <- function (image, fileNames, maxSize = NULL)
 {
-    datatype <- chooseDataTypeForImage(image, "Nifti")
-    if (!is.null(maxSize))
+    if (is.null(maxSize))
+        datatype <- chooseDataTypeForImage(image, "Nifti")
+    else
         datatype <- niftiDatatype(ifelse(maxSize >= 4, 16L, ifelse(maxSize >= 2, 4L, 2L)))
     
     image <- retrieveNifti(image)
