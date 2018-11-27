@@ -10,7 +10,7 @@ NULL
     if (is.null(getOption("tractorFileType")))
     {
         fileType <- toupper(Sys.getenv("TRACTOR_FILETYPE"))
-        if (isTRUE(fileType %in% .FileTypes$typeNames))
+        if (isTRUE(fileType %in% .FileTypes$typeNames) && fileType != "NIFTI_GZ")
         {
             report(OL$Warning, "The TRACTOR_FILETYPE environment variable is deprecated - NIfTI will always be the default in future")
             options(tractorFileType=as.vector(fileType))
