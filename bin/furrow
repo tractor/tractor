@@ -36,23 +36,16 @@ usage()
 
 [ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
 
-args=`getopt hzw: $*`
-[ $? -eq 0 ] || {
-    usage 1>&2
-    exit
-}
-set -- $args
-
-while [ $# -gt 0 ]
-    do
-    case "$1" in
-        -h) usage; status=0; exit ;;
-        -z) write_history=0 ;;
-        -w) shift; working_dir=`echo $1 | sed 's/\/$//'` ;;
-        --) shift; break ;;
+while getopts "hzw:" opt; do
+    case "$opt" in
+        h) usage; status=0; exit ;;
+        z) write_history=0 ;;
+        w) working_dir=`echo $OPTARG | sed 's/\/$//'`
+        ?) usage 1>&2; exit ;;
     esac
-    shift
 done
+
+shift "$(($OPTIND-1))"
 
 [ $# -eq 0 ] && {
     echo "Error: No command given. Type \"furrow -h\" for help" 1>&2
