@@ -57,15 +57,13 @@ runWorkflow <- function (name, session, env = character())
     env <- deduplicate(c(env, controlenv, sysenv[names(sysenv) %~|% "^TRACTOR_"]))
     env <- paste(names(env), env, sep="=")
     
-    report(OL$Info, "Running workflow \"#{name}\"...")
+    report(OL$Verbose, "Running workflow \"#{name}\"...")
     
     # If the workflow file is executable, run it directly; otherwise call bash
-    # cat("\x1b[32m")
     if (file.access(workflowFile, 1L) == 0L)
         returnValue <- execute(workflowFile, env=env)
     else
         returnValue <- execute("bash", c("-e",workflowFile), env=env)
-    # cat("\x1b[0m")
     
     invisible (returnValue)
 }
