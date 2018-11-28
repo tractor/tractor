@@ -8,7 +8,7 @@ runExperiment <- function ()
     session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
     nFibres <- getConfigVariable("FibresPerVoxel", 3, "integer")
-    howRunBedpost <- getConfigVariable("Context", "fg", validValues=c("fg","bg","screen"))
+    howRunBedpost <- getConfigVariable("Context", "fg", validValues=c("fg","bg","screen"), deprecated=TRUE)
     force <- getConfigVariable("Force", FALSE)
     
     if (!force && imageFileExists(session$getImageFileNameByType("avf")))
