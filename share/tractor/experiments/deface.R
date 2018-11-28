@@ -8,6 +8,8 @@ runExperiment <- function ()
 {
     requireArguments("image file")
     
+    requireMask <- getConfigVariable("RequireMask", FALSE)
+    
     image <- readImageFile(Arguments[1])
     
     report(OL$Info, "Obtaining transformation from MNI space")
@@ -66,5 +68,7 @@ runExperiment <- function ()
     
     report(OL$Info, "Applying to image and writing result")
     image$map(function(x,y) ifelse(y==1,0,x), transformedMask)
-    image$writeToFile(Arguments[nArguments()])
+    fileNames <- image$writeToFile(Arguments[nArguments()])
+    if (requireMask)
+        transformedMask$writeToFile(paste(fileNames$fileStem, "facemask", sep="_"), maxSize=1)
 }
