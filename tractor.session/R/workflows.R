@@ -53,7 +53,7 @@ runWorkflow <- function (name, session, env = character())
     furrowPath <- file.path(Sys.getenv("TRACTOR_HOME"), "bin", "furrow")
     
     sysenv <- Sys.getenv()
-    controlenv <- c(TRACTOR_COMMAND=commandPath, TRACTOR=es("\"#{tractorPath} -q #{implode(tractorFlags,' ')}\""), FURROW=es("\"#{furrowPath} -w #{directory} #{implode(furrowFlags,' ')}\""), TRACTOR_FLAGS="", PS4="\"\x1b[32m==> \x1b[0m\"")
+    controlenv <- c(TRACTOR_COMMAND=commandPath, TRACTOR=es("\"#{tractorPath} -w #{directory} -q #{implode(tractorFlags,' ')}\""), FURROW=es("\"#{furrowPath} -w #{directory} #{implode(furrowFlags,' ')}\""), TRACTOR_FLAGS="", PS4="\"\x1b[32m==> \x1b[0m\"")
     env <- deduplicate(c(env, controlenv, sysenv[names(sysenv) %~|% "^TRACTOR_"]))
     env <- paste(names(env), env, sep="=")
     
@@ -64,6 +64,9 @@ runWorkflow <- function (name, session, env = character())
         returnValue <- execute(workflowFile, env=env)
     else
         returnValue <- execute("bash", c("-e",workflowFile), env=env)
+    
+    if (returnValue != 0)
+        report(OL$Error, "Workflow \"#{name}\" failed with error code #{returnValue}")
     
     invisible (returnValue)
 }
