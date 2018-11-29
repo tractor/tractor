@@ -129,12 +129,24 @@ expandArguments <- function (arguments, workingDirectory = getwd())
 {
     setOutputLevel(OL$Warning)
     setwd(workingDirectory)
+    
     arguments <- resolvePath(ore.split("\\s+", arguments))
     for (i in seq_along(arguments))
     {
         fileName <- identifyImageFileNames(arguments[i], errorIfMissing=FALSE)
         if (!is.null(fileName))
             arguments[i] <- fileName$imageFile
+        else if (arguments[i] %~% "=")
+        {
+            parts <- resolvePath(ore.split("=", arguments[i]))
+            for (j in seq_along(parts))
+            {
+                fileName <- identifyImageFileNames(parts[j], errorIfMissing=FALSE)
+                if (!is.null(fileName))
+                    parts[j] <- fileName$imageFile
+            }
+            arguments[i] <- implode(parts, sep="=")
+        }
     }
     cat(implode(arguments, sep=" "))
 }
