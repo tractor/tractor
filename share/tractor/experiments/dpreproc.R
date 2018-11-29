@@ -75,23 +75,12 @@ runExperiment <- function ()
                 
                 report(OL$Info, "Merging #{n} raw data series")
                 images <- lapply(fileNames, readImageFile)
-                mergedImage <- do.call(mergeMriImages, images)
-                directions <- do.call(rbind, lapply(seq_len(n), function(i) {
-                    if (file.exists(ensureFileSuffix(fileNames[i], "dirs")))
-                        as.matrix(read.table(ensureFileSuffix(fileNames[i], "dirs")))
-                    else
-                        matrix(NA, nrow=ifelse(images[[i]]$getDimensionality()==4L, dim(images[[i]])[4], 1L), ncol=4L)
-                }))
-                bValues <- directions[,4]
-                bVectors <- directions[,1:3]
-                echoSeparations <- do.call(c, lapply(images, function(image) {
-                    if (image$hasTags("effectiveReadoutTime"))
-                        image$getTags("effectiveReadoutTime")
-                    else if (all(image$hasTags(c("echoSpacing", "epiFactor"))))
-                        image$getTags("echoSpacing") / 1e6 * (image$getTags("epiFactor") - 1)
-                    else
-                        rep(NA, image$nVolumes())
-                }))
+                mergedImage <- do.call(mergeMriImages, c(images, list(bindDim=4L, padTags=TRUE)))
+                seriesDescriptions <- unique(mergedImage$getTags("seriesDescription"))
+                if (mergedImage$hasTags("effectiveReadoutTime"))
+                    echoSeparations <- mergedImage$getTags("effectiveReadoutTime")
+                else if (all(mergedImage$hasTags("echoSpacing", "epiFactor")))
+                    echoSeparations <- mergedImage$getTags("echoSpacing") / 1e6 * (mergedImage$getTags("epiFactor") - 1)
             }
             else
             {
@@ -106,48 +95,17 @@ runExperiment <- function ()
                 dicomDirs <- ifelse(dicomDirs %~% "^([A-Za-z]:)?/", dicomDirs, file.path(session$getDirectory(),dicomDirs))
                 dicomDirs <- ore.subst("//+", "/", dicomDirs, all=TRUE)
                 
+                info <- NULL
                 if (dicomReader == "internal")
-                {
-                    info <- lapply(dicomDirs, readDicomDirectory, readDiffusionParams=TRUE)
-                    mergedImage <- do.call(mergeMriImages, lapply(info, "[[", "image"))
-                    seriesDescriptions <- do.call(c, lapply(info, "[[", "seriesDescriptions"))
-                    bValues <- do.call(c, lapply(info, "[[", "bValues"))
-                    bVectors <- t(do.call(cbind, lapply(info, "[[", "bVectors")))
-                    echoSeparations <- do.call(c, lapply(info, "[[", "echoSeparations"))
-                }
+                    info <- lapply(dicomDirs, readDicomDirectory, method="internal", readDiffusionParams=TRUE)
+                else if (interactive)
+                    info <- lapply(dicomDirs, readDicomDirectory, method="divest", readDiffusionParams=TRUE, interactive=TRUE)
                 else
-                {
-                    report(OL$Info, "Searching for DICOM series using \"divest\" reader")
-                    divestVerbosity <- switch(names(getOutputLevel()), Debug=2L, Verbose=0L, -1L)
-                    if (interactive)
-                        images <- divest::readDicom(dicomDirs, verbosity=divestVerbosity, interactive=TRUE)
-                    else
-                    {
-                        info <- divest::scanDicom(dicomDirs, verbosity=divestVerbosity)
-                        images <- divest::readDicom(info, subset=diffusion, verbosity=divestVerbosity)
-                    }
-                    mergedImage <- do.call(mergeMriImages, lapply(images, fx(reorderMriImage(as(x,"MriImage")))))
-                    bValues <- do.call(c, lapply(images, function(image) {
-                        if (is.null(attr(image, "bValues")))
-                            rep(NA, ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L))
-                        else
-                            attr(image, "bValues")
-                    }))
-                    bVectors <- do.call(rbind, lapply(images, function(image) {
-                        if (is.null(attr(image, "bVectors")))
-                            matrix(NA, nrow=ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L), ncol=3L)
-                        else
-                            attr(image, "bVectors")
-                    }))
-                    echoSeparations <- do.call(c, lapply(images, function(image) {
-                        if (!is.null(attr(image, "effectiveReadoutTime")))
-                            attr(image, "effectiveReadoutTime")
-                        else if (!is.null(attr(image,"echoSpacing")) && !is.null(attr(image,"epiFactor")))
-                            attr(image,"echoSpacing") / 1e6 * (attr(image,"epiFactor") - 1)
-                        else
-                            rep(NA, ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L))
-                    }))
-                }
+                    info <- lapply(dicomDirs, readDicomDirectory, method="divest", readDiffusionParams=TRUE, interactive=FALSE, subset=diffusion)
+                
+                mergedImage <- do.call(mergeMriImages, c(lapply(info, "[[", "image"), list(bindDim=4L, padTags=TRUE)))
+                seriesDescriptions <- do.call(c, lapply(info, "[[", "seriesDescriptions"))
+                echoSeparations <- do.call(c, lapply(info, "[[", "echoSeparations"))
             }
             
             writeImageFile(mergedImage, session$getImageFileNameByType("rawdata","diffusion"), writeTags=TRUE)

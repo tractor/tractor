@@ -486,9 +486,9 @@ readDicomDirectory <- function (dicomDir, method = c("internal","divest"), readD
         if (readDiffusionParams)
         {
             if (image$hasTags("effectiveReadoutTime"))
-                returnValue$echoSeparations <- image$getTag("effectiveReadoutTime")
+                returnValue$echoSeparations <- image$getTags("effectiveReadoutTime")
             else if (all(image$hasTags("echoSpacing", "epiFactor")))
-                returnValue$echoSeparations <- image$getTag("echoSpacing") / 1e6 * (image$getTags("epiFactor") - 1)
+                returnValue$echoSeparations <- image$getTags("echoSpacing") / 1e6 * (image$getTags("epiFactor") - 1)
             else
                 returnValue$echoSeparations <- rep(NA, image$nVolumes())
         }
