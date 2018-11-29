@@ -46,7 +46,6 @@ runExperiment <- function ()
     
     for (path in expandFileName(paths))
     {
-        # Scan over the DICOM files and convert to "niftiImage" objects
         report(OL$Info, "Looking for DICOM files in directory #{path}...")
         
         if (method == "internal")
