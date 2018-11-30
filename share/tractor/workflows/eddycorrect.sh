@@ -8,7 +8,7 @@
     exit 1
 }
 
-[ ${FURROW} -z test -f @diffusion/rawdata ] || {
+${FURROW} -z test -f @diffusion/rawdata || {
     echo "Error: The specified session does not contain a raw data image" 1>&2
     exit 1
 }

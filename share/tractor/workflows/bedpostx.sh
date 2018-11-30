@@ -6,7 +6,6 @@
 # Context is deprecated, but still allowed for now
 [ -z "$Context" ] && Context="fg"
 [ -z "$FibresPerVoxel" ] && FibresPerVoxel=3
-[ -z "$ModelSpec" ] && ModelSpec=""
 
 source helpers/create-fdt-files.sh
 
