@@ -17,9 +17,12 @@ findWorkflow <- function (name)
     }
 }
 
-runWorkflow <- function (name, session, env = character())
+runWorkflow <- function (name, session, ...)
 {
     workflowFile <- findWorkflow(name)
+    
+    env <- list(...)
+    env <- structure(as.character(env), names=names(env))
     
     if (is(session, "MriSession"))
         directory <- session$getDirectory()
