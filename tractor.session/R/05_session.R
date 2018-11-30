@@ -329,6 +329,10 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     }
 ))
 
+setAs("character", "MriSession", function (from) {
+    return (MriSession$new(from))
+})
+
 attachMriSession <- function (directory)
 {
     session <- MriSession$new(directory)
