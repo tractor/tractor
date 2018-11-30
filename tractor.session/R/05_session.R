@@ -356,51 +356,6 @@ getImageCountForSession <- function (session, type, place = NULL)
     return (i-1)
 }
 
-updateSessionHierarchy <- function (session)
-{
-    if (!is(session, "MriSession"))
-        report(OL$Error, "The specified session is not an MriSession object")
-    
-    oldFdtDirectory <- file.path(session$getDirectory("root"), "fdt")
-    diffusionDirectory <- session$getDirectory("diffusion")
-    
-    if (file.exists(oldFdtDirectory) && !file.exists(diffusionDirectory))
-    {
-        flag(OL$Warning, "Support for the TractoR 1.x session directory format is deprecated")
-        
-        # Assume this is a TractoR 1.x session directory: rename the FDT
-        # directory, insert the appropriate map, and move FDT-only files back
-        file.rename(oldFdtDirectory, diffusionDirectory)
-        writeLines(as.yaml(.FdtDiffusionMap), file.path(diffusionDirectory, "map.yaml"))
-        
-        filesToMoveBack <- c("bvals", "bvecs", "data.ecclog")
-        filesToMoveBack <- filesToMoveBack[file.exists(file.path(diffusionDirectory,filesToMoveBack))]
-        if (length(filesToMoveBack) > 0)
-        {
-            newFdtDirectory <- session$getDirectory("fdt", createIfMissing=TRUE)
-            file.rename(file.path(diffusionDirectory,filesToMoveBack), file.path(newFdtDirectory,filesToMoveBack))
-        }
-        
-        newFdtDirectory <- session$getDirectory("fdt")
-        if (file.exists(file.path(newFdtDirectory,"bvals")) && file.exists(file.path(newFdtDirectory,"bvecs")))
-        {
-            bValues <- unlist(read.table(file.path(newFdtDirectory, "bvals")))
-            bVectors <- as.matrix(read.table(file.path(newFdtDirectory, "bvecs")))
-            scheme <- SimpleDiffusionScheme$new(bValues, t(bVectors))
-            session$updateDiffusionScheme(scheme)
-        }
-        
-        # Update caches before creating FDT files, so that everything can be found
-        session$updateCaches()
-        
-        createFdtFilesForSession(session)
-        
-        objectDirectory <- file.path(session$getDirectory("root"), "objects")
-        if (file.exists(objectDirectory))
-            unlink(objectDirectory, recursive=TRUE)
-    }
-}
-
 createRadialDiffusivityMapForSession <- function (session)
 {
     if (!is(session, "MriSession"))
