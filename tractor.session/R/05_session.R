@@ -34,7 +34,6 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             object$updateCaches()
             object$caches.$objects <- list()
             object$getDirectory("root", createIfMissing=TRUE)
-            updateSessionHierarchy(object)
             return (object)
         }
     },
