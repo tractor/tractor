@@ -19,6 +19,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
     # Unmatched lookup table strings are passed through the function at the end of each list
     capitalise <- function (str) paste(toupper(substr(str,1,1)), tolower(substr(str,2,max(nchar(str)))), sep="")
     lookupTableMappings <- list(tractor=list(Greyscale=1,grayscale=1,greyscale=1,"Red-Yellow"=2,heat=2,.default=tolower),
+                                fsleyes=list(grayscale="greyscale",greyscale="greyscale",heat="red-yellow",.default=tolower),
                                 fslview=list(grayscale="Greyscale",greyscale="Greyscale",heat="Red-Yellow",.default=capitalise),
                                 freeview=list(Greyscale="grayscale",greyscale="grayscale","Red-Yellow"="heat",.default=tolower))
     lookupTable <- lapply(lookupTable, function (l) {
@@ -84,10 +85,10 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
                     return(NULL)
                 }
                 
-                if (viewer == "fslview")
+                if (viewer == "fslview" || viewer == "fsleyes")
                 {
                     # fslview is fussy about data types, so write the image into Analyze format to avoid a crash if necessary
-                    if (imageInfo$format == "Mgh" || (imageInfo$format == "Nifti" && tractor.base:::readNifti(imageInfo)$storageMetadata$datatype$code > 64))
+                    if (imageInfo$format == "Mgh" || (imageInfo$format == "Nifti" && RNifti::niftiHeader(imageInfo$imageFile)$datatype > 64))
                     {
                         dir.create(file.path(tempDir, i))
                         imageLoc <- file.path(tempDir, i, basename(imageInfo$fileStem))
@@ -107,7 +108,9 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
             return (imageInfo$imageFile)
         })
         
-        if (viewer == "fslview")
+        if (viewer == "fsleyes")
+            showImagesInFsleyes(imageFileNames, wait=wait, lookupTable=unlist(lookupTable), opacity=opacity)
+        else if (viewer == "fslview")
             showImagesInFslview(imageFileNames, wait=wait, lookupTable=unlist(lookupTable), opacity=opacity)
         else if (viewer == "freeview")
             showImagesInFreeview(imageFileNames, wait=wait, lookupTable=unlist(lookupTable), opacity=opacity)

@@ -15,6 +15,24 @@ getFslVersion <- function ()
         return (sum(version[1:3] * c(10000, 100, 1)))
 }
 
+showImagesInFsleyes <- function (imageFileNames, wait = FALSE, lookupTable = NULL, opacity = NULL)
+{
+    if (!is.null(lookupTable))
+    {
+        lookupTable <- rep(lookupTable, length.out=length(imageFileNames))
+        imageFileNames <- paste(imageFileNames, "-cm", lookupTable, sep=" ")
+    }
+    if (!is.null(opacity))
+    {
+        opacity <- rep(opacity, length.out=length(imageFileNames))
+        imageFileNames <- paste(imageFileNames, "-a", round(100*opacity), sep=" ")
+    }
+    
+    execute("fsleyes", imageFileNames, errorOnFail=TRUE, wait=wait, silent=TRUE)
+    
+    invisible(unlist(imageFileNames))
+}
+
 showImagesInFslview <- function (imageFileNames, wait = FALSE, lookupTable = NULL, opacity = NULL)
 {
     if (!is.null(lookupTable))
