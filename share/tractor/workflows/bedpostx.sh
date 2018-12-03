@@ -7,7 +7,7 @@
 [ -z "$Context" ] && Context="fg"
 [ -z "$FibresPerVoxel" ] && FibresPerVoxel=3
 
-source helpers/create-fdt-files.sh
+source ${TRACTOR_HOME}/share/tractor/workflows/helpers/create-fdt-files.sh
 
 bedpost_dir=`${FURROW} -z echo @bedpost/`
 

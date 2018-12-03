@@ -8,7 +8,7 @@ ${FURROW} -z test -f @diffusion/rawdata || {
     exit 1
 }
 
-source helpers/create-fdt-files.sh
+source ${TRACTOR_HOME}/share/tractor/workflows/helpers/create-fdt-files.sh
 
 set -x
 ${FURROW} ${TRACTOR_COMMAND} --imain=@fdt/b0vols --datain=@fdt/acqparams.txt --config=b02b0.cnf --out=@fdt/topup --iout=@fdt/b0corrected

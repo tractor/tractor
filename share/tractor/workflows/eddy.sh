@@ -8,7 +8,7 @@ ${FURROW} -z test -f @diffusion/rawdata || {
     exit 1
 }
 
-source helpers/create-fdt-files.sh
+source ${TRACTOR_HOME}/share/tractor/workflows/helpers/create-fdt-files.sh
 
 fdt_dir=`${FURROW} -z echo @fdt/`
 topup_arg=""

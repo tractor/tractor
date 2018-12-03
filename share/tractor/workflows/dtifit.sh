@@ -5,7 +5,7 @@
 
 [ -z "$WeightedLeastSquares" ] && WeightedLeastSquares=0
 
-source helpers/create-fdt-files.sh
+source ${TRACTOR_HOME}/share/tractor/workflows/helpers/create-fdt-files.sh
 
 wls_flag=""
 [ $WeightedLeastSquares -eq 1 ] && wls_flag="-w"
