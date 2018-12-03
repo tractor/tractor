@@ -34,11 +34,35 @@ runExperiment <- function ()
     else
         targetSessionDir <- targetDir
     
-    success <- dir.create(targetSessionDir, showWarnings=FALSE)
-    assert(success, "Could not create new session directory")
-    
-    success <- copyDirectory(session$getDirectory("root"), file.path(targetSessionDir,basename(session$getDirectory("root"))), allFiles=copyHidden, deleteOriginal=deleteOriginal)
-    assert(success, "Directory copy failed")
+    targetRoot <- file.path(targetSessionDir, basename(session$getDirectory("root")))
+    if (map)
+    {
+        success <- dir.create(targetRoot, recursive=TRUE, showWarnings=FALSE)
+        assert(success, "Could not create new session directory")
+        
+        sourceMap <- session$getMap()
+        targetMap <- list()
+        for (place in names(sourceMap))
+        {
+            sourcePath <- expandFileName(sourceMap[[place]], base=session$getDirectory("root"))
+            if (isTRUE(file.info(sourcePath)$isdir))
+            {
+                targetPath <- relativePath(sourcePath, targetRoot)
+                targetMap[[place]] <- targetPath
+            }
+        }
+        
+        if (length(targetMap) > 0)
+            yaml::write_yaml(targetMap, file.path(targetRoot,"map.yaml"))
+    }
+    else
+    {
+        success <- dir.create(targetSessionDir, showWarnings=FALSE)
+        assert(success, "Could not create new session directory")
+        
+        success <- copyDirectory(session$getDirectory("root"), targetRoot, allFiles=copyHidden, deleteOriginal=deleteOriginal)
+        assert(success, "Directory copy failed")
+    }
     
     return (invisible(NULL))
 }
