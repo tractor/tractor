@@ -269,7 +269,13 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             return (NULL)
         
         if (regexpr(rootDir, dirToRemove, fixed=TRUE) != 1)
-            report(OL$Error, "Existing externally-mapped directory #{dirToRemove} will not be overwritten")
+        {
+            report(OL$Info, "Unmapping external directory #{dirToRemove}")
+            mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")
+            subdirectoryMap <- read_yaml(mapFileName)
+            subdirectoryMap <- subset(subdirectoryMap, tolower(names(subdirectoryMap)) != tolower(type))
+            write_yaml(subdirectoryMap, mapFileName)
+        }
         else if (!ask || reportr::ask("Directory #{dirToRemove} already exists. Delete it? [yn]", valid=c("y","n")) == "y")
             unlink(dirToRemove, recursive=TRUE)
     },
