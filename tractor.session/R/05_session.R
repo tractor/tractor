@@ -151,6 +151,15 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         }
     },
     
+    getMap = function (place = "root")
+    {
+        .self$updateCaches()
+        if (place == "root")
+            return (.self$caches.$subdirectories)
+        else
+            return (.self$caches.$maps[[place]])
+    },
+    
     getParcellation = function (place = "structural", ...)
     {
         fileName <- .self$getImageFileNameByType("parcellation", place)

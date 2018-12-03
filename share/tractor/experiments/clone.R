@@ -9,6 +9,7 @@ runExperiment <- function ()
 {
     requireArguments("session directory", "target directory")
     
+    map <- getConfigVariable("Map", FALSE)
     deleteOriginal <- getConfigVariable("DeleteOriginal", FALSE, errorIfInvalid=TRUE)
     copyHidden <- getConfigVariable("CopyHidden", FALSE)
     
