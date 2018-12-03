@@ -34,7 +34,7 @@ runExperiment <- function ()
     else
         targetSessionDir <- targetDir
     
-    targetRoot <- file.path(targetSessionDir, basename(session$getDirectory("root")))
+    targetRoot <- expandFileName(file.path(targetSessionDir, basename(session$getDirectory("root"))))
     if (map)
     {
         success <- dir.create(targetRoot, recursive=TRUE, showWarnings=FALSE)
@@ -47,7 +47,7 @@ runExperiment <- function ()
             sourcePath <- expandFileName(sourceMap[[place]], base=session$getDirectory("root"))
             if (isTRUE(file.info(sourcePath)$isdir))
             {
-                targetPath <- relativePath(sourcePath, targetRoot)
+                targetPath <- relativePath(sourcePath, file.path(targetRoot,"map.yaml"))
                 targetMap[[place]] <- targetPath
             }
         }
