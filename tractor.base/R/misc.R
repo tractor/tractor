@@ -313,8 +313,8 @@ indexList <- function (list, index = NULL)
 #' @return A character vector.
 #' 
 #' @author Jon Clayden
-#' @seealso \code{\link{path.expand}} performs some of what
-#' \code{expandFileName} does.
+#' @seealso \code{\link{normalizePath}} does most of the work for
+#' \code{expandFileName}.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -348,8 +348,10 @@ resolvePath <- function (path, ...)
 #' @export
 relativePath <- function (path, referencePath)
 {
-    mainPieces <- strsplit(expandFileName(path), .Platform$file.sep, fixed=TRUE)[[1]]
-    refPieces <- strsplit(expandFileName(referencePath), .Platform$file.sep, fixed=TRUE)[[1]]
+    mainPieces <- ore.split(ore.escape(.Platform$file.sep), expandFileName(path))
+    mainPieces <- mainPieces[mainPieces != "."]
+    refPieces <- ore.split(ore.escape(.Platform$file.sep), expandFileName(referencePath))
+    refPieces <- refPieces[refPieces != "."]
     
     shorterLength <- min(length(mainPieces), length(refPieces))
     firstDifferentPiece <- min(which(mainPieces[1:shorterLength] != refPieces[1:shorterLength])[1], shorterLength, na.rm=TRUE)
@@ -386,21 +388,10 @@ registerPathHandler <- function (regex, handler)
 #' @export
 expandFileName <- function (fileName, base = getwd())
 {
-    fileName <- path.expand(as.character(fileName))
-    
     # A leading slash, with (Windows) or without (Unix) a letter and colon, indicates an absolute path
     fileName <- ifelse(fileName %~% "^([A-Za-z]:)?/", fileName, file.path(base,fileName))
-    
-    # Remove all instances of '/.' (which are redundant), recursively collapse
-    # instances of '/..', and remove trailing slashes
-    fileName <- gsub("/\\.(?=/)", "", fileName, perl=TRUE)
-    while (length(grep("/../", fileName, fixed=TRUE) > 0))
-        fileName <- sub("/([^/]*[^./][^/]*)?/\\.\\.(?=/)", "", fileName, perl=TRUE)
-    if (length(grep("/..$", fileName, perl=TRUE) > 0))
-        fileName <- sub("/([^/]*[^./][^/]*)?/\\.\\.$", "", fileName, perl=TRUE)
-    fileName <- gsub("/*\\.?$", "", fileName, perl=TRUE)
-    
-    return (fileName)
+    fileName <- ore.subst("/\\.(?=/)", "", fileName, all=TRUE)
+    return (normalizePath(fileName, .Platform$file.sep, FALSE))
 }
 
 #' @rdname paths
