@@ -4,7 +4,7 @@
 \alias{allEqual}
 \title{Test whether all elements of a vector are equal}
 \usage{
-allEqual(x, ignoreMissing = FALSE)
+allEqual(x, ignoreMissing = FALSE, ...)
 }
 \arguments{
 \item{x}{A vector of any mode, including a list.}
@@ -12,9 +12,12 @@ allEqual(x, ignoreMissing = FALSE)
 \item{ignoreMissing}{If \code{TRUE}, missing elements will be ignored.
 Otherwise the presence of missing values will result in a return value of
 \code{FALSE}.}
+
+\item{\dots}{Additional arguments to \code{all.equal}, via
+\code{\link{equivalent}}.}
 }
 \value{
-\code{TRUE} if all elements test (exactly) equal; \code{FALSE}
+\code{TRUE} if all elements test equivalent; \code{FALSE}
   otherwise.
 }
 \description{

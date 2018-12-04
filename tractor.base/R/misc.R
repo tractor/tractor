@@ -563,7 +563,9 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
 #' @param ignoreMissing If \code{TRUE}, missing elements will be ignored.
 #'   Otherwise the presence of missing values will result in a return value of
 #'   \code{FALSE}.
-#' @return \code{TRUE} if all elements test (exactly) equal; \code{FALSE}
+#' @param \dots Additional arguments to \code{all.equal}, via
+#'   \code{\link{equivalent}}.
+#' @return \code{TRUE} if all elements test equivalent; \code{FALSE}
 #'   otherwise.
 #' @author Jon Clayden
 #' @seealso \code{\link{equivalent}} for elementwise equivalence of two
@@ -582,12 +584,11 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
 #' allEqual(c(1,1,NA), ignoreMissing=TRUE)  # TRUE
 #' 
 #' @export
-allEqual <- function (x, ignoreMissing = FALSE)
+allEqual <- function (x, ignoreMissing = FALSE, ...)
 {
-    if (is.list(x))
-        return (isTRUE(all(sapply(x, equivalent, x[[1]]), na.rm=ignoreMissing)))
-    else
-        return (isTRUE(all(x==x[1], na.rm=ignoreMissing)))
+    if (ignoreMissing)
+        x <- x[!is.na(x)]
+    return (isTRUE(all(sapply(x, equivalent, x[[1]], ...))))
 }
 
 stripNul <- function (x, method = c("truncate","drop"))
