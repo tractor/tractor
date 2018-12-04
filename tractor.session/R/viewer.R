@@ -92,7 +92,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
                     {
                         dir.create(file.path(tempDir, i))
                         imageLoc <- file.path(tempDir, i, basename(imageInfo$fileStem))
-                        imageInfo <- writeImageFile(readImageFile(imageInfo$imageFile), imageLoc, fileType="ANALYZE_GZ")
+                        imageInfo <- writeImageFile(readImageFile(imageInfo$imageFile), imageLoc, fileType="NIFTI_GZ")
                     }
                 }
             }
@@ -100,7 +100,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
             {
                 dir.create(file.path(tempDir, i))
                 imageLoc <- file.path(tempDir, i, basename(imageList[[i]]$getSource()))
-                imageInfo <- writeImageFile(imageList[[i]], imageLoc, fileType="ANALYZE_GZ")
+                imageInfo <- writeImageFile(imageList[[i]], imageLoc, fileType="NIFTI_GZ")
             }
             else
                 report(OL$Error, "Images must be specified as MriImage objects or file names")

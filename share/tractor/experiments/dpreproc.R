@@ -15,7 +15,7 @@ runExperiment <- function ()
     
     statusOnly <- getConfigVariable("StatusOnly", FALSE)
     interactive <- getConfigVariable("Interactive", TRUE)
-    stages <- getConfigVariable("RunStages", "1-4")
+    stages <- getConfigVariable("RunStages", "1-4", "integer", multiple=TRUE)
     force <- getConfigVariable("Force", FALSE)
     dicomDirs <- getConfigVariable("DicomDirectories", NULL, "character")
     dicomReader <- getConfigVariable("DicomReader", "internal", "character", validValues=c("internal","divest"))
@@ -47,7 +47,6 @@ runExperiment <- function ()
     else
         reversePEVolumes <- splitAndConvertString(reversePEVolumes, ",", "integer", fixed=TRUE)
     
-    stages <- splitAndConvertString(stages, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
     runStages <- 1:4 %in% stages
     if (all(!runStages))
         report(OL$Info, "Nothing to do")
@@ -240,7 +239,7 @@ runExperiment <- function ()
                 repeat
                 {
                     choice <- ask("Use which one as the reference [1-#{length(zeroes)}; s to show in fslview]?", valid=c("s",seq_along(zeroes)))
-                    if (choice) == "s")
+                    if (choice == "s")
                     {
                         zeroVolumes <- readImageFile(b0Path, volumes=(if(useTopup) NULL else zeroes))
                         showImagesInViewer(zeroVolumes, viewer="fslview")

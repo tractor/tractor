@@ -30,7 +30,7 @@ setAs("character", "integer", function(from) {
     result <- unlist(lapply(from, function(x) {
         match <- ore.search("^(\\d+)[:-](\\d+)$", x)
         if (!is.null(match))
-            as.integer(match[,,1]):as.integer(match[,,2])
+            seq.int(from=as.integer(match[,1]), to=as.integer(match[,2]))
         else
             suppressWarnings(as.integer(x))
     }))
@@ -78,7 +78,7 @@ getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMi
         if (errorIfMissing)
             report(OL$Error, "The configuration variable \"#{name}\" must be specified")
         else if (multiple && is.character(defaultValue))
-            return (ore.split(",", defaultValue))
+            return (as(ore.split(",", defaultValue), mode))
         else
             return (defaultValue)
     }
