@@ -3,8 +3,8 @@
 #@command bet
 #@variables IntensityThreshold, VerticalGradient
 
-[ -z "$IntensityThreshold" ] && IntensityThreshold=0.3
-[ -z "$VerticalGradient" ] && VerticalGradient=0
+[ -n "$IntensityThreshold" ] || IntensityThreshold=0.3
+[ -n "$VerticalGradient" ] || VerticalGradient=0
 
 ${FURROW} -z test -f @diffusion/refb0 || {
     echo "Error: A reference b=0 image file has not yet been created" 1>&2

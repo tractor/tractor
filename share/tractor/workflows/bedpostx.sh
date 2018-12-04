@@ -4,14 +4,14 @@
 #@variables Context, FibresPerVoxel, ModelSpec
 
 # Context is deprecated, but still allowed for now
-[ -z "$Context" ] && Context="fg"
-[ -z "$FibresPerVoxel" ] && FibresPerVoxel=3
+[ -n "$Context" ] || Context="fg"
+[ -n "$FibresPerVoxel" ] || FibresPerVoxel=3
 
 source ${TRACTOR_HOME}/share/tractor/workflows/helpers/create-fdt-files.sh
 
 bedpost_dir=`${FURROW} -z echo @bedpost/`
 
-[ -d "$bedpost_dir" ] && rm -r "$bedpost_dir"
+[ ! -d "$bedpost_dir" ] || rm -r "$bedpost_dir"
 
 set -x
 

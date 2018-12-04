@@ -3,7 +3,7 @@
 #@command eddy_correct
 #@variables ReferenceVolume
 
-[ -z "$ReferenceVolume" ] && {
+[ -n "$ReferenceVolume" ] || {
     echo "Error: Reference volume must be specified" 1>&2
     exit 1
 }

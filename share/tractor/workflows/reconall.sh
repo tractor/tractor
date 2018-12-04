@@ -3,13 +3,13 @@
 #@command recon-all
 #@variables FreesurferOptions
 
-[ -z "$SUBJECTS_DIR" ] && {
+[ -n "$SUBJECTS_DIR" ] || {
     echo "Error: Freesurfer does not seem to be properly configured: can't identify subjects directory" 1>&2
     exit 1
 }
 
 session_name=`basename "$PWD"`
-[ -e "$SUBJECTS_DIR/$session_name" ] && {
+[ ! -e "$SUBJECTS_DIR/$session_name" ] || {
     echo "FreeSurfer subject named $session_name already exists" 1>&2
     exit 1
 }

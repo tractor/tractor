@@ -3,12 +3,12 @@
 #@command dtifit
 #@variables WeightedLeastSquares
 
-[ -z "$WeightedLeastSquares" ] && WeightedLeastSquares=0
+[ -n "$WeightedLeastSquares" ] || WeightedLeastSquares=0
 
 source ${TRACTOR_HOME}/share/tractor/workflows/helpers/create-fdt-files.sh
 
 wls_flag=""
-[ $WeightedLeastSquares -eq 1 ] && wls_flag="-w"
+[ $WeightedLeastSquares -eq 0 ] || wls_flag="-w"
 
 set -x
 ${FURROW} ${TRACTOR_COMMAND} -k @fdt/data -m @fdt/mask -r @fdt/bvecs -b @fdt/bvals -o @fdt/dti --sse "$wls_flag"
