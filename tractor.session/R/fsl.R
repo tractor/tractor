@@ -149,7 +149,7 @@ runTopupWithSession <- function (session, reversePEVolumes = NULL, echoSeparatio
 runEddyWithSession <- function (session, reversePEVolumes = NULL, echoSeparation = NULL)
 {
     session <- as(session, "MriSession")
-    session$getDirectory("fdt", createIfMissing=TRUE)
+    targetDir <- session$getDirectory("fdt", createIfMissing=TRUE)
     createAcquisitionParameterFileForSession(session, reversePEVolumes, echoSeparation, writeBZeroes=FALSE)
     session$updateDiffusionScheme()
     

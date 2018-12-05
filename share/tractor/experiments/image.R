@@ -23,19 +23,19 @@ runExperiment <- function ()
         # Directory, existing or new (the latter indicated by a trailing '/' in the last argument)
         if (isTRUE(file.info(Arguments[nArguments()])$isdir) || Arguments[nArguments()] %~% "/$")
         {
-            from <- Arguments[c(-1L,-nArguments())]
-            directory <- Arguments[nArguments()]
+            from <- resolvePath(Arguments[c(-1L,-nArguments())])
+            directory <- resolvePath(Arguments[nArguments()])
             if (!file.exists(directory))
                 dir.create(directory)
             to <- file.path(directory, basename(from))
         }
         else if (nArguments() > 3)
-            report(OL$Error, "")
+            report(OL$Error, "Exactly one source and target file name should be given, unless the target is a directory")
         else
         {
             # Exactly three arguments, including the subcommand
-            from <- Arguments[2]
-            to <- Arguments[3]
+            from <- resolvePath(Arguments[2])
+            to <- resolvePath(Arguments[3])
         }
         
         if (subcommand %in% c("ln","link"))
