@@ -125,17 +125,18 @@ requireArguments <- function (...)
         report(OL$Error, "At least ", length(args), " argument(s) must be specified: ", implode(args,", "))
 }
 
-expandArguments <- function (arguments, workingDirectory = getwd())
+expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = TRUE)
 {
     setOutputLevel(OL$Warning)
     setwd(workingDirectory)
+    suffixes <- as.logical(suffixes)
     
     arguments <- resolvePath(ore.split("\\s+", arguments))
     for (i in seq_along(arguments))
     {
         fileName <- identifyImageFileNames(arguments[i], errorIfMissing=FALSE)
         if (!is.null(fileName))
-            arguments[i] <- fileName$imageFile
+            arguments[i] <- ifelse(suffixes, fileName$imageFile, fileName$fileStem)
         else if (arguments[i] %~% "=")
         {
             parts <- resolvePath(ore.split("=", arguments[i]))
@@ -143,7 +144,7 @@ expandArguments <- function (arguments, workingDirectory = getwd())
             {
                 fileName <- identifyImageFileNames(parts[j], errorIfMissing=FALSE)
                 if (!is.null(fileName))
-                    parts[j] <- fileName$imageFile
+                    parts[j] <- ifelse(suffixes, fileName$imageFile, fileName$fileStem)
             }
             arguments[i] <- implode(parts, sep="=")
         }
