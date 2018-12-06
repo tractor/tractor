@@ -229,7 +229,7 @@ runBedpostWithSession <- function (session, nFibres = 3, how = c("fg","bg","scre
 {
     session <- as(session, "MriSession")
     session$unlinkDirectory("bedpost")
-    modelSpecification <- ifelse(session$getDiffusionScheme()$nShells() > 1, "-model 2", "")
+    modelSpecification <- ifelse(session$getDiffusionScheme()$nShells() > 1, "\"-model 2\"", "")
     runWorkflow("bedpostx", session, Context=match.arg(how), FibresPerVoxel=nFibres, ModelSpec=modelSpecification)
 }
 
