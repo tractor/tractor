@@ -11,6 +11,7 @@ runExperiment <- function ()
     nImages <- nArguments() - 1
     
     weighting <- getConfigVariable("ImageWeighting", "t1", validValues=c("t1","t2","pd","diffusion","functional"))
+    dicomReader <- getConfigVariable("DicomReader", "internal", validValues=c("internal","divest"))
     coregister <- getConfigVariable("Coregister", TRUE)
     
     if (weighting %in% c("diffusion","functional"))
@@ -21,23 +22,14 @@ runExperiment <- function ()
         session$getDirectory(weighting, createIfMissing=TRUE)
         
         if (isTRUE(file.info(Arguments[2])$isdir))
-            image <- readDicomDirectory(Arguments[2])$image
+            image <- readDicomDirectory(Arguments[2], method=dicomReader)$image
         else
             image <- readImageFile(Arguments[2])
         
         if (image$getDimensionality() != 4)
             report(OL$Error, "A #{weighting} dataset must be four-dimensional")
         
-        if (weighting == "diffusion")
-            writeImageFile(image, session$getImageFileNameByType("rawdata","diffusion"))
-        else
-        {
-            writeImageFile(image, session$getImageFileNameByType("data","functional"))
-            
-            report(OL$Info, "Calculating mean volume")
-            meanVolume <- asMriImage(image$apply(1:3,mean), image)
-            writeImageFile(meanVolume, session$getImageFileNameByType("mean","functional"))
-        }
+        writeImageFile(image, session$getImageFileNameByType("rawdata",weighting), writeTags=TRUE)
     }
     else
     {
@@ -48,7 +40,7 @@ runExperiment <- function ()
             report(OL$Info, "Copying image ", i, " of ", nImages)
         
             if (isTRUE(file.info(Arguments[i+1])$isdir))
-                image <- readDicomDirectory(Arguments[i+1])$image
+                image <- readDicomDirectory(Arguments[i+1], method=dicomReader)$image
             else if (!imageFileExists(Arguments[i+1]))
             {
                 report(OL$Warning, "Complete image file does not exist: \"", Arguments[i+1], "\"")
@@ -59,7 +51,7 @@ runExperiment <- function ()
         
             if (!is.null(image))
             {
-                writeImageFile(image, session$getImageFileNameByType(weighting,"structural",index=currentIndex))
+                writeImageFile(image, session$getImageFileNameByType(weighting,"structural",index=currentIndex), writeTags=TRUE)
                 currentIndex <- currentIndex + 1
             }
         }
