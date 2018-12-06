@@ -75,8 +75,8 @@ Journal of Statistical Software 44(8):1-18.
 \url{http://www.jstatsoft.org/v44/i08/}.
 }
 \seealso{
-\code{\link{path.expand}} performs some of what
-\code{expandFileName} does.
+\code{\link{normalizePath}} does most of the work for
+\code{expandFileName}.
 }
 \author{
 Jon Clayden

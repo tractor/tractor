@@ -82,6 +82,8 @@ implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
         }
         return (result)
     }
+    else
+        return ("")
 }
 
 #' Number agreement with a vector
@@ -311,8 +313,8 @@ indexList <- function (list, index = NULL)
 #' @return A character vector.
 #' 
 #' @author Jon Clayden
-#' @seealso \code{\link{path.expand}} performs some of what
-#' \code{expandFileName} does.
+#' @seealso \code{\link{normalizePath}} does most of the work for
+#' \code{expandFileName}.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -346,8 +348,10 @@ resolvePath <- function (path, ...)
 #' @export
 relativePath <- function (path, referencePath)
 {
-    mainPieces <- strsplit(expandFileName(path), .Platform$file.sep, fixed=TRUE)[[1]]
-    refPieces <- strsplit(expandFileName(referencePath), .Platform$file.sep, fixed=TRUE)[[1]]
+    mainPieces <- ore.split(ore.escape(.Platform$file.sep), expandFileName(path))
+    mainPieces <- mainPieces[mainPieces != "."]
+    refPieces <- ore.split(ore.escape(.Platform$file.sep), expandFileName(referencePath))
+    refPieces <- refPieces[refPieces != "."]
     
     shorterLength <- min(length(mainPieces), length(refPieces))
     firstDifferentPiece <- min(which(mainPieces[1:shorterLength] != refPieces[1:shorterLength])[1], shorterLength, na.rm=TRUE)
@@ -384,21 +388,10 @@ registerPathHandler <- function (regex, handler)
 #' @export
 expandFileName <- function (fileName, base = getwd())
 {
-    fileName <- path.expand(as.character(fileName))
-    
     # A leading slash, with (Windows) or without (Unix) a letter and colon, indicates an absolute path
     fileName <- ifelse(fileName %~% "^([A-Za-z]:)?/", fileName, file.path(base,fileName))
-    
-    # Remove all instances of '/.' (which are redundant), recursively collapse
-    # instances of '/..', and remove trailing slashes
-    fileName <- gsub("/\\.(?=/)", "", fileName, perl=TRUE)
-    while (length(grep("/../", fileName, fixed=TRUE) > 0))
-        fileName <- sub("/([^/]*[^./][^/]*)?/\\.\\.(?=/)", "", fileName, perl=TRUE)
-    if (length(grep("/..$", fileName, perl=TRUE) > 0))
-        fileName <- sub("/([^/]*[^./][^/]*)?/\\.\\.$", "", fileName, perl=TRUE)
-    fileName <- gsub("/*\\.?$", "", fileName, perl=TRUE)
-    
-    return (fileName)
+    fileName <- ore.subst("/\\.(?=/)", "", fileName, all=TRUE)
+    return (normalizePath(fileName, .Platform$file.sep, FALSE))
 }
 
 #' @rdname paths
@@ -487,9 +480,9 @@ execute <- function (executable, params = NULL, errorOnFail = TRUE, silent = FAL
     {
         report(OL$Debug, "#{execLoc} #{implode(params,sep=' ')}")
         if (silent && getOutputLevel() > OL$Debug)
-            system2(execLoc, params, stdout=FALSE, stderr=FALSE, ...)
+            system2(execLoc, as.character(params), stdout=FALSE, stderr=FALSE, ...)
         else
-            system2(execLoc, params, ...)
+            system2(execLoc, as.character(params), ...)
     }
 }
 
@@ -570,7 +563,9 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
 #' @param ignoreMissing If \code{TRUE}, missing elements will be ignored.
 #'   Otherwise the presence of missing values will result in a return value of
 #'   \code{FALSE}.
-#' @return \code{TRUE} if all elements test (exactly) equal; \code{FALSE}
+#' @param \dots Additional arguments to \code{all.equal}, via
+#'   \code{\link{equivalent}}.
+#' @return \code{TRUE} if all elements test equivalent; \code{FALSE}
 #'   otherwise.
 #' @author Jon Clayden
 #' @seealso \code{\link{equivalent}} for elementwise equivalence of two
@@ -589,12 +584,11 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
 #' allEqual(c(1,1,NA), ignoreMissing=TRUE)  # TRUE
 #' 
 #' @export
-allEqual <- function (x, ignoreMissing = FALSE)
+allEqual <- function (x, ignoreMissing = FALSE, ...)
 {
-    if (is.list(x))
-        return (isTRUE(all(sapply(x, equivalent, x[[1]]), na.rm=ignoreMissing)))
-    else
-        return (isTRUE(all(x==x[1], na.rm=ignoreMissing)))
+    if (ignoreMissing)
+        x <- x[!is.na(x)]
+    return (isTRUE(all(sapply(x, equivalent, x[[1]], ...))))
 }
 
 stripNul <- function (x, method = c("truncate","drop"))

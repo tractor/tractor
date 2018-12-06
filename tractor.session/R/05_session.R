@@ -34,7 +34,6 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             object$updateCaches()
             object$caches.$objects <- list()
             object$getDirectory("root", createIfMissing=TRUE)
-            updateSessionHierarchy(object)
             return (object)
         }
     },
@@ -151,6 +150,15 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         }
     },
     
+    getMap = function (place = "root")
+    {
+        .self$updateCaches()
+        if (place == "root")
+            return (.self$caches.$subdirectories)
+        else
+            return (.self$caches.$maps[[place]])
+    },
+    
     getParcellation = function (place = "structural", ...)
     {
         fileName <- .self$getImageFileNameByType("parcellation", place)
@@ -261,7 +269,13 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             return (NULL)
         
         if (regexpr(rootDir, dirToRemove, fixed=TRUE) != 1)
-            report(OL$Error, "Existing externally-mapped directory #{dirToRemove} will not be overwritten")
+        {
+            report(OL$Info, "Unmapping external directory #{dirToRemove}")
+            mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")
+            subdirectoryMap <- read_yaml(mapFileName)
+            subdirectoryMap <- subset(subdirectoryMap, tolower(names(subdirectoryMap)) != tolower(type))
+            write_yaml(subdirectoryMap, mapFileName)
+        }
         else if (!ask || reportr::ask("Directory #{dirToRemove} already exists. Delete it? [yn]", valid=c("y","n")) == "y")
             unlink(dirToRemove, recursive=TRUE)
     },
@@ -329,6 +343,10 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     }
 ))
 
+setAs("character", "MriSession", function (from) {
+    return (MriSession$new(from))
+})
+
 attachMriSession <- function (directory)
 {
     session <- MriSession$new(directory)
@@ -350,51 +368,6 @@ getImageCountForSession <- function (session, type, place = NULL)
         i <- i + 1
     
     return (i-1)
-}
-
-updateSessionHierarchy <- function (session)
-{
-    if (!is(session, "MriSession"))
-        report(OL$Error, "The specified session is not an MriSession object")
-    
-    oldFdtDirectory <- file.path(session$getDirectory("root"), "fdt")
-    diffusionDirectory <- session$getDirectory("diffusion")
-    
-    if (file.exists(oldFdtDirectory) && !file.exists(diffusionDirectory))
-    {
-        flag(OL$Warning, "Support for the TractoR 1.x session directory format is deprecated")
-        
-        # Assume this is a TractoR 1.x session directory: rename the FDT
-        # directory, insert the appropriate map, and move FDT-only files back
-        file.rename(oldFdtDirectory, diffusionDirectory)
-        writeLines(as.yaml(.FdtDiffusionMap), file.path(diffusionDirectory, "map.yaml"))
-        
-        filesToMoveBack <- c("bvals", "bvecs", "data.ecclog")
-        filesToMoveBack <- filesToMoveBack[file.exists(file.path(diffusionDirectory,filesToMoveBack))]
-        if (length(filesToMoveBack) > 0)
-        {
-            newFdtDirectory <- session$getDirectory("fdt", createIfMissing=TRUE)
-            file.rename(file.path(diffusionDirectory,filesToMoveBack), file.path(newFdtDirectory,filesToMoveBack))
-        }
-        
-        newFdtDirectory <- session$getDirectory("fdt")
-        if (file.exists(file.path(newFdtDirectory,"bvals")) && file.exists(file.path(newFdtDirectory,"bvecs")))
-        {
-            bValues <- unlist(read.table(file.path(newFdtDirectory, "bvals")))
-            bVectors <- as.matrix(read.table(file.path(newFdtDirectory, "bvecs")))
-            scheme <- SimpleDiffusionScheme$new(bValues, t(bVectors))
-            session$updateDiffusionScheme(scheme)
-        }
-        
-        # Update caches before creating FDT files, so that everything can be found
-        session$updateCaches()
-        
-        createFdtFilesForSession(session)
-        
-        objectDirectory <- file.path(session$getDirectory("root"), "objects")
-        if (file.exists(objectDirectory))
-            unlink(objectDirectory, recursive=TRUE)
-    }
 }
 
 createRadialDiffusivityMapForSession <- function (session)

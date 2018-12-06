@@ -14,7 +14,7 @@
     }
     
     # Assume path separator (.Platform$file.sep) is "/"
-    registerPathHandler("^([^@]+)?@(\\w+)(/([\\w.-]+))?(%(\\d+))?", function(path,index=1) {
+    registerPathHandler("^([^@=\\s]+)?@(\\w+)(/)?([\\w.-/]+)?(%(\\d+))?$", function(path,index=1) {
         # The match has to have been done just before calling this function (although this is not thread-safe)
         groups <- groups(ore.lastmatch())
         groupsPresent <- !is.na(groups)
@@ -23,8 +23,10 @@
         session <- attachMriSession(ifelse(groupsPresent[1], groups[1], "."))
         if (groupsPresent[6])
             index <- as.integer(groups[6])
-        if (groupsPresent[4])
+        if (groupsPresent[3] && groupsPresent[4])
             return (session$getImageFileNameByType(groups[4], groups[2], index=index, fallback=TRUE))
+        else if (groupsPresent[3])
+            return (session$getDirectory(groups[2]))
         else
             return (session$getImageFileNameByType(groups[2], index=index, fallback=TRUE))
     })
