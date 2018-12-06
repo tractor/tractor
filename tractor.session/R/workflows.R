@@ -31,11 +31,11 @@ runWorkflow <- function (name, session, ...)
     if (length(directory) != 1)
         report(OL$Error, "The session directory must be a single string")
     
-    commandLines <- readLines(workflowFile) %~|% "^\\s*#@command\\s+([\\w,\\s]+)$"
+    commandLines <- readLines(workflowFile) %~|% "^\\s*#@command\\s+([\\w\\-,\\s]+)$"
     if (length(commandLines) == 0)
         report(OL$Error, "Workflow file #{workflowFile} contains no command directive")
     
-    commands <- ore.split("[,\\s]+", groups(ore.search("^\\s*#@command\\s+([\\w,\\s]+)$",commandLines)))
+    commands <- ore.split("[,\\s]+", groups(ore.search("^\\s*#@command\\s+([\\w\\-,\\s]+)$",commandLines)))
     commandPath <- NULL
     for (command in commands)
     {
@@ -56,7 +56,7 @@ runWorkflow <- function (name, session, ...)
     furrowPath <- file.path(Sys.getenv("TRACTOR_HOME"), "bin", "furrow")
     
     sysenv <- Sys.getenv()
-    controlenv <- c(TRACTOR_COMMAND=commandPath, TRACTOR=es("\"#{tractorPath} -w #{directory} -q #{implode(tractorFlags,' ')}\""), FURROW=es("\"#{furrowPath} -w #{directory} #{implode(furrowFlags,' ')}\""), TRACTOR_FLAGS="", PS4="\"\x1b[32m==> \x1b[0m\"")
+    controlenv <- c(TRACTOR_COMMAND=commandPath, TRACTOR_SESSION_PATH=directory, TRACTOR=es("\"#{tractorPath} -w #{directory} -q #{implode(tractorFlags,' ')}\""), FURROW=es("\"#{furrowPath} -w #{directory} #{implode(furrowFlags,' ')}\""), TRACTOR_FLAGS="", PS4="\"\x1b[32m==> \x1b[0m\"")
     env <- deduplicate(c(env, controlenv, sysenv[names(sysenv) %~|% "^TRACTOR_"]))
     env <- paste(names(env), env, sep="=")
     

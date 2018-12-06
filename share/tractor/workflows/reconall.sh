@@ -8,7 +8,7 @@
     exit 1
 }
 
-session_name=`basename "$PWD"`
+session_name=`basename "$TRACTOR_SESSION_PATH"`
 [ ! -e "$SUBJECTS_DIR/$session_name" ] || {
     echo "FreeSurfer subject named $session_name already exists" 1>&2
     exit 1
