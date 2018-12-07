@@ -78,7 +78,7 @@ runExperiment <- function ()
                 seriesDescriptions <- unique(mergedImage$getTags("seriesDescription"))
                 if (mergedImage$hasTags("effectiveReadoutTime"))
                     echoSeparations <- mergedImage$getTags("effectiveReadoutTime")
-                else if (all(mergedImage$hasTags("echoSpacing", "epiFactor")))
+                else if (all(mergedImage$hasTags(c("echoSpacing", "epiFactor"))))
                     echoSeparations <- mergedImage$getTags("echoSpacing") / 1e6 * (mergedImage$getTags("epiFactor") - 1)
             }
             else
@@ -116,8 +116,10 @@ runExperiment <- function ()
                 writeLines(seriesDescriptions, file.path(session$getDirectory("diffusion"),"descriptions.txt"))
             }
             
-            if (any(!is.na(bValues)) && any(!is.na(bVectors)))
+            if (all(mergedImage$hasTags(c("bValues", "bVectors"))))
             {
+                bValues <- mergedImage$getTags("bValues")
+                bVectors <- mergedImage$getTags("bVectors")
                 missing <- (is.na(bValues) | apply(is.na(bVectors),1,any))
                 if (any(missing))
                 {
@@ -127,14 +129,13 @@ runExperiment <- function ()
                 }
                 report(OL$Info, "Constructing acquisition scheme")
                 scheme <- SimpleDiffusionScheme$new(bValues, bVectors)
-                session$updateDiffusionScheme(scheme)
                 print(scheme)
             }
             
             if (!is.null(echoSeparations) && any(!is.na(echoSeparations)))
                 writeLines(as.character(echoSeparations), file.path(session$getDirectory("diffusion"),"echosep.txt"))
             
-            if (useGradientCache == "first" || (useGradientCache == "second" && !gradientDirectionsAvailableForSession(session)))
+            if (useGradientCache == "first" || (useGradientCache == "second" && is.null(session$getDiffusionScheme())))
             {
                 gradientSet <- checkGradientCacheForSession(session)
                 if (!is.null(gradientSet))
@@ -145,7 +146,7 @@ runExperiment <- function ()
                 }
             }
             
-            if (!gradientDirectionsAvailableForSession(session))
+            if (is.null(session$getDiffusionScheme()))
                 report(OL$Warning, "Diffusion direction information not available - you need to create a gradient table manually")
             else
             {

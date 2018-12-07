@@ -40,28 +40,22 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getDiffusionScheme = function (unrotated = FALSE)
     {
+        # The argument means unrotated only; otherwise rotated is preferred but not required
         diffusionDir <- .self$getDirectory("diffusion")
-        
-        if (unrotated && file.exists(file.path(diffusionDir,"directions-orig.txt")))
-            fileName <- file.path(diffusionDir, "directions-orig.txt")
-        else
-            fileName <- file.path(diffusionDir, "directions.txt")
-        
-        scheme <- NULL
-        if (file.exists(fileName))
+        scheme <- readDiffusionScheme(.self$getImageFileNameByType(ifelse(unrotated,"rawdata","data"), "diffusion"))
+        if (is.null(scheme) && !unrotated)
+            scheme <- readDiffusionScheme(.self$getImageFileNameByType("rawdata","diffusion"))
+        if (is.null(scheme))
         {
-            gradientSet <- unname(as.matrix(read.table(fileName)))
-            scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
-        }
-        else
-        {
-            bvalsFile <- ensureFileSuffix(.self$getImageFileNameByType("rawdata","diffusion"), "bval")
-            bvecsFile <- ensureFileSuffix(.self$getImageFileNameByType("rawdata","diffusion"), "bvec")
-            if (all(file.exists(c(bvalsFile, bvecsFile))))
+            if (unrotated && file.exists(file.path(diffusionDir,"directions-orig.txt")))
+                fileName <- file.path(diffusionDir, "directions-orig.txt")
+            else
+                fileName <- file.path(diffusionDir, "directions.txt")
+        
+            if (file.exists(fileName))
             {
-                bvals <- drop(as.matrix(read.table(bvalsFile)))
-                bvecs <- t(as.matrix(read.table(bvecsFile)))
-                scheme <- SimpleDiffusionScheme$new(bvals, bvecs)
+                gradientSet <- unname(as.matrix(read.table(fileName)))
+                scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
             }
         }
         return (scheme)
@@ -324,14 +318,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             scheme <- .self$getDiffusionScheme()
         else
         {
-            diffusionDir <- .self$getDirectory("diffusion")
-            gradientSet <- cbind(scheme$getGradientDirections(), scheme$getBValues())
-            
-            lines <- ore.subst("\\.0+\\s*$", "", apply(format(gradientSet,scientific=FALSE),1,implode,sep="  "))
-            if (unrotated)
-                writeLines(lines, file.path(diffusionDir,"directions-orig.txt"))
-            else
-                writeLines(lines, file.path(diffusionDir,"directions.txt"))
+            fileName <- ensureFileSuffix(.self$getImageFileNameByType(ifelse(unrotated,"rawdata","data"), "diffusion"), "dirs")
+            scheme$writeToFile(fileName)
         }
         
         fslDir <- .self$getDirectory("fdt")

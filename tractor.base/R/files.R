@@ -475,6 +475,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     if (file.exists(dirsFileName))
     {
         dirs <- as.matrix(read.table(dirsFileName))
+        if (!is.null(volumes))
+            dirs <- dirs[volumes,,drop=FALSE]
         if (ncol(dirs) == 4 && nrow(dirs) == image$nVolumes())
             image$setTags(bVectors=dirs[,1:3,drop=FALSE], bValues=dirs[,4])
         else
@@ -511,6 +513,15 @@ writeImageData <- function (image, connection, type, size, endian = .Platform$en
         attributes(data) <- NULL
         writeBin(data, connection, size=size, endian=endian)
     }
+}
+
+writeGradientDirections <- function (directions, bValues, fileName)
+{
+    directions[is.na(directions)] <- 0
+    bValues[is.na(bValues)] <- 0
+    directions <- cbind(promote(directions,byrow=TRUE), bValues)
+    lines <- ore.subst("\\.0+\\s*$", "", apply(format(directions,scientific=FALSE),1,implode,sep="  "))
+    writeLines(lines, fileName)
 }
 
 #' @rdname files
@@ -559,11 +570,7 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
     {
         tags <- image$getTags()
         if (all(c("bVectors","bValues") %in% names(tags)))
-        {
-            dirs <- cbind(image$getTags("bVectors"), image$getTags("bValues"))
-            dirs <- ore.subst("\\.0+\\s*$", "", apply(format(dirs,scientific=FALSE),1,implode,sep="  "))
-            writeLines(dirs, ensureFileSuffix(fileStem,"dirs"))
-        }
+            writeGradientDirections(image$getTags("bVectors"), image$getTags("bValues"), ensureFileSuffix(fileStem,"dirs"))
         tags <- tags[!(names(tags) %in% c("bVectors","bValues"))]
         if (length(tags) > 0)
             writeLines(yaml::as.yaml(tags,handlers=list(Date=format.Date)), ensureFileSuffix(fileStem,"tags"))

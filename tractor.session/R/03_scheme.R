@@ -39,5 +39,41 @@ SimpleDiffusionScheme <- setRefClass("SimpleDiffusionScheme", contains="Serialis
         labels <- c("Number of shells", "Diffusion b-values", "Number of directions")
         values <- c(nShells(), paste(implode(uniqueBValues,", "), "s/mm^2"), implode(nDirections()[as.character(uniqueBValues)],", "))
         return (list(labels=labels, values=values))
+    },
+    
+    writeToFile = function (fileName)
+    {
+        tractor.base:::writeGradientDirections(gradientDirections, bValues, fileName)
     }
 ))
+
+readDiffusionScheme <- function (fileName)
+{
+    bValues <- directions <- NULL
+    if (basename(fileName) == "bvecs")
+    {
+        directions <- as.matrix(read.table(fileName))
+        bValues <- drop(as.matrix(read.table(file.path(dirname(fileName), "bvals"))))
+    }
+    else
+    {
+        candidateFiles <- ensureFileSuffix(fileName, c("dirs","bval","bvec"))
+        if (file.exists(candidateFiles[1]))
+        {
+            directions <- as.matrix(read.table(candidateFiles[1]))
+            bValues <- directions[,4]
+            directions <- directions[,1:3]
+        }
+        else if (all(file.exists(candidateFiles[2:3])))
+        {
+            bValues <- drop(as.matrix(read.table(candidateFiles[2])))
+            directions <- as.matrix(read.table(candidateFiles[3]))
+        }
+        else
+            return (NULL)
+    }
+    
+    bValues[is.na(bValues)] <- 0
+    directions[is.na(directions)] <- 0
+    return (SimpleDiffusionScheme$new(bValues, directions))
+}

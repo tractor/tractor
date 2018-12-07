@@ -1,8 +1,3 @@
-gradientDirectionsAvailableForSession <- function (session)
-{
-    return (!is.null(session$getDiffusionScheme()))
-}
-
 saveSeriesDescriptionsForSession <- function (session, descriptions)
 {
     if (!is(session, "MriSession"))
@@ -39,7 +34,7 @@ checkGradientCacheForSession <- function (session)
 
 updateGradientCacheFromSession <- function (session, force = FALSE)
 {
-    if (!gradientDirectionsAvailableForSession(session))
+    if (is.null(session$getDiffusionScheme()))
         return (FALSE)
     
     descriptionsFile <- file.path(session$getDirectory("diffusion"), "descriptions.txt")
