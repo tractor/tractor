@@ -1,3 +1,6 @@
+#@desc Import one or more images into a BIDS subject directory, which is analogous to a TractoR session (see http://bids.neuroimaging.io for details). The target directory name must follow the BIDS convention, "sub-<identifier>", possibly with a "ses-<identifier>" subdirectory where multiple scan sessions were acquired. Source files may be any image format TractoR supports, including DICOM. Multiple modalities can be imported at once, and multiple images of each type can be given, comma-separated. The names of tasks performed by the subjects are given in FunctionalTasks, matching the order of images specified as Functional. Field maps may be given as a phase difference image and two magnitude images (FieldMapType:dmm) or two phase and two magnitude images (FieldMapType:ppmm). If PatternMatch:true is given, file names are treated as regular expressions, rather than literal names, and all matching images will be used. Metadata is written to a sidecar JSON file for each image, and NO attempt at anonymisation is performed by this script.
+#@args [BIDS subject directory]
+
 runExperiment <- function ()
 {
     sessionPath <- expandFileName(ifelse(nArguments()==0, ".", Arguments[1]))
