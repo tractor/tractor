@@ -9,7 +9,7 @@ SimpleDiffusionScheme <- setRefClass("SimpleDiffusionScheme", contains="Serialis
         # NB: This changed in TractoR 3.0, from column-per-direction to row-per-direction
         if (ncol(directions) != 3 && nrow(directions) == 3)
         {
-            report(OL$Info, "Transposing gradient direction matrix")
+            report(OL$Verbose, "Transposing gradient direction matrix")
             directions <- t(directions)
         }
         
