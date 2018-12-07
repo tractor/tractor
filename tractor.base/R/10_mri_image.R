@@ -456,6 +456,8 @@ setAs("MriImage", "array", function (from) as(from$getData(),"array"))
 
 setAs("array", "MriImage", function (from) asMriImage(from))
 
+setAs("character", "MriImage", function (from) readImageFile(from))
+
 .warnIfIndexingUnreorderedImage <- function (image)
 {
     # The argument is an unreordered image and contains a non-LAS xform
@@ -845,24 +847,39 @@ mergeMriImages <- function (..., bindDim = NULL, padTags = FALSE)
     data <- do.call("c", lapply(images, as.array))
     dim(data) <- c(blockDims, length(data) %/% prod(blockDims))
     
+    resolveValue <- function (value, requiredLength)
+    {
+        if (is.null(value))
+            rep(NA, requiredLength)
+        else if (length(value) == requiredLength)
+            value
+        else if (nrow(promote(value,TRUE)) == requiredLength)
+            promote(value, TRUE)
+        else if (length(value) == 1)
+            rep(value, requiredLength)
+        else
+            NULL
+    }
+    
     tags <- lapply(seq_along(images), fi(c(list(.blocks=blockCounts[i]), images[[i]]$getTags())))
-    tagNames <- Reduce(intersect, lapply(tags, names))
+    tagNames <- Reduce(ifelse(padTags,union,intersect), lapply(tags, names))
     tags <- Reduce(function(x,y) {
         sapply(tagNames, function(n) {
             if (n == ".blocks")
                 x[[n]] + y[[n]]
             else if (equivalent(x[[n]], y[[n]]))
                 x[[n]]
-            else if (length(x[[n]]) == x$.blocks && length(y[[n]]) == y$.blocks)
-                c(x[[n]], y[[n]])
-            else if (nrow(promote(x[[n]],TRUE)) == x$.blocks && nrow(promote(y[[n]],TRUE)) == y$.blocks)
-                rbind(x[[n]], y[[n]])
-            else if (padTags && length(x[[n]]) == x$.blocks)
-                c(x[[n]], rep(NA,y$.blocks))
-            else if (padTags && length(y[[n]]) == y$.blocks)
-                c(rep(NA,x$.blocks), y[[n]])
             else
-                NULL
+            {
+                xn <- resolveValue(x[[n]], x$.blocks)
+                yn <- resolveValue(y[[n]], y$.blocks)
+                if (is.matrix(xn) || is.matrix(yn))
+                    rbind(xn, yn)
+                else if (is.null(xn) || is.null(yn))
+                    NULL
+                else
+                    c(xn, yn)
+            }
         }, simplify=FALSE, USE.NAMES=TRUE)
     }, tags)
     
