@@ -97,7 +97,7 @@ describeExperiment <- function (scriptFile, fill = FALSE)
             else if (identical(defaultValue, FALSE))
                 defaultValueString <- "false"
             else
-                defaultValueString <- ifelse(is.null(defaultValue), "NULL", as.character(defaultValue))
+                defaultValueString <- ifelse(is.null(defaultValue), "(no value)", as.character(defaultValue))
             
             if (!is.null(validValues))
             {
