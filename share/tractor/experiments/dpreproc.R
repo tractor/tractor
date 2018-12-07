@@ -86,7 +86,8 @@ runExperiment <- function ()
                 session$unlinkDirectory("diffusion", ask=interactive)
                 session$getDirectory("diffusion", createIfMissing=TRUE)
                 
-                if (is.null(dicomDirs))
+                dicomDirsSpecified <- !is.null(dicomDirs)
+                if (!dicomDirsSpecified)
                     dicomDirs <- session$getDirectory()
                 
                 # Non-absolute paths are relative to the session directory
@@ -97,8 +98,8 @@ runExperiment <- function ()
                 info <- NULL
                 if (dicomReader == "internal")
                     info <- lapply(dicomDirs, readDicomDirectory, method="internal", readDiffusionParams=TRUE)
-                else if (interactive)
-                    info <- lapply(dicomDirs, readDicomDirectory, method="divest", readDiffusionParams=TRUE, interactive=TRUE)
+                else if (interactive || dicomDirsSpecified)
+                    info <- lapply(dicomDirs, readDicomDirectory, method="divest", readDiffusionParams=TRUE, interactive=interactive)
                 else
                     info <- lapply(dicomDirs, readDicomDirectory, method="divest", readDiffusionParams=TRUE, interactive=FALSE, subset=diffusion)
                 
