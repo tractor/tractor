@@ -90,12 +90,12 @@ runExperiment <- function ()
                 report(OL$Info, "Image #{outputPaths[i]} appears to be T1-weighted")
                 type <- "t1"
             }
-            else if (isTRUE(attributes$repetitionTime > 2000) && isTRUE(attributes$echoTime > 30))
+            else if (isTRUE(attributes$repetitionTime > 1500) && isTRUE(attributes$echoTime > 90))
             {
                 report(OL$Info, "Image #{outputPaths[i]} appears to be T2-weighted")
                 type <- "t2"
             }
-            else if (isTRUE(attributes$repetitionTime > 2000) && isTRUE(attributes$echoTime < 30))
+            else if (isTRUE(attributes$repetitionTime > 1500) && isTRUE(attributes$echoTime < 30))
             {
                 report(OL$Info, "Image #{outputPaths[i]} appears to be proton density-weighted")
                 type <- "pd"
