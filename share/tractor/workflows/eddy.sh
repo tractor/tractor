@@ -1,6 +1,6 @@
 #! /bin/bash -e
 
-#@command eddy
+#@command eddy_openmp, eddy
 #@prereq @fdt/acqparams.txt @fdt/index.txt
 
 ${FURROW} -z test -f @diffusion/rawdata || {
