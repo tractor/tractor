@@ -830,9 +830,9 @@ mergeMriImages <- function (..., bindDim = NULL, padTags = FALSE)
     if (!allEqual(lapply(images, xform), tolerance=1e-4))
         report(OL$Warning, "Merging images with nonequal xforms - this is probably unwise")
     
-    dimensionalities <- sapply(images, fx(x$getDimensionality()))
+    dimensionalities <- sapply(images, function(x) x$getDimensionality())
     lastDim <- max(dimensionalities, bindDim)
-    dimensions <- sapply(seq_along(images), fi(c(images[[i]]$getDimensions(), rep(1L,lastDim-dimensionalities[i]))))
+    dimensions <- sapply(seq_along(images), function(i) c(images[[i]]$getDimensions(), rep(1L,lastDim-dimensionalities[i])))
     
     commonDims <- apply(dimensions, 1, allEqual)
     assert(commonDims[1], "Images must have at least their first dimension in common")
@@ -861,7 +861,7 @@ mergeMriImages <- function (..., bindDim = NULL, padTags = FALSE)
             NULL
     }
     
-    tags <- lapply(seq_along(images), fi(c(list(.blocks=blockCounts[i]), images[[i]]$getTags())))
+    tags <- lapply(seq_along(images), function(i) c(list(.blocks=blockCounts[i]), images[[i]]$getTags()))
     tagNames <- Reduce(ifelse(padTags,union,intersect), lapply(tags, names))
     tags <- Reduce(function(x,y) {
         sapply(tagNames, function(n) {

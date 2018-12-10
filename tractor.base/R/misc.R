@@ -650,7 +650,7 @@ threadSafeTempFile <- function (pattern = "file")
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
-#' @rdname infix
+#' @name infix
 #' @export
 "%||%" <- function (X, Y)
 {
