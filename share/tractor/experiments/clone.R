@@ -1,5 +1,5 @@
 #@args session directory, target directory
-#@desc Create a clone of a session hierarchy under the specified target directory. The entire "tractor" subdirectory, but nothing else, will be copied across. This will anonymise the hierarchy if DICOM files are stored outside the "tractor" subdirectory and no Analyze/NIfTI/MGH volume headers contain private data. The operation is a move rather than a copy with DeleteOriginal:true. The target directory will be created if it doesn't exist.
+#@desc Create a clone of a session hierarchy under the specified target directory. The entire "tractor" subdirectory, but nothing else, will be copied across - or referred back to with a map file if Map:true is given. This will anonymise the hierarchy if DICOM files are stored outside the "tractor" subdirectory and no Analyze/NIfTI/MGH volume headers contain private data. The operation is a move rather than a copy with DeleteOriginal:true. The target directory will be created if it doesn't exist.
 #@interactive TRUE
 
 library(tractor.base)
