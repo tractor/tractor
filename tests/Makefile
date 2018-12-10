@@ -7,12 +7,13 @@ ECHO_N=/bin/echo -n
 DIFF=diff -b
 TIME=time -p
 
+# This TRACTOR_PATH is a bit of a kludge, pointing to the same directory from two different starting points (one for finding scripts, the other for workflows)
 COLUMNS=40
 TRACTOR=../bin/tractor -q -z -i -v0
 PLOUGH=../bin/plough
 FURROW=../bin/furrow -z
 TRACTOR_HOME=..
-TRACTOR_PATH=scripts
+TRACTOR_PATH=scripts:../../../scripts
 export COLUMNS TRACTOR PLOUGH FURROW TRACTOR_HOME TRACTOR_FILETYPE TRACTOR_PATH
 
 # Tests are run three levels down
@@ -30,7 +31,7 @@ fullclean: clean
 
 run-tests:
 	@mkdir -p tmp
-	@$(MAKE) `find . -name '*.sh' -print | sort | sed 's/\.sh$$/\.out/'` || exit 1
+	@$(MAKE) `find . -name '0*.sh' -print | sort | sed 's/\.sh$$/\.out/'` || exit 1
 	@rm -rf tmp/*
 	@echo "All tests completed"
 
@@ -38,7 +39,7 @@ debug-tests:
 	@$(MAKE) run-tests TRACTOR="$(TRACTOR) -d"
 
 create-tests:
-	@$(MAKE) `find . -name '*.sh' -print | sort | sed 's/\.sh$$/\.save/'` || exit 1
+	@$(MAKE) `find . -name '0*.sh' -print | sort | sed 's/\.sh$$/\.save/'` || exit 1
 
 %.out: %.sh
 	@$(ECHO_N) "`grep '#@desc' $< | sed 's/#@desc //'`... "

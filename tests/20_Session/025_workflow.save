@@ -1,0 +1,13 @@
+coreg.xfmb
+data.nii.gz
+directions.txt
+dti_FA.nii.gz
+dti_MD.nii.gz
+dti_eigvec1.nii.gz
+mask.nii.gz
+maskedb0.nii.gz
+parcellation.lut
+parcellation.nii.gz
+rawdata.nii.gz
+refb0-index.txt
+refb0.nii.gz
