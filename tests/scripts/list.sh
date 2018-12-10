@@ -2,4 +2,4 @@
 
 #@command ls
 
-${FURROW} ${TRACTOR_COMMAND} -1 @diffusion/
+${FURROW} ${TRACTOR_COMMAND} -1 @diffusion/ | sort
