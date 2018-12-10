@@ -42,7 +42,7 @@ runExperiment <- function ()
         
         sourceMap <- session$getMap()
         targetMap <- list()
-        for (place in names(sourceMap))
+        for (place in setdiff(names(sourceMap),"fdt"))
         {
             sourcePath <- expandFileName(sourceMap[[place]], base=session$getDirectory("root"))
             if (isTRUE(file.info(sourcePath)$isdir))

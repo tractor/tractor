@@ -12,11 +12,11 @@ wls_flag=""
 
 set -x
 ${FURROW} ${TRACTOR_COMMAND} -k @fdt/data -m @fdt/mask -r @fdt/bvecs -b @fdt/bvals -o @fdt/dti --sse "$wls_flag"
-${TRACTOR} image link @fdt/s0 @diffusion/s0
-${TRACTOR} image link @fdt/fa @diffusion/fa
-${TRACTOR} image link @fdt/md @diffusion/md
-${TRACTOR} image link @fdt/sse @diffusion/sse
+${TRACTOR} image mv @fdt/s0 @diffusion/s0
+${TRACTOR} image mv @fdt/fa @diffusion/fa
+${TRACTOR} image mv @fdt/md @diffusion/md
+${TRACTOR} image mv @fdt/sse @diffusion/sse
 for i in 1 2 3; do
-    ${TRACTOR} image link @fdt/"eigenvalue%$i" @diffusion/"eigenvalue%$i"
-    ${TRACTOR} image link @fdt/"eigenvector%$i" @diffusion/"eigenvector%$i"
+    ${TRACTOR} image mv @fdt/"eigenvalue%$i" @diffusion/"eigenvalue%$i"
+    ${TRACTOR} image mv @fdt/"eigenvector%$i" @diffusion/"eigenvector%$i"
 done
