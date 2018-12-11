@@ -11,7 +11,7 @@ COLUMNS=40
 TRACTOR_HOME=$(PWD)/..
 TRACTOR_PATH=$(TRACTOR_HOME)/tests/scripts
 TRACTOR=$(TRACTOR_HOME)/bin/tractor -q -z -i -v0
-PLOUGH=$(TRACTOR_HOME)/bin/plough
+PLOUGH=$(TRACTOR_HOME)/bin/plough -q -z -i -v0
 FURROW=$(TRACTOR_HOME)/bin/furrow -z
 export COLUMNS TRACTOR_HOME TRACTOR_PATH TRACTOR PLOUGH FURROW
 
@@ -47,7 +47,7 @@ create-tests:
 	@if test -f $*.skip && $(BASH) $*.skip 2>&1; then \
 	 	$(ECHO) "SKIPPED"; \
 	 else \
-	 	$(TIME) ( TRACTOR="$(TRACTOR) -w tmp/$*" FURROW="$(FURROW) -w tmp/$*" $(BASH) $< >$@ 2>&1 ) >tmp/$*/.time 2>&1 || ( $(ECHO) "FAIL"; cat $@; rm -f $@; exit 1 ); \
+	 	$(TIME) ( cd tmp/$* && $(BASH) "../../../$<" >"../../../$@" 2>&1 ) >tmp/$*/.time 2>&1 || ( $(ECHO) "FAIL"; cat $@; rm -f $@; exit 1 ); \
 		real=`grep '^real' tmp/$*/.time | sed 's/real *//'`; $(DIFF) $*.save $@ >tmp/$*/.diff 2>&1 && ( $(ECHO) "OK ($$real s)" ) || ( $(ECHO) "FAIL"; cat tmp/$*/.diff; rm -f $@; exit 1 ); \
 	 fi
 	@rm -rf tmp/$*
@@ -56,6 +56,6 @@ create-tests:
 	@$(ECHO_N) "Updating test output for $@... "
 	@mkdir -p tmp/$*
 	@test `grep -c "#@data" $<` -eq 0 || cp -R `grep '#@data' $< | sed 's/#@data //'` tmp/$*/
-	@TRACTOR="$(TRACTOR) -w tmp/$*" FURROW="$(FURROW) -w tmp/$*" $(BASH) $< >$@ 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
+	@cd tmp/$* && $(BASH) "../../../$<" >"../../../$@" 2>&1 || ( $(ECHO) ""; cat $@; exit 1 )
 	@$(ECHO) "done"
 	@rm -rf tmp/$*
