@@ -389,8 +389,8 @@ registerPathHandler <- function (regex, handler)
 expandFileName <- function (fileName, base = getwd())
 {
     # A leading slash, with (Windows) or without (Unix) a letter and colon, indicates an absolute path
-    fileName <- ifelse(fileName %~% "^([A-Za-z]:)?/", fileName, file.path(base,fileName))
-    fileName <- ore.subst("/\\.(?=/)", "", fileName, all=TRUE)
+    fileName <- ifelse(fileName %~% "^([A-Za-z]:[/\\\\]|/)", fileName, file.path(base,fileName))
+    fileName <- ore.subst("/\\.(?=[/\\\\])", "", fileName, all=TRUE)
     return (normalizePath(fileName, .Platform$file.sep, FALSE))
 }
 

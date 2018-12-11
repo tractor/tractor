@@ -21,6 +21,9 @@ test_that("file functions work", {
     expect_true(imageFileExists(temp))
     removeImageFiles(temp)
     expect_false(imageFileExists(temp))
+    
+    # Windows doesn't properly support symlinking
+    skip_on_os("windows")
     symlinkImageFiles(path, temp)
     expect_true(imageFileExists(temp))
 })
