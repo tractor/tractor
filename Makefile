@@ -117,4 +117,5 @@ check-md5:
 
 docker: uninstall distclean
 	@$(GIT) clean -Xf
+	@$(GIT) submodule foreach $(GIT) clean -Xf
 	@minor_version=`cat VERSION | sed 's/\..$$//'` && $(DOCKER) build -t "tractor:$$minor_version" .
