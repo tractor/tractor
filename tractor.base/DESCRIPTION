@@ -9,7 +9,7 @@ Suggests: mmand, loder, divest, jsonlite, yaml, testthat
 Enhances: oro.nifti
 Description: Functions for working with magnetic resonance images. Reading and
     writing of popular file formats (DICOM, Analyze, NIfTI-1, NIfTI-2, MGH);
-    interactive and noninteractive visualisation; flexible image manipulation;
+    interactive and non-interactive visualisation; flexible image manipulation;
     metadata and sparse image handling.
 Encoding: UTF-8
 LazyLoad: yes

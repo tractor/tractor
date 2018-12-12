@@ -57,7 +57,7 @@ vectorCrossProduct <- function (a, b)
 #' @export
 angleBetweenVectors <- function (v1, v2)
 {
-    if (is.na(v1) || is.na(v2))
+    if (any(is.na(v1) | is.na(v2)))
         return (NA)
     else
     {
