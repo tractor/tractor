@@ -14,9 +14,9 @@ runExperiment <- function ()
     minPosterior <- getConfigVariable("MinimumPosterior", 0, "numeric")
     mode <- getConfigVariable("Mode", NULL, "character", errorIfMissing=TRUE, c("location","posterior","ratio","null-posterior"), errorIfInvalid=TRUE)
     
-    reference <- getNTResource("reference", "pnt", list(tractName=tractName))
-    model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
-    results <- getNTResource("results", "pnt", list(resultsName=resultsName))
+    reference <- getNTResource("reference", list(tractName=tractName))
+    model <- getNTResource("model", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
+    results <- getNTResource("results", list(resultsName=resultsName))
     
     data <- readPntDataTable(datasetName)
     if (nArguments() > 0)

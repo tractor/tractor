@@ -13,7 +13,6 @@ runExperiment <- function ()
                   "Working with sessions"="^(clone|import|status|transform)$",
                   "Diffusion processing"="dpreproc|(^dir)|(^grad)|(^trk)|bedpost|tensor|track|plotcorrections",
                   "Structural processing"="^(deface|parcellate|freesurf)$",
-                  "Heuristic neighbourhood tractography (deprecated)"="^hnt-",
                   "Probabilistic neighbourhood tractography"="^pnt-",
                   "Graph and network analysis"="^graph")
     

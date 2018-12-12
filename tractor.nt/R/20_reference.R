@@ -1,10 +1,8 @@
-setClassUnion("Tract", c("FieldTract","BSplineTract"))
-
 setClassUnion("MriSessionOrNull", c("MriSession","NULL"))
 
 setOldClass("tractOptions")
 
-ReferenceTract <- setRefClass("ReferenceTract", contains="SerialisableObject", fields=list(tract="Tract",standardSeed="numeric",seedUnit="character",session="MriSessionOrNull",options="tractOptions"), methods=list(
+ReferenceTract <- setRefClass("ReferenceTract", contains="SerialisableObject", fields=list(tract="BSplineTract",standardSeed="numeric",seedUnit="character",session="MriSessionOrNull",options="tractOptions"), methods=list(
     initialize = function (tract = nilObject(), standardSeed = NULL, seedUnit = "", session = NULL, options = NULL)
     {
         if (is.null(options))
@@ -67,16 +65,14 @@ newReferenceTractWithTract <- function (tract, standardSeed = NULL, nativeSeed =
 {
     if (is.null(session) && is.null(standardSeed))
         report(OL$Error, "A standard space seed point must be given if the reference tract is not associated with a session")
-    if (!is(tract,"FieldTract") && !is(tract,"BSplineTract"))
-        report(OL$Error, "Only field tracts and B-spline tracts can currently be used as references")
+    if (!is(tract,"BSplineTract"))
+        report(OL$Error, "Only B-spline tracts can currently be used as references")
     
     seedUnit <- match.arg(seedUnit)
     
     if (is.null(standardSeed))
     {
-        if (is(tract, "FieldTract"))
-            nativeSeed <- tract$getSeedPoint()
-        else if (is.null(nativeSeed))
+        if (is.null(nativeSeed))
             report(OL$Error, "The native space point associated with the tract must be specified")
         
         transform <- session$getTransformation("diffusion", "mni")

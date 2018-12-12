@@ -27,7 +27,7 @@ runExperiment <- function ()
     returnValue <- referenceSplineTractWithOptions(options, session, seed, nStreamlines=nStreamlines, maxAngle=maxAngle)
     
     reference <- newReferenceTractWithTract(returnValue$spline, nativeSeed=seed, session=session, options=returnValue$options)
-    writeNTResource(reference, "reference", "pnt", list(tractName=tractName))
+    writeNTResource(reference, "reference", list(tractName=tractName))
     
     invisible (returnValue$options)
 }
