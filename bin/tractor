@@ -30,7 +30,7 @@ expect_available=$?
 usage()
 {
     echo "tractor (program v3.3.0, distribution v$distribution_version)"
-    echo "Run a TractoR experiment script in R and report the results"
+    echo "Run a TractoR experiment script in R"
     echo
     echo "Usage: tractor [-ldzqfbi] [-v level] [-a architecture] [-w working_dir]"
     echo "               [-c config_file] script [arg1 [arg2 ...]]"
