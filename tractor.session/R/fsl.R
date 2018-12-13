@@ -217,6 +217,8 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
 
 runDtifitWithSession <- function (session, weightedLeastSquares = FALSE)
 {
+    session$getDirectory("fdt", createIfMissing=TRUE)
+    session$updateDiffusionScheme()
     runWorkflow("dtifit", session, WeightedLeastSquares=as.integer(weightedLeastSquares))
 }
 
