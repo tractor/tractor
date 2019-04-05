@@ -77,16 +77,16 @@ updateGradientCacheFromSession <- function (session, force = FALSE)
     return (TRUE)
 }
 
-flipGradientVectorsForSession <- function (session, axes)
+flipGradientVectorsForSession <- function (session, axes, unrotated = FALSE)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    scheme <- session$getDiffusionScheme()
+    scheme <- session$getDiffusionScheme(unrotated=unrotated)
     directions <- scheme$getGradientDirections()
     directions[,axes] <- (-directions[,axes])
     scheme <- SimpleDiffusionScheme$new(scheme$getBValues(), directions)
-    session$updateDiffusionScheme(scheme)
+    session$updateDiffusionScheme(scheme, unrotated=unrotated)
 }
 
 rotateGradientVectorsForSession <- function (session)
