@@ -67,7 +67,7 @@ updateGradientCacheFromSession <- function (session, force = FALSE)
         }
     }
     
-    scheme <- session$getDiffusionScheme()
+    scheme <- session$getDiffusionScheme(unrotated=TRUE)
     gradientSet <- cbind(scheme$getGradientDirections(), scheme$getBValues())
     write.table(gradientSet, file.path(cacheDirectory,paste("set",number,".txt",sep="")), row.names=FALSE, col.names=FALSE)
     
