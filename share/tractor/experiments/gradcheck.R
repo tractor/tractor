@@ -16,12 +16,11 @@ runExperiment <- function ()
     
     usingRawData <- FALSE
     
-    scheme <- session$getDiffusionScheme()
-
     report(OL$Info, "Reading data")
     if (session$imageExists("data", "diffusion"))
     {
         dataImage <- session$getImageByType("data", "diffusion")
+        scheme <- session$getDiffusionScheme(unrotated=FALSE)
         b0Image <- session$getImageByType("maskedb0", "diffusion")
         maskImage <- session$getImageByType("mask", "diffusion")
     }
@@ -30,6 +29,7 @@ runExperiment <- function ()
         report(OL$Warning, "Processed data unavailable - raw data will be modified instead")
         usingRawData <- TRUE
         dataImage <- session$getImageByType("rawdata", "diffusion")
+        scheme <- session$getDiffusionScheme(unrotated=TRUE)
         b0Image <- asMriImage(dataImage[,,,which.min(scheme$getBValues())], dataImage)
         maskImage <- b0Image$copy()$fill(1L)
     }
