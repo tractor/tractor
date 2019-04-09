@@ -14,10 +14,25 @@ runExperiment <- function ()
     lineWidth <- getConfigVariable("LineWidth", 1.5)
     updateCache <- getConfigVariable("UpdateGradientCache", FALSE)
     
+    usingRawData <- FALSE
+    
     report(OL$Info, "Reading data")
-    dataImage <- session$getImageByType("data", "diffusion")
-    b0Image <- session$getImageByType("maskedb0", "diffusion")
-    maskImage <- session$getImageByType("mask", "diffusion")
+    if (session$imageExists("data", "diffusion"))
+    {
+        dataImage <- session$getImageByType("data", "diffusion")
+        scheme <- session$getDiffusionScheme(unrotated=FALSE)
+        b0Image <- session$getImageByType("maskedb0", "diffusion")
+        maskImage <- session$getImageByType("mask", "diffusion")
+    }
+    else
+    {
+        report(OL$Warning, "Processed data unavailable - raw data will be modified instead")
+        usingRawData <- TRUE
+        dataImage <- session$getImageByType("rawdata", "diffusion")
+        scheme <- session$getDiffusionScheme(unrotated=TRUE)
+        b0Image <- asMriImage(dataImage[,,,which.min(scheme$getBValues())], dataImage)
+        maskImage <- b0Image$copy()$fill(1L)
+    }
     biggestLoc <- sapply(1:3, function (i) which.max(apply(maskImage$getData(),i,sum)))
     
     if (useInternalViewer)
@@ -26,8 +41,6 @@ runExperiment <- function ()
         {
             if (useOrthographic)
                 layout(matrix(1:4,nrow=2,byrow=TRUE))
-
-            scheme <- session$getDiffusionScheme()
 
             for (i in 1:3)
             {
@@ -58,16 +71,17 @@ runExperiment <- function ()
                 segments((d1-1)/(dims[1]-1)-eigenvectors[1,]/(2*dims[1]), (d2-1)/(dims[2]-1)-eigenvectors[2,]/(2*dims[2]), (d1-1)/(dims[1]-1)+eigenvectors[1,]/(2*dims[1]), (d2-1)/(dims[2]-1)+eigenvectors[2,]/(2*dims[2]), lwd=lineWidth, col=col)
             }
 
-            repeat
+            if (usingRawData)
+                done <- ask("Are the principal directions appropriate? [yn]", valid=c("y","n"))
+            else
             {
                 done <- ask("Are the principal directions appropriate? [yn; s to show full images in fslview]", valid=c("y","n","s"))
                 if (done == "s")
                 {
                     runDtifitWithSession(session)
                     showImagesInViewer(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1), viewer="fslview")
+                    done <- ask("Are the principal directions appropriate? [yn]", valid=c("y","n"))
                 }
-                else
-                    break
             }
 
             if (done == "y")
@@ -78,11 +92,11 @@ runExperiment <- function ()
                 flipAxes <- which(letters[24:26] %in% splitAndConvertString(ans, ",", fixed=TRUE))
 
                 if (length(flipAxes) > 0)
-                    flipGradientVectorsForSession(session, flipAxes)
+                    flipGradientVectorsForSession(session, flipAxes, unrotated=usingRawData)
             }
         }
     }
-    else
+    else if (!usingRawData)
     {
         repeat
         {

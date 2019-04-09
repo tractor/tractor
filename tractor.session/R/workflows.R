@@ -61,6 +61,7 @@ runWorkflow <- function (name, session, ...)
     env <- paste(names(env), env, sep="=")
     
     report(OL$Verbose, "Running workflow \"#{name}\"...")
+    startTime <- Sys.time()
     
     # If the workflow file is executable, run it directly; otherwise call bash
     if (file.access(workflowFile, 1L) == 0L)
@@ -70,6 +71,11 @@ runWorkflow <- function (name, session, ...)
     
     if (returnValue != 0)
         report(OL$Error, "Workflow \"#{name}\" failed with error code #{returnValue}")
+    else
+    {
+        runTime <- Sys.time() - startTime
+        report(OL$Verbose, "Workflow completed in #{runTime} #{units(runTime)}", round=2)
+    }
     
     invisible (returnValue)
 }

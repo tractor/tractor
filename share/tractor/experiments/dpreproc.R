@@ -143,7 +143,7 @@ runExperiment <- function ()
                 {
                     report(OL$Info, "Gradient cache hit - using stored gradient scheme")
                     scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
-                    session$updateDiffusionScheme(scheme)
+                    session$updateDiffusionScheme(scheme, unrotated=TRUE)
                 }
             }
             

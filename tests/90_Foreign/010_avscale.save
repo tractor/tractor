@@ -9,13 +9,13 @@ Rotation & Translation Matrix:
 0.016571 -0.003086 0.999858 -3.157293 
 0.000000 0.000000 0.000000 1.000000 
 
-Rotation Angles (x,y,z) [rads] =    0.0032   0.0165   0.0077
+Rotation Angles (x,y,z) [rads] = 0.003214 0.016547 0.007683 
 
-Translations (x,y,z) [mm] =   -0.7001   1.1786  -3.1573
+Translations (x,y,z) [mm] = -0.700066 1.178597 -3.157293 
 
-Scales (x,y,z) =    1.0083   1.0118   1.0294
+Scales (x,y,z) = 1.008339 1.011765 1.029363 
 
-Skews (xy,xz,yz) =   -0.0020  -0.0023  -0.0120
+Skews (xy,xz,yz) = -0.002046 -0.002328 -0.012041 
 
 Average scaling = 1.016489
 

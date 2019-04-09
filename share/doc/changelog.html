@@ -44,6 +44,16 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="331-2019-04-08">3.3.1 (2019-04-08)</h2>
+
+<ul>
+<li>The <code>gradcheck</code> script will now work with raw diffusion data, if there is no processed data in the specified session directory.</li>
+<li>The gradient cache now explicitly only stores the unrotated gradient vectors.</li>
+<li>FSL-compatible <code>bvals</code> and <code>bvecs</code> files should now always be created before the <code>dtifit</code> workflow is run.</li>
+<li>Workflow run-times are now reported.</li>
+<li>The self-documentation function called by <code>tractor -o</code> now works properly when the absolute path to a script is provided.</li>
+</ul>
+
 <h2 id="330-2018-12-12">3.3.0 (2018-12-12)</h2>
 
 <ul>

@@ -84,7 +84,7 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputL
 describeExperiment <- function (scriptFile, fill = FALSE)
 {
     inputLines <- readLines(scriptFile)
-    outputLines <- paste("OPTIONS for script", scriptFile, "(* required)", sep=" ")
+    outputLines <- es("OPTIONS for script #{scriptFile} (* required)")
     
     getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL, deprecated = FALSE, multiple = FALSE)
     {
@@ -133,11 +133,10 @@ describeExperiment <- function (scriptFile, fill = FALSE)
 findExperiment <- function (exptName)
 {
     exptFile <- ensureFileSuffix(exptName, "R")    
-    pathDirs <- c(".",
-                  file.path(Sys.getenv("HOME"), ".tractor"),
+    pathDirs <- c(file.path(Sys.getenv("HOME"), ".tractor"),
                   splitAndConvertString(Sys.getenv("TRACTOR_PATH"), ":", fixed=TRUE),
                   file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "experiments"))
-    possibleLocations <- file.path(pathDirs, exptFile)
+    possibleLocations <- c(expandFileName(exptFile), file.path(pathDirs,exptFile))
     filesExist <- file.exists(possibleLocations)
     
     if (sum(filesExist) == 0)
