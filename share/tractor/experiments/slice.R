@@ -21,7 +21,7 @@ runExperiment <- function ()
     x <- getConfigVariable("X", NULL, "character")
     y <- getConfigVariable("Y", NULL, "character")
     z <- getConfigVariable("Z", NULL, "character")
-    clearance <- getConfigVariable("Clearance", NULL, "integer")
+    clearance <- getConfigVariable("Clearance", NULL, "character")
     nColumns <- getConfigVariable("Columns", NULL, "integer")
     windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
     colourScales <- getConfigVariable("ColourScale", "heat")
@@ -55,9 +55,11 @@ runExperiment <- function ()
     if (!is.null(clearance))
     {
         report(OL$Info, "Trimming images with #{clearance}-voxel clearance")
+        clearance <- splitAndConvertString(clearance, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
         images[[1]] <- trimMriImage(images[[1]], clearance)
         for (i in seq_len(length(images)-1))
             images[[i+1]] <- trimMriImage(images[[i+1]], indices=attr(images[[1]],"indices"))
+        dims <- sapply(images, dim, simplify="array")
     }
     
     resolveLocs <- function (axis, locs)
@@ -71,10 +73,11 @@ runExperiment <- function ()
         else if (locs %~% "(\\d+)s")
             result <- seq(1, dims[axis,1], as.integer(ore.lastmatch()[,1]))
         else
+        {
             result <- splitAndConvertString(locs, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
-        
-        if (!is.null(attr(images[[1]],"indices")))
-            result <- na.omit(match(result, attr(images[[1]],"indices")[[axis]]))
+            if (!is.null(attr(images[[1]],"indices")))
+                result <- na.omit(match(result, attr(images[[1]],"indices")[[axis]]))
+        }
         
         report(OL$Verbose, "Using #{LETTERS[24:26][axis]} slice(s) #{implode(as.integer(result),', ',' and ',ranges=TRUE)}")
         
