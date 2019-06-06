@@ -457,7 +457,7 @@ readDicomDirectory <- function (dicomDir, method = c("internal","divest"), readD
         {
             # Invert Y direction again
             volumeBVectors[2,] <- -volumeBVectors[2,]
-            tags <- list(bValues=volumeBValues, bVectors=volumeBVectors)
+            tags <- list(bValues=volumeBValues, bVectors=t(volumeBVectors))
         }
         
         # Create the final image
