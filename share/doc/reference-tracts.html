@@ -42,15 +42,15 @@
 
 <h1>Reference tracts</h1>
 
-<p>Reference tracts represent prior information about tract trajectories, which are used by neighbourhood tractography methods to select corresponding pathways in diffusion data sets. It should be noted that <a href="HNT-tutorial.html">heuristic</a> and <a href="PNT-tutorial.html">probabilistic</a> neighbourhood tractography use different forms of reference tract, although if you plan to <a href="#creating-custom-reference-tracts">create a custom reference</a>, the process is nearly identical for the two cases.</p>
+<p>Reference tracts represent prior information about tract trajectories, which are used by probabilistic neighbourhood tractography to select corresponding pathways in diffusion data sets.</p>
 
 <h2 id="using-standard-reference-tracts">Using standard reference tracts</h2>
 
-<p>Since version 1.0.0, TractoR has been supplied with a set of standard reference tracts for both heuristic and probabilistic neighbourhood tractography (NT). These reference tracts are based on a white matter tract atlas kindly made available by Dr Susumu Mori&rsquo;s lab at Johns Hopkins University. Further information about the atlas can be found at <a href="http://cmrm.med.jhmi.edu/">http://cmrm.med.jhmi.edu/</a> and in <a href="#references">Ref. (1)</a> below. If you use these reference tracts in your work, please cite <a href="#references">Ref. (2)</a> below.</p>
+<p>Since version 1.0.0, TractoR has been supplied with a set of standard reference tracts for probabilistic neighbourhood tractography (PNT). These reference tracts are based on a white matter tract atlas kindly made available by Dr Susumu Mori&rsquo;s lab at Johns Hopkins University. Further information about the atlas can be found at <a href="http://cmrm.med.jhmi.edu/">http://cmrm.med.jhmi.edu/</a> and in <a href="#references">Ref. (1)</a> below. If you use these reference tracts in your work, please cite <a href="#references">Ref. (2)</a> below.</p>
 
 <p>In version 3.1.0, a new set of reference tracts was added, based on manual selection of tracts from 80 healthy adults aged 25–64. These will be used if the <code>TRACTOR_REFTRACT_SET</code> environment variable is set to <code>miua2017</code>, and this is recommended for new studies. If you do use these reference tracts in your work, please cite <a href="#references">Ref. (3)</a> below.</p>
 
-<p>Using these standard references is by far the easiest way to start using NT. TractoR &ldquo;knows&rdquo; where to find them, so you need only to specify the tract name when running the <code>hnt-eval</code> or <code>pnt-data</code> experiment scripts. Available tract names as of TractoR 2.1.0 are:</p>
+<p>Using these standard references is by far the easiest way to start using PNT. TractoR &ldquo;knows&rdquo; where to find them, so you need only to specify the tract name when running the <code>pnt-data</code> experiment script. Available tract names as of TractoR 2.1.0 are:</p>
 
 <table><thead>
 <tr>
@@ -100,12 +100,12 @@
 
 <p>If you wish to segment a tract for which there is not yet a standard reference tract, or if your data set is somehow unusual so that the standard reference tracts are inappropriate, you need to create a custom reference tract from one of your scans. Once created, the reference tract may be reused for later studies.</p>
 
-<p>TractoR scripts which are likely to be useful for creating a custom reference tract include <code>mkroi</code> (to create a region of interest), <code>track</code> (to generate a series of tract images, from which to choose a reference tract), and <code>hnt-ref</code> or <code>pnt-ref</code> (to create reference tracts for use with HNT or PNT, respectively).</p>
+<p>TractoR scripts which are likely to be useful for creating a custom reference tract include <code>mkroi</code> (to create a region of interest), <code>track</code> (to generate a series of tract images, from which to choose a reference tract), and <code>pnt-ref</code> (to create reference tracts for use with PNT).</p>
 
 <p>Let&rsquo;s assume that we wish to create a reference tract representing the corpus callosum genu. We begin by creating a directory for this experiment, and changing to this directory. For example,</p>
 
-<pre><code class="language-bash line-numbers">mkdir /expts/hnt-genu
-cd /expts/hnt-genu
+<pre><code class="language-bash line-numbers">mkdir /expts/pnt-genu
+cd /expts/pnt-genu
 </code></pre>
 
 <p>Next we observe that the point (99,163,78) appears to be within the genu in an MNI standard space brain volume. A suitable location such as this can be chosen using <code>tractor view</code> or <a href="http://www.fmrib.ox.ac.uk/fsl/fslview/index.html">FSL&rsquo;s data viewer</a>. We see the location shown below:</p>
@@ -139,12 +139,12 @@ cd /expts/hnt-genu
 
 <p>This process, or any other, can be used and repeated until a seed point has been found that produces an acceptable segmentation of the genu for use as a reference tract. The important characteristics are shape and length, so particular care should be taken to ensure that these are appropriate in the reference tract.</p>
 
-<p>Given a chosen seed point, the reference tract can be generated in the appropriate form using the <code>hnt-ref</code> or <code>pnt-ref</code> scripts, depending on whether you are planning to use heuristic or probabilistic NT. For example,</p>
+<p>Given a chosen seed point, the reference tract can be generated in the appropriate form using the <code>pnt-ref</code> script. For example,</p>
 
-<pre><code class="language-bash">tractor hnt-ref /data/refsubject 47,60,32 TractName:genu
+<pre><code class="language-bash">tractor pnt-ref /data/refsubject 47,60,32 TractName:genu
 </code></pre>
 
-<p>This will create a file called genu_ref.Rdata, which contains information about the reference tract for use in the testing phase. The syntax for <code>pnt-ref</code> is identical; only the script name needs to be changed.</p>
+<p>This will create a file called genu_ref.Rdata, which contains information about the reference tract for use in the testing phase.</p>
 
 <h2 id="references">References</h2>
 

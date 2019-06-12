@@ -1,5 +1,5 @@
 #@args image file(s)
-#@desc Create one or more composited slice images from the specified Analyze/NIfTI/MGH volumes. At least one of the X, Y and Z options must be specified, giving the location(s) on the appropriate axis where the slice should be taken: values for these variables can be a one or more literal integers, comma separated, or an integer followed by "s" for every nth slice, or "all" for all slices, or "max" for the slice containing the maximum total image intensity. All slices will be tiled into one big image unless Separate:true is given.
+#@desc Create one or more composited slice images from the specified Analyze/NIfTI/MGH volumes. At least one of the X, Y and Z options must be specified, giving the location(s) on the appropriate axis where the slice should be taken: values for these variables can be a one or more literal integers, comma separated, or an integer followed by "s" for every nth slice, or "all" for all slices, "max" for the slice containing the maximum total image intensity (in the topmost image), or "peak" for the peak intensity location. All slices will be tiled into one big image unless Separate:true is given.
 #@example # Overlay a tract visitation map on the corresponding FA map
 #@example tractor slice session@FA tract X:max Y:max Z:max Alpha:log
 #@example # A contact-sheet style version
@@ -21,7 +21,7 @@ runExperiment <- function ()
     x <- getConfigVariable("X", NULL, "character")
     y <- getConfigVariable("Y", NULL, "character")
     z <- getConfigVariable("Z", NULL, "character")
-    clearance <- getConfigVariable("Clearance", NULL, "integer")
+    clearance <- getConfigVariable("Clearance", NULL, "character")
     nColumns <- getConfigVariable("Columns", NULL, "integer")
     windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
     colourScales <- getConfigVariable("ColourScale", "heat")
@@ -55,9 +55,11 @@ runExperiment <- function ()
     if (!is.null(clearance))
     {
         report(OL$Info, "Trimming images with #{clearance}-voxel clearance")
+        clearance <- splitAndConvertString(clearance, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
         images[[1]] <- trimMriImage(images[[1]], clearance)
         for (i in seq_len(length(images)-1))
             images[[i+1]] <- trimMriImage(images[[i+1]], indices=attr(images[[1]],"indices"))
+        dims <- sapply(images, dim, simplify="array")
     }
     
     resolveLocs <- function (axis, locs)
@@ -68,13 +70,16 @@ runExperiment <- function ()
             result <- seq_len(dims[axis,1])
         else if (locs == "max")
             result <- which.max(images[[length(images)]]$apply(axis,sum,na.rm=TRUE))
+        else if (locs == "peak")
+            result <- which.max(images[[length(images)]]$apply(axis,max,na.rm=TRUE))
         else if (locs %~% "(\\d+)s")
             result <- seq(1, dims[axis,1], as.integer(ore.lastmatch()[,1]))
         else
+        {
             result <- splitAndConvertString(locs, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
-        
-        if (!is.null(attr(images[[1]],"indices")))
-            result <- na.omit(match(result, attr(images[[1]],"indices")[[axis]]))
+            if (!is.null(attr(images[[1]],"indices")))
+                result <- na.omit(match(result, attr(images[[1]],"indices")[[axis]]))
+        }
         
         report(OL$Verbose, "Using #{LETTERS[24:26][axis]} slice(s) #{implode(as.integer(result),', ',' and ',ranges=TRUE)}")
         

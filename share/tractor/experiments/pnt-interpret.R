@@ -41,7 +41,6 @@ runExperiment <- function ()
         }
         
         report(OL$Info, "Current session is ", sessionList[i])
-        currentSession <- attachMriSession(sessionList[i])
         currentData <- subset(data, sessionPath==sessionList[i])
         currentSeed <- round(apply(currentData[,c("x","y","z")], 2, median))
         currentPosteriors <- results$getTractPosteriors(attr(sessionList,"indices")[i])
@@ -82,7 +81,7 @@ runExperiment <- function ()
                 cat("NA\n")
             else
             {
-                likelihoodIndex <- ((i-1)*length(currentPosteriors)) + indices[j]
+                likelihoodIndex <- ((attr(sessionList,"indices")[i]-1)*length(currentPosteriors)) + indices[j]
                 value <- switch(mode, location=implode(seeds[j,],sep=","),
                                       posterior=currentPosteriors[indices[j]],
                                       ratio=(logLikelihoods[likelihoodIndex]-refLogLikelihood))
