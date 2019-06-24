@@ -156,9 +156,29 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         invisible(.self)
     },
     
-    setEdgeWeights = function (newWeights)
+    setEdgeWeights = function (expr, vertices = c("ignore","sum","mean","max","min"))
     {
-        if (length(newWeights) == 1)
+        attribs <- edgeAttributes
+        
+        vertices <- match.arg(vertices)
+        if (vertices != "ignore")
+        {
+            vattribs <- lapply(vertexAttributes, function(attrib) {
+                values <- attrib[as.vector(edges)]
+                if (is.numeric(values))
+                {
+                    dim(values) <- dim(edges)
+                    apply(values, 1, vertices, na.rm=TRUE)
+                }
+            })
+            names(vattribs) <- names(vertexAttributes)
+            attribs <- deduplicate(c(attribs, vattribs))
+        }
+        
+        newWeights <- eval(substitute(expr), attribs, parent.frame())
+        if (is.null(newWeights))
+            newWeights <- rep(1, .self$nEdges())
+        else if (length(newWeights) == 1)
             newWeights <- rep(newWeights, .self$nEdges())
         else if (length(newWeights) != .self$nEdges())
         {
