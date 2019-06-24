@@ -423,7 +423,10 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radiu
         colours <- col[colourIndices]
     }
     else
+    {
         colours <- rep(col, length(weights))
+        colours[is.na(weights)] <- NA
+    }
     
     if (useAlpha)
     {
@@ -488,9 +491,9 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radiu
     segments(xLocs[from], yLocs[from], xLocs[to], yLocs[to], lwd=lwd, col=colours)
     symbols(xLocs, yLocs, circles=rep(radius,nActiveVertices), inches=FALSE, col="grey50", lwd=lwd, bg=fill, add=TRUE)
     
-    if (useNames)
+    if (cex > 0 && useNames)
         text(xLocs, yLocs, x$getVertexAttributes("name")[activeVertices], col="grey40", cex=cex)
-    else
+    else if (cex > 0)
         text(xLocs, yLocs, as.character(activeVertices), col="grey40", cex=cex)
     
     if (!add)
