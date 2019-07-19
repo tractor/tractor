@@ -184,12 +184,12 @@ runExperiment <- function ()
             zeroes <- which(bValues == minBValue)
             if (length(zeroes) == 1)
             {
-                choice <- zeroes
+                choice <- 1
                 report(OL$Info, "Volume #{choice} is the only T2-weighted (b=#{minBValue}) volume in the data set")
             }
             else if (!interactive)
             {
-                choice <- zeroes[1]
+                choice <- 1
                 report(OL$Info, "Using volume #{choice} with b=#{minBValue} as the reference volume")
             }
             else
