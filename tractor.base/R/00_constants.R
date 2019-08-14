@@ -45,9 +45,9 @@
     toScale="^(Echo|Repetition)Time$")
 
 .FileTypes <- list(
-    typeNames=c(       "ANALYZE",  "NIFTI",    "NIFTI_PAIR",   "ANALYZE_GZ",   "NIFTI_GZ", "NIFTI_PAIR_GZ", "MGH",  "MGH_GZ"),
-    formatNames=c(     "Analyze",  "Nifti",    "Nifti",        "Analyze",      "Nifti",    "Nifti",         "Mgh",  "Mgh"),
-    singleFile=c(       NA,         TRUE,       FALSE,          NA,             TRUE,       FALSE,           NA,     NA),
-    gzipped=c(          FALSE,      FALSE,      FALSE,          TRUE,           TRUE,       TRUE,            FALSE,  TRUE),
-    headerSuffixes=c(  "hdr",      "nii",      "hdr",          "hdr.gz",       "nii.gz",   "hdr.gz",        "mgh",  "mgz"),
-    imageSuffixes=c(   "img",      "nii",      "img",          "img.gz",       "nii.gz",   "img.gz",        "mgh",  "mgz"))
+    typeNames=c(     "ANALYZE", "NIFTI", "NIFTI_PAIR", "ANALYZE_GZ", "NIFTI_GZ", "NIFTI_PAIR_GZ", "MGH", "MGH_GZ", "MRTRIX", "MRTRIX_GZ"),
+    formatNames=c(   "Analyze", "Nifti", "Nifti",      "Analyze",    "Nifti",    "Nifti",         "Mgh", "Mgh",    "Mrtrix", "Mrtrix"),
+    singleFile=c(     NA,        TRUE,    FALSE,        NA,           TRUE,       FALSE,           NA,    NA,       NA,       NA),
+    gzipped=c(        FALSE,     FALSE,   FALSE,        TRUE,         TRUE,       TRUE,            FALSE, TRUE,     FALSE,    TRUE),
+    headerSuffixes=c("hdr",     "nii",   "hdr",        "hdr.gz",     "nii.gz",   "hdr.gz",        "mgh", "mgz",    "mif",    "mif.gz"),
+    imageSuffixes=c( "img",     "nii",   "img",        "img.gz",     "nii.gz",   "img.gz",        "mgh", "mgz",    "mif",    "mif.gz"))
