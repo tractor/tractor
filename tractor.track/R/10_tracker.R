@@ -1,8 +1,8 @@
 # NB: The underlying C++ class is not thread-safe, so a Tracker object should not be run multiple times concurrently
 Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="character",targetInfo="list",options="list",filters="list"), methods=list(
-    initialize = function (model = nilModel(), maskPath = character(0), targetInfo = list(), curvatureThreshold = 0.2, useLoopcheck = TRUE, maxSteps = 2000, stepLength = 0.5, rightwardsVector = NULL, ...)
+    initialize = function (model = nilModel(), maskPath = character(0), targetInfo = list(), curvatureThreshold = 0.2, useLoopcheck = TRUE, maxSteps = 2000, stepLength = 0.5, rightwardsVector = NULL, oneWay = FALSE, ...)
     {
-        object <- initFields(model=model, options=list(curvatureThreshold=curvatureThreshold, useLoopcheck=useLoopcheck, maxSteps=maxSteps, stepLength=stepLength, rightwardsVector=rightwardsVector), filters=list(minLength=0, maxLength=Inf, minTargetHits=0L))
+        object <- initFields(model=model, options=list(curvatureThreshold=curvatureThreshold, useLoopcheck=useLoopcheck, maxSteps=maxSteps, stepLength=stepLength, rightwardsVector=rightwardsVector, oneWay=oneWay), filters=list(minLength=0, maxLength=Inf, minTargetHits=0L))
         
         object$setMask(maskPath)
         object$setTargets(targetInfo)
@@ -92,10 +92,7 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         
         seeds <- promote(seeds, byrow=TRUE)
         
-        startTime <- Sys.time()
-        nRetained <- .Call("track", model$getPointer(), seeds, as.integer(count), maskPath, .self$targetInfo, options$rightwardsVector, as.integer(options$maxSteps), as.double(options$stepLength), as.double(options$curvatureThreshold), isTRUE(options$useLoopcheck), isTRUE(terminateAtTargets), as.integer(filters$minTargetHits), as.numeric(filters$minLength), as.numeric(filters$maxLength), isTRUE(jitter), mapPath, streamlinePath, medianPath, profileFun, 0L, PACKAGE="tractor.track")
-        endTime <- Sys.time()
-        report(OL$Info, "Tracking completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
+        nRetained <- .Call("track", model$getPointer(), seeds, as.integer(count), maskPath, .self$targetInfo, options$rightwardsVector, as.integer(options$maxSteps), as.double(options$stepLength), as.double(options$curvatureThreshold), isTRUE(options$useLoopcheck), isTRUE(options$oneWay), isTRUE(terminateAtTargets), as.integer(filters$minTargetHits), as.numeric(filters$minLength), as.numeric(filters$maxLength), isTRUE(jitter), mapPath, streamlinePath, medianPath, profileFun, 0L, PACKAGE="tractor.track")
         
         if (nRetained < nrow(seeds) * count)
             report(OL$Info, "#{nRetained} streamlines (#{signif(nRetained/(nrow(seeds)*count)*100,3)}%) were retained after filtering")

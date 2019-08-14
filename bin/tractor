@@ -29,8 +29,8 @@ expect_available=$?
 
 usage()
 {
-    echo "tractor (program v3.1.0, distribution v$distribution_version)"
-    echo "Run a TractoR experiment script in R and report the results"
+    echo "tractor (program v3.3.0, distribution v$distribution_version)"
+    echo "Run a TractoR experiment script in R"
     echo
     echo "Usage: tractor [-ldzqfbi] [-v level] [-a architecture] [-w working_dir]"
     echo "               [-c config_file] script [arg1 [arg2 ...]]"
@@ -70,41 +70,43 @@ usage()
     echo
 }
 
-set -- `getopt "hldozqfbiv:p:a:w:c:" "$@"` || {
-    usage 1>&2
-    exit
-}
-
-[ -z "${TRACTOR_HOME}" ] && {
+if [ -z "${TRACTOR_HOME}" ]; then
     echo "Note: The TRACTOR_HOME environment variable is not set; it will be guessed"
-    export TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
-}
+    TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
+else
+    # Replace the specified path with a fully-qualified version
+    TRACTOR_HOME=`unset CDPATH; cd "$TRACTOR_HOME" && pwd`
+fi
+export TRACTOR_HOME
 
 [ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
 
 supress_config=`echo "$@" | grep -c '\-i' -`
 [ $supress_config -eq 0 -a -f "$HOME/.tractor/config" ] && source "$HOME/.tractor/config"
 
-while [ $# -gt 0 ]
-    do
-    case "$1" in
-        -h) usage; status=0; exit ;;
-        -l) keep_log=1 ;;
-        -d) verbose_level=3 ;;
-        -o) show_options=1 ;;
-        -z) write_history=0 ;;
-        -q) quiet=1 ;;
-        -f) profile_performance=1; command_flags="-f ${command_flags}" ;;
-        -b) batch_mode=1 ;;
-        -v) shift; verbose_level=$1 ;;
-        -p) shift; parallelisation_factor=$1; echo "The '-p' option is deprecated; use \"plough\" instead" 1>&2 ;;
-        -a) shift; architecture=$1 ;;
-        -w) shift; working_dir=`echo $1 | sed 's/\/$//'` ;;
-        -c) shift; config_file="$config_file:$1" ;;
-        --) shift; break ;;
+while getopts "hldozqfbiv:p:a:w:c:" opt; do
+    TRACTOR_FLAGS="$TRACTOR_FLAGS -$opt $OPTARG"
+    case "$opt" in
+        h) usage; status=0; exit ;;
+        l) keep_log=1 ;;
+        d) verbose_level=3 ;;
+        o) show_options=1 ;;
+        z) write_history=0 ;;
+        q) quiet=1 ;;
+        f) profile_performance=1; command_flags="-f ${command_flags}" ;;
+        b) batch_mode=1 ;;
+        i) supress_config=1 ;;
+        v) verbose_level=$OPTARG ;;
+        p) parallelisation_factor=$OPTARG; echo "The '-p' option is deprecated; use \"plough\" instead" 1>&2 ;;
+        a) architecture=$OPTARG ;;
+        w) working_dir=`echo $OPTARG | sed 's/\/$//'` ;;
+        c) config_file="$config_file:$OPTARG" ;;
+        ?) usage 1>&2; exit ;;
     esac
-    shift
 done
+
+shift "$(($OPTIND-1))"
+export TRACTOR_FLAGS
 
 [ $# -eq 0 ] && {
     echo "Error: No script name given. Type \"tractor -h\" for help" 1>&2
@@ -195,10 +197,12 @@ fi
     rprofile_backed_up=1
 }
 
+[ -t 1 -a -t 2 -a -z "$TRACTOR_NOCOLOUR" -a -z "$TRACTOR_NOCOLOR" ] || command_flags="-m $command_flags"
+
 [ $quiet -eq 0 ] && echo "Starting TractoR environment..." 1>&2
 
 if [ -x "$TRACTOR_HOME/bin/exec/tractor" ]; then
-    "$R" --vanilla CMD "$TRACTOR_HOME/bin/exec/tractor" -w "$working_dir" -l "$output_level" -c "$config_file" -p "$parallelisation_factor" -g "$log_file" $command_flags "$script_file" $args 2>&1
+    "$R" --vanilla CMD "$TRACTOR_HOME/bin/exec/tractor" $command_flags -w "$working_dir" -l "$output_level" -c "$config_file" -p "$parallelisation_factor" -g "$log_file" "$script_file" $args 2>&1
 elif [ $batch_mode -eq 1 ]; then
     cat >"$expect_file" <<EOF
 library(utils)

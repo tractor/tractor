@@ -13,6 +13,7 @@ queue=""
 qsub_options=""
 parallelisation_factor=${TRACTOR_PLOUGH_THREADS:-1}
 debug=0
+repetitions=0
 working_dir="."
 distribution_version="ersion unknown"
 
@@ -21,26 +22,29 @@ tractor_options=""
 
 usage()
 {
-    echo "plough (program v3.0.0, distribution v$distribution_version)"
+    echo "plough (program v3.3.0, distribution v$distribution_version)"
     echo "Plough through your TractoR analysis!"
     echo
-    echo "Usage: plough [-GXD] -C config_file [-V variable_name] [-Q grid_queue]"
-    echo "              [-O grid_options] [-P factor] [tractor_flags] script"
-    echo "              [arg1 [arg2 ...]]"
+    echo "Usage: plough [-GXD] -C config_file [-V variable_name] [-R repetitions]"
+    echo "              [-Q grid_queue] [-O grid_options] [-P factor]"
+    echo "              [tractor_flags] script [arg1 [arg2 ...]]"
     echo "       plough -H"
     echo
     echo "  -H          Display this usage information and exit"
     echo "  -G          Schedule parallel jobs on the Oracle (formerly Sun) Grid"
     echo "              Engine. The 'qsub' executable must be on your PATH"
-    echo "  -X          Cross-apply each set of options, taking each combination in"
+    echo "  -X          Cross-apply the loop variables, taking each combination in"
     echo "              turn"
     echo "  -D          Produce debugging output from plough. This does not imply"
-    echo "              that tractor will be called with -d; that flag should also"
+    echo "              that tractor will be called with '-d'; that flag should also"
     echo "              be given if required"
     echo "  -C file     Specify a configuration file in YAML format. For plough this"
     echo "              option is required"
     echo "  -V var      Specify a variable over which the loop will be run. It must"
     echo "              be defined in a config file"
+    echo "  -R reps     Specify the number of repetitions to be run. If specified,"
+    echo "              this takes priority over the '-V' and '-X' options, and the"
+    echo "              configuration file is passed unmodified to each instance"
     echo "  -Q queue    Specify the grid engine queue name to submit to"
     echo "  -O options  Specify any addition grid engine options required. These"
     echo "              must be quoted if they include any spaces"
@@ -59,36 +63,35 @@ usage()
     echo
 }
 
-set -- `getopt "HGXDC:V:Q:O:P:hldozqfbiv:a:w:c:" "$@"` || {
-    usage 1>&2
-    exit
-}
-
-[ -z "${TRACTOR_HOME}" ] && {
+if [ -z "${TRACTOR_HOME}" ]; then
     echo "Note: The TRACTOR_HOME environment variable is not set; it will be guessed"
-    export TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
-}
+    TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
+else
+    # Replace the specified path with a fully-qualified version
+    TRACTOR_HOME=`unset CDPATH; cd "$TRACTOR_HOME" && pwd`
+fi
+export TRACTOR_HOME
 
 [ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
 
-while [ $# -gt 0 ]
-    do
-    case "$1" in
-        -[Hh]) usage; status=0; exit ;;
-        -G) use_grid_engine=1 ;;
-        -X) cross_apply=1 ;;
-        -D) debug=1 ;;
-        -[Cc]) shift; config_file="$config_file:$1" ;;
-        -V) shift; variables="$variables,$1" ;;
-        -Q) shift; queue=$1 ;;
-        -O) shift; options="$options $1" ;;
-        -P) shift; parallelisation_factor=$1 ;;
-        -[vaw]) tractor_flags="$tractor_flags $1 $2"; shift ;;
-        --) shift; break ;;
-        -*) tractor_flags="$tractor_flags $1" ;;
+while getopts ":HhGXDC:c:V:R:Q:O:P:v:a:w:" opt; do
+    case "$opt" in
+        [Hh]) usage; status=0; exit ;;
+        G) use_grid_engine=1 ;;
+        X) cross_apply=1 ;;
+        D) debug=1 ;;
+        [Cc]) config_file="$config_file:$OPTARG" ;;
+        V) variables="$variables,$OPTARG" ;;
+        R) repetitions=$OPTARG ;;
+        Q) queue=$OPTARG ;;
+        O) options="$options $OPTARG" ;;
+        P) parallelisation_factor=$OPTARG ;;
+        [vaw]) tractor_flags="$tractor_flags -$opt $OPTARG" ;;
+        ?) tractor_flags="$tractor_flags -$OPTARG" ;;
     esac
-    shift
 done
+
+shift "$(($OPTIND-1))"
 
 [ $# -eq 0 ] && {
     echo "Error: No script name given. Type \"plough -H\" for help" 1>&2
@@ -115,8 +118,8 @@ tractor_options="$@"
     export COLUMNS
 }
 
-[ $debug -eq 1 ] && echo "library(utils); library(tractor.utils); ploughExperiment('$script_name', '$config_file', '$variables', '$tractor_flags', '$tractor_options', $use_grid_engine, $cross_apply, '$queue', '$options', $parallelisation_factor, $debug)"
+[ $debug -eq 1 ] && echo "library(utils); library(tractor.utils); ploughExperiment('$script_name', '$config_file', '$variables', '$tractor_flags', '$tractor_options', $use_grid_engine, $cross_apply, '$queue', '$options', $parallelisation_factor, $debug, $repetitions)"
 
-echo "library(utils); library(tractor.utils); ploughExperiment('$script_name', '$config_file', '$variables', '$tractor_flags', '$tractor_options', $use_grid_engine, $cross_apply, '$queue', '$options', $parallelisation_factor, $debug)" | "$R" --slave --vanilla 2>&1
+echo "library(utils); library(tractor.utils); ploughExperiment('$script_name', '$config_file', '$variables', '$tractor_flags', '$tractor_options', $use_grid_engine, $cross_apply, '$queue', '$options', $parallelisation_factor, $debug, $repetitions)" | "$R" --slave --vanilla 2>&1
 
 status=0

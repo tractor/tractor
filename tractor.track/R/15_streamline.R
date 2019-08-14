@@ -18,7 +18,21 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     
     getCoordinateUnit = function () { return (coordUnit) },
     
-    getLine = function () { return (line) },
+    getLine = function (unit = NULL)
+    {
+        if (is.null(unit))
+            return (line)
+        else
+        {
+            unit <- match.arg(unit, c("vox","mm"))
+            if (unit == "vox" && .self$coordUnit == "mm")
+                return (t(apply(line, 1, "/", abs(voxelDims))) + 1)
+            else if (unit == "mm" && .self$coordUnit == "vox")
+                return (t(apply(line-1, 1, "*", abs(voxelDims))))
+            else
+                return (line)
+        }
+    },
     
     getLineLength = function () { return (sum(pointSpacings)) },
     
@@ -35,10 +49,7 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     setCoordinateUnit = function (newUnit = c("vox","mm"))
     {
         newUnit <- match.arg(newUnit)
-        if (newUnit == "vox" && .self$coordUnit == "mm")
-            .self$line <- t(apply(line, 1, "/", abs(voxelDims))) + 1
-        else if (newUnit == "mm" && .self$coordUnit == "vox")
-            .self$line <- t(apply(line-1, 1, "*", abs(voxelDims)))
+        .self$line <- .self$getLine(newUnit)
         
         if (newUnit != .self$coordUnit)
         {
@@ -126,6 +137,36 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         return (initFields(file=file, selection=integer(0), count.=count, labelsPtr.=labelsPtr))
     },
     
+    apply = function (fun, ..., simplify = TRUE)
+    {
+        fun <- match.fun(fun)
+        n <- ifelse(length(selection) == 0, count., length(selection))
+        if (!is.na(simplify))
+        {
+            results <- vector("list", n)
+            i <- 1
+        }
+        
+        .applyFunction <- function (points, seedIndex, voxelDims, coordUnit)
+        {
+            streamline <- Streamline$new(points, seedIndex, voxelDims, coordUnit)
+            if (is.na(simplify))
+                fun(streamline, ...)
+            else
+            {
+                results[[i]] <<- fun(streamline, ...)
+                i <<- i + 1
+            }
+        }
+        
+        .Call("trkApply", file, selection, .applyFunction, PACKAGE="tractor.track")
+        
+        if (isTRUE(simplify) && n == 1)
+            return (results[[1]])
+        else if (!is.na(simplify))
+            return (results)
+    },
+    
     extractAndTruncate = function (leftLength, rightLength)
     {
         tempFile <- threadSafeTempFile()
@@ -160,26 +201,13 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     
     getStreamlines = function (simplify = TRUE)
     {
-        n <- ifelse(length(selection) == 0, count., length(selection))
-        streamlines <- vector("list", n)
-        i <- 1
-        
-        .addStreamline <- function (points, seedIndex, voxelDims, coordUnit)
-        {
-            streamlines[[i]] <<- Streamline$new(points, seedIndex, voxelDims, coordUnit)
-            i <<- i + 1
-        }
-        
-        .Call("trkApply", file, selection, .addStreamline, PACKAGE="tractor.track")
-        
-        if (simplify && n == 1)
-            return (streamlines[[1]])
-        else
-            return (streamlines)
+        .self$apply(fx(x), simplify=simplify)
     },
     
-    getVisitationMap = function (reference = NULL)
+    getVisitationMap = function (reference = NULL, scope = c("full","seed","ends"), normalise = FALSE)
     {
+        scope <- match.arg(scope)
+        
         if (is(reference, "MriImage"))
         {
             if (reference$isInternal())
@@ -195,7 +223,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
             report(OL$Error, "A reference image or path must be provided")
         
         resultFile <- threadSafeTempFile()
-        .Call("trkMap", file, selection, reference, resultFile, PACKAGE="tractor.track")
+        .Call("trkMap", file, selection, reference, scope, normalise, resultFile, PACKAGE="tractor.track")
         
         return (readImageFile(resultFile))
     },
@@ -214,29 +242,52 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         }
         
         invisible(.self)
+    },
+    
+    summarise = function ()
+    {
+        properties <- .Call("trkInfo", file, PACKAGE="tractor.track")
+        values <- c("Number of streamlines"=count., "Streamline properties"=implode(properties,sep=", "), "Auxiliary label file"=!is.null(labelsPtr.))
+        return (values)
     }
 ))
 
-StreamlineSink <- setRefClass("StreamlineSink", fields=list(file="character"), methods=list(
+setClassUnion("MriImageOrNull", c("MriImage","NULL"))
+
+StreamlineSink <- setRefClass("StreamlineSink", fields=list(file="character",mask="MriImageOrNull",sinkPtr.="ExternalPointerOrNull"), methods=list(
     initialize = function (file = NULL, mask = NULL, ...)
     {
         if (is.null(file) || is.null(mask))
             report(OL$Error, "Streamline source file and mask must be specified")
         
         file <- ensureFileSuffix(file, NULL, strip=c("trk","trkl"))
-        .Call("trkCreate", file, mask, PACKAGE="tractor.track")
         
-        return (initFields(file=file))
+        return (initFields(file=file, mask=mask, sinkPtr.=NULL))
     },
     
     append = function (streamline)
     {
+        if (is.null(sinkPtr.))
+            .self$sinkPtr. <- .Call("trkCreate", file, mask, PACKAGE="tractor.track")
+        
         if (is(streamline, "Streamline"))
         {
+            if (!equivalent(streamline$getVoxelDimensions(), mask$getVoxelDimensions()))
+                report(OL$Error, "Streamline voxel dimensions do not match the reference image")
+            
             fixedSpacings <- all(streamline$getPointSpacings()[1] == streamline$getPointSpacings())
-            .Call("trkAppend", file, streamline$getLine(), streamline$getSeedIndex(), streamline$getCoordinateUnit(), streamline$getVoxelDimensions(), fixedSpacings, PACKAGE="tractor.track")
+            .Call("trkAppend", sinkPtr., streamline$getLine(), streamline$getSeedIndex(), streamline$getCoordinateUnit(), fixedSpacings, PACKAGE="tractor.track")
         }
         
         invisible(.self)
+    },
+    
+    close = function ()
+    {
+        if (!is.null(sinkPtr.))
+        {
+            .Call("trkClose", sinkPtr., PACKAGE="tractor.track")
+            .self$sinkPtr. <- NULL
+        }
     }
 ))

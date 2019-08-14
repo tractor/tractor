@@ -4,12 +4,19 @@
 \alias{mergeMriImages}
 \title{Merging MriImage objects}
 \usage{
-mergeMriImages(...)
+mergeMriImages(..., bindDim = NULL, padTags = FALSE)
 }
 \arguments{
 \item{...}{\code{MriImage} objects. They do not need to have the same
-dimensionality, but they would usually not vary by more than one
-dimension.}
+dimensionality.}
+
+\item{bindDim}{An integer specifying the dimension along which to bind the
+data, or \code{NULL} (the default). The latter case resolves to one number
+higher than the last dimension common to all images.}
+
+\item{padTags}{Logical value. If \code{TRUE}, \code{NA}s will be used to pad
+tags which appear to be partially missing in the merged dataset. If
+\code{FALSE}, incomplete tags will be dropped.}
 }
 \value{
 A merged image.
@@ -18,6 +25,12 @@ A merged image.
 This function concatenates the data from a series of \code{MriImage}
 objects, and then attempts to work out the final dimensions of the merged
 image and returns it.
+}
+\note{
+Tags are retained as-is if they are identical in each image. Otherwise
+  they are concatenated if their lengths match the number of blocks in each
+  image, or concatenated with NAs for missing values if \code{padTags} is
+  \code{TRUE}.
 }
 \references{
 Please cite the following reference when using TractoR in your

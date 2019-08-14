@@ -82,6 +82,8 @@ implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
         }
         return (result)
     }
+    else
+        return ("")
 }
 
 #' Number agreement with a vector
@@ -119,6 +121,61 @@ pluralise <- function (singular, x = NULL, n = NULL, plural = NULL)
         plural <- paste0(singular, "s")
     
     return (ifelse(n==1L, singular, plural))
+}
+
+#' Combine similar strings into one
+#' 
+#' Merge a vector of strings with a common prefix and/or suffix into one string
+#' with the unique parts in braces, comma-separated.
+#' 
+#' @param strings A vector, which will be coerced to mode \code{character}.
+#' @return A single merged string, with the common prefix and suffix as
+#'   attributes.
+#' 
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @examples
+#' embrace(c("image.hdr", "image.img"))
+#' 
+#' @export
+embrace <- function (strings)
+{
+    strings <- as.character(strings)
+    
+    if (length(strings) < 1)
+        return (structure("", prefix="", suffix=""))
+    else if (length(strings) < 2)
+        return (structure(strings, prefix="", suffix=""))
+    
+    codepoints <- lapply(enc2utf8(strings), utf8ToInt)
+    lengths <- sapply(codepoints, length)
+    sharedLength <- min(lengths)
+    if (sharedLength == 0)
+        return (structure(paste0("{",implode(strings,","),"}"), prefix="", suffix=""))
+    else
+    {
+        forwardCodepoints <- sapply(codepoints, function(x) x[seq_len(sharedLength)], simplify="array")
+        forwardMatches <- apply(forwardCodepoints, 1, allEqual)
+        prefixLength <- ifelse(all(forwardMatches), sharedLength, which(!forwardMatches)[1] - 1L)
+        
+        reverseCodepoints <- sapply(codepoints, function(x) rev(x)[seq_len(sharedLength)], simplify="array")
+        reverseMatches <- apply(reverseCodepoints, 1, allEqual)
+        suffixLength <- ifelse(all(reverseMatches), sharedLength, which(!reverseMatches)[1] - 1L)
+        
+        prefix <- intToUtf8(codepoints[[1]][seq_len(prefixLength)])
+        suffix <- intToUtf8(rev(rev(codepoints[[1]])[seq_len(suffixLength)]))
+        uniqueParts <- sapply(seq_along(codepoints), function(i) {
+            indices <- setdiff(seq_len(lengths[i]), c(seq_len(prefixLength), seq_len(suffixLength)+lengths[i]-suffixLength))
+            intToUtf8(codepoints[[i]][indices])
+        })
+        return (structure(es("#{prefix}{#{implode(uniqueParts,',')}}#{suffix}"), prefix=prefix, suffix=suffix))
+    }
 }
 
 #' Pretty print labelled information
@@ -189,33 +246,75 @@ deduplicate <- function (...)
     return (x)
 }
 
+#' Extract one or more elements from a list
+#' 
+#' Given a list-like first argument, this function extracts one or more of its
+#' elements. Numeric and character indexing are allowed.
+#' 
+#' @param list A list-like object, with a \code{[[} indexing method.
+#' @param index A vector of integers or strings, or \code{NULL}.
+#' @return If \code{index} is \code{NULL}, the whole list is returned.
+#'   Otherwise, if \code{index} has length one, the corresponding element is
+#'   extracted and returned. Otherwise a list containing the requested subset
+#'   is returned.
+#' 
+#' @note This function is not type-safe, in the sense that its return type
+#'   depends on its arguments. It should therefore be used with care.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
+indexList <- function (list, index = NULL)
+{
+    if (is.null(index))
+        return (list)
+    else if (length(index) == 1)
+        return (list[[index]])
+    else
+        return (list[index])
+}
+
 #' Functions for file name and path manipulation
 #' 
 #' Functions for expanding file paths, finding relative paths and ensuring that
 #' a file name has the required suffix.
 #' 
+#' The \code{resolvePath} function passes its arguments elementwise through any
+#' matching path handler, and returns the resolved paths. Nonmatching elements
+#' are returned as-is. \code{registerPathHandler} registers a new path handler
+#' for special syntaxes, and is for advanced use only. \code{relativePath}
+#' returns the specified \code{path}, expressed relative to
+#' \code{referencePath}. \code{matchPaths} resolves a vector of paths against a
+#' vector of reference paths. \code{expandFileName} returns the full path to
+#' the specified file name, collapsing \code{".."} elements if appropriate.
+#' \code{ensureFileSuffix} returns the specified file names with the requested
+#' suffixes appended (if they are not already).
+#' 
+#' @param path,referencePath Character vectors whose elements represent file
+#'   paths (which may or may not currently exist).
+#' @param \dots Additional arguments to custom path handlers.
+#' @param regex A Ruby-style regular expression.
+#' @param handler A function taking and returning a string.
 #' @param fileName A character vector of file names.
+#' @param base If \code{fileName} is a relative path, this option gives the
+#'   base directory which the path is relative to. If \code{fileName} is an
+#'   absolute path, this argument is ignored.
 #' @param suffix A character vector of file suffixes, which will be recycled if
 #'   shorter than \code{fileName}.
 #' @param strip A character vector of suffixes to remove before appending
 #'   \code{suffix}. The intended suffix does not need to be given here, as the
 #'   function will not append it if the specified file name already has the
 #'   correct suffix.
-#' @param base If \code{fileName} is a relative path, this option gives the
-#'   base directory which the path is relative to. If \code{fileName} is an
-#'   absolute path, this argument is ignored.
-#' @param path,referencePath Character vectors whose elements represent file
-#'   paths.
-#' @return The \code{ensureFileSuffix} function returns the specified file
-#'   names with the requested suffixes appended. \code{expandFileName} returns
-#'   the full path to the specified file name, collapsing \code{".."} elements
-#'   if appropriate. \code{relativePath} returns the specified \code{path},
-#'   expressed relative to \code{referencePath}. \code{matchPaths} resolves a
-#'   a vector of paths against a vector of reference paths.
+#' @return A character vector.
 #' 
 #' @author Jon Clayden
-#' @seealso \code{\link{path.expand}} performs some of what
-#' \code{expandFileName} does.
+#' @seealso \code{\link{normalizePath}} does most of the work for
+#' \code{expandFileName}.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -226,10 +325,33 @@ deduplicate <- function (...)
 #' @aliases paths
 #' @rdname paths
 #' @export
+resolvePath <- function (path, ...)
+{
+    sapply(path, function(p) {
+        for (i in seq_along(.Workspace$pathHandlers))
+        {
+            if (p %~% names(.Workspace$pathHandlers)[i])
+            {
+                result <- .Workspace$pathHandlers[[i]](p, ...)
+                if (!is.null(result))
+                {
+                    report(OL$Debug, "Resolving #{p} to #{result}")
+                    return (result)
+                }
+            }
+        }
+        return (p)
+    })
+}
+
+#' @rdname paths
+#' @export
 relativePath <- function (path, referencePath)
 {
-    mainPieces <- strsplit(expandFileName(path), .Platform$file.sep, fixed=TRUE)[[1]]
-    refPieces <- strsplit(expandFileName(referencePath), .Platform$file.sep, fixed=TRUE)[[1]]
+    mainPieces <- ore.split(ore.escape(.Platform$file.sep), expandFileName(path))
+    mainPieces <- mainPieces[mainPieces != "."]
+    refPieces <- ore.split(ore.escape(.Platform$file.sep), expandFileName(referencePath))
+    refPieces <- refPieces[refPieces != "."]
     
     shorterLength <- min(length(mainPieces), length(refPieces))
     firstDifferentPiece <- min(which(mainPieces[1:shorterLength] != refPieces[1:shorterLength])[1], shorterLength, na.rm=TRUE)
@@ -251,23 +373,25 @@ matchPaths <- function (path, referencePath)
 
 #' @rdname paths
 #' @export
+registerPathHandler <- function (regex, handler)
+{
+    if (!is.character(regex) || length(regex) != 1)
+        report(OL$Error, "Regular expression should be specified as a character string")
+    
+    handler <- match.fun(handler)
+    .Workspace$pathHandlers[[regex]] <- handler
+    
+    invisible(NULL)
+}
+
+#' @rdname paths
+#' @export
 expandFileName <- function (fileName, base = getwd())
 {
-    fileName <- path.expand(fileName)
-    
     # A leading slash, with (Windows) or without (Unix) a letter and colon, indicates an absolute path
-    fileName <- ifelse(fileName %~% "^([A-Za-z]:)?/", fileName, file.path(base,fileName))
-    
-    # Remove all instances of '/.' (which are redundant), recursively collapse
-    # instances of '/..', and remove trailing slashes
-    fileName <- gsub("/\\.(?=/)", "", fileName, perl=TRUE)
-    while (length(grep("/../", fileName, fixed=TRUE) > 0))
-        fileName <- sub("/([^/]*[^./][^/]*)?/\\.\\.(?=/)", "", fileName, perl=TRUE)
-    if (length(grep("/..$", fileName, perl=TRUE) > 0))
-        fileName <- sub("/([^/]*[^./][^/]*)?/\\.\\.$", "", fileName, perl=TRUE)
-    fileName <- gsub("/*\\.?$", "", fileName, perl=TRUE)
-    
-    return (fileName)
+    fileName <- ifelse(fileName %~% "^([A-Za-z]:[/\\\\]|/)", fileName, file.path(base,fileName))
+    fileName <- ore.subst("/\\.(?=[/\\\\])", "", fileName, all=TRUE)
+    return (normalizePath(fileName, .Platform$file.sep, FALSE))
 }
 
 #' @rdname paths
@@ -275,12 +399,7 @@ expandFileName <- function (fileName, base = getwd())
 ensureFileSuffix <- function (fileName, suffix, strip = NULL)
 {
     if (is.null(strip))
-    {
-        if (is.null(suffix))
-            strip <- "\\w+"
-        else
-            strip <- suffix
-    }
+        strip <- suffix %||% "\\w+"
     else
         strip <- c(strip, suffix)
     
@@ -289,6 +408,8 @@ ensureFileSuffix <- function (fileName, suffix, strip = NULL)
     
     if (is.null(suffix))
         return (fileStem)
+    else if (length(suffix) == 0)
+        return (character(0))
     else
     {
         fileName <- paste(fileStem, suffix, sep=".")
@@ -359,9 +480,9 @@ execute <- function (executable, params = NULL, errorOnFail = TRUE, silent = FAL
     {
         report(OL$Debug, "#{execLoc} #{implode(params,sep=' ')}")
         if (silent && getOutputLevel() > OL$Debug)
-            system2(execLoc, params, stdout=FALSE, stderr=FALSE, ...)
+            system2(execLoc, as.character(params), stdout=FALSE, stderr=FALSE, ...)
         else
-            system2(execLoc, params, ...)
+            system2(execLoc, as.character(params), ...)
     }
 }
 
@@ -434,14 +555,17 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
 
 #' Test whether all elements of a vector are equal
 #' 
-#' This function is a wrapper around \code{all}, testing whether all elements
-#' of the specified vector are equal to each other.
+#' This function tests whether all elements of the specified vector are equal
+#' to each other, i.e., whether the vector contains only a single unique value.
+#' For lists, equality is determined using \code{\link{equivalent}}.
 #' 
 #' @param x A vector of any mode, including a list.
 #' @param ignoreMissing If \code{TRUE}, missing elements will be ignored.
 #'   Otherwise the presence of missing values will result in a return value of
 #'   \code{FALSE}.
-#' @return \code{TRUE} if all elements test (exactly) equal; \code{FALSE}
+#' @param \dots Additional arguments to \code{all.equal}, via
+#'   \code{\link{equivalent}}.
+#' @return \code{TRUE} if all elements test equivalent; \code{FALSE}
 #'   otherwise.
 #' @author Jon Clayden
 #' @seealso \code{\link{equivalent}} for elementwise equivalence of two
@@ -460,12 +584,11 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
 #' allEqual(c(1,1,NA), ignoreMissing=TRUE)  # TRUE
 #' 
 #' @export
-allEqual <- function (x, ignoreMissing = FALSE)
+allEqual <- function (x, ignoreMissing = FALSE, ...)
 {
-    if (is.list(x))
-        return (isTRUE(all(x==x[[1]], na.rm=ignoreMissing)))
-    else
-        return (isTRUE(all(x==x[1], na.rm=ignoreMissing)))
+    if (ignoreMissing)
+        x <- x[!is.na(x)]
+    return (isTRUE(all(sapply(x, equivalent, x[[1]], ...))))
 }
 
 stripNul <- function (x, method = c("truncate","drop"))
@@ -507,4 +630,29 @@ threadSafeTempFile <- function (pattern = "file")
     if (!file.exists(tempDir))
         dir.create(tempDir)
     return (tempfile(pattern=pattern, tmpdir=tempDir))
+}
+
+#' Resolve a variable to a default when NULL
+#' 
+#' This is a very simple infix function for the common TractoR idiom whereby
+#' \code{NULL} is used as a default argument value, but later needs to be
+#' resolved to a meaningful value if not overridden in the call. It returns its
+#' first argument unless it is \code{NULL}, in which case it falls back on the
+#' second argument.
+#' 
+#' @param X,Y R objects, possibly \code{NULL}.
+#' @return \code{X}, if it is not \code{NULL}; otherwise \code{Y}.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @name infix
+#' @export
+"%||%" <- function (X, Y)
+{
+    if (is.null(X)) Y else X
 }

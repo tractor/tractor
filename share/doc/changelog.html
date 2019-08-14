@@ -44,6 +44,154 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="332-2019-06-07">3.3.2 (2019-06-07)</h2>
+
+<ul>
+<li>The <code>slice</code> script now additionally accepts &ldquo;peak&rdquo; as shorthand for the slice containing the peak image intensity. Clearances can now properly be specified per-axis, and trimming should no longer cause problems when slice locations are not specified literally.</li>
+<li>The internal DICOM reader could previously produce logically transposed diffusion gradient tables, for example in <code>dpreproc</code>, which would lead to spurious warnings and downstream errors. This has been corrected.</li>
+<li>Missing matrix values are now handled more robustly when merging images.</li>
+<li>The <code>pnt-interpret</code> script could give incorrect results when session directories are specified as arguments and Mode:ratio is given, due to a mistake in the indexing logic. This has been corrected.</li>
+</ul>
+
+<h2 id="331-2019-04-08">3.3.1 (2019-04-08)</h2>
+
+<ul>
+<li>The <code>gradcheck</code> script will now work with raw diffusion data, if there is no processed data in the specified session directory.</li>
+<li>The gradient cache now explicitly only stores the unrotated gradient vectors.</li>
+<li>FSL-compatible <code>bvals</code> and <code>bvecs</code> files should now always be created before the <code>dtifit</code> workflow is run.</li>
+<li>Workflow run-times are now reported.</li>
+<li>The self-documentation function called by <code>tractor -o</code> now works properly when the absolute path to a script is provided.</li>
+</ul>
+
+<h2 id="330-2018-12-12">3.3.0 (2018-12-12)</h2>
+
+<ul>
+<li>This release introduces &ldquo;workflows&rdquo; as the primary means by which TractoR calls third-party programs. These are small shell scripts, stored in <code>share/tractor/workflows</code>, which make heavy use of <code>furrow</code> to call external software in a way that is consistent with the TractoR session convention. They may be called implicitly or explicitly, the latter using the new <code>workflow</code> script.</li>
+<li>TractoR now uses the <code>RNifti</code> package for NIfTI file handling, which is backed by the NIfTI reference C library. This should provide some performance improvements, but more importantly it makes NIfTI support much more complete. Image &ldquo;xforms&rdquo; and other metadata should now be better preserved through read/write cycles.</li>
+<li>Diffusion gradient directions and b-values may now be included as image tags, and are more consistently written to .dirs auxiliary files.</li>
+<li>A new script, simply called <code>image</code>, allows images to be copied, moved or linked on the file system along with any auxiliary files. This is the first TractoR script to use a subcommand syntax, where the first argument specifies the operation required.</li>
+<li>The new <code>bids</code> script helps with creating <a href="http://bids.neuroimaging.io">BIDS datasets</a>.</li>
+<li>The <code>clone</code> script can now be called with <code>Map:true</code>, in which case the new session uses a map file to point to existing subdirectories within the old one, rather than copying their contents across. This functionally duplicates a session with almost no extra cost in terms of disk usage. Subdirectories that are subsequently added or replaced will cause the two sessions to diverge.</li>
+<li>The <code>age</code> script will now work with tagged NIfTI files, if patient birthdate or age information is stored with them.</li>
+<li>The <code>extract</code> script gains an option to exclude regions. This can be used, for example, to extract all grey matter apart from a particular subregion.</li>
+<li><code>fsleyes</code>, the new viewer in recent FSL releases, is now supported by the <code>view</code> script.</li>
+<li>The <code>divest</code> DICOM back-end can now be used by the <code>import</code> script.</li>
+<li>There is now an option to write out the final face mask in the <code>deface</code> script.</li>
+<li>It is now possible to run multiple replications of an experiment, using <code>plough</code> with the new &ldquo;-R&rdquo; flag. Compatibility between SGE and <code>plough</code> has also been improved.</li>
+<li>Session subdirectories, and files not aliased by TractoR, can now be referenced through <code>furrow</code>.</li>
+<li>The <code>tractor.base</code> package now has a set of unit tests.</li>
+<li>The reason for terminating each streamline is now stored, as a numeric code, in .trk files produced by the <code>track</code> script.</li>
+<li>It is now possible to perform tractography in only one direction away from the seed point.</li>
+<li>Coloured output is now suppressed if the standard output or standard error streams appear not to be terminals (e.g. if the script&rsquo;s output is piped). It can also be suppressed by setting the <code>TRACTOR_NOCOLOUR</code> environment variable.</li>
+<li>The <code>TRACTOR_FILETYPE</code> environment variable is deprecated, as is writing to Analyze format. Output format will always be NIfTI-1, although this can subsequently be changed where needed using the <code>chfiletype</code> script.</li>
+<li>The &ldquo;Context&rdquo; option to the <code>bedpost</code> script is deprecated.</li>
+<li>The output from <code>tractor -o (script)</code> now reads &ldquo;(no value)&rdquo; instead of &ldquo;NULL&rdquo; for options with a null default value.</li>
+<li>Logical values such as &ldquo;yes&rdquo; and &ldquo;no&rdquo; are now accepted by scripts, in addition to &ldquo;true&rdquo; and &ldquo;false&rdquo;.</li>
+<li>Support for the session format from TractoR 1.x has been removed. This was deprecated in v3.1.0.</li>
+</ul>
+
+<h2 id="325-2018-08-07">3.2.5 (2018-08-07)</h2>
+
+<ul>
+<li>Multiple image series read by <code>dpreproc</code> stage 1, with <code>DicomReader:divest</code>, will now be reoriented to a common orientation before merging.</li>
+<li>The <code>deface</code> script now checks whether the bottom edge of the face mask is within the image before trying to extend it downwards. In addition, slices containing no extended face mask voxels are now skipped over during subsequent processing. This should resolve some spurious errors.</li>
+<li>Reading a non-axial 2D image could produce an error. This has been corrected.</li>
+<li>Attempting to calculate clustering coefficients for directed, weighted graphs is now a warning rather than an error.</li>
+<li>Failure to find a binary called <code>fslview_deprecated</code> will no longer produce an error, restoring compatibility with older builds of FSL.</li>
+<li>The compatibility of <code>furrow</code> with external commands has been improved.</li>
+</ul>
+
+<h2 id="324-2018-04-26">3.2.4 (2018-04-26)</h2>
+
+<ul>
+<li>The <code>Rcpp</code> package has been updated for compatibility with the recently released R 3.5.0.</li>
+<li>Paths are now expanded by <code>dicomread</code>, so that filenames beginning with &ldquo;._&rdquo; are no longer created when reading from the current working directory. (Such files are generally invisible.)</li>
+<li>The code behind <code>plough</code> is now more careful to avoid spurious errors when non-loop variables have length greater than one.</li>
+</ul>
+
+<h2 id="323-2018-04-10">3.2.3 (2018-04-10)</h2>
+
+<ul>
+<li>Attempting to merge tags from more than two images, notably in <code>dpreproc</code>, should no longer produce an error.</li>
+<li>FSLview has been deprecated in recent FSL builds, and the binary renamed to <code>fslview_deprecated</code>. TractoR now checks for this name, and so running the <code>view</code> script with <code>Viewer:fslview</code> will work again. There is not yet any support for FSL&rsquo;s replacement viewer, <code>fsleyes</code>, although it can be invoked through <code>furrow</code>.</li>
+<li>The <code>gradread</code> script no longer requires a data image to be present if a <em>b</em>-value file is provided as the third argument.</li>
+<li>Calculation of graph modularity has been improved for the case where a node is in none of the communities.</li>
+<li>Further tweaks to unit tests have been made.</li>
+</ul>
+
+<h2 id="322-2018-03-16">3.2.2 (2018-03-16)</h2>
+
+<ul>
+<li>The <code>reg-apply</code> script would produce an error if given multiple transforms in .xfmb format. That has been corrected.</li>
+<li>Due to an oversight, vertex and principal network names disappeared from the output of <code>graph-decompose</code> in v3.2.0. They have now been reinstated.</li>
+<li>The Homebrew distribution of TractoR now declares a dependency on JasPer.</li>
+<li>An occasional failure in the <code>tractor.graph</code> package&rsquo;s unit tests has been addressed.</li>
+</ul>
+
+<h2 id="321-2018-02-26">3.2.1 (2018-02-26)</h2>
+
+<ul>
+<li>Running <code>dpreproc</code> with <code>DicomReader:divest</code> on a session directory containing DICOM files from different series will now also combine metadata from those series (where appropriate), and write it to an auxiliary .tags file.</li>
+<li>Recent minor updates to supporting packages <code>RNifti</code>, <code>RNiftyReg</code>, <code>mmand</code>, <code>yaml</code> and <code>corpcor</code> have now been incorporated.</li>
+<li>Infinite weights could rarely occur in <code>tensorfit</code>, when using the IWLS method. These are now detected and ignored.</li>
+<li>A spurious error in <code>dpreproc</code> due to a typo has been corrected.</li>
+</ul>
+
+<h2 id="320-2018-02-14">3.2.0 (2018-02-14)</h2>
+
+<ul>
+<li>The new <code>pnt-sample</code> script allows one to sample synthetic streamlines from a PNT model. There is <a href="http://dx.doi.org/10.3390/jimaging4010008">a new paper</a> with the full details.</li>
+<li>There is now basic support for the <a href="http://bids.neuroimaging.io">BIDS format</a>, a session-like hierarchy structure for multimodal acquisitions.</li>
+<li>The new top-level command <code>furrow</code> can be used to call any third-party program after substituting TractoR&rsquo;s session path shorthand for the canonical image paths. This is useful for compatibility with other software.</li>
+<li>TractoR&rsquo;s graph-handling code has been substantially refactored, and detailed unit tests have been added.</li>
+<li>Streamline seed points and end points can now be mapped, using the new <code>trkmap</code> script.</li>
+<li>The new <code>trkinfo</code> script provides basic information on the streamlines stored in a .trk file.</li>
+<li>A new make target, <code>deeptest</code>, installs additional packages from CRAN and then runs package unit tests (currently only for <code>tractor.graph</code>) before running the main integration tests.</li>
+<li>The <code>dicomsort</code> script can now use the more robust <code>divest</code> back-end, and gains the ability to clean up empty subdirectories. Additional metadata is now extracted by <code>dicomread</code> with <code>Method:divest</code>.</li>
+<li>A partitioned graph object is now also produced by <code>graph-decompose</code>, which contains the original graph and information about the partition. This may also be used as a reference partition for new graphs.</li>
+<li>Generation of colour scales is now handled by the <code>shades</code> package. The <code>slice</code> script now additionally supports the &ldquo;viridis&rdquo; colour scale, which is perceptually uniform and interpretable by viewers with a colour vision deficiency (colour blindness).</li>
+<li>The <code>tensorfit</code> script now support FSL <code>dtifit</code>&lsquo;s weighted-least squares option, as <code>Method:fsl-wls</code>.</li>
+<li>The <code>extract</code> script now accepts named regions, for extraction from parcellations.</li>
+<li>A file containing <em>b</em>-values may now be given as the third argument to the <code>gradread</code> script.</li>
+<li>It is now possible to create a .trk file containing the streamlines selected by <code>pnt-prune</code>.</li>
+<li>Streamlines stored in .trk files may now also be transformed between spaces by the <code>transform</code> script, although this is currently very slow for nonlinear transformations.</li>
+<li>The <code>list</code> script now arranges its output into categories.</li>
+<li>The <code>dicomtags</code> script now tries harder to read metadata from files using an unsupported transfer syntax.</li>
+<li>The <code>status</code> script now examines raw data files if processed ones are not yet available.</li>
+<li>A user-defined mask can now be passed to the <code>dirviz</code> script.</li>
+<li>The <code>slice</code> script now offers some control over the interpolation kernel used.</li>
+<li>The polar plots used by TractoR&rsquo;s internal image viewer for diffusion data now use different colour shades for each <em>b</em>-value shell.</li>
+<li>The loop-checking logic in the tractography code has been tweaked to correct the boundaries between logical blocks.</li>
+<li>Session paths stored in PNT data files should now always be interpreted as strings, avoiding potential errors.</li>
+</ul>
+
+<h2 id="314-2017-11-09">3.1.4 (2017-11-09)</h2>
+
+<ul>
+<li>The median streamline used by default in <code>pnt-prune</code> when all individual streamlines are rejected could be incorrect. This has been fixed.</li>
+<li>The <code>apply</code> script will no longer fail when used with more than 26 image arguments (although only the first 26 can be referred to in the function).</li>
+<li>Images with a data size of 2 GiB or more can now be written to file by TractoR.</li>
+</ul>
+
+<h2 id="313-2017-09-27">3.1.3 (2017-09-27)</h2>
+
+<ul>
+<li>The <code>graph-props</code> script should now properly respect the &ldquo;DisconnectedVertices&rdquo; option for all properties. The number of self-connections present in the graph is also reported separately for clarity.</li>
+<li>Scripts which perform an operation on a subset of streamlines stored in a .trk file, notably <code>pnt-prune</code>, would often include one additional streamline that should not be in the selection. This has been corrected.</li>
+<li>The slice script now fixes &ldquo;Alpha&rdquo; to &ldquo;binary&rdquo; for masking images that are themselves binary, to avoid masking out everything and producing an empty layer.</li>
+<li>The <code>view</code> script will no longer produce an error when multiple images from a session&rsquo;s diffusion directory are specified.</li>
+</ul>
+
+<h2 id="312-2017-08-15">3.1.2 (2017-08-15)</h2>
+
+<ul>
+<li>A warning about a namespace clash will no longer be seen when starting the TractoR console. A side effect of this change is that the <code>RNiftyReg</code> package&rsquo;s functions are no longer directly visible. The <code>tractor.reg</code> interface can be used instead.</li>
+<li>TractoR&rsquo;s diffusion tensor fitting routine, used by <code>tensorfit</code>, is now more robust. In particular, it will handle exact fits and impose a limit on the iteration count when using iterative weighted least-squares.</li>
+<li>The trivial case for <code>plough</code>, where the design file contains no variables of length greater than one, now works as expected.</li>
+<li>The <code>view</code> script will now use the time series plot type by default, for 4D volumes whose interpretation cannot be guessed.</li>
+<li>Scripts using tractography other than <code>track</code>, such as <code>pnt-data</code>, will no longer report the tractography run-time, to avoid producing overly verbose output.</li>
+</ul>
+
 <h2 id="311-2017-07-03">3.1.1 (2017-07-03)</h2>
 
 <ul>
@@ -199,6 +347,14 @@
 <li>Camino-specific scripts <code>fsl2camino</code>, <code>camino2fsl</code> and <code>caminofiles</code> have been removed. They were poorly maintained, and largely redundant following Camino&rsquo;s support for NIfTI images.</li>
 <li>The &ldquo;-r&rdquo; flag to the main <code>tractor</code> program is defunct.</li>
 <li>Extensive low-level and upstream package improvements have been incorporated.</li>
+</ul>
+
+<h2 id="265-2018-06-19">2.6.5 (2018-06-19)</h2>
+
+<ul>
+<li>The <code>Rcpp</code> package has been updated for compatibility with R 3.5.0 (in line with TractoR version 3.2.4).</li>
+<li>An inconsistency between <code>pnt-data</code> and <code>pnt-data-sge</code> prevented the latter from working as expected for multiple sessions, when seed points were specified for each case. This has been corrected.</li>
+<li>The <code>pnt-interpret</code> script no longer strictly requires a session list, as long as subject and seed information are stored in the dataset.</li>
 </ul>
 
 <h2 id="264-2016-11-07">2.6.4 (2016-11-07)</h2>
@@ -478,7 +634,7 @@
 <ul>
 <li>An error about a missing &ldquo;dti_eigval1&rdquo; image should no longer appear when calling <code>mean</code> or <code>gmean</code> with <code>Metric:axialdiff</code> on data originally preprocessed with TractoR 1.x. (Reported by Mark Bastin.)</li>
 <li>Errors about &ldquo;no loop to break from&rdquo; should no longer be generated by <code>pnt-viz</code> or <code>pnt-prune</code> when a data set with no match data is encountered. (Reported by Michael Yoong.)</li>
-<li>The error &ldquo;object &lsquo;nullPosterior&rsquo; not found&rdquo; should no longer appear when calling <code>pnt-interpret</code> with <code>Mode:null-posterior</code>.</li>
+<li>The error &ldquo;object &#39;nullPosterior&rsquo; not found&rdquo; should no longer appear when calling <code>pnt-interpret</code> with <code>Mode:null-posterior</code>.</li>
 </ul>
 
 <h2 id="204-2011-10-07">2.0.4 (2011-10-07)</h2>
@@ -560,7 +716,7 @@
 
 <ul>
 <li>The NIfTI file reading code in TractoR is now substantially more flexible, and supports images stored using conventions other than the LAS arrangement which is used internally.</li>
-<li>Read support for the proposed new <a href="http://www.nitrc.org/forum/forum.php?thread_id=2148&amp;forum_id=1941">NIfTI-2 file format</a> has been added.</li>
+<li>Read support for the proposed new <a href="http://www.nitrc.org/forum/forum.php?thread_id=2148&forum_id=1941">NIfTI-2 file format</a> has been added.</li>
 <li>Image origins are now adjusted appropriately when image data are flipped on reading, and negative and noninteger values are allowed for. The result of the <code>imageinfo</code> script may therefore differ from previous versions for some files, but the new output is more consistent with TractoR&rsquo;s conventions.</li>
 <li>Any gradient flip specified with the FlipGradientAxes option is now performed during stage 2 of the <code>preproc</code> script, to avoid problems with doing it after rotating the directions.</li>
 </ul>

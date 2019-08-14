@@ -56,6 +56,8 @@ polarPlotPanel <- function (point, data, imageNames, directions, bValues = NULL)
     maxDataValue <- suppressWarnings(max(data[bValues>0],na.rm=T))
         
     correlations <- abs(cor(cbind(abs(directions), data))[1:3,4])
+    basicColour <- rgb(correlations[1], correlations[2], correlations[3])
+    basicBrightness <- shades::brightness(basicColour)
     axes <- setdiff(1:3, which.min(correlations))
     view <- c("sagittal","coronal","axial")[which.min(correlations)]
     
@@ -70,7 +72,7 @@ polarPlotPanel <- function (point, data, imageNames, directions, bValues = NULL)
         currentDirections <- rbind(directions[i,], -directions[i,])
         currentData <- rep(data[i],2)
         order <- order(atan2(currentDirections[,axes[2]], currentDirections[,axes[1]]))
-        polygon((currentDirections[,axes]*currentData)[order,], col=rgb(matrix(correlations,nrow=1)))
+        polygon((currentDirections[,axes]*currentData)[order,], col=shades::brightness(basicColour,basicBrightness*b/max(bValues,na.rm=TRUE)))
     }
 }
 
@@ -128,10 +130,10 @@ polarPlotPanel <- function (point, data, imageNames, directions, bValues = NULL)
 #' @export
 viewImages <- function (images, colourScales = NULL, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, fixedWindow = TRUE, indexNames = NULL, infoPanel = defaultInfoPanel, ...)
 {
-    if (is(images, "MriImage"))
-        images <- list(images)
-    if (!is.list(images))
-        report(OL$Error, "Images must be specified in a list")
+    if (is.list(images))
+        images <- lapply(images, as, "MriImage")
+    else
+        images <- list(as(images, "MriImage"))
     
     nImages <- length(images)
     

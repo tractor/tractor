@@ -26,8 +26,7 @@ runExperiment <- function ()
     
     if (reinstall || latestVersion > currentVersion)
     {
-        ans <- ask("Would you like to update your installation? [yn]")
-        if (tolower(ans) == "y")
+        if (ask("Would you like to update your installation? [yn]", valid=c("y","n")) == "y")
         {
             targetFileName <- ensureFileSuffix(tempfile(), "tar.gz")
             targetDir <- file.path(tempdir(), "download")

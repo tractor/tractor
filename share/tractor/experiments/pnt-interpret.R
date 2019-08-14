@@ -14,9 +14,9 @@ runExperiment <- function ()
     minPosterior <- getConfigVariable("MinimumPosterior", 0, "numeric")
     mode <- getConfigVariable("Mode", NULL, "character", errorIfMissing=TRUE, c("location","posterior","ratio","null-posterior"), errorIfInvalid=TRUE)
     
-    reference <- getNTResource("reference", "pnt", list(tractName=tractName))
-    model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
-    results <- getNTResource("results", "pnt", list(resultsName=resultsName))
+    reference <- getNTResource("reference", list(tractName=tractName))
+    model <- getNTResource("model", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
+    results <- getNTResource("results", list(resultsName=resultsName))
     
     data <- readPntDataTable(datasetName)
     if (nArguments() > 0)
@@ -41,7 +41,6 @@ runExperiment <- function ()
         }
         
         report(OL$Info, "Current session is ", sessionList[i])
-        currentSession <- attachMriSession(sessionList[i])
         currentData <- subset(data, sessionPath==sessionList[i])
         currentSeed <- round(apply(currentData[,c("x","y","z")], 2, median))
         currentPosteriors <- results$getTractPosteriors(attr(sessionList,"indices")[i])
@@ -82,7 +81,7 @@ runExperiment <- function ()
                 cat("NA\n")
             else
             {
-                likelihoodIndex <- ((i-1)*length(currentPosteriors)) + indices[j]
+                likelihoodIndex <- ((attr(sessionList,"indices")[i]-1)*length(currentPosteriors)) + indices[j]
                 value <- switch(mode, location=implode(seeds[j,],sep=","),
                                       posterior=currentPosteriors[indices[j]],
                                       ratio=(logLikelihoods[likelihoodIndex]-refLogLikelihood))

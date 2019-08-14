@@ -1,0 +1,45 @@
+.TH "furrow" 1
+
+.SH NAME
+furrow \- Preprocessor for TractoR's session shorthand
+
+.SH SYNOPSIS
+.B furrow \fR[\fB\-zn\fR] [\fB\-w \fIworking_dir\fR] \fIcommand\fR [\fIarguments\fR]\fB
+.br
+.B furrow \-h
+
+.SH DESCRIPTION
+The \fBfurrow\fR program is a simple wrapper around the specified \fIcommand\fR, which replaces TractoR-style shorthand in the \fIarguments\fR with canonical paths, and then runs \fIcommand\fR. This allows third-party commands to be called in a way that is consistent with TractoR's session abstraction, without requiring the exact paths to individual images to be known.
+
+.SH OPTIONS
+.TP
+.B \-h
+Display usage information and quit.
+.TP
+.B \-z
+Do not write the command line used into a history log file.
+.TP
+.B \-n
+Do not append a suffix to image filenames, giving the file stem instead. Substituting the full image filename is usually best for compatibility with other software, but the stem may occasionally be needed (e.g. for creating derived paths), in which case this flag should be specified.
+.TP
+.B \-w \fIworking_dir\fB
+Specify the working directory for the \fIcommand\fR, which will be created if necessary. If \fIworking_dir\fR is a session directory, this allows 'working_dir@FA' to be abbreviated to just '@FA', which results in a more concise command when more than one image is referenced. The default is the current directory.
+
+.SH EXAMPLES
+This simple example prints the full path to the FA map within the test dataset shipped with TractoR.
+.TP
+.PP
+furrow \-w $TRACTOR_HOME/tests/data/session echo @FA
+.PP
+Notice that certain shorthand, such as '@data', is ambiguous. In these cases subdirectory syntax is used to disambiguate, as in
+.TP
+.PP
+furrow \-w $TRACTOR_HOME/tests/data/session echo @diffusion/data
+.PP
+Paths that point to non-managed files within managed directories will have only the directory expanded, and the path to a managed directory itself can be obtained by adding a trailing slash.
+
+.SH DIAGNOSTICS
+Return value is 1 if the substitution fails; otherwise it is the return value of \fIcommand\fR.
+
+.SH AUTHOR
+Jon Clayden <code@clayden.org>

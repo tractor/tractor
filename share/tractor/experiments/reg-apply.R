@@ -16,7 +16,7 @@ runExperiment <- function ()
     transformName <- splitAndConvertString(transformName, ",", fixed=TRUE)
     if (length(transformName) > 1)
     {
-        transforms <- lapply(transformName, deserialiseReferenceObject)
+        transforms <- lapply(transformName, attachTransformation)
         transform <- composeTransformations(transforms)
     }
     else

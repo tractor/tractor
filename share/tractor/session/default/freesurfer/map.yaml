@@ -1,0 +1,5 @@
+refT1: mri/rawavg
+normT1: mri/T1
+maskedT1: mri/brainmask
+desikan-killiany: mri/aparc+aseg
+destrieux: mri/aparc.a2009s+aseg

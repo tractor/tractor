@@ -1,6 +1,8 @@
 #@desc Transform a point or image between named spaces as they relate to a particular session. Registration will be performed implicitly if necessary. The PointType option allows "world" coordinates or FSL-style zero-based voxel indices to be converted to TractoR's one-based voxel indices. The latter is always used for output.
 #@args session directory, image file or point
 
+library(tractor.track)
+
 runExperiment <- function ()
 {
     requireArguments("session directory", "image file or point")
@@ -18,12 +20,37 @@ runExperiment <- function ()
         targetSpace <- sourceSpace
     
     session <- attachMriSession(Arguments[1])
-    if (imageFileExists(implode(Arguments[-1], sep=" ")))
+    fileStem <- implode(Arguments[-1], sep=" ")
+    if (imageFileExists(fileStem))
     {
         image <- readImageFile(implode(Arguments[-1], sep=" "))
         interpolation <- switch(interpolation, nearestneighbour=0, trilinear=1, spline=3)
         newImage <- transformImageToSpace(image, session, tlc(targetSpace), tlc(sourceSpace), preferAffine=preferAffine, interpolation=interpolation)
         writeImageFile(newImage, paste(basename(image$getSource()),targetSpace,sep="_"))
+    }
+    else if (file.exists(ensureFileSuffix(fileStem, "trk")))
+    {
+        if (is.null(sourceSpace))
+        {
+            report(OL$Info, "Source space was not specified - assuming diffusion")
+            sourceSpace <- "diffusion"
+        }
+        
+        source <- StreamlineSource$new(fileStem)
+        xfm <- session$getTransformation(tlc(sourceSpace),tlc(targetSpace))$getTransformObjects(preferAffine=preferAffine)
+        if (RNiftyReg::isImage(xfm))
+            xfm <- RNiftyReg::deformationField(xfm, jacobian=FALSE)
+        
+        targetImage <- session$getRegistrationTarget(tlc(targetSpace))
+        resultStem <- paste(ensureFileSuffix(basename(fileStem),NULL,strip="trk"), targetSpace, sep="_")
+        sink <- StreamlineSink$new(resultStem, targetImage)
+        
+        source$apply(function(x) {
+            line <- RNiftyReg::applyTransform(xfm, x$getLine("vox"))
+            sink$append(Streamline$new(line, x$getSeedIndex(), targetImage$getVoxelDimensions(), "vox"))
+        }, simplify=NA)
+        
+        sink$close()
     }
     else
     {

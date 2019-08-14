@@ -1,0 +1,5 @@
+diffusion: ../../../../../data/session/tractor/diffusion
+bedpost: ../../../../../data/session/tractor/fdt.bedpostX
+transforms: ../../../../../data/session/tractor/transforms
+structural: ../../../../../data/session/tractor/structural
+functional: ../../../../../data/session/tractor/functional

@@ -8,7 +8,13 @@
 static FILE *log_file = NULL;
 static char *bootstrap_string = NULL;
 static char *script_file = NULL, *working_dir = NULL, *output_level = NULL, *config_file = NULL, *script_args = NULL;
-static int parallelisation_factor = 1, profile_performance = 0;
+static int parallelisation_factor = 1, profile_performance = 0, use_colour = 1;
+
+void set_colour (FILE *stream, const int code)
+{
+    if (use_colour == 1)
+        fprintf(stream, "\x1b[%dm", code);
+}
 
 char * allocate_and_copy_string (const char *from)
 {
@@ -70,7 +76,9 @@ void parse_arguments (int argc, const char **argv)
                 parallelisation_factor = atoi(argv[current_arg+1]);
                 if (parallelisation_factor < 1 || parallelisation_factor > 99)
                 {
-                    fprintf(stderr, "\x1b[33mParallelisation factor must be between 1 and 99 - ignoring value of %d\x1b[0m\n", parallelisation_factor);
+                    set_colour(stderr, 33);
+                    fprintf(stderr, "Parallelisation factor must be between 1 and 99 - ignoring value of %d\n", parallelisation_factor);
+                    set_colour(stderr, 0);
                     parallelisation_factor = 1;
                 }
                 to_drop = 2;
@@ -81,9 +89,16 @@ void parse_arguments (int argc, const char **argv)
             profile_performance = 1;
             to_drop = 1;
         }
+        else if (strcmp(argv[current_arg], "-m") == 0)
+        {
+            use_colour = 0;
+            to_drop = 1;
+        }
         else if (strncmp(argv[current_arg],"-",1) == 0)
         {
-            fprintf(stderr, "\x1b[33mUnrecognised option: %s\x1b[0m\n", argv[current_arg]);
+            set_colour(stderr, 33);
+            fprintf(stderr, "Unrecognised option: %s\n", argv[current_arg]);
+            set_colour(stderr, 0);
             to_drop = 1;
         }
         
@@ -125,7 +140,9 @@ int main (int argc, char **argv)
     
     if (script_file == NULL)
     {
-        fputs("\x1b[31mError: Script file must be specified\x1b[0m\n", stderr);
+        set_colour(stderr, 31);
+        fputs("Error: Script file must be specified\n", stderr);
+        set_colour(stderr, 0);
         tidy_up();
         return 1;
     }
@@ -219,7 +236,9 @@ int read_console (const char *prompt, unsigned char *buffer, int buffer_len, int
         // Print bootstrap string to stdout if running in debug mode
         if (output_level != NULL && strcmp(output_level,"Debug") == 0)
         {
-            fprintf(stdout, "\x1b[32m%s\x1b[0m", bootstrap_string);
+            set_colour(stdout, 32);
+            fputs(bootstrap_string, stdout);
+            set_colour(stdout, 0);
             fflush(stdout);
         }
     }
@@ -291,17 +310,15 @@ void write_console (const char *buffer, int buffer_len, int output_type)
     }
     else
     {
+        set_colour(stderr, is_error_string(buffer) ? 31 : 33);
+        
         len = strlen(buffer);
-        
-        if (is_error_string(buffer))
-            fputs("\x1b[31m", stderr);
-        else
-            fputs("\x1b[33m", stderr);
-        
         if (buffer[len-1] == '\n')
-            fprintf(stderr, "%.*s\x1b[0m\n", (int) len-1, buffer);
+            fprintf(stderr, "%.*s\n", (int) len-1, buffer);
         else
-            fprintf(stderr, "%s\x1b[0m", buffer);
+            fprintf(stderr, "%s", buffer);
+        
+        set_colour(stderr, 0);
         
         fflush(stderr);
     }

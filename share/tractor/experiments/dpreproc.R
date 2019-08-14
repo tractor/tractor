@@ -15,7 +15,7 @@ runExperiment <- function ()
     
     statusOnly <- getConfigVariable("StatusOnly", FALSE)
     interactive <- getConfigVariable("Interactive", TRUE)
-    stages <- getConfigVariable("RunStages", "1-4")
+    stages <- getConfigVariable("RunStages", "1-4", "integer", multiple=TRUE)
     force <- getConfigVariable("Force", FALSE)
     dicomDirs <- getConfigVariable("DicomDirectories", NULL, "character")
     dicomReader <- getConfigVariable("DicomReader", "internal", "character", validValues=c("internal","divest"))
@@ -47,7 +47,6 @@ runExperiment <- function ()
     else
         reversePEVolumes <- splitAndConvertString(reversePEVolumes, ",", "integer", fixed=TRUE)
     
-    stages <- splitAndConvertString(stages, ",", "integer", fixed=TRUE, errorIfInvalid=TRUE)
     runStages <- 1:4 %in% stages
     if (all(!runStages))
         report(OL$Info, "Nothing to do")
@@ -75,28 +74,20 @@ runExperiment <- function ()
                 
                 report(OL$Info, "Merging #{n} raw data series")
                 images <- lapply(fileNames, readImageFile)
-                mergedImage <- do.call(mergeMriImages, images)
-                directions <- do.call(rbind, lapply(seq_len(n), function(i) {
-                    if (file.exists(ensureFileSuffix(fileNames[i], "dirs")))
-                        as.matrix(read.table(ensureFileSuffix(fileNames[i], "dirs")))
-                    else
-                        matrix(NA, nrow=ifelse(images[[i]]$getDimensionality()==4L, dim(images[[i]])[4], 1L), ncol=4L)
-                }))
-                bValues <- directions[,4]
-                bVectors <- directions[,1:3]
-                echoSeparations <- do.call(c, lapply(images, function(image) {
-                    if (is.null(image$getTags("echoSpacing")) || is.null(image$getTags("epiFactor")))
-                        rep(NA, ifelse(image$getDimensionality()==4L, dim(image)[4], 1L))
-                    else
-                        image$getTags("echoSpacing") / 1e6 * (image$getTags("epiFactor") - 1)
-                }))
+                mergedImage <- do.call(mergeMriImages, c(images, list(bindDim=4L, padTags=TRUE)))
+                seriesDescriptions <- unique(mergedImage$getTags("seriesDescription"))
+                if (mergedImage$hasTags("effectiveReadoutTime"))
+                    echoSeparations <- mergedImage$getTags("effectiveReadoutTime")
+                else if (all(mergedImage$hasTags(c("echoSpacing", "epiFactor"))))
+                    echoSeparations <- mergedImage$getTags("echoSpacing") / 1e6 * (mergedImage$getTags("epiFactor") - 1)
             }
             else
             {
                 session$unlinkDirectory("diffusion", ask=interactive)
                 session$getDirectory("diffusion", createIfMissing=TRUE)
                 
-                if (is.null(dicomDirs))
+                dicomDirsSpecified <- !is.null(dicomDirs)
+                if (!dicomDirsSpecified)
                     dicomDirs <- session$getDirectory()
                 
                 # Non-absolute paths are relative to the session directory
@@ -104,49 +95,20 @@ runExperiment <- function ()
                 dicomDirs <- ifelse(dicomDirs %~% "^([A-Za-z]:)?/", dicomDirs, file.path(session$getDirectory(),dicomDirs))
                 dicomDirs <- ore.subst("//+", "/", dicomDirs, all=TRUE)
                 
+                info <- NULL
                 if (dicomReader == "internal")
-                {
-                    info <- lapply(dicomDirs, readDicomDirectory, readDiffusionParams=TRUE)
-                    mergedImage <- do.call(mergeMriImages, lapply(info, "[[", "image"))
-                    seriesDescriptions <- do.call(c, lapply(info, "[[", "seriesDescriptions"))
-                    bValues <- do.call(c, lapply(info, "[[", "bValues"))
-                    bVectors <- t(do.call(cbind, lapply(info, "[[", "bVectors")))
-                    echoSeparations <- do.call(c, lapply(info, "[[", "echoSeparations"))
-                }
+                    info <- lapply(dicomDirs, readDicomDirectory, method="internal", readDiffusionParams=TRUE)
+                else if (interactive || dicomDirsSpecified)
+                    info <- lapply(dicomDirs, readDicomDirectory, method="divest", readDiffusionParams=TRUE, interactive=interactive)
                 else
-                {
-                    report(OL$Info, "Searching for DICOM series using \"divest\" reader")
-                    divestVerbosity <- switch(names(getOutputLevel()), Debug=2L, Verbose=0L, -1L)
-                    if (interactive)
-                        images <- divest::readDicom(dicomDirs, verbosity=divestVerbosity, interactive=TRUE)
-                    else
-                    {
-                        info <- divest::scanDicom(dicomDirs, verbosity=divestVerbosity)
-                        images <- divest::readDicom(info, subset=diffusion, verbosity=divestVerbosity)
-                    }
-                    mergedImage <- do.call(mergeMriImages, lapply(images, as, "MriImage"))
-                    bValues <- do.call(c, lapply(images, function(image) {
-                        if (is.null(attr(image, "bValues")))
-                            rep(NA, ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L))
-                        else
-                            attr(image, "bValues")
-                    }))
-                    bVectors <- do.call(rbind, lapply(images, function(image) {
-                        if (is.null(attr(image, "bVectors")))
-                            matrix(NA, nrow=ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L), ncol=3L)
-                        else
-                            attr(image, "bVectors")
-                    }))
-                    echoSeparations <- do.call(c, lapply(images, function(image) {
-                        if (is.null(attr(image,"echoSpacing")) || is.null(attr(image,"epiFactor")))
-                            rep(NA, ifelse(RNifti::ndim(image)==4L, dim(image)[4], 1L))
-                        else
-                            attr(image,"echoSpacing") / 1e6 * (attr(image,"epiFactor") - 1)
-                    }))
-                }
+                    info <- lapply(dicomDirs, readDicomDirectory, method="divest", readDiffusionParams=TRUE, interactive=FALSE, subset=diffusion)
+                
+                mergedImage <- do.call(mergeMriImages, c(lapply(info, "[[", "image"), list(bindDim=4L, padTags=TRUE)))
+                seriesDescriptions <- do.call(c, lapply(info, "[[", "seriesDescriptions"))
+                echoSeparations <- do.call(c, lapply(info, "[[", "echoSeparations"))
             }
             
-            writeImageFile(mergedImage, session$getImageFileNameByType("rawdata","diffusion"))
+            writeImageFile(mergedImage, session$getImageFileNameByType("rawdata","diffusion"), writeTags=TRUE)
             print(mergedImage)
             
             if (!is.null(seriesDescriptions))
@@ -155,8 +117,10 @@ runExperiment <- function ()
                 writeLines(seriesDescriptions, file.path(session$getDirectory("diffusion"),"descriptions.txt"))
             }
             
-            if (any(!is.na(bValues)) && any(!is.na(bVectors)))
+            if (all(mergedImage$hasTags(c("bValues", "bVectors"))))
             {
+                bValues <- mergedImage$getTags("bValues")
+                bVectors <- mergedImage$getTags("bVectors")
                 missing <- (is.na(bValues) | apply(is.na(bVectors),1,any))
                 if (any(missing))
                 {
@@ -166,25 +130,24 @@ runExperiment <- function ()
                 }
                 report(OL$Info, "Constructing acquisition scheme")
                 scheme <- SimpleDiffusionScheme$new(bValues, bVectors)
-                session$updateDiffusionScheme(scheme)
                 print(scheme)
             }
             
             if (!is.null(echoSeparations) && any(!is.na(echoSeparations)))
                 writeLines(as.character(echoSeparations), file.path(session$getDirectory("diffusion"),"echosep.txt"))
             
-            if (useGradientCache == "first" || (useGradientCache == "second" && !gradientDirectionsAvailableForSession(session)))
+            if (useGradientCache == "first" || (useGradientCache == "second" && is.null(session$getDiffusionScheme())))
             {
                 gradientSet <- checkGradientCacheForSession(session)
                 if (!is.null(gradientSet))
                 {
                     report(OL$Info, "Gradient cache hit - using stored gradient scheme")
                     scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
-                    session$updateDiffusionScheme(scheme)
+                    session$updateDiffusionScheme(scheme, unrotated=TRUE)
                 }
             }
             
-            if (!gradientDirectionsAvailableForSession(session))
+            if (is.null(session$getDiffusionScheme()))
                 report(OL$Warning, "Diffusion direction information not available - you need to create a gradient table manually")
             else
             {
@@ -232,18 +195,20 @@ runExperiment <- function ()
             else
             {
                 report(OL$Info, "There #{pluralise('is',zeroes,plural='are')} #{length(zeroes)} T2-weighted (b=#{minBValue}) #{pluralise('volume',zeroes)}")
-                choice <- -1
-
-                while (!(choice %in% seq_along(zeroes)))
+                
+                repeat
                 {
-                    choice <- ask("Use which one as the reference [1-#{length(zeroes)}; s to show in fslview]?")
-                    if (tolower(choice) == "s")
+                    choice <- ask("Use which one as the reference [1-#{length(zeroes)}; s to show in fslview]?", valid=c("s",seq_along(zeroes)))
+                    if (choice == "s")
                     {
                         zeroVolumes <- readImageFile(b0Path, volumes=(if(useTopup) NULL else zeroes))
                         showImagesInViewer(zeroVolumes, viewer="fslview")
                     }
                     else
+                    {
                         choice <- as.integer(choice)
+                        break
+                    }
                 }
             }
         
@@ -273,38 +238,36 @@ runExperiment <- function ()
                         createMaskImageForSession(session, maskingMethod, nClusters=nClusters)
                 }
                 
-                if (interactive && maskingMethod != "fill")
-                {
-                    done <- ask("Is the brain extraction satisfactory? [yn; s to show the mask]")
-                    
-                    if (tolower(done) == "s")
-                        showImagesInViewer(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("mask","diffusion"), lookupTable=c("greyscale","yellow"), opacity=c(1,0.5))
-                    else if (tolower(done) == "y")
-                        break
-                    else if (maskingMethod == "bet")
-                    {
-                        report(OL$Info, "Previous intensity threshold was #{betIntensityThreshold}; smaller values give larger brain outlines")
-                        tempValue <- ask("Intensity threshold? [0 to 1; Enter for same as before]")
-                        if (tempValue != "")
-                            betIntensityThreshold <- as.numeric(tempValue)
-
-                        report(OL$Info, "Previous vertical gradient was #{betVerticalGradient}; positive values shift the outline downwards")
-                        tempValue <- ask("Vertical gradient? [-1 to 1; Enter for same as before]")
-                        if (tempValue != "")
-                            betVerticalGradient <- as.numeric(tempValue)
-                    }
-                    else if (maskingMethod == "kmeans")
-                    {
-                        report(OL$Info, "Previous number of clusters was #{nClusters}; larger values will usually give larger brain outlines")
-                        tempValue <- ask("Number of clusters? [2 to 10; b to switch to using FSL-BET]")
-                        if (tempValue == "b")
-                            maskingMethod <- "bet"
-                        else
-                            nClusters <- as.integer(tempValue)
-                    }
-                }
-                else
+                if (!interactive || maskingMethod == "fill")
                     break
+                
+                done <- ask("Is the brain extraction satisfactory? [yn; s to show the mask]", valid=c("y","n","s"))
+                
+                if (done == "y")
+                    break
+                else if (done == "s")
+                    showImagesInViewer(session$getImageFileNameByType("refb0"), session$getImageFileNameByType("mask","diffusion"), lookupTable=c("greyscale","yellow"), opacity=c(1,0.5))
+                else if (maskingMethod == "bet")
+                {
+                    report(OL$Info, "Previous intensity threshold was #{betIntensityThreshold}; smaller values give larger brain outlines")
+                    tempValue <- ask("Intensity threshold? [0 to 1; Enter for same as before]")
+                    if (tempValue != "")
+                        betIntensityThreshold <- as.numeric(tempValue)
+
+                    report(OL$Info, "Previous vertical gradient was #{betVerticalGradient}; positive values shift the outline downwards")
+                    tempValue <- ask("Vertical gradient? [-1 to 1; Enter for same as before]")
+                    if (tempValue != "")
+                        betVerticalGradient <- as.numeric(tempValue)
+                }
+                else if (maskingMethod == "kmeans")
+                {
+                    report(OL$Info, "Previous number of clusters was #{nClusters}; larger values will usually give larger brain outlines")
+                    tempValue <- ask("Number of clusters? [2 to 10; b to switch to using FSL-BET]", valid=c("b",2:10))
+                    if (tempValue == "b")
+                        maskingMethod <- "bet"
+                    else
+                        nClusters <- as.integer(tempValue)
+                }
             }
         }
         

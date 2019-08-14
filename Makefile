@@ -30,12 +30,21 @@ post-install-info:
 	@$(ECHO)
 	@$(ECHO) "The ~/.bashrc file can be created if it does not already exist."
 
-lib/.timestamp: lib/ore lib/reportr lib/corpcor lib/loder lib/yaml lib/Rcpp lib/RcppEigen lib/mmand lib/RNifti lib/divest lib/RNiftyReg
+lib/.timestamp: lib/ore lib/reportr lib/corpcor lib/loder lib/shades lib/yaml lib/jsonlite lib/Rcpp lib/RcppEigen lib/mmand lib/RNifti lib/divest lib/RNiftyReg
 	@$(INSTALL) $? && touch lib/.timestamp
 
 install-libs: lib/.timestamp
 
 check-and-install-libs: install-libs
+
+lib/R/testthat:
+	@$(INSTALL) -c testthat
+
+lib/R/oro.nifti:
+	@$(INSTALL) -c oro.nifti
+
+lib/R/igraph:
+	@$(INSTALL) -c igraph
 
 install-base:
 	@$(INSTALL) tractor.base
@@ -91,6 +100,12 @@ test:
 dtest:
 	@cd tests && $(MAKE) debug-tests R=$(R)
 
+utest: lib/R/testthat lib/R/oro.nifti lib/R/igraph
+	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.base
+	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.graph
+
+deeptest: utest test
+
 create-md5:
 	@$(GIT) ls-files | grep -v -e '^lib/' -e '^md5.txt' -e '\.git' | xargs $(MD5) -r >md5.txt
 
@@ -102,4 +117,5 @@ check-md5:
 
 docker: uninstall distclean
 	@$(GIT) clean -Xf
+	@$(GIT) submodule foreach $(GIT) clean -Xf
 	@minor_version=`cat VERSION | sed 's/\..$$//'` && $(DOCKER) build -t "tractor:$$minor_version" .

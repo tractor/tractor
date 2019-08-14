@@ -8,26 +8,25 @@
 \alias{copyImageFiles}
 \alias{readImageFile}
 \alias{writeImageFile}
-\alias{registerPathHandler}
 \title{Working with MRI images stored in NIfTI, Analyze and MGH formats}
 \usage{
-identifyImageFileNames(fileName, fileType = NULL, errorIfMissing = TRUE)
+identifyImageFileNames(fileName, fileType = NULL,
+  errorIfMissing = TRUE, auxiliaries = c("dirs", "lut", "tags"), ...)
 
 imageFileExists(fileName, fileType = NULL)
 
-removeImageFiles(fileName)
+removeImageFiles(fileName, ...)
 
-symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE)
+symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE, ...)
 
-copyImageFiles(from, to, overwrite = FALSE, deleteOriginals = FALSE)
+copyImageFiles(from, to, overwrite = FALSE, deleteOriginals = FALSE,
+  ...)
 
 readImageFile(fileName, fileType = NULL, metadataOnly = FALSE,
-  volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
+  volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
 
-writeImageFile(image, fileName = NULL, fileType = NA, overwrite = TRUE,
-  maxSize = NULL)
-
-registerPathHandler(regex, handler)
+writeImageFile(image, fileName = NULL, fileType = NA,
+  overwrite = TRUE, maxSize = NULL, writeTags = FALSE)
 }
 \arguments{
 \item{fileName, from, to}{File names, with or without appropriate extension.}
@@ -39,6 +38,13 @@ Details.}
 
 \item{errorIfMissing}{Logical value: raise an error if no suitable files
 were found?}
+
+\item{auxiliaries}{A character vector of auxiliary file suffixes to search
+for.}
+
+\item{\dots}{For \code{identifyImageFileNames}, additional arguments to
+\code{\link{resolvePath}}. Elsewhere, additional arguments to
+\code{identifyImageFileNames}.}
 
 \item{overwrite}{Logical value: overwrite an existing image file? For
 \code{writeImageFile}, an error will be raised if there is an existing
@@ -76,9 +82,8 @@ use when storing the data. This can lead to a substantial loss of
 precision, and is usually not desirable. Only used when writing to the
 NIfTI file format.}
 
-\item{regex}{A regular expression.}
-
-\item{handler}{A function taking and returning a string.}
+\item{writeTags}{Logical value: should tags be written in YAML format to an
+auxiliary file?}
 }
 \value{
 \code{readImageFile} returns an \code{\linkS4class{MriImage}}
@@ -131,9 +136,6 @@ Since multiple files may be involved, copying, moving or symlinking images
 is not trivial. \code{copyImageFiles} and \code{symlinkImageFiles} are
 wrappers around the standard functions \code{\link{file.copy}} and
 \code{\link{file.symlink}} which handle this complexity.
-
-\code{registerPathHandler} allows special syntaxes to be used for image
-paths, and is for advanced use only.
 }
 \references{
 Please cite the following reference when using TractoR in your

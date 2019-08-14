@@ -7,8 +7,12 @@
 
 class VisitationMapDataSink : public DataSink<Streamline>
 {
+public:
+    enum MappingScope { FullMappingScope, SeedMappingScope, EndsMappingScope };
+    
 private:
     Array<double> values;
+    MappingScope scope;
     bool normalise;
     size_t totalStreamlines;
     
@@ -16,8 +20,8 @@ private:
     VisitationMapDataSink () {}
     
 public:
-    VisitationMapDataSink (const std::vector<int> &dims, const bool normalise = false)
-        : normalise(normalise), totalStreamlines(0)
+    VisitationMapDataSink (const std::vector<int> &dims, const MappingScope scope = FullMappingScope, const bool normalise = false)
+        : scope(scope), normalise(normalise), totalStreamlines(0)
     {
         values = Array<double>(dims, 0.0);
     }

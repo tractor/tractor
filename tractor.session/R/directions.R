@@ -1,8 +1,3 @@
-gradientDirectionsAvailableForSession <- function (session)
-{
-    return (!is.null(session$getDiffusionScheme()))
-}
-
 saveSeriesDescriptionsForSession <- function (session, descriptions)
 {
     if (!is(session, "MriSession"))
@@ -39,7 +34,7 @@ checkGradientCacheForSession <- function (session)
 
 updateGradientCacheFromSession <- function (session, force = FALSE)
 {
-    if (!gradientDirectionsAvailableForSession(session))
+    if (is.null(session$getDiffusionScheme()))
         return (FALSE)
     
     descriptionsFile <- file.path(session$getDirectory("diffusion"), "descriptions.txt")
@@ -72,7 +67,7 @@ updateGradientCacheFromSession <- function (session, force = FALSE)
         }
     }
     
-    scheme <- session$getDiffusionScheme()
+    scheme <- session$getDiffusionScheme(unrotated=TRUE)
     gradientSet <- cbind(scheme$getGradientDirections(), scheme$getBValues())
     write.table(gradientSet, file.path(cacheDirectory,paste("set",number,".txt",sep="")), row.names=FALSE, col.names=FALSE)
     
@@ -82,16 +77,16 @@ updateGradientCacheFromSession <- function (session, force = FALSE)
     return (TRUE)
 }
 
-flipGradientVectorsForSession <- function (session, axes)
+flipGradientVectorsForSession <- function (session, axes, unrotated = FALSE)
 {
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    scheme <- session$getDiffusionScheme()
+    scheme <- session$getDiffusionScheme(unrotated=unrotated)
     directions <- scheme$getGradientDirections()
     directions[,axes] <- (-directions[,axes])
     scheme <- SimpleDiffusionScheme$new(scheme$getBValues(), directions)
-    session$updateDiffusionScheme(scheme)
+    session$updateDiffusionScheme(scheme, unrotated=unrotated)
 }
 
 rotateGradientVectorsForSession <- function (session)

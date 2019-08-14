@@ -9,7 +9,7 @@ runExperiment <- function ()
 {
     requireArguments("image file(s)")
     
-    requestedViewer <- getConfigVariable("Viewer", NULL, "character", validValues=c("tractor","fslview","freeview"))
+    requestedViewer <- getConfigVariable("Viewer", NULL, "character", validValues=c("tractor","fsleyes","fslview","freeview"))
     fixedWindow <- getConfigVariable("FixedWindow", TRUE)
     plotType <- getConfigVariable("PlotType", NULL, "character", validValues=c("none","time","orientation"))
     directionsFile <- getConfigVariable("DirectionsFile", NULL, "character")
@@ -37,7 +37,7 @@ runExperiment <- function ()
                 return (groups(ore.search(":(\\w+)$", space)))
         })
         
-        if (any(spaces == "diffusion") && file.exists(directionsFile <- file.path(dirname(fileStems[which(spaces=="diffusion")]), "directions.txt")))
+        if (any(spaces == "diffusion") && file.exists(directionsFile <- file.path(dirname(fileStems[which(spaces=="diffusion")[1]]), "directions.txt")))
             directions <- as.matrix(read.table(directionsFile))
         else if (is.null(plotType) && any(spaces == "functional"))
         {
@@ -47,10 +47,18 @@ runExperiment <- function ()
     }
     
     panelOptions <- list()
-    if (is.null(plotType) && !is.null(directions))
+    if (is.null(plotType))
     {
-        report(OL$Info, "Image appears to be diffusion-weighted; choosing orientation plot")
-        plotType <- "orientation"
+        if (!is.null(directions))
+        {
+            report(OL$Info, "Image appears to be diffusion-weighted; choosing orientation plot")
+            plotType <- "orientation"
+        }
+        else
+        {
+            report(OL$Info, "Defaulting to time plot")
+            plotType <- "time"
+        }
     }
     if (plotType == "orientation")
         panelOptions <- list(directions=directions[,1:3], bValues=directions[,4])

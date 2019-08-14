@@ -8,10 +8,12 @@
 \alias{[,MriImage,ANY,missing-method}
 \alias{[,MriImage,missing,ANY-method}
 \alias{[,MriImage,ANY,ANY-method}
+\alias{[,MriImage,MriImage,missing-method}
 \alias{[<-,MriImage,missing,missing-method}
 \alias{[<-,MriImage,ANY,missing-method}
 \alias{[<-,MriImage,missing,ANY-method}
 \alias{[<-,MriImage,ANY,ANY-method}
+\alias{[<-,MriImage,MriImage,missing-method}
 \title{Indexing methods}
 \usage{
 \S4method{[}{SparseArray,ANY,ANY}(x, i, j, ..., drop = TRUE)
@@ -26,6 +28,8 @@
 
 \S4method{[}{MriImage,ANY,ANY}(x, i, j, ..., drop = TRUE)
 
+\S4method{[}{MriImage,MriImage,missing}(x, i, j, ..., drop = TRUE)
+
 \S4method{[}{MriImage,missing,missing}(x, i, j, ...) <- value
 
 \S4method{[}{MriImage,ANY,missing}(x, i, j, ...) <- value
@@ -33,6 +37,8 @@
 \S4method{[}{MriImage,missing,ANY}(x, i, j, ...) <- value
 
 \S4method{[}{MriImage,ANY,ANY}(x, i, j, ...) <- value
+
+\S4method{[}{MriImage,MriImage,missing}(x, i, j, ...) <- value
 }
 \arguments{
 \item{x}{An object of the appropriate type.}
@@ -49,8 +55,10 @@ A vector, array or \code{\link{SparseArray}}.
 \description{
 Indexing methods for \code{\link{SparseArray}} and \code{\link{MriImage}}
 objects. For the latter class, arguments are passed to the equivalents for
-\code{array} or \code{\link{SparseArray}}. For \code{\link{SparseArray}},
-indexing may be blank, or by numeric vector or matrix.
+\code{array} or \code{\link{SparseArray}}, except where \code{i} is another
+\code{\link{MriImage}} object, where its nonzero region will be used to
+provide the indices. For \code{\link{SparseArray}}, indexing may be blank,
+or by numeric vector or matrix.
 }
 \author{
 Jon Clayden

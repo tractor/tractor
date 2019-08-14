@@ -3,7 +3,6 @@
 #@interactive TRUE
 
 library(RNifti)
-library(divest)
 library(tractor.base)
 
 runExperiment <- function ()
@@ -45,14 +44,13 @@ runExperiment <- function ()
     
     divestVerbosity <- switch(names(getOutputLevel()), Debug=2L, Verbose=0L, -1L)
     
-    for (path in paths)
+    for (path in expandFileName(paths))
     {
-        # Scan over the DICOM files and convert to "niftiImage" objects
         report(OL$Info, "Looking for DICOM files in directory #{path}...")
         
         if (method == "internal")
         {
-            info <- readDicomDirectory(path, untileMosaics=untileMosaics)
+            info <- readDicomDirectory(path, method="internal", untileMosaics=untileMosaics)
             reportFlags()
             
             outputPath <- switch(filenameStyle, argument2=Arguments[2], folder=basename(path), report(OL$Error,"Metadata is not available for the internal method"))
@@ -62,7 +60,7 @@ runExperiment <- function ()
         }
         
         # From here on the divest back-end is assumed
-        result <- readDicom(path, interactive=interactive, flipY=flipY, crop=crop, forceStack=forceStack, labelFormat=ifelse(anonymise,"%t_S%3s_%d","%n_%t_S%3s_%d"), verbosity=divestVerbosity)
+        result <- divest::readDicom(path, interactive=interactive, flipY=flipY, crop=crop, forceStack=forceStack, labelFormat=ifelse(anonymise,"%t_S%3s_%d","%n_%t_S%3s_%d"), verbosity=divestVerbosity)
         
         # Create initial file names
         outputPaths <- switch(filenameStyle, argument2=rep(Arguments[2], length(result)),
@@ -92,12 +90,12 @@ runExperiment <- function ()
                 report(OL$Info, "Image #{outputPaths[i]} appears to be T1-weighted")
                 type <- "t1"
             }
-            else if (isTRUE(attributes$repetitionTime > 2000) && isTRUE(attributes$echoTime > 30))
+            else if (isTRUE(attributes$repetitionTime > 1500) && isTRUE(attributes$echoTime > 90))
             {
                 report(OL$Info, "Image #{outputPaths[i]} appears to be T2-weighted")
                 type <- "t2"
             }
-            else if (isTRUE(attributes$repetitionTime > 2000) && isTRUE(attributes$echoTime < 30))
+            else if (isTRUE(attributes$repetitionTime > 1500) && isTRUE(attributes$echoTime < 30))
             {
                 report(OL$Info, "Image #{outputPaths[i]} appears to be proton density-weighted")
                 type <- "pd"
@@ -137,31 +135,26 @@ runExperiment <- function ()
                 storedTR <- pixdim(image)[4]
                 if (storedTR > 0 && storedTR < thresholdTR)
                 {
-                    report(OL$Info, "Reconstructed TR of #{storedTR} s is less than threshold", round=3)
-                    throughPlaneAxis <- abs(tractor.base:::xformToOrientation(xform(image), string=FALSE)[3])
-                    image <- as.array(image)
-                    pixdim(image)[4] <- pixdim(image)[4] * dim(image)[throughPlaneAxis]
+                    # This section can fail, for example for RGB images, which RNifti does not handle
+                    try({
+                        throughPlaneAxis <- which(abs(rotation(image))[,3] > 0.5)
+                        image <- as.array(image)
+                        pixdim(image)[4] <- pixdim(image)[4] * dim(image)[throughPlaneAxis]
+                        flag(OL$Info, "Reconstructed TR of #{storedTR} s is less than threshold - correcting to #{pixdim(image)[4]} s", round=3)
+                    
+                        if ("repetitionTime" %in% names(attributes) && equivalent(attributes$repetitionTime, storedTR*1000, tolerance=1e-4))
+                            attributes$repetitionTime <- round(pixdim(image)[4] * 1000)
+                    
+                        secondaryAttributes <- attributes[!(names(attributes) %~% "^\\.|^(dim|imagedim|pixdim|pixunits|class)$")]
+                        if (length(secondaryAttributes) > 0)
+                            image <- do.call(structure, c(list(image), secondaryAttributes))
+                    })
                 }
             }
             
             # Write the image to file
             report(OL$Verbose, "Writing image #{outputPaths[i]}")
-            writeNifti(image, ensureFileSuffix(outputPaths[i],"nii.gz"))
-            
-            # Strip unneeded attributes (including for anonymisation, if requested)
-            exclusionPattern <- "^\\.|^(dim|imagedim|pixdim|pixunits|class)$"
-            if (anonymise)
-                exclusionPattern <- ore(exclusionPattern, "|^patient")
-            if (all(c("bValues","bVectors") %in% names(attributes)))
-            {
-                write.table(cbind(attributes$bVectors,attributes$bValues), ensureFileSuffix(outputPaths[i],"dirs"), row.names=FALSE, col.names=FALSE)
-                exclusionPattern <- ore(exclusionPattern, "|^bV(alues|ectors)$")
-            }
-            
-            # Finalise and write attributes
-            attributes <- attributes[!(names(attributes) %~% exclusionPattern)]
-            if (length(attributes) > 0)
-                writeLines(yaml::as.yaml(attributes), ensureFileSuffix(outputPaths[i],"tags"))
+            writeImageFile(structure(image,anonymise=anonymise), outputPaths[i], writeTags=TRUE)
         }
     }
 }

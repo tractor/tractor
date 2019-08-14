@@ -28,8 +28,8 @@ is reset to the empty string if the image is modified}
 
 \item{\code{origin}}{Numeric vector giving the spatial coordinate origin}
 
-\item{\code{storedXform}}{Numeric matrix giving the NIfTI xform matrix read from
-file, if any}
+\item{\code{xform}}{Numeric matrix giving the NIfTI-style xform matrix associated
+with the image, which indicates its orientation}
 
 \item{\code{reordered}}{Logical value indicating whether the image has been
 reordered. See \code{\link{reorderMriImage}}}
@@ -47,6 +47,8 @@ reordered. See \code{\link{reorderMriImage}}}
 \item{\code{binarise()}}{Binarise the image by setting nonzero values to one}
 
 \item{\code{fill(value)}}{Fill the image with a particular value}
+
+\item{\code{find(fun = NULL, ..., array = TRUE)}}{Find voxels whose values are not zero, or satisfy a function}
 
 \item{\code{getDataAtPoint(...)}}{Obtain the value of the image at a particular point}
 
@@ -66,9 +68,13 @@ reordered. See \code{\link{reorderMriImage}}}
 
 \item{\code{mask(maskImage)}}{Mask the image, setting zero voxels in the mask to zero}
 
+\item{\code{setData(newData)}}{Replace the data in the image}
+
 \item{\code{setOrigin(newOrigin)}}{Update the origin of the image}
 
 \item{\code{setSource(newSource)}}{Update the source of the image}
+
+\item{\code{setTags(...)}}{Add or replace metadata tags}
 
 \item{\code{setXform(newXform)}}{Update the xform matrix associated with the image}
 

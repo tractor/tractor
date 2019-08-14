@@ -14,12 +14,17 @@ runExperiment <- function ()
     z <- getConfigVariable("Z", NA, "numeric", errorIfInvalid=TRUE)
     source <- getConfigVariable("Source", "tensor", validValues=c("bedpost","tensor"))
     thresholdLevel <- getConfigVariable("ThresholdLevel", 0.2)
+    maskFile <- getConfigVariable("MaskFile", NULL, "character")
     windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
     scaleComponents <- getConfigVariable("ScaleComponents", TRUE)
     scaleFactor <- getConfigVariable("ScaleFactor", 16)
     
     faImage <- session$getImageByType("fa", "diffusion")
-    maskImage <- session$getImageByType("mask", "diffusion")
+    
+    if (is.null(maskFile))
+        maskImage <- session$getImageByType("mask", "diffusion")
+    else
+        maskImage <- readImageFile(maskFile)
     
     if (!is.null(windowLimits))
     {
@@ -94,8 +99,7 @@ runExperiment <- function ()
         segments((d1-1)/(dims[1]-1)-maskedData[,1]/(2*dims[1]), (d2-1)/(dims[2]-1)-maskedData[,2]/(2*dims[2]), (d1-1)/(dims[1]-1)+maskedData[,1]/(2*dims[1]), (d2-1)/(dims[2]-1)+maskedData[,2]/(2*dims[2]), lwd=round(3*scaleFactor/16), col=col)
     }
     
-    ans <- ask("Copy figure to a high-resolution \"png\" file? [yn]")
-    if (tolower(ans) == "y")
+    if (ask("Copy figure to a high-resolution \"png\" file? [yn]", valid=c("y","n")) == "y")
     {
         outputFileName <- paste(basename(session$getDirectory()), "_", c("x","y","z")[throughPlaneAxis], point[throughPlaneAxis], "_", source, sep="")
         dev.print(png, filename=ensureFileSuffix(outputFileName,"png"), width=round(scaleFactor*dims[1]), height=round(scaleFactor*dims[2]), bg="black")

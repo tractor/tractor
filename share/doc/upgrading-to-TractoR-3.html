@@ -99,7 +99,7 @@ tractor track /data/subject1 white_matter TargetRegions:cerebral_cortex Terminat
 
 <h2 id="parallelisation">Parallelisation</h2>
 
-<p>Support for parallelisation in prior versions of TractoR was very patchy. Some individual scripts supported running in parallel on multiple cores using the &rsquo;-p&rsquo; flag, and the special case of <code>pnt-data-sge</code> supported parallelisation using the Sun Grid Engine high-performance computing platform. Moreover, some script worked with one dataset while others expected group data, and <code>mean</code> and <code>gmean</code> differed only in this regard.</p>
+<p>Support for parallelisation in prior versions of TractoR was very patchy. Some individual scripts supported running in parallel on multiple cores using the &lsquo;-p&rsquo; flag, and the special case of <code>pnt-data-sge</code> supported parallelisation using the Sun Grid Engine high-performance computing platform. Moreover, some script worked with one dataset while others expected group data, and <code>mean</code> and <code>gmean</code> differed only in this regard.</p>
 
 <p>In TractoR 3.0, support for both multicore and grid engine parallelisation is fully pervasive, and scripts are much more consistent about working with one object or dataset at a time. The core tool for this purpose is a new top-level program called <code>plough</code>, which allows an experiment script to be called multiple times but with different sets of arguments.</p>
 
@@ -118,14 +118,14 @@ tractor -c design.yaml -p 2 pnt-data                  # Locally parallelised
 tractor -c design.yaml pnt-data-sge QueueName:myq     # Grid engine
 </code></pre>
 
-<p>This worked well enough, for <code>pnt-data</code> in particular, but few other scripts worked with the &rsquo;-p&rsquo; option, and <em>no</em> other scripts had an option to use a grid engine. By contrast, these options are available to every script in TractoR 3.0. The syntax for the above commands would now be</p>
+<p>This worked well enough, for <code>pnt-data</code> in particular, but few other scripts worked with the &lsquo;-p&rsquo; option, and <em>no</em> other scripts had an option to use a grid engine. By contrast, these options are available to every script in TractoR 3.0. The syntax for the above commands would now be</p>
 
 <pre><code class="language-bash line-numbers">plough -C design.yaml pnt-data %SessionList           # Sequential
 plough -C design.yaml -P 2 pnt-data %SessionList      # Locally parallelised
 plough -C design.yaml -G -Q myq pnt-data %SessionList # Grid engine
 </code></pre>
 
-<p>There are a few things to note here. Firstly, <code>pnt-data</code> now takes a session directory as an argument, because it works on one session at a time. Since this differs for each call to the script, we use the <code>plough</code>-specific notation with a percent sign, <code>%SessionList</code>, to mean &ldquo;the value of the &lsquo;SessionList&rsquo; variable on this iteration of the loop&rdquo;. Note that using the grid engine is specified with the &rsquo;-G&rsquo; flag, with the queue name passed using &rsquo;-Q&rsquo;. Note also that in general, flags to <code>plough</code> use upper-case letters, to avoid confusing them with the lower-case flags of <code>tractor</code>, which can be mixed in as required.</p>
+<p>There are a few things to note here. Firstly, <code>pnt-data</code> now takes a session directory as an argument, because it works on one session at a time. Since this differs for each call to the script, we use the <code>plough</code>-specific notation with a percent sign, <code>%SessionList</code>, to mean &ldquo;the value of the &lsquo;SessionList&rsquo; variable on this iteration of the loop&rdquo;. Note that using the grid engine is specified with the &lsquo;-G&rsquo; flag, with the queue name passed using &lsquo;-Q&rsquo;. Note also that in general, flags to <code>plough</code> use upper-case letters, to avoid confusing them with the lower-case flags of <code>tractor</code>, which can be mixed in as required.</p>
 
 <p>Using <code>plough</code> not only opens up parallelisation to all the package&rsquo;s scripts, but it also allows for some more complex commands. Let&rsquo;s say we want to run <code>pnt-data</code> for multiple tracts and sessions, all at once. We update our design file first:</p>
 
@@ -139,7 +139,7 @@ SearchWidth: 7
 <pre><code class="language-bash">plough -C design.yaml -X -P 3 -w %TractName pnt-data %Session DatasetName:%TractName_data
 </code></pre>
 
-<p>Here, we use the &rsquo;-X&rsquo; flag, which means &ldquo;apply every combination of all variables whose length is greater than one&rdquo;, so we run <code>pnt-data</code> four times, for each combination of tract and subject. We collate data from each tract in a separate working directory (&rsquo;-w&rsquo;), and name the dataset according to the tract (<code>DatasetName:%TractName_data</code>). Of course, there is no obligation to get as complex as this, but this should give a sense of what is possible with relatively little effort.</p>
+<p>Here, we use the &lsquo;-X&rsquo; flag, which means &ldquo;apply every combination of all variables whose length is greater than one&rdquo;, so we run <code>pnt-data</code> four times, for each combination of tract and subject. We collate data from each tract in a separate working directory (&lsquo;-w&rsquo;), and name the dataset according to the tract (<code>DatasetName:%TractName_data</code>). Of course, there is no obligation to get as complex as this, but this should give a sense of what is possible with relatively little effort.</p>
 
 <h2 id="visualisation">Visualisation</h2>
 

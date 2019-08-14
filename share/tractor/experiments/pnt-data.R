@@ -17,8 +17,7 @@ runExperiment <- function ()
     # For backwards compatibility: update an old dataset file
     if (!is.null(sessionList))
     {
-        if (!overwrite)
-            report(OL$Error, "The SessionList variable is only used to update old files - also set Overwrite:true if you want to do this")
+        assert(overwrite, "The SessionList variable is only used to update old files - also set Overwrite:true if you want to do this")
         
         fileName <- ensureFileSuffix(datasetName, "txt")
         data <- read.table(fileName)
@@ -36,7 +35,7 @@ runExperiment <- function ()
     requireArguments("session directory")
     session <- attachMriSession(Arguments[1])
     
-    reference <- getNTResource("reference", "pnt", list(tractName=tractName))
+    reference <- getNTResource("reference", list(tractName=tractName))
     
     if (isValidAs(Sys.getenv("TRACTOR_PLOUGH_ID"), "integer"))
         fileName <- ensureFileSuffix(paste(datasetName,Sys.getenv("TRACTOR_PLOUGH_ID"),sep="."), "txt")

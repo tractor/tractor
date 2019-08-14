@@ -16,12 +16,14 @@ runExperiment <- function ()
     subgroupSize <- getConfigVariable("SubgroupSize", 500)
     truncate <- getConfigVariable("TruncateToReference", TRUE)
     randomSeed <- getConfigVariable("RandomSeed", NULL, "integer")
+    requireMap <- getConfigVariable("RequireMap", TRUE)
+    requireStreamlines <- getConfigVariable("RequirePaths", FALSE)
     
-    reference <- getNTResource("reference", "pnt", list(tractName=tractName))
+    reference <- getNTResource("reference", list(tractName=tractName))
     refSession <- reference$getSourceSession()
     options <- reference$getTractOptions()
-    model <- getNTResource("model", "pnt", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
-    results <- getNTResource("results", "pnt", list(resultsName=resultsName))
+    model <- getNTResource("model", list(tractName=tractName,datasetName=datasetName,modelName=modelName))
+    results <- getNTResource("results", list(resultsName=resultsName))
     
     if (!is.null(randomSeed))
         set.seed(randomSeed)
@@ -113,7 +115,7 @@ runExperiment <- function ()
         if (length(toAccept) == 0)
         {
             report(OL$Warning, "All streamlines rejected for session #{i} - using median line")
-            streamSource <- StreamlineSource$new(streamSource$getMedian(options$lengthQuantile, pathOnly=TRUE))
+            streamSource <- StreamlineSource$new(streamSource$select(NULL)$getMedian(options$lengthQuantile, pathOnly=TRUE))
         }
         else
         {
@@ -145,9 +147,18 @@ runExperiment <- function ()
             streamSource <- streamSource$extractAndTruncate(refLeftLength, refRightLength)
         }
         
-        report(OL$Info, "Creating visitation map")
-        faPath <- currentSession$getImageFileNameByType("FA", "diffusion")
-        visitationMap <- streamSource$getVisitationMap(faPath)
-        writeImageFile(visitationMap, es("#{tractName}.#{currentSessionIndex}"))
+        report(OL$Info, "Creating outputs")
+        outputStem <- es("#{tractName}.#{currentSessionIndex}")
+        if (requireMap)
+        {
+            faPath <- currentSession$getImageFileNameByType("FA", "diffusion")
+            visitationMap <- streamSource$getVisitationMap(faPath)
+            writeImageFile(visitationMap, outputStem)
+        }
+        if (requireStreamlines)
+        {
+            sourceFile <- ensureFileSuffix(streamSource$getFileStem(), "trk")
+            file.copy(sourceFile, ensureFileSuffix(outputStem,"trk"))
+        }
     }
 }

@@ -75,8 +75,7 @@ runExperiment <- function ()
     else
         plot(graph, useAbsoluteWeights=useAbsoluteWeights, weightLimits=weightLimits, ignoreBeyondLimits=FALSE, useAlpha=TRUE, hideDisconnected=hideDisconnected, useNames=useNames, useLocations=FALSE)
     
-    ans <- ask("Copy figure to pdf file? [yn]")
-    if (tolower(ans) == "y")
+    if (ask("Copy figure to pdf file? [yn]", valid=c("y","n") == "y"))
         dev.print(pdf, file=ensureFileSuffix(basename(graphName),"pdf",strip=c("Rdata","csv")))
     
     invisible(NULL)

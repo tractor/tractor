@@ -84,9 +84,9 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputL
 describeExperiment <- function (scriptFile, fill = FALSE)
 {
     inputLines <- readLines(scriptFile)
-    outputLines <- paste("OPTIONS for script", scriptFile, "(* required)", sep=" ")
+    outputLines <- es("OPTIONS for script #{scriptFile} (* required)")
     
-    getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL, deprecated = FALSE)
+    getConfigVariable <- function (name, defaultValue = NULL, mode = NULL, errorIfMissing = FALSE, errorIfInvalid = FALSE, validValues = NULL, deprecated = FALSE, multiple = FALSE)
     {
         # Don't show deprecated config variables
         if (!deprecated)
@@ -97,7 +97,7 @@ describeExperiment <- function (scriptFile, fill = FALSE)
             else if (identical(defaultValue, FALSE))
                 defaultValueString <- "false"
             else
-                defaultValueString <- ifelse(is.null(defaultValue), "NULL", as.character(defaultValue))
+                defaultValueString <- ifelse(is.null(defaultValue), "(no value)", as.character(defaultValue))
             
             if (!is.null(validValues))
             {
@@ -133,11 +133,10 @@ describeExperiment <- function (scriptFile, fill = FALSE)
 findExperiment <- function (exptName)
 {
     exptFile <- ensureFileSuffix(exptName, "R")    
-    pathDirs <- c(".",
-                  file.path(Sys.getenv("HOME"), ".tractor"),
+    pathDirs <- c(file.path(Sys.getenv("HOME"), ".tractor"),
                   splitAndConvertString(Sys.getenv("TRACTOR_PATH"), ":", fixed=TRUE),
                   file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "experiments"))
-    possibleLocations <- file.path(pathDirs, exptFile)
+    possibleLocations <- c(expandFileName(exptFile), file.path(pathDirs,exptFile))
     filesExist <- file.exists(possibleLocations)
     
     if (sum(filesExist) == 0)
@@ -152,7 +151,6 @@ findExperiment <- function (exptName)
 callExperiment <- function (exptName, args = NULL, configFiles = NULL, outputLevel = getOutputLevel(), ...)
 {
     scriptFile <- findExperiment(exptName)
-    report(OL$Info, "Running experiment script ", scriptFile)
     bootstrapExperiment(scriptFile, outputLevel=outputLevel, configFiles=configFiles, configText=implode(args,sep=" "), standalone=FALSE, ...)
 }
 

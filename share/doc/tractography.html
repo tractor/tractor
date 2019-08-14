@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+
+<html lang="en-gb">
+
+<head>
+  <title>TractoR ~ Tractography</title>
+
+  <meta charset="utf-8" />
+  <meta name="author" content="Jon Clayden" />
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
+  <link href="assets/prism.css" rel="stylesheet" />
+  <link href="assets/style.css" rel="stylesheet" />
+</head>
+
+<body>
+
+<header>
+  <div id="banner">
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+  </div>
+</header>
+
+<div id="navbar">
+  <nav>
+    <div id="links">
+      <span><a href="home.html">Home</a></span>
+      <span><a href="home.html#site-contents">Contents</a></span>
+      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="changelog.html">Changelog</a></span>
+      <span><a href="references.html">References</a></span>
+      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
+      <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+    </div>
+  </nav>
+</div>
+
+<div id="main" class="language-bash">
+
+
+<h1>Tractography</h1>
+
+<p>This page outlines TractoR&rsquo;s facilities for tractography, otherwise known as tract tracing, virtual dissection or white matter segmentation. The package currently offers seed-based or mask-based probabilistic tractography, based on a tensor or ball-and-sticks diffusion model. Streamline pathways, visitation maps and connectivity profiles can be obtained.</p>
+
+<h2 id="the-track-script">The track script</h2>
+
+<p>Tractography in TractoR is run using the <code>track</code> script, which requires some <a href="diffusion-processing.html">fully preprocessed</a> diffusion MR data, stored in a <a href="conventions.html">session directory</a>. A simple example is</p>
+
+<pre><code class="language-bash">tractor track /data/subject1 TractName:global
+</code></pre>
+
+<p>which will generate 100 streamlines from each voxel within the brain mask of the session directory rooted at <code>/data/subject1</code>, and write out an image whose voxels indicate the total number of streamlines passing through in each case. The <code>TractName</code> option determines the name of all output files.</p>
+
+<p>Note that TractoR&rsquo;s tractography is probabilistic, in the sense that an element of randomness is involved, which means that repeated tracing from a given seed point will not in general produce equivalent results. There are three reasons for this:</p>
+
+<ul>
+<li><strong>Seeding jitter.</strong> By default, each streamline is initiated from a random position <em>within</em> the voxel. This avoids the rather artificial grid structure that results from always seeding at voxel centre points. It can be disabled by setting the <code>JitterSeeds</code> option to <code>false</code>.</li>
+<li><strong>Modelling uncertainty.</strong> The BEDPOSTX ball-and-sticks model fitted by the <code>bedpost</code> script, which is the preferred diffusion model in TractoR, estimates a posterior distribution over fibre directions in each voxel. A sample from this distribution is drawn in each voxel visited during the tracking process. This aspect is not relevant to the diffusion tensor model, which can be selected with <code>PreferredModel:dti</code>.</li>
+<li><strong>Probabilistic interpolation.</strong> Like some other software, TractoR uses a probabilistic analogue of trilinear interpolation to identify suitable fibre directions at subvoxel locations. Under this scheme, neighbouring voxels are chosen as the source with a probability that is proportional to their proximity. This is built into the algorithm, and cannot be changed.</li>
+</ul>
+
+<h2 id="seeding-options">Seeding options</h2>
+
+<p>Instead of using the whole brain mask to seed, there are a number of options to narrow down the scope of seeding. The most obvious is to specify a location explicitly, as in</p>
+
+<pre><code class="language-bash">tractor track /data/subject1 41,38,23 Streamlines:1000
+</code></pre>
+
+<p>which seeds 1000 streamlines from voxel location (41,38,23). Notice that these indices are 1-based, and correspond to the locations given by the internal viewer (<code>tractor view</code>).</p>
+
+<p>A second option is to specify an image file as the second argument, which will be used as a mask.</p>
+
+<p>Thirdly, if a <a href="structural.html">parcellation is available</a>, labelled regions in the parcellation may be specified by name or type (following the names in the auxiliary .lut file). For example,</p>
+
+<pre><code class="language-bash">tractor track /data/subject1 white_matter
+</code></pre>
+
+<p>will seed in all white matter voxels, if such a region is defined.</p>
+
+<p>Further refinement of the seeding region is possible using options such as <code>AnisotropyThreshold</code>, which ignores seeds with a fractional anisotropy below a specified threshold, and <code>BoundaryManipulation</code>, which applies mathematical morphology to the seed region. For example,</p>
+
+<pre><code class="language-bash">tractor track /data/subject1 postcentral_gyrus_left BoundaryManipulation:outer
+</code></pre>
+
+<p>will extract the left postcentral gyrus from the parcellation, apply a morphological dilation and subtract the original mask, resulting in a set of seed voxels just outside this grey matter region. These will typically correspond to neighbouring white matter and cerebrospinal fluid. The latter can be removed by setting an <code>AnisotropyThreshold</code>.</p>
+
+<h2 id="target-regions">Target regions</h2>
+
+<p>As well as the seeding regions, a set of target areas can be specified, and streamlines may optionally be required to pass through them, or else truncated when they do so. This is often a prelude to creating a diffusion-based <a href="connectivity-graphs.html">connectivity graph</a>. Like seed masks, target regions can be standalone image files or named regions from a parcellation. For example,</p>
+
+<pre><code class="language-bash">tractor track /data/subject1 white_matter TargetRegions:cerebal_cortex TerminateAtTargets:true MinTargetHits:2
+</code></pre>
+
+<p>seeds from every white matter voxel and terminates in cortical grey matter regions. The option <code>MinTargetHits:2</code> stipulates that both ends of the streamline must reach a target, otherwise it is rejected and not included in the result.</p>
+
+<p>If the actual streamlines are required, in addition to a visitation map or instead of it, the option <code>RequirePaths:true</code> can be added. In this case the streamlines are written to a .trk file, which can be opened in <a href="http://trackvis.org">TrackVis</a> for visualisation as shown below.</p>
+
+<p><img src="trackvis.png" alt="TrackVis visualisation of streamlines"></p>
+
+<p>If target regions are used then an <a href="conventions.html#file-types">auxiliary .trkl file</a> will also be created. This is a TractoR-specific extension that stores information about which streamlines reached which targets, for rapid lookup in other scripts such as <a href="connectivity-graphs.html"><code>graph-build</code></a>.</p>
+
+<p>Basic information about the contents of a .trk file can be obtained using the <code>trkinfo</code> script, and further mapping, of the seed or end-points is available through the <code>trkmap</code> script.</p>
+
+<p>Finally, the <code>track</code> scripts offers connectivity profiling, which is often performed voxelwise to identify the distribution of end-points of streamlines emanating from that location. The key option here is <code>RequireProfiles</code>.</p>
+
+<pre><code class="language-bash">tractor track /data/subject1 thalamus_left Strategy:voxelwise TargetRegions:cerebal_cortex TerminateAtTargets:true RequireProfiles:true
+</code></pre>
+
+<p>Here, the <code>Strategy:voxelwise</code> option forces tractography to be run separately for each seed point. In each case, the number of &ldquo;hits&rdquo; to each target are counted, and the result is written into a standard CSV file, which can be opened in R or Microsoft Excel.</p>
+
+<h2 id="neighbourhood-tractography">Neighbourhood tractography</h2>
+
+<p>An alternative to conventional tractography is <a href="PNT-tutorial.html">probabilistic neighbourhood tractography</a>, which is focussed on automatic segmentation of predefined major tracts, in a way that is consistent across subjects. There are separate scripts for that, which <a href="PNT-tutorial.html">the tutorial</a> explores.</p>
+
+
+</div>
+
+<script src="assets/jquery-3.2.0.min.js"></script>
+<script src="assets/jquery.hypher.min.js"></script>
+<script src="assets/en-gb.js"></script>
+<script async type="text/javascript">
+  $('p,li').hyphenate('en-gb');
+</script>
+<script async src="assets/prism.js"></script>
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-563735-7', 'auto');
+  ga('send', 'pageview');
+</script>
+
+</body>
+
+</html>

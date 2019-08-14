@@ -5,7 +5,7 @@ createDiffusionTensorFromComponents <- function (components)
     return (tensor)
 }
 
-estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), requireMetrics = TRUE, convergenceLevel = 1e-2)
+estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), requireMetrics = TRUE, convergenceLevel = 1e-3)
 {
     if (!is(scheme, "SimpleDiffusionScheme") && !is.matrix(scheme))
         report(OL$Error, "The specified scheme object is not valid")
@@ -68,18 +68,28 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
                 previousSumOfSquares <- sum(voxelResiduals^2, na.rm=TRUE)
                 sumOfSquaresChange <- Inf
                 tempSolution <- NULL
-            
+                
+                iteration <- 1
                 while (sumOfSquaresChange > convergenceLevel)
                 {
                     # Weights are simply the predicted signals; nonpositive data values get zero weight
                     weights <- exp(voxelLogData - voxelResiduals)
-                    weights[is.na(weights)] <- 0
+                    weights[!is.finite(weights)] <- 0
                     tempSolution <- suppressWarnings(lsfit(bMatrix, voxelLogData, wt=weights))
                     voxelResiduals <- tempSolution$residuals
-                
-                    sumOfSquares <- sum(tempSolution$residuals^2, na.rm=TRUE)
-                    sumOfSquaresChange <- abs((previousSumOfSquares - sumOfSquares) / previousSumOfSquares)
-                    previousSumOfSquares <- sumOfSquares
+                    
+                    weightedSumOfSquares <- sum(tempSolution$residuals^2 * weights, na.rm=TRUE)
+                    # Exact fit: probably precisely seven valid directions
+                    if (weightedSumOfSquares < sqrt(.Machine$double.eps))
+                        break
+                    if (iteration == 30)
+                    {
+                        flag(OL$Warning, "Iteration limit reached")
+                        break
+                    }
+                    sumOfSquaresChange <- abs((previousSumOfSquares - weightedSumOfSquares) / previousSumOfSquares)
+                    previousSumOfSquares <- weightedSumOfSquares
+                    iteration <- iteration + 1
                 }
             
                 return (c(tempSolution$coefficients, tempSolution$residuals))
@@ -178,4 +188,11 @@ createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwl
     writeMap((fit$eigenvalues[2,]+fit$eigenvalues[3,]) / 2, session$getImageFileNameByType("radialdiff","diffusion"))
     writeMap(fit$sse, session$getImageFileNameByType("sse","diffusion"))
     writeMap(fit$bad, file.path(session$getDirectory("diffusion"), "dti_bad"))
+    
+    # FIXME: This is a temporary solution
+    boundedFA <- pmin(1, pmax(0, fit$fa))
+    for (i in 1:3)
+        vectorData[cbind(intraMaskLocs,i)] <- abs(fit$eigenvectors[i,1,]) * boundedFA
+    colourFAPath <- file.path(session$getDirectory("diffusion"), "dti_colFA.nii.gz")
+    .Call("writeNiftiRgb", vectorData[,,,1], vectorData[,,,2], vectorData[,,,3], colourFAPath, maskImage, PACKAGE="RNifti")
 }

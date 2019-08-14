@@ -4,12 +4,16 @@
 \alias{sortDicomDirectories}
 \title{Sort a directory of DICOM files into series}
 \usage{
-sortDicomDirectories(directories, deleteOriginals = FALSE,
-  sortOn = "series", seriesId = c("UID", "number", "time"), nested = TRUE)
+sortDicomDirectories(directories, method = c("internal", "divest"),
+  deleteOriginals = FALSE, sortOn = "series", seriesId = c("UID",
+  "number", "time"), nested = TRUE, ...)
 }
 \arguments{
 \item{directories}{A character vector giving the directories to search for
 DICOM files. Subdirectories will also be searched.}
+
+\item{method}{Character string specifying whether to use the internal DICOM
+reading code or use the \code{divest} package.}
 
 \item{deleteOriginals}{A single logical value. If \code{TRUE}, then the
 source files will be deleted after being copied to their new locations,
@@ -27,6 +31,8 @@ sorting by series: \code{"UID"} (DICOM tag 0x0020,0x000e; the default),
 \item{nested}{Logical value. If \code{TRUE} and \code{directories} is of
 length 1, subdirectories will be created within the specified original
 directory. Otherwise they will be created in the working directory.}
+
+\item{...}{Additional arguments to pass to \code{\link{readDicomFile}}.}
 }
 \value{
 This function is called for its side effect.

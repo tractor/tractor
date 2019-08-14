@@ -1,0 +1,25 @@
+GENERAL:
+  Working directory exists : TRUE
+
+DIFFUSION:
+  Preprocessing complete        : FALSE
+  Data dimensions               : 96 x 96 x 60 x 12 voxels
+  Voxel dimensions              : 2.5 x 2.5 x 2.5 mm x 1 s
+  Number of shells              : 1
+  Diffusion b-values            : 0, 1000 s/mm^2
+  Number of gradient directions : 2, 10
+  Fibre orientation model(s)    : (none)
+
+FUNCTIONAL:
+  Data dimensions    : 64 x 64 x 30 x 15 voxels
+  Voxel dimensions   : 3.28125 x 3.28125 x 3.99 mm x 2.16 s
+  Sampling frequency : 0.463 Hz
+  Total time         : 32.4 s
+
+STRUCTURAL:
+  Number of T1w volumes : 1
+  T1w space dimensions  : 176 x 232 x 256 voxels
+  T1w voxel dimensions  : 1 x 1 x 1 mm
+  Parcellation created  : FALSE
+  Number of T2w volumes : 0
+  Number of PDw volumes : 0

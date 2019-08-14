@@ -34,28 +34,31 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             object$updateCaches()
             object$caches.$objects <- list()
             object$getDirectory("root", createIfMissing=TRUE)
-            updateSessionHierarchy(object)
             return (object)
         }
     },
     
     getDiffusionScheme = function (unrotated = FALSE)
     {
+        # The argument means unrotated only; otherwise rotated is preferred but not required
         diffusionDir <- .self$getDirectory("diffusion")
-        
-        if (unrotated && file.exists(file.path(diffusionDir,"directions-orig.txt")))
-            fileName <- file.path(diffusionDir, "directions-orig.txt")
-        else
-            fileName <- file.path(diffusionDir, "directions.txt")
-    
-        if (file.exists(fileName))
+        scheme <- readDiffusionScheme(.self$getImageFileNameByType(ifelse(unrotated,"rawdata","data"), "diffusion"))
+        if (is.null(scheme) && !unrotated)
+            scheme <- readDiffusionScheme(.self$getImageFileNameByType("rawdata","diffusion"))
+        if (is.null(scheme))
         {
-            gradientSet <- unname(as.matrix(read.table(fileName)))
-            scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
-            return (scheme)
+            if (unrotated && file.exists(file.path(diffusionDir,"directions-orig.txt")))
+                fileName <- file.path(diffusionDir, "directions-orig.txt")
+            else
+                fileName <- file.path(diffusionDir, "directions.txt")
+        
+            if (file.exists(fileName))
+            {
+                gradientSet <- unname(as.matrix(read.table(fileName)))
+                scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
+            }
         }
-        else
-            return (NULL)
+        return (scheme)
     },
     
     getDirectory = function (type = NULL, createIfMissing = FALSE)
@@ -92,7 +95,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         return (readImageFile(fileName, ...))
     },
     
-    getImageFileNameByType = function (type, place = NULL, index = 1)
+    getImageFileNameByType = function (type, place = NULL, index = 1, fallback = FALSE)
     {
         if (!is.null(place) && tolower(place) == "mni")
             return (getFileNameForStandardImage(type))
@@ -125,13 +128,29 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             
             fileName <- map[[type]]
             if (is.null(fileName))
-                report(OL$Error, "Image type \"#{type}\" is not valid")
+            {
+                if (fallback)
+                    return (file.path(directory, type))
+                else
+                    report(OL$Error, "Image type \"#{type}\" is not valid")
+            }
             
             if (fileName %~% "\\%")
                 fileName <- sapply(index, function(i) sub("%",as.character(i),fileName,fixed=TRUE))
+            if (fileName %~% "@")
+                fileName <- ore.subst("@", basename(.self$getDirectory()), fileName)
             
             return (file.path(directory, fileName))
         }
+    },
+    
+    getMap = function (place = "root")
+    {
+        .self$updateCaches()
+        if (place == "root")
+            return (.self$caches.$subdirectories)
+        else
+            return (.self$caches.$maps[[place]])
     },
     
     getParcellation = function (place = "structural", ...)
@@ -244,18 +263,24 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             return (NULL)
         
         if (regexpr(rootDir, dirToRemove, fixed=TRUE) != 1)
-            report(OL$Error, "Existing externally-mapped directory #{dirToRemove} will not be overwritten")
-        else
         {
-            ans <- (if (ask) ask("Directory #{dirToRemove} already exists. Delete it? [yn]") else "y")
-            if (tolower(ans) == "y")
-                unlink(dirToRemove, recursive=TRUE)
+            report(OL$Info, "Unmapping external directory #{dirToRemove}")
+            mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")
+            subdirectoryMap <- read_yaml(mapFileName)
+            subdirectoryMap <- subset(subdirectoryMap, tolower(names(subdirectoryMap)) != tolower(type))
+            write_yaml(subdirectoryMap, mapFileName)
         }
+        else if (!ask || reportr::ask("Directory #{dirToRemove} already exists. Delete it? [yn]", valid=c("y","n")) == "y")
+            unlink(dirToRemove, recursive=TRUE)
     },
     
     updateCaches = function ()
     {
-        defaultsPath <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "session")
+        bidsDescription <- file.path(directory, "..", "dataset_description.json")
+        if (file.exists(bidsDescription) && ore.file(bidsDescription) %~% "BIDSVersion")
+            defaultsPath <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "session", "bids")
+        else
+            defaultsPath <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "session", "default")
         
         subdirectories <- defaultSubdirectories <- yaml.load_file(file.path(defaultsPath, "map.yaml"))
         mapFileName <- file.path(.self$getDirectory("root"), "map.yaml")
@@ -266,7 +291,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         maps <- list()
         for (place in .AllSessionDirectories)
         {
-            defaultFileName <- file.path(defaultsPath, defaultSubdirectories[[place]], "map.yaml")
+            defaultFileName <- file.path(defaultsPath, basename(defaultSubdirectories[[place]]), "map.yaml")
             if (!file.exists(defaultFileName))
                 next
             maps[[place]] <- yaml.load_file(defaultFileName)
@@ -293,14 +318,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             scheme <- .self$getDiffusionScheme()
         else
         {
-            diffusionDir <- .self$getDirectory("diffusion")
-            gradientSet <- cbind(scheme$getGradientDirections(), scheme$getBValues())
-            
-            lines <- ore.subst("\\.0+\\s*$", "", apply(format(gradientSet,scientific=FALSE),1,implode,sep="  "))
-            if (unrotated)
-                writeLines(lines, file.path(diffusionDir,"directions-orig.txt"))
-            else
-                writeLines(lines, file.path(diffusionDir,"directions.txt"))
+            fileName <- ensureFileSuffix(.self$getImageFileNameByType(ifelse(unrotated,"rawdata","data"), "diffusion"), "dirs")
+            scheme$writeToFile(fileName)
         }
         
         fslDir <- .self$getDirectory("fdt")
@@ -311,6 +330,10 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         }
     }
 ))
+
+setAs("character", "MriSession", function (from) {
+    return (MriSession$new(from))
+})
 
 attachMriSession <- function (directory)
 {
@@ -333,51 +356,6 @@ getImageCountForSession <- function (session, type, place = NULL)
         i <- i + 1
     
     return (i-1)
-}
-
-updateSessionHierarchy <- function (session)
-{
-    if (!is(session, "MriSession"))
-        report(OL$Error, "The specified session is not an MriSession object")
-    
-    oldFdtDirectory <- file.path(session$getDirectory("root"), "fdt")
-    diffusionDirectory <- session$getDirectory("diffusion")
-    
-    if (file.exists(oldFdtDirectory) && !file.exists(diffusionDirectory))
-    {
-        flag(OL$Warning, "Support for the TractoR 1.x session directory format is deprecated")
-        
-        # Assume this is a TractoR 1.x session directory: rename the FDT
-        # directory, insert the appropriate map, and move FDT-only files back
-        file.rename(oldFdtDirectory, diffusionDirectory)
-        writeLines(as.yaml(.FdtDiffusionMap), file.path(diffusionDirectory, "map.yaml"))
-        
-        filesToMoveBack <- c("bvals", "bvecs", "data.ecclog")
-        filesToMoveBack <- filesToMoveBack[file.exists(file.path(diffusionDirectory,filesToMoveBack))]
-        if (length(filesToMoveBack) > 0)
-        {
-            newFdtDirectory <- session$getDirectory("fdt", createIfMissing=TRUE)
-            file.rename(file.path(diffusionDirectory,filesToMoveBack), file.path(newFdtDirectory,filesToMoveBack))
-        }
-        
-        newFdtDirectory <- session$getDirectory("fdt")
-        if (file.exists(file.path(newFdtDirectory,"bvals")) && file.exists(file.path(newFdtDirectory,"bvecs")))
-        {
-            bValues <- unlist(read.table(file.path(newFdtDirectory, "bvals")))
-            bVectors <- as.matrix(read.table(file.path(newFdtDirectory, "bvecs")))
-            scheme <- SimpleDiffusionScheme$new(bValues, t(bVectors))
-            session$updateDiffusionScheme(scheme)
-        }
-        
-        # Update caches before creating FDT files, so that everything can be found
-        session$updateCaches()
-        
-        createFdtFilesForSession(session)
-        
-        objectDirectory <- file.path(session$getDirectory("root"), "objects")
-        if (file.exists(objectDirectory))
-            unlink(objectDirectory, recursive=TRUE)
-    }
 }
 
 createRadialDiffusivityMapForSession <- function (session)

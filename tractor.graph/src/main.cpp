@@ -17,16 +17,19 @@ struct RGraph
     IndexMap indices;
     WeightMap weights;
     WeightMap distances;
+    
+    int order;
     bool directed;
     bool weighted;
     bool negativeWeights;
     
     RGraph ()
-        : indices(graph), weights(graph), distances(graph), directed(false), weighted(false), negativeWeights(false) {}
+        : indices(graph), weights(graph), distances(graph), order(0), directed(false), weighted(false), negativeWeights(false) {}
 };
 
 void createGraph (const int nVertices, const IntegerMatrix &edges, const NumericVector &weights, const bool directed, RGraph &g)
 {
+    g.order = nVertices;
     g.directed = directed;
     double nonzeroValue = NA_REAL;
     
@@ -99,43 +102,51 @@ void searchPaths (const RGraph &g, Algorithm &algorithm, NumericMatrix &result)
     }
 }
 
-RcppExport SEXP shortestPaths (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed)
+RcppExport SEXP graphPointer (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed)
 {
 BEGIN_RCPP
-    const int nVertices = as<int>(_nVertices);
+    RGraph *graph = new RGraph();
+    createGraph(as<int>(_nVertices), IntegerMatrix(_edges), NumericVector(_weights), as<bool>(_directed), *graph);
+    XPtr<RGraph> graphPtr(graph);
+    return graphPtr;
+END_RCPP
+}
+
+RcppExport SEXP shortestPaths (SEXP _graph)
+{
+BEGIN_RCPP
+    XPtr<RGraph> graphPtr(_graph);
+    RGraph *g = graphPtr;
     
-    RGraph g;
-    createGraph(nVertices, IntegerMatrix(_edges), NumericVector(_weights), as<bool>(_directed), g);
-    
-    NumericMatrix result(nVertices, nVertices);
-    if (!g.weighted)
+    NumericMatrix result(g->order, g->order);
+    if (!g->weighted)
     {
-        Bfs<SmartDigraph> bfs(g.graph);
-        searchPaths(g, bfs, result);
+        Bfs<SmartDigraph> bfs(g->graph);
+        searchPaths(*g, bfs, result);
     }
-    else if (!g.negativeWeights)
+    else if (!g->negativeWeights)
     {
-        Dijkstra<SmartDigraph,WeightMap> dijkstra(g.graph, g.distances);
-        searchPaths(g, dijkstra, result);
+        Dijkstra<SmartDigraph,WeightMap> dijkstra(g->graph, g->distances);
+        searchPaths(*g, dijkstra, result);
     }
     else
     {
-        BellmanFord<SmartDigraph,WeightMap> bellmanFord(g.graph, g.distances);
-        searchPaths(g, bellmanFord, result);
+        BellmanFord<SmartDigraph,WeightMap> bellmanFord(g->graph, g->distances);
+        searchPaths(*g, bellmanFord, result);
     }
     
     return result;
 END_RCPP
 }
 
-RcppExport SEXP neighbourhoods (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed, SEXP _vertices, SEXP _type)
+RcppExport SEXP neighbourhoods (SEXP _graph, SEXP _vertices, SEXP _type)
 {
 BEGIN_RCPP
     IntegerVector vertices(_vertices);
     const std::string type = as<std::string>(_type);
     
-    RGraph g;
-    createGraph(as<int>(_nVertices), IntegerMatrix(_edges), NumericVector(_weights), as<bool>(_directed), g);
+    XPtr<RGraph> graphPtr(_graph);
+    RGraph *g = graphPtr;
     
     List result(vertices.length());
     for (int i=0; i<vertices.length(); i++)
@@ -147,22 +158,22 @@ BEGIN_RCPP
         }
         
         SmartDigraph::Node targetNode;
-        for (SmartDigraph::NodeIt node(g.graph); node != INVALID; ++node)
+        for (SmartDigraph::NodeIt node(g->graph); node != INVALID; ++node)
         {
-            if (g.indices[node] == vertices[i] - 1)
+            if (g->indices[node] == vertices[i] - 1)
                 targetNode = node;
         }
         
         std::set<int> neighbours;
         if (type == "all" || type == "in")
         {
-            for (SmartDigraph::InArcIt arc(g.graph,targetNode); arc != INVALID; ++arc)
-                neighbours.insert(g.indices[g.graph.source(arc)] + 1);
+            for (SmartDigraph::InArcIt arc(g->graph,targetNode); arc != INVALID; ++arc)
+                neighbours.insert(g->indices[g->graph.source(arc)] + 1);
         }
         if (type == "all" || type == "out")
         {
-            for (SmartDigraph::OutArcIt arc(g.graph,targetNode); arc != INVALID; ++arc)
-                neighbours.insert(g.indices[g.graph.target(arc)] + 1);
+            for (SmartDigraph::OutArcIt arc(g->graph,targetNode); arc != INVALID; ++arc)
+                neighbours.insert(g->indices[g->graph.target(arc)] + 1);
         }
         
         // Remove the target node itself, if present (open neighbourhood)
@@ -174,32 +185,49 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP clusteringCoefficients (SEXP _nVertices, SEXP _edges, SEXP _weights, SEXP _directed, SEXP _method)
+RcppExport SEXP clusteringCoefficients (SEXP _graph, SEXP _method)
 {
 BEGIN_RCPP
-    const int nVertices = as<int>(_nVertices);
     const std::string method = as<std::string>(_method);
     
-    RGraph g;
-    createGraph(nVertices, IntegerMatrix(_edges), NumericVector(_weights), as<bool>(_directed), g);
+    XPtr<RGraph> graphPtr(_graph);
+    RGraph *g = graphPtr;
     
-    ArcLookUp<SmartDigraph> arcs(g.graph);
-    NumericVector result(nVertices);
-    for (SmartDigraph::NodeIt node(g.graph); node != INVALID; ++node)
+    // Catch the unsupported case before calculations begin
+    if (g->weighted && g->directed)
     {
+        Rf_warning("Clustering coefficient is not implemented for directed, weighted graphs");
+        return NumericVector(g->order, NA_REAL);
+    }
+    
+    ArcLookUp<SmartDigraph> arcs(g->graph);
+    NumericVector result(g->order);
+    for (SmartDigraph::NodeIt node(g->graph); node != INVALID; ++node)
+    {
+        double inDegree = 0.0, outDegree = 0.0, reciprocal = 0.0;
+        
         // Find all neighbours of the current node
         std::set<SmartDigraph::Node> neighbours;
-        for (SmartDigraph::InArcIt arc(g.graph,node); arc != INVALID; ++arc)
-            neighbours.insert(g.graph.source(arc));
-        for (SmartDigraph::OutArcIt arc(g.graph,node); arc != INVALID; ++arc)
-            neighbours.insert(g.graph.target(arc));
+        for (SmartDigraph::InArcIt arc(g->graph,node); arc != INVALID; ++arc)
+        {
+            inDegree += 1.0;
+            neighbours.insert(g->graph.source(arc));
+        }
+        for (SmartDigraph::OutArcIt arc(g->graph,node); arc != INVALID; ++arc)
+        {
+            outDegree += 1.0;
+            if (neighbours.count(g->graph.target(arc)) == 1)
+                reciprocal += 1.0;
+            else
+                neighbours.insert(g->graph.target(arc));
+        }
         neighbours.erase(node);
         
         int nNeighbours = neighbours.size();
         if (nNeighbours < 2)
         {
             // By definition, the clustering coefficient is zero when there are no possible triangles
-            result[g.indices[node]] = 0.0;
+            result[g->indices[node]] = 0.0;
         }
         else
         {
@@ -208,36 +236,41 @@ BEGIN_RCPP
             double triangles = 0.0;
             for (std::set<SmartDigraph::Node>::const_iterator neighbour1=neighbours.begin(); neighbour1 != neighbours.end(); neighbour1++)
             {
-                strength += g.weights[arcs(node,*neighbour1)];
+                strength += g->weights[arcs(node,*neighbour1)];
                 for (std::set<SmartDigraph::Node>::const_iterator neighbour2=neighbours.begin(); neighbour2 != neighbours.end(); neighbour2++)
                 {
                     if (*neighbour1 == *neighbour2)
                         continue;
-                    else if (!g.weighted && !g.directed)
+                    else if (!g->weighted && !g->directed)
                         triangles += static_cast<double>(arcs(*neighbour1,*neighbour2) != INVALID);
-                    else if (!g.weighted && g.directed)
-                        triangles += static_cast<double>(arcs(*neighbour1,*neighbour2) != INVALID) + static_cast<double>(arcs(*neighbour2,*neighbour1) != INVALID);
-                    else if (g.weighted && g.directed)
-                        throw std::domain_error("Clustering coefficient is not implemented for directed, weighted graphs");
+                    else if (!g->weighted && g->directed)
+                        triangles += static_cast<double>(((arcs(node,*neighbour1) != INVALID) + (arcs(*neighbour1,node) != INVALID)) * ((arcs(*neighbour1,*neighbour2) != INVALID) + (arcs(*neighbour2,*neighbour1) != INVALID)) * ((arcs(node,*neighbour2) != INVALID) + (arcs(*neighbour2,node) != INVALID)));
+                    else if (g->weighted && g->directed)
+                    {
+                        // This point should never be reached, because this case is caught at the beginning of the function, but it's present for clarity
+                        triangles = NA_REAL;
+                    }
                     else if (method == "onnela")
                     {
                         // Onnela method: weighted triangle value is the geometric mean of the weights of the edges
                         SmartDigraph::Arc arc = arcs(*neighbour1, *neighbour2);
                         if (arc != INVALID)
-                            triangles += R_pow(g.weights[arc] * g.weights[arcs(node,*neighbour1)] * g.weights[arcs(node,*neighbour2)], 1.0/3.0);
+                            triangles += R_pow(g->weights[arc] * g->weights[arcs(node,*neighbour1)] * g->weights[arcs(node,*neighbour2)], 1.0/3.0);
                     }
                     else
                     {
                         // Barrat method: proportion of node strength associated with links to neighbours in triangles
-                        triangles += static_cast<double>(arcs(*neighbour1,*neighbour2) != INVALID) * (g.weights[arcs(node,*neighbour1)] + g.weights[arcs(node,*neighbour2)]) / 2.0;
+                        triangles += static_cast<double>(arcs(*neighbour1,*neighbour2) != INVALID) * (g->weights[arcs(node,*neighbour1)] + g->weights[arcs(node,*neighbour2)]) / 2.0;
                     }
                 }
             }
             
-            if (g.weighted && method == "barrat")
-                result[g.indices[node]] = triangles / (strength * static_cast<double>(nNeighbours - 1));
+            if (g->weighted && method == "barrat")
+                result[g->indices[node]] = triangles / (strength * static_cast<double>(nNeighbours - 1));
+            else if (g->directed)
+                result[g->indices[node]] = 0.5 * triangles / static_cast<double>((inDegree + outDegree) * (inDegree + outDegree - 1) - 2 * reciprocal);
             else
-                result[g.indices[node]] = (g.directed ? 0.5 : 1.0) * triangles / static_cast<double>(nNeighbours * (nNeighbours - 1));
+                result[g->indices[node]] = triangles / static_cast<double>(nNeighbours * (nNeighbours - 1));
         }
     }
     

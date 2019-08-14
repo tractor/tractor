@@ -4,7 +4,7 @@
 plough \- Interface for running multiple related TractoR experiments
 
 .SH SYNOPSIS
-.B plough \fR[\fB\-GXD\fR] \fB\-C \fIconfig_file\fR [\fB\-V \fIvariable_name\fR] [\fB\-Q \fIgrid_queue\fR] [\fB\-O \fIgrid_options\fR] [\fB\-P \fIfactor\fR] [\fItractor_flags\fR] \fIscript\fR [\fIarguments\fR]\fB
+.B plough \fR[\fB\-GXD\fR] \fB\-C \fIconfig_file\fR [\fB\-V \fIvariable_name\fR] [\fB\-R \fIrepetitions\fR] [\fB\-Q \fIgrid_queue\fR] [\fB\-O \fIgrid_options\fR] [\fB\-P \fIfactor\fR] [\fItractor_flags\fR] \fIscript\fR [\fIarguments\fR]\fB
 .br
 .B plough \-H
 
@@ -32,6 +32,9 @@ Specify a configuration file in YAML format (see \fBtractor\fR(1) for details). 
 .TP
 .B \-V \fIvariable_name\fB
 Specify one or more variables over which the loop will be run (comma-separated). These must be defined in a config file. By default all variables with more than one element will be used.
+.TP
+.B \-R \fIrepetitions\fB
+Specify the number of repetitions to be run, allowing the exact same experiment to be run repeatedly with the same options (perhaps to examine the reproducibility of its results). If specified, this takes priority over the '\-V' and '\-X' options, and the configuration file is passed unmodified to each instance.
 .TP
 .B \-Q \fIgrid_queue\fB
 Name the grid engine queue on which jobs should be scheduled. Has no effect if '\-G' is not set.

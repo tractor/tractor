@@ -13,9 +13,10 @@ timeSeriesPanel(point, data, imageNames)
 
 polarPlotPanel(point, data, imageNames, directions, bValues = NULL)
 
-viewImages(images, colourScales = NULL, point = NULL, interactive = TRUE,
-  crosshairs = TRUE, orientationLabels = TRUE, fixedWindow = TRUE,
-  indexNames = NULL, infoPanel = defaultInfoPanel, ...)
+viewImages(images, colourScales = NULL, point = NULL,
+  interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE,
+  fixedWindow = TRUE, indexNames = NULL,
+  infoPanel = defaultInfoPanel, ...)
 }
 \arguments{
 \item{point}{For \code{viewImages}, a length 3 integer vector giving the

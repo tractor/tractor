@@ -8,6 +8,8 @@ runExperiment <- function ()
 {
     requireArguments("image file")
     
+    requireMask <- getConfigVariable("RequireMask", FALSE)
+    
     image <- readImageFile(Arguments[1])
     
     report(OL$Info, "Obtaining transformation from MNI space")
@@ -43,22 +45,30 @@ runExperiment <- function ()
     normal <- vectorCrossProduct(corners[2,]-corners[1,], corners[4,]-corners[1,])
     normal <- normal / vectorLength(normal)
     
-    grid <- as.matrix(expand.grid(1:dim(image)[1], 1:dim(image)[2]))
-    for (i in seq_len(max(round(corners[,3]))))
+    # If the bottom corners are all below the image space, there's nothing to do
+    if (max(round(corners[,3])) > 0)
     {
-        report(OL$Verbose, "Processing slice #{i}...")
-        sliceCorners <- t(apply(corners, 1, function(x) x[1:2] + (i-x[3]) * normal[1:2] / normal[3]))
-        blockIndices <- which(grid[,1] >= min(sliceCorners[,1]) & grid[,1] <= max(sliceCorners[,1]) & grid[,2] >= min(sliceCorners[,2]) & grid[,2] <= max(sliceCorners[,2]))
-        toAdd <- sapply(blockIndices, function(j) {
-            # Ref: http://demonstrations.wolfram.com/AnEfficientTestForAPointToBeInAConvexPolygon/
-            cc <- t(apply(sliceCorners, 1, "-", grid[j,]))
-            signs <- sign(c(cc[2,1]*cc[1,2]-cc[2,2]*cc[1,1], cc[3,1]*cc[2,2]-cc[3,2]*cc[2,1], cc[4,1]*cc[3,2]-cc[4,2]*cc[3,1], cc[1,1]*cc[4,2]-cc[1,2]*cc[4,1]))
-            return (all(signs == signs[1]))
-        })
-        transformedMask[cbind(grid[blockIndices[toAdd],],i)] <- 1
+        grid <- as.matrix(expand.grid(1:dim(image)[1], 1:dim(image)[2]))
+        for (i in seq_len(max(round(corners[,3]))))
+        {
+            report(OL$Verbose, "Processing slice #{i}...")
+            sliceCorners <- t(apply(corners, 1, function(x) x[1:2] + (i-x[3]) * normal[1:2] / normal[3]))
+            blockIndices <- which(grid[,1] >= min(sliceCorners[,1]) & grid[,1] <= max(sliceCorners[,1]) & grid[,2] >= min(sliceCorners[,2]) & grid[,2] <= max(sliceCorners[,2]))
+            if (length(blockIndices) == 0)
+                next
+            toAdd <- sapply(blockIndices, function(j) {
+                # Ref: http://demonstrations.wolfram.com/AnEfficientTestForAPointToBeInAConvexPolygon/
+                cc <- t(apply(sliceCorners, 1, "-", grid[j,]))
+                signs <- sign(c(cc[2,1]*cc[1,2]-cc[2,2]*cc[1,1], cc[3,1]*cc[2,2]-cc[3,2]*cc[2,1], cc[4,1]*cc[3,2]-cc[4,2]*cc[3,1], cc[1,1]*cc[4,2]-cc[1,2]*cc[4,1]))
+                return (all(signs == signs[1]))
+            })
+            transformedMask[cbind(grid[blockIndices[toAdd],],i)] <- 1
+        }
     }
     
     report(OL$Info, "Applying to image and writing result")
     image$map(function(x,y) ifelse(y==1,0,x), transformedMask)
-    image$writeToFile(Arguments[nArguments()])
+    fileNames <- image$writeToFile(Arguments[nArguments()])
+    if (requireMask)
+        transformedMask$writeToFile(paste(fileNames$fileStem, "facemask", sep="_"), maxSize=1)
 }

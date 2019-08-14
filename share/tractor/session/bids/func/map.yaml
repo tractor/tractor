@@ -1,0 +1,5 @@
+rawdata: "@_task-rest_bold"
+data: data
+mean: mean_vol
+mask: mask
+parcellation: parcellation

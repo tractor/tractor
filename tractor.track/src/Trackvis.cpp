@@ -118,11 +118,10 @@ void TrackvisDataSource::attach (const std::string &fileStem)
     nProperties = binaryStream.readValue<int16_t>();
     for (int i=0; i<std::min(nProperties,10); i++)
     {
-        if (binaryStream.readString(20).compare(0,4,"seed") == 0)
-        {
+        const std::string propertyName = binaryStream.readString(20);
+        propertyNames.push_back(propertyName);
+        if (propertyName.compare(0,4,"seed") == 0)
             seedProperty = i;
-            break;
-        }
     }
     fileStream.seekg(440, ios::beg);
     binaryStream.readMatrix<float>(grid.transform());
@@ -275,6 +274,10 @@ void TrackvisDataSink::writeStreamline (const Streamline &data)
     if (seedIndex > 16777216)
         Rf_warning("Seed index %lu is not representable exactly as a 32-bit floating point value\n", seedIndex);
     binaryStream.writeValue<float>(seedIndex);
+    
+    // Store termination reasons
+    binaryStream.writeValue(static_cast<float>(data.getLeftTerminationReason()));
+    binaryStream.writeValue(static_cast<float>(data.getRightTerminationReason()));
 }
 
 void TrackvisDataSink::attach (const std::string &fileStem)
@@ -305,9 +308,13 @@ void TrackvisDataSink::attach (const std::string &fileStem)
     
     binaryStream.writeValue<int16_t>(0);
     binaryStream.writeValues<char>(0, 200);
-    binaryStream.writeValue<int16_t>(1);
+    binaryStream.writeValue<int16_t>(3);
     fileStream.write("seed", 4);
-    binaryStream.writeValues<char>(0, 196);
+    binaryStream.writeValues<char>(0, 16);
+    fileStream.write("Ltermcode", 9);
+    binaryStream.writeValues<char>(0, 11);
+    fileStream.write("Rtermcode", 9);
+    binaryStream.writeValues<char>(0, 151);
     
     const Eigen::Matrix4f xform = grid.transform();
     binaryStream.writeMatrix<float>(xform);
@@ -333,8 +340,12 @@ void TrackvisDataSink::attach (const std::string &fileStem)
     float qb, qc, qd, qfac;
     nifti_mat44_to_quatern(xformStruct, &qb, &qc, &qd, NULL, NULL, NULL, NULL, NULL, NULL, &qfac);
     ::mat44 rotationMatrix = nifti_quatern_to_mat44(qb, qc, qd, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, qfac);
-    binaryStream.writeArray<float>(rotationMatrix.m[0], 3);
-    binaryStream.writeArray<float>(rotationMatrix.m[1], 3);
+    binaryStream.writeValue<float>(-rotationMatrix.m[0][0]);
+    binaryStream.writeValue<float>(-rotationMatrix.m[0][1]);
+    binaryStream.writeValue<float>(rotationMatrix.m[0][2]);
+    binaryStream.writeValue<float>(-rotationMatrix.m[1][0]);
+    binaryStream.writeValue<float>(-rotationMatrix.m[1][1]);
+    binaryStream.writeValue<float>(rotationMatrix.m[1][2]);
     binaryStream.writeValues<char>(0, 8);
     
     binaryStream.writeValue<int32_t>(0);

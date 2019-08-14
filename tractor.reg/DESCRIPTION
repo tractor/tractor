@@ -1,12 +1,14 @@
 Package: tractor.reg
-Version: 3.1.0
-Date: 2017-02-08
+Version: 3.3.0
+Date: 2018-09-07
 Title: Image registration in TractoR
 Author: Jon Clayden
 Maintainer: Jon Clayden <code@clayden.org>
 Imports: methods, ore, reportr, tractor.base, RNiftyReg
+Suggests: RNifti
 Description: The tractor.reg package provides functions for performing image registration. It interfaces with the RNiftyReg R package, and with the FLIRT tool from the FSL library.
 Encoding: UTF-8
 LazyLoad: yes
 License: GPL-2
-URL: http://www.tractor-mri.org.uk
+URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
+BugReports: https://github.com/tractor/tractor/issues

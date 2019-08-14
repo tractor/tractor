@@ -29,6 +29,9 @@ used in the file}
 
 \item{\code{asciiFields}}{Character vector containing the contents of the ASCII
 header, if requested and present in the file.}
+
+\item{\code{transferSyntax}}{Transfer syntax string, if specified in the file;
+otherwise the empty string.}
 }}
 
 \section{Methods}{

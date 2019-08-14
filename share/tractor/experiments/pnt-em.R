@@ -13,7 +13,7 @@ runExperiment <- function ()
     nullPrior <- getConfigVariable("NullPrior", NULL, "numeric")
     resultsName <- getConfigVariable("ResultsName", "results")
     
-    reference <- getNTResource("reference", "pnt", list(tractName=tractName))
+    reference <- getNTResource("reference", list(tractName=tractName))
     
     if (alphaPriorMean == 0)
         alphaPriorMean <- NULL
@@ -29,10 +29,10 @@ runExperiment <- function ()
         results <- runMatchingEMForDataTable(data, reference$getTract(), lengthCutoff=maxKnotCount, lambda=1/alphaPriorMean, alphaOffset=alphaOffset, nullPrior=nullPrior, asymmetricModel=asymmetricModel)
     
     resultsObject <- newProbabilisticNTResultsFromPosteriors(results$tp, results$np, results$mm, results$um)
-    writeNTResource(resultsObject, "results", "pnt", list(resultsName=resultsName))
+    writeNTResource(resultsObject, "results", list(resultsName=resultsName))
     
     model <- results$mm
-    writeNTResource(model, "model", "pnt", list(tractName=tractName,datasetName=datasetName))
+    writeNTResource(model, "model", list(tractName=tractName,datasetName=datasetName))
 
     print(model)
     

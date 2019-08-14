@@ -1,40 +1,35 @@
-#' @rdname colourScales
-#' @export
-interpolatePalette <- function (colours, n, ...)
-{
-    rampFunction <- colorRamp(colours, ...)
-    colourMatrix <- round(rampFunction(0:(n-1)/(n-1)))
-    rgbStrings <- apply(colourMatrix, 1, function (x) sprintf("#%02X%02X%02X",x[1],x[2],x[3]))
-    return (rgbStrings)
-}
+.colourScales <- list(gray(0:99/99),
+                      heat.colors(100),
+                      rainbow(100, start=0.7, end=0.1),
+                      shades::gradient("RdBu", 100),
+                      shades::gradient("Reds", 100),
+                      shades::gradient("Blues", 100),
+                      shades::gradient("YlOrRd", 100),
+                      shades::gradient("viridis", 100))
 
-#' Functions for working with colour scales or palettes
+#' Obtaining colour scales
 #' 
 #' The \code{getColourScale} function can be used to obtain a standard or
 #' customised colour scale for use in the package's image visualisation
-#' functions. A graded palette of colours between two or more key colours can
-#' be obtained using \code{interpolatePalette}.
+#' functions.
 #' 
 #' Colour scales can be specified in any of three ways. Firstly, by a single
 #' number, representing a predefined colour scale. Currently valid values are 1
 #' (greyscale, black background), 2 (red to yellow heat scale, red background),
 #' 3 (blue to red rainbow scale, blue background), 4 (blue to white to red
-#' diverging scale, white background), 5 (white to red, white background) and 6
-#' (white to blue, white background). Secondly, a single colour name can be
-#' given (see \code{\link{colours}}); in this case the background will be
-#' black. This is useful for binary images. Thirdly and most flexibly, a list
-#' with two named elements can be given: \code{colours}, a vector of colours
-#' representing the colour scale, perhaps created using \code{\link{rgb}}; and
-#' \code{background}, a single colour representing the background.
+#' diverging scale, white background), 5 (white to red, white background), 6
+#' (white to blue, white background), 7 (yellow to orange to red) and 8 (purple
+#' to green to yellow, perceptually uniform). Secondly, a single colour name
+#' can be given (see \code{\link{colours}}); in this case the background will
+#' be black. This is useful for binary images. Thirdly, and most flexibly, a
+#' list with two named elements can be given: \code{colours}, a vector of
+#' colours representing the colour scale, perhaps created using using the
+#' \code{shades} package; and \code{background}, a single colour representing
+#' the background.
 #' 
-#' @aliases getColourScale interpolatePalette
-#' @param n For \code{getColourScale}, a number, colour name or list (see
-#'   Details). For \code{interpolatePalette}, a single integer specifying the
-#'   length of the interpolated palette.
-#' @param colours A vector of colours to interpolate between, using any format
-#'   recognised by \code{\link{colours}}.
-#' @param \dots Additional arguments to \code{\link{colorRamp}}.
-#' @return For \code{getColourScale}, a list with elements
+#' @aliases getColourScale
+#' @param n A number, colour name or list (see Details).
+#' @return A list with elements
 #'   \describe{
 #'     \item{colours}{A character-mode vector representing the colours in the
 #'       scale, usually of length 100. This can be passed as a colour scale to
@@ -42,10 +37,9 @@ interpolatePalette <- function (colours, n, ...)
 #'     \item{background}{A single character string representing the background
 #'       colour.}
 #'   }
-#' The \code{interpolatePalette} function returns a character-mode vector
-#' representing the colours in the interpolated scale.
 #' @author Jon Clayden
-#' @seealso \code{\link{colours}}, \code{\link{rgb}}, \code{\link{colorRamp}}
+#' @seealso \code{\link{colours}}, \code{\link{rgb}}, \code{\link{colorRamp}},
+#'   and the \code{shades} package for colour manipulation.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -54,10 +48,7 @@ interpolatePalette <- function (colours, n, ...)
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @examples
-#' 
 #' getColourScale(1)
-#' 
-#' interpolatePalette(c("red","yellow"), 10)
 #' 
 #' @rdname colourScales
 #' @export
@@ -69,22 +60,10 @@ getColourScale <- function (n)
         return (list(colours=c("black",n,n), background="black"))
     else
     {
-        colours <- list(gray(0:99/99),
-                        heat.colors(100),
-                        rainbow(100, start=0.7, end=0.1),
-                        # ColorBrewer "RdBu" diverging palette
-                        interpolatePalette(c("#053061", "#2166AC", "#4393C3", "#92C5DE", "#D1E5F0", "#F7F7F7", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B", "#67001F"), 100),
-                        # Just the red part of "RdBu"
-                        interpolatePalette(c("#F7F7F7", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B", "#67001F"), 100),
-                        # Just the blue part of "RdBu"
-                        interpolatePalette(c("#F7F7F7", "#D1E5F0", "#92C5DE", "#4393C3", "#2166AC", "#053061"), 100),
-                        # ColorBrewer "YlOrRd" sequential palette
-                        interpolatePalette(c("#800026", "#BD0026", "#E31A1C", "#FC4E2A", "#FD8D3C", "#FEB24C", "#FED976", "#FFEDA0", "#FFFFCC"), 100))
-    
         if (n < 0)
-            scale <- list(colours=rev(colours[[-n]]))
+            scale <- list(colours=rev(.colourScales[[-n]]))
         else
-            scale <- list(colours=colours[[n]])
+            scale <- list(colours=.colourScales[[n]])
         
         scale$background <- scale$colours[1]
         return (scale)
@@ -95,8 +74,7 @@ colourMap <- function (image, scale, zlim = NULL)
 {
     if (!is.matrix(image))
         image <- as.matrix(image)
-    if (!is.numeric(image))
-        report(OL$Error, "Image to display should be a 2D numeric matrix")
+    assert(is.numeric(image), "Image to display should be a 2D numeric matrix")
     
     scale <- getColourScale(scale)
     nColours <- length(scale$colours)
@@ -121,12 +99,9 @@ colourMap <- function (image, scale, zlim = NULL)
 
 maximumIntensityProjection <- function (image, axis)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
-    
+    image <- as(image, "MriImage")
     nDims <- image$getDimensionality()
-    if (!(axis %in% 1:nDims))
-        report(OL$Error, "Specified axis is not relevant for this image")
+    assert(axis %in% 1:nDims, "Specified axis is not relevant for this image")
     
     planeAxes <- setdiff(1:nDims, axis)
     
@@ -197,9 +172,7 @@ maximumIntensityProjection <- function (image, axis)
 #' @export
 createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, windowLimits = NULL)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
-    
+    image <- as(image, "MriImage")
     device <- match.arg(device)
     
     if (image$getDimensionality() == 2)
@@ -238,9 +211,7 @@ createSliceGraphic <- function (image, x = NA, y = NA, z = NA, device = c("inter
 #' @export
 createProjectionGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, windowLimits = NULL)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
-    
+    image <- as(image, "MriImage")
     device <- match.arg(device)
     projection <- maximumIntensityProjection(image, axis)
     imageAxes <- !(1:3 %in% axis)
@@ -259,8 +230,7 @@ createProjectionGraphic <- function (image, axis, device = c("internal","png"), 
 #' @export
 createContactSheetGraphic <- function (image, axis, device = c("internal","png"), colourScale = 1, add = FALSE, file = NULL, zoomFactor = 1, windowLimits = NULL, clearance = NULL, nColumns = NULL)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
+    image <- as(image, "MriImage")
     if (image$getDimensionality() != 3)
         report(OL$Error, "The \"createContactSheetGraphic\" function only handles 3D images")
     
@@ -307,7 +277,7 @@ createContactSheetGraphic <- function (image, axis, device = c("internal","png")
     }
 }
 
-compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScales = 2, projectOverlays = NULL, alpha = c("binary","linear","log"), prefix = "image", zoomFactor = 1, windowLimits = NULL, nColumns = NULL, separate = FALSE, clip = TRUE)
+compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScales = 2, projectOverlays = NULL, alpha = c("binary","linear","log"), prefix = "image", zoomFactor = 1, windowLimits = NULL, nColumns = NULL, separate = FALSE, clip = TRUE, interpolationKernel = mmand::mnKernel())
 {
     if (!is.list(images) || length(images) < 1)
         report(OL$Error, "Images should be specified in a list with at least one element")
@@ -337,11 +307,16 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScales 
     alphaImages <- lapply(seq_along(images), function(i) {
         if (i == 1)
             NULL
+        else if (is(alpha, "MriImage"))
+            return (alpha)
         else if (is.numeric(alpha))
             images[[i]]$copy()$map(function(x) ifelse(!is.na(x) & x>0, alpha, 0))
         else
         {
             validExpression <- switch(alpha, binary="1", linear="x", log="log(x)")
+            # If the original image is binary, fix the expression to be likewise (otherwise the result may be zero everywhere)
+            if (mmand::binary(as.array(images[[i]])))
+                validExpression <- "1"
             images[[i]]$copy()$map(eval(parse(text=es("function(x) ifelse(!is.na(x) & x>0, #{validExpression}, 0)"))))
         }
     })
@@ -355,7 +330,10 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScales 
     
     # Use projections, unless multiple slices on the same axis were requested
     if (is.null(projectOverlays))
+    {
         projectOverlays <- !any(duplicated(info$axis))
+        report(OL$Info, "Overlays will use a maximum-intensity projection")
+    }
     
     if (!separate)
     {
@@ -401,9 +379,9 @@ compositeImages <- function (images, x = NULL, y = NULL, z = NULL, colourScales 
         }
         
         paneAxes <- setdiff(1:3, info$axis[j])
-        red <- mmand::rescale(currentImage[,,1], abs(voxelDims[paneAxes] * zoomFactor), mmand::mnKernel())
-        green <- mmand::rescale(currentImage[,,2], abs(voxelDims[paneAxes] * zoomFactor), mmand::mnKernel())
-        blue <- mmand::rescale(currentImage[,,3], abs(voxelDims[paneAxes] * zoomFactor), mmand::mnKernel())
+        red <- mmand::rescale(currentImage[,,1], abs(voxelDims[paneAxes] * zoomFactor), interpolationKernel)
+        green <- mmand::rescale(currentImage[,,2], abs(voxelDims[paneAxes] * zoomFactor), interpolationKernel)
+        blue <- mmand::rescale(currentImage[,,3], abs(voxelDims[paneAxes] * zoomFactor), interpolationKernel)
         currentImage <- c(red, green, blue)
         
         if (separate)

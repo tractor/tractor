@@ -108,10 +108,20 @@ std::string BinaryInputStream::readString (const std::string delim)
 
 std::string BinaryInputStream::readString (const size_t n)
 {
-    char value[n];
-    stream->read(value, n);
-    std::string finalValue(value, n);
-    return finalValue;
+    if (n == 0)
+    {
+        std::string finalValue;
+        std::getline(*stream, finalValue, '\0');
+        return finalValue;
+    }
+    else
+    {
+        char *value = new char[n];
+        stream->read(value, n);
+        std::string finalValue(value, std::min(n,strlen(value)));
+        delete[] value;
+        return finalValue;
+    }
 }
 
 template <typename TargetType>

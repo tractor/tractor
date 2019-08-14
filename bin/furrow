@@ -1,0 +1,78 @@
+#! /bin/bash
+
+status=1
+tmpdir=${TMPDIR:-/tmp}
+trap 'exit $status' 0 1 2 15
+
+full_command="$0 $*"
+write_history=1
+suffixes=1
+working_dir="."
+
+usage()
+{
+    echo "furrow (program v3.3.0, distribution v$distribution_version)"
+    echo "Channel a command through TractoR's shorthand"
+    echo
+    echo "Usage: furrow [-zn] [-w working_dir] command [arg1 [arg2 ...]]"
+    echo "       furrow -h"
+    echo
+    echo "  -h          Display this usage information and exit"
+    echo "  -z          Do not write the command line used into a history log file"
+    echo "  -n          Do not append a suffix to image filenames, giving the file"
+    echo "              stem instead"
+    echo "  -w dir      Specify the working directory, which will be created if"
+    echo "              necessary. Default is '.', the current directory"
+    echo
+    echo "Run the specified command, which can be any standard program or script on"
+    echo "the PATH, after first expanding TractoR's image-path shorthand, such as"
+    echo "@FA for the fractional anisotropy map in the current session directory,"
+    echo "or /data/subject1@diffusion/data for the diffusion data series from the"
+    echo "session rooted at /data/subject1."
+    echo
+}
+
+[ -z "${TRACTOR_HOME}" ] && {
+    echo "Note: The TRACTOR_HOME environment variable is not set; it will be guessed"
+    export TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
+}
+
+[ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
+
+while getopts "hznw:" opt; do
+    case "$opt" in
+        h) usage; status=0; exit ;;
+        z) write_history=0 ;;
+        n) suffixes=0 ;;
+        w) working_dir=`echo $OPTARG | sed 's/\/$//'` ;;
+        ?) usage 1>&2; exit ;;
+    esac
+done
+
+shift "$(($OPTIND-1))"
+
+[ $# -eq 0 ] && {
+    echo "Error: No command given. Type \"furrow -h\" for help" 1>&2
+    exit
+}
+
+[ ! -e $working_dir ] && mkdir -p $working_dir
+
+command="$1"
+shift
+
+[ -z "$R" ] && R=R
+
+[ -d "${TRACTOR_HOME}/lib/R" ] && export R_LIBS="${TRACTOR_HOME}/lib/R"
+
+args=`echo "library(utils); library(tractor.utils); library(tractor.session); expandArguments('$*','$working_dir',$suffixes)" | "$R" --slave --vanilla`
+
+status=$?
+[ $status -ne 0 ] && exit
+
+cd $working_dir && eval $command "$args"
+
+status=$?
+
+# We are now in the working directory, so don't preface the log filename with it
+[ $write_history -eq 1 ] && echo "[`date`] $full_command [${status}S]" >> tractor-history.log

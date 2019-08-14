@@ -1,0 +1,10 @@
+An object of class "PartitionedGraph"
+---
+     Graph properties : undirected, weighted
+   Number of vertices : 68
+      Number of edges : 243
+         Edge density : 7.95%
+    Vertex attributes : voxelCount, volume, name
+      Edge attributes : nStreamlines, binaryFA, weightedFA, binaryMD, weightedMD, streamlineLength, uniqueVoxels, voxelVisits
+Number of communities : 8
+   Community coverage : 98.53%

@@ -25,35 +25,33 @@ getParametersForFileType <- function (fileType = NA, format = NA, singleFile = N
 
 #' @rdname files
 #' @export
-identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = TRUE)
+identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
 {
-    suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)
+    suffixes <- unique(c(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes, auxiliaries))
     fileName <- expandFileName(fileName)
     files <- ensureFileSuffix(fileName, suffixes)
     exist <- file.exists(files)
     headersExist <- intersect(unique(.FileTypes$headerSuffixes), suffixes[exist])
     imagesExist <- intersect(unique(.FileTypes$imageSuffixes), suffixes[exist])
+    auxiliariesExist <- intersect(unique(auxiliaries), suffixes[exist])
     
     if (length(headersExist) < 1 || length(imagesExist) < 1)
     {
-        for (i in seq_along(.Workspace$pathHandlers))
-        {
-            if (fileName %~% names(.Workspace$pathHandlers)[i])
-            {
-                fileName <- .Workspace$pathHandlers[[i]](fileName)
-                if (is.null(fileName))
-                    report(OL$Error, "Custom path handler could not resolve file name: #{fileName}")
-                else
-                    return(identifyImageFileNames(fileName, fileType=fileType, errorIfMissing=errorIfMissing))
-            }
-        }
+        originalFileName <- fileName
+        fileName <- resolvePath(originalFileName, ...)
         
-        if (errorIfMissing)
-            report(OL$Error, "Complete image file does not exist: #{fileName}")
+        # The image does not exist, because we have already tried the unresolved path
+        if (all(fileName == originalFileName))
+        {
+            if (errorIfMissing)
+                report(OL$Error, "Complete image file does not exist: #{fileName}")
+            else
+                return (NULL)
+        }
         else
-            return (NULL)
+            return (identifyImageFileNames(fileName, fileType=fileType, errorIfMissing=errorIfMissing, auxiliaries=auxiliaries))
     }
-    if (length(headersExist) > 1 || length(imagesExist) > 1)
+    else if (length(headersExist) > 1 || length(imagesExist) > 1)
     {
         if (errorIfMissing)
             report(OL$Error, "Multiple compatible image files exist: #{fileName}")
@@ -67,6 +65,7 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     fileStem <- ensureFileSuffix(fileName, NULL, strip=suffixes)
     headerFile <- ensureFileSuffix(fileStem, headersExist)
     imageFile <- ensureFileSuffix(fileStem, imagesExist)
+    auxiliaryFiles <- ensureFileSuffix(fileStem, auxiliariesExist)
     
     # ANALYZE and NIFTI_PAIR file types use the same filename suffixes
     if (length(typeIndices) == 1)
@@ -76,7 +75,7 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     else
         format <- ifelse(hasNiftiMagicString(headerFile), "Nifti", "Analyze")
     
-    fileNames <- list(fileStem=fileStem, headerFile=headerFile, imageFile=imageFile, format=format, headerSuffix=headersExist, imageSuffix=imagesExist)
+    fileNames <- list(fileStem=fileStem, headerFile=headerFile, imageFile=imageFile, auxiliaryFiles=auxiliaryFiles, format=format, headerSuffix=headersExist, imageSuffix=imagesExist, auxiliarySuffixes=auxiliariesExist)
     return (fileNames)
 }
 
@@ -91,20 +90,23 @@ imageFileExists <- function (fileName, fileType = NULL)
 
 #' @rdname files
 #' @export
-removeImageFiles <- function (fileName)
+removeImageFiles <- function (fileName, ...)
 {
-    fileName <- expandFileName(fileName)
-    suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)    
-    files <- ensureFileSuffix(fileName, suffixes)
-    unlink(files)
+    info <- identifyImageFileNames(fileName, ...)
+    if (!is.null(info))
+    {
+        files <- unique(c(info$headerFile, info$imageFile, info$auxiliaryFiles))
+        report(OL$Debug, "Unlinking files #{embrace(files)}")
+        unlink(files)
+    }
 }
 
 #' @rdname files
 #' @export
-symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE)
+symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...)
 {
     if (isTRUE(getOption("tractorNoSymlinks")))
-        return (copyImageFiles(from, to, overwrite))
+        return (copyImageFiles(from, to, overwrite, ...))
     
     if (length(from) != length(to))
         report(OL$Error, "The number of source and target file names must match")
@@ -113,11 +115,11 @@ symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE)
     
     for (i in seq_along(from))
     {
-        info <- identifyImageFileNames(from[i])
-        currentSource <- unique(c(info$headerFile, info$imageFile))
-        currentTarget <- unique(ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix), strip=suffixes))
+        info <- identifyImageFileNames(from[i], ...)
+        currentSource <- unique(c(info$headerFile, info$imageFile, info$auxiliaryFiles))
+        currentTarget <- unique(ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix,info$auxiliarySuffixes), strip=suffixes))
         
-        # NB: file.exists() requires the target of an existing link to exist
+        # NB: file.exists() requires the target of an existing link to exist, but we want to know whether the link itself exists
         if (overwrite && any(!is.na(Sys.readlink(currentTarget))))
             unlink(currentTarget)
         if (relative)
@@ -126,13 +128,14 @@ symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE)
                 currentSource[j] <- relativePath(currentSource[j], currentTarget[j])
         }
         
+        report(OL$Verbose, "Linking #{embrace(currentSource)} => #{embrace(currentTarget)}")
         file.symlink(currentSource, currentTarget)
     }
 }
 
 #' @rdname files
 #' @export
-copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE)
+copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE, ...)
 {
     if (length(from) != length(to))
         report(OL$Error, "The number of source and target file names must match")
@@ -141,18 +144,19 @@ copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE
     
     for (i in seq_along(from))
     {
-        info <- identifyImageFileNames(from[i])
-        currentSource <- c(info$headerFile, info$imageFile)
-        currentTarget <- ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix), strip=suffixes)
+        info <- identifyImageFileNames(from[i], ...)
+        currentSource <- c(info$headerFile, info$imageFile, info$auxiliaryFiles)
+        currentTarget <- ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix,info$auxiliarySuffixes), strip=suffixes)
         
         # Don't try to copy an image onto itself
         if (all(currentSource == currentTarget))
             next
         
+        report(OL$Verbose, "#{ifelse(deleteOriginals,'Moving','Copying')} #{embrace(unique(currentSource))} => #{embrace(unique(currentTarget))}")
         success <- file.copy(unique(currentSource), unique(currentTarget), overwrite=overwrite)
         
         if (all(success) && deleteOriginals)
-            removeImageFiles(from[i])
+            removeImageFiles(from[i], ...)
     }
 }
 
@@ -180,8 +184,7 @@ chooseDataTypeForImage <- function (image, format)
     {
         singleTypeExists <- sum(datatypes$rTypes == "double" & datatypes$sizes == 4) == 1
         doubleTypeExists <- sum(datatypes$rTypes == "double" & datatypes$sizes == 8) == 1
-        if (!singleTypeExists && !doubleTypeExists)
-            report(OL$Error, "Floating-point data cannot be stored using the specified file format")
+        assert(singleTypeExists || doubleTypeExists, "Floating-point data cannot be stored using the specified file format")
         
         if (singleTypeExists && (isTRUE(getOption("tractorOutputPrecision") == "single") || !doubleTypeExists))
             size <- 4
@@ -190,6 +193,7 @@ chooseDataTypeForImage <- function (image, format)
         
         isSigned <- TRUE
         code <- datatypes$codes[datatypes$rTypes == "double" & datatypes$sizes == size]
+        name <- datatypes$names[datatypes$codes == code]
     }
     else
     {
@@ -205,16 +209,16 @@ chooseDataTypeForImage <- function (image, format)
         if (format == "Nifti" && any(compatible[datatypes$codes <= 64]))
             compatible <- compatible & (datatypes$codes <= 64)
         
-        if (!any(compatible))
-            report(OL$Error, "No compatible data type exists for the specified image and file format")
+        assert(any(compatible), "No compatible data type exists for the specified image and file format")
         
         maximumValues[!compatible] <- Inf
         code <- datatypes$codes[which.min(maximumValues)]
         size <- datatypes$sizes[datatypes$codes == code]
         isSigned <- datatypes$isSigned[datatypes$codes == code]
+        name <- datatypes$names[datatypes$codes == code]
     }
     
-    return (list(code=code, type=rType, size=size, isSigned=isSigned))
+    return (list(code=code, type=rType, size=size, isSigned=isSigned, name=name))
 }
 
 #' Working with MRI images stored in NIfTI, Analyze and MGH formats
@@ -251,15 +255,14 @@ chooseDataTypeForImage <- function (image, format)
 #' wrappers around the standard functions \code{\link{file.copy}} and
 #' \code{\link{file.symlink}} which handle this complexity.
 #' 
-#' \code{registerPathHandler} allows special syntaxes to be used for image
-#' paths, and is for advanced use only.
-#' 
 #' @param fileName,from,to File names, with or without appropriate extension.
 #' @param image An \code{\linkS4class{MriImage}} object.
 #' @param fileType A character vector of length one, giving the file type
 #'   required or expected. If this option is missing, the file type used for
 #'   writing images will be taken from the \code{tractorFileType} option. See
 #'   Details.
+#' @param auxiliaries A character vector of auxiliary file suffixes to search
+#'   for.
 #' @param metadataOnly Logical value: if \code{TRUE}, only metadata are read
 #'   into the object.
 #' @param volumes An optional integer vector specifying a subset of volumes to
@@ -273,6 +276,9 @@ chooseDataTypeForImage <- function (image, format)
 #'   image is of interest. Ignored if \code{sparse} is not \code{TRUE}.
 #' @param reorder Logical value: should the image data be reordered to LAS?
 #'   This is recommended in most circumstances.
+#' @param \dots For \code{identifyImageFileNames}, additional arguments to
+#'   \code{\link{resolvePath}}. Elsewhere, additional arguments to
+#'   \code{identifyImageFileNames}.
 #' @param overwrite Logical value: overwrite an existing image file? For
 #'   \code{writeImageFile}, an error will be raised if there is an existing
 #'   file and this is set to FALSE.
@@ -280,6 +286,8 @@ chooseDataTypeForImage <- function (image, format)
 #'   use when storing the data. This can lead to a substantial loss of
 #'   precision, and is usually not desirable. Only used when writing to the
 #'   NIfTI file format.
+#' @param writeTags Logical value: should tags be written in YAML format to an
+#'   auxiliary file?
 #' @param errorIfMissing Logical value: raise an error if no suitable files
 #'   were found?
 #' @param deleteOriginals Logical value: if \code{TRUE}, \code{copyImageFiles}
@@ -287,8 +295,6 @@ chooseDataTypeForImage <- function (image, format)
 #' @param relative Logical value: if \code{TRUE}, the path stored in the
 #'   symlink will be relative (e.g. \code{"../some_dir/some_image.nii"}) rather
 #'   than absolute (e.g. \code{"/path/to/some_dir/some_image.nii"}).
-#' @param regex A regular expression.
-#' @param handler A function taking and returning a string.
 #' @return \code{readImageFile} returns an \code{\linkS4class{MriImage}}
 #'   object. \code{imageFileExists} returns \code{TRUE} if an existing file
 #'   with the specified name exists (all file extensions are checked), and
@@ -318,180 +324,177 @@ chooseDataTypeForImage <- function (image, format)
 #' \url{http://www.jstatsoft.org/v44/i08/}.
 #' @rdname files
 #' @export
-readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
+readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
 {
-    fileNames <- identifyImageFileNames(fileName, fileType)
+    # Find the relevant files
+    fileNames <- identifyImageFileNames(fileName, fileType, ...)
     
-    readFun <- switch(fileNames$format, Analyze=readAnalyze, Nifti=readNifti, Mgh=readMgh)
-    info <- readFun(fileNames)
+    # Parse the files
+    # These functions should return either a complete image or a NIfTI-like
+    # header and information on the type and location of the data
+    if (fileNames$format %in% c("Analyze","Nifti"))
+        info <- readNifti(fileNames, metadataOnly=metadataOnly, volumes=volumes)
+    else if (fileNames$format == "Mgh")
+        info <- readMgh(fileNames)
+    else
+        report(OL$Error, "Unknown image file format: #{fileNames$format}")
     
-    datatype <- info$storageMetadata$datatype
-    endian <- info$storageMetadata$endian
-    dims <- info$imageMetadata$imageDims
-    voxelDims <- info$imageMetadata$voxelDims
+    # Create a niftiImage object from the image and/or header information
+    if (!is.null(info$image))
+        image <- updateNifti(info$image, info$header)
+    else if (!is.null(info$header))
+        image <- retrieveNifti(info$header)
+    else
+        report(OL$Error, "No image information is available")
+    
+    # Extract some metadata
+    nDims <- ndim(image)
+    dims <- dim(image)
+    fullDims <- c(dims, rep(1,max(0,7-nDims)))
     nVoxels <- prod(dims)
-    nDims <- length(dims)
     
-    if (sparse && !is.null(mask))
+    # Extract the datatype if the information is available
+    if (!is.null(info$storage))
     {
-        if (mask$getDimensionality() > nDims || mask$getDimensionality() < (nDims-1))
-            report(OL$Error, "Mask must have the same number of dimensions as the image, or one fewer")
-        else if (mask$getDimensionality() == nDims && !equivalent(mask$getDimensions(),dims))
-            report(OL$Error, "Mask and image dimensions do not match")
-        else if (mask$getDimensionality() == (nDims-1) && !equivalent(mask$getDimensions(),dims[-nDims]))
-            report(OL$Error, "Mask and image dimensions do not match")
+        datatype <- info$storage$datatype
+        report(OL$Debug, "Image datatype is #{datatype$size}-byte #{ifelse(datatype$isSigned,'signed','unsigned')} #{datatype$type}")
     }
+    report(OL$Debug, "Image orientation is #{orientation(image)}")
     
-    if (!is.null(volumes))
+    # Check that the mask is compatible, if it was specified
+    if (sparse && !is.null(mask) && !equivalent(dim(mask),dims[seq_along(dim(mask))]))
+        report(OL$Error, "Mask and image dimensions do not match")
+    
+    # Check whether we need to read data and/or reorder the image
+    data <- NULL
+    willReadData <- (!metadataOnly && !RNifti:::hasData(image))
+    willReorderImage <- (reorder && orientation(image) != "LAS")
+    
+    # Data has not already been read, so do it here
+    if (willReadData)
     {
-        if (metadataOnly)
+        # Jump to the data offset position
+        connection <- gzfile(fileNames$imageFile, "rb")
+        if (fileNames$imageFile == fileNames$headerFile)
+            readBin(connection, "raw", n=info$storage$offset)
+        
+        # Work out how many blocks (3D volumes) we're reading, and the gaps between them
+        blockSize <- prod(fullDims[1:3])
+        if (!is.null(volumes) && nDims > 3)
         {
-            flag(OL$Warning, "Volumes specified when reading only metadata from an image file will be ignored")
-            volumes <- NULL
-        }
-        else if (nDims != 4)
-        {
-            flag(OL$Warning, "Volumes specified for images with dimensionality other than 4 will be ignored")
-            volumes <- NULL
+            blocks <- volumes
+            jumps <- (diff(c(0, sort(volumes))) - 1) * blockSize
         }
         else
         {
-            if (any(volumes < 1 || volumes > prod(dims[4:nDims])))
-                report(OL$Error, "Some of the specified volume numbers (", implode(volumes,","), ") are out of bounds")
-            
-            volumeSize <- prod(dims[1:3])
-            jumps <- (diff(c(0, sort(volumes))) - 1) * volumeSize
-            
-            if (length(volumes) == 1)
-            {
-                dims <- dims[1:3]
-                nDims <- 3
-                voxelDims <- voxelDims[1:3]
-            }
-            else
-            {
-                matrixLocs <- vectorToMatrixLocs(volumes, dims[4:nDims])
-                remainingVolumeDims <- apply(matrixLocs, 2, function (x) length(unique(x)))
-                dims <- c(dims[1:3], remainingVolumeDims)
-                
-                dimsToKeep <- 1:max(which(dims > 1))
-                dims <- dims[dimsToKeep]
-                nDims <- length(dimsToKeep)
-                voxelDims <- voxelDims[dimsToKeep]
-            }
+            blocks <- prod(fullDims[4:7])
+            jumps <- rep(0, length(blocks))
         }
-    }
-    
-    report(OL$Debug, "Image datatype is #{datatype$size}-byte #{ifelse(datatype$isSigned,'signed','unsigned')} #{datatype$type}")
-    
-    if (metadataOnly)
-        data <- NULL
-    else
-    {
-        connection <- gzfile(fileNames$imageFile, "rb")
-        if (fileNames$imageFile == fileNames$headerFile)
-            readBin(connection, "raw", n=info$storageMetadata$dataOffset)
         
-        if (sparse)
+        willRescaleData <- (info$storage$slope != 0 && !equivalent(c(info$storage$slope,info$storage$intercept), 1:0))
+        coords <- values <- NULL
+        for (i in seq_along(blocks))
         {
-            if (!is.null(volumes))
+            # Jump over blocks being ignored, if necessary
+            if (jumps[i] > 0)
+                readBin(connection, "raw", n=jumps[i]*datatype$size)
+            
+            # Read the current block
+            currentData <- array(readBin(connection, what=datatype$type, n=blockSize, size=datatype$size, signed=datatype$isSigned, endian=info$storage$endian), dim=fullDims[1:3])
+            
+            # Rescale and reorder if necessary
+            # Reordering is a purely spatial operation, so we can do it blockwise
+            if (willRescaleData)
+                currentData <- currentData * info$storage$slope + info$storage$intercept
+            if (willReorderImage)
             {
-                blocks <- volumes
-                blockSize <- volumeSize
-            }
-            else
-            {
-                blocks <- 1:dims[nDims]
-                jumps <- rep(0, length(blocks))
-                blockSize <- prod(dims[-nDims])
+                currentData <- updateNifti(currentData, image)
+                orientation(currentData) <- "LAS"
             }
             
-            coords <- NULL
-            values <- NULL
-            for (i in blocks)
+            if (sparse)
             {
-                if (jumps[i] > 0)
-                    readBin(connection, "raw", n=jumps[i]*datatype$size)
-                currentData <- readBin(connection, what=datatype$type, n=blockSize, size=datatype$size, signed=datatype$isSigned, endian=endian)
-                
+                # A sparse result was requested, so identify nonzero and/or within-mask voxels
                 toKeep <- which(currentData != 0)
-                if (!is.null(mask) && mask$getDimensionality() == (nDims-1))
-                    toKeep <- intersect(toKeep, which(mask$getData() > 0))
+                if (!is.null(mask))
+                    toKeep <- intersect(toKeep, mask$find(array=FALSE))
+                
                 if (length(toKeep) > 0)
                 {
-                    coords <- rbind(coords, cbind(vectorToMatrixLocs(toKeep,dims[-nDims]),i))
+                    coords <- rbind(coords, cbind(vectorToMatrixLocs(toKeep,fullDims[1:3]),blocks[i]))
                     values <- c(values, currentData[toKeep])
                 }
             }
-            
-            if (!is.null(mask) && mask$getDimensionality() == nDims)
+            else
             {
-                toKeep <- which(matrixToVectorLocs(coords,dims) %in% which(mask$getData() > 0))
-                coords <- coords[toKeep,]
-                values <- values[toKeep]
+                # Create an array for the data if it doesn't yet exist, then insert the block
+                if (is.null(data))
+                    data <- array(as(0,datatype$type), dim=c(fullDims[1:3],length(blocks)))
+                data[,,,i] <- currentData
             }
-            
-            data <- newSparseArrayWithData(values, coords, dims)
-        }
-        else if (!is.null(volumes))
-        {
-            data <- array(as(0,datatype$type), dim=c(dims[1:3],length(volumes)))
-            for (i in seq_along(volumes))
-            {
-                if (jumps[i] > 0)
-                    readBin(connection, "raw", n=jumps[i]*datatype$size)
-                data[,,,i] <- readBin(connection, what=datatype$type, n=volumeSize, size=datatype$size, signed=datatype$isSigned, endian=endian)
-            }
-            dim(data) <- dims
-        }
-        else
-        {
-            voxels <- readBin(connection, what=datatype$type, n=nVoxels, size=datatype$size, signed=datatype$isSigned, endian=endian)
-            data <- array(voxels, dim=dims)
         }
         
+        # Create the sparse matrix from its components, if requested
+        if (sparse)
+            data <- newSparseArrayWithData(values, coords, dims)
+        
+        # Update the dimensions to match the image metadata
+        dim(data) <- dims
         close(connection)
-
-        slope <- info$storageMetadata$dataScalingSlope
-        intercept <- info$storageMetadata$dataScalingIntercept
-        if (slope != 0 && !equivalent(c(slope,intercept), 1:0))
-            data <- data * slope + intercept
     }
     
-    report(OL$Debug, "Image orientation is ", xformToOrientation(info$storageMetadata$xformMatrix))
+    # Reorder the image if requested (as opposed to the data to be associated with it)
+    if (willReorderImage)
+        orientation(image) <- "LAS"
     
-    # The origin is world position (0,0,0); the xform is a voxel-to-world affine matrix
-    origin <- rep(1,3)
-    if (equivalent(dim(info$storageMetadata$xformMatrix), c(4,4)))
-    {
-        tempOrigin <- (solve(info$storageMetadata$xformMatrix) %*% c(0,0,0,1)) + 1
-        origin <- tempOrigin[1:3]
-    }
+    # Attach the data if necessary
+    # NB: this must happen before conversion to MriImage, otherwise cal_min and cal_max won't be checked against the data
+    if (willReadData)
+        image <- updateNifti(data, image)
     
+    # Convert to an MriImage
+    attr(image, "reordered") <- reorder
+    image <- as(image, "MriImage")
+    
+    # Ensure the data has the required form
+    if (metadataOnly)
+        image$setData(NULL)
+    else if (sparse && !image$isSparse())
+        image$setData(as(image$getData(), "SparseArray"))
+    
+    # Set the source
+    image$setSource(fileNames$fileStem)
+    
+    # Read the auxiliary tags file, if one exists
     tagsFileName <- ensureFileSuffix(fileNames$fileStem, "tags")
     if (file.exists(tagsFileName))
-        tags <- deduplicate(yaml::yaml.load_file(tagsFileName), info$imageMetadata$tags)
-    else
-        tags <- info$imageMetadata$tags
+        do.call(image$setTags, yaml::yaml.load_file(tagsFileName))
     
-    image <- MriImage$new(imageDims=dims, voxelDims=voxelDims, voxelDimUnits=info$imageMetadata$voxelUnit, source=info$imageMetadata$source, origin=origin, storedXform=info$storageMetadata$xformMatrix, reordered=FALSE, tags=tags, data=data)
+    # Read diffusion directions, if present
+    dirsFileName <- ensureFileSuffix(fileNames$fileStem, "dirs")
+    if (file.exists(dirsFileName))
+    {
+        dirs <- as.matrix(read.table(dirsFileName))
+        if (!is.null(volumes))
+            dirs <- dirs[volumes,,drop=FALSE]
+        if (ncol(dirs) == 4 && nrow(dirs) == image$nVolumes())
+            image$setTags(bVectors=dirs[,1:3,drop=FALSE], bValues=dirs[,4])
+        else
+            flag(OL$Warning, "Auxiliary directions file does not match image - ignoring")
+    }
     
-    if (reorder)
-        image <- reorderMriImage(image)
-    
-    invisible (image)
+    return (image)
 }
 
 writeImageData <- function (image, connection, type, size, endian = .Platform$endian)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
-    
+    image <- as(image, "MriImage")
     data <- image$getData()
+    dims <- image$getDimensions()
     
-    if (image$isSparse())
+    # writeBin() can only write 2^31 - 1 bytes, so work blockwise if necessary
+    if (image$isSparse() || prod(dims) * size >= 2^31)
     {
-        dims <- image$getDimensions()
         nDims <- image$getDimensionality()
         for (i in seq_len(dims[nDims]))
         {
@@ -512,12 +515,20 @@ writeImageData <- function (image, connection, type, size, endian = .Platform$en
     }
 }
 
+writeGradientDirections <- function (directions, bValues, fileName)
+{
+    directions[is.na(directions)] <- 0
+    bValues[is.na(bValues)] <- 0
+    directions <- cbind(promote(directions,byrow=TRUE), bValues)
+    lines <- ore.subst("\\.0+\\s*$", "", apply(format(directions,scientific=FALSE),1,implode,sep="  "))
+    writeLines(lines, fileName)
+}
+
 #' @rdname files
 #' @export
-writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE, maxSize = NULL)
+writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE, maxSize = NULL, writeTags = FALSE)
 {
-    if (!is(image, "MriImage"))
-        report(OL$Error, "The specified image is not an MriImage object")
+    image <- as(image, "MriImage")
     
     if (!is.null(fileName))
         fileName <- expandFileName(fileName)
@@ -549,24 +560,24 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
         report(OL$Error, "An unreordered image can only be written to NIfTI format")
     
     if (params$format == "Analyze")
-        writeAnalyze(image, fileNames, gzipped=params$gzipped)
+        report(OL$Error, "Writing to ANALYZE format is no longer supported")
     else if (params$format == "Nifti")
-        writeNifti(image, fileNames, gzipped=params$gzipped, maxSize=maxSize)
+        writeNifti(image, fileNames, maxSize=maxSize)
     else if (params$format == "Mgh")
         writeMgh(image, fileNames, gzipped=params$gzipped)
     
+    if (writeTags && image$nTags() > 0)
+    {
+        tags <- image$getTags()
+        if (all(c("bVectors","bValues") %in% names(tags)))
+            writeGradientDirections(image$getTags("bVectors"), image$getTags("bValues"), ensureFileSuffix(fileStem,"dirs"))
+        tags <- tags[!(names(tags) %in% c("bVectors","bValues"))]
+        if (length(tags) > 0)
+            writeLines(yaml::as.yaml(tags,handlers=list(Date=format.Date)), ensureFileSuffix(fileStem,"tags"))
+    }
+    
+    if (image$isInternal())
+        image$setSource(expandFileName(fileStem))
+    
     invisible (fileNames)
-}
-
-#' @rdname files
-#' @export
-registerPathHandler <- function (regex, handler)
-{
-    if (!is.character(regex) || length(regex) != 1)
-        report(OL$Error, "Regular expression should be specified as a character string")
-    
-    handler <- match.fun(handler)
-    .Workspace$pathHandlers[[regex]] <- handler
-    
-    invisible(NULL)
 }

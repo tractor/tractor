@@ -133,7 +133,7 @@
 
 <h2 id="the-divest-back-end">The divest back-end</h2>
 
-<p>In TractoR version 3.1.0 a new DICOM back-end based on <a href="https://github.com/rordenlab/dcm2niix">Chris Rorden&rsquo;s <code>dcm2niix</code></a> (via the <a href="https://github.com/jonclayden/divest"><code>divest</code> R package</a>) was added. As well as being more robust and more extensively tested, this route handles multiple series at once and interactively, removing the need to pre-sort DICOM directories. It also extracts more metadata from the DICOM files, storing it in auxiliary .tags files. For example,</p>
+<p>In TractoR version 3.1.0 a new DICOM back-end based on <a href="https://github.com/rordenlab/dcm2niix">Chris Rorden&rsquo;s <code>dcm2niix</code></a> (via the <a href="https://github.com/jonclayden/divest"><code>divest</code> R package</a>) was added. As well as being more robust and more extensively tested, this route handles multiple series at once and interactively, removing the need to pre-sort DICOM directories. (Sorting files using <code>divest</code> is possible as of TractoR 3.2.0, however.) It also extracts more metadata from the DICOM files, storing it in auxiliary .tags files. For example,</p>
 
 <pre><code class="language-bash line-numbers">tractor dicomread $TRACTOR_HOME/tests/data/dicom Method:divest FileNames:metadata
 # Starting TractoR environment...
@@ -142,7 +142,7 @@
 # 1: Series 8 "DTIb3000s5", TE 112 ms, TR 4100 ms 
 # 2: Series 9 "fl3D_t1_sag", TE 4.94 ms, TR 11 ms
 # 
-# Type <Enter> for all series, 0 for none, or indices separated by spaces or commas
+# Type &lt;Enter&gt; for all series, 0 for none, or indices separated by spaces or commas
 # Selected series: 2
 # * INFO: Image _0_S009_fl3D_t1_sag appears to be T1-weighted
 # * INFO: Finalising images and writing them out...

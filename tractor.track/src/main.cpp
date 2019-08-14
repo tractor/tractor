@@ -50,7 +50,7 @@ FinalType increment (OriginalType x)
     return static_cast<FinalType>(x + OriginalType(1));
 }
 
-RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetInfo, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _maxLength, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _medianPath, SEXP _profileFunction, SEXP _debugLevel)
+RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetInfo, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _oneWay, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _maxLength, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _medianPath, SEXP _profileFunction, SEXP _debugLevel)
 {
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
@@ -67,6 +67,7 @@ BEGIN_RCPP
     
     std::map<std::string,bool> flags;
     flags["loopcheck"] = as<bool>(_useLoopcheck);
+    flags["one-way"] = as<bool>(_oneWay);
     flags["terminate-targets"] = as<bool>(_terminateAtTargets);
     tracker.setFlags(flags);
     
@@ -96,29 +97,17 @@ BEGIN_RCPP
     TractographyDataSource dataSource(&tracker, seeds.array(), as<size_t>(_count), as<bool>(_jitter));
     Pipeline<Streamline> pipeline(&dataSource);
     
-    LabelCountFilter *hitFilter = NULL;
-    LengthFilter *lengthFilter = NULL;
-    
     const int minTargetHits = as<int>(_minTargetHits);
     if (minTargetHits > 0)
-    {
-        hitFilter = new LabelCountFilter(minTargetHits);
-        pipeline.addManipulator(hitFilter);
-    }
+        pipeline.addManipulator(new LabelCountFilter(minTargetHits));
     
     const double minLength = as<double>(_minLength);
     double maxLength = as<double>(_maxLength);
     maxLength = (maxLength == R_PosInf ? 0.0 : maxLength);
     if (minLength > 0.0 || maxLength > 0.0)
-    {
-        lengthFilter = new LengthFilter(minLength, maxLength);
-        pipeline.addManipulator(lengthFilter);
-    }
+        pipeline.addManipulator(new LengthFilter(minLength, maxLength));
     
     VisitationMapDataSink *visitationMap = NULL;
-    TrackvisDataSink *trkFile = NULL;
-    MedianTrackvisDataSink *medianFile = NULL;
-    ProfileMatrixDataSink *profile = NULL;
     Rcpp::Function *function = NULL;
     if (!Rf_isNull(_mapPath))
     {
@@ -127,6 +116,8 @@ BEGIN_RCPP
     }
     if (!Rf_isNull(_trkPath))
     {
+        TrackvisDataSink *trkFile;
+        
         if (!Rf_isNull(targetInfo["indices"]) && !Rf_isNull(targetInfo["labels"]))
         {
             IntegerVector indices = targetInfo["indices"];
@@ -143,8 +134,7 @@ BEGIN_RCPP
     }
     if (!Rf_isNull(_medianPath))
     {
-        medianFile = new MedianTrackvisDataSink(as<std::string>(_medianPath), grid);
-        pipeline.addSink(medianFile);
+        pipeline.addSink(new MedianTrackvisDataSink(as<std::string>(_medianPath), grid));
         
         // Pipeline must contain all streamlines at once for calculating median
         pipeline.setBlockSize(as<size_t>(_count));
@@ -152,24 +142,15 @@ BEGIN_RCPP
     if (!Rf_isNull(_profileFunction))
     {
         function = new Rcpp::Function(_profileFunction);
-        profile = new ProfileMatrixDataSink(*function);
-        pipeline.addSink(profile);
+        pipeline.addSink(new ProfileMatrixDataSink(*function));
     }
     
     size_t nRetained = pipeline.run();
     
     if (visitationMap != NULL)
-    {
         visitationMap->writeToNifti(mask, as<std::string>(_mapPath));
-        delete visitationMap;
-    }
     
-    delete hitFilter;
-    delete lengthFilter;
-    delete trkFile;
-    delete medianFile;
     delete function;
-    delete profile;
     
     return wrap(nRetained);
 END_RCPP
@@ -184,8 +165,7 @@ BEGIN_RCPP
     std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
     pipeline.setSubset(indices);
     Function function(_function);
-    RCallbackDataSink sink(function);
-    pipeline.addSink(&sink);
+    pipeline.addSink(new RCallbackDataSink(function));
     
     pipeline.run();
     
@@ -221,18 +201,18 @@ BEGIN_RCPP
     int_vector dims(3);
     const Grid<3> &grid = trkFile.getGrid3D();
     std::copy(grid.dimensions().data(), grid.dimensions().data()+3, dims.begin());
-    VisitationMapDataSink map(dims);
-    pipeline.addSink(&map);
+    VisitationMapDataSink *map = new VisitationMapDataSink(dims);
+    pipeline.addSink(map);
     
-    StreamlineLengthsDataSink lengths;
-    pipeline.addSink(&lengths);
+    StreamlineLengthsDataSink *lengths = new StreamlineLengthsDataSink;
+    pipeline.addSink(lengths);
     
     pipeline.run();
     
-    const Array<double> &array = map.getArray();
+    const Array<double> &array = map->getArray();
     NumericVector arrayR = wrap(array.getData());
     arrayR.attr("dim") = array.getDimensions();
-    List result = List::create(Named("map")=arrayR, Named("lengths")=lengths.getLengths());
+    List result = List::create(Named("map")=arrayR, Named("lengths")=lengths->getLengths());
     return result;
 END_RCPP
 }
@@ -257,6 +237,17 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP trkInfo (SEXP _trkPath)
+{
+BEGIN_RCPP
+    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
+    std::vector<std::string> properties = trkFile.getPropertyNames();
+    if (properties.size() == 0)
+        properties.push_back("(none)");
+    return wrap(properties);
+END_RCPP
+}
+
 RcppExport SEXP trkLabels (SEXP _trkPath)
 {
 BEGIN_RCPP
@@ -274,16 +265,17 @@ BEGIN_RCPP
     int_vector indices = as<int_vector>(_indices);
     std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
     pipeline.setSubset(indices);
-    StreamlineLengthsDataSink sink;
-    pipeline.addSink(&sink);
+    
+    StreamlineLengthsDataSink *sink = new StreamlineLengthsDataSink;
+    pipeline.addSink(sink);
     
     pipeline.run();
     
-    return wrap(sink.getLengths());
+    return wrap(sink->getLengths());
 END_RCPP
 }
 
-RcppExport SEXP trkMap (SEXP _trkPath, SEXP _indices, SEXP _imagePath, SEXP _resultPath)
+RcppExport SEXP trkMap (SEXP _trkPath, SEXP _indices, SEXP _imagePath, SEXP _scope, SEXP _normalise, SEXP _resultPath)
 {
 BEGIN_RCPP
     BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
@@ -292,16 +284,23 @@ BEGIN_RCPP
     std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
     pipeline.setSubset(indices);
     
+    const std::string scopeString = as<std::string>(_scope);
+    VisitationMapDataSink::MappingScope scope = VisitationMapDataSink::FullMappingScope;
+    if (scopeString == "seed")
+        scope = VisitationMapDataSink::SeedMappingScope;
+    else if (scopeString == "ends")
+        scope = VisitationMapDataSink::EndsMappingScope;
+    
     int_vector dims(3);
     const Grid<3> &grid = trkFile.getGrid3D();
     std::copy(grid.dimensions().data(), grid.dimensions().data()+3, dims.begin());
-    VisitationMapDataSink map(dims);
-    pipeline.addSink(&map);
+    VisitationMapDataSink *map = new VisitationMapDataSink(dims, scope, as<bool>(_normalise));
+    pipeline.addSink(map);
     
     pipeline.run();
     
     RNifti::NiftiImage reference(as<std::string>(_imagePath), false);
-    map.writeToNifti(reference, as<std::string>(_resultPath));
+    map->writeToNifti(reference, as<std::string>(_resultPath));
     
     return R_NilValue;
 END_RCPP
@@ -316,8 +315,8 @@ BEGIN_RCPP
     int_vector indices = as<int_vector>(_indices);
     std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
     pipeline.setSubset(indices);
-    MedianTrackvisDataSink medianFile(as<std::string>(_resultPath), trkFile.getGrid3D(), as<double>(_quantile));
-    pipeline.addSink(&medianFile);
+    MedianTrackvisDataSink *medianFile = new MedianTrackvisDataSink(as<std::string>(_resultPath), trkFile.getGrid3D(), as<double>(_quantile));
+    pipeline.addSink(medianFile);
     
     pipeline.run();
     
@@ -334,10 +333,10 @@ BEGIN_RCPP
     int_vector indices = as<int_vector>(_indices);
     std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
     pipeline.setSubset(indices);
-    StreamlineTruncator truncator(as<double>(_leftLength), as<double>(_rightLength));
-    pipeline.addManipulator(&truncator);
-    BasicTrackvisDataSink resultFile(as<std::string>(_resultPath), trkFile.getGrid3D());
-    pipeline.addSink(&resultFile);
+    StreamlineTruncator *truncator = new StreamlineTruncator(as<double>(_leftLength), as<double>(_rightLength));
+    pipeline.addManipulator(truncator);
+    BasicTrackvisDataSink *resultFile = new BasicTrackvisDataSink(as<std::string>(_resultPath), trkFile.getGrid3D());
+    pipeline.addSink(resultFile);
     
     pipeline.run();
     
@@ -349,34 +348,57 @@ RcppExport SEXP trkCreate (SEXP _trkPath, SEXP _mask)
 {
 BEGIN_RCPP
     RNifti::NiftiImage mask(_mask);
-    BasicTrackvisDataSink trkFile(as<std::string>(_trkPath), getGrid3D(mask));
-    trkFile.done();
+    BasicTrackvisDataSink *sink = new BasicTrackvisDataSink(as<std::string>(_trkPath), getGrid3D(mask));
+    XPtr<BasicTrackvisDataSink> sinkPtr(sink);
+    return sinkPtr;
+END_RCPP
+}
+
+RcppExport SEXP trkAppend (SEXP _sink, SEXP _points, SEXP _seedIndex, SEXP _pointType, SEXP _fixedSpacing)
+{
+BEGIN_RCPP
+    XPtr<BasicTrackvisDataSink> sinkPtr(_sink);
+    BasicTrackvisDataSink *sink = sinkPtr;
+    
+    Rcpp::NumericMatrix pointsR(_points);
+    const Streamline::PointType pointType = (as<std::string>(_pointType) == "mm" ? Streamline::WorldPointType : Streamline::VoxelPointType);
+    const int seedIndex = as<int>(_seedIndex) - 1;
+    
+    std::vector<Space<3>::Point> leftPoints(seedIndex+1), rightPoints(pointsR.rows()-seedIndex);
+    for (int i=seedIndex; i>=0; i--)
+    {
+        Space<3>::Point point;
+        point[0] = pointsR(i,0) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        point[1] = pointsR(i,1) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        point[2] = pointsR(i,2) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        leftPoints[seedIndex-i] = point;
+    }
+    for (int i=seedIndex; i<pointsR.rows(); i++)
+    {
+        Space<3>::Point point;
+        point[0] = pointsR(i,0) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        point[1] = pointsR(i,1) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        point[2] = pointsR(i,2) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
+        rightPoints[i-seedIndex] = point;
+    }
+    
+    Streamline streamline(leftPoints, rightPoints, pointType, sink->getGrid3D().spacings(), as<bool>(_fixedSpacing));
+    std::list<Streamline> list;
+    list.push_back(streamline);
+    sink->setup(1, list.begin(), list.end());
+    sink->put(streamline);
+    
     return R_NilValue;
 END_RCPP
 }
 
-RcppExport SEXP trkAppend (SEXP _trkPath, SEXP _points, SEXP _seedIndex, SEXP _pointType, SEXP _voxelDims, SEXP _fixedSpacing)
+RcppExport SEXP trkClose (SEXP _sink)
 {
 BEGIN_RCPP
-    const std::string path = as<std::string>(_trkPath);
-    BasicTrackvisDataSink sink(path, true);
-    
-    Eigen::VectorXf voxelDims = as<Eigen::VectorXf>(_voxelDims);
-    // if (!(voxelDims.array() == grid.spacings()).all())
-    //     throw std::runtime_error("Voxel dimensions do not match the existing .trk file");
-    
-    Eigen::MatrixXf points = as<Eigen::MatrixXf>(_points);
-    const int seedIndex = as<int>(_seedIndex) - 1;
-    std::vector<Space<3>::Point> leftPoints(seedIndex+1), rightPoints(points.rows()-seedIndex);
-    const std::string pointType = as<std::string>(_pointType);
-    for (int i=seedIndex; i>=0; i--)
-        leftPoints[seedIndex-i] = points.row(i);
-    for (int i=seedIndex; i<points.rows(); i++)
-        rightPoints[i-seedIndex] = points.row(i);
-    Streamline streamline(leftPoints, rightPoints, (pointType == "mm") ? Streamline::WorldPointType : Streamline::VoxelPointType, voxelDims, as<bool>(_fixedSpacing));
-    sink.append(streamline);
-    sink.done();
-    
+    XPtr<BasicTrackvisDataSink> sinkPtr(_sink);
+    BasicTrackvisDataSink *sink = sinkPtr;
+    sink->done();
+    sinkPtr.release();
     return R_NilValue;
 END_RCPP
 }

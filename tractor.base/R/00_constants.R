@@ -24,7 +24,8 @@
     datatypes=list(codes=c(     2,          4,          8,          16,         64,         256,        512,        768),
                    rTypes=c(   "integer",  "integer",  "integer",  "double",   "double",   "integer",  "integer",  "integer"),
                    sizes=c(     1,          2,          4,          4,          8,          1,          2,          4),
-                   isSigned=c(  FALSE,      TRUE,       TRUE,       TRUE,       TRUE,       TRUE,       FALSE,      FALSE)),
+                   isSigned=c(  FALSE,      TRUE,       TRUE,       TRUE,       TRUE,       TRUE,       FALSE,      FALSE),
+                   names=c(    "uint8",    "int16",    "int32",    "float",    "double",   "int8",     "uint16",   "uint32")),
     units=list(unknown=0, m=1, mm=2, um=3, s=8, ms=16, us=24),
     xformCodes=list(unknown=0, scannerAnatomical=1, alignedAnatomical=2, talairach=3, mni=4),
     magicStrings=list(list(c(charToRaw("ni1"),as.raw(0)), c(charToRaw("n+1"),as.raw(0))),
@@ -34,7 +35,14 @@
     datatypes=list(codes=c(     0,          4,          1,          3      ),
                    rTypes=c(   "integer",  "integer",  "integer",  "double"),
                    sizes=c(     1,          2,          4,          4      ),
-                   isSigned=c(  FALSE,      TRUE,       TRUE,       TRUE   )))
+                   isSigned=c(  FALSE,      TRUE,       TRUE,       TRUE   ),
+                   names=c(    "uint8",    "int16",    "int32",    "float" )))
+
+.Bids <- list(
+    mappingFromJson=c(MagneticFieldStrength="fieldStrength", ManufacturersModelName="scannerModelName", SpacingBetweenSlices="sliceSpacing", TotalReadoutTime="effectiveReadoutTime", MultibandAccelerationFactor="multibandFactor", ImageComments="comments"),
+    mappingToJson=c(fieldStrength="MagneticFieldStrength", scannerModelName="ManufacturersModelName", sliceSpacing="SpacingBetweenSlices", effectiveReadoutTime="TotalReadoutTime", multibandFactor="MultibandAccelerationFactor", comments="ImageComments"),
+    toIgnore="^[iI]mageType$",
+    toScale="^(Echo|Repetition)Time$")
 
 .FileTypes <- list(
     typeNames=c(       "ANALYZE",  "NIFTI",    "NIFTI_PAIR",   "ANALYZE_GZ",   "NIFTI_GZ", "NIFTI_PAIR_GZ", "MGH",  "MGH_GZ"),

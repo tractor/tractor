@@ -1,0 +1,14 @@
+rawdata: "@_dwi"
+data: data
+refb0: refb0
+mask: mask
+maskedb0: maskedb0
+s0: dti_S0
+fa: dti_FA
+md: dti_MD
+eigenvalue: dti_eigval%
+eigenvector: dti_eigvec%
+axialdiff: dti_eigval1
+radialdiff: dti_radial
+sse: dti_SSE
+parcellation: parcellation

@@ -14,8 +14,8 @@ runExperiment <- function ()
     minPosterior <- getConfigVariable("MinimumPosterior", 0, "numeric")
     nStreamlines <- getConfigVariable("Streamlines", 1000, "integer")
     
-    reference <- getNTResource("reference", "pnt", list(tractName=tractName))
-    results <- getNTResource("results", "pnt", list(resultsName=resultsName))
+    reference <- getNTResource("reference", list(tractName=tractName))
+    results <- getNTResource("results", list(resultsName=resultsName))
     
     data <- readPntDataTable(datasetName)
     if (nArguments() > 0)
