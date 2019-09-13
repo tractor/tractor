@@ -12,6 +12,7 @@ readMrtrix <- function (fileNames)
     
     # The gzfile function can handle uncompressed files too
     connection <- gzfile(fileNames$headerFile, "rb")
+    on.exit(close(connection))
     
     magic <- rawToChar(stripNul(readBin(connection, "raw", n=12)))
     assert(magic == "mrtrix image", "File #{fileNames$headerFile} does not appear to be a valid MRtrix image")
@@ -23,49 +24,75 @@ readMrtrix <- function (fileNames)
     for (fieldName in unique(names(fields)))
         mergedFields[[fieldName]] <- unlist(fields[names(fields) == fieldName], use.names=FALSE)
     
+    pad <- function (x, minLength = 3L, value = 1)
+    {
+        length <- length(x)
+        if (length >= minLength)
+            return (x)
+        else
+            return (c(x, rep(value, minLength-length)))
+    }
+    
+    # Extract and remove the specified field, splitting up elements
+    getField <- function (name, split = "\\s*,\\s*", required = TRUE)
+    {
+        value <- mergedFields[[name]]
+        if (required && is.null(value))
+            report(OL$Error, "Required MRtrix header field \"#{name}\" is missing")
+        else if (!is.null(value) && !is.null(split))
+            value <- unlist(ore.split(split, value))
+        mergedFields[[name]] <<- NULL
+        return (value)
+    }
+    
+    dims <- as.integer(getField("dim"))
+    voxelDims <- as.numeric(getField("vox"))
+    voxelDims[!is.finite(voxelDims)] <- 0
+    
+    layoutMatch <- ore.search("^(\\+|-)(\\d)$", getField("layout"), simplify=FALSE)
+    signs <- ifelse(layoutMatch[,,1] == "+", 1, -1)
+    axes <- as.integer(layoutMatch[,,2]) + 1L
+    if (length(axes) > 3 && any(axes[4:length(axes)] != 4:length(axes)))
+        report(OL$Error, "Images not stored in volume block order are not yet supported")
+    
+    layoutMatrix <- diag(c(0,0,0,1))
+    layoutMatrix[cbind(1:3, pad(axes,3,3L)[1:3])] <- pad(signs,3)[1:3]
+    
+    xform <- diag(c(pad(abs(voxelDims),3)[1:3], 1)) %*% layoutMatrix
+    if (!is.null(mergedFields$transform))
+    {
+        mrtrixTransform <- rbind(matrix(as.numeric(getField("transform")), nrow=3, ncol=4, byrow=TRUE), c(0,0,0,1))
+        xform <- mrtrixTransform %*% xform
+    }
+    
+    datatypeString <- as.character(getField("datatype"))
+    if (datatypeString == "Bit" || datatypeString %~% "^C")
+        report(OL$Error, "Bit and complex datatypes are not supported")
+    datatypeMatch <- ore.search("^(U)?(Int|Float)(8|16|32|64)(LE|BE)?$", datatypeString)
+    datatype <- list(code=0,
+                     type=ifelse(datatypeMatch[,2]=="Int", "integer", "double"),
+                     size=as.integer(datatypeMatch[,3]) / 8L,
+                     isSigned=!is.na(datatypeMatch[,1]))
+    endianString <- ifelse(is.na(datatypeMatch[,4]), "", datatypeMatch[,4])
+    endian <- switch(endianString, LE="little", BE="big", .Platform$endian)
+    
+    fileField <- getField("file")
+    fileMatch <- ore.search("^\\s*(\\S+) (\\d+)\\s*$", fileField)
+    
+    scaling <- as.numeric(getField("scaling", required=FALSE))
+    if (length(scaling) == 0)
+        scaling <- c(0, 1)
+    
     # Create a default header
-    # header <- niftiHeader()
-    #
-    # dims <- readBin(connection, "integer", n=4, size=4, endian="big")
-    # typeCode <- readBin(connection, "integer", n=1, size=4, endian="big")
-    # readBin(connection, "raw", n=4)
-    # orientationStored <- as.logical(readBin(connection, "integer", n=1, size=2, endian="big"))
-    # voxelDims <- readBin(connection, "double", n=3, size=4, endian="big")
-    #
-    # scaleMatrix <- diag(c(abs(voxelDims[1:3]), 1))
-    # if (orientationStored)
-    # {
-    #     # The stored xform is not scaled by the voxel dimensions
-    #     xform <- matrix(readBin(connection, "double", n=12, size=4, endian="big"), nrow=3)
-    #     xform <- rbind(xform, c(0,0,0,1)) %*% scaleMatrix
-    # }
-    # else
-    # {
-    #     # Default orientation is LIA
-    #     xform <- scaleMatrix
-    #     orientation(xform) <- "LIA"
-    # }
-    #
-    # # Whether the information is stored or not, an origin adjustment is needed,
-    # # because MGH format uses the image centre as a reference point
-    # xform[1:3,4] <- xform[1:3,4] - (xform[1:3,1:3] %*% (dims[1:3] / 2))
-    #
-    # close(connection)
-    #
-    # nDims <- max(which(dims > 1))
-    # if (nDims < 2)
-    #     report(OL$Error, "MGH image appears to have less than two non-unitary dimensions")
-    # header$dim[seq_len(nDims+1)] <- c(nDims, dims[1:nDims])
-    # qform(header) <- structure(xform, code=2L)
-    # header$pixdim[seq_len(nDims)+1] <- voxelDims[1:nDims]
-    #
-    # typeIndex <- which(.Mgh$datatypes$codes == typeCode)
-    # if (length(typeIndex) != 1)
-    #     report(OL$Error, "The MGH data type code is not valid")
-    # datatype <- list(code=typeCode, type=.Mgh$datatypes$rTypes[typeIndex], size=.Mgh$datatypes$sizes[typeIndex], isSigned=.Mgh$datatypes$isSigned[typeIndex])
-    #
-    # storage <- list(offset=284, slope=1, intercept=0, datatype=datatype, endian="big")
-    # invisible (list(image=NULL, header=header, storage=storage))
+    header <- niftiHeader()
+    
+    nDims <- length(dims)
+    header$dim[seq_len(nDims+1)] <- c(nDims, dims)
+    qform(header) <- structure(xform, code=2L)
+    header$pixdim[seq_len(nDims)+1] <- voxelDims
+    
+    storage <- list(offset=as.integer(fileMatch[,2]), intercept=scaling[1], slope=scaling[2], datatype=datatype, endian=endian)
+    invisible (list(image=NULL, header=header, storage=storage))
 }
 
 writeMrtrix <- function (image, fileNames, gzipped = FALSE)

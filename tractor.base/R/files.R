@@ -336,6 +336,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         info <- readNifti(fileNames, metadataOnly=metadataOnly, volumes=volumes)
     else if (fileNames$format == "Mgh")
         info <- readMgh(fileNames)
+    else if (fileNames$format == "Mrtrix")
+        info <- readMrtrix(fileNames)
     else
         report(OL$Error, "Unknown image file format: #{fileNames$format}")
     
