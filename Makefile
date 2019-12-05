@@ -79,7 +79,7 @@ install-global:
 install-all: install
 
 uninstall:
-	@rm -rf lib/R
+	@rm -rf lib/R lib/.timestamp
 
 uninstall-local: uninstall
 
