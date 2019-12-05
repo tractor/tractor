@@ -632,6 +632,41 @@ threadSafeTempFile <- function (pattern = "file")
     return (tempfile(pattern=pattern, tmpdir=tempDir))
 }
 
+#' Compact conditional values
+#' 
+#' This simple function checks whether its first argument is a logical value
+#' that evaluates to \code{TRUE}. If so, it returns its second argument. If
+#' not, it returns its third argument.
+#' 
+#' This function differs from the standard \code{\link{ifelse}} function in
+#' that it does not act elementwise, and that the third argument is optional,
+#' defaulting to \code{NULL}.
+#' 
+#' @param condition An expression that resolves to a single logical value.
+#' @param value,fallback Any expression.
+#' @return \code{value}, if \code{condition} evaluates to \code{TRUE};
+#'   otherwise \code{NULL}.
+#' @author Jon Clayden
+#' @seealso ifelse
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export
+where <- function (condition, value, fallback = NULL)
+{
+    conditionString <- deparse(substitute(condition))
+    assert(is.logical(condition) && length(condition) == 1, "Condition \"#{conditionString}\" does not evaluate to a single logical value", level=OL$Warning)
+    
+    if (isTRUE(condition))
+        return (value)
+    else
+        return (fallback)
+}
+
 #' Resolve a variable to a default when NULL
 #' 
 #' This is a very simple infix function for the common TractoR idiom whereby
@@ -643,6 +678,9 @@ threadSafeTempFile <- function (pattern = "file")
 #' @param X,Y R objects, possibly \code{NULL}.
 #' @return \code{X}, if it is not \code{NULL}; otherwise \code{Y}.
 #' @author Jon Clayden
+#' @seealso \code{\link{where}}, which resolves a value if an expression is
+#'   \code{TRUE}. Several calls to that function can be conveniently chained
+#'   together with this one.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
