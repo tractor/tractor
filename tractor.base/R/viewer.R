@@ -1,33 +1,30 @@
 #' @rdname viewer
 #' @export
-defaultInfoPanel <- function (point, data, imageNames)
+augmentedInfoPanel <- function (indexNames = NULL)
 {
-    usingQuartz <- isTRUE(names(dev.cur()) == "quartz")
-    quitInstructions <- paste(ifelse(usingQuartz,"Press Esc","Right click"), "to exit", sep=" ")
-    
-    plot(NA, xlim=c(0,1), ylim=c(0,1), xlab="", ylab="", xaxt="n", yaxt="n", bty="n", main=paste("Location: (",implode(point,","),")",sep=""))
-    nImages <- min(4, length(imageNames))
-    yLocs <- 0.95 - cumsum(c(0,rep(c(0.1,0.13),nImages)))
-    yLocs[length(yLocs)] <- -0.05
-    labels <- quitInstructions
-    for (i in seq_len(nImages))
+    if (is.null(indexNames))
+        return (RNifti::defaultInfoPanel)
+    else
     {
-        labels <- c(labels, {
-            if (is.numeric(data[[i]]))
-                as.character(signif(mean(data[[i]]),6))
-            else
-                data[[i]]
-        }, imageNames[i])
+        indexNames <- where(!is.list(indexNames), list(indexNames)) %||% indexNames
+        return (function (point, data, labels) {
+            data <- lapply(seq_along(data), function(i) {
+                if (is.null(indexNames[[i]]))
+                    data[[i]]
+                else
+                    es("#{data[[i]] (#{indexNames[[i]][as.character(data[[i]])]})}")
+            })
+            RNifti::defaultInfoPanel(point, data, labels)
+        })
     }
-    text(0.5, yLocs, rev(labels), col=c(rep(c("white","red"),nImages),"grey70"), cex=pmin(1,1/strwidth(rev(labels))), xpd=TRUE)
 }
 
 #' @rdname viewer
 #' @export
-timeSeriesPanel <- function (point, data, imageNames)
+timeSeriesPanel <- function (point, data, labels)
 {
-    usingQuartz <- isTRUE(names(dev.cur()) == "quartz")
-    quitInstructions <- paste(ifelse(usingQuartz,"Press Esc","Right click"), "to exit", sep=" ")
+    escapeToQuit <- isTRUE(names(dev.cur()) %in% c("quartz","RStudioGD"))
+    quitInstructions <- paste(ifelse(escapeToQuit,"Press Esc","Right click"), "to leave interactive mode", sep=" ")
     
     lengths <- sapply(data, length)
     suppressWarnings(range <- c(min(sapply(data,min,na.rm=T)), max(sapply(data,max,na.rm=T))))
@@ -43,37 +40,39 @@ timeSeriesPanel <- function (point, data, imageNames)
 
 #' @rdname viewer
 #' @export
-polarPlotPanel <- function (point, data, imageNames, directions, bValues = NULL)
+polarPlotPanel <- function (directions, bValues = NULL)
 {
-    usingQuartz <- isTRUE(names(dev.cur()) == "quartz")
-    quitInstructions <- paste(ifelse(usingQuartz,"Press Esc","Right click"), "to exit", sep=" ")
+    escapeToQuit <- isTRUE(names(dev.cur()) %in% c("quartz","RStudioGD"))
+    quitInstructions <- paste(ifelse(escapeToQuit,"Press Esc","Right click"), "to leave interactive mode", sep=" ")
     
     if (is.null(bValues))
         bValues <- rep(1, nrow(directions))
     
-    lengths <- sapply(data, length)
-    data <- data[[which(lengths==nrow(directions))]]
-    maxDataValue <- suppressWarnings(max(data[bValues>0],na.rm=T))
-        
-    correlations <- abs(cor(cbind(abs(directions), data))[1:3,4])
-    basicColour <- rgb(correlations[1], correlations[2], correlations[3])
-    basicBrightness <- shades::brightness(basicColour)
-    axes <- setdiff(1:3, which.min(correlations))
-    view <- c("sagittal","coronal","axial")[which.min(correlations)]
+    return (function (point, data, labels) {
+        lengths <- sapply(data, length)
+        data <- data[[which(lengths==nrow(directions))]]
+        maxDataValue <- suppressWarnings(max(data[bValues>0],na.rm=T))
     
-    plot(NA, xlim=c(-maxDataValue,maxDataValue), ylim=c(-maxDataValue,maxDataValue), xlab=quitInstructions, ylab="intensity", col.lab="grey70", bty="n", main=paste("Location: (",implode(point,","),")\nView: ",view,sep=""), xaxt="n", yaxt="n", asp=1)
-    ticks <- list(x=pretty(par("xaxp")[1:2]), y=pretty(par("yaxp")[1:2]))
-    axis(1, ticks$x, abs(ticks$x))
-    axis(2, ticks$y, abs(ticks$y))
+        correlations <- abs(cor(cbind(abs(directions), data))[1:3,4])
+        basicColour <- rgb(correlations[1], correlations[2], correlations[3])
+        basicBrightness <- shades::brightness(basicColour)
+        axes <- setdiff(1:3, which.min(correlations))
+        view <- c("sagittal","coronal","axial")[which.min(correlations)]
     
-    for (b in setdiff(sort(unique(bValues)),0))
-    {
-        i <- (bValues == b)
-        currentDirections <- rbind(directions[i,], -directions[i,])
-        currentData <- rep(data[i],2)
-        order <- order(atan2(currentDirections[,axes[2]], currentDirections[,axes[1]]))
-        polygon((currentDirections[,axes]*currentData)[order,], col=shades::brightness(basicColour,basicBrightness*b/max(bValues,na.rm=TRUE)))
-    }
+        plot(NA, xlim=c(-maxDataValue,maxDataValue), ylim=c(-maxDataValue,maxDataValue), xlab=quitInstructions, ylab="intensity", col.lab="grey70", bty="n", main=paste("Location: (",implode(point,","),")\nView: ",view,sep=""), xaxt="n", yaxt="n", asp=1)
+        ticks <- list(x=pretty(par("xaxp")[1:2]), y=pretty(par("yaxp")[1:2]))
+        axis(1, ticks$x, abs(ticks$x))
+        axis(2, ticks$y, abs(ticks$y))
+    
+        for (b in setdiff(sort(unique(bValues)),0))
+        {
+            i <- (bValues == b)
+            currentDirections <- rbind(directions[i,], -directions[i,])
+            currentData <- rep(data[i],2)
+            order <- order(atan2(currentDirections[,axes[2]], currentDirections[,axes[1]]))
+            polygon((currentDirections[,axes]*currentData)[order,], col=shades::brightness(basicColour,basicBrightness*b/max(bValues,na.rm=TRUE)))
+        }
+    })
 }
 
 #' A simple interactive viewer for MriImage objects
