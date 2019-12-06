@@ -29,6 +29,11 @@ Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 Journal of Statistical Software 44(8):1-18.
 \url{http://www.jstatsoft.org/v44/i08/}.
 }
+\seealso{
+\code{\link{where}}, which resolves a value if an expression is
+  \code{TRUE}. Several calls to that function can be conveniently chained
+  together with this one.
+}
 \author{
 Jon Clayden
 }
