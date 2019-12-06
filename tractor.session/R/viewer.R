@@ -1,4 +1,4 @@
-showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), interactive = TRUE, wait = FALSE, lookupTable = NULL, opacity = NULL, infoPanel = defaultInfoPanel, panelOptions = list(), fixedWindow = TRUE)
+showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), interactive = TRUE, wait = FALSE, lookupTable = NULL, opacity = NULL, infoPanel = NULL)
 {
     viewer <- match.arg(viewer, .Viewers)
     imageList <- list(...)
@@ -59,15 +59,14 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
         
         if (!is.null(opacity))
         {
-            opacity <- rep(opacity, length.out=length(images))
             for (i in seq_along(images))
-            {
-                colourScales[[i]]$colours <- rgb(t(col2rgb(colourScales[[i]]$colours)), alpha=round(opacity[i]*255), maxColorValue=255)
-                colourScales[[i]]$background <- rgb(t(col2rgb(colourScales[[i]]$background)), alpha=round(opacity[i]*255), maxColorValue=255)
-            }
+                colourScales[[i]]$colours <- shades::opacity(colourScales[[i]]$colours, recycle(opacity))
         }
         
-        do.call(viewImages, c(list(images, interactive=interactive, colourScales=colourScales, fixedWindow=fixedWindow, indexNames=indexNames, infoPanel=infoPanel), panelOptions))
+        if (is.null(infoPanel))
+            infoPanel <- where(all(sapply(indexNames, is.null)), RNifti::defaultInfoPanel) %||% augmentedInfoPanel(indexNames)
+        
+        do.call(viewImages, list(images, interactive=interactive, colourScales=colourScales, infoPanel=infoPanel))
     }
     else
     {

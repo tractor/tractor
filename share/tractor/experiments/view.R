@@ -10,7 +10,7 @@ runExperiment <- function ()
     requireArguments("image file(s)")
     
     requestedViewer <- getConfigVariable("Viewer", NULL, "character", validValues=c("tractor","fsleyes","fslview","freeview"))
-    fixedWindow <- getConfigVariable("FixedWindow", TRUE)
+    fixedWindow <- getConfigVariable("FixedWindow", TRUE, deprecated=TRUE)
     plotType <- getConfigVariable("PlotType", NULL, "character", validValues=c("none","time","orientation"))
     directionsFile <- getConfigVariable("DirectionsFile", NULL, "character")
     
@@ -46,7 +46,6 @@ runExperiment <- function ()
         }
     }
     
-    panelOptions <- list()
     if (is.null(plotType))
     {
         if (!is.null(directions))
@@ -60,11 +59,9 @@ runExperiment <- function ()
             plotType <- "time"
         }
     }
-    if (plotType == "orientation")
-        panelOptions <- list(directions=directions[,1:3], bValues=directions[,4])
     
-    infoPanel <- switch(plotType, none=defaultInfoPanel, time=timeSeriesPanel, orientation=polarPlotPanel)
-    viewerArguments <- c(as.list(Arguments), list(wait=TRUE,lookupTable=lookupTable,fixedWindow=fixedWindow,infoPanel=infoPanel,panelOptions=panelOptions))
+    infoPanel <- switch(plotType, time=timeSeriesPanel, orientation=polarPlotPanel(directions[,1:3],directions[,4]))
+    viewerArguments <- c(as.list(Arguments), list(wait=TRUE,lookupTable=lookupTable,infoPanel=infoPanel))
     if (!is.null(requestedViewer))
         viewerArguments <- c(viewerArguments, list(viewer=requestedViewer))
     
