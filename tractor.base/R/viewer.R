@@ -145,7 +145,7 @@ viewImages <- function (images, colourScales = NULL, point = NULL, interactive =
         colourScales <- rep(colourScales, length.out=nImages)
     
     layers <- lapply(seq_len(nImages), function(i) {
-        layer <- lyr(images[[i]], colourScales[[i]]$colours)
+        layer <- lyr(images[[i]], getColourScale(colourScales[[i]])$colours)
         layer$label <- basename(images[[i]]$getSource())
         return (layer)
     })
