@@ -147,6 +147,7 @@ viewImages <- function (images, colourScales = NULL, point = NULL, interactive =
     layers <- lapply(seq_len(nImages), function(i) {
         layer <- lyr(images[[i]], colourScales[[i]]$colours)
         layer$label <- basename(images[[i]]$getSource())
+        return (layer)
     })
     
     do.call(RNifti::view, c(layers, list(point=point, interactive=interactive, crosshairs=crosshairs, labels=orientationLabels, infoPanel=infoPanel)))
