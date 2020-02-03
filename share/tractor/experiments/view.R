@@ -60,7 +60,7 @@ runExperiment <- function ()
         }
     }
     
-    infoPanel <- switch(plotType, time=timeSeriesPanel, orientation=polarPlotPanel(directions[,1:3],directions[,4]))
+    infoPanel <- switch(plotType, time=RNifti::timeSeriesPanel, orientation=polarPlotPanel(directions[,1:3],directions[,4]))
     viewerArguments <- c(as.list(Arguments), list(wait=TRUE,lookupTable=lookupTable,infoPanel=infoPanel))
     if (!is.null(requestedViewer))
         viewerArguments <- c(viewerArguments, list(viewer=requestedViewer))

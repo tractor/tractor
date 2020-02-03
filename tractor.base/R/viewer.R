@@ -22,25 +22,6 @@ augmentedInfoPanel <- function (indexNames = NULL)
 
 #' @rdname viewer
 #' @export
-timeSeriesPanel <- function (point, data, labels)
-{
-    escapeToQuit <- isTRUE(names(dev.cur()) %in% c("quartz","RStudioGD"))
-    quitInstructions <- paste(ifelse(escapeToQuit,"Press Esc","Right click"), "to leave interactive mode", sep=" ")
-    
-    lengths <- sapply(data, length)
-    suppressWarnings(range <- c(min(sapply(data,min,na.rm=T)), max(sapply(data,max,na.rm=T))))
-    range[is.infinite(range)] <- 0
-    plot(NA, xlim=c(1,max(lengths)), ylim=range, xlab=quitInstructions, ylab="intensity", col.lab="grey70", bty="n", main=paste("Location: (",implode(point,","),")",sep=""))
-    
-    for (i in seq_along(data))
-    {
-        if (lengths[i] > 1)
-            lines(1:lengths[i], data[[i]], col="red", lwd=2)
-    }
-}
-
-#' @rdname viewer
-#' @export
 polarPlotPanel <- function (directions, bValues = NULL)
 {
     escapeToQuit <- isTRUE(names(dev.cur()) %in% c("quartz","RStudioGD"))

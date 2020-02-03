@@ -2,14 +2,11 @@
 % Please edit documentation in R/viewer.R
 \name{augmentedInfoPanel}
 \alias{augmentedInfoPanel}
-\alias{timeSeriesPanel}
 \alias{polarPlotPanel}
 \alias{viewImages}
 \title{A simple interactive viewer for MriImage objects}
 \usage{
 augmentedInfoPanel(indexNames = NULL)
-
-timeSeriesPanel(point, data, labels)
 
 polarPlotPanel(directions, bValues = NULL)
 
@@ -21,15 +18,6 @@ viewImages(images, colourScales = NULL, point = NULL,
 \item{indexNames}{A list whose elements are either \code{NULL} or a named
 character vector giving the names associated with each index in the image.}
 
-\item{point}{For \code{viewImages}, a length 3 integer vector giving the
-initial location of the crosshairs, in voxels. For info panel functions,
-the current location of the crosshairs.}
-
-\item{data}{A list giving the data value(s) at the current crosshair
-location in each image displayed. Typically numeric, but in principle may
-be of any mode, and will be character mode when \code{indexNames} is not
-\code{NULL}.}
-
 \item{directions}{A matrix of 3D acquisition direction vectors, one per row.}
 
 \item{bValues}{A vector of b-values, if the image is diffusion-weighted.}
@@ -39,6 +27,10 @@ be of any mode, and will be character mode when \code{indexNames} is not
 \item{colourScales}{A list of colour scales to use for each image, which
 will be recycled to the length of \code{images}. See
 \code{\link{getColourScale}} for details. The default is to use greyscale.}
+
+\item{point}{For \code{viewImages}, a length 3 integer vector giving the
+initial location of the crosshairs, in voxels. For info panel functions,
+the current location of the crosshairs.}
 
 \item{interactive}{A single logical value. If \code{TRUE}, the plot is
 interactive.}
@@ -60,6 +52,11 @@ names of each image. The \code{defaultInfoPanel} and
 
 \item{fixedWindow}{A single logical value. If \code{TRUE}, each image is
 windowed globally, rather than for each slice.}
+
+\item{data}{A list giving the data value(s) at the current crosshair
+location in each image displayed. Typically numeric, but in principle may
+be of any mode, and will be character mode when \code{indexNames} is not
+\code{NULL}.}
 
 \item{imageNames}{A character vector giving a name for each image displayed.}
 }
