@@ -1,3 +1,4 @@
+#' @export
 PartitionedGraph <- setRefClass("PartitionedGraph", contains="Graph", fields=list(vertexWeights="matrix",communityWeights="numeric"), methods=list(
     initialize = function (graph = NULL, vertexWeights = emptyMatrix(), communityWeights = numeric(0), ...)
     {
@@ -11,9 +12,9 @@ PartitionedGraph <- setRefClass("PartitionedGraph", contains="Graph", fields=lis
         if (length(communityWeights) > 0 && length(communityWeights) != ncol(vertexWeights))
             report(OL$Error, "Inputs don't agree on the number of communities")
         
-        rownames(vertexWeights) <- .self$getVertexAttributes("name")
-        
-        initFields(vertexWeights=vertexWeights, communityWeights=communityWeights)
+        object <- initFields(vertexWeights=vertexWeights, communityWeights=communityWeights)
+        rownames(object$vertexWeights) <- .self$getVertexAttributes("name")
+        return (object)
     },
     
     getCommunities = function (i = NULL)
