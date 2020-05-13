@@ -336,16 +336,19 @@ setAs("Graph", "igraph", function (from) {
 
 setAs("matrix", "Graph", function (from) asGraph(from))
 
+#' @export
 asGraph <- function (x, ...)
 {
     UseMethod("asGraph")
 }
 
+#' @export
 asGraph.Graph <- function (x, ...)
 {
     return (x)
 }
 
+#' @export
 asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections = TRUE, nVertices = NULL, ...)
 {
     if (is.null(edgeList))
@@ -411,26 +414,43 @@ asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections
     return (graph)
 }
 
+#' @export
 as.matrix.Graph <- function (x, ...)
 {
     as(x, "matrix")
 }
 
+#' @export
 dim.Graph <- function (x)
 {
     rep(x$nVertices(), 2L)
 }
 
+#' @export
 setMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,,drop=drop]))
+
+#' @export
 setMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,,drop=drop]))
+
+#' @export
 setMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,j,drop=drop]))
+
+#' @export
 setMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,j,drop=drop]))
 
+#' @export
 setReplaceMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, ..., value) return (x$map("[<-", value=value)))
+
+#' @export
 setReplaceMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., value) return (x$map("[<-", i=i, value=value)))
+
+#' @export
 setReplaceMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., value) return (x$map("[<-", j=j, value=value)))
+
+#' @export
 setReplaceMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., value) return (x$map("[<-", i, j, value=value)))
 
+#' @export
 setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radius = NULL, add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useNames = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
@@ -556,6 +576,7 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radiu
         par(oldPars)
 })
 
+#' @export
 levelplot.Graph <- function (x, data = NULL, col = NULL, cex = NULL, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE, useNames = FALSE, ...)
 {
     associationMatrix <- x$getAssociationMatrix()
@@ -620,6 +641,7 @@ levelplot.Graph <- function (x, data = NULL, col = NULL, cex = NULL, order = NUL
     levelplot(submatrix, col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
 }
 
+#' @export
 inducedSubgraph <- function (graph, vertices = connectedVertices(graph))
 {
     graph <- asGraph(graph)
@@ -656,6 +678,7 @@ inducedSubgraph <- function (graph, vertices = connectedVertices(graph))
     return (Graph$new(vertexCount=length(vertices), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=graph$getVertexLocationUnit(), locationSpace=graph$getVertexLocationSpace(), edges=edges, edgeAttributes=edgeAttributes, edgeWeights=graph$getEdgeWeights()[edgesToKeep], directed=graph$isDirected()))
 }
 
+#' @export
 thresholdEdges <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted = TRUE, binarise = FALSE)
 {
     graph <- asGraph(graph)

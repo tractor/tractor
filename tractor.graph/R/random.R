@@ -1,3 +1,4 @@
+#' @export
 randomGraph <- function (n, M, p, weights = NULL, directed = FALSE, selfConnections = FALSE)
 {
     associationMatrix <- matrix(0L, ncol=n, nrow=n)
@@ -41,15 +42,18 @@ randomGraph <- function (n, M, p, weights = NULL, directed = FALSE, selfConnecti
 }
 
 # Flatten upper triangular matrix
+#' @export
 flattenUpperTri <- function(X) t(X)[upper.tri(X,diag=FALSE)]
 
 # Get Strength
+#' @export
 getStrength <- function (weight_matrix)
 {
     strength <- rowSums(weight_matrix)
     return (strength)
 }
 
+#' @export
 randomiseGraph <- function (graph)
 {
     #Association Matrix

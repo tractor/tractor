@@ -1,3 +1,4 @@
+#' @export
 readGraphFile <- function (fileName, fileType = NULL)
 {
     if (!is.null(fileType))
@@ -44,6 +45,7 @@ readGraphFile <- function (fileName, fileType = NULL)
     }
 }
 
+#' @export
 writeGraphFile <- function (graph, fileName, fileType = c("binary","csv"))
 {
     fileType <- match.arg(fileType)

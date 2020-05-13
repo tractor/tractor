@@ -1,3 +1,4 @@
+#' @export
 edgeDensity <- function (graph, selfConnections = FALSE)
 {
     graph <- asGraph(graph)
@@ -10,6 +11,7 @@ edgeDensity <- function (graph, selfConnections = FALSE)
     return (ifelse(nPossibleEdges==0, NA, nEdges/nPossibleEdges))
 }
 
+#' @export
 vertexDegree <- function (graph, type = c("all","in","out"))
 {
     graph <- asGraph(graph)
@@ -26,6 +28,7 @@ vertexDegree <- function (graph, type = c("all","in","out"))
         return (colSums(adjacencyMatrix,na.rm=TRUE))
 }
 
+#' @export
 vertexStrength <- function (graph, type = c("all","in","out"))
 {
     graph <- asGraph(graph)
@@ -42,11 +45,13 @@ vertexStrength <- function (graph, type = c("all","in","out"))
         return (colSums(associationMatrix,na.rm=TRUE))
 }
 
+#' @export
 connectedVertices <- function (graph, type = c("all","in","out"))
 {
     return (which(vertexDegree(graph,type) > 0))
 }
 
+#' @export
 neighbourhoods <- function (graph, vertices = NULL, type = c("all","in","out"), simplify = TRUE)
 {
     graph <- asGraph(graph)
@@ -63,11 +68,13 @@ neighbourhoods <- function (graph, vertices = NULL, type = c("all","in","out"), 
         return (neighbourhoods)
 }
 
+#' @export
 shortestPaths <- function (graph)
 {
     .Call("shortestPaths", .graphPointer(graph), PACKAGE="tractor.graph")
 }
 
+#' @export
 meanShortestPath <- function (graph, ignoreInfinite = TRUE)
 {
     graph <- asGraph(graph)
@@ -79,6 +86,7 @@ meanShortestPath <- function (graph, ignoreInfinite = TRUE)
     return (mean(shortestPathMatrix[!diag(graph$nVertices())], na.rm=TRUE))
 }
 
+#' @export
 laplacianMatrix <- function (graph)
 {
     graph <- asGraph(graph)
@@ -91,12 +99,14 @@ laplacianMatrix <- function (graph)
     return (degreeMatrix - associationMatrix)
 }
 
+#' @export
 clusteringCoefficients <- function (graph, method = c("onnela","barrat"))
 {
     method <- match.arg(method)
     .Call("clusteringCoefficients", .graphPointer(graph), method, PACKAGE="tractor.graph")
 }
 
+#' @export
 graphEfficiency <- function (graph, type = c("global","local"))
 {
     graph <- asGraph(graph)
@@ -134,6 +144,7 @@ graphEfficiency <- function (graph, type = c("global","local"))
     }
 }
 
+#' @export
 betweennessCentrality <- function (weight_matrix)
 {
     # Convert weight matrix in connection-length matrix
