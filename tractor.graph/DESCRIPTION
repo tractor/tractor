@@ -1,6 +1,6 @@
 Package: tractor.graph
-Version: 3.2.5
-Date: 2018-06-08
+Version: 3.3.3
+Date: 2020-05-13
 Title: Functions for working with connectivity graphs
 Author: Jon Clayden, Lena Dorfschmidt and Fani Deligianni
 Maintainer: Jon Clayden <code@clayden.org>
