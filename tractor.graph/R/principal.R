@@ -1,9 +1,11 @@
+#' @export
 principalNetworks <- function (x, ...)
 {
     UseMethod("principalNetworks")
 }
 
 # Table of raw data, e.g. cortical thickness measurements
+#' @export
 principalNetworks.matrix <- function (x, ...)
 {
     graph <- asGraph(cor(x), edgeList=FALSE, directed=FALSE)
@@ -14,12 +16,14 @@ principalNetworks.matrix <- function (x, ...)
 }
 
 # Single graph
+#' @export
 principalNetworks.Graph <- function (x, ...)
 {
     principalNetworks.list(list(x), ...)
 }
 
 # One or more graphs in a list
+#' @export
 principalNetworks.list <- function (x, components = NULL, replicates = 0L, reference = NULL)
 {
     if (length(x) == 1 && replicates > 0)
@@ -75,6 +79,7 @@ principalNetworks.list <- function (x, components = NULL, replicates = 0L, refer
     return (result)
 }
 
+#' @export
 printLoadings <- function (loadings, threshold = 0.1, ignoreAttribute = FALSE)
 {
     if (!is.matrix(loadings))
@@ -92,6 +97,7 @@ printLoadings <- function (loadings, threshold = 0.1, ignoreAttribute = FALSE)
     printSparse(loadings[order,])
 }
 
+#' @export
 matchLoadings <- function (newLoadings, refLoadings)
 {
     if (!is.matrix(newLoadings) || !is.matrix(refLoadings))

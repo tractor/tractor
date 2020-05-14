@@ -4,6 +4,45 @@
     .Call("graphPointer", graph$nVertices(), graph$getEdges(), graph$getEdgeWeights(), graph$isDirected(), PACKAGE="tractor.graph")
 }
 
+#' The Graph class
+#' 
+#' This class represents a graph, composed of vertices and edges with optional
+#' attributes. It can be coerced to an \code{"igraph"} object (from the package
+#' of the same name), and to or from a standard numeric matrix.
+#' 
+#' @field vertexCount The number of vertices in the graph.
+#' @field vertexAttributes A named list of attributes which apply to the
+#'   vertices. Each component should be a vector of length equal to
+#'   \code{vertexCount}.
+#' @field vertexLocations A numeric matrix giving the locations of each vertex
+#'   in some layout, one per row, or the \code{\link{emptyMatrix}}.
+#' @field locationUnit A string giving the units for \code{vertexLocations}, or
+#'   the empty string.
+#' @field locationSpace A string giving the space for \code{vertexLocations},
+#'   or the empty string. This generally only applies to graphs derived from
+#'   medical imaging.
+#' @field edges An integer matrix listing the vertex indices linked by each
+#'   edge, one per line. There should be exactly two columns. If the graph is
+#'   undirected, it is not necessary for both directions of each edge to be
+#'   stored explicitly.
+#' @field edgeAttributes A named list of attributes which apply to the edges.
+#'   Each component should be a vector of length equal to the number of rows in
+#'   \code{edges}.
+#' @field edgeWeights A numeric vector of edge weights, of length equal to the
+#'   number of rows in \code{edges}.
+#' @field directed Logical value: \code{TRUE} if the graph is directed (so that
+#'   edge direction matters); \code{FALSE} otherwise.
+#' 
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18.
+#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' @export Graph
+#' @exportClass Graph
 Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexCount="integer",vertexAttributes="list",vertexLocations="matrix",locationUnit="character",locationSpace="character",edges="matrix",edgeAttributes="list",edgeWeights="numeric",directed="logical"), methods=list(
     initialize = function (vertexCount = 0, vertexAttributes = list(), vertexLocations = emptyMatrix(), locationUnit = "", locationSpace = "", edges = matrix(NA,0,2), edgeAttributes = list(), edgeWeights = rep(1,nrow(edges)), directed = FALSE, ...)
     {
@@ -29,12 +68,21 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         return (object)
     },
     
-    binarise = function () { .self$map(function(x) ifelse(x==0, 0L, 1L)) },
+    binarise = function ()
+    {
+        "Binarise the graph, setting all nonzero edge weights to 1."
+        .self$map(function(x) ifelse(x==0, 0L, 1L))
+    },
     
-    getAdjacencyMatrix = function () { return (ifelse(.self$getAssociationMatrix()==0, 0L, 1L)) },
+    getAdjacencyMatrix = function ()
+    {
+        "Obtain the adjacency matrix of the graph, a binarised version of the association matrix whose elements indicate whether or not an edge exists between each pair of vertices."
+        return (ifelse(.self$getAssociationMatrix()==0, 0L, 1L))
+    },
     
     getAssociationMatrix = function ()
     {
+        "Obtain the graph's association matrix, a representation which encapsulates connectivity and edge weights. The matrix will be symmetric for undirected graphs; otherwise rows represent the vertices at the source of each edge and columns the targets."
         associationMatrix <- matrix(0, nrow=vertexCount, ncol=vertexCount)
         if (!is.null(vertexAttributes$name))
             dimnames(associationMatrix) <- list(vertexAttributes$name, vertexAttributes$name)
@@ -44,24 +92,42 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         return (associationMatrix)
     },
     
-    getConnectedVertices = function () { return (sort(unique(as.vector(edges)))) },
+    getConnectedVertices = function ()
+    {
+        "Retrieve a vector of the indices of vertices which are connected by one or more edges."
+        return (sort(unique(as.vector(edges))))
+    },
     
     getEdges = function (expr)
     {
+        "Retrieve the matrix of edges, optionally limiting the result to those selected by the expression supplied."
         if (missing(expr))
             return (edges)
         result <- eval(substitute(expr), edgeAttributes, parent.frame())
         return (edges[result,,drop=FALSE])
     },
     
-    getEdgeAttributes = function (attributes = NULL) { indexList(edgeAttributes,attributes) },
+    getEdgeAttributes = function (attributes = NULL)
+    {
+        "Retrieve edge attributes. By default the full list is returned, but a subset or a single attribute vector can be selected by name."
+        indexList(edgeAttributes, attributes)
+    },
     
-    getEdgeWeights = function () { return (edgeWeights) },
+    getEdgeWeights = function ()
+    {
+        "Retrieve the vector of current edge weights."
+        return (edgeWeights)
+    },
     
-    getVertexAttributes = function (attributes = NULL) { indexList(vertexAttributes,attributes) },
+    getVertexAttributes = function (attributes = NULL)
+    {
+        "Retrieve vertex attributes. By default the full list is returned, but a subset or a single attribute vector can be selected by name."
+        indexList(vertexAttributes, attributes)
+    },
     
     getVertexLocations = function ()
     {
+        "Retrieve the vertex locations, if available. The units and space of the location information are returned in attributes."
         locs <- vertexLocations
         if (locationUnit != "")
             attr(locs, "unit") <- locationUnit
@@ -76,6 +142,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     getVertices = function (expr)
     {
+        "Retrieve the indices of vertices selected by the expression supplied, which is evaluated in an environment in which the vertex attributes are available by name."
         if (missing(expr))
             return (seq_len(vertexCount))
         result <- eval(substitute(expr), vertexAttributes, parent.frame())
@@ -89,16 +156,22 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     isSelfConnected = function ()
     {
+        "Return TRUE if any edge connects a vertex to itself."
         if (nrow(edges) == 0)
             return (FALSE)
         else
             return (any(edges[,1] == edges[,2]))
     },
     
-    isWeighted = function () { return (!all(is.na(edgeWeights) | (edgeWeights %in% c(0,1)))) },
+    isWeighted = function ()
+    {
+        "Return TRUE if any edge weight is neither missing nor 0 or 1."
+        return (!all(is.na(edgeWeights) | (edgeWeights %in% c(0,1))))
+    },
     
     map = function (fun, ..., matchEdges = FALSE)
     {
+        "Modify the graph in-place, replacing the association matrix with the result of applying a function to the current one."
         fun <- match.fun(fun)
         originalMatrix <- .self$getAssociationMatrix()
         modifiedMatrix <- fun(originalMatrix, ...)
@@ -113,20 +186,19 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     setAssociationMatrix = function (newMatrix, matchEdges = FALSE)
     {
+        "Modify the graph in-place, replacing its connectivity using the supplied association matrix (which must have the appropriate dimensions). This will not change the directedness of the graph. If matchEdges is TRUE, attributes other than weight will be carried over for edges that still exist after the operation."
         if (nrow(newMatrix) != .self$nVertices() || ncol(newMatrix) != .self$nVertices())
             report(OL$Error, "Association matrix size does not match vertex count")
         
         if (!.self$isDirected())
             newMatrix[lower.tri(newMatrix,diag=FALSE)] <- NA
         newEdges <- which(!is.na(newMatrix) & newMatrix != 0, arr.ind=TRUE)
-        .self$edges <- newEdges
-        .self$edgeWeights <- newMatrix[newEdges]
         
         if (matchEdges)
         {
             indices <- match(apply(newEdges,1,implode,sep=","), apply(edges,1,implode,sep=","))
             .self$edgeAttributes <- lapply(edgeAttributes, function (attrib) {
-                if (length(attrib) == nEdges)
+                if (length(attrib) == nrow(edges))
                     return (attrib[indices])
                 else
                     return (attrib)
@@ -135,11 +207,14 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         else
             .self$edgeAttributes <- list()
         
+        .self$edges <- newEdges
+        .self$edgeWeights <- newMatrix[newEdges]
         invisible(.self)
     },
     
     setEdgeAttributes = function (...)
     {
+        "Add or replace edge attributes."
         newAttributes <- lapply(list(...), function(x) {
             if (length(x) == 1)
                 return (rep(x, .self$nEdges()))
@@ -158,6 +233,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     setEdgeWeights = function (expr, vertices = c("ignore","sum","mean","max","min"))
     {
+        "Set or replace edge weights. The expression giving the new values is evaluated in an environment in which the edge attributes (and the vertex attributes, if the second argument is not 'ignore') are available by name."
         attribs <- edgeAttributes
         
         vertices <- match.arg(vertices)
@@ -191,6 +267,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     setVertexAttributes = function (...)
     {
+        "Add or replace vertex attributes."
         newAttributes <- lapply(list(...), function(x) {
             if (length(x) == 1)
                 return (rep(x, .self$nVertices()))
@@ -209,6 +286,7 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
     
     setVertexLocations = function (locs, unit, space)
     {
+        "Set or replace vertex locations. Attributes of the first argument will be used as fallback values for the second and third, if present."
         .self$vertexLocations <- locs
         if (missing(unit) && !is.null(attr(locs,"unit")))
             .self$locationUnit <- attr(locs, "unit")
@@ -232,11 +310,12 @@ Graph <- setRefClass("Graph", contains="SerialisableObject", fields=list(vertexC
         edgeAttribNames <- names(edgeAttributes)
         if (length(edgeAttribNames) == 0)
             edgeAttribNames <- "(none)"
+        edgeDensity <- edgeDensity(.self)
         
         values <- c("Graph properties"=implode(properties,sep=", "),
                     "Number of vertices"=.self$nVertices(),
                     "Number of edges"=.self$nEdges(),
-                    "Edge density"=es("#{edgeDensity(.self)*100}%",round=2),
+                    "Edge density"=ifelse(is.na(edgeDensity), "N/A", es("#{edgeDensity*100}%",round=2)),
                     "Vertex attributes"=implode(vertexAttribNames,sep=", "),
                     "Edge attributes"=implode(edgeAttribNames,sep=", "))
         return (values)
@@ -277,16 +356,19 @@ setAs("Graph", "igraph", function (from) {
 
 setAs("matrix", "Graph", function (from) asGraph(from))
 
+#' @export
 asGraph <- function (x, ...)
 {
     UseMethod("asGraph")
 }
 
+#' @export
 asGraph.Graph <- function (x, ...)
 {
     return (x)
 }
 
+#' @export
 asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections = TRUE, nVertices = NULL, ...)
 {
     if (is.null(edgeList))
@@ -352,26 +434,43 @@ asGraph.matrix <- function (x, edgeList = NULL, directed = NULL, selfConnections
     return (graph)
 }
 
+#' @export
 as.matrix.Graph <- function (x, ...)
 {
     as(x, "matrix")
 }
 
+#' @export
 dim.Graph <- function (x)
 {
     rep(x$nVertices(), 2L)
 }
 
+#' @export
 setMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,,drop=drop]))
+
+#' @export
 setMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,,drop=drop]))
+
+#' @export
 setMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[,j,drop=drop]))
+
+#' @export
 setMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) return (x$getAssociationMatrix()[i,j,drop=drop]))
 
+#' @export
 setReplaceMethod("[", signature(x="Graph",i="missing",j="missing"), function (x, i, j, ..., value) return (x$map("[<-", value=value)))
+
+#' @export
 setReplaceMethod("[", signature(x="Graph",i="ANY",j="missing"), function (x, i, j, ..., value) return (x$map("[<-", i=i, value=value)))
+
+#' @export
 setReplaceMethod("[", signature(x="Graph",i="missing",j="ANY"), function (x, i, j, ..., value) return (x$map("[<-", j=j, value=value)))
+
+#' @export
 setReplaceMethod("[", signature(x="Graph",i="ANY",j="ANY"), function (x, i, j, ..., value) return (x$map("[<-", i, j, value=value)))
 
+#' @export
 setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radius = NULL, fill = "white", add = FALSE, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, useAlpha = FALSE, hideDisconnected = FALSE, useNames = FALSE, useLocations = FALSE, locationAxes = NULL) {
     edges <- x$getEdges()
     weights <- x$getEdgeWeights()
@@ -500,6 +599,7 @@ setMethod("plot", "Graph", function(x, y, col = NULL, cex = NULL, lwd = 2, radiu
         par(oldPars)
 })
 
+#' @export
 levelplot.Graph <- function (x, data = NULL, col = NULL, cex = NULL, order = NULL, useAbsoluteWeights = FALSE, weightLimits = NULL, ignoreBeyondLimits = TRUE, hideDisconnected = FALSE, useNames = FALSE, ...)
 {
     associationMatrix <- x$getAssociationMatrix()
@@ -564,6 +664,7 @@ levelplot.Graph <- function (x, data = NULL, col = NULL, cex = NULL, order = NUL
     levelplot(submatrix, col.regions=col, at=seq(weightLimits[1],weightLimits[2],length.out=20), scales=list(x=list(labels=labels,tck=0,rot=60,col="grey40",cex=cex), y=list(labels=labels,tck=0,col="grey40",cex=cex)), xlab="", ylab="", ...)
 }
 
+#' @export
 inducedSubgraph <- function (graph, vertices = connectedVertices(graph))
 {
     graph <- asGraph(graph)
@@ -600,6 +701,7 @@ inducedSubgraph <- function (graph, vertices = connectedVertices(graph))
     return (Graph$new(vertexCount=length(vertices), vertexAttributes=vertexAttributes, vertexLocations=vertexLocations, locationUnit=graph$getVertexLocationUnit(), locationSpace=graph$getVertexLocationSpace(), edges=edges, edgeAttributes=edgeAttributes, edgeWeights=graph$getEdgeWeights()[edgesToKeep], directed=graph$isDirected()))
 }
 
+#' @export
 thresholdEdges <- function (graph, threshold, ignoreSign = FALSE, keepUnweighted = TRUE, binarise = FALSE)
 {
     graph <- asGraph(graph)

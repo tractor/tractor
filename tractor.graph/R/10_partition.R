@@ -1,3 +1,4 @@
+#' @export
 PartitionedGraph <- setRefClass("PartitionedGraph", contains="Graph", fields=list(vertexWeights="matrix",communityWeights="numeric"), methods=list(
     initialize = function (graph = NULL, vertexWeights = emptyMatrix(), communityWeights = numeric(0), ...)
     {
@@ -11,9 +12,9 @@ PartitionedGraph <- setRefClass("PartitionedGraph", contains="Graph", fields=lis
         if (length(communityWeights) > 0 && length(communityWeights) != ncol(vertexWeights))
             report(OL$Error, "Inputs don't agree on the number of communities")
         
-        rownames(vertexWeights) <- .self$getVertexAttributes("name")
-        
-        initFields(vertexWeights=vertexWeights, communityWeights=communityWeights)
+        object <- initFields(vertexWeights=vertexWeights, communityWeights=communityWeights)
+        rownames(object$vertexWeights) <- .self$getVertexAttributes("name")
+        return (object)
     },
     
     getCommunities = function (i = NULL)
@@ -90,16 +91,19 @@ PartitionedGraph <- setRefClass("PartitionedGraph", contains="Graph", fields=lis
     }
 ))
 
+#' @export
 asPartitionedGraph <- function (x, ...)
 {
     UseMethod("asPartitionedGraph")
 }
 
+#' @export
 asPartitionedGraph.PartitionedGraph <- function (x, ...)
 {
     return (x)
 }
 
+#' @export
 asPartitionedGraph.Graph <- function (x, vertexWeights, communities, communityWeights = numeric(0), ...)
 {
     if (missing(vertexWeights) && missing(communities))
@@ -116,11 +120,13 @@ asPartitionedGraph.Graph <- function (x, vertexWeights, communities, communityWe
     PartitionedGraph$new(x, vertexWeights=vertexWeights, communityWeights=communityWeights)
 }
 
+#' @export
 asPartitionedGraph.matrix <- function (x, ...)
 {
     asPartitionedGraph.Graph(asGraph.matrix(x), ...)
 }
 
+#' @export
 asGraph.PartitionedGraph <- function (x, strict = FALSE, ...)
 {
     if (strict)
@@ -129,6 +135,7 @@ asGraph.PartitionedGraph <- function (x, strict = FALSE, ...)
         return (x)
 }
 
+#' @export
 setMethod("[[", signature(x="PartitionedGraph",i="ANY"), function (x,i) {
     index <- as.integer(i)
     if (length(index) != 1)
@@ -136,6 +143,7 @@ setMethod("[[", signature(x="PartitionedGraph",i="ANY"), function (x,i) {
     return (inducedSubgraph(x, vertices=x$getCommunities(index)))
 })
 
+#' @export
 modularityMatrix <- function (graph)
 {
     graph <- asGraph(graph)
@@ -148,6 +156,7 @@ modularityMatrix <- function (graph)
     return (modularityMatrix)
 }
 
+#' @export
 modularity <- function (graph, ...)
 {
     graph <- asPartitionedGraph(graph, ...)
@@ -159,6 +168,7 @@ modularity <- function (graph, ...)
     return (modularity)
 }
 
+#' @export
 partitionGraph <- function (graph, method = "modularity")
 {
     graph <- asGraph(graph, strict=TRUE)
@@ -194,6 +204,7 @@ partitionGraph <- function (graph, method = "modularity")
     }
 }
 
+#' @export
 applyPartition <- function (partition, graph)
 {
     partition <- asPartitionedGraph(partition)

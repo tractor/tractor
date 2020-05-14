@@ -1,3 +1,4 @@
+#' @export
 printSparse <- function (x, threshold = 0, ignoreSign = TRUE, zeroChar = "", digits = 3, ...)
 {
     if (ignoreSign)
