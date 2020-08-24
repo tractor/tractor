@@ -1,25 +1,25 @@
 <!DOCTYPE html>
-
 <html lang="en-gb">
 
 <head>
   <title>TractoR ~ TractoR and DICOM</title>
 
-  <meta charset="utf-8" />
-  <meta name="author" content="Jon Clayden" />
-  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="author" content="Jon Clayden">
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   
-  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
-  <link href="assets/prism.css" rel="stylesheet" />
-  <link href="assets/style.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto%7CSource+Code+Pro" rel="stylesheet">
+  <link href="assets/prism.css" rel="stylesheet">
+  <link href="assets/style.css" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
   <div id="banner">
-    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo"></a>
   </div>
 </header>
 
@@ -42,7 +42,7 @@
 
 <h1>TractoR and DICOM</h1>
 
-<p>TractoR provides some facilities for working with DICOM files, but the <a href="http://dicom.nema.org/">DICOM standard</a> is extremely complex, and TractoR&rsquo;s support for the DICOM file format cannot be said to be complete. Due to the varying conventions of the different scanner manufacturers, there can be several subtleties to correctly interpreting a given DICOM file. TractoR tries to follow best practices, and has been tested on files from a range of scanners from different vendors, but the accuracy of the results is not guaranteed.</p>
+<p>TractoR provides some facilities for working with DICOM files, but the <a href="http://dicom.nema.org/">DICOM standard</a> is extremely complex, and TractoR’s support for the DICOM file format cannot be said to be complete. Due to the varying conventions of the different scanner manufacturers, there can be several subtleties to correctly interpreting a given DICOM file. TractoR tries to follow best practices, and has been tested on files from a range of scanners from different vendors, but the accuracy of the results is not guaranteed.</p>
 
 <p><strong>Please remember that TractoR is provided with no warranty. It is always advisable to check that your files are being correctly interpreted, for example with regard to orientation, before using these facilities on a regular basis.</strong></p>
 
@@ -78,9 +78,9 @@
 #  Series Description            fl3D_t1_sag
 # [...]
 # Experiment completed with 0 warning(s) and 0 error(s)</code>
-</code></pre>
+</pre>
 
-<p>For files from a Siemens scanner which contain an embedded, proprietary ASCII header, this can be extracted by setting the &ldquo;SiemensAscii&rdquo; option:</p>
+<p>For files from a Siemens scanner which contain an embedded, proprietary ASCII header, this can be extracted by setting the “SiemensAscii” option:</p>
 
 <pre><code class="language-bash line-numbers">tractor dicomtags $TRACTOR_HOME/tests/data/dicom/01.dcm SiemensAscii:true
 # Starting TractoR environment...
@@ -100,7 +100,7 @@
 # Experiment completed with 0 warning(s) and 0 error(s)
 </code></pre>
 
-<p>Different scans within a single session are often divided into different image &ldquo;series&rdquo;, and these can be separated using the <code>dicomsort</code> script:</p>
+<p>Different scans within a single session are often divided into different image “series”, and these can be separated using the <code>dicomsort</code> script:</p>
 
 <pre><code class="language-bash line-numbers">tractor dicomsort $TRACTOR_HOME/tests/data/dicom
 # Starting TractoR environment...
@@ -133,7 +133,7 @@
 
 <h2 id="the-divest-back-end">The divest back-end</h2>
 
-<p>In TractoR version 3.1.0 a new DICOM back-end based on <a href="https://github.com/rordenlab/dcm2niix">Chris Rorden&rsquo;s <code>dcm2niix</code></a> (via the <a href="https://github.com/jonclayden/divest"><code>divest</code> R package</a>) was added. As well as being more robust and more extensively tested, this route handles multiple series at once and interactively, removing the need to pre-sort DICOM directories. (Sorting files using <code>divest</code> is possible as of TractoR 3.2.0, however.) It also extracts more metadata from the DICOM files, storing it in auxiliary .tags files. For example,</p>
+<p>In TractoR version 3.1.0 a new DICOM back-end based on <a href="https://github.com/rordenlab/dcm2niix">Chris Rorden’s <code>dcm2niix</code></a> (via the <a href="https://github.com/jonclayden/divest"><code>divest</code> R package</a>) was added. As well as being more robust and more extensively tested, this route handles multiple series at once and interactively, removing the need to pre-sort DICOM directories. (Sorting files using <code>divest</code> is possible as of TractoR 3.2.0, however.) It also extracts more metadata from the DICOM files, storing it in auxiliary .tags files. For example,</p>
 
 <pre><code class="language-bash line-numbers">tractor dicomread $TRACTOR_HOME/tests/data/dicom Method:divest FileNames:metadata
 # Starting TractoR environment...
@@ -172,15 +172,7 @@ tractor imageinfo _0_S009_fl3D_t1_sag
   $('p,li').hyphenate('en-gb');
 </script>
 <script async src="assets/prism.js"></script>
-<script type="text/javascript">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-563735-7', 'auto');
-  ga('send', 'pageview');
-</script>
 
 </body>
 

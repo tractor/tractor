@@ -1,25 +1,25 @@
 <!DOCTYPE html>
-
 <html lang="en-gb">
 
 <head>
   <title>TractoR ~ References</title>
 
-  <meta charset="utf-8" />
-  <meta name="author" content="Jon Clayden" />
-  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="author" content="Jon Clayden">
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   
-  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
-  <link href="assets/prism.css" rel="stylesheet" />
-  <link href="assets/style.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto%7CSource+Code+Pro" rel="stylesheet">
+  <link href="assets/prism.css" rel="stylesheet">
+  <link href="assets/style.css" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
   <div id="banner">
-    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo"></a>
   </div>
 </header>
 
@@ -50,22 +50,27 @@
 
 <p>Additionally, the table below outlines the relevant papers which should be cited when using various parts of the functionality provided by TractoR.</p>
 
-<table><thead>
+<table>
+<thead>
 <tr>
 <th>Script name(s)</th>
 <th>Reference(s)</th>
 </tr>
-</thead><tbody>
+</thead>
+<tbody>
 <tr>
-<td><code>dpreproc</code> (stage 2, with <code>UseTopup:true</code> only)</td>
+<td>
+<code>dpreproc</code> (stage 2, with <code>UseTopup:true</code> only)</td>
 <td>Andersson J.L.R., Skare S. &amp; Ashburner J. (2003). How to correct susceptibility distortions in spin-echo echo-planar images: Application to diffusion tensor imaging. <em>NeuroImage</em> <strong>20</strong>(2):870–888.</td>
 </tr>
 <tr>
-<td><code>dpreproc</code> (stage 3, with <code>MaskingMethod:bet</code> only)</td>
+<td>
+<code>dpreproc</code> (stage 3, with <code>MaskingMethod:bet</code> only)</td>
 <td>Smith S. (2002). Fast robust automated brain extraction. <em>Human Brain Mapping</em> <strong>17</strong>(3):143–155.</td>
 </tr>
 <tr>
-<td><code>dpreproc</code> (stage 4, with <code>EddyCorrectionMethod:eddy</code> only)</td>
+<td>
+<code>dpreproc</code> (stage 4, with <code>EddyCorrectionMethod:eddy</code> only)</td>
 <td>Andersson J.L.R. &amp; Sotiropoulos S.N. (2016). An integrated approach to correction for off-resonance effects and subject movement in diffusion MR imaging. <em>NeuroImage</em> <strong>125</strong>:1063–1078.</td>
 </tr>
 <tr>
@@ -73,15 +78,19 @@
 <td>Behrens T.E., Johansen-Berg H., Jbabdi S., Rushworth M. &amp; Woolrich M. (2007). Probabilistic diffusion tractography with multiple fibre orientations: What can we gain? <em>NeuroImage</em> <strong>34</strong>(1):144–155.</td>
 </tr>
 <tr>
-<td><code>track</code> (with <code>PreferredModel:bedpost</code>)</td>
+<td>
+<code>track</code> (with <code>PreferredModel:bedpost</code>)</td>
 <td>Behrens T.E., Johansen-Berg H., Jbabdi S., Rushworth M. &amp; Woolrich M. (2007). Probabilistic diffusion tractography with multiple fibre orientations: What can we gain? <em>NeuroImage</em> <strong>34</strong>(1):144–155.</td>
 </tr>
 <tr>
-<td><code>hnt-eval</code>, <code>hnt-interpret</code>, <code>hnt-ref</code>, <code>hnt-viz</code></td>
+<td>
+<code>hnt-eval</code>, <code>hnt-interpret</code>, <code>hnt-ref</code>, <code>hnt-viz</code>
+</td>
 <td>Clayden J.D., Bastin M.E. &amp; Storkey A.J. (2006). Improved segmentation reproducibility in group tractography using a quantitative tract similarity measure. <em>NeuroImage</em> <strong>33</strong>(2):482–492.</td>
 </tr>
 <tr>
-<td><code>pnt-data</code> (with standard reference tracts)</td>
+<td>
+<code>pnt-data</code> (with standard reference tracts)</td>
 <td>Muñoz Maniega S., Bastin M.E., Deary I.J., Wardlaw J.M. &amp; Clayden J.D. (2017). Improved reference tracts for unsupervised brain white matter tractography. In M. Valdés Hernández &amp; V. González-Castro (eds.), <em>Proceedings of Medical Image Understanding and Analysis</em> (MIUA). <em>Communications in Computer and Information Science</em>, vol. 723, pp. 1–11.</td>
 </tr>
 <tr>
@@ -89,7 +98,9 @@
 <td>Muñoz Maniega S., Bastin M.E., McIn­tosh A.M., Lawrie S.M. &amp; Clayden J.D. (2008). At­las-based ref­er­ence tracts im­prove auto­matic white mat­ter seg­ment­a­tion with neigh­bour­hood tracto­graphy. In <em>Proceedings of the ISMRM 16th Scientific Meeting &amp; Exhibition</em>, Toronto, Canada; p. 3318.</td>
 </tr>
 <tr>
-<td><code>pnt-ref</code>, <code>pnt-train</code>, <code>pnt-eval</code></td>
+<td>
+<code>pnt-ref</code>, <code>pnt-train</code>, <code>pnt-eval</code>
+</td>
 <td>Clayden J.D., Storkey A.J. &amp; Bastin M.E. (2007). A probabilistic model-based approach to consistent white matter tract segmentation. <em>IEEE Transactions on Medical Imaging</em> <strong>26</strong>(11):1555–1561.</td>
 </tr>
 <tr>
@@ -105,11 +116,13 @@
 <td>Muñoz Maniega S., Bastin M.E., Deary I.J., Wardlaw J.M. &amp; Clayden J.D. (2018). Reference tracts and generative models for brain white matter tractography. <em>Journal of Imaging</em> <strong>4</strong>(1):8.</td>
 </tr>
 <tr>
-<td><code>reg-linear</code> (with <code>Method:fsl</code>)</td>
+<td>
+<code>reg-linear</code> (with <code>Method:fsl</code>)</td>
 <td>Jenkinson M., Bannister P., Brady J. &amp; Smith S. (2002). Improved optimisation for the robust and accurate linear registration and motion correction of brain images. <em>NeuroImage</em> <strong>17</strong>(2):825–841.</td>
 </tr>
 <tr>
-<td><code>reg-linear</code> (with <code>Method:niftyreg</code>)</td>
+<td>
+<code>reg-linear</code> (with <code>Method:niftyreg</code>)</td>
 <td>Modat M., Cash D.M., Daga P., Winston G.P, Duncan J.S &amp; Ourselin S. (2014). Global image registration using a symmetric block-matching approach. <em>Journal of Medical Imaging</em> <strong>1</strong>(2):024003.</td>
 </tr>
 <tr>
@@ -121,7 +134,8 @@
 <td>Please see <a href="http://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferMethodsCitation">http://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferMethodsCitation</a>.</td>
 </tr>
 <tr>
-<td><code>graph-build</code> (with <code>Type:functional</code> and <code>UseShrinkage:true</code>)</td>
+<td>
+<code>graph-build</code> (with <code>Type:functional</code> and <code>UseShrinkage:true</code>)</td>
 <td>Schäfer J. &amp; Strimmer K. (2005). A shrinkage approach to large-scale covariance matrix estimation and implications for functional genomics. <em>Statistical Applications in Genetics and Molecular Biology</em> <strong>4</strong>(1):32.</td>
 </tr>
 <tr>
@@ -129,22 +143,27 @@
 <td>Opgen-Rhein R. &amp; Strimmer K. (2007). Accurate ranking of differentially expressed genes by a distributi on-free shrinkage approach. <em>Statistical Applications in Genetics and Molecular Biology</em> <strong>6</strong>(1):9.</td>
 </tr>
 <tr>
-<td><code>graph-decompose</code> (with <code>Method:principal-networks</code>)</td>
+<td>
+<code>graph-decompose</code> (with <code>Method:principal-networks</code>)</td>
 <td>Clayden J.D., Dayan M. &amp; Clark C.A. (2013). Principal networks. <em>PLoS ONE</em> <strong>8</strong>(4):e60997.</td>
 </tr>
 <tr>
-<td><code>graph-decompose</code> (with <code>Method:modularity</code>)</td>
+<td>
+<code>graph-decompose</code> (with <code>Method:modularity</code>)</td>
 <td>Newman M. (2006). Modularity and community structure in networks. <em>Proceedings of the National Academy of Sciences of the United States of America</em> <strong>103</strong>:8577–8582.</td>
 </tr>
 <tr>
-<td><code>graph-props</code> (with <code>Binarise:false</code> and <code>WeightedClusteringCoefficient:onnela</code>)</td>
+<td>
+<code>graph-props</code> (with <code>Binarise:false</code> and <code>WeightedClusteringCoefficient:onnela</code>)</td>
 <td>Onnela J.P., Saramaki J., Kertesz J. &amp; Kaski K. (2005). Intensity and coherence of motifs in weighted complex networks. <em>Physics Review E</em> <strong>71</strong>:065103.</td>
 </tr>
 <tr>
-<td><code>graph-props</code> (with <code>Binarise:false</code> and <code>WeightedClusteringCoefficient:barrat</code>)</td>
+<td>
+<code>graph-props</code> (with <code>Binarise:false</code> and <code>WeightedClusteringCoefficient:barrat</code>)</td>
 <td>Barrat A., Barthelemy M., Pastor-Satorras R. &amp; Vespignani A. (2004). The architecture of complex weighted networks. <em>Proceedings of the National Academy of Sciences of the United States of America</em> <strong>101</strong>:3747–3752.</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 
 
 </div>
@@ -156,15 +175,7 @@
   $('p,li').hyphenate('en-gb');
 </script>
 <script async src="assets/prism.js"></script>
-<script type="text/javascript">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-563735-7', 'auto');
-  ga('send', 'pageview');
-</script>
 
 </body>
 

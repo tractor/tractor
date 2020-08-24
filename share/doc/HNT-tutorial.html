@@ -1,25 +1,25 @@
 <!DOCTYPE html>
-
 <html lang="en-gb">
 
 <head>
   <title>TractoR ~ HNT tutorial</title>
 
-  <meta charset="utf-8" />
-  <meta name="author" content="Jon Clayden" />
-  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="author" content="Jon Clayden">
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   
-  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
-  <link href="assets/prism.css" rel="stylesheet" />
-  <link href="assets/style.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto%7CSource+Code+Pro" rel="stylesheet">
+  <link href="assets/prism.css" rel="stylesheet">
+  <link href="assets/style.css" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
   <div id="banner">
-    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo"></a>
   </div>
 </header>
 
@@ -58,12 +58,12 @@
 
 <h2 id="segmenting-in-novel-data">Segmenting in novel data</h2>
 
-<p>Once a suitable reference tract is chosen and available, segmenting a similar tract in another brain volume is a matter of identifying the appropriate session directory (we&rsquo;ll use /data/testsubject for the sake of example) and the size of the search neighbourhood. These parameters are passed to <code>hnt-eval</code>, along with the tract name:</p>
+<p>Once a suitable reference tract is chosen and available, segmenting a similar tract in another brain volume is a matter of identifying the appropriate session directory (we’ll use /data/testsubject for the sake of example) and the size of the search neighbourhood. These parameters are passed to <code>hnt-eval</code>, along with the tract name:</p>
 
 <pre><code class="language-bash">tractor hnt-eval /data/testsubject TractName:genu SearchWidth:7 ResultsName:genu_results
 </code></pre>
 
-<p>Here we use a search neighbourhood of 7 x 7 x 7 voxels, as in <a href="#reference">Ref. (1)</a>. The larger the &ldquo;SearchWidth&rdquo;, the more likely a good match will be found, but the longer the process will take to complete. There is an anisotropy (FA) threshold of 0.2 imposed on the neighbourhood by default, so that seed points with FA lower than 0.2 will not be used to generate candidate tracts. The level of this threshold can be set with the &ldquo;AnisotropyThreshold&rdquo; option.</p>
+<p>Here we use a search neighbourhood of 7 x 7 x 7 voxels, as in <a href="#reference">Ref. (1)</a>. The larger the “SearchWidth”, the more likely a good match will be found, but the longer the process will take to complete. There is an anisotropy (FA) threshold of 0.2 imposed on the neighbourhood by default, so that seed points with FA lower than 0.2 will not be used to generate candidate tracts. The level of this threshold can be set with the “AnisotropyThreshold” option.</p>
 
 <p>Note that the preceding example uses a <a href="reference-tracts.html">standard reference tract</a> (the genu), so TractoR knows where to find it. However, if a custom reference tract is used, it must be copied into the working directory before running <code>hnt-eval</code>. An error will be produced if no reference tract of the specified name can be found.</p>
 
@@ -82,11 +82,11 @@
 <pre><code class="language-bash">tractor mean /data/testsubject@FA genu.1
 </code></pre>
 
-<p>where &ldquo;genu.1&rdquo; is the tract volume created by <code>hnt-viz</code> for our test session.</p>
+<p>where “genu.1” is the tract volume created by <code>hnt-viz</code> for our test session.</p>
 
 <h2 id="using-a-design-file">Using a design file</h2>
 
-<p>Since the various HNT scripts have a number of options in common, which are typically repeated from one to the other, it is often convenient to store these options in a file, rather than specifying them on the command line. Moreover, since any given script will simply ignore any options which it does not use, the entire experiment&rsquo;s parameters can be stored in a single configuration file, or design file. For example, if we place into a file called &ldquo;design.yaml&rdquo; the following</p>
+<p>Since the various HNT scripts have a number of options in common, which are typically repeated from one to the other, it is often convenient to store these options in a file, rather than specifying them on the command line. Moreover, since any given script will simply ignore any options which it does not use, the entire experiment’s parameters can be stored in a single configuration file, or design file. For example, if we place into a file called “design.yaml” the following</p>
 
 <pre><code class="language-yaml line-numbers">TractName: genu
 SearchWidth: 7
@@ -98,7 +98,7 @@ ResultsName: genu_results
 <pre><code class="language-bash">tractor -c design.yaml hnt-eval /data/testsubject
 </code></pre>
 
-<p>to do the same job that our earlier <code>hnt-eval</code> command did, but with less command-line clutter. Note that the <code>-c</code> flag, which must come <em>before</em> the script name, tells TractoR to look in the file &ldquo;design.yaml&rdquo; for configuration parameters. (See the <code>tractor</code> man page for more details.) Any further parameters needed by specific scripts can still be given as part of a command, as in</p>
+<p>to do the same job that our earlier <code>hnt-eval</code> command did, but with less command-line clutter. Note that the <code>-c</code> flag, which must come <em>before</em> the script name, tells TractoR to look in the file “design.yaml” for configuration parameters. (See the <code>tractor</code> man page for more details.) Any further parameters needed by specific scripts can still be given as part of a command, as in</p>
 
 <pre><code class="language-bash">tractor -c design.yaml hnt-viz /data/testsubject
 </code></pre>
@@ -121,7 +121,7 @@ plough -C design.yaml hnt-interpret %Session Mode:location
 plough -C design.yaml mean %Session@FA genu.%%
 </code></pre>
 
-<p>Note the syntax <code>%Session</code>, which will be expanded by <code>plough</code> to use each value of the &ldquo;Session&rdquo; variable specified in the design file, in turn. In the final command, <code>%%</code> is also used, which is replaced by the number of the iteration being performed: 1, 2 or 3.</p>
+<p>Note the syntax <code>%Session</code>, which will be expanded by <code>plough</code> to use each value of the “Session” variable specified in the design file, in turn. In the final command, <code>%%</code> is also used, which is replaced by the number of the iteration being performed: 1, 2 or 3.</p>
 
 <h2 id="summary">Summary</h2>
 
@@ -143,15 +143,7 @@ plough -C design.yaml mean %Session@FA genu.%%
   $('p,li').hyphenate('en-gb');
 </script>
 <script async src="assets/prism.js"></script>
-<script type="text/javascript">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-563735-7', 'auto');
-  ga('send', 'pageview');
-</script>
 
 </body>
 

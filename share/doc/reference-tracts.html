@@ -1,25 +1,25 @@
 <!DOCTYPE html>
-
 <html lang="en-gb">
 
 <head>
   <title>TractoR ~ Reference tracts</title>
 
-  <meta charset="utf-8" />
-  <meta name="author" content="Jon Clayden" />
-  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="author" content="Jon Clayden">
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   
-  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
-  <link href="assets/prism.css" rel="stylesheet" />
-  <link href="assets/style.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto%7CSource+Code+Pro" rel="stylesheet">
+  <link href="assets/prism.css" rel="stylesheet">
+  <link href="assets/style.css" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
   <div id="banner">
-    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo"></a>
   </div>
 </header>
 
@@ -46,18 +46,20 @@
 
 <h2 id="using-standard-reference-tracts">Using standard reference tracts</h2>
 
-<p>Since version 1.0.0, TractoR has been supplied with a set of standard reference tracts for probabilistic neighbourhood tractography (PNT). These reference tracts are based on a white matter tract atlas kindly made available by Dr Susumu Mori&rsquo;s lab at Johns Hopkins University. Further information about the atlas can be found at <a href="http://cmrm.med.jhmi.edu/">http://cmrm.med.jhmi.edu/</a> and in <a href="#references">Ref. (1)</a> below. If you use these reference tracts in your work, please cite <a href="#references">Ref. (2)</a> below.</p>
+<p>Since version 1.0.0, TractoR has been supplied with a set of standard reference tracts for probabilistic neighbourhood tractography (PNT). These reference tracts are based on a white matter tract atlas kindly made available by Dr Susumu Mori’s lab at Johns Hopkins University. Further information about the atlas can be found at <a href="http://cmrm.med.jhmi.edu/">http://cmrm.med.jhmi.edu/</a> and in <a href="#references">Ref. (1)</a> below. If you use these reference tracts in your work, please cite <a href="#references">Ref. (2)</a> below.</p>
 
 <p>In version 3.1.0, a new set of reference tracts was added, based on manual selection of tracts from 80 healthy adults aged 25–64. These will be used if the <code>TRACTOR_REFTRACT_SET</code> environment variable is set to <code>miua2017</code>, and this is recommended for new studies. If you do use these reference tracts in your work, please cite <a href="#references">Ref. (3)</a> below.</p>
 
-<p>Using these standard references is by far the easiest way to start using PNT. TractoR &ldquo;knows&rdquo; where to find them, so you need only to specify the tract name when running the <code>pnt-data</code> experiment script. Available tract names as of TractoR 2.1.0 are:</p>
+<p>Using these standard references is by far the easiest way to start using PNT. TractoR “knows” where to find them, so you need only to specify the tract name when running the <code>pnt-data</code> experiment script. Available tract names as of TractoR 2.1.0 are:</p>
 
-<table><thead>
+<table>
+<thead>
 <tr>
 <th>Tract name(s)</th>
 <th>Structure</th>
 </tr>
-</thead><tbody>
+</thead>
+<tbody>
 <tr>
 <td><code>genu</code></td>
 <td>corpus callosum genu, forceps anterior</td>
@@ -67,34 +69,49 @@
 <td>corpus callosum splenium, forceps posterior</td>
 </tr>
 <tr>
-<td><code>cst_left</code>, <code>cst_right</code></td>
+<td>
+<code>cst_left</code>, <code>cst_right</code>
+</td>
 <td>left and right corticospinal or pyramidal tracts</td>
 </tr>
 <tr>
-<td><code>cing_left</code>, <code>cing_right</code></td>
+<td>
+<code>cing_left</code>, <code>cing_right</code>
+</td>
 <td>left and right cingula, dorsal parts</td>
 </tr>
 <tr>
-<td><code>vcing_left</code>, <code>vcing_right</code></td>
+<td>
+<code>vcing_left</code>, <code>vcing_right</code>
+</td>
 <td>left and right cingula, ventral parts</td>
 </tr>
 <tr>
-<td><code>atr_left</code>, <code>atr_right</code></td>
+<td>
+<code>atr_left</code>, <code>atr_right</code>
+</td>
 <td>left and right anterior thalamic radiations</td>
 </tr>
 <tr>
-<td><code>arcuate_left</code>, <code>arcuate_right</code></td>
+<td>
+<code>arcuate_left</code>, <code>arcuate_right</code>
+</td>
 <td>left and right arcuate fasciculi</td>
 </tr>
 <tr>
-<td><code>uncinate_left</code>, <code>uncinate_right</code></td>
+<td>
+<code>uncinate_left</code>, <code>uncinate_right</code>
+</td>
 <td>left and right uncinate fasciculi</td>
 </tr>
 <tr>
-<td><code>ilf_left</code>, <code>ilf_right</code></td>
+<td>
+<code>ilf_left</code>, <code>ilf_right</code>
+</td>
 <td>left and right inferior longitudinal fasciculi</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 
 <h2 id="creating-custom-reference-tracts">Creating custom reference tracts</h2>
 
@@ -102,27 +119,27 @@
 
 <p>TractoR scripts which are likely to be useful for creating a custom reference tract include <code>mkroi</code> (to create a region of interest), <code>track</code> (to generate a series of tract images, from which to choose a reference tract), and <code>pnt-ref</code> (to create reference tracts for use with PNT).</p>
 
-<p>Let&rsquo;s assume that we wish to create a reference tract representing the corpus callosum genu. We begin by creating a directory for this experiment, and changing to this directory. For example,</p>
+<p>Let’s assume that we wish to create a reference tract representing the corpus callosum genu. We begin by creating a directory for this experiment, and changing to this directory. For example,</p>
 
 <pre><code class="language-bash line-numbers">mkdir /expts/pnt-genu
 cd /expts/pnt-genu
 </code></pre>
 
-<p>Next we observe that the point (99,163,78) appears to be within the genu in an MNI standard space brain volume. A suitable location such as this can be chosen using <code>tractor view</code> or <a href="http://www.fmrib.ox.ac.uk/fsl/fslview/index.html">FSL&rsquo;s data viewer</a>. We see the location shown below:</p>
+<p>Next we observe that the point (99,163,78) appears to be within the genu in an MNI standard space brain volume. A suitable location such as this can be chosen using <code>tractor view</code> or <a href="http://www.fmrib.ox.ac.uk/fsl/fslview/index.html">FSL’s data viewer</a>. We see the location shown below:</p>
 
 <p><img src="genu-point.png" alt="genu seed point location"></p>
 
-<p>We next need to choose a subject in which to generate our reference tract. In this tutorial we will assume that the session directory for this subject is based at the location /data/refsubject. Note that this session <em>must already</em> be <a href="diffusion-processing.html">fully preprocessed</a>. We will seed throughout a region around the location corresponding to the point we found in MNI standard space, on the basis that at least one point in this region stands a good chance of generating a tract suitable for use as the reference. First, we need to transform the MNI point into this subject&rsquo;s diffusion space:</p>
+<p>We next need to choose a subject in which to generate our reference tract. In this tutorial we will assume that the session directory for this subject is based at the location /data/refsubject. Note that this session <em>must already</em> be <a href="diffusion-processing.html">fully preprocessed</a>. We will seed throughout a region around the location corresponding to the point we found in MNI standard space, on the basis that at least one point in this region stands a good chance of generating a tract suitable for use as the reference. First, we need to transform the MNI point into this subject’s diffusion space:</p>
 
 <pre><code class="language-bash">tractor transform /data/refsubject 99,163,78 PointType:R SourceSpace:MNI TargetSpace:diffusion Nearest:true
 </code></pre>
 
-<p>Let&rsquo;s say that produces the native space seed point (49,59,33). The command</p>
+<p>Let’s say that produces the native space seed point (49,59,33). The command</p>
 
 <pre><code class="language-bash">tractor mkroi /data/refsubject 49,59,33 Width:5 ROIName:genu_region
 </code></pre>
 
-<p>generates a region of interest (called &ldquo;genu_region.nii.gz&rdquo;) of width 5 voxels in each dimension, and then</p>
+<p>generates a region of interest (called “genu_region.nii.gz”) of width 5 voxels in each dimension, and then</p>
 
 <pre><code class="language-bash">tractor track /data/refsubject genu_region Streamlines:1000x Strategy:voxelwise
 </code></pre>
@@ -164,15 +181,7 @@ cd /expts/pnt-genu
   $('p,li').hyphenate('en-gb');
 </script>
 <script async src="assets/prism.js"></script>
-<script type="text/javascript">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-563735-7', 'auto');
-  ga('send', 'pageview');
-</script>
 
 </body>
 
