@@ -1,0 +1,27 @@
+name: CI
+
+on: [ push, pull_request ]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # This workflow contains a single job called "check"
+  check:
+    # The type of runner that this job runs on
+    runs-on: ubuntu-latest
+    
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Check out the repository under $GITHUB_WORKSPACE
+    - uses: actions/checkout@v2
+    
+    # Install and set up R
+    - uses: r-lib/actions/setup-r@master
+    
+    - name: Install packages
+      run: make install
+    
+    - name: Run tests
+      run: make deeptest
