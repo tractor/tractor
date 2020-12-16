@@ -1,14 +1,4 @@
-language: c
-os: linux
-dist: trusty
-
-addons:
-  apt:
-    sources:
-    - r-packages-trusty
-    packages:
-    - r-base-dev
-    - r-cran-matrix
+language: r
 
 install: make install
 

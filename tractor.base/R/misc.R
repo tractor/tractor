@@ -20,7 +20,7 @@
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @examples
 #' implode(1:3, ", ")  # "1, 2, 3"
 #' implode(1:3, ", ", " and ")  # "1, 2 and 3"
@@ -108,7 +108,7 @@ implode <- function (strings, sep = "", finalSep = NULL, ranges = FALSE)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @export
 pluralise <- function (singular, x = NULL, n = NULL, plural = NULL)
 {
@@ -139,7 +139,7 @@ pluralise <- function (singular, x = NULL, n = NULL, plural = NULL)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @examples
 #' embrace(c("image.hdr", "image.img"))
 #' 
@@ -199,7 +199,7 @@ embrace <- function (strings)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @export
 printLabelledValues <- function (labels, values, outputLevel = OL$Info, leftJustify = FALSE)
 {
@@ -236,7 +236,7 @@ printLabelledValues <- function (labels, values, outputLevel = OL$Info, leftJust
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @export
 deduplicate <- function (...)
 {
@@ -267,7 +267,7 @@ deduplicate <- function (...)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @export
 indexList <- function (list, index = NULL)
 {
@@ -321,7 +321,7 @@ indexList <- function (list, index = NULL)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @aliases paths
 #' @rdname paths
 #' @export
@@ -388,9 +388,10 @@ registerPathHandler <- function (regex, handler)
 #' @export
 expandFileName <- function (fileName, base = getwd())
 {
-    # A leading slash, with (Windows) or without (Unix) a letter and colon, indicates an absolute path
-    fileName <- ifelse(fileName %~% "^([A-Za-z]:[/\\\\]|/)", fileName, file.path(base,fileName))
-    fileName <- ore.subst("/\\.(?=[/\\\\])", "", fileName, all=TRUE)
+    # Absolute paths are assumed to start with an optional drive letter and colon (for Windows), and then a slash or backslash
+    # This covers C:\dir\file, \dir\file, \\server\dir\file, //server/dir/file and /dir/file, but not URLs
+    # Cf. https://docs.microsoft.com/en-gb/windows/win32/fileio/naming-a-file#fully-qualified-vs-relative-paths
+    fileName <- ifelse(fileName %~% "^([A-Za-z]:)?[/\\\\]", fileName, file.path(base,fileName))
     return (normalizePath(fileName, .Platform$file.sep, FALSE))
 }
 
@@ -471,7 +472,7 @@ locateExecutable <- function (fileName, errorIfMissing = TRUE)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @export
 execute <- function (executable, params = NULL, errorOnFail = TRUE, silent = FALSE, ...)
 {
@@ -503,7 +504,7 @@ execute <- function (executable, params = NULL, errorOnFail = TRUE, silent = FAL
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @export
 promote <- function (x, byrow = FALSE)
 {
@@ -537,7 +538,7 @@ promote <- function (x, byrow = FALSE)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @examples
 #' 
 #' equivalent(c(-1,1), c(1,1))  # FALSE
@@ -576,7 +577,7 @@ equivalent <- function (x, y, signMatters = TRUE, ...)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @examples
 #' 
 #' allEqual(c(1,1,1))  # TRUE
@@ -622,7 +623,7 @@ stripNul <- function (x, method = c("truncate","drop"))
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @export
 threadSafeTempFile <- function (pattern = "file")
 {
@@ -687,7 +688,7 @@ where <- function (condition, value, fallback = NULL)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @name infix
 #' @export
 "%||%" <- function (X, Y)
