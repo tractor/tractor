@@ -16,6 +16,8 @@ jobs:
     steps:
     # Check out the repository under $GITHUB_WORKSPACE
     - uses: actions/checkout@v2
+      with:
+        submodules: true
     
     # Install and set up R
     - uses: r-lib/actions/setup-r@master
