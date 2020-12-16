@@ -1,6 +1,6 @@
 Package: tractor.base
-Version: 3.3.2
-Date: 2019-06-06
+Version: 3.3.3.1
+Date: 2020-12-12
 Title: Read, Manipulate and Visualise Magnetic Resonance Images
 Author: Jon Clayden
 Maintainer: Jon Clayden <code@clayden.org>
@@ -17,4 +17,5 @@ LazyData: yes
 License: GPL-2
 URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
 BugReports: https://github.com/tractor/tractor/issues
-RoxygenNote: 6.1.0
+RoxygenNote: 7.1.1
+Roxygen: list(old_usage=TRUE)

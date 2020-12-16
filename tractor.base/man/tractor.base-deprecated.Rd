@@ -23,8 +23,7 @@ newMriImageFromDicomDirectory(dicomDir, readDiffusionParams = FALSE,
 newMriImageFromFile(fileName, fileType = NULL, metadataOnly = FALSE,
   volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
 
-writeMriImageToFile(image, fileName = NULL, fileType = NA,
-  overwrite = TRUE)
+writeMriImageToFile(image, fileName = NULL, fileType = NA, overwrite = TRUE)
 
 newMriImageByExtraction(image, dim, loc)
 
@@ -45,8 +44,8 @@ newMriImageByMasking(image, mask)
 
 newMriImageByThresholding(image, level, defaultValue = 0)
 
-newDicomMetadataFromFile(fileName, checkFormat = TRUE,
-  dictionary = NULL, stopTag = NULL, ignoreTransferSyntax = FALSE)
+newDicomMetadataFromFile(fileName, checkFormat = TRUE, dictionary = NULL,
+  stopTag = NULL, ignoreTransferSyntax = FALSE)
 
 removeImageFilesWithName(fileName)
 }

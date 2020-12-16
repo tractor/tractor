@@ -321,7 +321,7 @@ chooseDataTypeForImage <- function (image, format)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @rdname files
 #' @export
 readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)

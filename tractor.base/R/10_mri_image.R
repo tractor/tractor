@@ -17,7 +17,7 @@
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @export
 emptyMatrix <- function ()
 {
@@ -685,7 +685,7 @@ setMethod("Summary", "MriImage", Summary.MriImage)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @export
 asMriImage <- function (data, templateImage = nilObject(), imageDims = NA, voxelDims = NA, voxelDimUnits = NA, origin = NA, tags = NA, reordered = NA)
 {
@@ -818,7 +818,7 @@ reorderMriImage <- function (image)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @export
 mergeMriImages <- function (..., bindDim = NULL, padTags = FALSE)
 {

@@ -142,17 +142,17 @@ getDescriptionForDicomTag <- function (groupRequired, elementRequired)
 #'   object, or \code{NULL} on failure.
 #' 
 #' @author Jon Clayden
-#' @seealso The DICOM standard, found online at \url{http://dicom.nema.org/}.
-#'   (Warning: may produce headaches!) Also \code{\link{readDicomDirectory}}
-#'   for information on how to create \code{\linkS4class{MriImage}} objects
-#'   from DICOM files.
+#' @seealso The DICOM standard, found online at
+#'   \url{https://www.dicomstandard.org/}. (Warning: may produce headaches!)
+#'   Also \code{\link{readDicomDirectory}} for information on how to create
+#'   \code{\linkS4class{MriImage}} objects from DICOM files.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @export
 readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreTransferSyntax = FALSE, ascii = TRUE)
 {

@@ -10,8 +10,8 @@
 \alias{writeImageFile}
 \title{Working with MRI images stored in NIfTI, Analyze and MGH formats}
 \usage{
-identifyImageFileNames(fileName, fileType = NULL,
-  errorIfMissing = TRUE, auxiliaries = c("dirs", "lut", "tags"), ...)
+identifyImageFileNames(fileName, fileType = NULL, errorIfMissing = TRUE,
+  auxiliaries = c("dirs", "lut", "tags"), ...)
 
 imageFileExists(fileName, fileType = NULL)
 
@@ -19,14 +19,13 @@ removeImageFiles(fileName, ...)
 
 symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE, ...)
 
-copyImageFiles(from, to, overwrite = FALSE, deleteOriginals = FALSE,
-  ...)
+copyImageFiles(from, to, overwrite = FALSE, deleteOriginals = FALSE, ...)
 
 readImageFile(fileName, fileType = NULL, metadataOnly = FALSE,
   volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
 
-writeImageFile(image, fileName = NULL, fileType = NA,
-  overwrite = TRUE, maxSize = NULL, writeTags = FALSE)
+writeImageFile(image, fileName = NULL, fileType = NA, overwrite = TRUE,
+  maxSize = NULL, writeTags = FALSE)
 }
 \arguments{
 \item{fileName, from, to}{File names, with or without appropriate extension.}
@@ -144,7 +143,7 @@ work:
 J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 Journal of Statistical Software 44(8):1-18.
-\url{http://www.jstatsoft.org/v44/i08/}.
+\url{https://www.jstatsoft.org/v44/i08/}.
 }
 \seealso{
 The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}) and

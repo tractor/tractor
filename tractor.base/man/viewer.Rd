@@ -13,10 +13,9 @@ timeSeriesPanel(point, data, imageNames)
 
 polarPlotPanel(point, data, imageNames, directions, bValues = NULL)
 
-viewImages(images, colourScales = NULL, point = NULL,
-  interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE,
-  fixedWindow = TRUE, indexNames = NULL,
-  infoPanel = defaultInfoPanel, ...)
+viewImages(images, colourScales = NULL, point = NULL, interactive = TRUE,
+  crosshairs = TRUE, orientationLabels = TRUE, fixedWindow = TRUE,
+  indexNames = NULL, infoPanel = defaultInfoPanel, ...)
 }
 \arguments{
 \item{point}{For \code{viewImages}, a length 3 integer vector giving the
@@ -83,7 +82,7 @@ work:
 J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 Journal of Statistical Software 44(8):1-18.
-\url{http://www.jstatsoft.org/v44/i08/}.
+\url{https://www.jstatsoft.org/v44/i08/}.
 }
 \seealso{
 \code{\link{getColourScale}}
