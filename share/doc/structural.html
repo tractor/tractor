@@ -1,25 +1,25 @@
 <!DOCTYPE html>
-
 <html lang="en-gb">
 
 <head>
   <title>TractoR ~ Working with structural data</title>
 
-  <meta charset="utf-8" />
-  <meta name="author" content="Jon Clayden" />
-  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="author" content="Jon Clayden">
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   
-  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
-  <link href="assets/prism.css" rel="stylesheet" />
-  <link href="assets/style.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto%7CSource+Code+Pro" rel="stylesheet">
+  <link href="assets/prism.css" rel="stylesheet">
+  <link href="assets/style.css" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
   <div id="banner">
-    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo"></a>
   </div>
 </header>
 
@@ -42,7 +42,7 @@
 
 <h1>Working with structural data</h1>
 
-<p>This tutorial covers TractoR&rsquo;s facilities for working with structural T1-weighted or T2-weighted MRI images. These are presently limited to importing files from DICOM and parcellating the brain into anatomical regions.</p>
+<p>This tutorial covers TractoR’s facilities for working with structural T1-weighted or T2-weighted MRI images. These are presently limited to importing files from DICOM and parcellating the brain into anatomical regions.</p>
 
 <h2 id="importing-data">Importing data</h2>
 
@@ -66,7 +66,7 @@ furrow run_first_all -i @refT1 -o first
 tractor parcellate . first_all_fast_firstseg Types:first
 </code></pre>
 
-<p>Note that TractoR does not provide a wrapper script for FIRST, but TractoR&rsquo;s <code>furrow</code> program can be used to create one. It replaces the session syntax <code>@refT1</code> with the full path to the relevant input file, and then calls the FIRST command line tool, <code>run_first_all</code>. The TractoR <code>parcellate</code> script then needs to be told that the parcellation was performed by FIRST, and since there is a standard parcellation lookup table for this type of parcellation, it will use it automatically.</p>
+<p>Note that TractoR does not provide a wrapper script for FIRST, but TractoR’s <code>furrow</code> program can be used to create one. It replaces the session syntax <code>@refT1</code> with the full path to the relevant input file, and then calls the FIRST command line tool, <code>run_first_all</code>. The TractoR <code>parcellate</code> script then needs to be told that the parcellation was performed by FIRST, and since there is a standard parcellation lookup table for this type of parcellation, it will use it automatically.</p>
 
 <p>Another alternative is to use Freesurfer, and in this case TractoR does provide a wrapper script, viz.</p>
 
@@ -85,15 +85,7 @@ tractor parcellate . first_all_fast_firstseg Types:first
   $('p,li').hyphenate('en-gb');
 </script>
 <script async src="assets/prism.js"></script>
-<script type="text/javascript">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-563735-7', 'auto');
-  ga('send', 'pageview');
-</script>
 
 </body>
 

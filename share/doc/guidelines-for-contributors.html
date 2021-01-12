@@ -1,25 +1,25 @@
 <!DOCTYPE html>
-
 <html lang="en-gb">
 
 <head>
   <title>TractoR ~ Guidelines for contributors</title>
 
-  <meta charset="utf-8" />
-  <meta name="author" content="Jon Clayden" />
-  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="author" content="Jon Clayden">
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   
-  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
-  <link href="assets/prism.css" rel="stylesheet" />
-  <link href="assets/style.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto%7CSource+Code+Pro" rel="stylesheet">
+  <link href="assets/prism.css" rel="stylesheet">
+  <link href="assets/style.css" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
   <div id="banner">
-    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo"></a>
   </div>
 </header>
 
@@ -51,9 +51,9 @@
 <h3 id="general-philosophy-and-style">General philosophy and style</h3>
 
 <ul>
-<li>Descriptive function and variable names are strongly favoured, so as to make code as self-documenting as possible. Variables with meaningful names make understanding the effect of a line more obvious, as in <code class="language-r">spatialUnitCode &lt;- packBits(intToBits(from@xyzt_units) &amp; intToBits(7), &quot;integer&quot;)</code>. It may not be clear what the right hand side of the assignment is doing, but the result is a spatial unit code. This would be much less obvious if the variable was just named <code>s</code>, for example.</li>
-<li>Use of vectorised functions, <code>apply()</code> and similar, is almost always preferable to extensive use of <code>for</code> loops, for reasons of both speed and conciseness. R&rsquo;s functional programming features are very powerful, and full advantage should be taken of them.</li>
-<li>TractoR aims to follow the <a href="http://en.wikipedia.org/wiki/Don%27t_Repeat_Yourself">&ldquo;don&rsquo;t repeat yourself&rdquo;</a> principle. Constants and other key pieces of information are stored in one place whenever practical, and there is usually a single point of contact between the code and external software or data. Code duplication should be avoided, except where a large penalty to clarity or speed would result.</li>
+<li>Descriptive function and variable names are strongly favoured, so as to make code as self-documenting as possible. Variables with meaningful names make understanding the effect of a line more obvious, as in <code class="language-r">spatialUnitCode &lt;- packBits(intToBits(from@xyzt_units) &amp; intToBits(7), "integer")</code>. It may not be clear what the right hand side of the assignment is doing, but the result is a spatial unit code. This would be much less obvious if the variable was just named <code>s</code>, for example.</li>
+<li>Use of vectorised functions, <code>apply()</code> and similar, is almost always preferable to extensive use of <code>for</code> loops, for reasons of both speed and conciseness. R’s functional programming features are very powerful, and full advantage should be taken of them.</li>
+<li>TractoR aims to follow the <a href="http://en.wikipedia.org/wiki/Don%27t_Repeat_Yourself">“don’t repeat yourself”</a> principle. Constants and other key pieces of information are stored in one place whenever practical, and there is usually a single point of contact between the code and external software or data. Code duplication should be avoided, except where a large penalty to clarity or speed would result.</li>
 <li>Extensive commenting is not currently required, but counterintuitive or very obscure operations should be explained just before they occur.</li>
 </ul>
 
@@ -61,8 +61,8 @@
 
 <ul>
 <li>Since version 2.0, TractoR makes extensive use of the <a href="http://stat.ethz.ch/R-manual/R-devel/library/methods/html/refClass.html">reference classes</a> introduced in R 2.12.0, and much deeper use of methods in key classes was adopted in version 3.0. All such classes defined within TractoR packages should be named using upper <a href="http://en.wikipedia.org/wiki/CamelCase">camel case</a> convention, downcasing standard acronyms (as in <code>MriImage</code>) if necessary. Classes that do not inherit from any other class should use <code>SerialisableObject</code> (defined in the <code>tractor.base</code> package) as their superclass, unless they are transient by nature. Files defining such classes in a package should include a number at the beginning of their name, to ensure that the classes are not created before types upon which they depend (files will be loaded by R in name order).</li>
-<li>Reference class fields and methods should be named using lower camel case convention (as in <code>dataOffset</code>). Temporary fields, which will not be serialised, should have names ending with a period. (Of course, it must be possible to reconstruct them for a deserialised object.) Methods should be provided for accessing all public fields, and should be named &ldquo;get&rdquo; followed by the field name (as in <code>getDataOffset()</code>). These accessor methods should be used in code outside the class&rsquo;s methods, rather than accessing the fields directly.</li>
-<li>Very simple data structures which contain only small data elements, and are unlikely to be modified after creation, can be simply constructed using an R <code>list</code> with a simple (<a href="https://github.com/hadley/devtools/wiki/S3">&ldquo;S3&rdquo;</a>) class attribute. The probability distributions defined in <code>tractor.nt/R/distns.R</code> are good examples.</li>
+<li>Reference class fields and methods should be named using lower camel case convention (as in <code>dataOffset</code>). Temporary fields, which will not be serialised, should have names ending with a period. (Of course, it must be possible to reconstruct them for a deserialised object.) Methods should be provided for accessing all public fields, and should be named “get” followed by the field name (as in <code>getDataOffset()</code>). These accessor methods should be used in code outside the class’s methods, rather than accessing the fields directly.</li>
+<li>Very simple data structures which contain only small data elements, and are unlikely to be modified after creation, can be simply constructed using an R <code>list</code> with a simple (<a href="https://github.com/hadley/devtools/wiki/S3">“S3”</a>) class attribute. The probability distributions defined in <code>tractor.nt/R/distns.R</code> are good examples.</li>
 <li>Constants for internal use should be named using upper camel case, with a leading period, in a file called <code>00_constants.R</code> in the relevant package.</li>
 <li>Standard local variables and functions should be named using lower camel case.</li>
 </ul>
@@ -104,15 +104,7 @@ make -B 00_Basics/005_hello.save
   $('p,li').hyphenate('en-gb');
 </script>
 <script async src="assets/prism.js"></script>
-<script type="text/javascript">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-563735-7', 'auto');
-  ga('send', 'pageview');
-</script>
 
 </body>
 

@@ -1,25 +1,25 @@
 <!DOCTYPE html>
-
 <html lang="en-gb">
 
 <head>
   <title>TractoR ~ Tractography</title>
 
-  <meta charset="utf-8" />
-  <meta name="author" content="Jon Clayden" />
-  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="author" content="Jon Clayden">
+  <meta name="keywords" content="TractoR,MRI,imaging,tractography,graph,software,open-source">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   
-  <link href="https://fonts.googleapis.com/css?family=Roboto|Source+Code+Pro" rel="stylesheet" />
-  <link href="assets/prism.css" rel="stylesheet" />
-  <link href="assets/style.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto%7CSource+Code+Pro" rel="stylesheet">
+  <link href="assets/prism.css" rel="stylesheet">
+  <link href="assets/style.css" rel="stylesheet">
 </head>
 
 <body>
 
 <header>
   <div id="banner">
-    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo" /></a>
+    <a href="home.html"><img id="logo" src="assets/logo.svg" alt="TractoR logo"></a>
   </div>
 </header>
 
@@ -42,7 +42,7 @@
 
 <h1>Tractography</h1>
 
-<p>This page outlines TractoR&rsquo;s facilities for tractography, otherwise known as tract tracing, virtual dissection or white matter segmentation. The package currently offers seed-based or mask-based probabilistic tractography, based on a tensor or ball-and-sticks diffusion model. Streamline pathways, visitation maps and connectivity profiles can be obtained.</p>
+<p>This page outlines TractoR’s facilities for tractography, otherwise known as tract tracing, virtual dissection or white matter segmentation. The package currently offers seed-based or mask-based probabilistic tractography, based on a tensor or ball-and-sticks diffusion model. Streamline pathways, visitation maps and connectivity profiles can be obtained.</p>
 
 <h2 id="the-track-script">The track script</h2>
 
@@ -53,12 +53,15 @@
 
 <p>which will generate 100 streamlines from each voxel within the brain mask of the session directory rooted at <code>/data/subject1</code>, and write out an image whose voxels indicate the total number of streamlines passing through in each case. The <code>TractName</code> option determines the name of all output files.</p>
 
-<p>Note that TractoR&rsquo;s tractography is probabilistic, in the sense that an element of randomness is involved, which means that repeated tracing from a given seed point will not in general produce equivalent results. There are three reasons for this:</p>
+<p>Note that TractoR’s tractography is probabilistic, in the sense that an element of randomness is involved, which means that repeated tracing from a given seed point will not in general produce equivalent results. There are three reasons for this:</p>
 
 <ul>
-<li><strong>Seeding jitter.</strong> By default, each streamline is initiated from a random position <em>within</em> the voxel. This avoids the rather artificial grid structure that results from always seeding at voxel centre points. It can be disabled by setting the <code>JitterSeeds</code> option to <code>false</code>.</li>
-<li><strong>Modelling uncertainty.</strong> The BEDPOSTX ball-and-sticks model fitted by the <code>bedpost</code> script, which is the preferred diffusion model in TractoR, estimates a posterior distribution over fibre directions in each voxel. A sample from this distribution is drawn in each voxel visited during the tracking process. This aspect is not relevant to the diffusion tensor model, which can be selected with <code>PreferredModel:dti</code>.</li>
-<li><strong>Probabilistic interpolation.</strong> Like some other software, TractoR uses a probabilistic analogue of trilinear interpolation to identify suitable fibre directions at subvoxel locations. Under this scheme, neighbouring voxels are chosen as the source with a probability that is proportional to their proximity. This is built into the algorithm, and cannot be changed.</li>
+<li>
+<strong>Seeding jitter.</strong> By default, each streamline is initiated from a random position <em>within</em> the voxel. This avoids the rather artificial grid structure that results from always seeding at voxel centre points. It can be disabled by setting the <code>JitterSeeds</code> option to <code>false</code>.</li>
+<li>
+<strong>Modelling uncertainty.</strong> The BEDPOSTX ball-and-sticks model fitted by the <code>bedpost</code> script, which is the preferred diffusion model in TractoR, estimates a posterior distribution over fibre directions in each voxel. A sample from this distribution is drawn in each voxel visited during the tracking process. This aspect is not relevant to the diffusion tensor model, which can be selected with <code>PreferredModel:dti</code>.</li>
+<li>
+<strong>Probabilistic interpolation.</strong> Like some other software, TractoR uses a probabilistic analogue of trilinear interpolation to identify suitable fibre directions at subvoxel locations. Under this scheme, neighbouring voxels are chosen as the source with a probability that is proportional to their proximity. This is built into the algorithm, and cannot be changed.</li>
 </ul>
 
 <h2 id="seeding-options">Seeding options</h2>
@@ -108,7 +111,7 @@
 <pre><code class="language-bash">tractor track /data/subject1 thalamus_left Strategy:voxelwise TargetRegions:cerebal_cortex TerminateAtTargets:true RequireProfiles:true
 </code></pre>
 
-<p>Here, the <code>Strategy:voxelwise</code> option forces tractography to be run separately for each seed point. In each case, the number of &ldquo;hits&rdquo; to each target are counted, and the result is written into a standard CSV file, which can be opened in R or Microsoft Excel.</p>
+<p>Here, the <code>Strategy:voxelwise</code> option forces tractography to be run separately for each seed point. In each case, the number of “hits” to each target are counted, and the result is written into a standard CSV file, which can be opened in R or Microsoft Excel.</p>
 
 <h2 id="neighbourhood-tractography">Neighbourhood tractography</h2>
 
@@ -124,15 +127,7 @@
   $('p,li').hyphenate('en-gb');
 </script>
 <script async src="assets/prism.js"></script>
-<script type="text/javascript">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-563735-7', 'auto');
-  ga('send', 'pageview');
-</script>
 
 </body>
 
