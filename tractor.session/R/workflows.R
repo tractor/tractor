@@ -17,6 +17,51 @@ findWorkflow <- function (name)
     }
 }
 
+precheckWorkflow <- function (file, session, commandOnly = FALSE)
+{
+    if (!file.exists(file))
+        file <- findWorkflow(file)
+    
+    result <- list(ok=TRUE, problems=NULL, commandPath=NULL)
+    logProblem <- function (p)
+    {
+        result$ok <<- FALSE
+        result$problems <<- c(result$problems, es(p, envir=parent.frame()))
+    }
+    
+    lines <- readLines(file)
+    
+    commandLines <- lines %~|% "^\\s*#@command\\s+([\\w\\-,\\s]+)$"
+    if (length(commandLines) == 0)
+        logProblem("Workflow file #{file} contains no command directive")
+    
+    commands <- ore.split("[,\\s]+", groups(ore.search("^\\s*#@command\\s+([\\w\\-,\\s]+)$",commandLines)))
+    for (command in commands)
+    {
+        command <- locateExecutable(command, errorIfMissing=FALSE)
+        if (!is.null(command))
+        {
+            result$commandPath <- command
+            break
+        }
+    }
+    if (is.null(result$commandPath))
+        logProblem("No suitable command (#{implode(commands,', ')}) can be found for workflow #{file}")
+    
+    if (!commandOnly)
+    {
+        prereqs <- ore.split("[,\\s]+", groups(ore.search("^\\s*#@prereq\\s+(.+)$",lines)))
+        for (prereq in prereqs)
+        {
+            prereqPath <- resolvePath(prereq, defaultSessionPath=as.character(session))
+            if (!file.exists(prereqPath) && !imageFileExists(prereqPath))
+                logProblem("Prerequisite file #{prereqPath} is missing for workflow #{file}")
+        }
+    }
+    
+    return (result)
+}
+
 runWorkflow <- function (name, session, ...)
 {
     workflowFile <- findWorkflow(name)
@@ -24,30 +69,12 @@ runWorkflow <- function (name, session, ...)
     env <- list(...)
     env <- structure(as.character(env), names=names(env))
     
-    if (is(session, "MriSession"))
-        directory <- session$getDirectory()
-    else
-        directory <- as.character(session)
+    directory <- as.character(session)
     if (length(directory) != 1)
         report(OL$Error, "The session directory must be a single string")
     
-    commandLines <- readLines(workflowFile) %~|% "^\\s*#@command\\s+([\\w\\-,\\s]+)$"
-    if (length(commandLines) == 0)
-        report(OL$Error, "Workflow file #{workflowFile} contains no command directive")
-    
-    commands <- ore.split("[,\\s]+", groups(ore.search("^\\s*#@command\\s+([\\w\\-,\\s]+)$",commandLines)))
-    commandPath <- NULL
-    for (command in commands)
-    {
-        command <- locateExecutable(command, errorIfMissing=FALSE)
-        if (!is.null(command))
-        {
-            commandPath <- command
-            break
-        }
-    }
-    if (is.null(commandPath))
-        report(OL$Error, "No suitable command (#{implode(commands,', ')}) can be found for workflow #{workflowFile}")
+    check <- precheckWorkflow(workflowFile, directory)
+    assert(check$ok, check$problems[1])
     
     tractorFlags <- na.omit(matches(ore.search("-[dziva](\\s+[^-]\\S*)?", Sys.getenv("TRACTOR_FLAGS"), all=TRUE)))
     furrowFlags <- na.omit(matches(ore.search("-z", Sys.getenv("TRACTOR_FLAGS"), all=TRUE)))
@@ -56,7 +83,7 @@ runWorkflow <- function (name, session, ...)
     furrowPath <- file.path(Sys.getenv("TRACTOR_HOME"), "bin", "furrow")
     
     sysenv <- Sys.getenv()
-    controlenv <- c(TRACTOR_COMMAND=commandPath, TRACTOR_SESSION_PATH=directory, TRACTOR=es("\"#{tractorPath} -w #{directory} -q #{implode(tractorFlags,' ')}\""), FURROW=es("\"#{furrowPath} -w #{directory} #{implode(furrowFlags,' ')}\""), TRACTOR_FLAGS="", PS4="\"\x1b[32m==> \x1b[0m\"")
+    controlenv <- c(TRACTOR_COMMAND=check$commandPath, TRACTOR_SESSION_PATH=directory, TRACTOR=es("\"#{tractorPath} -w #{directory} -q #{implode(tractorFlags,' ')}\""), FURROW=es("\"#{furrowPath} -w #{directory} #{implode(furrowFlags,' ')}\""), TRACTOR_FLAGS="", PS4="\"\x1b[32m==> \x1b[0m\"")
     env <- deduplicate(c(env, controlenv, sysenv[names(sysenv) %~|% "^TRACTOR_"]))
     env <- paste(names(env), env, sep="=")
     

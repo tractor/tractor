@@ -167,7 +167,7 @@ runExperiment <- function ()
             b0Path <- session$getImageFileNameByType("rawdata", "diffusion")
             if (useTopup && eddyCorrectMethod == "eddy")
             {
-                if (is.null(locateExecutable("topup",errorIfMissing=FALSE)))
+                if (!precheckWorkflow("topup", commandOnly=TRUE)$ok)
                 {
                     report(OL$Warning, "The \"topup\" executable was not found - continuing without it")
                     useTopup <- FALSE
@@ -221,7 +221,7 @@ runExperiment <- function ()
         
         if (runStages[3] && (force || !stagesComplete[3]))
         {
-            if (maskingMethod == "bet" && is.null(locateExecutable("bet",errorIfMissing=FALSE)))
+            if (maskingMethod == "bet" && !precheckWorkflow("bet-diffusion",commandOnly=TRUE)$ok)
             {
                 report(OL$Warning, "The \"bet\" executable was not found - using k-means instead")
                 maskingMethod <- "kmeans"
@@ -275,9 +275,9 @@ runExperiment <- function ()
         {
             refVolume <- as.integer(readLines(file.path(session$getDirectory("diffusion"),"refb0-index.txt")))
             
-            if (eddyCorrectMethod == "eddy" && !is.null(locateExecutable("eddy",errorIfMissing=FALSE)))
+            if (eddyCorrectMethod == "eddy" && precheckWorkflow("eddy",commandOnly=TRUE)$ok)
                 runEddyWithSession(session, reversePEVolumes, echoSeparation)
-            else if (eddyCorrectMethod %in% c("eddycorrect","fsl") && !is.null(locateExecutable("eddy_correct",errorIfMissing=FALSE)))
+            else if (eddyCorrectMethod %in% c("eddycorrect","fsl") && precheckWorkflow("eddycorrect",commandOnly=TRUE)$ok)
                 runEddyCorrectWithSession(session, refVolume)
             else
             {
