@@ -335,6 +335,15 @@ setAs("character", "MriSession", function (from) {
     return (MriSession$new(from))
 })
 
+setAs("MriSession", "character", function (from) {
+    return (from$getDirectory())
+})
+
+as.character.MriSession <- function (x, ...)
+{
+    return (x$getDirectory())
+}
+
 attachMriSession <- function (directory)
 {
     session <- MriSession$new(directory)
