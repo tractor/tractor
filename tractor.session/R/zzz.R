@@ -14,13 +14,13 @@
     }
     
     # Assume path separator (.Platform$file.sep) is "/"
-    registerPathHandler("^([^@=\\s]+)?@(\\w+)(/)?([\\w.-/]+)?(%(\\d+))?$", function(path,index=1) {
+    registerPathHandler("^([^@=\\s]+)?@(\\w+)(/)?([\\w.-/]+)?(%(\\d+))?$", function(path, index=1, defaultSessionPath=".") {
         # The match has to have been done just before calling this function (although this is not thread-safe)
         groups <- groups(ore.lastmatch())
         groupsPresent <- !is.na(groups)
         
         # The string matches, so group 2 must be present
-        session <- attachMriSession(ifelse(groupsPresent[1], groups[1], "."))
+        session <- attachMriSession(ifelse(groupsPresent[1], groups[1], defaultSessionPath))
         if (groupsPresent[6])
             index <- as.integer(groups[6])
         if (groupsPresent[3] && groupsPresent[4])
