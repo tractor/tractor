@@ -1,4 +1,4 @@
-#@desc Run the specified workflow on a session directory (default "."). Named configuration variables are passed to the environment of the workflow, and may be used in its 
+#@desc Run the specified workflow on a session directory (default "."). Named configuration variables are passed to the environment of the workflow, and may be used in its script.
 #@args workflow name, [session directory]
 
 library(tractor.session)
