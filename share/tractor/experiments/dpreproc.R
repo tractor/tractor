@@ -275,7 +275,7 @@ runExperiment <- function ()
         {
             refVolume <- as.integer(readLines(file.path(session$getDirectory("diffusion"),"refb0-index.txt")))
             
-            if (eddyCorrectMethod == "eddy" && !is.null(locateExecutable("eddy",errorIfMissing=FALSE)))
+            if (eddyCorrectMethod == "eddy" && (!is.null(locateExecutable("eddy",errorIfMissing=FALSE)) || !is.null(locateExecutable("eddy_openmp",errorIfMissing=FALSE))))
                 runEddyWithSession(session, reversePEVolumes, echoSeparation)
             else if (eddyCorrectMethod %in% c("eddycorrect","fsl") && !is.null(locateExecutable("eddy_correct",errorIfMissing=FALSE)))
                 runEddyCorrectWithSession(session, refVolume)
