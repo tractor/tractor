@@ -6,7 +6,7 @@ a5391c7555bd912343ae34a4ebf8ba89 Dockerfile
 10b634d9e14144c8b6aa3562b4877ede LICENSE
 22c98deb8ff49cf6841f730ad93943e9 Makefile
 d0e2013df90f2ccad8a8cbe982ac3c29 README.md
-ebc4c999455d45f0f3f4e50c89a2e5dd VERSION
+87184fe4422927f3e3b3ed9a12068489 VERSION
 f13a73bd17fbe0f54870413c386c301a bin/extra/tractor_Rinstall
 696ece1d55b4fb38c5b974dd6d50aaba bin/furrow
 8dbfc3195195a40ec30b2f8eccf62876 bin/plough
@@ -23,12 +23,12 @@ d4162c9d7e520a5de05001be6e741899 share/doc/assets/jquery-3.2.0.min.js
 ce088d53ef9561c4dd85577f4c4e10ba share/doc/assets/prism.css
 cdca90be556c2e5f8dfb1482e0fc09e9 share/doc/assets/prism.js
 7df7e835c118fa33ba2f3432dd911dc2 share/doc/assets/style.css
-66fdc7ff1318f67e1dbca747e702cd9e share/doc/changelog.html
+2be6f9c9ea7727b663ffa02b511d12ba share/doc/changelog.html
 9fc5c12064be0feb6c607b3665a0c1e2 share/doc/connectivity-graphs.html
 287bd8c2ea76fc7368959b41c0bab1c9 share/doc/conventions.html
 db4edcf36cd36b1d8ae2016213ba51be share/doc/diffusion-processing.html
 0d66d29aa7dcadd51f330f04bfe8f919 share/doc/download.png
-5c4bebf7f9d75866f5509995d6295d6b share/doc/downloads.html
+9500a0b3cb1caebb90e28bf68e6bc922 share/doc/downloads.html
 d7f0853dab78e9236a957c344d7cd1db share/doc/genu-point.png
 67a91c737fd5cf609861800cb2bcab06 share/doc/getting-started.html
 cd8cec91833ffa792d4ad33729f8acbf share/doc/graph-brain.png
@@ -65,7 +65,7 @@ beb8a38c06433106310a5be9c62c701d share/tractor/experiments/chfiletype.R
 52d7ea45875ba8d88191c5b3acbc0ff7 share/tractor/experiments/dicomsort.R
 7b02a0e2c27d53dfe1c09ea33f3d901e share/tractor/experiments/dicomtags.R
 de3c845d8a3c2f8762e09e48547addac share/tractor/experiments/dirviz.R
-99d3220bd487f037d100396700c60dd5 share/tractor/experiments/dpreproc.R
+d7a1e3a15345fe8d68f5fb27433af2f7 share/tractor/experiments/dpreproc.R
 5c1b05ff0d87515c31d899c883e940de share/tractor/experiments/extract.R
 9ce17812dd320d0146703b8b7c4d85b8 share/tractor/experiments/freesurf.R
 c2d5d72cd898776874b290773540aad7 share/tractor/experiments/gradcheck.R
@@ -124,7 +124,7 @@ b4f0c6fa4067acff2980ec0624548dea share/tractor/experiments/track.R
 768a08aa555b362aa993394b45c0d937 share/tractor/experiments/update.R
 d72aeb9320052ae8b6ceb305893c2082 share/tractor/experiments/values.R
 213a13fab33d0441407134a6d0345f12 share/tractor/experiments/view.R
-9bc2be2b81954361c68c546bd6aeb75b share/tractor/experiments/workflow.R
+7b6d5fcca3f2c25bc1474bf07ec5ec4a share/tractor/experiments/workflow.R
 fd3f9f3a3395a4ade03e7d77bca7be90 share/tractor/hnt/reftracts/arcuate_left_ref.Rdata
 bfaee929d3fb8fc9a230d30e6f3a4b45 share/tractor/hnt/reftracts/arcuate_right_ref.Rdata
 34cd5423fc2f30c905792af15ded0b96 share/tractor/hnt/reftracts/atr_left_ref.Rdata
@@ -214,7 +214,7 @@ cc936e4e91e071bd2186918305c33ae5 share/tractor/session/default/transforms/strate
 443a25b2008816d6646241f16ab46a49 share/tractor/workflows/bedpostx.sh
 206e3babbfeff82242af055b2e6f1b3d share/tractor/workflows/bet-diffusion.sh
 1e164f4b35a35d990a2252df99a3797e share/tractor/workflows/dtifit.sh
-64e46d12db52c705bc4ac8e88a0c70f1 share/tractor/workflows/eddy.sh
+d256f2a0dd826fb38068fb18a3905763 share/tractor/workflows/eddy.sh
 701ec37649ff984d465634d5d04ae1db share/tractor/workflows/eddycorrect.sh
 4648461097ea21d330783e633c9c65e9 share/tractor/workflows/helpers/create-fdt-files.sh
 3086cc9add98366b926a341b6de2c956 share/tractor/workflows/reconall.sh

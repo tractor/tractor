@@ -44,6 +44,14 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="335-2021-04-30">3.3.5 (2021-04-30)</h2>
+
+<ul>
+<li>The <a href="https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/eddy">eddy</a> workflow now adds the argument <code>--data_is_shelled</code> when calling the <code>eddy</code> executable, since the absence of this flag frequently caused confusion among users. This has no effect on the output from the workflow, except to silence an error from <code>eddy</code> which is often spurious.</li>
+<li>The <code>dpreproc</code> script now also checks for the <code>eddy_openmp</code> variant executable name before deciding not to run eddy.</li>
+<li>A mistake in the self-documentation of the <code>workflow</code> script has been corrected.</li>
+</ul>
+
 <h2 id="334-2021-01-12">3.3.4 (2021-01-12)</h2>
 
 <ul>
