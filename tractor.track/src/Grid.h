@@ -68,7 +68,8 @@ inline Grid<3> getGrid3D (const RNifti::NiftiImage &object)
 {
     Eigen::Array3i dims = Eigen::Array3i::Ones();
     Eigen::Array3f spacings = Eigen::Array3f::Zero();
-    Eigen::Matrix4f xform = Eigen::Map<Eigen::Matrix4f>(*(object.xform().m)).transpose();
+    RNifti::NiftiImage::Xform::Matrix matrix = object.xform().matrix();
+    Eigen::Matrix4f xform = Eigen::Map<Eigen::Matrix4f>(matrix.begin()).transpose();
     for (int i=0; i<std::min(3,object.nDims()); i++)
     {
         dims(i,0) = object->dim[i+1];
@@ -80,14 +81,14 @@ inline Grid<3> getGrid3D (const RNifti::NiftiImage &object)
 inline std::string grid3DOrientation (const Grid<3> &grid)
 {
     const Grid<3>::TransformMatrix transform = grid.transform();
-    ::mat44 matrix;
+    RNifti::NiftiImage::Xform::Matrix matrix;
     for (int i=0; i<4; i++)
     {
         for (int j=0; j<4; j++)
-            matrix.m[i][j] = transform(i,j);
+            matrix(i,j) = transform(i,j);
     }
     
-    return RNifti::NiftiImage::xformToString(matrix);
+    return RNifti::NiftiImage::Xform(matrix).orientation();
 }
 
 #endif
