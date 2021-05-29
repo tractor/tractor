@@ -375,34 +375,26 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     # Data has not already been read, so do it here
     if (willReadData)
     {
-        # Jump to the data offset position
-        connection <- gzfile(fileNames$imageFile, "rb")
-        if (fileNames$imageFile == fileNames$headerFile)
-            readBin(connection, "raw", n=info$storage$offset)
+        matchingDatatypes <- .Nifti$datatypes$rTypes == datatype$type & .Nifti$datatypes$sizes == datatype$size & .Nifti$datatypes$isSigned == datatype$isSigned
+        assert(any(matchingDatatypes), "Image datatype is not supported")
+        datatypeCode <- as.integer(.Nifti$datatypes$codes[which(matchingDatatypes)[1]])
         
-        # Work out how many blocks (3D volumes) we're reading, and the gaps between them
+        swapEndianness <- info$storage$endian != "" && info$storage$endian != .Platform$endian
+        
+        # Work out how many blocks (3D volumes) we're reading, and the corresponding byte offsets
         blockSize <- prod(fullDims[1:3])
         if (!is.null(volumes) && nDims > 3)
-        {
             blocks <- volumes
-            jumps <- (diff(c(0, sort(volumes))) - 1) * blockSize
-        }
         else
-        {
-            blocks <- prod(fullDims[4:7])
-            jumps <- rep(0, length(blocks))
-        }
+            blocks <- seq_len(prod(fullDims[4:7]))
+        offsets <- info$storage$offset + (blocks - 1) * blockSize * datatype$size
         
         willRescaleData <- (info$storage$slope != 0 && !equivalent(c(info$storage$slope,info$storage$intercept), 1:0))
         coords <- values <- NULL
         for (i in seq_along(blocks))
         {
-            # Jump over blocks being ignored, if necessary
-            if (jumps[i] > 0)
-                readBin(connection, "raw", n=jumps[i]*datatype$size)
-            
             # Read the current block
-            currentData <- array(readBin(connection, what=datatype$type, n=blockSize, size=datatype$size, signed=datatype$isSigned, endian=info$storage$endian), dim=fullDims[1:3])
+            currentData <- array(RNifti:::readBlob(fileNames$imageFile, blockSize, datatypeCode, offsets[i], swap=swapEndianness), dim=fullDims[1:3])
             
             # Rescale and reorder if necessary
             # Reordering is a purely spatial operation, so we can do it blockwise
@@ -442,7 +434,6 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         
         # Update the dimensions to match the image metadata
         dim(data) <- dims
-        close(connection)
     }
     
     # Reorder the image if requested (as opposed to the data to be associated with it)
