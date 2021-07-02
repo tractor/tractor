@@ -55,15 +55,20 @@ readMrtrix <- function (fileNames)
     if (length(axes) > 3 && any(axes[4:length(axes)] != 4:length(axes)))
         report(OL$Error, "Images not stored in volume block order are not yet supported")
     
-    layoutMatrix <- diag(c(0,0,0,1))
-    layoutMatrix[cbind(1:3, pad(axes,3,3L)[1:3])] <- pad(signs,3)[1:3]
+    # Find the inverse axis permutation and create an orientation string matching the data layout
+    perm <- match(seq_along(axes), axes)
+    orientation <- implode(c("I","P","L","","R","A","S")[pad(signs[perm]*axes[perm],3L,3L)[1:3]+4], sep="")
     
-    xform <- diag(c(pad(abs(voxelDims),3)[1:3], 1)) %*% layoutMatrix
+    # MRtrix stores the transform relative to the basic layout, and without
+    # scaling for voxel dimensions, so we have to restore the scale factors and
+    # convert from effective RAS to the actual orientation
+    xform <- diag(c(pad(abs(voxelDims),3)[1:3], 1))
     if (!is.null(mergedFields$transform))
     {
         mrtrixTransform <- rbind(matrix(as.numeric(getField("transform")), nrow=3, ncol=4, byrow=TRUE), c(0,0,0,1))
-        xform <- mrtrixTransform %*% xform
+        xform <- structure(mrtrixTransform %*% xform, imagedim=dims)
     }
+    orientation(xform) <- orientation
     
     datatypeString <- as.character(getField("datatype"))
     if (datatypeString == "Bit" || datatypeString %~% "^C")
