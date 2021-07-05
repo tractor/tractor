@@ -96,6 +96,23 @@ readMrtrix <- function (fileNames)
     qform(header) <- structure(xform, code=2L)
     header$pixdim[seq_len(nDims)+1] <- voxelDims
     
+    # Extract a diffusion gradient scheme into standard tags, if available
+    tags <- NULL
+    scheme <- getField("dw_scheme", required=FALSE)
+    if (!is.null(scheme))
+    {
+        # Again, the diffusion directions are relative to real-world RAS space, so permute and flip as needed
+        scheme <- matrix(as.numeric(scheme), ncol=4, byrow=TRUE)
+        bVectors <- scheme[,pad(axes[perm],3L,3L)[1:3],drop=FALSE]
+        flip <- which(signs < 0)
+        if (any(flip <= 3))
+            bVectors[,flip] <- -bVectors[,flip]
+        tags <- list(bVectors=bVectors, bValues=scheme[,4])
+    }
+    
+    # Fields are removed as they are used; remaining ones become tags
+    tags <- c(tags, mergedFields)
+    
     storage <- list(offset=as.integer(fileMatch[,2]), intercept=scaling[1], slope=scaling[2], datatype=datatype, endian=endian)
-    invisible (list(image=NULL, header=header, storage=storage))
+    invisible (list(image=NULL, header=header, storage=storage, tags=tags))
 }
