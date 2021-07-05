@@ -458,6 +458,10 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     # Set the source
     image$setSource(fileNames$fileStem)
     
+    # If the reader produced any tags, set them first (auxiliary files will overwrite duplicates)
+    if (!is.null(info$tags))
+        do.call(image$setTags, as.list(info$tags))
+    
     # Read the auxiliary tags file, if one exists
     tagsFileName <- ensureFileSuffix(fileNames$fileStem, "tags")
     if (file.exists(tagsFileName))
