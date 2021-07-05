@@ -77,7 +77,7 @@ readMrtrix <- function (fileNames)
     datatype <- list(code=0,
                      type=ifelse(datatypeMatch[,2]=="Int", "integer", "double"),
                      size=as.integer(datatypeMatch[,3]) / 8L,
-                     isSigned=!is.na(datatypeMatch[,1]))
+                     isSigned=!is.na(datatypeMatch[,1]) || datatypeMatch[,2]=="Float")
     endianString <- ifelse(is.na(datatypeMatch[,4]), "", datatypeMatch[,4])
     endian <- switch(endianString, LE="little", BE="big", .Platform$endian)
     
