@@ -37,18 +37,25 @@ void MrtrixDataSource::attach (const std::string &fileStem)
         fileStream.close();
     
     fileStream.open((fileStem + ".tck").c_str(), ios::binary);
+    if (binaryStream.readString("\n") != "mrtrix tracks")
+        throw std::runtime_error("File " + fileStem + " does not contain an MRtrix magic number");
     
     size_t dataOffset = 0;
     while (true)
     {
         const string str = binaryStream.readString("\n");
-        if (str == "END")
+        if (fileStream.eof() || str == "END")
             break;
         else if (str.compare(0,8,"file: . ") == 0)
             dataOffset = static_cast<size_t>(atol(str.substr(8).c_str()));
         else if (str.compare(0,7,"count: ") == 0)
             totalStreamlines = static_cast<size_t>(atol(str.substr(7).c_str()));
     }
+    
+    if (dataOffset == 0)
+        throw std::runtime_error("File " + fileStem + " does not seem to contain a valid MRtrix header");
+    if (totalStreamlines == 0)
+        throw std::runtime_error("Streamline count not stored in MRtrix track file header");
     
     fileStream.seekg(dataOffset);
     currentStreamline = 0;
