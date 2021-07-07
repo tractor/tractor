@@ -14,6 +14,7 @@ protected:
     std::ifstream fileStream;
     BinaryInputStream binaryStream;
     size_t totalStreamlines, currentStreamline;
+    std::string datatype;
     Grid<3> grid;
     
     void readStreamline (Streamline &data);

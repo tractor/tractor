@@ -26,6 +26,23 @@ void BinaryStream::swap (Type *pointer)
     }
 }
 
+std::string BinaryStream::nativeEndianness () const
+{
+    uint32_t value = 1;
+    return ((*((char *) &value) == 1) ? "little" : "big");
+}
+
+void BinaryStream::setEndianness (const std::string &endianness)
+{
+    if (endianness == "native")
+        swapEndian = false;
+    else if (endianness == "swapped")
+        swapEndian = true;
+    else if (endianness == "little" || endianness == "big")
+        swapEndian = (endianness == nativeEndianness());
+    // NB: invalid values are silently ignored
+}
+
 template <typename SourceType>
 SourceType BinaryInputStream::readValue ()
 {
@@ -226,6 +243,7 @@ template void BinaryInputStream::readVector<int16_t,int> (std::vector<int> &valu
 
 template void BinaryInputStream::readVector<float> (Eigen::Vector3f &values, size_t n);
 template void BinaryInputStream::readVector<float> (Eigen::Array3f &values, size_t n);
+template void BinaryInputStream::readVector<double> (Eigen::Array3f &values, size_t n);
 template void BinaryInputStream::readVector<short> (Eigen::Array3i &values, size_t n);
 
 template void BinaryInputStream::readMatrix<float> (Eigen::Matrix4f &values, size_t n, size_t m);

@@ -157,14 +157,12 @@ protected:
         : append(false)
     {
         binaryStream.attach(&fileStream);
-        binaryStream.swapEndianness(false);
     }
     
     TrackvisDataSink (const std::string &fileStem, const bool append = false)
         : append(append)
     {
         binaryStream.attach(&fileStream);
-        binaryStream.swapEndianness(false);
         attach(fileStem);
     }
     
@@ -172,7 +170,6 @@ protected:
         : grid(grid), append(append)
     {
         binaryStream.attach(&fileStream);
-        binaryStream.swapEndianness(false);
         attach(fileStem);
     }
     
@@ -234,7 +231,6 @@ public:
     LabelledTrackvisDataSink ()
     {
         auxBinaryStream.attach(&auxFileStream);
-        auxBinaryStream.swapEndianness(false);
     }
     
     // Don't call base class constructor explicitly here
@@ -243,7 +239,6 @@ public:
     {
         this->grid = grid;
         auxBinaryStream.attach(&auxFileStream);
-        auxBinaryStream.swapEndianness(false);
         attach(fileStem);
     }
     

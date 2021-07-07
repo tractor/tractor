@@ -7,14 +7,14 @@ class BinaryStream
 {
 protected:
     bool swapEndian;
-    
     template <typename Type> void swap (Type *value);
     
 public:
     BinaryStream ()
         : swapEndian(false) {}
     
-    void swapEndianness (const bool value) { swapEndian = value; }
+    std::string nativeEndianness () const;
+    void setEndianness (const std::string &endianness);
 };
 
 class BinaryInputStream : public BinaryStream

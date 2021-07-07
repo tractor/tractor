@@ -12,7 +12,10 @@ void MrtrixDataSource::readStreamline (Streamline &data)
     while (true)
     {
         Space<3>::Point point;
-        binaryStream.readVector<float>(point, 3);
+        if (datatype == "float")
+            binaryStream.readVector<float>(point, 3);
+        else if (datatype == "double")
+            binaryStream.readVector<double>(point, 3);
         
         if (ISNAN(point[0]) && ISNAN(point[1]) && ISNAN(point[2]))
             break;
@@ -50,6 +53,15 @@ void MrtrixDataSource::attach (const std::string &fileStem)
             dataOffset = static_cast<size_t>(atol(str.substr(8).c_str()));
         else if (str.compare(0,7,"count: ") == 0)
             totalStreamlines = static_cast<size_t>(atol(str.substr(7).c_str()));
+        else if (str.compare(0,10,"datatype: ") == 0)
+        {
+            const string datatypeString = str.substr(10);
+            if (datatypeString == "Float32BE")      { datatype = "float";   binaryStream.setEndianness("big");      }
+            else if (datatypeString == "Float32LE") { datatype = "float";   binaryStream.setEndianness("little");   }
+            else if (datatypeString == "Float64BE") { datatype = "double";  binaryStream.setEndianness("big");      }
+            else if (datatypeString == "Float64LE") { datatype = "double";  binaryStream.setEndianness("little");   }
+            else throw std::runtime_error("MRtrix track file datatype is invalid");
+        }
     }
     
     if (dataOffset == 0)

@@ -99,7 +99,7 @@ void TrackvisDataSource::attach (const std::string &fileStem)
     fileStream.seekg(996);
     fileStream.read((char *) &headerSize, sizeof(int32_t));
     
-    binaryStream.swapEndianness(headerSize != 1000);
+    binaryStream.setEndianness(headerSize != 1000 ? "swapped" : "native");
     fileStream.seekg(996);
     headerSize = binaryStream.readValue<int32_t>();
     if (headerSize != 1000)
@@ -517,7 +517,7 @@ void StreamlineLabelList::read (const std::string &fileStem)
         throw runtime_error("Track label file does not seem to have a valid magic number");
     
     const int version = binaryStream.readValue<int32_t>();
-    binaryStream.swapEndianness(version > 0xffff);
+    binaryStream.setEndianness(version > 0xffff ? "swapped" : "native");
     
     const int nStreamlines = binaryStream.readValue<int32_t>();
     const int nLabels = binaryStream.readValue<int32_t>();
