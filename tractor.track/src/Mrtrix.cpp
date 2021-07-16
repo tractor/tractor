@@ -28,7 +28,7 @@ void MrtrixDataSource::readStreamline (Streamline &data)
     data = Streamline(vector<Space<3>::Point>(points.begin(), points.begin()+1),
                       points,
                       Streamline::WorldPointType,
-                      grid.spacings(),
+                      Eigen::VectorXf::Zero(3,1),
                       true);
     
     currentStreamline++;

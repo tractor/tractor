@@ -410,7 +410,7 @@ BEGIN_RCPP
     RNifti::NiftiImage image(_image, false);
     const Grid<3> grid = getGrid3D(image);
     
-    MrtrixDataSource tckFile(path, grid);
+    MrtrixDataSource tckFile(path);
     Pipeline<Streamline> pipeline(&tckFile);
     BasicTrackvisDataSink trkFile(path, grid);
     pipeline.addSink(&trkFile);
