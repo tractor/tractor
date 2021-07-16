@@ -17,7 +17,9 @@ void MrtrixDataSource::readStreamline (Streamline &data)
         else if (datatype == "double")
             binaryStream.readVector<double>(point, 3);
         
-        if (ISNAN(point[0]) && ISNAN(point[1]) && ISNAN(point[2]))
+        if (fileStream.eof())
+            break;
+        else if (ISNAN(point[0]) && ISNAN(point[1]) && ISNAN(point[2]))
             break;
         else if (point[0] == R_PosInf && point[1] == R_PosInf && point[2] == R_PosInf)
             break;
