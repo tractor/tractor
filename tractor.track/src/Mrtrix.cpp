@@ -42,7 +42,8 @@ void MrtrixDataSource::attach (const std::string &fileStem)
         fileStream.close();
     
     fileStream.open((fileStem + ".tck").c_str(), ios::binary);
-    if (binaryStream.readString("\n") != "mrtrix tracks")
+    const std::string magic = binaryStream.readString("\n");
+    if (magic.compare(0,13,"mrtrix tracks") != 0)
         throw std::runtime_error("File " + fileStem + " does not contain an MRtrix magic number");
     
     size_t dataOffset = 0;
