@@ -122,19 +122,21 @@ setClassUnion("ExternalPointerOrNull", c("externalptr","NULL"))
 StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character",selection="integer",count.="integer",labelsPtr.="ExternalPointerOrNull"), methods=list(
     initialize = function (file = NULL, ...)
     {
-        if (is.null(file))
-            report(OL$Error, "Streamline source file must be specified")
-        if (!file.exists(ensureFileSuffix(file, "trk", strip=c("trk","trkl"))))
+        assert(!is.null(file), "Streamline source file must be specified")
+        
+        fileStem <- ensureFileSuffix(file, NULL, strip=c("tck","trk","trkl"))
+        if (file.exists(ensureFileSuffix(fileStem, "trk")))
+            count <- as.integer(.Call("trkCount", fileStem, PACKAGE="tractor.track"))
+        else if (file.exists(ensureFileSuffix(fileStem, "tck")))
+            count <- as.integer(.Call("tckCount", fileStem, PACKAGE="tractor.track"))
+        else
             report(OL$Error, "Specified streamline source file does not exist")
         
-        file <- ensureFileSuffix(file, NULL, strip=c("trk","trkl"))
-        count <- as.integer(.Call("trkCount", file, PACKAGE="tractor.track"))
-        
         labelsPtr <- NULL
-        if (file.exists(ensureFileSuffix(file, "trkl", strip=c("trk","trkl"))))
-            labelsPtr <- .Call("trkLabels", file, PACKAGE="tractor.track")
+        if (file.exists(ensureFileSuffix(fileStem, "trkl")))
+            labelsPtr <- .Call("trkLabels", fileStem, PACKAGE="tractor.track")
         
-        return (initFields(file=file, selection=integer(0), count.=count, labelsPtr.=labelsPtr))
+        return (initFields(file=fileStem, selection=integer(0), count.=count, labelsPtr.=labelsPtr))
     },
     
     apply = function (fun, ..., simplify = TRUE)
@@ -159,7 +161,12 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
             }
         }
         
-        .Call("trkApply", file, selection, .applyFunction, PACKAGE="tractor.track")
+        if (file.exists(ensureFileSuffix(file, "trk")))
+            .Call("trkApply", file, selection, .applyFunction, PACKAGE="tractor.track")
+        else if (file.exists(ensureFileSuffix(file, "tck")))
+            .Call("tckApply", file, selection, .applyFunction, PACKAGE="tractor.track")
+        else
+            report(OL$Error, "Streamline source file no longer exists")
         
         if (isTRUE(simplify) && n == 1)
             return (results[[1]])

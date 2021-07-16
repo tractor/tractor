@@ -173,11 +173,36 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP tckApply (SEXP _tckPath, SEXP _indices, SEXP _function)
+{
+BEGIN_RCPP
+    MrtrixDataSource tckFile(as<std::string>(_tckPath));
+    Pipeline<Streamline> pipeline(&tckFile);
+    int_vector indices = as<int_vector>(_indices);
+    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
+    pipeline.setSubset(indices);
+    Function function(_function);
+    pipeline.addSink(new RCallbackDataSink(function));
+    
+    pipeline.run();
+    
+    return R_NilValue;
+END_RCPP
+}
+
 RcppExport SEXP trkCount (SEXP _trkPath)
 {
 BEGIN_RCPP
     BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
     return wrap(trkFile.nStreamlines());
+END_RCPP
+}
+
+RcppExport SEXP tckCount (SEXP _tckPath)
+{
+BEGIN_RCPP
+    MrtrixDataSource tckFile(as<std::string>(_tckPath));
+    return wrap(tckFile.nStreamlines());
 END_RCPP
 }
 
