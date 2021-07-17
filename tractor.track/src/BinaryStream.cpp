@@ -39,7 +39,7 @@ void BinaryStream::setEndianness (const std::string &endianness)
     else if (endianness == "swapped")
         swapEndian = true;
     else if (endianness == "little" || endianness == "big")
-        swapEndian = (endianness == nativeEndianness());
+        swapEndian = (endianness != nativeEndianness());
     // NB: invalid values are silently ignored
 }
 
