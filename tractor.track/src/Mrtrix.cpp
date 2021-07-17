@@ -27,11 +27,14 @@ void MrtrixDataSource::readStreamline (Streamline &data)
             points.push_back(point);
     }
     
-    data = Streamline(vector<Space<3>::Point>(points.begin(), points.begin()+1),
-                      points,
-                      Streamline::WorldPointType,
-                      Eigen::VectorXf::Zero(3,1),
-                      true);
+    if (points.size() > 0)
+    {
+        data = Streamline(vector<Space<3>::Point>(points.begin(), points.begin()+1),
+                          points,
+                          Streamline::WorldPointType,
+                          Eigen::ArrayXf::Zero(3,1),
+                          true);
+    }
     
     currentStreamline++;
 }
