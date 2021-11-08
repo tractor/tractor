@@ -5,15 +5,17 @@ readMrtrix <- function (fileNames)
     if (!file.exists(fileNames$headerFile))
         report(OL$Error, "File #{fileNames$headerFile} not found")
     
-    # Find the end of the header
-    match <- ore.search("\nEND\n", ore.file(fileNames$headerFile, binary=TRUE))
-    assert(!is.null(match), "File #{fileNames$headerFile} does not seem to contain a well-formed MRtrix header")
-    endOffset <- match$byteOffsets
-    
     # The gzfile function can handle uncompressed files too
     connection <- gzfile(fileNames$headerFile, "rb")
     on.exit(close(connection))
     
+    # Find the end of the header
+    match <- ore.search("\nEND\n", connection)
+    assert(!is.null(match), "File #{fileNames$headerFile} does not seem to contain a well-formed MRtrix header")
+    endOffset <- match$byteOffsets
+    
+    # Rewind the connection and check for a magic number
+    seek(connection, 0)
     magic <- rawToChar(stripNul(readBin(connection, "raw", n=12)))
     assert(magic == "mrtrix image", "File #{fileNames$headerFile} does not appear to be a valid MRtrix image")
     
