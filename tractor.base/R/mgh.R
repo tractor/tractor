@@ -53,7 +53,7 @@ readMgh <- function (fileNames)
         report(OL$Error, "The MGH data type code is not valid")
     datatype <- list(code=typeCode, type=.Mgh$datatypes$rTypes[typeIndex], size=.Mgh$datatypes$sizes[typeIndex], isSigned=.Mgh$datatypes$isSigned[typeIndex])
     
-    storage <- list(offset=284, slope=1, intercept=0, datatype=datatype, endian="big")
+    storage <- list(offset=284, datatype=datatype, endian="big")
     invisible (list(image=NULL, header=header, storage=storage))
 }
 

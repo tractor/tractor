@@ -98,6 +98,13 @@ readMrtrix <- function (fileNames)
     qform(header) <- structure(xform, code=2L)
     header$pixdim[seq_len(nDims)+1] <- voxelDims[perm]
     
+    # Set the intercept and slope values
+    header$scl_inter <- scaling[1]
+    header$scl_slope <- scaling[2]
+    
+    # MRtrix spatial units are always millimetres; temporal units are unclear
+    header$xyzt_units <- 2L
+    
     # Extract a diffusion gradient scheme into standard tags, if available
     tags <- NULL
     scheme <- getField("dw_scheme", required=FALSE)
@@ -115,6 +122,6 @@ readMrtrix <- function (fileNames)
     # Fields are removed as they are used; remaining ones become tags
     tags <- c(tags, mergedFields)
     
-    storage <- list(offset=as.integer(fileMatch[,2]), intercept=scaling[1], slope=scaling[2], datatype=datatype, endian=endian)
+    storage <- list(offset=as.integer(fileMatch[,2]), datatype=datatype, endian=endian)
     invisible (list(image=NULL, header=header, storage=storage, tags=tags))
 }

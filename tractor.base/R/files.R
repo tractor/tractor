@@ -389,22 +389,11 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
             blocks <- seq_len(prod(fullDims[4:7]))
         offsets <- info$storage$offset + (blocks - 1) * blockSize * datatype$size
         
-        willRescaleData <- (info$storage$slope != 0 && !equivalent(c(info$storage$slope,info$storage$intercept), 1:0))
         coords <- values <- NULL
         for (i in seq_along(blocks))
         {
             # Read the current block
-            currentData <- array(RNifti:::readBlob(fileNames$imageFile, blockSize, datatypeCode, offsets[i], swap=swapEndianness), dim=fullDims[1:3])
-            
-            # Rescale and reorder if necessary
-            # Reordering is a purely spatial operation, so we can do it blockwise
-            if (willRescaleData)
-                currentData <- currentData * info$storage$slope + info$storage$intercept
-            if (willReorderImage)
-            {
-                currentData <- updateNifti(currentData, image)
-                orientation(currentData) <- "LAS"
-            }
+            currentData <- RNifti:::readBlob(fileNames$imageFile, blockSize, datatypeCode, offsets[i], swap=swapEndianness)
             
             if (sparse)
             {
@@ -419,6 +408,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
                     values <- c(values, currentData[toKeep])
                 }
             }
+            else if (length(blocks) == 1)
+                data <- currentData
             else
             {
                 # Create an array for the data if it doesn't yet exist, then insert the block
@@ -434,16 +425,14 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         
         # Update the dimensions to match the image metadata
         dim(data) <- dims
+        
+        # Attach the data to the image
+        image <- updateNifti(data, image)
     }
     
     # Reorder the image if requested (as opposed to the data to be associated with it)
     if (willReorderImage)
         orientation(image) <- "LAS"
-    
-    # Attach the data if necessary
-    # NB: this must happen before conversion to MriImage, otherwise cal_min and cal_max won't be checked against the data
-    if (willReadData)
-        image <- updateNifti(data, image)
     
     # Convert to an MriImage
     attr(image, "reordered") <- reorder
