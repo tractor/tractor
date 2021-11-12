@@ -59,7 +59,7 @@ readMrtrix <- function (fileNames)
     
     # Find the inverse axis permutation and create an orientation string matching the data layout
     perm <- match(seq_along(axes), axes)
-    orientation <- implode(c("I","P","L","","R","A","S")[pad(signs[perm]*axes[perm],3L,3L)[1:3]+4], sep="")
+    orientation <- implode(c("I","P","L","","R","A","S")[pad(signs[perm]*perm,3L,3L)[1:3]+4], sep="")
     
     # MRtrix stores the transform relative to the basic layout, and without
     # scaling for voxel dimensions, so we have to restore the scale factors and
@@ -94,9 +94,9 @@ readMrtrix <- function (fileNames)
     header <- niftiHeader()
     
     nDims <- length(dims)
-    header$dim[seq_len(nDims+1)] <- c(nDims, dims)
+    header$dim[seq_len(nDims+1)] <- c(nDims, dims[perm])
     qform(header) <- structure(xform, code=2L)
-    header$pixdim[seq_len(nDims)+1] <- voxelDims
+    header$pixdim[seq_len(nDims)+1] <- voxelDims[perm]
     
     # Extract a diffusion gradient scheme into standard tags, if available
     tags <- NULL
@@ -105,7 +105,7 @@ readMrtrix <- function (fileNames)
     {
         # Again, the diffusion directions are relative to real-world RAS space, so permute and flip as needed
         scheme <- matrix(as.numeric(scheme), ncol=4, byrow=TRUE)
-        bVectors <- scheme[,pad(axes[perm],3L,3L)[1:3],drop=FALSE]
+        bVectors <- scheme[,pad(perm,3L,3L)[1:3],drop=FALSE]
         flip <- which(signs < 0)
         if (any(flip <= 3))
             bVectors[,flip] <- -bVectors[,flip]
