@@ -156,6 +156,29 @@ BEGIN_RCPP
 END_RCPP
 }
 
+static inline bool fileExists (const std::string path)
+{
+    return std::ifstream(path.c_str()).good();
+}
+
+static StreamlineFileSource * resolveFile (SEXP _path)
+{
+    std::string path = as<std::string>(_path);
+    StreamlineFileSource *result = NULL;
+    
+    if (fileExists(path + ".trk"))
+        result = new BasicTrackvisDataSource(path);
+    else if (fileExists(path + ".tck"))
+        result = new MrtrixDataSource(path);
+    
+    if (fileExists(path + ".trkl"))
+    {
+        StreamlineLabelList *labelList = new StreamlineLabelList(path);
+    }
+    
+    return result;
+}
+
 RcppExport SEXP trkApply (SEXP _trkPath, SEXP _indices, SEXP _function)
 {
 BEGIN_RCPP
