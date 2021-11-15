@@ -5,6 +5,7 @@
 
 #include "Space.h"
 #include "DataSource.h"
+#include "BinaryStream.h"
 
 class Streamline
 {
@@ -78,6 +79,63 @@ public:
     }
     
     size_t concatenatePoints (Eigen::ArrayX3f &points) const;
+};
+
+class StreamlineLabelList
+{
+private:
+    std::ifstream fileStream;
+    BinaryInputStream binaryStream;
+    std::vector< std::set<int> > labelList;
+    std::vector<size_t> offsetList;
+    
+public:
+    StreamlineLabelList ()
+    {
+        binaryStream.attach(&fileStream);
+    }
+    
+    StreamlineLabelList (const std::string &fileStem)
+    {
+        binaryStream.attach(&fileStream);
+        read(fileStem);
+    }
+    
+    void read (const std::string &fileStem);
+    const std::vector<int> find (const std::vector<int> &labels);
+    size_t size () { return labelList.size(); }
+    const std::set<int> & getLabels (const int n) { return labelList[n]; }
+    size_t getOffset (const int n) { return offsetList[n]; }
+};
+
+class StreamlineFileSource : public DataSource<Streamline>
+{
+protected:
+    std::ifstream fileStream;
+    BinaryInputStream binaryStream;
+    size_t totalStreamlines, currentStreamline;
+    std::vector<std::string> propertyNames;
+    StreamlineLabelList *labelList;
+    
+    StreamlineFileSource ()
+        : labelList(NULL)
+    {
+        binaryStream.attach(&fileStream);
+    }
+    
+public:
+    virtual ~StreamlineFileSource ()
+    {
+        binaryStream.detach();
+        if (fileStream.is_open())
+            fileStream.close();
+    }
+    
+    virtual void attach (const std::string &fileStem);
+    virtual bool hasGrid () const { return false; }
+    virtual bool hasLabels () const { return labelList != NULL; }
+    
+    const std::vector<std::string> & getPropertyNames () const { return propertyNames; }
 };
 
 class StreamlineTruncator : public DataManipulator<Streamline>

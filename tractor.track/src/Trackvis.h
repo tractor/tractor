@@ -60,33 +60,6 @@ public:
     bool seekable () { return true; }
 };
 
-class StreamlineLabelList
-{
-private:
-    std::ifstream fileStream;
-    BinaryInputStream binaryStream;
-    std::vector< std::set<int> > labelList;
-    std::vector<size_t> offsetList;
-    
-public:
-    StreamlineLabelList ()
-    {
-        binaryStream.attach(&fileStream);
-    }
-    
-    StreamlineLabelList (const std::string &fileStem)
-    {
-        binaryStream.attach(&fileStream);
-        read(fileStem);
-    }
-    
-    void read (const std::string &fileStem);
-    const std::vector<int> find (const std::vector<int> &labels);
-    size_t size () { return labelList.size(); }
-    const std::set<int> & getLabels (const int n) { return labelList[n]; }
-    size_t getOffset (const int n) { return offsetList[n]; }
-};
-
 // Labelled Trackvis reader: also read auxiliary file containing label info
 class LabelledTrackvisDataSource : public TrackvisDataSource
 {
