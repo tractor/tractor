@@ -131,10 +131,13 @@ public:
             fileStream.close();
     }
     
-    virtual void attach (const std::string &fileStem);
+    virtual void attach (const std::string &fileStem) = 0;
     virtual bool hasGrid () const { return false; }
     virtual bool hasLabels () const { return labelList != NULL; }
     
+    virtual bool more () { return (currentStreamline < totalStreamlines); }
+        
+    const size_t nStreamlines () const { return totalStreamlines; }
     const std::vector<std::string> & getPropertyNames () const { return propertyNames; }
 };
 

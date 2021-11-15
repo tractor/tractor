@@ -9,40 +9,19 @@
 #include "BinaryStream.h"
 
 // Base class for Trackvis readers: provides common functionality
-class TrackvisDataSource : public Griddable3D, public DataSource<Streamline>
+class TrackvisDataSource : public Griddable3D, public StreamlineFileSource
 {
 protected:
-    std::ifstream fileStream;
-    BinaryInputStream binaryStream;
     int nScalars, nProperties, seedProperty;
-    std::vector<std::string> propertyNames;
-    size_t totalStreamlines, currentStreamline;
     Grid<3> grid;
-    
-    TrackvisDataSource ()
-    {
-        binaryStream.attach(&fileStream);
-    }
-    
-    TrackvisDataSource (const std::string &fileStem)
-    {
-        binaryStream.attach(&fileStream);
-        attach(fileStem);
-    }
     
     void readStreamline (Streamline &data);
     
 public:
-    virtual ~TrackvisDataSource ()
-    {
-        binaryStream.detach();
-        if (fileStream.is_open())
-            fileStream.close();
-    }
+    void attach (const std::string &fileStem);
     
-    virtual void attach (const std::string &fileStem);
+    bool hasGrid () const { return true; }
     Grid<3> getGrid3D () const { return grid; }
-    const std::vector<std::string> & getPropertyNames () const { return propertyNames; }
 };
 
 // Basic Trackvis reader: read all streamlines, including seed property
@@ -50,11 +29,10 @@ class BasicTrackvisDataSource : public TrackvisDataSource
 {
 public:
     BasicTrackvisDataSource (const std::string &fileStem)
-        : TrackvisDataSource(fileStem) {}
+    {
+        attach(fileStem);
+    }
     
-    size_t nStreamlines () const { return totalStreamlines; }
-    
-    bool more () { return (currentStreamline < totalStreamlines); }
     void get (Streamline &data) { readStreamline(data); }
     void seek (const int n);
     bool seekable () { return true; }
@@ -66,7 +44,6 @@ class LabelledTrackvisDataSource : public TrackvisDataSource
 protected:
     std::ifstream auxFileStream;
     BinaryInputStream auxBinaryStream;
-    StreamlineLabelList *labelList;
     bool externalLabelList;
     
 public:
@@ -76,9 +53,9 @@ public:
     }
     
     LabelledTrackvisDataSource (const std::string &fileStem, StreamlineLabelList *labelList = NULL)
-        : labelList(labelList)
     {
         auxBinaryStream.attach(&auxFileStream);
+        labelList = labelList;
         this->externalLabelList = (labelList != NULL);
         attach(fileStem);
     }
@@ -93,7 +70,6 @@ public:
     }
     
     void attach (const std::string &fileStem);
-    bool more () { return (currentStreamline < totalStreamlines); }
     void get (Streamline &data);
     void seek (const int n);
     bool seekable () { return true; }
@@ -111,7 +87,10 @@ public:
         : read(false) {}
     
     MedianTrackvisDataSource (const std::string &fileStem, const double quantile = 0.99)
-        : TrackvisDataSource(fileStem), quantile(quantile), read(false) {}
+        : quantile(quantile), read(false)
+    {
+        attach(fileStem);
+    }
     
     bool more () { return (!read); }
     void get (Streamline &data);

@@ -8,40 +8,21 @@
 #include "DataSource.h"
 #include "BinaryStream.h"
 
-class MrtrixDataSource : public DataSource<Streamline>
+class MrtrixDataSource : public StreamlineFileSource
 {
 protected:
-    std::ifstream fileStream;
-    BinaryInputStream binaryStream;
-    size_t totalStreamlines, currentStreamline;
     std::string datatype;
     
     void readStreamline (Streamline &data);
     
 public:
-    MrtrixDataSource ()
-    {
-        binaryStream.attach(&fileStream);
-    }
-    
     MrtrixDataSource (const std::string &fileStem)
     {
-        binaryStream.attach(&fileStream);
         attach(fileStem);
-    }
-    
-    virtual ~MrtrixDataSource ()
-    {
-        binaryStream.detach();
-        if (fileStream.is_open())
-            fileStream.close();
     }
     
     void attach (const std::string &fileStem);
     
-    size_t nStreamlines () const { return totalStreamlines; }
-    
-    bool more () { return (currentStreamline < totalStreamlines); }
     void get (Streamline &data) { readStreamline(data); }
 };
 
