@@ -182,25 +182,8 @@ static StreamlineFileSource * resolveFile (SEXP _path)
 RcppExport SEXP trkApply (SEXP _trkPath, SEXP _indices, SEXP _function)
 {
 BEGIN_RCPP
-    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
-    Pipeline<Streamline> pipeline(&trkFile);
-    int_vector indices = as<int_vector>(_indices);
-    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
-    pipeline.setSubset(indices);
-    Function function(_function);
-    pipeline.addSink(new RCallbackDataSink(function));
-    
-    pipeline.run();
-    
-    return R_NilValue;
-END_RCPP
-}
-
-RcppExport SEXP tckApply (SEXP _tckPath, SEXP _indices, SEXP _function)
-{
-BEGIN_RCPP
-    MrtrixDataSource tckFile(as<std::string>(_tckPath));
-    Pipeline<Streamline> pipeline(&tckFile);
+    std::unique_ptr<StreamlineFileSource> trkFile(resolveFile(_trkPath));
+    Pipeline<Streamline> pipeline(trkFile.get());
     int_vector indices = as<int_vector>(_indices);
     std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
     pipeline.setSubset(indices);
@@ -216,16 +199,8 @@ END_RCPP
 RcppExport SEXP trkCount (SEXP _trkPath)
 {
 BEGIN_RCPP
-    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
-    return wrap(trkFile.nStreamlines());
-END_RCPP
-}
-
-RcppExport SEXP tckCount (SEXP _tckPath)
-{
-BEGIN_RCPP
-    MrtrixDataSource tckFile(as<std::string>(_tckPath));
-    return wrap(tckFile.nStreamlines());
+    std::unique_ptr<StreamlineFileSource> trkFile(resolveFile(_trkPath));
+    return wrap(trkFile->nStreamlines());
 END_RCPP
 }
 
@@ -288,8 +263,8 @@ END_RCPP
 RcppExport SEXP trkInfo (SEXP _trkPath)
 {
 BEGIN_RCPP
-    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
-    std::vector<std::string> properties = trkFile.getPropertyNames();
+    std::unique_ptr<StreamlineFileSource> trkFile(resolveFile(_trkPath));
+    std::vector<std::string> properties = trkFile->getPropertyNames();
     if (properties.size() == 0)
         properties.push_back("(none)");
     return wrap(properties);

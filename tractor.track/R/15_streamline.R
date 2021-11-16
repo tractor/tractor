@@ -125,10 +125,8 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         assert(!is.null(file), "Streamline source file must be specified")
         
         fileStem <- ensureFileSuffix(file, NULL, strip=c("tck","trk","trkl"))
-        if (file.exists(ensureFileSuffix(fileStem, "trk")))
+        if (any(file.exists(ensureFileSuffix(fileStem, c("trk","tck")))))
             count <- as.integer(.Call("trkCount", fileStem, PACKAGE="tractor.track"))
-        else if (file.exists(ensureFileSuffix(fileStem, "tck")))
-            count <- as.integer(.Call("tckCount", fileStem, PACKAGE="tractor.track"))
         else
             report(OL$Error, "Specified streamline source file does not exist")
         
@@ -161,12 +159,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
             }
         }
         
-        if (file.exists(ensureFileSuffix(file, "trk")))
-            .Call("trkApply", file, selection, .applyFunction, PACKAGE="tractor.track")
-        else if (file.exists(ensureFileSuffix(file, "tck")))
-            .Call("tckApply", file, selection, .applyFunction, PACKAGE="tractor.track")
-        else
-            report(OL$Error, "Streamline source file no longer exists")
+        .Call("trkApply", file, selection, .applyFunction, PACKAGE="tractor.track")
         
         if (isTRUE(simplify) && n == 1)
             return (results[[1]])
