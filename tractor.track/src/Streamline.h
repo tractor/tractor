@@ -113,12 +113,11 @@ class StreamlineFileSource : public DataSource<Streamline>
 protected:
     std::ifstream fileStream;
     BinaryInputStream binaryStream;
-    size_t totalStreamlines, currentStreamline;
+    size_t totalStreamlines = 0, currentStreamline = 0;
     std::vector<std::string> propertyNames;
-    StreamlineLabelList *labelList;
+    StreamlineLabelList *labelList = nullptr;
     
     StreamlineFileSource ()
-        : labelList(NULL)
     {
         binaryStream.attach(&fileStream);
     }
@@ -129,13 +128,23 @@ public:
         binaryStream.detach();
         if (fileStream.is_open())
             fileStream.close();
+        if (labelList != nullptr)
+            delete labelList;
     }
     
     virtual void attach (const std::string &fileStem) = 0;
     virtual bool hasGrid () const { return false; }
-    virtual bool hasLabels () const { return labelList != NULL; }
     
     virtual bool more () { return (currentStreamline < totalStreamlines); }
+    
+    bool hasLabels () const { return labelList != nullptr; }
+    StreamlineLabelList * getLabels () const { return labelList; }
+    void setLabels (StreamlineLabelList *labels = nullptr)
+    {
+        if (labels != nullptr && totalStreamlines > 0 && labelList->size() != totalStreamlines)
+            throw std::runtime_error("Streamline file and label list don't match in length");
+        labelList = labels;
+    }
         
     const size_t nStreamlines () const { return totalStreamlines; }
     const std::vector<std::string> & getPropertyNames () const { return propertyNames; }

@@ -164,7 +164,7 @@ static inline bool fileExists (const std::string path)
 static StreamlineFileSource * resolveFile (SEXP _path)
 {
     std::string path = as<std::string>(_path);
-    StreamlineFileSource *result = NULL;
+    StreamlineFileSource *result = nullptr;
     
     if (fileExists(path + ".trk"))
         result = new BasicTrackvisDataSource(path);
@@ -174,6 +174,7 @@ static StreamlineFileSource * resolveFile (SEXP _path)
     if (fileExists(path + ".trkl"))
     {
         StreamlineLabelList *labelList = new StreamlineLabelList(path);
+        result->setLabels(labelList);
     }
     
     return result;
