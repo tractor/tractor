@@ -180,6 +180,27 @@ static StreamlineFileSource * resolveFile (SEXP _path)
     return result;
 }
 
+RcppExport SEXP trkOpen (SEXP _trkPath, SEXP _readLabels)
+{
+BEGIN_RCPP
+    std::string path = as<std::string>(_trkPath);
+    StreamlineFileSource *source = nullptr;
+    
+    if (fileExists(path + ".trk"))
+        result = new BasicTrackvisDataSource(path);
+    else if (fileExists(path + ".tck"))
+        result = new MrtrixDataSource(path);
+    
+    if (as<bool>(_readLabels) && fileExists(path + ".trkl"))
+    {
+        StreamlineLabelList *labelList = new StreamlineLabelList(path);
+        result->setLabels(labelList);
+    }
+    
+    return XPtr<StreamlineFileSource>(source);
+END_RCPP
+}
+
 RcppExport SEXP trkApply (SEXP _trkPath, SEXP _indices, SEXP _function)
 {
 BEGIN_RCPP

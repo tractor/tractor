@@ -45,6 +45,23 @@ public:
         }
     }
     
+    void setSubset (SEXP _elements)
+    {
+        if (Rf_isNull(_elements))
+            subset.clear();
+        else
+        {
+            DoubleVector elements(_elements);
+            if (elements.size() == 0)
+                subset.clear();
+            else
+            {
+                subset.resize(elements.size());
+                std::transform(elements.begin(), elements.end(), subset.begin(), [](double x))
+            }
+        }
+    }
+    
     void addManipulator (DataManipulator<ElementType> * const manipulator)
     {
         if (manipulator != NULL)
