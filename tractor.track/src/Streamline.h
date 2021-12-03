@@ -139,12 +139,14 @@ public:
     
     bool hasLabels () const { return labelList != nullptr; }
     StreamlineLabelList * getLabels () const { return labelList; }
-    void setLabels (StreamlineLabelList *labels = nullptr)
+    void setLabels (StreamlineLabelList *labels)
     {
         if (labels != nullptr && totalStreamlines > 0 && labelList->size() != totalStreamlines)
             throw std::runtime_error("Streamline file and label list don't match in length");
+        delete labelList;
         labelList = labels;
     }
+    void dropLabels () { delete labelList; labelList = nullptr; }
         
     const size_t nStreamlines () const { return totalStreamlines; }
     const std::vector<std::string> & getPropertyNames () const { return propertyNames; }
