@@ -9,7 +9,7 @@
 #include "BinaryStream.h"
 
 // Base class for Trackvis readers: provides common functionality
-class TrackvisDataSource : public Griddable3D, public StreamlineFileSource
+class TrackvisDataSource : public StreamlineFileSource
 {
 protected:
     int nScalars, nProperties, seedProperty;
@@ -20,7 +20,6 @@ protected:
 public:
     void attach (const std::string &fileStem);
     
-    bool hasGrid () const { return true; }
     Grid<3> getGrid3D () const { return grid; }
 };
 

@@ -56,22 +56,17 @@ public:
 class Griddable3D
 {
 public:
-    virtual Grid<3> getGrid3D () const = 0;
+    virtual Grid<3> getGrid3D () const
+    {
+        throw std::runtime_error("No image grid information is available");
+    }
 };
 
-template <class Type>
-inline Grid<3> getGrid3D (const Type &object)
-{
-    throw std::runtime_error("No image grid information is available");
-}
-
-template <>
 inline Grid<3> getGrid3D (const Griddable3D &object)
 {
     return object.getGrid3D();
 }
 
-template <>
 inline Grid<3> getGrid3D (const RNifti::NiftiImage &object)
 {
     Eigen::Array3i dims = Eigen::Array3i::Ones();

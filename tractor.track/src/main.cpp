@@ -312,7 +312,7 @@ BEGIN_RCPP
     Pipeline<Streamline> pipeline(source, source->nStreamlines());
     pipeline.setSubset(_indices);
     
-    MedianTrackvisDataSink *medianFile = new MedianTrackvisDataSink(as<std::string>(_resultPath), getGrid3D(*source), as<double>(_quantile));
+    MedianTrackvisDataSink *medianFile = new MedianTrackvisDataSink(as<std::string>(_resultPath), source->getGrid3D(), as<double>(_quantile));
     pipeline.addSink(medianFile);
     
     pipeline.run();
@@ -332,7 +332,7 @@ BEGIN_RCPP
     
     StreamlineTruncator *truncator = new StreamlineTruncator(as<double>(_leftLength), as<double>(_rightLength));
     pipeline.addManipulator(truncator);
-    BasicTrackvisDataSink *resultFile = new BasicTrackvisDataSink(as<std::string>(_resultPath), getGrid3D(*source));
+    BasicTrackvisDataSink *resultFile = new BasicTrackvisDataSink(as<std::string>(_resultPath), source->getGrid3D());
     pipeline.addSink(resultFile);
     
     pipeline.run();

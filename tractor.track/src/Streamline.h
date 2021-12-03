@@ -4,6 +4,7 @@
 #include <RcppEigen.h>
 
 #include "Space.h"
+#include "Grid.h"
 #include "DataSource.h"
 #include "BinaryStream.h"
 
@@ -108,7 +109,7 @@ public:
     size_t getOffset (const int n) { return offsetList[n]; }
 };
 
-class StreamlineFileSource : public DataSource<Streamline>
+class StreamlineFileSource : public DataSource<Streamline>, public Griddable3D
 {
 protected:
     std::ifstream fileStream;
@@ -133,7 +134,6 @@ public:
     }
     
     virtual void attach (const std::string &fileStem) = 0;
-    virtual bool hasGrid () const { return false; }
     
     virtual bool more () { return (currentStreamline < totalStreamlines); }
     
