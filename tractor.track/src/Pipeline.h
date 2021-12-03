@@ -51,13 +51,14 @@ public:
             subset.clear();
         else
         {
-            DoubleVector elements(_elements);
+            Rcpp::IntegerVector elements(_elements);
             if (elements.size() == 0)
                 subset.clear();
             else
             {
                 subset.resize(elements.size());
-                std::transform(elements.begin(), elements.end(), subset.begin(), [](double x))
+                std::transform(elements.begin(), elements.end(), subset.begin(), [](int x) { return size_t(x - 1); });
+                std::sort(subset.begin(), subset.end());
             }
         }
     }
