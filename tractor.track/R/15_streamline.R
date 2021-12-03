@@ -119,22 +119,16 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
 
 setClassUnion("ExternalPointerOrNull", c("externalptr","NULL"))
 
-StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character",selection="integer",count.="integer",labelsPtr.="ExternalPointerOrNull"), methods=list(
-    initialize = function (file = NULL, ...)
+StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character",selection="integer",count.="integer",labels.="logical", properties.="character", pointer.="ExternalPointerOrNull"), methods=list(
+    initialize = function (file = NULL, readLabels = TRUE, ...)
     {
-        assert(!is.null(file), "Streamline source file must be specified")
+        if (length(file) == 0L || file == "")
+            return (initFields(file=character(0), selection=integer(0), count.=0L, labels.=FALSE, properties.=character(0), pointer.=NULL))
         
         fileStem <- ensureFileSuffix(file, NULL, strip=c("tck","trk","trkl"))
-        if (any(file.exists(ensureFileSuffix(fileStem, c("trk","tck")))))
-            count <- as.integer(.Call("trkCount", fileStem, PACKAGE="tractor.track"))
-        else
-            report(OL$Error, "Specified streamline source file does not exist")
+        info <- .Call("trkOpen", fileStem, readLabels, PACKAGE="tractor.track")
         
-        labelsPtr <- NULL
-        if (file.exists(ensureFileSuffix(fileStem, "trkl")))
-            labelsPtr <- .Call("trkLabels", fileStem, PACKAGE="tractor.track")
-        
-        return (initFields(file=fileStem, selection=integer(0), count.=count, labelsPtr.=labelsPtr))
+        return (initFields(file=fileStem, selection=integer(0), count.=as.integer(info$count), labels.=info$labels, properties.=info$properties, pointer.=info$pointer))
     },
     
     apply = function (fun, ..., simplify = TRUE)
@@ -159,7 +153,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
             }
         }
         
-        .Call("trkApply", file, selection, .applyFunction, PACKAGE="tractor.track")
+        .Call("trkApply", pointer., selection, .applyFunction, PACKAGE="tractor.track")
         
         if (isTRUE(simplify) && n == 1)
             return (results[[1]])
@@ -170,7 +164,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     extractAndTruncate = function (leftLength, rightLength)
     {
         tempFile <- threadSafeTempFile()
-        .Call("trkTruncate", file, selection, tempFile, leftLength, rightLength, PACKAGE="tractor.track")
+        .Call("trkTruncate", pointer., selection, tempFile, leftLength, rightLength, PACKAGE="tractor.track")
         return (StreamlineSource$new(tempFile))
     },
     
@@ -178,7 +172,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     
     getLengths = function ()
     {
-        return (.Call("trkLengths", file, selection, PACKAGE="tractor.track"))
+        return (.Call("trkLengths", pointer., selection, PACKAGE="tractor.track"))
     },
     
     getMapAndLengthData = function ()
@@ -189,7 +183,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     getMedian = function (quantile = 0.99, pathOnly = FALSE)
     {
         tempFile <- threadSafeTempFile()
-        .Call("trkMedian", file, selection, tempFile, quantile, PACKAGE="tractor.track")
+        .Call("trkMedian", pointer., selection, tempFile, quantile, PACKAGE="tractor.track")
         
         if (pathOnly)
             return (tempFile)
@@ -223,7 +217,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
             report(OL$Error, "A reference image or path must be provided")
         
         resultFile <- threadSafeTempFile()
-        .Call("trkMap", file, selection, reference, scope, normalise, resultFile, PACKAGE="tractor.track")
+        .Call("trkMap", pointer., selection, reference, scope, normalise, resultFile, PACKAGE="tractor.track")
         
         return (readImageFile(resultFile))
     },
@@ -246,8 +240,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     
     summarise = function ()
     {
-        properties <- .Call("trkInfo", file, PACKAGE="tractor.track")
-        values <- c("Number of streamlines"=count., "Streamline properties"=implode(properties,sep=", "), "Auxiliary label file"=!is.null(labelsPtr.))
+        values <- c("Number of streamlines"=count., "Streamline properties"=implode(properties.,sep=", "), "Auxiliary label file"=labels.)
         return (values)
     }
 ))

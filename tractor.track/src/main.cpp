@@ -161,25 +161,6 @@ static inline bool fileExists (const std::string path)
     return std::ifstream(path.c_str()).good();
 }
 
-static StreamlineFileSource * resolveFile (SEXP _path)
-{
-    std::string path = as<std::string>(_path);
-    StreamlineFileSource *result = nullptr;
-    
-    if (fileExists(path + ".trk"))
-        result = new BasicTrackvisDataSource(path);
-    else if (fileExists(path + ".tck"))
-        result = new MrtrixDataSource(path);
-    
-    if (fileExists(path + ".trkl"))
-    {
-        StreamlineLabelList *labelList = new StreamlineLabelList(path);
-        result->setLabels(labelList);
-    }
-    
-    return result;
-}
-
 RcppExport SEXP trkOpen (SEXP _trkPath, SEXP _readLabels)
 {
 BEGIN_RCPP
@@ -187,42 +168,44 @@ BEGIN_RCPP
     StreamlineFileSource *source = nullptr;
     
     if (fileExists(path + ".trk"))
-        result = new BasicTrackvisDataSource(path);
+        source = new BasicTrackvisDataSource(path);
     else if (fileExists(path + ".tck"))
-        result = new MrtrixDataSource(path);
+        source = new MrtrixDataSource(path);
+    else
+        Rf_error("Specified streamline source file does not exist");
     
     if (as<bool>(_readLabels) && fileExists(path + ".trkl"))
     {
         StreamlineLabelList *labelList = new StreamlineLabelList(path);
-        result->setLabels(labelList);
+        source->setLabels(labelList);
     }
     
-    return XPtr<StreamlineFileSource>(source);
+    std::vector<std::string> properties = source->getPropertyNames();
+    if (properties.size() == 0)
+        properties.push_back("(none)");
+    
+    List result;
+    result["count"] = source->nStreamlines();
+    result["labels"] = source->hasLabels();
+    result["properties"] = properties;
+    result["pointer"] = XPtr<StreamlineFileSource>(source);
+    
+    return result;
 END_RCPP
 }
 
-RcppExport SEXP trkApply (SEXP _trkPath, SEXP _indices, SEXP _function)
+RcppExport SEXP trkApply (SEXP _source, SEXP _indices, SEXP _function)
 {
 BEGIN_RCPP
-    std::unique_ptr<StreamlineFileSource> trkFile(resolveFile(_trkPath));
-    Pipeline<Streamline> pipeline(trkFile.get());
-    int_vector indices = as<int_vector>(_indices);
-    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
-    pipeline.setSubset(indices);
+    XPtr<StreamlineFileSource> source(_source);
+    Pipeline<Streamline> pipeline(source);
+    pipeline.setSubset(_indices);
     Function function(_function);
     pipeline.addSink(new RCallbackDataSink(function));
     
     pipeline.run();
     
     return R_NilValue;
-END_RCPP
-}
-
-RcppExport SEXP trkCount (SEXP _trkPath)
-{
-BEGIN_RCPP
-    std::unique_ptr<StreamlineFileSource> trkFile(resolveFile(_trkPath));
-    return wrap(trkFile->nStreamlines());
 END_RCPP
 }
 
@@ -239,9 +222,7 @@ BEGIN_RCPP
     // A labelled source is used for speed, since it stores the streamline offsets for seeking
     LabelledTrackvisDataSource trkFile(as<std::string>(_trkPath), labelList);
     Pipeline<Streamline> pipeline(&trkFile);
-    int_vector indices = as<int_vector>(_indices);
-    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
-    pipeline.setSubset(indices);
+    pipeline.setSubset(_indices);
     
     int_vector dims(3);
     const Grid<3> &grid = trkFile.getGrid3D();
@@ -282,52 +263,27 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP trkInfo (SEXP _trkPath)
+RcppExport SEXP trkLengths (SEXP _source, SEXP _indices)
 {
 BEGIN_RCPP
-    std::unique_ptr<StreamlineFileSource> trkFile(resolveFile(_trkPath));
-    std::vector<std::string> properties = trkFile->getPropertyNames();
-    if (properties.size() == 0)
-        properties.push_back("(none)");
-    return wrap(properties);
-END_RCPP
-}
-
-RcppExport SEXP trkLabels (SEXP _trkPath)
-{
-BEGIN_RCPP
-    StreamlineLabelList *labelList = new StreamlineLabelList(as<std::string>(_trkPath));
-    XPtr<StreamlineLabelList> labelsPtr(labelList);
-    return labelsPtr;
-END_RCPP
-}
-
-RcppExport SEXP trkLengths (SEXP _trkPath, SEXP _indices)
-{
-BEGIN_RCPP
-    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
-    Pipeline<Streamline> pipeline(&trkFile);
-    int_vector indices = as<int_vector>(_indices);
-    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
-    pipeline.setSubset(indices);
+    XPtr<StreamlineFileSource> source(_source);
+    Pipeline<Streamline> pipeline(source);
+    pipeline.setSubset(_indices);
     
     StreamlineLengthsDataSink *sink = new StreamlineLengthsDataSink;
     pipeline.addSink(sink);
-    
     pipeline.run();
     
     return wrap(sink->getLengths());
 END_RCPP
 }
 
-RcppExport SEXP trkMap (SEXP _trkPath, SEXP _indices, SEXP _imagePath, SEXP _scope, SEXP _normalise, SEXP _resultPath)
+RcppExport SEXP trkMap (SEXP _source, SEXP _indices, SEXP _imagePath, SEXP _scope, SEXP _normalise, SEXP _resultPath)
 {
 BEGIN_RCPP
-    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
-    Pipeline<Streamline> pipeline(&trkFile);
-    int_vector indices = as<int_vector>(_indices);
-    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
-    pipeline.setSubset(indices);
+    XPtr<StreamlineFileSource> source(_source);
+    Pipeline<Streamline> pipeline(source);
+    pipeline.setSubset(_indices);
     
     const std::string scopeString = as<std::string>(_scope);
     VisitationMapDataSink::MappingScope scope = VisitationMapDataSink::FullMappingScope;
@@ -336,31 +292,27 @@ BEGIN_RCPP
     else if (scopeString == "ends")
         scope = VisitationMapDataSink::EndsMappingScope;
     
-    int_vector dims(3);
-    const Grid<3> &grid = trkFile.getGrid3D();
-    std::copy(grid.dimensions().data(), grid.dimensions().data()+3, dims.begin());
-    VisitationMapDataSink *map = new VisitationMapDataSink(dims, scope, as<bool>(_normalise));
+    RNifti::NiftiImage reference(as<std::string>(_imagePath), false);
+    VisitationMapDataSink *map = new VisitationMapDataSink(reference.dim(), scope, as<bool>(_normalise));
     pipeline.addSink(map);
     
     pipeline.run();
     
-    RNifti::NiftiImage reference(as<std::string>(_imagePath), false);
     map->writeToNifti(reference, as<std::string>(_resultPath));
     
     return R_NilValue;
 END_RCPP
 }
 
-RcppExport SEXP trkMedian (SEXP _trkPath, SEXP _indices, SEXP _resultPath, SEXP _quantile)
+RcppExport SEXP trkMedian (SEXP _source, SEXP _indices, SEXP _resultPath, SEXP _quantile)
 {
 BEGIN_RCPP
     // Block size must match number of streamlines, as a running median can't be calculated
-    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
-    Pipeline<Streamline> pipeline(&trkFile, trkFile.nStreamlines());
-    int_vector indices = as<int_vector>(_indices);
-    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
-    pipeline.setSubset(indices);
-    MedianTrackvisDataSink *medianFile = new MedianTrackvisDataSink(as<std::string>(_resultPath), trkFile.getGrid3D(), as<double>(_quantile));
+    XPtr<StreamlineFileSource> source(_source);
+    Pipeline<Streamline> pipeline(source, source->nStreamlines());
+    pipeline.setSubset(_indices);
+    
+    MedianTrackvisDataSink *medianFile = new MedianTrackvisDataSink(as<std::string>(_resultPath), getGrid3D(*source), as<double>(_quantile));
     pipeline.addSink(medianFile);
     
     pipeline.run();
@@ -369,18 +321,18 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP trkTruncate (SEXP _trkPath, SEXP _indices, SEXP _resultPath, SEXP _leftLength, SEXP _rightLength)
+RcppExport SEXP trkTruncate (SEXP _source, SEXP _indices, SEXP _resultPath, SEXP _leftLength, SEXP _rightLength)
 {
 BEGIN_RCPP
-    // BasicTrackvisDataSource does not read labels, but when truncating they may not be preserved anyway
-    BasicTrackvisDataSource trkFile(as<std::string>(_trkPath));
-    Pipeline<Streamline> pipeline(&trkFile);
-    int_vector indices = as<int_vector>(_indices);
-    std::transform(indices.begin(), indices.end(), indices.begin(), decrement<int,int>);
-    pipeline.setSubset(indices);
+    // Truncating streamlines may invalidate labels, so drop them
+    XPtr<StreamlineFileSource> source(_source);
+    source->dropLabels();
+    Pipeline<Streamline> pipeline(source);
+    pipeline.setSubset(_indices);
+    
     StreamlineTruncator *truncator = new StreamlineTruncator(as<double>(_leftLength), as<double>(_rightLength));
     pipeline.addManipulator(truncator);
-    BasicTrackvisDataSink *resultFile = new BasicTrackvisDataSink(as<std::string>(_resultPath), trkFile.getGrid3D());
+    BasicTrackvisDataSink *resultFile = new BasicTrackvisDataSink(as<std::string>(_resultPath), getGrid3D(*source));
     pipeline.addSink(resultFile);
     
     pipeline.run();
@@ -402,8 +354,7 @@ END_RCPP
 RcppExport SEXP trkAppend (SEXP _sink, SEXP _points, SEXP _seedIndex, SEXP _pointType, SEXP _fixedSpacing)
 {
 BEGIN_RCPP
-    XPtr<BasicTrackvisDataSink> sinkPtr(_sink);
-    BasicTrackvisDataSink *sink = sinkPtr;
+    XPtr<BasicTrackvisDataSink> sink(_sink);
     
     Rcpp::NumericMatrix pointsR(_points);
     const Streamline::PointType pointType = (as<std::string>(_pointType) == "mm" ? Streamline::WorldPointType : Streamline::VoxelPointType);
@@ -440,10 +391,9 @@ END_RCPP
 RcppExport SEXP trkClose (SEXP _sink)
 {
 BEGIN_RCPP
-    XPtr<BasicTrackvisDataSink> sinkPtr(_sink);
-    BasicTrackvisDataSink *sink = sinkPtr;
+    XPtr<BasicTrackvisDataSink> sink(_sink);
     sink->done();
-    sinkPtr.release();
+    sink.release();
     return R_NilValue;
 END_RCPP
 }
