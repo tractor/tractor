@@ -15,7 +15,8 @@ size_t Pipeline<ElementType>::run ()
     if (source == NULL)
         return 0;
     
-    // Empty the working set
+    // Otherwise set up the source and empty the working set
+    source->setup();
     workingSet.clear();
     
     while (source->more() && !subsetFinished)
@@ -89,6 +90,7 @@ size_t Pipeline<ElementType>::run ()
     
     for (int i=0; i<sinks.size(); i++)
         sinks[i]->done();
+    source->done();
     
     return total;
 }

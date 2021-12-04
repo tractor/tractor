@@ -5,10 +5,13 @@
 template <class ElementType> class DataSource
 {
 public:
+    // The setup() function is called before the pipeline starts, more() is used to check if more elements are available, get() retrieves an element, seek() moves to the nth element if seekable() returns true to say seeking is allowed, and done() is called after the pipeline finishes
+    virtual void setup () {}
     virtual bool more () { return false; }
     virtual void get (ElementType &data) {}
     virtual void seek (const int n) {}
     virtual bool seekable () { return false; }
+    virtual void done () {}
 };
 
 // Data sink: responsible for exporting or writing data elements
@@ -21,6 +24,7 @@ protected:
 public:
     virtual ~DataSink () {}
     
+    // The setup() function is called at the start of each block and provides a preview of the data, put() is called once per element, finish() is called after each block, and done() is called after all blocks are finished
     virtual void setup (const size_type &count, const_iterator begin, const_iterator end) {}
     virtual void put (const ElementType &data) {}
     virtual void finish () {}
