@@ -85,10 +85,11 @@ void TrackvisDataSource::readStreamline (Streamline &data)
     currentStreamline++;
 }
 
-void TrackvisDataSource::attach (const std::string &fileStem)
+void TrackvisDataSource::setup ()
 {
+    // If the file is already open, we assume the setup is done
     if (fileStream.is_open())
-        fileStream.close();
+        return;
     
     fileStream.open((fileStem + ".trk").c_str(), ios::binary);
     
@@ -132,109 +133,27 @@ void TrackvisDataSource::attach (const std::string &fileStem)
     currentStreamline = 0;
 }
 
-void LabelledTrackvisDataSource::attach (const std::string &fileStem)
-{
-    TrackvisDataSource::attach(fileStem);
-    if (!externalLabelList)
-        labelList = new StreamlineLabelList(fileStem);
-    if (labelList->size() != totalStreamlines)
-        throw runtime_error("Number of streamlines in .trk and .trkl files do not match");
-}
-
-void LabelledTrackvisDataSource::get (Streamline &data)
+void TrackvisDataSource::get (Streamline &data)
 {
     // This increments currentStreamline, so we subtract 1 below
     readStreamline(data);
-    data.setLabels(labelList->getLabels(currentStreamline-1));
+    if (hasLabels())
+        data.setLabels(labelList->getLabels(currentStreamline-1));
 }
 
-void MedianTrackvisDataSource::get (Streamline &data)
+void TrackvisDataSource::seek (const int n)
 {
-    if (seedProperty < 0)
-        throw runtime_error("A meaningful median can't be recovered without knowing seed indices");
-    
-    const Eigen::Array3f voxelDims = grid.spacings();
-    vector<int> leftLengths(totalStreamlines), rightLengths(totalStreamlines);
-    
-    // First pass: find lengths
-    for (size_t i=0; i<totalStreamlines; i++)
+    if (hasLabels())
     {
-        const int32_t nPoints = binaryStream.readValue<int32_t>();
-        fileStream.seekg(4 * (nPoints*(3+nScalars) + seedProperty), ios::cur);
-        leftLengths[i] = static_cast<int>(binaryStream.readValue<float>()) + 1;
-        rightLengths[i] = nPoints - leftLengths[i] + 1;
-        fileStream.seekg(4 * (nProperties-seedProperty-1), ios::cur);
+        fileStream.seekg(labelList->getOffset(n));
+        currentStreamline = n;
+        return;
     }
-    
-    const int lengthIndex = static_cast<int>(floor((totalStreamlines-1) * quantile));
-    const int leftLength = getNthElement(leftLengths, lengthIndex);
-    const int rightLength = getNthElement(rightLengths, lengthIndex);
-    
-    // Second pass: left points
-    vector<Space<3>::Point> leftPoints(leftLength);
-    for (int j=0; j<leftLength; j++)
+    else if (n < currentStreamline)
     {
-        vector<float> x, y, z;
-        fileStream.seekg(1000);
-        
-        for (size_t i=0; i<totalStreamlines; i++)
-        {
-            // Skip over this streamline if it is too short
-            if (leftLengths[i] <= j)
-                fileStream.seekg(4 * (1 + (leftLengths[i]+rightLengths[i]-1)*(3+nScalars) + nProperties), ios::cur);
-            else
-            {
-                fileStream.seekg(4 * (1 + (leftLengths[i]-1-j)*(3+nScalars)), ios::cur);
-                x.push_back(binaryStream.readValue<float>());
-                y.push_back(binaryStream.readValue<float>());
-                z.push_back(binaryStream.readValue<float>());
-                fileStream.seekg(4 * (nScalars + (j+rightLengths[i]-1)*(3+nScalars) + nProperties), ios::cur);
-            }
-        }
-        
-        const int medianIndex = static_cast<int>(round(x.size()/2.0));
-        leftPoints[j][0] = getNthElement(x, medianIndex) / voxelDims[0] - 0.5;
-        leftPoints[j][1] = getNthElement(y, medianIndex) / voxelDims[1] - 0.5;
-        leftPoints[j][2] = getNthElement(z, medianIndex) / voxelDims[2] - 0.5;
-    }
-    
-    // Third pass: right points
-    vector<Space<3>::Point> rightPoints(rightLength);
-    for (int j=0; j<rightLength; j++)
-    {
-        vector<float> x, y, z;
-        fileStream.seekg(1000);
-        
-        for (size_t i=0; i<totalStreamlines; i++)
-        {
-            // Skip over this streamline if it is too short
-            if (rightLengths[i] <= j)
-                fileStream.seekg(4 * (1 + (leftLengths[i]+rightLengths[i]-1)*(3+nScalars) + nProperties), ios::cur);
-            else
-            {
-                fileStream.seekg(4 * (1 + (leftLengths[i]+j-1)*(3+nScalars)), ios::cur);
-                x.push_back(binaryStream.readValue<float>());
-                y.push_back(binaryStream.readValue<float>());
-                z.push_back(binaryStream.readValue<float>());
-                fileStream.seekg(4 * (nScalars + (rightLengths[i]-j-1)*(3+nScalars) + nProperties), ios::cur);
-            }
-        }
-        
-        const int medianIndex = static_cast<int>(round(x.size()/2.0));
-        rightPoints[j][0] = getNthElement(x, medianIndex) / voxelDims[0] - 0.5;
-        rightPoints[j][1] = getNthElement(y, medianIndex) / voxelDims[1] - 0.5;
-        rightPoints[j][2] = getNthElement(z, medianIndex) / voxelDims[2] - 0.5;
-    }
-    
-    data = Streamline(leftPoints, rightPoints, Streamline::VoxelPointType, voxelDims, false);
-    
-    read = true;
-}
-
-void BasicTrackvisDataSource::seek (const int n)
-{
-    if (n < currentStreamline)
+        // FIXME: This is perfectly possible, by rewinding the file pointer first
         throw std::runtime_error("Cannot seek backwards");
+    }
     
     while (currentStreamline < n)
     {
@@ -242,12 +161,6 @@ void BasicTrackvisDataSource::seek (const int n)
         fileStream.seekg(4 * ((3+nScalars) * nPoints + nProperties), ios::cur);
         currentStreamline++;
     }
-}
-
-void LabelledTrackvisDataSource::seek (const int n)
-{
-    fileStream.seekg(labelList->getOffset(n));
-    currentStreamline = n;
 }
 
 void TrackvisDataSink::writeStreamline (const Streamline &data)

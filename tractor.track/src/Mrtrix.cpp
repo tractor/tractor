@@ -39,10 +39,10 @@ void MrtrixDataSource::readStreamline (Streamline &data)
     currentStreamline++;
 }
 
-void MrtrixDataSource::attach (const std::string &fileStem)
+void MrtrixDataSource::setup ()
 {
     if (fileStream.is_open())
-        fileStream.close();
+        return;
     
     fileStream.open((fileStem + ".tck").c_str(), ios::binary);
     const std::string magic = binaryStream.readString("\n");

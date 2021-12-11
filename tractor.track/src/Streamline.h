@@ -112,6 +112,7 @@ public:
 class StreamlineFileSource : public DataSource<Streamline>, public Griddable3D
 {
 protected:
+    std::string fileStem;
     std::ifstream fileStream;
     BinaryInputStream binaryStream;
     size_t totalStreamlines = 0, currentStreamline = 0;
@@ -124,18 +125,25 @@ protected:
     }
     
 public:
-    virtual ~StreamlineFileSource ()
+    StreamlineFileSource (const std::string &fileStem)
+        : fileStem(fileStem)
     {
-        binaryStream.detach();
-        if (fileStream.is_open())
-            fileStream.close();
-        if (labelList != nullptr)
-            delete labelList;
+        binaryStream.attach(&fileStream);
     }
     
-    virtual void attach (const std::string &fileStem) = 0;
+    virtual ~StreamlineFileSource ()
+    {
+        done();
+        binaryStream.detach();
+        delete labelList;
+    }
     
     virtual bool more () { return (currentStreamline < totalStreamlines); }
+    virtual void done ()
+    {
+        if (fileStream.is_open())
+            fileStream.close();
+    }
     
     bool hasLabels () const { return labelList != nullptr; }
     StreamlineLabelList * getLabels () const { return labelList; }

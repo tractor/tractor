@@ -8,7 +8,6 @@
 #include "DataSource.h"
 #include "BinaryStream.h"
 
-// Base class for Trackvis readers: provides common functionality
 class TrackvisDataSource : public StreamlineFileSource
 {
 protected:
@@ -18,81 +17,14 @@ protected:
     void readStreamline (Streamline &data);
     
 public:
-    void attach (const std::string &fileStem);
+    using StreamlineFileSource::StreamlineFileSource;
+        
+    void setup ();
+    void get (Streamline &data);
+    void seek (const int n);
+    bool seekable () { return true; }
     
     Grid<3> getGrid3D () const { return grid; }
-};
-
-// Basic Trackvis reader: read all streamlines, including seed property
-class BasicTrackvisDataSource : public TrackvisDataSource
-{
-public:
-    BasicTrackvisDataSource (const std::string &fileStem)
-    {
-        attach(fileStem);
-    }
-    
-    void get (Streamline &data) { readStreamline(data); }
-    void seek (const int n);
-    bool seekable () { return true; }
-};
-
-// Labelled Trackvis reader: also read auxiliary file containing label info
-class LabelledTrackvisDataSource : public TrackvisDataSource
-{
-protected:
-    std::ifstream auxFileStream;
-    BinaryInputStream auxBinaryStream;
-    bool externalLabelList;
-    
-public:
-    LabelledTrackvisDataSource ()
-    {
-        auxBinaryStream.attach(&auxFileStream);
-    }
-    
-    LabelledTrackvisDataSource (const std::string &fileStem, StreamlineLabelList *labelList = NULL)
-    {
-        auxBinaryStream.attach(&auxFileStream);
-        labelList = labelList;
-        this->externalLabelList = (labelList != NULL);
-        attach(fileStem);
-    }
-    
-    ~LabelledTrackvisDataSource ()
-    {
-        auxBinaryStream.detach();
-        if (auxFileStream.is_open())
-            auxFileStream.close();
-        if (!externalLabelList)
-            delete labelList;
-    }
-    
-    void attach (const std::string &fileStem);
-    void get (Streamline &data);
-    void seek (const int n);
-    bool seekable () { return true; }
-};
-
-// Median Trackvis reader: construct and return median streamline only
-class MedianTrackvisDataSource : public TrackvisDataSource
-{
-protected:
-    bool read;
-    double quantile;
-    
-public:
-    MedianTrackvisDataSource ()
-        : read(false) {}
-    
-    MedianTrackvisDataSource (const std::string &fileStem, const double quantile = 0.99)
-        : quantile(quantile), read(false)
-    {
-        attach(fileStem);
-    }
-    
-    bool more () { return (!read); }
-    void get (Streamline &data);
 };
 
 class TrackvisDataSink : public Griddable3D, public DataSink<Streamline>

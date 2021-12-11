@@ -16,13 +16,9 @@ protected:
     void readStreamline (Streamline &data);
     
 public:
-    MrtrixDataSource (const std::string &fileStem)
-    {
-        attach(fileStem);
-    }
+    using StreamlineFileSource::StreamlineFileSource;
     
-    void attach (const std::string &fileStem);
-    
+    void setup ();
     void get (Streamline &data) { readStreamline(data); }
 };
 
