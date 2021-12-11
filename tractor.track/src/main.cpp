@@ -168,7 +168,7 @@ BEGIN_RCPP
     StreamlineFileSource *source = nullptr;
     
     if (fileExists(path + ".trk"))
-        source = new BasicTrackvisDataSource(path);
+        source = new TrackvisDataSource(path);
     else if (fileExists(path + ".tck"))
         source = new MrtrixDataSource(path);
     else
@@ -179,6 +179,9 @@ BEGIN_RCPP
         StreamlineLabelList *labelList = new StreamlineLabelList(path);
         source->setLabels(labelList);
     }
+    
+    // Open the file and read the relevant metadata
+    source->setup();
     
     std::vector<std::string> properties = source->getPropertyNames();
     if (properties.size() == 0)
