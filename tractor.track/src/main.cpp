@@ -212,23 +212,15 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP trkFastMapAndLengths (SEXP _trkPath, SEXP _indices, SEXP _pointer)
+RcppExport SEXP trkFastMapAndLengths (SEXP _source, SEXP _indices)
 {
 BEGIN_RCPP
-    StreamlineLabelList *labelList = NULL;
-    if (!Rf_isNull(_pointer))
-    {
-        XPtr<StreamlineLabelList> labelsPtr(_pointer);
-        labelList = labelsPtr;
-    }
-    
-    // A labelled source is used for speed, since it stores the streamline offsets for seeking
-    LabelledTrackvisDataSource trkFile(as<std::string>(_trkPath), labelList);
-    Pipeline<Streamline> pipeline(&trkFile);
+    XPtr<StreamlineFileSource> source(_source);
+    Pipeline<Streamline> pipeline(source);
     pipeline.setSubset(_indices);
     
     int_vector dims(3);
-    const Grid<3> &grid = trkFile.getGrid3D();
+    const Grid<3> &grid = source->getGrid3D();
     std::copy(grid.dimensions().data(), grid.dimensions().data()+3, dims.begin());
     VisitationMapDataSink *map = new VisitationMapDataSink(dims);
     pipeline.addSink(map);
@@ -246,21 +238,15 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP trkFind (SEXP _trkPath, SEXP _labels, SEXP _pointer)
+RcppExport SEXP trkFind (SEXP _source, SEXP _labels)
 {
 BEGIN_RCPP
-    std::vector<int> indices;
-    if (Rf_isNull(_pointer))
-    {
-        StreamlineLabelList labelList(as<std::string>(_trkPath));
-        indices = labelList.find(as<int_vector>(_labels));
-    }
-    else
-    {
-        XPtr<StreamlineLabelList> labelsPtr(_pointer);
-        StreamlineLabelList *labelList = labelsPtr;
-        indices = labelList->find(as<int_vector>(_labels));
-    }
+    XPtr<StreamlineFileSource> source(_source);
+    
+    if (!source->hasLabels())
+        Rf_error("Streamline source has no label information");
+    
+    std::vector<int> indices = source->getLabels()->find(as<int_vector>(_labels));
     std::transform(indices.begin(), indices.end(), indices.begin(), increment<int,int>);
     return wrap(indices);
 END_RCPP

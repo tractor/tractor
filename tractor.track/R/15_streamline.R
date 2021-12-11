@@ -177,7 +177,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     
     getMapAndLengthData = function ()
     {
-        return (.Call("trkFastMapAndLengths", file, selection, labelsPtr., PACKAGE="tractor.track"))
+        return (.Call("trkFastMapAndLengths", pointer., selection, PACKAGE="tractor.track"))
     },
     
     getMedian = function (quantile = 0.99, pathOnly = FALSE)
@@ -231,7 +231,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         else
         {
             if (is.null(indices))
-                indices <- .Call("trkFind", file, as.integer(labels), labelsPtr., PACKAGE="tractor.track")
+                indices <- .Call("trkFind", pointer., as.integer(labels), PACKAGE="tractor.track")
             .self$selection <- as.integer(indices)
         }
         
