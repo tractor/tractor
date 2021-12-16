@@ -396,8 +396,7 @@ BEGIN_RCPP
     
     MrtrixDataSource tckFile(path);
     Pipeline<Streamline> pipeline(&tckFile);
-    BasicTrackvisDataSink trkFile(path, grid);
-    pipeline.addSink(&trkFile);
+    pipeline.addSink(new BasicTrackvisDataSink(path, grid));
     
     pipeline.run();
     
