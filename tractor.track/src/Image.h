@@ -2,6 +2,7 @@
 #define _IMAGE_H_
 
 #include "RNifti.h"
+#include <array>
 
 struct ImageSpace
 {
@@ -19,9 +20,9 @@ struct ImageSpace
     PixdimVector pixdim;
     Transform transform;
     
-    static constexpr Vector zeroVector ()
+    static Vector zeroVector ()
     {
-        return Vector(0);
+        return Vector(0.0);
     }
     
     static bool zeroVector (const Vector &vector)
@@ -64,7 +65,7 @@ protected:
     {
         const Indexer<N-1> child;
         
-        size_t flatten (const ArrayIndex &loc) const
+        size_t flatten (const ArrayIndex &loc, const ArrayIndex &strides) const
         {
             return strides[N-1] * loc[N-1] + child.flatten(loc);
         }
@@ -73,8 +74,8 @@ protected:
     template<>
     struct Indexer<1>
     {
-        size_t flatten (const ArrayIndex &loc) const { return loc[0]; }
-    }
+        size_t flatten (const ArrayIndex &loc, const ArrayIndex &strides) const { return loc[0]; }
+    };
     
     Indexer<Dimensionality> indexer;
     ImageSpace *space = nullptr;
@@ -131,18 +132,18 @@ public:
     size_t size () const { return data_.size(); }
     void fill (const Element &value) { data_.assign(data_.size(), value); }
     
-    std::vector<Element>::iterator begin () { return data_.begin(); }
-    std::vector<Element>::iterator end () { return data_.end(); }
-    std::vector<Element>::const_iterator begin () const { return data_.begin(); }
-    std::vector<Element>::const_iterator end () const { return data_.end(); }
+    typename std::vector<Element>::iterator begin () { return data_.begin(); }
+    typename std::vector<Element>::iterator end () { return data_.end(); }
+    typename std::vector<Element>::const_iterator begin () const { return data_.begin(); }
+    typename std::vector<Element>::const_iterator end () const { return data_.end(); }
     
     Element & operator[] (const size_t n) { return data_[n]; }
-    Element & operator[] (const ArrayIndex &loc) { return data_[indexer.flatten(loc)]; }
+    Element & operator[] (const ArrayIndex &loc) { return data_[indexer.flatten(loc, strides)]; }
     
     const Element & operator[] (const size_t n) const { return data_[n]; }
-    const Element & operator[] (const ArrayIndex &loc) const { return data_[indexer.flatten(loc)]; }
+    const Element & operator[] (const ArrayIndex &loc) const { return data_[indexer.flatten(loc, strides)]; }
     
-    void flattenIndex (const ArrayIndex &loc, size_t &result) const { result = indexer.flatten(loc); }
+    void flattenIndex (const ArrayIndex &loc, size_t &result) const { result = indexer.flatten(loc, strides); }
 };
 
 #endif
