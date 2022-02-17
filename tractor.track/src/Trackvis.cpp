@@ -49,11 +49,11 @@ void TrackvisDataSource::readStreamline (Streamline &data)
     int32_t nPoints = binaryStream.readValue<int32_t>();
     if (nPoints > 0)
     {
-        vector<Space<3>::Point> points;
+        vector<ImageSpace::Point> points;
         int seed = 0;
         for (int32_t i=0; i<nPoints; i++)
         {
-            Space<3>::Point point;
+            ImageSpace::Point point;
             binaryStream.readVector<float>(point, 3);
             // TrackVis indexes from the left edge of each voxel
             points.push_back(point / grid.spacings() - 0.5);
@@ -70,8 +70,8 @@ void TrackvisDataSource::readStreamline (Streamline &data)
         if (nProperties > 0)
             fileStream.seekg(4 * (nProperties-seedProperty-1), ios::cur);
         
-        data = Streamline(vector<Space<3>::Point>(points.rend()-seed-1, points.rend()),
-                          vector<Space<3>::Point>(points.begin()+seed, points.end()),
+        data = Streamline(vector<ImageSpace::Point>(points.rend()-seed-1, points.rend()),
+                          vector<ImageSpace::Point>(points.begin()+seed, points.end()),
                           Streamline::VoxelPointType,
                           grid.spacings(),
                           false);
@@ -332,7 +332,7 @@ void MedianTrackvisDataSink::setup (const size_type &count, const_iterator begin
     const int rightLength = getNthElement(rightLengths, lengthIndex);
     
     // Second pass: left points
-    vector<Space<3>::Point> leftPoints(leftLength);
+    vector<ImageSpace::Point> leftPoints(leftLength);
     for (int j=0; j<leftLength; j++)
     {
         vector<float> x, y, z;
@@ -342,7 +342,7 @@ void MedianTrackvisDataSink::setup (const size_type &count, const_iterator begin
             // Skip over this streamline if it is too short
             if (leftLengths[i] > j)
             {
-                const Space<3>::Point point = it->getLeftPoints()[j];
+                const ImageSpace::Point point = it->getLeftPoints()[j];
                 x.push_back(point[0]);
                 y.push_back(point[1]);
                 z.push_back(point[2]);
@@ -356,7 +356,7 @@ void MedianTrackvisDataSink::setup (const size_type &count, const_iterator begin
     }
     
     // Third pass: right points
-    vector<Space<3>::Point> rightPoints(rightLength);
+    vector<ImageSpace::Point> rightPoints(rightLength);
     for (int j=0; j<rightLength; j++)
     {
         vector<float> x, y, z;
@@ -366,7 +366,7 @@ void MedianTrackvisDataSink::setup (const size_type &count, const_iterator begin
             // Skip over this streamline if it is too short
             if (rightLengths[i] > j)
             {
-                const Space<3>::Point point = it->getRightPoints()[j];
+                const ImageSpace::Point point = it->getRightPoints()[j];
                 x.push_back(point[0]);
                 y.push_back(point[1]);
                 z.push_back(point[2]);

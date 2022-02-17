@@ -1,7 +1,7 @@
 #include <RcppEigen.h>
 
-#include "Space.h"
 #include "RNifti.h"
+#include "Image.h"
 #include "Streamline.h"
 #include "DiffusionModel.h"
 #include "Tracker.h"
@@ -55,7 +55,7 @@ RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SE
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
     DiffusionModel *model = modelPtr;
-    const Grid<3> &grid = model->getGrid3D();
+    const ImageSpace &grid = model->getGrid3D();
     const std::string gridOrientation = grid3DOrientation(grid);
     
     Tracker tracker(model);
@@ -71,9 +71,9 @@ BEGIN_RCPP
     flags["terminate-targets"] = as<bool>(_terminateAtTargets);
     tracker.setFlags(flags);
     
-    Space<3>::Vector rightwardsVector;
+    ImageSpace::Vector rightwardsVector;
     if (Rf_isNull(_rightwardsVector))
-        rightwardsVector = Space<3>::zeroVector();
+        rightwardsVector = ImageSpace::zeroVector();
     else
         rightwardsVector = as<Eigen::VectorXf>(_rightwardsVector);
     tracker.setRightwardsVector(rightwardsVector);
@@ -220,7 +220,7 @@ BEGIN_RCPP
     pipeline.setSubset(_indices);
     
     int_vector dims(3);
-    const Grid<3> &grid = source->getGrid3D();
+    const ImageSpace &grid = source->getGrid3D();
     std::copy(grid.dimensions().data(), grid.dimensions().data()+3, dims.begin());
     VisitationMapDataSink *map = new VisitationMapDataSink(dims);
     pipeline.addSink(map);
@@ -230,7 +230,7 @@ BEGIN_RCPP
     
     pipeline.run();
     
-    const Array<double> &array = map->getArray();
+    const Image<double> &array = map->getArray();
     NumericVector arrayR = wrap(array.getData());
     arrayR.attr("dim") = array.getDimensions();
     List result = List::create(Named("map")=arrayR, Named("lengths")=lengths->getLengths());
@@ -349,10 +349,10 @@ BEGIN_RCPP
     const Streamline::PointType pointType = (as<std::string>(_pointType) == "mm" ? Streamline::WorldPointType : Streamline::VoxelPointType);
     const int seedIndex = as<int>(_seedIndex) - 1;
     
-    std::vector<Space<3>::Point> leftPoints(seedIndex+1), rightPoints(pointsR.rows()-seedIndex);
+    std::vector<ImageSpace::Point> leftPoints(seedIndex+1), rightPoints(pointsR.rows()-seedIndex);
     for (int i=seedIndex; i>=0; i--)
     {
-        Space<3>::Point point;
+        ImageSpace::Point point;
         point[0] = pointsR(i,0) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
         point[1] = pointsR(i,1) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
         point[2] = pointsR(i,2) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
@@ -360,7 +360,7 @@ BEGIN_RCPP
     }
     for (int i=seedIndex; i<pointsR.rows(); i++)
     {
-        Space<3>::Point point;
+        ImageSpace::Point point;
         point[0] = pointsR(i,0) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
         point[1] = pointsR(i,1) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
         point[2] = pointsR(i,2) - (pointType == Streamline::VoxelPointType ? 1.0 : 0.0);
@@ -392,7 +392,7 @@ RcppExport SEXP tck2trk (SEXP _tckPath, SEXP _image)
 BEGIN_RCPP
     const std::string path = as<std::string>(_tckPath);
     RNifti::NiftiImage image(_image, false);
-    const Grid<3> grid = getGrid3D(image);
+    const ImageSpace grid = getGrid3D(image);
     
     MrtrixDataSource tckFile(path);
     Pipeline<Streamline> pipeline(&tckFile);

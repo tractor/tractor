@@ -14,7 +14,7 @@ struct divider
     double operator() (double x) { return x/divisor; }
 };
 
-inline void checkAndSetPoint (Array<bool> &visited, Array<double> &values, const Space<3>::Point &point)
+inline void checkAndSetPoint (Image<bool> &visited, Image<double> &values, const ImageSpace::Point &point)
 {
     static std::vector<int> loc(3);
     size_t index;
@@ -37,10 +37,10 @@ void VisitationMapDataSink::setup (const size_type &count, const_iterator begin,
 
 void VisitationMapDataSink::put (const Streamline &data)
 {
-    Array<bool> visited(values.getDimensions(), false);
+    Image<bool> visited(values.getDimensions(), false);
     
-    const std::vector<Space<3>::Point> &leftPoints = data.getLeftPoints();
-    const std::vector<Space<3>::Point> &rightPoints = data.getRightPoints();
+    const std::vector<ImageSpace::Point> &leftPoints = data.getLeftPoints();
+    const std::vector<ImageSpace::Point> &rightPoints = data.getRightPoints();
     
     switch (scope)
     {

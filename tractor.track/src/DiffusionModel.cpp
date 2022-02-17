@@ -1,10 +1,9 @@
 #include <RcppEigen.h>
 
-#include "Space.h"
-#include "Grid.h"
+#include "Image.h"
 #include "DiffusionModel.h"
 
-std::vector<int> DiffusionModel::probabilisticRound (const Space<3>::Point &point, const int size) const
+std::vector<int> DiffusionModel::probabilisticRound (const ImageSpace::Point &point, const int size) const
 {
     std::vector<int> result(size, 0);
     const Eigen::Array3i imageDims = grid.dimensions();
@@ -37,13 +36,13 @@ DiffusionTensorModel::DiffusionTensorModel (const std::string &pdFile)
     
     image.reorient("LAS");
     grid = ::getGrid3D(image);
-    principalDirections = getImageArray<float>(image);
+    principalDirections = getImageImage<float>(image);
 }
 
-Space<3>::Vector DiffusionTensorModel::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
+ImageSpace::Vector DiffusionTensorModel::sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const
 {
     std::vector<int> roundedPoint = probabilisticRound(point, 4);
-    Space<3>::Vector stepVector;
+    ImageSpace::Vector stepVector;
     
     for (int i=0; i<3; i++)
     {
@@ -71,9 +70,9 @@ BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std:
     
     for (int i=0; i<nCompartments; i++)
     {
-        avf[i] = getImageArray<float>(RNifti::NiftiImage(avfFiles[i]).reorient("LAS"));
-        theta[i] = getImageArray<float>(RNifti::NiftiImage(thetaFiles[i]).reorient("LAS"));
-        phi[i] = getImageArray<float>(RNifti::NiftiImage(phiFiles[i]).reorient("LAS"));
+        avf[i] = getImageImage<float>(RNifti::NiftiImage(avfFiles[i]).reorient("LAS"));
+        theta[i] = getImageImage<float>(RNifti::NiftiImage(thetaFiles[i]).reorient("LAS"));
+        phi[i] = getImageImage<float>(RNifti::NiftiImage(phiFiles[i]).reorient("LAS"));
     }
     
     const std::vector<int> &avfDims = avf[0]->getDimensions();
@@ -82,7 +81,7 @@ BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std:
     nSamples = avfDims[3];
 }
 
-Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
+ImageSpace::Vector BedpostModel::sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const
 {
     std::vector<int> roundedPoint = probabilisticRound(point, 4);
     
@@ -98,15 +97,15 @@ Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, co
         float currentAvfSample = (*avf[i])[roundedPoint];
         if (i == 0 || currentAvfSample >= avfThreshold)
         {
-            Space<3>::Vector sphericalCoordsStep;
+            ImageSpace::Vector sphericalCoordsStep;
             sphericalCoordsStep[0] = 1.0;
             sphericalCoordsStep[1] = (*theta[i])[roundedPoint];
             sphericalCoordsStep[2] = (*phi[i])[roundedPoint];
-            Space<3>::Vector stepVector = Space<3>::sphericalToCartesian(sphericalCoordsStep);
+            ImageSpace::Vector stepVector = ImageSpace::sphericalToCartesian(sphericalCoordsStep);
             
             // Use AVF to choose population on first step
             float innerProd;
-            if (Space<3>::zeroVector(referenceDirection))
+            if (ImageSpace::zeroVector(referenceDirection))
                 innerProd = currentAvfSample;
             else
                 innerProd = static_cast<float>(fabs(stepVector.dot(referenceDirection)));
@@ -120,15 +119,15 @@ Space<3>::Vector BedpostModel::sampleDirection (const Space<3>::Point &point, co
         }
     }
     
-    Space<3>::Vector sphericalCoordsStep;
+    ImageSpace::Vector sphericalCoordsStep;
     sphericalCoordsStep[0] = 1.0;
     sphericalCoordsStep[1] = (*theta[closestIndex])[roundedPoint];
     sphericalCoordsStep[2] = (*phi[closestIndex])[roundedPoint];
     
-    Space<3>::Vector stepVector;
+    ImageSpace::Vector stepVector;
     if (sphericalCoordsStep[1] == 0.0 && sphericalCoordsStep[2] == 0.0)
-        stepVector = Space<3>::zeroVector();
+        stepVector = ImageSpace::zeroVector();
     else
-        stepVector = Space<3>::sphericalToCartesian(sphericalCoordsStep);
+        stepVector = ImageSpace::sphericalToCartesian(sphericalCoordsStep);
     return stepVector;
 }

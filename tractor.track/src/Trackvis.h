@@ -12,7 +12,7 @@ class TrackvisDataSource : public StreamlineFileSource
 {
 protected:
     int nScalars, nProperties, seedProperty;
-    Grid<3> grid;
+    ImageSpace grid;
     
     void readStreamline (Streamline &data);
     
@@ -24,7 +24,7 @@ public:
     void seek (const int n);
     bool seekable () { return true; }
     
-    Grid<3> getGrid3D () const { return grid; }
+    ImageSpace getGrid3D () const { return grid; }
 };
 
 class TrackvisDataSink : public Griddable3D, public DataSink<Streamline>
@@ -33,7 +33,7 @@ protected:
     std::fstream fileStream;
     BinaryOutputStream binaryStream;
     size_t totalStreamlines;
-    Grid<3> grid;
+    ImageSpace grid;
     bool append;
     
     TrackvisDataSink ()
@@ -49,7 +49,7 @@ protected:
         attach(fileStem);
     }
     
-    TrackvisDataSink (const std::string &fileStem, const Grid<3> &grid, const bool append = false)
+    TrackvisDataSink (const std::string &fileStem, const ImageSpace &grid, const bool append = false)
         : grid(grid), append(append)
     {
         binaryStream.attach(&fileStream);
@@ -83,7 +83,7 @@ public:
     virtual void attach (const std::string &fileStem);
     void setup (const size_type &count, const_iterator begin, const_iterator end);
     void done ();
-    Grid<3> getGrid3D () const { return grid; }
+    ImageSpace getGrid3D () const { return grid; }
 };
 
 class BasicTrackvisDataSink : public TrackvisDataSink
@@ -92,7 +92,7 @@ public:
     BasicTrackvisDataSink (const std::string &fileStem, const bool append = false)
         : TrackvisDataSink(fileStem,append) {}
     
-    BasicTrackvisDataSink (const std::string &fileStem, const Grid<3> &grid, const bool append = false)
+    BasicTrackvisDataSink (const std::string &fileStem, const ImageSpace &grid, const bool append = false)
         : TrackvisDataSink(fileStem,grid,append) {}
     
     void put (const Streamline &data) { writeStreamline(data); }
@@ -117,7 +117,7 @@ public:
     }
     
     // Don't call base class constructor explicitly here
-    LabelledTrackvisDataSink (const std::string &fileStem, const Grid<3> &grid, const std::map<int,std::string> labelDictionary)
+    LabelledTrackvisDataSink (const std::string &fileStem, const ImageSpace &grid, const std::map<int,std::string> labelDictionary)
         : labelDictionary(labelDictionary)
     {
         this->grid = grid;
@@ -144,7 +144,7 @@ protected:
     Streamline median;
     
 public:
-    MedianTrackvisDataSink (const std::string &fileStem, const Grid<3> &grid, const double quantile = 0.99)
+    MedianTrackvisDataSink (const std::string &fileStem, const ImageSpace &grid, const double quantile = 0.99)
         : TrackvisDataSink(fileStem,grid), quantile(quantile) {}
     
     void setup (const size_type &count, const_iterator begin, const_iterator end);

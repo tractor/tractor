@@ -17,16 +17,16 @@ class Tracker
 private:
     DiffusionModel *model;
     
-    Array<short> *maskData;
-    Array<int> *targetData;
+    Image<short> *maskData;
+    Image<int> *targetData;
     
-    Array<Space<3>::Vector> *loopcheck;
-    Array<bool> *visited;
+    Image<ImageSpace::Vector> *loopcheck;
+    Image<bool> *visited;
     
     std::map<std::string,bool> flags;
     
-    Space<3>::Point seed;
-    Space<3>::Vector rightwardsVector;
+    ImageSpace::Point seed;
+    ImageSpace::Vector rightwardsVector;
     float innerProductThreshold;
     float stepLength;
     int maxSteps;
@@ -48,37 +48,37 @@ public:
         delete visited;
     }
     
-    Space<3>::Point getSeed () const { return seed; }
-    Space<3>::Vector getRightwardsVector () const { return rightwardsVector; }
+    ImageSpace::Point getSeed () const { return seed; }
+    ImageSpace::Vector getRightwardsVector () const { return rightwardsVector; }
     float getInnerProductThreshold () const { return innerProductThreshold; }
     float getStepLength () const { return stepLength; }
     
     void setMask (const RNifti::NiftiImage &mask)
     {
         delete maskData;
-        maskData = getImageArray<short>(mask);
+        maskData = getImageImage<short>(mask);
     }
     
-    void setSeed (const Space<3>::Point &seed, const bool jitter)
+    void setSeed (const ImageSpace::Point &seed, const bool jitter)
     {
         // An existing rightwards vector needs to be discarded when a new seed is used
         this->seed = seed;
         if (autoResetRightwardsVector)
-            this->rightwardsVector = Space<3>::zeroVector();
+            this->rightwardsVector = ImageSpace::zeroVector();
         this->jitter = jitter;
     }
     
     void setTargets (const RNifti::NiftiImage &targets)
     {
         delete targetData;
-        targetData = getImageArray<int>(targets);
+        targetData = getImageImage<int>(targets);
     }
     
-    void setRightwardsVector (const Space<3>::Vector &rightwardsVector)
+    void setRightwardsVector (const ImageSpace::Vector &rightwardsVector)
     {
         // If the specified rightwards vector is nontrivial, don't clobber it when setting the seed
         this->rightwardsVector = rightwardsVector;
-        this->autoResetRightwardsVector = Space<3>::zeroVector(rightwardsVector);
+        this->autoResetRightwardsVector = ImageSpace::zeroVector(rightwardsVector);
     }
     
     void setInnerProductThreshold (const float innerProductThreshold) { this->innerProductThreshold = innerProductThreshold; }

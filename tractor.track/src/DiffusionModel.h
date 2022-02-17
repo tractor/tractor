@@ -1,32 +1,30 @@
 #ifndef _DIFFUSION_MODEL_H_
 #define _DIFFUSION_MODEL_H_
 
-#include "Space.h"
-#include "Grid.h"
-#include "Array.h"
+#include "Image.h"
 
 class DiffusionModel : public Griddable3D
 {
 protected:
-    Grid<3> grid;
+    ImageSpace grid;
     
-    std::vector<int> probabilisticRound (const Space<3>::Point &point, const int size = 3) const;
+    std::vector<int> probabilisticRound (const ImageSpace::Point &point, const int size = 3) const;
     
 public:
     virtual ~DiffusionModel () {}
     
-    virtual Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
+    virtual ImageSpace::Vector sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const
     {
-        return Space<3>::zeroVector();
+        return ImageSpace::zeroVector();
     }
     
-    Grid<3> getGrid3D () const { return grid; }
+    ImageSpace getGrid3D () const { return grid; }
 };
 
 class DiffusionTensorModel : public DiffusionModel
 {
 private:
-    Array<float> *principalDirections;
+    Image<float> *principalDirections;
     
 public:
     DiffusionTensorModel ()
@@ -39,13 +37,13 @@ public:
         delete principalDirections;
     }
     
-    Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const;
+    ImageSpace::Vector sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const;
 };
 
 class BedpostModel : public DiffusionModel
 {
 private:
-    std::vector<Array<float>*> avf, theta, phi;
+    std::vector<Image<float>*> avf, theta, phi;
     int nCompartments;
     int nSamples;
     float avfThreshold;
@@ -72,7 +70,7 @@ public:
     
     void setAvfThreshold (const float avfThreshold) { this->avfThreshold = avfThreshold; }
     
-    Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const;
+    ImageSpace::Vector sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const;
 };
 
 #endif

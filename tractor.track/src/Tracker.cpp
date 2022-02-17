@@ -22,7 +22,7 @@ Streamline Tracker::run ()
     if (visited == NULL)
     {
         logger.debug2.indent() << "Creating visitation map" << endl;
-        visited = new Array<bool>(spaceDims, false);
+        visited = new Image<bool>(spaceDims, false);
     }
     else
     {
@@ -36,20 +36,20 @@ Streamline Tracker::run ()
         std::vector<int> loopcheckDims(3);
         for (int i=0; i<3; i++)
             loopcheckDims[i] = static_cast<int>(ceil(spaceDims[i] / LOOPCHECK_RATIO));
-        loopcheck = new Array<Space<3>::Vector>(loopcheckDims, Space<3>::zeroVector());
+        loopcheck = new Image<ImageSpace::Vector>(loopcheckDims, ImageSpace::zeroVector());
     }
     
     bool starting = true;
-    bool rightwardsVectorValid = !Space<3>::zeroVector(rightwardsVector);
-    Space<3>::Point loc;
+    bool rightwardsVectorValid = !ImageSpace::zeroVector(rightwardsVector);
+    ImageSpace::Point loc;
     std::vector<int> roundedLoc(3), loopcheckLoc(3);
     size_t vectorLoc;
-    Space<3>::Vector previousStep = Space<3>::zeroVector();
+    ImageSpace::Vector previousStep = ImageSpace::zeroVector();
     
-    std::vector<Space<3>::Point> leftPoints, rightPoints;
+    std::vector<ImageSpace::Point> leftPoints, rightPoints;
     std::set<int> labels;
     
-    Space<3>::Point currentSeed = seed;
+    ImageSpace::Point currentSeed = seed;
     if (jitter)
     {
         for (int i=0; i<3; i++)
@@ -73,7 +73,7 @@ Streamline Tracker::run ()
         logger.debug2.indent() << "Tracking " << (dir==0 ? "\"right\"" : "\"left\"") << endl;
         
         if (flags["loopcheck"])
-            loopcheck->fill(Space<3>::zeroVector());
+            loopcheck->fill(ImageSpace::zeroVector());
         
         loc = currentSeed;
         if (rightwardsVectorValid)
@@ -149,9 +149,9 @@ Streamline Tracker::run ()
             }
             
             // Sample a direction for the current step
-            Space<3>::Vector currentStep = model->sampleDirection(loc, previousStep);
+            ImageSpace::Vector currentStep = model->sampleDirection(loc, previousStep);
             logger.debug3.indent() << "Sampled step direction is " << currentStep << endl;
-            if (Space<3>::zeroVector(currentStep))
+            if (ImageSpace::zeroVector(currentStep))
             {
                 terminationReasons[dir] = Streamline::NoDataReason;
                 logger.debug2.indent() << "Terminating: zero step vector" << endl;

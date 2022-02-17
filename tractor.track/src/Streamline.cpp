@@ -2,7 +2,7 @@
 
 #include "Streamline.h"
 
-double Streamline::getLength (const std::vector<Space<3>::Point> &points) const
+double Streamline::getLength (const std::vector<ImageSpace::Point> &points) const
 {
     const size_t nPoints = points.size();
     
@@ -32,7 +32,7 @@ double Streamline::getLength (const std::vector<Space<3>::Point> &points) const
     }
 }
 
-void Streamline::trim (std::vector<Space<3>::Point> &points, const double maxLength)
+void Streamline::trim (std::vector<ImageSpace::Point> &points, const double maxLength)
 {
     const size_t nPoints = points.size();
     
@@ -81,7 +81,7 @@ size_t Streamline::concatenatePoints (Eigen::ArrayX3f &points) const
     size_t index = 0;
     if (leftPoints.size() > 1)
     {
-        for (std::vector<Space<3>::Point>::const_reverse_iterator it=leftPoints.rbegin(); it!=leftPoints.rend()-1; it++)
+        for (std::vector<ImageSpace::Point>::const_reverse_iterator it=leftPoints.rbegin(); it!=leftPoints.rend()-1; it++)
         {
             points.row(index) = *it;
             index++;
@@ -90,7 +90,7 @@ size_t Streamline::concatenatePoints (Eigen::ArrayX3f &points) const
     
     if (rightPoints.size() > 0)
     {
-        for (std::vector<Space<3>::Point>::const_iterator it=rightPoints.begin(); it!=rightPoints.end(); it++)
+        for (std::vector<ImageSpace::Point>::const_iterator it=rightPoints.begin(); it!=rightPoints.end(); it++)
         {
             points.row(index) = *it;
             index++;

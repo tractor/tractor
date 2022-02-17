@@ -8,10 +8,10 @@ using namespace std;
 
 void MrtrixDataSource::readStreamline (Streamline &data)
 {
-    vector<Space<3>::Point> points;
+    vector<ImageSpace::Point> points;
     while (true)
     {
-        Space<3>::Point point;
+        ImageSpace::Point point;
         if (datatype == "float")
             binaryStream.readVector<float>(point, 3);
         else if (datatype == "double")
@@ -29,7 +29,7 @@ void MrtrixDataSource::readStreamline (Streamline &data)
     
     if (points.size() > 0)
     {
-        data = Streamline(vector<Space<3>::Point>(points.begin(), points.begin()+1),
+        data = Streamline(vector<ImageSpace::Point>(points.begin(), points.begin()+1),
                           points,
                           Streamline::WorldPointType,
                           Eigen::ArrayXf::Zero(3,1),
