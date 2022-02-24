@@ -4,8 +4,9 @@
 #include "RNifti.h"
 #include <array>
 
-struct ImageSpace
+class ImageSpace
 {
+public:
     typedef RNifti::NiftiImage::Xform::Element Element;
     typedef RNifti::NiftiImage::Xform::Vector3 Point;
     typedef RNifti::NiftiImage::Xform::Vector3 Vector;
@@ -15,6 +16,7 @@ struct ImageSpace
     typedef std::array<RNifti::NiftiImage::pixdim_t,3> PixdimVector;
     
     enum PointType { VoxelPointType, ScaledPointType, WorldPointType };
+    enum RoundingType { NoRounding, ConventionalRounding, ProbabilisticRounding };
     
     DimVector dim;
     PixdimVector pixdim;
@@ -31,6 +33,12 @@ struct ImageSpace
         return (sqrt(norm) == 0.0);
     }
     
+    static Element dot (const Vector &first, const Vector &second)
+    {
+        const Element product = first[0]*second[0] + first[1]*second[1] + first[2]*second[2];
+        return product;
+    }
+    
     static Vector sphericalToCartesian (const Vector &spherical)
     {
         Vector cartesian;
@@ -39,10 +47,103 @@ struct ImageSpace
         cartesian[2] = spherical[0] * cos(spherical[1]);
         return cartesian;
     }
+    
+    ImageSpace (const DimVector &dim, const PixdimVector &pixdim, const Transform &transform)
+        : dim(dim), pixdim(pixdim), transform(transform) {}
+    
+    ImageSpace (const RNifti::NiftiImage &source)
+    {
+        std::vector<RNifti::NiftiImage::dim_t> vdim = source.dim();
+        std::vector<RNifti::NiftiImage::pixdim_t> vpixdim = source.pixdim();
+        
+        dim = { 1, 1, 1 };
+        pixdim = { 1.0, 1.0, 1.0 };
+        
+        for (unsigned i=0; i<std::min<size_t>(3,vdim.size()); i++)
+        {
+            dim[i] = vdim[i];
+            pixdim[i] = vpixdim[i];
+        }
+        
+        transform = source.xform().matrix();
+    }
+    
+    Point toVoxel (const Point &point, const PointType type, const RoundingType round = ConventionalRounding)
+    {
+        Point result;
+        
+        switch (type)
+        {
+            case VoxelPointType:
+            result = point;
+            break;
+            
+            case ScaledPointType:
+            for (int i=0; i<3; i++)
+                result[i] = point[i] / fabs(pixdim[i]);
+            break;
+            
+            case WorldPointType:
+            RNifti::NiftiImage::Xform::Vector4 padded(1.0);
+            for (int i=0; i<3; i++)
+                padded[i] = point[i];
+            const RNifti::NiftiImage::Xform::Vector4 product = transform.multiply(padded);
+            for (int i=0; i<3; i++)
+                result[i] = product[i];
+            break;
+        }
+        
+        switch (round)
+        {
+            case NoRounding:
+            break;
+            
+            case ConventionalRounding:
+            for (int i=0; i<3; i++)
+                result[i] = std::round(result[i]);
+            break;
+            
+            case ProbabilisticRounding:
+            for (int i=0; i<3; i++)
+            {
+                const Element ceiling = std::ceil(result[i]);
+                const Element floor = std::floor(result[i]);
+                const Element distance = result[i] - floor;
+                
+                // Sample in proportion to proximity, unless we're off the end of the image
+                const Element uniformSample = static_cast<Element>(R::unif_rand());
+                const bool chooseFloor = (uniformSample > distance && floor >= 0.0) || ceiling >= static_cast<Element>(dim[i]);
+                result[i] = chooseFloor ? floor : ceiling;
+            }
+            break;
+        }
+        
+        return result;
+    }
+};
+
+class ImageSpaceEmbedded
+{
+protected:
+    ImageSpace *space = nullptr;
+    
+public:
+    virtual ~ImageSpaceEmbedded ()
+    {
+        delete space;
+    }
+    
+    virtual ImageSpace & imageSpace () const
+    {
+        if (space == nullptr)
+            throw std::runtime_error("No image space information is available");
+        else
+            return *space;
+    }
 };
 
 template <class ElementType, int Dimensionality>
-class Image
+class Image : public ImageSpaceEmbedded
 {
 public:
     typedef ElementType Element;
@@ -78,7 +179,6 @@ protected:
     };
     
     Indexer<Dimensionality> indexer;
-    ImageSpace *space = nullptr;
     
 public:
     Image () { dims.fill(0); strides.fill(0); }
@@ -125,6 +225,8 @@ public:
         if (sourceData.isEmpty())
             throw std::runtime_error("NiftiImage source contains no voxel data");
         std::copy(sourceData.begin(), sourceData.end(), data_.begin());
+        
+        space = new ImageSpace(source);
     }
     
     const std::vector<Element> & data () const { return data_; }
@@ -142,6 +244,33 @@ public:
     
     const Element & operator[] (const size_t n) const { return data_[n]; }
     const Element & operator[] (const ArrayIndex &loc) const { return data_[indexer.flatten(loc, strides)]; }
+    
+    Element & at (const size_t n) { return data_.at(n); }
+    Element & at (const ArrayIndex &loc)
+    {
+        for (int i=0; i<3; i++)
+        {
+            if (loc[i] >= dims[i])
+                throw std::out_of_range("Array index is out of range");
+        }
+        return data_[indexer.flatten(loc, strides)];
+    }
+    Element & at (const ImageSpace::Point &point, const ImageSpace::PointType type = ImageSpace::VoxelPointType, const ImageSpace::RoundingType round = ImageSpace::ConventionalRounding)
+    {
+        if (space == nullptr)
+            throw std::runtime_error("No space is associated with the image");
+        
+        const ImageSpace::Point resolvedPoint = space->toVoxel(point, type, round);
+        
+        ArrayIndex loc;
+        for (int i=0; i<3; i++)
+        {
+            loc[i] = static_cast<size_t>(resolvedPoint[i]);
+            if (loc[i] >= dims[i])
+                throw std::out_of_range("Array index is out of range");
+        }
+        return data_[indexer.flatten(loc, strides)];
+    }
     
     void flattenIndex (const ArrayIndex &loc, size_t &result) const { result = indexer.flatten(loc, strides); }
 };
