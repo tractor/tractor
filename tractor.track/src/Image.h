@@ -27,10 +27,10 @@ public:
         return Vector(0.0);
     }
     
-    static bool zeroVector (const Vector &vector)
+    static Element norm (const Vector &vector)
     {
-        const Element norm = vector[0]*vector[0] + vector[1]*vector[1] + vector[2]*vector[2];
-        return (sqrt(norm) == 0.0);
+        const Element squaredNorm = vector[0]*vector[0] + vector[1]*vector[1] + vector[2]*vector[2];
+        return sqrt(squaredNorm);
     }
     
     static Element dot (const Vector &first, const Vector &second)
