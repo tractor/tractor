@@ -152,23 +152,52 @@ public:
 protected:
     std::vector<Element> data_;
     ArrayIndex dims, strides;
+    size_t size_;
     
     void calculateStrides ()
     {
         // The first index always moves fastest (as in R)
-        strides[0] = 1;
+        strides[0] = size_ = 1;
         for (size_t i=1; i<Dimensionality; i++)
+        {
             strides[i] = strides[i-1] * dims[i-1];
+            size_ *= dims[i-1];
+        }
+        size_ *= dims[Dimensionality - 1];
+    }
+    
+    template <class TargetType>
+    void import (const RNifti::NiftiImage &source, std::vector<TargetType> &target)
+    {
+        const RNifti::NiftiImageData sourceData = source.data();
+        std::copy(sourceData.begin(), sourceData.end(), target.begin());
+    };
+    
+    template <>
+    void import (const RNifti::NiftiImage &source, std::vector<ImageSpace::Vector> &target)
+    {
+        // We are currently assuming that vector images are 4D with fourth dimension 3 (FSL-style)
+        // This is overly restrictive, and in particular doesn't handle NIFTI_INTENT_VECTOR
+        if (source.nDims() != 4 || source->nt != 3)
+            throw std::runtime_error("NiftiImage source does not seem to be vector-valued");
+        
+        const RNifti::NiftiImageData sourceData = source.data();
+        const size_t volumeSize = source->nx * source->ny * source->nz;
+        for (size_t i=0; i<volumeSize; i++)
+        {
+            ImageSpace::Element elements[3] { sourceData[i], sourceData[i+volumeSize], sourceData[i+2*volumeSize] };
+            target[i] = ImageSpace::Vector(elements);
+        }
     }
     
     template <int N>
     struct Indexer
     {
-        const Indexer<N-1> child;
+        Indexer<N-1> child;
         
         size_t flatten (const ArrayIndex &loc, const ArrayIndex &strides) const
         {
-            return strides[N-1] * loc[N-1] + child.flatten(loc);
+            return strides[N-1] * loc[N-1] + child.flatten(loc, strides);
         }
     };
     
@@ -186,47 +215,35 @@ public:
     Image (const ArrayIndex &dims, const Element value)
         : dims(dims)
     {
-        size_t length = 1;
-        for (size_t i=0; i<Dimensionality; i++)
-            length *= dims[i];
-        
-        data_ = std::vector<Element>(length, value);
-        
         calculateStrides();
+        data_ = std::vector<Element>(size_, value);
     }
     
     Image (const ArrayIndex &dims, const std::vector<Element> &data)
         : dims(dims)
     {
-        size_t length = 1;
-        for (size_t i=0; i<Dimensionality; i++)
-            length *= dims[i];
-        
-        if (length == data.size())
+        calculateStrides();
+        if (size_ == data.size())
             this->data_ = data;
         else
             throw std::runtime_error("Data size does not match the specified dimensions");
-        
-        calculateStrides();
     }
     
     Image (const RNifti::NiftiImage &source)
     {
         if (source.isNull())
             throw std::runtime_error("NiftiImage source is empty");
-        if (source.nDims() != Dimensionality)
-            throw std::runtime_error("NiftiImage source is not of the right dimensionality");
+        if (source->data == nullptr)
+            throw std::runtime_error("NiftiImage source contains no voxel data");
         
         auto sourceDims = source.dim();
         std::copy(sourceDims.begin(), sourceDims.begin() + Dimensionality, dims.begin());
         calculateStrides();
         
-        RNifti::NiftiImageData sourceData = source.data();
-        if (sourceData.isEmpty())
-            throw std::runtime_error("NiftiImage source contains no voxel data");
-        std::copy(sourceData.begin(), sourceData.end(), data_.begin());
-        
         space = new ImageSpace(source);
+        
+        data_.resize(size_);
+        import(source, data_);
     }
     
     const std::vector<Element> & data () const { return data_; }
