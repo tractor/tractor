@@ -3,13 +3,8 @@
 
 #include "Image.h"
 
-class DiffusionModel : public Griddable3D
+class DiffusionModel : public ImageSpaceEmbedded
 {
-protected:
-    ImageSpace grid;
-    
-    std::vector<int> probabilisticRound (const ImageSpace::Point &point, const int size = 3) const;
-    
 public:
     virtual ~DiffusionModel () {}
     
@@ -17,14 +12,12 @@ public:
     {
         return ImageSpace::zeroVector();
     }
-    
-    ImageSpace getGrid3D () const { return grid; }
 };
 
 class DiffusionTensorModel : public DiffusionModel
 {
 private:
-    Image<float> *principalDirections;
+    Image<ImageSpace::Vector,3> *principalDirections;
     
 public:
     DiffusionTensorModel ()
@@ -43,7 +36,7 @@ public:
 class BedpostModel : public DiffusionModel
 {
 private:
-    std::vector<Image<float>*> avf, theta, phi;
+    std::vector<Image<float,4>*> avf, theta, phi;
     int nCompartments;
     int nSamples;
     float avfThreshold;
