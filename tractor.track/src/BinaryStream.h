@@ -75,7 +75,12 @@ inline void BinaryStream::read (FinalType *values, const size_t n)
     
     SourceType *originalValues;
     if (std::is_same<SourceType,FinalType>::value)
-        originalValues = values;
+    {
+        // The cast should be unnecessary, because the branch will not exist
+        // when the types don't match, but Clang, at least, produces an error
+        // when instantiated with SourceType and FinalType not matching
+        originalValues = (SourceType *) values;
+    }
     else
         originalValues = new SourceType[n];
     
@@ -155,8 +160,8 @@ inline void BinaryInputStream::readPoint (ImageSpace::Point &value)
 template <typename SourceType>
 inline void BinaryInputStream::readTransform (ImageSpace::Transform &value)
 {
-    ImageSpace::Element elements[12];
-    read<SourceType>(elements, 12);
+    ImageSpace::Element elements[16];
+    read<SourceType>(elements, 16);
     value = ImageSpace::Transform(elements);
 }
 
