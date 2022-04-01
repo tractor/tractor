@@ -39,6 +39,14 @@ public:
         return product;
     }
     
+    static Vector step (const Point &from, const Point &to)
+    {
+        Vector result;
+        for (int i=0; i<3; i++)
+            result[i] = to[i] - from[i];
+        return result;
+    }
+    
     static Vector sphericalToCartesian (const Vector &spherical)
     {
         Vector cartesian;
