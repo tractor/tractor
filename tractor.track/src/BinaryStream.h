@@ -3,13 +3,15 @@
 
 #include <Rcpp.h>
 #include "Image.h"
+#include <fstream>
 
 class BinaryStream
 {
 protected:
+    bool streamsOwned = false;
     bool swapEndian = false;
-    std::istream *inputStream = nullptr;
-    std::ostream *outputStream = nullptr;
+    std::ifstream *inputStream = nullptr;
+    std::ofstream *outputStream = nullptr;
     
     template <typename Type> static void swap (Type &value);
     
@@ -17,15 +19,33 @@ protected:
     template <typename TargetType, typename OriginalType> void write (const OriginalType *values, const size_t n = 1);
     
 public:
+    virtual ~BinaryStream ()
+    {
+        if (inputStream != nullptr && inputStream->is_open())
+            inputStream->close();
+        if (outputStream != nullptr && outputStream->is_open())
+            outputStream->close();
+        if (streamsOwned)
+        {
+            delete inputStream;
+            delete outputStream;
+        }
+    }
+    
     void setEndianness (const std::string &endianness);
 };
 
 class BinaryInputStream : public BinaryStream
 {
 public:
-    BinaryInputStream (std::istream *stream) { this->inputStream = stream; }
-    
-    void attach (std::istream *stream) { this->inputStream = stream; }
+    void attach (std::ifstream *stream) { this->inputStream = stream; }
+    void attach (const std::string &path)
+    {
+        this->inputStream = new std::ifstream(path, std::ios::in | std::ios::binary);
+        if (!inputStream)
+            throw std::runtime_error("Failed to open file " + path);
+        this->streamsOwned = true;
+    }
     
     template <typename SourceType> SourceType readValue ();
     template <typename SourceType, typename FinalType> void readValue (FinalType &value);
@@ -39,14 +59,20 @@ public:
 class BinaryOutputStream : public BinaryStream
 {
 public:
-    BinaryOutputStream (std::ostream *stream) { this->outputStream = stream; }
-    
-    void attach (std::ostream *stream) { this->outputStream = stream; }
+    void attach (std::ofstream *stream) { this->outputStream = stream; }
+    void attach (const std::string &path)
+    {
+        this->outputStream = new std::ofstream(path, std::ios::out | std::ios::binary);
+        if (!outputStream)
+            throw std::runtime_error("Failed to open file " + path);
+        this->streamsOwned = true;
+    }
     
     template <typename TargetType> void writeValue (const TargetType &value);
     template <typename TargetType> void writeValues (const TargetType &value, size_t n);
     template <typename TargetType> void writeArray (TargetType * const pointer, size_t n);
     template <typename TargetType, typename OriginalType> void writeVector (const std::vector<OriginalType> &values, size_t n = 0);
+    template <typename TargetType> void writePoint (const ImageSpace::Point &value);
     void writeString (const std::string &value);
 };
 
@@ -190,6 +216,13 @@ inline void BinaryOutputStream::writeVector (const std::vector<OriginalType> &va
     if (n == 0)
         n = values.size();
     write<TargetType,OriginalType>(values.data(), n);
+}
+
+template <typename TargetType>
+inline void BinaryOutputStream::writePoint (const ImageSpace::Point &value)
+{
+    ImageSpace::Element elements[3] = { value[0], value[1], value[2] };
+    write<TargetType,ImageSpace::Element>(elements, 3);
 }
 
 #endif
