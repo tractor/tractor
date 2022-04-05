@@ -1,12 +1,9 @@
 #ifndef _MRTRIX_H_
 #define _MRTRIX_H_
 
-#include <RcppEigen.h>
+#include <Rcpp.h>
 
-#include "Grid.h"
 #include "Streamline.h"
-#include "DataSource.h"
-#include "BinaryStream.h"
 
 class MrtrixDataSource : public StreamlineFileSource
 {

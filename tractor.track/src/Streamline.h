@@ -1,7 +1,7 @@
 #ifndef _STREAMLINE_H_
 #define _STREAMLINE_H_
 
-#include <RcppEigen.h>
+#include <Rcpp.h>
 
 #include "Image.h"
 #include "DataSource.h"
@@ -10,7 +10,6 @@
 class Streamline
 {
 public:
-    enum PointType { VoxelPointType, WorldPointType };
     enum TerminationReason { UnknownReason, BoundsReason, MaskReason, OneWayReason, TargetReason, NoDataReason, LoopReason, CurvatureReason };
     
 private:
@@ -21,10 +20,10 @@ private:
     std::vector<ImageSpace::Point> rightPoints;
     
     // Are points stored in voxel or world (typically mm) terms?
-    Streamline::PointType pointType;
+    ImageSpace::PointType pointType;
     
     // Voxel dimensions, needed for converting between voxel and world point types
-    Eigen::ArrayXf voxelDims;
+    ImageSpace::DimVector voxelDims;
     
     // A set of integer labels associated with the streamline, indicating, for
     // example, the anatomical regions that the streamline passes through
@@ -43,7 +42,7 @@ protected:
     
 public:
     Streamline () {}
-    Streamline (const std::vector<ImageSpace::Point> &leftPoints, const std::vector<ImageSpace::Point> &rightPoints, const Streamline::PointType pointType, const Eigen::VectorXf &voxelDims, const bool fixedSpacing)
+    Streamline (const std::vector<ImageSpace::Point> &leftPoints, const std::vector<ImageSpace::Point> &rightPoints, const ImageSpace::PointType pointType, const ImageSpace::DimVector &voxelDims, const bool fixedSpacing)
         : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), voxelDims(voxelDims), fixedSpacing(fixedSpacing), leftTerminationReason(UnknownReason), rightTerminationReason(UnknownReason) {}
     
     size_t nPoints () const { return std::max(static_cast<size_t>(leftPoints.size()+rightPoints.size())-1, size_t(0)); }
@@ -51,10 +50,11 @@ public:
     
     const std::vector<ImageSpace::Point> & getLeftPoints () const { return leftPoints; }
     const std::vector<ImageSpace::Point> & getRightPoints () const { return rightPoints; }
-    Streamline::PointType getPointType () const { return pointType; }
+    std::vector<ImageSpace::Point> getPoints () const;
+    ImageSpace::PointType getPointType () const { return pointType; }
     bool usesFixedSpacing () const { return fixedSpacing; }
     
-    const Eigen::ArrayXf & getVoxelDimensions () const { return voxelDims; }
+    const ImageSpace::DimVector & getVoxelDimensions () const { return voxelDims; }
     
     double getLeftLength () const  { return getLength(leftPoints); }
     double getRightLength () const { return getLength(rightPoints); }
@@ -77,8 +77,6 @@ public:
         leftTerminationReason = left;
         rightTerminationReason = right;
     }
-    
-    size_t concatenatePoints (Eigen::ArrayX3f &points) const;
 };
 
 class StreamlineLabelList
@@ -86,7 +84,7 @@ class StreamlineLabelList
 private:
     std::ifstream fileStream;
     BinaryInputStream binaryStream;
-    std::vector< std::set<int> > labelList;
+    std::vector<std::set<int>> labelList;
     std::vector<size_t> offsetList;
     
 public:
@@ -108,7 +106,7 @@ public:
     size_t getOffset (const int n) { return offsetList[n]; }
 };
 
-class StreamlineFileSource : public DataSource<Streamline>, public Griddable3D
+class StreamlineFileSource : public DataSource<Streamline>, public ImageSpaceEmbedded
 {
 protected:
     std::string fileStem;
@@ -133,7 +131,6 @@ public:
     virtual ~StreamlineFileSource ()
     {
         done();
-        binaryStream.detach();
         delete labelList;
     }
     

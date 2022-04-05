@@ -1,10 +1,9 @@
 #ifndef _TRACKER_H_
 #define _TRACKER_H_
 
-#include <RcppEigen.h>
+#include <Rcpp.h>
 
-#include "Space.h"
-#include "RNifti.h"
+#include "Image.h"
 #include "DiffusionModel.h"
 #include "Streamline.h"
 #include "DataSource.h"

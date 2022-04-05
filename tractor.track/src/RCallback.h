@@ -1,7 +1,7 @@
 #ifndef _R_CALLBACK_H_
 #define _R_CALLBACK_H_
 
-#include <RcppEigen.h>
+#include <Rcpp.h>
 
 #include "DataSource.h"
 #include "Streamline.h"

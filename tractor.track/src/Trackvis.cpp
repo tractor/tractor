@@ -1,6 +1,5 @@
-#include <RcppEigen.h>
+#include <Rcpp.h>
 
-#include "RNiftiAPI.h"
 #include "Streamline.h"
 #include "BinaryStream.h"
 #include "Trackvis.h"

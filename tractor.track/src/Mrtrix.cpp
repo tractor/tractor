@@ -1,4 +1,4 @@
-#include <RcppEigen.h>
+#include <Rcpp.h>
 
 #include "Streamline.h"
 #include "BinaryStream.h"
@@ -13,9 +13,9 @@ void MrtrixDataSource::readStreamline (Streamline &data)
     {
         ImageSpace::Point point;
         if (datatype == "float")
-            binaryStream.readVector<float>(point, 3);
+            binaryStream.readPoint<float>(point);
         else if (datatype == "double")
-            binaryStream.readVector<double>(point, 3);
+            binaryStream.readPoint<double>(point);
         
         if (fileStream.eof())
             break;
@@ -31,8 +31,8 @@ void MrtrixDataSource::readStreamline (Streamline &data)
     {
         data = Streamline(vector<ImageSpace::Point>(points.begin(), points.begin()+1),
                           points,
-                          Streamline::WorldPointType,
-                          Eigen::ArrayXf::Zero(3,1),
+                          ImageSpace::WorldPointType,
+                          { 0, 0, 0},
                           true);
     }
     

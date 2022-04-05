@@ -1,7 +1,7 @@
 #ifndef _TRACKVIS_H_
 #define _TRACKVIS_H_
 
-#include <RcppEigen.h>
+#include <Rcpp.h>
 
 #include "Grid.h"
 #include "Streamline.h"
@@ -27,7 +27,7 @@ public:
     ImageSpace getGrid3D () const { return grid; }
 };
 
-class TrackvisDataSink : public Griddable3D, public DataSink<Streamline>
+class TrackvisDataSink : public ImageSpaceEmbedded, public DataSink<Streamline>
 {
 protected:
     std::fstream fileStream;
