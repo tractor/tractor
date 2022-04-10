@@ -23,7 +23,7 @@ private:
     ImageSpace::PointType pointType;
     
     // Voxel dimensions, needed for converting between voxel and world point types
-    ImageSpace::DimVector voxelDims;
+    ImageSpace::PixdimVector voxelDims;
     
     // A set of integer labels associated with the streamline, indicating, for
     // example, the anatomical regions that the streamline passes through
@@ -42,7 +42,7 @@ protected:
     
 public:
     Streamline () {}
-    Streamline (const std::vector<ImageSpace::Point> &leftPoints, const std::vector<ImageSpace::Point> &rightPoints, const ImageSpace::PointType pointType, const ImageSpace::DimVector &voxelDims, const bool fixedSpacing)
+    Streamline (const std::vector<ImageSpace::Point> &leftPoints, const std::vector<ImageSpace::Point> &rightPoints, const ImageSpace::PointType pointType, const ImageSpace::PixdimVector &voxelDims, const bool fixedSpacing)
         : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), voxelDims(voxelDims), fixedSpacing(fixedSpacing), leftTerminationReason(UnknownReason), rightTerminationReason(UnknownReason) {}
     
     size_t nPoints () const { return std::max(static_cast<size_t>(leftPoints.size()+rightPoints.size())-1, size_t(0)); }
@@ -54,7 +54,7 @@ public:
     ImageSpace::PointType getPointType () const { return pointType; }
     bool usesFixedSpacing () const { return fixedSpacing; }
     
-    const ImageSpace::DimVector & getVoxelDimensions () const { return voxelDims; }
+    const ImageSpace::PixdimVector & getVoxelDimensions () const { return voxelDims; }
     
     double getLeftLength () const  { return getLength(leftPoints); }
     double getRightLength () const { return getLength(rightPoints); }
