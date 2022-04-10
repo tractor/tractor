@@ -54,6 +54,10 @@ public:
     template <typename SourceType> void readTransform (ImageSpace::Transform &value);
     std::string readString (const std::string delim = "\0");
     std::string readString (const size_t n);
+    
+    // Allow pass-through calls to the underlying ifstream via the arrow operator
+    const std::ifstream * operator-> () const   { return inputStream; }
+    std::ifstream * operator-> ()               { return inputStream; }
 };
 
 class BinaryOutputStream : public BinaryStream
@@ -74,6 +78,10 @@ public:
     template <typename TargetType, typename OriginalType> void writeVector (const std::vector<OriginalType> &values, size_t n = 0);
     template <typename TargetType> void writePoint (const ImageSpace::Point &value);
     void writeString (const std::string &value);
+    
+    // Allow pass-through calls to the underlying ofstream via the arrow operator
+    const std::ofstream * operator-> () const   { return outputStream; }
+    std::ofstream * operator-> ()               { return outputStream; }
 };
 
 template <typename Type>
