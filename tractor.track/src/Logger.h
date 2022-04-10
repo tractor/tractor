@@ -43,6 +43,19 @@ public:
         return *this;
     }
     
+    LoggerStream & operator<< (const ImageSpace::Point &arg)
+    {
+        if (*outputLevel >= myLevel)
+        {
+            Rcpp::Rcout << "(";
+            for (int i=0; i<3; i++)
+                Rcpp::Rcout << "\x1b[36m" << arg[i] << "\x1b[0m, ";
+            Rcpp::Rcout << "\b\b)";
+        }
+        
+        return *this;
+    }
+    
     LoggerStream & operator<< (const double &arg)
     {
         if (*outputLevel >= myLevel)
