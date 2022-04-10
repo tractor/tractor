@@ -6,23 +6,20 @@ using namespace std;
 
 Streamline Tracker::run ()
 {
-    if (model == NULL)
+    if (model == nullptr)
         throw std::runtime_error("No diffusion model has been specified");
     
-    const Eigen::Array3i imageDims = model->getGrid3D().dimensions();
-    std::vector<int> spaceDims(3);
-    for (int i=0; i<3; i++)
-        spaceDims[i] = imageDims(i,0);
-    const Eigen::Array3f voxelDims = model->getGrid3D().spacings();
+    const ImageSpace::DimVector imageDims = model->imageSpace().dim;
+    const ImageSpace::PixdimVector voxelDims = model->imageSpace().pixdim;
     
     Rcpp::Rcout << std::fixed;
     Rcpp::Rcout.precision(3);
     logger.debug1.indent() << "Tracking from seed point " << seed << endl;
     
-    if (visited == NULL)
+    if (visited == nullptr)
     {
         logger.debug2.indent() << "Creating visitation map" << endl;
-        visited = new Image<bool>(spaceDims, false);
+        visited = new Image<bool,3>(imageDims, false);
     }
     else
     {
@@ -33,16 +30,17 @@ Streamline Tracker::run ()
     if (flags["loopcheck"] && loopcheck == NULL)
     {
         logger.debug2.indent() << "Creating loopcheck vector field" << endl;
-        std::vector<int> loopcheckDims(3);
+        ImageSpace::DimVector loopcheckDims;
         for (int i=0; i<3; i++)
-            loopcheckDims[i] = static_cast<int>(ceil(spaceDims[i] / LOOPCHECK_RATIO));
-        loopcheck = new Image<ImageSpace::Vector>(loopcheckDims, ImageSpace::zeroVector());
+            loopcheckDims[i] = static_cast<int>(ceil(imageDims[i] / LOOPCHECK_RATIO));
+        loopcheck = new Image<ImageSpace::Vector,3>(loopcheckDims, ImageSpace::zeroVector());
     }
     
     bool starting = true;
-    bool rightwardsVectorValid = !ImageSpace::zeroVector(rightwardsVector);
+    bool rightwardsVectorValid = (ImageSpace::norm(rightwardsVector) != 0.0);
     ImageSpace::Point loc;
-    std::vector<int> roundedLoc(3), loopcheckLoc(3);
+    Image<bool,3>::ArrayIndex roundedLoc;
+    Image<ImageSpace::Vector,3>::ArrayIndex loopcheckLoc;
     size_t vectorLoc;
     ImageSpace::Vector previousStep = ImageSpace::zeroVector();
     
@@ -77,7 +75,7 @@ Streamline Tracker::run ()
         
         loc = currentSeed;
         if (rightwardsVectorValid)
-            previousStep = rightwardsVector * (dir==0 ? 1.0 : -1.0);
+            previousStep = (dir==0 ? rightwardsVector : -rightwardsVector);
         
         int step;
         int previouslyInsideMask = -1;
@@ -90,7 +88,7 @@ Streamline Tracker::run ()
             for (int i=0; i<3; i++)
             {
                 roundedLoc[i] = static_cast<int>(round(loc[i]));
-                if (roundedLoc[i] < 0 || roundedLoc[i] > spaceDims[i] - 1)
+                if (roundedLoc[i] < 0 || roundedLoc[i] > imageDims[i] - 1)
                 {
                     inBounds = false;
                     break;
@@ -116,8 +114,7 @@ Streamline Tracker::run ()
             previouslyInsideMask = ((*maskData)[vectorLoc] == 0 ? 0 : 1);
             
             // Mark visit
-            if (!(*visited)[vectorLoc])
-                (*visited)[vectorLoc] = true;
+            visited->at(vectorLoc) = true;
             
             // Store current (unrounded) location if required
             // NB: This part of the code must always be reached at the seed point
@@ -151,7 +148,7 @@ Streamline Tracker::run ()
             // Sample a direction for the current step
             ImageSpace::Vector currentStep = model->sampleDirection(loc, previousStep);
             logger.debug3.indent() << "Sampled step direction is " << currentStep << endl;
-            if (ImageSpace::zeroVector(currentStep))
+            if (ImageSpace::norm(currentStep) == 0.0)
             {
                 terminationReasons[dir] = Streamline::NoDataReason;
                 logger.debug2.indent() << "Terminating: zero step vector" << endl;
@@ -164,7 +161,7 @@ Streamline Tracker::run ()
                 for (int i=0; i<3; i++)
                     loopcheckLoc[i] = static_cast<int>(round((loc[i] + 0.5) / LOOPCHECK_RATIO - 0.5));
                 
-                float loopcheckInnerProduct = (*loopcheck)[loopcheckLoc].dot(previousStep);
+                float loopcheckInnerProduct = ImageSpace::dot(loopcheck->at(loopcheckLoc), previousStep);
                 if (loopcheckInnerProduct < 0.0)
                 {
                     terminationReasons[dir] = Streamline::LoopReason;
@@ -182,7 +179,7 @@ Streamline Tracker::run ()
                 sign = 1.0;
             else
             {
-                float innerProduct = previousStep.dot(currentStep);
+                float innerProduct = ImageSpace::dot(previousStep, currentStep);
                 if (fabs(innerProduct) < innerProductThreshold)
                 {
                     terminationReasons[dir] = Streamline::CurvatureReason;
@@ -193,8 +190,11 @@ Streamline Tracker::run ()
             }
             
             // Update streamline front and previous step
-            loc += currentStep.array() / voxelDims * sign * stepLength;
-            previousStep = currentStep * sign;
+            for (int i=0; i<3; i++)
+            {
+                loc[i] += currentStep[i] / voxelDims[i] * sign * stepLength;
+                previousStep[i] = currentStep[i] * sign;
+            }
             logger.debug3.indent() << "New location is " << loc << endl;
             
             // Store the first step to ensure that subsequent samples go the same way
@@ -215,7 +215,7 @@ Streamline Tracker::run ()
     
     logger.debug1.indent() << "Tracking finished" << endl;
     
-    Streamline streamline(leftPoints, rightPoints, Streamline::VoxelPointType, voxelDims, true);
+    Streamline streamline(leftPoints, rightPoints, ImageSpace::VoxelPointType, voxelDims, true);
     streamline.setTerminationReasons(terminationReasons[0], terminationReasons[1]);
     streamline.setLabels(labels);
     return streamline;

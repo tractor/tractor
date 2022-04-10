@@ -14,13 +14,13 @@
 class Tracker
 {
 private:
-    DiffusionModel *model;
+    DiffusionModel *model = nullptr;
     
-    Image<short> *maskData;
-    Image<int> *targetData;
+    Image<short,3> *maskData = nullptr;
+    Image<int,3> *targetData = nullptr;
     
-    Image<ImageSpace::Vector> *loopcheck;
-    Image<bool> *visited;
+    Image<ImageSpace::Vector,3> *loopcheck = nullptr;
+    Image<bool,3> *visited = nullptr;
     
     std::map<std::string,bool> flags;
     
@@ -37,7 +37,7 @@ private:
 public:
     Tracker () {}
     Tracker (DiffusionModel * const model)
-        : model(model), maskData(NULL), targetData(NULL), loopcheck(NULL), visited(NULL) {}
+        : model(model) {}
     
     ~Tracker ()
     {
@@ -55,7 +55,7 @@ public:
     void setMask (const RNifti::NiftiImage &mask)
     {
         delete maskData;
-        maskData = getImageImage<short>(mask);
+        maskData = new Image<short,3>(mask);
     }
     
     void setSeed (const ImageSpace::Point &seed, const bool jitter)
@@ -70,14 +70,14 @@ public:
     void setTargets (const RNifti::NiftiImage &targets)
     {
         delete targetData;
-        targetData = getImageImage<int>(targets);
+        targetData = new Image<int,3>(targets);
     }
     
     void setRightwardsVector (const ImageSpace::Vector &rightwardsVector)
     {
         // If the specified rightwards vector is nontrivial, don't clobber it when setting the seed
         this->rightwardsVector = rightwardsVector;
-        this->autoResetRightwardsVector = ImageSpace::zeroVector(rightwardsVector);
+        this->autoResetRightwardsVector = (ImageSpace::norm(rightwardsVector) == 0.0);
     }
     
     void setInnerProductThreshold (const float innerProductThreshold) { this->innerProductThreshold = innerProductThreshold; }
@@ -96,15 +96,15 @@ class TractographyDataSource : public DataSource<Streamline>
 {
 private:
     Tracker *tracker;
-    Eigen::ArrayX3f seeds;
+    std::vector<ImageSpace::Point> seeds;
     bool jitter;
     size_t streamlinesPerSeed, totalStreamlines, currentStreamline, currentSeed;
     
 public:
-    TractographyDataSource (Tracker * const tracker, const Eigen::ArrayX3f &seeds, const size_t streamlinesPerSeed, const bool jitter)
+    TractographyDataSource (Tracker * const tracker, const std::vector<ImageSpace::Point> &seeds, const size_t streamlinesPerSeed, const bool jitter)
         : tracker(tracker), seeds(seeds), streamlinesPerSeed(streamlinesPerSeed), jitter(jitter), currentStreamline(0), currentSeed(0)
     {
-        this->totalStreamlines = seeds.rows() * streamlinesPerSeed;
+        this->totalStreamlines = seeds.size() * streamlinesPerSeed;
     }
     
     bool more () { return (currentStreamline < totalStreamlines); }
@@ -121,7 +121,7 @@ public:
             if (currentStreamline > 0)
                 currentSeed++;
             
-            tracker->setSeed(seeds.row(currentSeed), jitter);
+            tracker->setSeed(seeds[currentSeed], jitter);
         }
         
         // Generate the streamline
