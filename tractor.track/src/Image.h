@@ -227,6 +227,13 @@ public:
         data_ = std::vector<Element>(size_, value);
     }
     
+    Image (const ImageSpace::DimVector &dims, const Element value)
+    {
+        std::copy(dims.begin(), dims.end(), this->dims.begin());
+        calculateStrides();
+        data_ = std::vector<Element>(size_, value);
+    }
+    
     Image (const ArrayIndex &dims, const std::vector<Element> &data)
         : dims(dims)
     {
@@ -264,14 +271,14 @@ public:
     typename std::vector<Element>::const_iterator begin () const { return data_.begin(); }
     typename std::vector<Element>::const_iterator end () const { return data_.end(); }
     
-    Element & operator[] (const size_t n) { return data_[n]; }
-    Element & operator[] (const ArrayIndex &loc) { return data_[indexer.flatten(loc, strides)]; }
+    typename std::vector<Element>::reference operator[] (const size_t n) { return data_[n]; }
+    typename std::vector<Element>::reference operator[] (const ArrayIndex &loc) { return data_[indexer.flatten(loc, strides)]; }
     
-    const Element & operator[] (const size_t n) const { return data_[n]; }
-    const Element & operator[] (const ArrayIndex &loc) const { return data_[indexer.flatten(loc, strides)]; }
+    typename std::vector<Element>::const_reference operator[] (const size_t n) const { return data_[n]; }
+    typename std::vector<Element>::const_reference operator[] (const ArrayIndex &loc) const { return data_[indexer.flatten(loc, strides)]; }
     
-    Element & at (const size_t n) { return data_.at(n); }
-    Element & at (const ArrayIndex &loc)
+    typename std::vector<Element>::reference at (const size_t n) { return data_.at(n); }
+    typename std::vector<Element>::reference at (const ArrayIndex &loc)
     {
         for (int i=0; i<3; i++)
         {
@@ -280,7 +287,7 @@ public:
         }
         return data_[indexer.flatten(loc, strides)];
     }
-    Element & at (const ImageSpace::Point &point, const ImageSpace::PointType type = ImageSpace::VoxelPointType, const ImageSpace::RoundingType round = ImageSpace::ConventionalRounding)
+    typename std::vector<Element>::reference at (const ImageSpace::Point &point, const ImageSpace::PointType type = ImageSpace::VoxelPointType, const ImageSpace::RoundingType round = ImageSpace::ConventionalRounding)
     {
         if (space == nullptr)
             throw std::runtime_error("No space is associated with the image");
