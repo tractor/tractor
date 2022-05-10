@@ -1,6 +1,6 @@
-#include <RcppEigen.h>
+#include <Rcpp.h>
 
-#include "RNifti.h"
+#include "Image.h"
 #include "Streamline.h"
 #include "VisitationMap.h"
 
@@ -14,13 +14,17 @@ struct divider
     double operator() (double x) { return x/divisor; }
 };
 
-inline void checkAndSetPoint (Image<bool> &visited, Image<double> &values, const ImageSpace::Point &point)
+inline void checkAndSetPoint (Image<bool,3> &visited, Image<double,3> &values, const ImageSpace::Point &point)
 {
-    static std::vector<int> loc(3);
-    size_t index;
+    // The code below would suffice, but this function is called a lot, so
+    // we try to reduce duplicating work between the two images by flattening
+    // separately once
+    // if (!visited.at(point)) { visited.at(point) = true; values.at(point) += 1.0; }
+    static Image<bool,3>::ArrayIndex loc;
+    static size_t index;
     
     for (int i=0; i<3; i++)
-        loc[i] = static_cast<int>(round(point[i]));
+        loc[i] = static_cast<size_t>(round(point[i]));
     
     values.flattenIndex(loc, index);
     if (!visited[index])
@@ -37,7 +41,7 @@ void VisitationMapDataSink::setup (const size_type &count, const_iterator begin,
 
 void VisitationMapDataSink::put (const Streamline &data)
 {
-    Image<bool> visited(values.getDimensions(), false);
+    Image<bool,3> visited(values.dim(), false);
     
     const std::vector<ImageSpace::Point> &leftPoints = data.getLeftPoints();
     const std::vector<ImageSpace::Point> &rightPoints = data.getRightPoints();
@@ -82,6 +86,6 @@ void VisitationMapDataSink::done ()
 void VisitationMapDataSink::writeToNifti (const RNifti::NiftiImage &reference, const std::string &fileName) const
 {
     RNifti::NiftiImage image = reference;
-    image.replaceData(values.getData(), DT_FLOAT64);
+    image.data() = RNifti::NiftiImageData(values.begin(), values.end(), DT_FLOAT64);
     image.toFile(fileName);
 }
