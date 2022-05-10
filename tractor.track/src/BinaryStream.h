@@ -38,6 +38,10 @@ public:
 class BinaryInputStream : public BinaryStream
 {
 public:
+    BinaryInputStream ()                        { }
+    BinaryInputStream (std::ifstream *stream)   { attach(stream); }
+    BinaryInputStream (const std::string &path) { attach(path); }
+    
     void attach (std::ifstream *stream) { this->inputStream = stream; }
     void attach (const std::string &path)
     {
@@ -49,9 +53,9 @@ public:
     
     template <typename SourceType> SourceType readValue ();
     template <typename SourceType, typename FinalType> void readValue (FinalType &value);
+    template <typename SourceType, typename FinalType, size_t N> void readArray (std::array<FinalType,N> &values);
     template <typename SourceType, typename FinalType> void readVector (std::vector<FinalType> &values, size_t n = 0);
     template <typename SourceType> void readPoint (ImageSpace::Point &value);
-    template <typename SourceType> void readTransform (ImageSpace::Transform &value);
     std::string readString (const std::string delim = "\0");
     std::string readString (const size_t n);
     
@@ -63,6 +67,10 @@ public:
 class BinaryOutputStream : public BinaryStream
 {
 public:
+    BinaryOutputStream ()                           { }
+    BinaryOutputStream (std::ofstream *stream)      { attach(stream); }
+    BinaryOutputStream (const std::string &path)    { attach(path); }
+    
     void attach (std::ofstream *stream) { this->outputStream = stream; }
     void attach (const std::string &path)
     {
@@ -75,9 +83,10 @@ public:
     template <typename TargetType> void writeValue (const TargetType &value);
     template <typename TargetType> void writeValues (const TargetType &value, size_t n);
     template <typename TargetType> void writeArray (TargetType * const pointer, size_t n);
+    template <typename TargetType, typename OriginalType, size_t N> void writeArray (const std::array<OriginalType,N> &values);
     template <typename TargetType, typename OriginalType> void writeVector (const std::vector<OriginalType> &values, size_t n = 0);
     template <typename TargetType> void writePoint (const ImageSpace::Point &value);
-    void writeString (const std::string &value);
+    void writeString (const std::string &value, const bool terminate = true);
     
     // Allow pass-through calls to the underlying ofstream via the arrow operator
     const std::ofstream * operator-> () const   { return outputStream; }
@@ -139,7 +148,7 @@ inline void BinaryStream::write (const OriginalType *values, const size_t n)
     
     TargetType *finalValues;
     if (std::is_same<TargetType,OriginalType>::value && !swapEndian)
-        finalValues = const_cast<TargetType*>(values);
+        finalValues = (TargetType *) values;
     else
     {
         finalValues = new TargetType[n];
@@ -173,6 +182,12 @@ inline void BinaryInputStream::readValue (FinalType &value)
     read<SourceType>(&value);
 }
 
+template <typename SourceType, typename FinalType, size_t N>
+inline void BinaryInputStream::readArray (std::array<FinalType,N> &values)
+{
+    read<SourceType>(values.data(), N);
+}
+
 template <typename SourceType, typename FinalType>
 inline void BinaryInputStream::readVector (std::vector<FinalType> &values, size_t n)
 {
@@ -189,14 +204,6 @@ inline void BinaryInputStream::readPoint (ImageSpace::Point &value)
     ImageSpace::Element elements[3];
     read<SourceType>(elements, 3);
     value = ImageSpace::Point(elements);
-}
-
-template <typename SourceType>
-inline void BinaryInputStream::readTransform (ImageSpace::Transform &value)
-{
-    ImageSpace::Element elements[16];
-    read<SourceType>(elements, 16);
-    value = ImageSpace::Transform(elements);
 }
 
 template <typename TargetType>
@@ -216,6 +223,12 @@ template <typename TargetType>
 inline void BinaryOutputStream::writeArray (TargetType * const pointer, size_t n)
 {
     write<TargetType,TargetType>(pointer, n);
+}
+
+template <typename TargetType, typename OriginalType, size_t N>
+inline void BinaryOutputStream::writeArray (const std::array<OriginalType,N> &values)
+{
+    write<TargetType,OriginalType>(values.data(), N);
 }
 
 template <typename TargetType, typename OriginalType>

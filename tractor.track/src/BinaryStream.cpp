@@ -44,7 +44,12 @@ std::string BinaryInputStream::readString (const size_t n)
     }
 }
 
-void BinaryOutputStream::writeString (const std::string &value)
+void BinaryOutputStream::writeString (const std::string &value, const bool terminate)
 {
     write<char>(value.data(), value.length());
+    if (terminate)
+    {
+        const char nul = '\0';
+        write<char>(&nul);
+    }
 }
