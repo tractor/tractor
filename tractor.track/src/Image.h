@@ -59,6 +59,17 @@ public:
     ImageSpace (const DimVector &dim, const PixdimVector &pixdim, const Transform &transform)
         : dim(dim), pixdim(pixdim), transform(transform) {}
     
+    ImageSpace (const DimVector &dim, const PixdimVector &pixdim)
+        : dim(dim), pixdim(pixdim)
+    {
+        this->transform = Transform::eye();
+        for (int i=0; i<3; i++)
+            this->transform(i,i) = pixdim[i];
+    }
+    
+    ImageSpace (const DimVector &dim)
+        : ImageSpace(dim, {1,1,1}, Transform::eye()) {}
+    
     ImageSpace (const RNifti::NiftiImage &source)
     {
         std::vector<RNifti::NiftiImage::dim_t> vdim = source.dim();
@@ -76,7 +87,9 @@ public:
         transform = source.xform().matrix();
     }
     
-    Point toVoxel (const Point &point, const PointType type, const RoundingType round = ConventionalRounding)
+    std::string orientation () const    { return RNifti::NiftiImage::Xform(transform).orientation(); }
+    
+    Point toVoxel (const Point &point, const PointType type, const RoundingType round = ConventionalRounding) const
     {
         Point result;
         
@@ -134,11 +147,13 @@ class ImageSpaceEmbedded
 {
 protected:
     ImageSpace *space = nullptr;
+    bool sharedSpace = false;
     
 public:
     virtual ~ImageSpaceEmbedded ()
     {
-        delete space;
+        if (!sharedSpace)
+            delete space;
     }
     
     virtual ImageSpace & imageSpace () const
@@ -147,6 +162,14 @@ public:
             throw std::runtime_error("No image space information is available");
         else
             return *space;
+    }
+    
+    bool hasImageSpace () const { return (space != nullptr); }
+    
+    void setImageSpace (ImageSpace * const space, const bool shared = false)
+    {
+        this->space = space;
+        sharedSpace = shared;
     }
 };
 
