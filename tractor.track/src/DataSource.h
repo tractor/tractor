@@ -9,7 +9,7 @@ public:
     virtual void setup () {}
     virtual bool more () { return false; }
     virtual void get (ElementType &data) {}
-    virtual void seek (const int n) {}
+    virtual void seek (const size_t n) {}
     virtual bool seekable () { return false; }
     virtual void done () {}
 };
