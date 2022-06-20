@@ -13,8 +13,6 @@ protected:
     std::ifstream *inputStream = nullptr;
     std::ofstream *outputStream = nullptr;
     
-    template <typename Type> static void swap (Type &value);
-    
     template <typename SourceType, typename FinalType> void read (FinalType *values, const size_t n = 1);
     template <typename TargetType, typename OriginalType> void write (const OriginalType *values, const size_t n = 1);
     
@@ -31,6 +29,8 @@ public:
             delete outputStream;
         }
     }
+    
+    template <typename Type> static void swap (Type &value);
     
     void setEndianness (const std::string &endianness);
 };
