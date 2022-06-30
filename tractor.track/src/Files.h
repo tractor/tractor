@@ -61,6 +61,7 @@ protected:
     bool haveLabels = false;
     std::vector<std::set<int>> labels;
     std::vector<size_t> offsets;
+    std::map<int,std::string> dictionary;
     
     bool fileExists (const std::string &path) const
     {
@@ -133,6 +134,9 @@ protected:
     SinkFileAdapter *sink = nullptr;
     
     bool needLabels = false;
+    std::vector<std::set<int>> labels;
+    std::vector<size_t> offsets;
+    std::map<int,std::string> dictionary;
     
     void writeLabels (const std::string &path);
     
@@ -144,8 +148,12 @@ public:
         sink->open(append);
     }
     
+    std::map<int,std::string> & labelDictionary () { return dictionary; }
+    
     void put (const Streamline &data)
     {
+        if (needLabels)
+            labels.push_back(data.getLabels());
         sink->write(data);
         currentStreamline++;
     }

@@ -17,10 +17,11 @@ void StreamlineFileSource::readLabels (const std::string &path)
     const int nLabels = inputStream.readValue<int32_t>();
     inputStream->seekg(32);
     
+    dictionary.clear();
     for (int i=0; i<nLabels; i++)
     {
-        inputStream.readValue<int32_t>();
-        inputStream.readString();
+        const int value = inputStream.readValue<int32_t>();
+        dictionary[value] = inputStream.readString();
     }
     
     offsets.clear();
@@ -59,6 +60,13 @@ void StreamlineFileSource::seek (const size_t n)
 
 void StreamlineFileSink::writeLabels (const std::string &path)
 {
+    if (!needLabels || (labels.empty() && offsets.empty()))
+        return;
+    if (labels.size() != offsets.size())
+        throw std::runtime_error("Label and offset vectors are not the same length");
+    if (labels.size() != currentStreamline)
+        throw std::runtime_error("Label vector length doesn't correspond to the number of streamlines");
+    
     BinaryOutputStream outputStream(path);
     
     // Magic number (unterminated)
@@ -67,8 +75,8 @@ void StreamlineFileSink::writeLabels (const std::string &path)
     // File version number (offset 8)
     outputStream.writeValue<int32_t>(1);
     
-    // Number of streamlines, unknown at this point (offset 12)
-    outputStream.writeValue<int32_t>(0);
+    // Number of streamlines (offset 12)
+    outputStream.writeValue<int32_t>(currentStreamline);
     
     // Number of labels (offset 16)
     outputStream.writeValue<int32_t>(dictionary.size());
@@ -77,11 +85,20 @@ void StreamlineFileSink::writeLabels (const std::string &path)
     outputStream.writeValues<int32_t>(0, 3);
     
     // Write out label dictionary (offset 32)
-    for (auto it=dictionary.begin(); it!=dictionary.end(); it++)
+    for (auto it=dictionary.cbegin(); it!=dictionary.cend(); it++)
     {
         const std::pair<int,std::string> &element = *it;
         outputStream.writeValue<int32_t>(element.first);
         outputStream.writeString(element.second);
-        outputStream.writeValue<char>(0);
+    }
+    
+    // Write out offsets and labels (variable offset)
+    for (size_t i=0; i<offsets.size(); i++)
+    {
+        outputStream.writeValue<uint64_t>(offsets[i]);
+        const std::set<int> &currentLabels = labels[i];
+        outputStream.writeValue<int32_t>(currentLabels.size());
+        for (auto it=currentLabels.cbegin(); it!=currentLabels.cend(); it++)
+            outputStream.writeValue<int32_t>(*it);
     }
 }
