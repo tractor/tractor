@@ -38,6 +38,7 @@ public:
     virtual ~DataManipulator () {}
     
     // If the return value is false, the element will be removed
+    virtual void setup (const size_t &count) {}
     virtual bool process (ElementType &data) { return true; }
 };
 
