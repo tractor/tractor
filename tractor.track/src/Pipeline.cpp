@@ -52,7 +52,8 @@ size_t Pipeline<ElementType>::run ()
             // Apply the manipulator(s), if there are any
             for (int i=0; i<manipulators.size(); i++)
             {
-                typename std::list<ElementType>::iterator it = workingSet.begin();
+                manipulators[i]->setup(workingSet.size());
+                auto it = workingSet.begin();
                 while (it != workingSet.end())
                 {
                     bool keep = manipulators[i]->process(*it);
@@ -77,7 +78,7 @@ size_t Pipeline<ElementType>::run ()
                 sinks[i]->setup(workingSet.size(), workingSet.begin(), workingSet.end());
                 
                 // Pass each element to the sink
-                for (typename std::list<ElementType>::const_iterator it=workingSet.begin(); it!=workingSet.end(); it++)
+                for (auto it=workingSet.cbegin(); it!=workingSet.cend(); it++)
                     sinks[i]->put(*it);
                 
                 sinks[i]->finish();
