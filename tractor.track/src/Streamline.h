@@ -7,7 +7,7 @@
 #include "DataSource.h"
 #include "BinaryStream.h"
 
-class Streamline
+class Streamline : public ImageSpaceEmbedded
 {
 public:
     enum TerminationReason { UnknownReason, BoundsReason, MaskReason, OneWayReason, TargetReason, NoDataReason, LoopReason, CurvatureReason };
