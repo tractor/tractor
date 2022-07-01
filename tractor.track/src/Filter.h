@@ -44,4 +44,25 @@ public:
     }
 };
 
+class MedianStreamlineFilter : public DataManipulator<Streamline>
+{
+private:
+    double quantile;
+    size_t count, current;
+    std::vector<Streamline> cache;
+    
+public:
+    MedianStreamlineFilter (const double quantile = 0.99)
+        : quantile(quantile) {}
+    
+    void setup (const size_t &count)
+    {
+        this->count = count;
+        this->current = 0;
+        cache.resize(count);
+    }
+    
+    bool process (Streamline &data);
+};
+
 #endif
