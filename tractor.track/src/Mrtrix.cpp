@@ -4,20 +4,55 @@
 #include "BinaryStream.h"
 #include "Mrtrix.h"
 
-using namespace std;
-
-void MrtrixDataSource::readStreamline (Streamline &data)
+void MrtrixSourceFileAdapter::open ()
 {
-    vector<ImageSpace::Point> points;
+    inputStream->seekg(0);
+    
+    const std::string magic = inputStream.readString("\n");
+    if (magic.compare(0,13,"mrtrix tracks") != 0)
+        throw std::runtime_error("File " + path + " does not contain an MRtrix magic number");
+    
+    dataOffset_ = 0;
+    while (true)
+    {
+        const std::string str = inputStream.readString("\n");
+        if (inputStream->eof() || str == "END")
+            break;
+        else if (str.compare(0,8,"file: . ") == 0)
+            dataOffset_ = static_cast<size_t>(atol(str.substr(8));
+        else if (str.compare(0,7,"count: ") == 0)
+            count = static_cast<size_t>(atol(str.substr(7)));
+        else if (str.compare(0,10,"datatype: ") == 0)
+        {
+            const string datatypeString = str.substr(10);
+            if (datatypeString == "Float32BE")      { datatype = "float";   inputStream.setEndianness("big");       }
+            else if (datatypeString == "Float32LE") { datatype = "float";   inputStream.setEndianness("little");    }
+            else if (datatypeString == "Float64BE") { datatype = "double";  inputStream.setEndianness("big");       }
+            else if (datatypeString == "Float64LE") { datatype = "double";  inputStream.setEndianness("little");    }
+            else throw std::runtime_error("MRtrix track file datatype is invalid");
+        }
+    }
+    
+    if (dataOffset_ == 0)
+        throw std::runtime_error("File " + path + " does not seem to contain a valid MRtrix header");
+    if (count == 0)
+        throw std::runtime_error("Streamline count not stored in MRtrix track file header");
+    
+    inputStream->seekg(dataOffset_);
+}
+
+void MrtrixSourceFileAdapter::read (Streamline &data)
+{
+    std::vector<ImageSpace::Point> points;
     while (true)
     {
         ImageSpace::Point point;
         if (datatype == "float")
-            binaryStream.readPoint<float>(point);
+            inputStream.readPoint<float>(point);
         else if (datatype == "double")
-            binaryStream.readPoint<double>(point);
+            inputStream.readPoint<double>(point);
         
-        if (fileStream.eof())
+        if (inputStream->eof())
             break;
         else if (ISNAN(point[0]) && ISNAN(point[1]) && ISNAN(point[2]))
             break;
@@ -29,7 +64,7 @@ void MrtrixDataSource::readStreamline (Streamline &data)
     
     if (points.size() > 0)
     {
-        data = Streamline(vector<ImageSpace::Point>(points.begin(), points.begin()+1),
+        data = Streamline(std::vector<ImageSpace::Point>(points.begin(), points.begin()+1),
                           points,
                           ImageSpace::WorldPointType,
                           { 0, 0, 0},
@@ -37,44 +72,4 @@ void MrtrixDataSource::readStreamline (Streamline &data)
     }
     
     currentStreamline++;
-}
-
-void MrtrixDataSource::setup ()
-{
-    if (fileStream.is_open())
-        return;
-    
-    fileStream.open((fileStem + ".tck").c_str(), ios::binary);
-    const std::string magic = binaryStream.readString("\n");
-    if (magic.compare(0,13,"mrtrix tracks") != 0)
-        throw std::runtime_error("File " + fileStem + " does not contain an MRtrix magic number");
-    
-    size_t dataOffset = 0;
-    while (true)
-    {
-        const string str = binaryStream.readString("\n");
-        if (fileStream.eof() || str == "END")
-            break;
-        else if (str.compare(0,8,"file: . ") == 0)
-            dataOffset = static_cast<size_t>(atol(str.substr(8).c_str()));
-        else if (str.compare(0,7,"count: ") == 0)
-            totalStreamlines = static_cast<size_t>(atol(str.substr(7).c_str()));
-        else if (str.compare(0,10,"datatype: ") == 0)
-        {
-            const string datatypeString = str.substr(10);
-            if (datatypeString == "Float32BE")      { datatype = "float";   binaryStream.setEndianness("big");      }
-            else if (datatypeString == "Float32LE") { datatype = "float";   binaryStream.setEndianness("little");   }
-            else if (datatypeString == "Float64BE") { datatype = "double";  binaryStream.setEndianness("big");      }
-            else if (datatypeString == "Float64LE") { datatype = "double";  binaryStream.setEndianness("little");   }
-            else throw std::runtime_error("MRtrix track file datatype is invalid");
-        }
-    }
-    
-    if (dataOffset == 0)
-        throw std::runtime_error("File " + fileStem + " does not seem to contain a valid MRtrix header");
-    if (totalStreamlines == 0)
-        throw std::runtime_error("Streamline count not stored in MRtrix track file header");
-    
-    fileStream.seekg(dataOffset);
-    currentStreamline = 0;
 }

@@ -1,22 +1,20 @@
 #ifndef _MRTRIX_H_
 #define _MRTRIX_H_
 
-#include <Rcpp.h>
+#include "Files.h"
 
-#include "Streamline.h"
-
-class MrtrixDataSource : public StreamlineFileSource
+class MrtrixSourceFileAdapter : public SourceFileAdapter
 {
 protected:
     std::string datatype;
-    
-    void readStreamline (Streamline &data);
+    size_t dataOffset_;
     
 public:
-    using StreamlineFileSource::StreamlineFileSource;
+    using SourceFileAdapter::SourceFileAdapter;
     
-    void setup ();
-    void get (Streamline &data) { readStreamline(data); }
+    void open ();
+    size_t dataOffset () { return dataOffset_; }
+    void read (Streamline &data);
 };
 
 #endif
