@@ -1,6 +1,7 @@
 #ifndef _FILES_H_
 #define _FILES_H_
 
+#include "Image.h"
 #include "DataSource.h"
 #include "Streamline.h"
 
@@ -8,6 +9,7 @@ class SourceFileAdapter
 {
 protected:
     BinaryInputStream inputStream;
+    std::string path;
     
     size_t count;
     std::vector<std::string> properties;
@@ -15,6 +17,7 @@ protected:
     
 public:
     SourceFileAdapter (const std::string &path)
+        : path(path)
     {
         inputStream.attach(path);
     }
@@ -74,9 +77,9 @@ public:
     StreamlineFileSource (const std::string &fileStem, const bool readLabels = true)
     {
         if (fileExists(fileStem + ".trk"))
-            source = new TrackvisFileSource(fileStem + ".trk");
+            source = new TrackvisSourceFileAdapter(fileStem + ".trk");
         else if (fileExists(fileStem + ".tck"))
-            source = new MrtrixFileSource(fileStem + ".tck");
+            source = new MrtrixSourceFileAdapter(fileStem + ".tck");
         else
             throw std::runtime_error("Specified streamline source file does not exist");
         
@@ -104,22 +107,29 @@ class SinkFileAdapter
 {
 protected:
     BinaryOutputStream outputStream;
-    
-    size_t count;
+    std::string path;
     
 public:
     SinkFileAdapter (const std::string &path)
+        : path(path)
     {
         outputStream.attach(path);
     }
     
     virtual ~SinkFileAdapter () {}
     
-    void setCount (const size_t count) { this->count = count; }
+    // Read header (if there is one) and prepare to read first streamline
+    // Should return the current number of streamlines in the file (0 unless appending)
+    virtual size_t open (const bool append) {}
     
-    virtual void open (const bool append) {}
-    virtual void write (const Streamline &data) {}
-    virtual void close () {}
+    // The maximum number of streamlines that the format can store (0 means no limit)
+    virtual constexpr size_t capacity () { return 0; }
+    
+    // Write a streamline to file and return its offset within the file
+    virtual size_t write (const Streamline &data) { return 0; }
+    
+    // Finalise the file. The argument is the final streamline count
+    virtual void close (const size_t &count) {}
 };
 
 class StreamlineFileSink : public DataSink<Streamline>
@@ -144,24 +154,33 @@ public:
     StreamlineFileSink (const std::string &fileStem, const bool writeLabels = true, const bool append = false)
         : fileStem(fileStem), needLabels(writeLabels)
     {
-        sink = new TrackvisFileSink(fileStem + ".trk");
-        sink->open(append);
+        sink = new TrackvisSinkFileAdapter(fileStem + ".trk");
+        currentStreamline = sink->open(append);
     }
     
     std::map<int,std::string> & labelDictionary () { return dictionary; }
     
+    void setup (const size_t &count)
+    {
+        const size_t capacity = sink->capacity();
+        if (capacity > 0 && currentStreamline + count > capacity)
+            throw std::runtime_error("Total streamline count will exceed the capacity of the output file format");
+    }
+    
     void put (const Streamline &data)
     {
+        const offset = sink->write(data);
         if (needLabels)
+        {
             labels.push_back(data.getLabels());
-        sink->write(data);
+            offsets.push_back(offset);
+        }
         currentStreamline++;
     }
     
     void done ()
     {
-        sink->setCount(currentStreamline);
-        sink->close();
+        sink->close(currentStreamline);
         writeLabels(fileStem + ".trkl");
     }
 };
