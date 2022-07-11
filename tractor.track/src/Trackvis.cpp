@@ -34,7 +34,7 @@ using namespace std;
 // 
 // Source: Trackvis documentation (http://www.trackvis.org/docs/?subsect=fileformat)
 
-void TrackvisSourceFileAdapter::open ()
+StreamlineFileMetadata * TrackvisSourceFileAdapter::open ()
 {
     // Must be -1 if there is no seed property
     seedProperty = -1;
@@ -55,10 +55,12 @@ void TrackvisSourceFileAdapter::open ()
     if (inputStream.readString(6).compare(0,5,"TRACK") != 0)
         throw runtime_error("Trackvis file does not seem to have a valid magic number");
     
-    space = new ImageSpace;
+    metadata = new StreamlineFileMetadata;
+    metadata->dataOffset = 1000;
+    metadata->space = new ImageSpace;
     
-    inputStream.readArray<int16_t>(space->dim);
-    inputStream.readArray<float>(space->pixdim);
+    inputStream.readArray<int16_t>(metadata->space->dim);
+    inputStream.readArray<float>(metadata->space->pixdim);
     
     inputStream->seekg(12, ios::cur);
     nScalars = inputStream.readValue<int16_t>();
@@ -67,7 +69,7 @@ void TrackvisSourceFileAdapter::open ()
     for (int i=0; i<std::min(nProperties,10); i++)
     {
         const std::string propertyName = inputStream.readString(20);
-        properties.push_back(propertyName);
+        metadata->properties.push_back(propertyName);
         if (propertyName == "seed")
             seedProperty = i;
     }
@@ -75,12 +77,13 @@ void TrackvisSourceFileAdapter::open ()
     array<ImageSpace::Element,16> elements;
     inputStream->seekg(440, ios::beg);
     inputStream.readArray<float>(elements);
-    space->transform = ImageSpace::Transform(elements.data());
+    metadata->space->transform = ImageSpace::Transform(elements.data());
     
     inputStream->seekg(988, ios::beg);
-    count = inputStream.readValue<int32_t>();
+    metadata->count = inputStream.readValue<int32_t>();
     
     inputStream->seekg(1000);
+    return metadata;
 }
 
 void TrackvisSourceFileAdapter::read (Streamline &data)

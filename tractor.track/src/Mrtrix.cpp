@@ -4,24 +4,26 @@
 #include "BinaryStream.h"
 #include "Mrtrix.h"
 
-void MrtrixSourceFileAdapter::open ()
+StreamlineFileMetadata * MrtrixSourceFileAdapter::open ()
 {
+    metadata = new StreamlineFileMetadata;
+    
     inputStream->seekg(0);
     
     const std::string magic = inputStream.readString("\n");
     if (magic.compare(0,13,"mrtrix tracks") != 0)
         throw std::runtime_error("File " + path + " does not contain an MRtrix magic number");
     
-    dataOffset_ = 0;
+    metadata->dataOffset = 0;
     while (true)
     {
         const std::string str = inputStream.readString("\n");
         if (inputStream->eof() || str == "END")
             break;
         else if (str.compare(0,8,"file: . ") == 0)
-            dataOffset_ = static_cast<size_t>(atol(str.substr(8));
+            metadata->dataOffset = static_cast<size_t>(atol(str.substr(8));
         else if (str.compare(0,7,"count: ") == 0)
-            count = static_cast<size_t>(atol(str.substr(7)));
+            metadata->count = static_cast<size_t>(atol(str.substr(7)));
         else if (str.compare(0,10,"datatype: ") == 0)
         {
             const string datatypeString = str.substr(10);
@@ -33,12 +35,13 @@ void MrtrixSourceFileAdapter::open ()
         }
     }
     
-    if (dataOffset_ == 0)
+    if (metadata->dataOffset == 0)
         throw std::runtime_error("File " + path + " does not seem to contain a valid MRtrix header");
-    if (count == 0)
+    if (metadata->count == 0)
         throw std::runtime_error("Streamline count not stored in MRtrix track file header");
     
-    inputStream->seekg(dataOffset_);
+    inputStream->seekg(metadata->dataOffset);
+    return metadata;
 }
 
 void MrtrixSourceFileAdapter::read (Streamline &data)

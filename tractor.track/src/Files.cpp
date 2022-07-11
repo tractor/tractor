@@ -3,7 +3,7 @@
 #include "BinaryStream.h"
 #include "Files.h"
 
-void StreamlineFileSource::readLabels (const std::string &path)
+void StreamlineFileSource::attachLabelFile (const std::string &path)
 {
     BinaryInputStream inputStream(path);
     
@@ -49,7 +49,7 @@ void StreamlineFileSource::seek (const size_t n)
     {
         if (n < currentStreamline)
         {
-            source->seek(source->dataOffset());
+            source->seek(metadata->dataOffset);
             currentStreamline = 0;
         }
         source->skip(n - currentStreamline);
