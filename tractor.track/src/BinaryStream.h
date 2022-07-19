@@ -51,7 +51,7 @@ public:
         this->streamsOwned = true;
     }
     
-    template <typename SourceType> SourceType readValue ();
+    template <typename SourceType, typename FinalType = SourceType> FinalType readValue ();
     template <typename SourceType, typename FinalType> void readValue (FinalType &value);
     template <typename SourceType, typename FinalType, size_t N> void readArray (std::array<FinalType,N> &values);
     template <typename SourceType, typename FinalType> void readVector (std::vector<FinalType> &values, size_t n = 0);
@@ -168,10 +168,10 @@ inline void BinaryStream::write (const OriginalType *values, const size_t n)
         delete[] finalValues;
 }
 
-template <typename SourceType>
-inline SourceType BinaryInputStream::readValue ()
+template <typename SourceType, typename FinalType>
+inline FinalType BinaryInputStream::readValue ()
 {
-    SourceType value;
+    FinalType value;
     read<SourceType>(&value);
     return value;
 }
@@ -215,8 +215,8 @@ inline void BinaryOutputStream::writeValue (const TargetType &value)
 template <typename TargetType>
 inline void BinaryOutputStream::writeValues (const TargetType &value, size_t n)
 {
-    for (size_t i=0; i<n; i++)
-        write<TargetType,TargetType>(&value);
+    const std::vector<TargetType> values(n, value);
+    write<TargetType,TargetType>(values.data(), n);
 }
 
 template <typename TargetType>
