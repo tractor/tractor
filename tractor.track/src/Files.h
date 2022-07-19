@@ -31,7 +31,9 @@ public:
         inputStream.attach(path);
     }
     
-    virtual StreamlineFileMetadata * open () { return new StreamlineFileMetadata; }
+    virtual ~SourceFileAdapter () {}
+    
+    virtual void open (StreamlineFileMetadata &metadata) {}
     virtual void seek (const size_t offset)
     {
         inputStream->seekg(offset);
@@ -65,11 +67,6 @@ protected:
     std::vector<size_t> offsets;
     std::map<int,std::string> dictionary;
     
-    bool fileExists (const std::string &path) const
-    {
-        return std::ifstream(path).good();
-    }
-    
 public:
     StreamlineFileSource (SourceFileAdapter *source)
         : source(source)
@@ -77,7 +74,8 @@ public:
         if (source == nullptr)
             throw std::runtime_error("A valid source must be specified");
         
-        metadata = source->open();
+        metadata = new StreamlineFileMetadata;
+        source->open(*metadata);
         totalStreamlines = metadata->count;
     }
     
@@ -119,16 +117,16 @@ public:
     
     // Read header (if there is one) and prepare to read first streamline
     // Should return the current number of streamlines in the file (0 unless appending)
-    virtual size_t open (const bool append) {}
+    virtual size_t open (const bool append) { return 0; }
     
     // The maximum number of streamlines that the format can store (0 means no limit)
-    virtual constexpr size_t capacity () { return 0; }
+    virtual size_t capacity () const { return 0; }
     
     // Write a streamline to file and return its offset within the file
     virtual size_t write (const Streamline &data) { return 0; }
     
-    // Finalise the file. The argument is the final streamline count
-    virtual void close (const size_t &count) {}
+    // Finalise the file with the specified metadata
+    virtual void close (const StreamlineFileMetadata &metadata) {}
 };
 
 class StreamlineFileSink : public DataSink<Streamline>
@@ -139,10 +137,10 @@ private:
     
 protected:
     size_t currentStreamline = 0;
-    std::string fileStem;
     SinkFileAdapter *sink = nullptr;
+    StreamlineFileMetadata *metadata = nullptr;
     
-    bool needLabels = false;
+    bool keepLabels = false;
     std::vector<std::set<int>> labels;
     std::vector<size_t> offsets;
     std::map<int,std::string> dictionary;
@@ -150,10 +148,13 @@ protected:
     void writeLabels (const std::string &path);
     
 public:
-    StreamlineFileSink (const std::string &fileStem, const bool writeLabels = true, const bool append = false)
-        : fileStem(fileStem), needLabels(writeLabels)
+    StreamlineFileSink (SinkFileAdapter *sink, const bool keepLabels = true, const bool append = false)
+        : sink(sink), keepLabels(keepLabels)
     {
-        sink = new TrackvisSinkFileAdapter(fileStem + ".trk");
+        if (sink == nullptr)
+            throw std::runtime_error("A valid sink must be specified");
+        
+        metadata = new StreamlineFileMetadata;
         currentStreamline = sink->open(append);
     }
     
@@ -168,8 +169,8 @@ public:
     
     void put (const Streamline &data)
     {
-        const offset = sink->write(data);
-        if (needLabels)
+        const size_t offset = sink->write(data);
+        if (keepLabels)
         {
             labels.push_back(data.getLabels());
             offsets.push_back(offset);
@@ -179,8 +180,8 @@ public:
     
     void done ()
     {
-        sink->close(currentStreamline);
-        writeLabels(fileStem + ".trkl");
+        metadata->count = currentStreamline;
+        sink->close(*metadata);
     }
 };
 

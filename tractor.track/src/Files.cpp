@@ -60,7 +60,7 @@ void StreamlineFileSource::seek (const size_t n)
 
 void StreamlineFileSink::writeLabels (const std::string &path)
 {
-    if (!needLabels || (labels.empty() && offsets.empty()))
+    if (!keepLabels || (labels.empty() && offsets.empty()))
         return;
     if (labels.size() != offsets.size())
         throw std::runtime_error("Label and offset vectors are not the same length");

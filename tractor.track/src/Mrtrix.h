@@ -11,8 +11,7 @@ protected:
 public:
     using SourceFileAdapter::SourceFileAdapter;
     
-    StreamlineFileMetadata * open ();
-    size_t dataOffset () { return dataOffset_; }
+    void open (StreamlineFileMetadata &metadata);
     void read (Streamline &data);
 };
 

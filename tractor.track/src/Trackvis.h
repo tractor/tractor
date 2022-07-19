@@ -1,17 +1,19 @@
 #ifndef _TRACKVIS_H_
 #define _TRACKVIS_H_
 
+#include "Image.h"
 #include "Files.h"
 
 class TrackvisSourceFileAdapter : public SourceFileAdapter
 {
 protected:
-    int nScalars, seedProperty;
+    int nScalars, nProperties, seedProperty;
+    ImageSpace::PixdimVector pixdim;
     
 public:
     using SourceFileAdapter::SourceFileAdapter;
     
-    StreamlineFileMetadata * open ();
+    void open (StreamlineFileMetadata &metadata);
     void read (Streamline &data);
     void skip (const size_t n = 1);
     void close ();
@@ -23,9 +25,9 @@ public:
     using SinkFileAdapter::SinkFileAdapter;
     
     size_t open (const bool append);
-    constexpr size_t capacity () { return static_cast<size_t>(std::numeric_limits<int32_t>::max()); }
+    size_t capacity () { return static_cast<size_t>(std::numeric_limits<int32_t>::max()); }
     size_t write (const Streamline &data);
-    void close (const size_t &count);
+    void close (const StreamlineFileMetadata &metadata);
 };
 
 #endif
