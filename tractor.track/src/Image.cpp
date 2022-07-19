@@ -2,7 +2,7 @@
 
 #include "Image.h"
 
-Point ImageSpace::toVoxel (const Point &point, const PointType type, const RoundingType round = ConventionalRounding) const
+ImageSpace::Point ImageSpace::toVoxel (const Point &point, const PointType type, const RoundingType round) const
 {
     Point result;
     

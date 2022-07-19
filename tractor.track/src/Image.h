@@ -70,6 +70,9 @@ public:
     ImageSpace (const DimVector &dim)
         : ImageSpace(dim, {1,1,1}, Transform::eye()) {}
     
+    ImageSpace ()
+        : ImageSpace({0,0,0}, {1,1,1}, Transform::eye()) {}
+    
     ImageSpace (const RNifti::NiftiImage &source)
     {
         std::vector<RNifti::NiftiImage::dim_t> vdim = source.dim();

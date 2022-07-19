@@ -94,4 +94,5 @@ bool MedianStreamlineFilter::process (Streamline &data)
     // Replace the source data with the calculated median
     // Fixed spacing won't be preserved
     data = Streamline(leftPoints, rightPoints, pointType, data.imageSpace().pixdim, false);
+    return true;
 }
