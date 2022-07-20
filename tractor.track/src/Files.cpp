@@ -3,7 +3,7 @@
 #include "BinaryStream.h"
 #include "Files.h"
 
-void StreamlineFileSource::attachLabelFile (const std::string &path)
+void StreamlineFileSource::readLabels (const std::string &path)
 {
     BinaryInputStream inputStream(path);
     

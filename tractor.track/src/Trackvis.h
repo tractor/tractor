@@ -2,7 +2,7 @@
 #define _TRACKVIS_H_
 
 #include "Image.h"
-#include "Files.h"
+#include "FileAdapters.h"
 
 class TrackvisSourceFileAdapter : public SourceFileAdapter
 {

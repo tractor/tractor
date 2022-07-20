@@ -1,55 +1,10 @@
 #ifndef _FILES_H_
 #define _FILES_H_
 
-#include "Image.h"
 #include "DataSource.h"
-#include "Streamline.h"
-
-struct StreamlineFileMetadata
-{
-    size_t count = 0;
-    size_t dataOffset = 0;
-    std::vector<std::string> properties;
-    ImageSpace *space = nullptr;
-    
-    ~StreamlineFileMetadata ()
-    {
-        delete space;
-    }
-};
-
-class SourceFileAdapter
-{
-protected:
-    BinaryInputStream inputStream;
-    std::string path;
-    
-public:
-    SourceFileAdapter (const std::string &path)
-        : path(path)
-    {
-        inputStream.attach(path);
-    }
-    
-    virtual ~SourceFileAdapter () {}
-    
-    virtual void open (StreamlineFileMetadata &metadata) {}
-    virtual void seek (const size_t offset)
-    {
-        inputStream->seekg(offset);
-        if (!inputStream->good())
-            throw std::runtime_error("Failed to seek to offset " + std::to_string(offset));
-    }
-    virtual void read (Streamline &data) {}
-    virtual void skip (const size_t n = 1)
-    {
-        // Default implementation: read each streamline as normal, but ignore it
-        Streamline ignored;
-        for (size_t i=0; i<n; i++)
-            read(ignored);
-    }
-    virtual void close () {}
-};
+#include "FileAdapters.h"
+#include "Trackvis.h"
+#include "Mrtrix.h"
 
 class StreamlineFileSource : public DataSource<Streamline>
 {
@@ -67,16 +22,29 @@ protected:
     std::vector<size_t> offsets;
     std::map<int,std::string> dictionary;
     
-public:
-    StreamlineFileSource (SourceFileAdapter *source)
-        : source(source)
+    bool fileExists (const std::string &path) const
     {
-        if (source == nullptr)
-            throw std::runtime_error("A valid source must be specified");
+        return std::ifstream(path).good();
+    }
+    
+    void readLabels (const std::string &path);
+    
+public:
+    StreamlineFileSource (const std::string &fileStem, const bool readLabels = true)
+    {
+        if (fileExists(fileStem + ".trk"))
+            source = new TrackvisSourceFileAdapter(fileStem + ".trk");
+        else if (fileExists(fileStem + ".tck"))
+            source = new MrtrixSourceFileAdapter(fileStem + ".tck");
+        else
+            throw std::runtime_error("Specified streamline source file does not exist");
         
         metadata = new StreamlineFileMetadata;
         source->open(*metadata);
         totalStreamlines = metadata->count;
+        
+        if (readLabels && fileExists(fileStem + ".trkl"))
+            this->readLabels(fileStem + ".trkl");
     }
     
     virtual ~StreamlineFileSource ()
@@ -85,7 +53,8 @@ public:
         delete source;
     }
     
-    void attachLabelFile (const std::string &path);
+    bool hasLabels () const { return haveLabels; }
+    StreamlineFileMetadata * fileMetadata () const { return metadata; }
     
     bool more () { return currentStreamline < totalStreamlines; }
     void get (Streamline &data)
@@ -100,35 +69,6 @@ public:
     void done () { source->close(); }
 };
 
-class SinkFileAdapter
-{
-protected:
-    BinaryOutputStream outputStream;
-    std::string path;
-    
-public:
-    SinkFileAdapter (const std::string &path)
-        : path(path)
-    {
-        outputStream.attach(path);
-    }
-    
-    virtual ~SinkFileAdapter () {}
-    
-    // Read header (if there is one) and prepare to read first streamline
-    // Should return the current number of streamlines in the file (0 unless appending)
-    virtual size_t open (const bool append) { return 0; }
-    
-    // The maximum number of streamlines that the format can store (0 means no limit)
-    virtual size_t capacity () const { return 0; }
-    
-    // Write a streamline to file and return its offset within the file
-    virtual size_t write (const Streamline &data) { return 0; }
-    
-    // Finalise the file with the specified metadata
-    virtual void close (const StreamlineFileMetadata &metadata) {}
-};
-
 class StreamlineFileSink : public DataSink<Streamline>
 {
 private:
@@ -137,6 +77,7 @@ private:
     
 protected:
     size_t currentStreamline = 0;
+    std::string fileStem;
     SinkFileAdapter *sink = nullptr;
     StreamlineFileMetadata *metadata = nullptr;
     
@@ -148,12 +89,10 @@ protected:
     void writeLabels (const std::string &path);
     
 public:
-    StreamlineFileSink (SinkFileAdapter *sink, const bool keepLabels = true, const bool append = false)
-        : sink(sink), keepLabels(keepLabels)
+    StreamlineFileSink (const std::string &fileStem, const bool keepLabels = true, const bool append = false)
+        : fileStem(fileStem), keepLabels(keepLabels)
     {
-        if (sink == nullptr)
-            throw std::runtime_error("A valid sink must be specified");
-        
+        sink = new TrackvisSinkFileAdapter(fileStem + ".trk");
         metadata = new StreamlineFileMetadata;
         currentStreamline = sink->open(append);
     }
@@ -182,6 +121,8 @@ public:
     {
         metadata->count = currentStreamline;
         sink->close(*metadata);
+        if (keepLabels)
+            writeLabels(fileStem + ".trkl");
     }
 };
 

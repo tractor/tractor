@@ -1,7 +1,7 @@
 #ifndef _MRTRIX_H_
 #define _MRTRIX_H_
 
-#include "Files.h"
+#include "FileAdapters.h"
 
 class MrtrixSourceFileAdapter : public SourceFileAdapter
 {
