@@ -14,7 +14,7 @@ double Streamline::getLength (const std::vector<ImageSpace::Point> &points) cons
         for (size_t i=1; i<nPoints; i++)
         {
             ImageSpace::Vector step = ImageSpace::step(points[i-1], points[i]);
-            if (pointType == ImageSpace::VoxelPointType)
+            if (pointType == PointType::Voxel)
             {
                 for (int j=0; j<3; j++)
                     step[j] *= voxelDims[j];
@@ -40,7 +40,7 @@ void Streamline::trim (std::vector<ImageSpace::Point> &points, const double maxL
     for (size_t i=1; i<nPoints; i++)
     {
         ImageSpace::Vector step = ImageSpace::step(points[i-1], points[i]);
-        if (pointType == ImageSpace::VoxelPointType)
+        if (pointType == PointType::Voxel)
         {
             for (int j=0; j<3; j++)
                 step[j] *= voxelDims[j];

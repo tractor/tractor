@@ -269,11 +269,11 @@ BEGIN_RCPP
     pipeline.setSubset(_indices);
     
     const std::string scopeString = as<std::string>(_scope);
-    VisitationMapDataSink::MappingScope scope = VisitationMapDataSink::FullMappingScope;
+    VisitationMapDataSink::MappingScope scope = VisitationMapDataSink::MappingScope::All;
     if (scopeString == "seed")
-        scope = VisitationMapDataSink::SeedMappingScope;
+        scope = VisitationMapDataSink::MappingScope::Seed;
     else if (scopeString == "ends")
-        scope = VisitationMapDataSink::EndsMappingScope;
+        scope = VisitationMapDataSink::MappingScope::Ends;
     
     RNifti::NiftiImage reference(as<std::string>(_imagePath), false);
     auto dims = reference.dim();
@@ -340,24 +340,24 @@ BEGIN_RCPP
     XPtr<StreamlineFileSink> sink(_sink);
     
     Rcpp::NumericMatrix pointsR(_points);
-    const ImageSpace::PointType pointType = (as<std::string>(_pointType) == "mm" ? ImageSpace::WorldPointType : ImageSpace::VoxelPointType);
+    const PointType pointType = (as<std::string>(_pointType) == "mm" ? PointType::World : PointType::Voxel);
     const int seedIndex = as<int>(_seedIndex) - 1;
     
     std::vector<ImageSpace::Point> leftPoints(seedIndex+1), rightPoints(pointsR.rows()-seedIndex);
     for (int i=seedIndex; i>=0; i--)
     {
         ImageSpace::Point point;
-        point[0] = pointsR(i,0) - (pointType == ImageSpace::VoxelPointType ? 1.0 : 0.0);
-        point[1] = pointsR(i,1) - (pointType == ImageSpace::VoxelPointType ? 1.0 : 0.0);
-        point[2] = pointsR(i,2) - (pointType == ImageSpace::VoxelPointType ? 1.0 : 0.0);
+        point[0] = pointsR(i,0) - (pointType == PointType::Voxel ? 1.0 : 0.0);
+        point[1] = pointsR(i,1) - (pointType == PointType::Voxel ? 1.0 : 0.0);
+        point[2] = pointsR(i,2) - (pointType == PointType::Voxel ? 1.0 : 0.0);
         leftPoints[seedIndex-i] = point;
     }
     for (int i=seedIndex; i<pointsR.rows(); i++)
     {
         ImageSpace::Point point;
-        point[0] = pointsR(i,0) - (pointType == ImageSpace::VoxelPointType ? 1.0 : 0.0);
-        point[1] = pointsR(i,1) - (pointType == ImageSpace::VoxelPointType ? 1.0 : 0.0);
-        point[2] = pointsR(i,2) - (pointType == ImageSpace::VoxelPointType ? 1.0 : 0.0);
+        point[0] = pointsR(i,0) - (pointType == PointType::Voxel ? 1.0 : 0.0);
+        point[1] = pointsR(i,1) - (pointType == PointType::Voxel ? 1.0 : 0.0);
+        point[2] = pointsR(i,2) - (pointType == PointType::Voxel ? 1.0 : 0.0);
         rightPoints[i-seedIndex] = point;
     }
     

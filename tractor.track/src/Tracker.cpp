@@ -65,7 +65,7 @@ Streamline Tracker::run ()
     }
     
     // We go right first (dir=0), then left (dir=1)
-    Streamline::TerminationReason terminationReasons[2] = { Streamline::UnknownReason, Streamline::UnknownReason };
+    Streamline::TerminationReason terminationReasons[2] = { Streamline::TerminationReason::Unknown, Streamline::TerminationReason::Unknown };
     for (int dir=0; dir<2; dir++)
     {
         logger.debug2.indent() << "Tracking " << (dir==0 ? "\"right\"" : "\"left\"") << endl;
@@ -96,7 +96,7 @@ Streamline Tracker::run ()
             }
             if (!inBounds)
             {
-                terminationReasons[dir] = Streamline::BoundsReason;
+                terminationReasons[dir] = Streamline::TerminationReason::Bounds;
                 logger.debug2.indent() << "Terminating: stepped out of bounds" << endl;
                 break;
             }
@@ -107,7 +107,7 @@ Streamline Tracker::run ()
             // Stop if we've stepped outside the mask, possibly deferring termination if required
             if ((*maskData)[vectorLoc] == 0 && previouslyInsideMask == 1)
             {
-                terminationReasons[dir] = Streamline::MaskReason;
+                terminationReasons[dir] = Streamline::TerminationReason::Mask;
                 logger.debug2.indent() << "Terminating: stepped outside tracking mask" << endl;
                 break;
             }
@@ -126,7 +126,7 @@ Streamline Tracker::run ()
                 
                 if (flags["one-way"])
                 {
-                    terminationReasons[dir] = Streamline::OneWayReason;
+                    terminationReasons[dir] = Streamline::TerminationReason::OneWay;
                     logger.debug2.indent() << "Terminating: one-way tracking" << endl;
                     break;
                 }
@@ -139,7 +139,7 @@ Streamline Tracker::run ()
                 
                 if (flags["terminate-targets"] && (*targetData)[vectorLoc] != startTarget)
                 {
-                    terminationReasons[dir] = Streamline::TargetReason;
+                    terminationReasons[dir] = Streamline::TerminationReason::Target;
                     logger.debug2.indent() << "Terminating: target hit" << endl;
                     break;
                 }
@@ -150,7 +150,7 @@ Streamline Tracker::run ()
             logger.debug3.indent() << "Sampled step direction is " << currentStep << endl;
             if (ImageSpace::norm(currentStep) == 0.0)
             {
-                terminationReasons[dir] = Streamline::NoDataReason;
+                terminationReasons[dir] = Streamline::TerminationReason::NoData;
                 logger.debug2.indent() << "Terminating: zero step vector" << endl;
                 break;
             }
@@ -164,7 +164,7 @@ Streamline Tracker::run ()
                 float loopcheckInnerProduct = ImageSpace::dot(loopcheck->at(loopcheckLoc), previousStep);
                 if (loopcheckInnerProduct < 0.0)
                 {
-                    terminationReasons[dir] = Streamline::LoopReason;
+                    terminationReasons[dir] = Streamline::TerminationReason::Loop;
                     logger.debug2.indent() << "Terminating: loop detected" << endl;
                     break;
                 }
@@ -182,7 +182,7 @@ Streamline Tracker::run ()
                 float innerProduct = ImageSpace::dot(previousStep, currentStep);
                 if (fabs(innerProduct) < innerProductThreshold)
                 {
-                    terminationReasons[dir] = Streamline::CurvatureReason;
+                    terminationReasons[dir] = Streamline::TerminationReason::Curvature;
                     logger.debug2.indent() << "Terminating: curvature too high" << endl;
                     break;
                 }
@@ -215,7 +215,7 @@ Streamline Tracker::run ()
     
     logger.debug1.indent() << "Tracking finished" << endl;
     
-    Streamline streamline(leftPoints, rightPoints, ImageSpace::VoxelPointType, voxelDims, true);
+    Streamline streamline(leftPoints, rightPoints, PointType::Voxel, voxelDims, true);
     streamline.setTerminationReasons(terminationReasons[0], terminationReasons[1]);
     streamline.setLabels(labels);
     return streamline;

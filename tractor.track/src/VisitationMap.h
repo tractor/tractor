@@ -8,7 +8,7 @@
 class VisitationMapDataSink : public DataSink<Streamline>
 {
 public:
-    enum MappingScope { FullMappingScope, SeedMappingScope, EndsMappingScope };
+    enum struct MappingScope { All, Seed, Ends };
     
 private:
     Image<double,3> values;
@@ -20,7 +20,7 @@ private:
     VisitationMapDataSink () {}
     
 public:
-    VisitationMapDataSink (const Image<double,3>::ArrayIndex &dims, const MappingScope scope = FullMappingScope, const bool normalise = false)
+    VisitationMapDataSink (const Image<double,3>::ArrayIndex &dims, const MappingScope scope = MappingScope::All, const bool normalise = false)
         : scope(scope), normalise(normalise)
     {
         values = Image<double,3>(dims, 0.0);

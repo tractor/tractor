@@ -27,7 +27,7 @@ bool MedianStreamlineFilter::process (Streamline &data)
     
     // Lengths are in steps here
     std::vector<size_t> leftLengths(count), rightLengths(count);
-    const ImageSpace::PointType pointType = cache[0].getPointType();
+    const PointType pointType = cache[0].getPointType();
     
     // First pass: find lengths
     for (size_t i=0; i<count; i++)

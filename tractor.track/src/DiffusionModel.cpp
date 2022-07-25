@@ -12,7 +12,7 @@ DiffusionTensorModel::DiffusionTensorModel (const std::string &pdFile)
 
 ImageSpace::Vector DiffusionTensorModel::sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const
 {
-    return principalDirections->at(point, ImageSpace::VoxelPointType, ImageSpace::ProbabilisticRounding);
+    return principalDirections->at(point, PointType::Voxel, RoundingType::Probabilistic);
 }
 
 BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std::vector<std::string> &thetaFiles, const std::vector<std::string> &phiFiles)
@@ -42,7 +42,7 @@ BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std:
 ImageSpace::Vector BedpostModel::sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const
 {
     // Round the point location and convert to array index
-    ImageSpace::Point roundedPoint = space->toVoxel(point, ImageSpace::VoxelPointType, ImageSpace::ProbabilisticRounding);
+    ImageSpace::Point roundedPoint = space->toVoxel(point, PointType::Voxel, RoundingType::Probabilistic);
     Image<float,4>::ArrayIndex loc;
     for (int i=0; i<3; i++)
         loc[i] = static_cast<size_t>(roundedPoint[i]);

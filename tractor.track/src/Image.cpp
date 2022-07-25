@@ -8,16 +8,16 @@ ImageSpace::Point ImageSpace::toVoxel (const Point &point, const PointType type,
     
     switch (type)
     {
-        case VoxelPointType:
+        case PointType::Voxel:
         result = point;
         break;
         
-        case ScaledPointType:
+        case PointType::Scaled:
         for (int i=0; i<3; i++)
             result[i] = point[i] / fabs(pixdim[i]);
         break;
         
-        case WorldPointType:
+        case PointType::World:
         RNifti::NiftiImage::Xform::Vector4 padded(1.0);
         for (int i=0; i<3; i++)
             padded[i] = point[i];
@@ -29,15 +29,15 @@ ImageSpace::Point ImageSpace::toVoxel (const Point &point, const PointType type,
     
     switch (round)
     {
-        case NoRounding:
+        case RoundingType::None:
         break;
         
-        case ConventionalRounding:
+        case RoundingType::Conventional:
         for (int i=0; i<3; i++)
             result[i] = std::round(result[i]);
         break;
         
-        case ProbabilisticRounding:
+        case RoundingType::Probabilistic:
         for (int i=0; i<3; i++)
         {
             const Element ceiling = std::ceil(result[i]);

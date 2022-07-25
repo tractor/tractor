@@ -4,6 +4,14 @@
 #include "RNifti.h"
 #include <array>
 
+// Location conventions: voxel-indexed, scaled for voxel dimensions only (as
+// with a diagonal xform), or world coordinates fully respecting the xform
+enum struct PointType { Voxel, Scaled, World };
+
+// Rounding strategies: none, standard for nearest-neighbour, or probabilistic
+// for stochastic nearest neighbour (probabilities proportional to distance)
+enum struct RoundingType { None, Conventional, Probabilistic };
+
 class ImageSpace
 {
 public:
@@ -14,9 +22,6 @@ public:
     
     typedef std::array<RNifti::NiftiImage::dim_t,3> DimVector;
     typedef std::array<RNifti::NiftiImage::pixdim_t,3> PixdimVector;
-    
-    enum PointType { VoxelPointType, ScaledPointType, WorldPointType };
-    enum RoundingType { NoRounding, ConventionalRounding, ProbabilisticRounding };
     
     DimVector dim;
     PixdimVector pixdim;
@@ -92,7 +97,7 @@ public:
     
     std::string orientation () const { return RNifti::NiftiImage::Xform(transform).orientation(); }
     
-    Point toVoxel (const Point &point, const PointType type, const RoundingType round = ConventionalRounding) const;
+    Point toVoxel (const Point &point, const PointType type, const RoundingType round = RoundingType::Conventional) const;
 };
 
 class ImageSpaceEmbedded
@@ -269,7 +274,7 @@ public:
         }
         return data_[indexer.flatten(loc, strides)];
     }
-    typename std::vector<Element>::reference at (const ImageSpace::Point &point, const ImageSpace::PointType type = ImageSpace::VoxelPointType, const ImageSpace::RoundingType round = ImageSpace::ConventionalRounding)
+    typename std::vector<Element>::reference at (const ImageSpace::Point &point, const PointType type = PointType::Voxel, const RoundingType round = RoundingType::Conventional)
     {
         if (space == nullptr)
             throw std::runtime_error("No space is associated with the image");

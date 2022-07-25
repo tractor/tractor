@@ -115,7 +115,7 @@ void TrackvisSourceFileAdapter::read (Streamline &data)
         
         data = Streamline(vector<ImageSpace::Point>(points.rend()-seed-1, points.rend()),
                           vector<ImageSpace::Point>(points.begin()+seed, points.end()),
-                          ImageSpace::VoxelPointType,
+                          PointType::Voxel,
                           pixdim,
                           false);
     }

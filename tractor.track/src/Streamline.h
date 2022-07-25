@@ -10,7 +10,7 @@
 class Streamline : public ImageSpaceEmbedded
 {
 public:
-    enum TerminationReason { UnknownReason, BoundsReason, MaskReason, OneWayReason, TargetReason, NoDataReason, LoopReason, CurvatureReason };
+    enum struct TerminationReason { Unknown, Bounds, Mask, OneWay, Target, NoData, Loop, Curvature };
     
 private:
     // A list of points along the streamline; the path is considered
@@ -20,7 +20,7 @@ private:
     std::vector<ImageSpace::Point> rightPoints;
     
     // Are points stored in voxel or world (typically mm) terms?
-    ImageSpace::PointType pointType;
+    PointType pointType;
     
     // Voxel dimensions, needed for converting between voxel and world point types
     ImageSpace::PixdimVector voxelDims;
@@ -42,8 +42,8 @@ protected:
     
 public:
     Streamline () {}
-    Streamline (const std::vector<ImageSpace::Point> &leftPoints, const std::vector<ImageSpace::Point> &rightPoints, const ImageSpace::PointType pointType, const ImageSpace::PixdimVector &voxelDims, const bool fixedSpacing)
-        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), voxelDims(voxelDims), fixedSpacing(fixedSpacing), leftTerminationReason(UnknownReason), rightTerminationReason(UnknownReason) {}
+    Streamline (const std::vector<ImageSpace::Point> &leftPoints, const std::vector<ImageSpace::Point> &rightPoints, const PointType pointType, const ImageSpace::PixdimVector &voxelDims, const bool fixedSpacing)
+        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), voxelDims(voxelDims), fixedSpacing(fixedSpacing), leftTerminationReason(TerminationReason::Unknown), rightTerminationReason(TerminationReason::Unknown) {}
     
     size_t nPoints () const { return std::max(static_cast<size_t>(leftPoints.size()+rightPoints.size())-1, size_t(0)); }
     size_t getSeedIndex () const { return std::max(static_cast<size_t>(leftPoints.size())-1, size_t(0)); }
@@ -51,7 +51,7 @@ public:
     const std::vector<ImageSpace::Point> & getLeftPoints () const { return leftPoints; }
     const std::vector<ImageSpace::Point> & getRightPoints () const { return rightPoints; }
     std::vector<ImageSpace::Point> getPoints () const;
-    ImageSpace::PointType getPointType () const { return pointType; }
+    PointType getPointType () const { return pointType; }
     bool usesFixedSpacing () const { return fixedSpacing; }
     
     const ImageSpace::PixdimVector & getVoxelDimensions () const { return voxelDims; }

@@ -38,21 +38,21 @@ void VisitationMapDataSink::put (const Streamline &data)
     
     switch (scope)
     {
-        case FullMappingScope:
+        case MappingScope::All:
         for (size_t i=0; i<leftPoints.size(); i++)
             checkAndSetPoint(visited, values, leftPoints[i]);
         for (size_t i=0; i<rightPoints.size(); i++)
             checkAndSetPoint(visited, values, rightPoints[i]);
         break;
         
-        case SeedMappingScope:
+        case MappingScope::Seed:
         if (leftPoints.size() > 0)
             checkAndSetPoint(visited, values, leftPoints[0]);
         else if (rightPoints.size() > 0)
             checkAndSetPoint(visited, values, rightPoints[0]);
         break;
         
-        case EndsMappingScope:
+        case MappingScope::Ends:
         if (leftPoints.size() > 0)
         {
             size_t i = leftPoints.size() - 1;
