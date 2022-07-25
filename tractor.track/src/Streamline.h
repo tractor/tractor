@@ -92,6 +92,10 @@ public:
     {
         data.trimLeft(maxLeftLength);
         data.trimRight(maxRightLength);
+        
+        // Truncating streamlines may invalidate labels, so drop them
+        data.clearLabels();
+        
         return true;
     }
 };

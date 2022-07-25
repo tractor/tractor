@@ -54,6 +54,9 @@ public:
     }
     
     bool hasLabels () const { return haveLabels; }
+    std::vector<size_t> matchLabels (const std::vector<int> &values) const;
+    
+    size_t count () const { return totalStreamlines; }
     StreamlineFileMetadata * fileMetadata () const { return metadata; }
     
     bool more () { return currentStreamline < totalStreamlines; }
@@ -97,7 +100,14 @@ public:
         currentStreamline = sink->open(append);
     }
     
+    StreamlineFileMetadata * fileMetadata () const { return metadata; }
     std::map<int,std::string> & labelDictionary () { return dictionary; }
+    
+    void setImageSpace (ImageSpace *space)
+    {
+        delete metadata->space;
+        metadata->space = space;
+    }
     
     void setup (const size_t &count)
     {

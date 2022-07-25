@@ -16,7 +16,6 @@ public:
     void open (StreamlineFileMetadata &metadata);
     void read (Streamline &data);
     void skip (const size_t n = 1);
-    void close ();
 };
 
 class TrackvisSinkFileAdapter : public SinkFileAdapter

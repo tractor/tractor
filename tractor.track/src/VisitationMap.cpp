@@ -4,16 +4,6 @@
 #include "Streamline.h"
 #include "VisitationMap.h"
 
-struct divider
-{
-    double divisor;
-    
-    divider (double divisor)
-        : divisor(divisor) {}
-    
-    double operator() (double x) { return x/divisor; }
-};
-
 inline void checkAndSetPoint (Image<bool,3> &visited, Image<double,3> &values, const ImageSpace::Point &point)
 {
     // The code below would suffice, but this function is called a lot, so
@@ -80,7 +70,7 @@ void VisitationMapDataSink::put (const Streamline &data)
 void VisitationMapDataSink::done ()
 {
     if (normalise)
-        std::transform(values.begin(), values.end(), values.begin(), divider(static_cast<double>(totalStreamlines)));
+        std::transform(values.begin(), values.end(), values.begin(), [this](const double &x) { return x / static_cast<double>(totalStreamlines); });
 }
 
 void VisitationMapDataSink::writeToNifti (const RNifti::NiftiImage &reference, const std::string &fileName) const

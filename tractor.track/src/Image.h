@@ -236,6 +236,13 @@ public:
         import(source, data_);
     }
     
+    operator SEXP () const
+    {
+        Rcpp::RObject object = Rcpp::wrap(data_);
+        object.attr("dim") = dims;
+        return object;
+    }
+    
     const std::vector<Element> & data () const { return data_; }
     const ArrayIndex & dim () const { return dims; }
     size_t size () const { return data_.size(); }
