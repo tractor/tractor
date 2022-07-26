@@ -168,7 +168,7 @@ size_t TrackvisSinkFileAdapter::write (const Streamline &data)
     
     const size_t nPoints = data.nPoints();
     std::vector<ImageSpace::Point> points = data.getPoints();
-    const ImageSpace::PixdimVector &pixdim = data.imageSpace().pixdim;
+    const ImageSpace::PixdimVector &pixdim = data.imageSpace()->pixdim;
     
     outputStream.writeValue<int32_t>(nPoints);
     for (size_t i=0; i<nPoints; i++)

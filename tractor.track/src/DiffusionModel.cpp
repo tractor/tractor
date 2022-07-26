@@ -35,7 +35,7 @@ BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std:
         phi[i] = new Image<float,4>(RNifti::NiftiImage(phiFiles[i]).reorient("LAS"));
     }
     
-    space = new ImageSpace(avf[0]->imageSpace());
+    copyImageSpace(*avf[0]);
     nSamples = avf[0]->dim()[3];
 }
 

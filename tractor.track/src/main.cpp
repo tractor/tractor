@@ -56,8 +56,8 @@ RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SE
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
     DiffusionModel *model = modelPtr;
-    ImageSpace &space = model->imageSpace();
-    const std::string orientation = space.orientation();
+    ImageSpace *space = model->imageSpace();
+    const std::string orientation = space->orientation();
     
     Tracker tracker(model);
     

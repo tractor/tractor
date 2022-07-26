@@ -16,14 +16,14 @@ private:
     bool normalise;
     size_t totalStreamlines = 0;
     
-    // Hide default constructor
-    VisitationMapDataSink () {}
-    
 public:
-    VisitationMapDataSink (const Image<double,3>::ArrayIndex &dims, const MappingScope scope = MappingScope::All, const bool normalise = false)
+    // Delete the default constructor
+    VisitationMapDataSink () = delete;
+    
+    VisitationMapDataSink (const ImageRaster<3> &raster, const MappingScope scope = MappingScope::All, const bool normalise = false)
         : scope(scope), normalise(normalise)
     {
-        values = Image<double,3>(dims, 0.0);
+        this->values = Image<double,3>(raster, 0.0);
     }
     
     void setup (const size_type &count, const_iterator begin, const_iterator end);

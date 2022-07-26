@@ -9,8 +9,8 @@ Streamline Tracker::run ()
     if (model == nullptr)
         throw std::runtime_error("No diffusion model has been specified");
     
-    const ImageSpace::DimVector imageDims = model->imageSpace().dim;
-    const ImageSpace::PixdimVector voxelDims = model->imageSpace().pixdim;
+    const ImageSpace::DimVector imageDims = model->imageSpace()->dim;
+    const ImageSpace::PixdimVector voxelDims = model->imageSpace()->pixdim;
     
     Rcpp::Rcout << std::fixed;
     Rcpp::Rcout.precision(3);
@@ -102,7 +102,7 @@ Streamline Tracker::run ()
             }
             
             // Index for current location
-            visited->flattenIndex(roundedLoc, vectorLoc);
+            visited->imageRaster().flattenIndex(roundedLoc, vectorLoc);
             
             // Stop if we've stepped outside the mask, possibly deferring termination if required
             if ((*maskData)[vectorLoc] == 0 && previouslyInsideMask == 1)

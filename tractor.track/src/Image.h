@@ -121,6 +121,12 @@ public:
     bool hasImageSpace () const { return (space != nullptr); }
     ImageSpace * imageSpace () const { return space; }
     
+    void copyImageSpace (const ImageSpaceEmbedded &other)
+    {
+        this->space = new ImageSpace(*other.imageSpace());
+        sharedSpace = false;
+    }
+    
     void setImageSpace (ImageSpace * const space, const bool shared = false)
     {
         this->space = space;
@@ -185,10 +191,19 @@ public:
         this->dims.fill(1);
         for (int i=0; i<std::min(3,Dimensionality); i++)
             this->dims[i] = dims[i];
+        calculateStrides();
     }
     
-    ArrayIndex & dim () const { return dims; }
-    size_t size () const { return length; }
+    ImageRaster (const std::vector<RNifti::NiftiImage::dim_t> &dims)
+    {
+        if (dims.size() != Dimensionality)
+            throw std::runtime_error("Dimension vector is not of the right dimensionality");
+        std::copy(dims.begin(), dims.end(), this->dims.begin());
+        calculateStrides();
+    }
+    
+    const ArrayIndex & dim () const { return dims; }
+    const size_t size () const { return length; }
     
     size_t flattenIndex (const ArrayIndex &loc) const { return indexer.flatten(loc, strides); }
     void flattenIndex (const ArrayIndex &loc, size_t &result) const { result = indexer.flatten(loc, strides); }
@@ -233,20 +248,15 @@ protected:
     }
     
 public:
-    Image (const ArrayIndex &dims, const Element value)
-        : raster(dims)
+    // First argument may implicitly be anything that can initialise a Raster
+    Image (const Raster &raster, const Element value = Element())
+        : raster(raster)
     {
         data_ = std::vector<Element>(raster.size(), value);
     }
     
-    Image (const ImageSpace::DimVector &dims, const Element value)
-        : raster(dims)
-    {
-        data_ = std::vector<Element>(raster.size(), value);
-    }
-    
-    Image (const ArrayIndex &dims, const std::vector<Element> &data)
-        : raster(dims)
+    Image (const Raster &raster, const std::vector<Element> &data)
+        : raster(raster)
     {
         if (raster.size() == data.size())
             this->data_ = data;
@@ -268,6 +278,8 @@ public:
         import(source, data_);
     }
     
+    Image () = default;
+    
     operator SEXP () const
     {
         Rcpp::RObject object = Rcpp::wrap(data_);
@@ -275,9 +287,11 @@ public:
         return object;
     }
     
-    const std::vector<Element> & data () const { return data_; }
+    const Raster & imageRaster () const { return raster; }
     const ArrayIndex & dim () const { return raster.dim(); }
     size_t size () const { return raster.size(); }
+    
+    const std::vector<Element> & data () const { return data_; }
     void fill (const Element &value) { data_.assign(data_.size(), value); }
     
     typename std::vector<Element>::iterator begin () { return data_.begin(); }

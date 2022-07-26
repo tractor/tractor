@@ -10,13 +10,13 @@ inline void checkAndSetPoint (Image<bool,3> &visited, Image<double,3> &values, c
     // we try to reduce duplicating work between the two images by flattening
     // separately once
     // if (!visited.at(point)) { visited.at(point) = true; values.at(point) += 1.0; }
-    static Image<bool,3>::ArrayIndex loc;
+    static ImageRaster<3>::ArrayIndex loc;
     static size_t index;
     
     for (int i=0; i<3; i++)
         loc[i] = static_cast<size_t>(round(point[i]));
     
-    values.flattenIndex(loc, index);
+    values.imageRaster().flattenIndex(loc, index);
     if (!visited[index])
     {
         visited[index] = true;
