@@ -187,12 +187,12 @@ public:
             this->dims[i] = dims[i];
     }
     
-    ArrayIndex dim () const { return dims; }
+    ArrayIndex & dim () const { return dims; }
     size_t size () const { return length; }
     
     size_t flattenIndex (const ArrayIndex &loc) const { return indexer.flatten(loc, strides); }
     void flattenIndex (const ArrayIndex &loc, size_t &result) const { result = indexer.flatten(loc, strides); }
-}
+};
 
 // A typed and fixed-dimensionality bounded array embedded in 3D space
 // This class focusses on handling the pixel/voxel data
@@ -202,7 +202,7 @@ class Image : public ImageSpaceEmbedded
 public:
     typedef ElementType Element;
     typedef ImageRaster<Dimensionality> Raster;
-    typedef ImageRaster<Dimensionality>::ArrayIndex ArrayIndex;
+    typedef typename ImageRaster<Dimensionality>::ArrayIndex ArrayIndex;
     
 protected:
     Raster raster;
@@ -236,13 +236,13 @@ public:
     Image (const ArrayIndex &dims, const Element value)
         : raster(dims)
     {
-        data_ = std::vector<Element>(size_, value);
+        data_ = std::vector<Element>(raster.size(), value);
     }
     
     Image (const ImageSpace::DimVector &dims, const Element value)
         : raster(dims)
     {
-        data_ = std::vector<Element>(size_, value);
+        data_ = std::vector<Element>(raster.size(), value);
     }
     
     Image (const ArrayIndex &dims, const std::vector<Element> &data)
@@ -262,16 +262,16 @@ public:
             throw std::runtime_error("NiftiImage source contains no voxel data");
         
         space = new ImageSpace(source);
-        raster = ImageRaster(source.dim());
+        raster = Raster(source.dim());
         
-        data_.resize(size_);
+        data_.resize(raster.size());
         import(source, data_);
     }
     
     operator SEXP () const
     {
         Rcpp::RObject object = Rcpp::wrap(data_);
-        object.attr("dim") = dims;
+        object.attr("dim") = raster.dim();
         return object;
     }
     
@@ -294,6 +294,7 @@ public:
     typename std::vector<Element>::reference at (const size_t n) { return data_.at(n); }
     typename std::vector<Element>::reference at (const ArrayIndex &loc)
     {
+        const ArrayIndex &dims = raster.dim();
         for (int i=0; i<3; i++)
         {
             if (loc[i] >= dims[i])
@@ -308,6 +309,7 @@ public:
         
         const ImageSpace::Point resolvedPoint = space->toVoxel(point, type, round);
         
+        const ArrayIndex &dims = raster.dim();
         ArrayIndex loc;
         for (int i=0; i<3; i++)
         {
