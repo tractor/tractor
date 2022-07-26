@@ -113,15 +113,8 @@ public:
             delete space;
     }
     
-    virtual ImageSpace & imageSpace () const
-    {
-        if (space == nullptr)
-            throw std::runtime_error("No image space information is available");
-        else
-            return *space;
-    }
-    
     bool hasImageSpace () const { return (space != nullptr); }
+    ImageSpace * imageSpace () const { return space; }
     
     void setImageSpace (ImageSpace * const space, const bool shared = false)
     {
@@ -130,15 +123,13 @@ public:
     }
 };
 
-template <class ElementType, int Dimensionality>
-class Image : public ImageSpaceEmbedded
+template <int Dimensionality>
+class ImageRaster
 {
 public:
-    typedef ElementType Element;
     typedef std::array<size_t,Dimensionality> ArrayIndex;
     
 protected:
-    std::vector<Element> data_;
     ArrayIndex dims, strides;
     size_t size_;
     
@@ -153,6 +144,55 @@ protected:
         }
         size_ *= dims[Dimensionality - 1];
     }
+    
+    template <int N>
+    struct Indexer
+    {
+        Indexer<N-1> child;
+        
+        size_t flatten (const ArrayIndex &loc, const ArrayIndex &strides) const
+        {
+            return strides[N-1] * loc[N-1] + child.flatten(loc, strides);
+        }
+    };
+    
+    template<>
+    struct Indexer<1>
+    {
+        size_t flatten (const ArrayIndex &loc, const ArrayIndex &strides) const { return loc[0]; }
+    };
+    
+    Indexer<Dimensionality> indexer;
+    
+public:
+    ImageRaster () { dims.fill(0); strides.fill(0); }
+    
+    ImageRaster (const ArrayIndex &dims)
+        : dims(dims)
+    {
+        calculateStrides();
+    }
+    
+    ImageRaster (const ImageSpace::DimVector &dims)
+    {
+        this->dims.fill(1);
+        for (int i=0; i<std::min(3,Dimensionality); i++)
+            this->dims[i] = dims[i];
+    }
+    
+    void flattenIndex (const ArrayIndex &loc, size_t &result) const { result = indexer.flatten(loc, strides); }
+}
+
+template <class ElementType, int Dimensionality>
+class Image : public ImageSpaceEmbedded
+{
+public:
+    typedef ElementType Element;
+    typedef ImageRaster<Dimensionality> Raster;
+    
+protected:
+    Raster raster;
+    std::vector<Element> data_;
     
     template <class TargetType>
     void import (const RNifti::NiftiImage &source, std::vector<TargetType> &target)
@@ -178,28 +218,7 @@ protected:
         }
     }
     
-    template <int N>
-    struct Indexer
-    {
-        Indexer<N-1> child;
-        
-        size_t flatten (const ArrayIndex &loc, const ArrayIndex &strides) const
-        {
-            return strides[N-1] * loc[N-1] + child.flatten(loc, strides);
-        }
-    };
-    
-    template<>
-    struct Indexer<1>
-    {
-        size_t flatten (const ArrayIndex &loc, const ArrayIndex &strides) const { return loc[0]; }
-    };
-    
-    Indexer<Dimensionality> indexer;
-    
 public:
-    Image () { dims.fill(0); strides.fill(0); }
-    
     Image (const ArrayIndex &dims, const Element value)
         : dims(dims)
     {
@@ -290,8 +309,6 @@ public:
         }
         return data_[indexer.flatten(loc, strides)];
     }
-    
-    void flattenIndex (const ArrayIndex &loc, size_t &result) const { result = indexer.flatten(loc, strides); }
 };
 
 #endif
