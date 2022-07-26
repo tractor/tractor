@@ -12,6 +12,9 @@ enum struct PointType { Voxel, Scaled, World };
 // for stochastic nearest neighbour (probabilities proportional to distance)
 enum struct RoundingType { None, Conventional, Probabilistic };
 
+// Handles the geometry of the 3D space an image is embedded within, including
+// continuous point and vector concepts, affine xforms and conversion between
+// point types
 class ImageSpace
 {
 public:
@@ -20,6 +23,7 @@ public:
     typedef RNifti::NiftiImage::Xform::Vector3 Vector;
     typedef RNifti::NiftiImage::Xform::Matrix Transform;
     
+    // RNifti-compatible dim and pixdim array types
     typedef std::array<RNifti::NiftiImage::dim_t,3> DimVector;
     typedef std::array<RNifti::NiftiImage::pixdim_t,3> PixdimVector;
     
@@ -100,6 +104,7 @@ public:
     Point toVoxel (const Point &point, const PointType type, const RoundingType round = RoundingType::Conventional) const;
 };
 
+// Functionality for objects that conceptually exist within an image space
 class ImageSpaceEmbedded
 {
 protected:
@@ -123,6 +128,8 @@ public:
     }
 };
 
+// Handles image array functionality that does not depend on the datatype,
+// notably indexing
 template <int Dimensionality>
 class ImageRaster
 {
@@ -131,18 +138,18 @@ public:
     
 protected:
     ArrayIndex dims, strides;
-    size_t size_;
+    size_t length;
     
     void calculateStrides ()
     {
         // The first index always moves fastest (as in R)
-        strides[0] = size_ = 1;
+        strides[0] = length = 1;
         for (size_t i=1; i<Dimensionality; i++)
         {
             strides[i] = strides[i-1] * dims[i-1];
-            size_ *= dims[i-1];
+            length *= dims[i-1];
         }
-        size_ *= dims[Dimensionality - 1];
+        length *= dims[Dimensionality - 1];
     }
     
     template <int N>
@@ -180,15 +187,22 @@ public:
             this->dims[i] = dims[i];
     }
     
+    ArrayIndex dim () const { return dims; }
+    size_t size () const { return length; }
+    
+    size_t flattenIndex (const ArrayIndex &loc) const { return indexer.flatten(loc, strides); }
     void flattenIndex (const ArrayIndex &loc, size_t &result) const { result = indexer.flatten(loc, strides); }
 }
 
+// A typed and fixed-dimensionality bounded array embedded in 3D space
+// This class focusses on handling the pixel/voxel data
 template <class ElementType, int Dimensionality>
 class Image : public ImageSpaceEmbedded
 {
 public:
     typedef ElementType Element;
     typedef ImageRaster<Dimensionality> Raster;
+    typedef ImageRaster<Dimensionality>::ArrayIndex ArrayIndex;
     
 protected:
     Raster raster;
@@ -220,24 +234,21 @@ protected:
     
 public:
     Image (const ArrayIndex &dims, const Element value)
-        : dims(dims)
+        : raster(dims)
     {
-        calculateStrides();
         data_ = std::vector<Element>(size_, value);
     }
     
     Image (const ImageSpace::DimVector &dims, const Element value)
+        : raster(dims)
     {
-        std::copy(dims.begin(), dims.end(), this->dims.begin());
-        calculateStrides();
         data_ = std::vector<Element>(size_, value);
     }
     
     Image (const ArrayIndex &dims, const std::vector<Element> &data)
-        : dims(dims)
+        : raster(dims)
     {
-        calculateStrides();
-        if (size_ == data.size())
+        if (raster.size() == data.size())
             this->data_ = data;
         else
             throw std::runtime_error("Data size does not match the specified dimensions");
@@ -250,11 +261,8 @@ public:
         if (source->data == nullptr)
             throw std::runtime_error("NiftiImage source contains no voxel data");
         
-        auto sourceDims = source.dim();
-        std::copy(sourceDims.begin(), sourceDims.begin() + Dimensionality, dims.begin());
-        calculateStrides();
-        
         space = new ImageSpace(source);
+        raster = ImageRaster(source.dim());
         
         data_.resize(size_);
         import(source, data_);
@@ -268,8 +276,8 @@ public:
     }
     
     const std::vector<Element> & data () const { return data_; }
-    const ArrayIndex & dim () const { return dims; }
-    size_t size () const { return data_.size(); }
+    const ArrayIndex & dim () const { return raster.dim(); }
+    size_t size () const { return raster.size(); }
     void fill (const Element &value) { data_.assign(data_.size(), value); }
     
     typename std::vector<Element>::iterator begin () { return data_.begin(); }
@@ -278,10 +286,10 @@ public:
     typename std::vector<Element>::const_iterator end () const { return data_.end(); }
     
     typename std::vector<Element>::reference operator[] (const size_t n) { return data_[n]; }
-    typename std::vector<Element>::reference operator[] (const ArrayIndex &loc) { return data_[indexer.flatten(loc, strides)]; }
+    typename std::vector<Element>::reference operator[] (const ArrayIndex &loc) { return data_[raster.flattenIndex(loc)]; }
     
     typename std::vector<Element>::const_reference operator[] (const size_t n) const { return data_[n]; }
-    typename std::vector<Element>::const_reference operator[] (const ArrayIndex &loc) const { return data_[indexer.flatten(loc, strides)]; }
+    typename std::vector<Element>::const_reference operator[] (const ArrayIndex &loc) const { return data_[raster.flattenIndex(loc)]; }
     
     typename std::vector<Element>::reference at (const size_t n) { return data_.at(n); }
     typename std::vector<Element>::reference at (const ArrayIndex &loc)
@@ -291,7 +299,7 @@ public:
             if (loc[i] >= dims[i])
                 throw std::out_of_range("Array index is out of range");
         }
-        return data_[indexer.flatten(loc, strides)];
+        return data_[raster.flattenIndex(loc)];
     }
     typename std::vector<Element>::reference at (const ImageSpace::Point &point, const PointType type = PointType::Voxel, const RoundingType round = RoundingType::Conventional)
     {
@@ -307,7 +315,7 @@ public:
             if (loc[i] >= dims[i])
                 throw std::out_of_range("Array index is out of range");
         }
-        return data_[indexer.flatten(loc, strides)];
+        return data_[raster.flattenIndex(loc)];
     }
 };
 
