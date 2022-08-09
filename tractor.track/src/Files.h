@@ -56,6 +56,9 @@ public:
     bool hasLabels () const { return haveLabels; }
     std::vector<size_t> matchLabels (const std::vector<int> &values) const;
     
+    bool hasImageSpace () const { return (metadata != nullptr && metadata->space != nullptr); }
+    ImageSpace * imageSpace () const { return metadata == nullptr ? nullptr : metadata->space; }
+    
     size_t count () const { return totalStreamlines; }
     StreamlineFileMetadata * fileMetadata () const { return metadata; }
     
