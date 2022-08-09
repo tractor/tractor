@@ -39,18 +39,6 @@ BEGIN_RCPP
 END_RCPP
 }
 
-template <typename OriginalType, typename FinalType>
-FinalType decrement (OriginalType x)
-{
-    return static_cast<FinalType>(x - OriginalType(1));
-}
-
-template <typename OriginalType, typename FinalType>
-FinalType increment (OriginalType x)
-{
-    return static_cast<FinalType>(x + OriginalType(1));
-}
-
 RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetInfo, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _oneWay, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _maxLength, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _medianPath, SEXP _profileFunction, SEXP _debugLevel)
 {
 BEGIN_RCPP
@@ -106,9 +94,7 @@ BEGIN_RCPP
     for (int i=0; i<seedsR.nrow(); i++)
     {
         ImageSpace::Point seed;
-        auto row = seedsR.row(i);
-        for (int j=0; j<3; j++)
-            seed[j] = row[j] - 1.0;
+        std::transform(seedsR.row(i).begin(), seedsR.row(i).end(), &seed[0], [](double &x) { return x - 1.0; });
         seeds.push_back(seed);
     }
     TractographyDataSource dataSource(&tracker, seeds, as<size_t>(_count), as<bool>(_jitter));
@@ -127,9 +113,7 @@ BEGIN_RCPP
     VisitationMapDataSink *visitationMap = nullptr;
     if (!Rf_isNull(_mapPath))
     {
-        auto dims = mask.dim();
-        Image<int,3>::ArrayIndex dimArray = { static_cast<size_t>(dims[0]), static_cast<size_t>(dims[1]), static_cast<size_t>(dims[2]) };
-        visitationMap = new VisitationMapDataSink(dimArray);
+        visitationMap = new VisitationMapDataSink(mask.dim());
         pipeline.addSink(visitationMap);
     }
     if (!Rf_isNull(_trkPath))
@@ -218,9 +202,7 @@ BEGIN_RCPP
     Pipeline<Streamline> pipeline(source);
     pipeline.setSubset(_indices);
     
-    const ImageSpace::DimVector dims = source->fileMetadata()->space->dim;
-    Image<double,3>::ArrayIndex dimArray = { size_t(dims[0]), size_t(dims[1]), size_t(dims[2]) };
-    VisitationMapDataSink *map = new VisitationMapDataSink(dimArray);
+    VisitationMapDataSink *map = new VisitationMapDataSink(source->imageSpace()->dim);
     pipeline.addSink(map);
     
     StreamlineLengthsDataSink *lengths = new StreamlineLengthsDataSink;
@@ -276,9 +258,7 @@ BEGIN_RCPP
         scope = VisitationMapDataSink::MappingScope::Ends;
     
     RNifti::NiftiImage reference(as<std::string>(_imagePath), false);
-    auto dims = reference.dim();
-    Image<double,3>::ArrayIndex dimArray = { size_t(dims[0]), size_t(dims[1]), size_t(dims[2]) };
-    VisitationMapDataSink *map = new VisitationMapDataSink(dimArray, scope, as<bool>(_normalise));
+    VisitationMapDataSink *map = new VisitationMapDataSink(reference.dim(), scope, as<bool>(_normalise));
     pipeline.addSink(map);
     
     pipeline.run();
