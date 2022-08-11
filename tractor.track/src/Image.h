@@ -216,12 +216,13 @@ class Image : public ImageSpaceEmbedded
 {
 public:
     typedef ElementType Element;
+    typedef std::vector<Element> Vector;
     typedef ImageRaster<Dimensionality> Raster;
     typedef typename ImageRaster<Dimensionality>::ArrayIndex ArrayIndex;
     
 protected:
     Raster raster;
-    std::vector<Element> data_;
+    Vector data_;
     
     template <class TargetType>
     void import (const RNifti::NiftiImage &source, std::vector<TargetType> &target)
@@ -291,22 +292,37 @@ public:
     const ArrayIndex & dim () const { return raster.dim(); }
     size_t size () const { return raster.size(); }
     
-    const std::vector<Element> & data () const { return data_; }
+    const Vector & data () const { return data_; }
     void fill (const Element &value) { data_.assign(data_.size(), value); }
     
-    typename std::vector<Element>::iterator begin () { return data_.begin(); }
-    typename std::vector<Element>::iterator end () { return data_.end(); }
-    typename std::vector<Element>::const_iterator begin () const { return data_.begin(); }
-    typename std::vector<Element>::const_iterator end () const { return data_.end(); }
+    RNifti::NiftiImage toNifti (const int datatype) const
+    {
+        std::vector<RNifti::NiftiImage::dim_t> dim(raster.dim().begin(), raster.dim().end());
+        RNifti::NiftiImage object(dim, datatype);
+        if (this->hasImageSpace())
+        {
+            std::copy(space->pixdim.begin(), space->pixdim.begin() + std::min(Dimensionality,3), &object->pixdim[1]);
+            nifti_update_dims_from_array(object);
+            object.qform() = space->transform;
+            object->qform_code = 2;
+        }
+        std::copy(data_.begin(), data_.end(), object.data().begin());
+        return object;
+    }
     
-    typename std::vector<Element>::reference operator[] (const size_t n) { return data_[n]; }
-    typename std::vector<Element>::reference operator[] (const ArrayIndex &loc) { return data_[raster.flattenIndex(loc)]; }
+    typename Vector::iterator begin () { return data_.begin(); }
+    typename Vector::iterator end () { return data_.end(); }
+    typename Vector::const_iterator begin () const { return data_.begin(); }
+    typename Vector::const_iterator end () const { return data_.end(); }
     
-    typename std::vector<Element>::const_reference operator[] (const size_t n) const { return data_[n]; }
-    typename std::vector<Element>::const_reference operator[] (const ArrayIndex &loc) const { return data_[raster.flattenIndex(loc)]; }
+    typename Vector::reference operator[] (const size_t n) { return data_[n]; }
+    typename Vector::reference operator[] (const ArrayIndex &loc) { return data_[raster.flattenIndex(loc)]; }
     
-    typename std::vector<Element>::reference at (const size_t n) { return data_.at(n); }
-    typename std::vector<Element>::reference at (const ArrayIndex &loc)
+    typename Vector::const_reference operator[] (const size_t n) const { return data_[n]; }
+    typename Vector::const_reference operator[] (const ArrayIndex &loc) const { return data_[raster.flattenIndex(loc)]; }
+    
+    typename Vector::reference at (const size_t n) { return data_.at(n); }
+    typename Vector::reference at (const ArrayIndex &loc)
     {
         const ArrayIndex &dims = raster.dim();
         for (int i=0; i<3; i++)
@@ -316,7 +332,7 @@ public:
         }
         return data_[raster.flattenIndex(loc)];
     }
-    typename std::vector<Element>::reference at (const ImageSpace::Point &point, const PointType type = PointType::Voxel, const RoundingType round = RoundingType::Conventional)
+    typename Vector::reference at (const ImageSpace::Point &point, const PointType type = PointType::Voxel, const RoundingType round = RoundingType::Conventional)
     {
         if (space == nullptr)
             throw std::runtime_error("No space is associated with the image");
