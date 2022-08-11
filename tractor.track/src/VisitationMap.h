@@ -31,7 +31,7 @@ public:
     void done ();
     
     const Image<double,3> & getImage () const { return values; }
-    void writeToNifti (const RNifti::NiftiImage &reference, const std::string &fileName) const;
+    void writeToNifti (const std::string &fileName, ImageSpace *space = nullptr);
 };
 
 #endif

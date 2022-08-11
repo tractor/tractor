@@ -39,7 +39,7 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP track (SEXP _model, SEXP _seeds, SEXP _count, SEXP _maskPath, SEXP _targetInfo, SEXP _rightwardsVector, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _oneWay, SEXP _terminateAtTargets, SEXP _minTargetHits, SEXP _minLength, SEXP _maxLength, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _medianPath, SEXP _profileFunction, SEXP _debugLevel)
+RcppExport SEXP createTracker (SEXP _model, SEXP _mask, SEXP _targetInfo, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _oneWay, SEXP _terminateAtTargets, SEXP _debugLevel)
 {
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
@@ -47,18 +47,51 @@ BEGIN_RCPP
     ImageSpace *space = model->imageSpace();
     const std::string orientation = space->orientation();
     
-    Tracker tracker(model);
+    Tracker *tracker = new Tracker(model);
     
-    RNifti::NiftiImage mask(as<std::string>(_maskPath));
+    RNifti::NiftiImage mask(_mask);
     mask.reorient(orientation);
-    tracker.setMask(mask);
-    tracker.setDebugLevel(as<int>(_debugLevel));
+    tracker->setMask(mask);
+    tracker->setDebugLevel(as<int>(_debugLevel));
     
     std::map<std::string,bool> flags;
     flags["loopcheck"] = as<bool>(_useLoopcheck);
     flags["one-way"] = as<bool>(_oneWay);
     flags["terminate-targets"] = as<bool>(_terminateAtTargets);
-    tracker.setFlags(flags);
+    tracker->setFlags(flags);
+    
+    tracker->setInnerProductThreshold(as<float>(_curvatureThreshold));
+    tracker->setStepLength(as<float>(_stepLength));
+    tracker->setMaxSteps(as<int>(_maxSteps));
+    
+    List targetInfo(_targetInfo);
+    if (!Rf_isNull(targetInfo["path"]))
+    {
+        RNifti::NiftiImage targets(as<std::string>(targetInfo["path"]));
+        tracker->setTargets(targets.reorient(orientation));
+    }
+    
+    if (!Rf_isNull(targetInfo["indices"]) && !Rf_isNull(targetInfo["labels"]))
+    {
+        IntegerVector indices = targetInfo["indices"];
+        CharacterVector labels = targetInfo["labels"];
+        std::map<int,std::string> labelDictionary;
+        for (int i=0; i<std::min(indices.size(),labels.size()); i++)
+            labelDictionary[indices[i]] = labels[i];
+        
+        tracker->labelDictionary() = labelDictionary;
+    }
+    
+    return XPtr<Tracker>(tracker);
+END_RCPP
+}
+
+RcppExport SEXP track (SEXP _tracker, SEXP _seeds, SEXP _count, SEXP _rightwardsVector, SEXP _minTargetHits, SEXP _minLength, SEXP _maxLength, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _medianPath, SEXP _profileFunction, SEXP _debugLevel)
+{
+BEGIN_RCPP
+    XPtr<Tracker> trackerPtr(_tracker);
+    Tracker *tracker = trackerPtr;
+    ImageSpace *space = tracker->getModel()->imageSpace();
     
     ImageSpace::Vector rightwardsVector;
     if (Rf_isNull(_rightwardsVector))
@@ -71,18 +104,7 @@ BEGIN_RCPP
         for (int i=0; i<3; i++)
             rightwardsVector[i] = rightwardsVectorR[i];
     }
-    tracker.setRightwardsVector(rightwardsVector);
-    
-    tracker.setInnerProductThreshold(as<float>(_curvatureThreshold));
-    tracker.setStepLength(as<float>(_stepLength));
-    tracker.setMaxSteps(as<int>(_maxSteps));
-    
-    List targetInfo(_targetInfo);
-    if (!Rf_isNull(targetInfo["path"]))
-    {
-        RNifti::NiftiImage targets(as<std::string>(targetInfo["path"]));
-        tracker.setTargets(targets.reorient(orientation));
-    }
+    tracker->setRightwardsVector(rightwardsVector);
     
     // Before TractographyDataSource is initialised, as RNG needed for jitter
     RNGScope scope;
@@ -97,7 +119,7 @@ BEGIN_RCPP
         std::transform(seedsR.row(i).begin(), seedsR.row(i).end(), &seed[0], [](double &x) { return x - 1.0; });
         seeds.push_back(seed);
     }
-    TractographyDataSource dataSource(&tracker, seeds, as<size_t>(_count), as<bool>(_jitter));
+    TractographyDataSource dataSource(tracker, seeds, as<size_t>(_count), as<bool>(_jitter));
     Pipeline<Streamline> pipeline(&dataSource);
     
     const int minTargetHits = as<int>(_minTargetHits);
@@ -113,24 +135,14 @@ BEGIN_RCPP
     VisitationMapDataSink *visitationMap = nullptr;
     if (!Rf_isNull(_mapPath))
     {
-        visitationMap = new VisitationMapDataSink(mask.dim());
+        visitationMap = new VisitationMapDataSink(space->dim);
         pipeline.addSink(visitationMap);
     }
     if (!Rf_isNull(_trkPath))
     {
         StreamlineFileSink *trkFile = new StreamlineFileSink(as<std::string>(_trkPath));
-        
-        if (!Rf_isNull(targetInfo["indices"]) && !Rf_isNull(targetInfo["labels"]))
-        {
-            IntegerVector indices = targetInfo["indices"];
-            CharacterVector labels = targetInfo["labels"];
-            std::map<int,std::string> labelDictionary;
-            for (int i=0; i<std::min(indices.size(),labels.size()); i++)
-                labelDictionary[indices[i]] = labels[i];
-            
-            trkFile->labelDictionary() = labelDictionary;
-            pipeline.addSink(trkFile);
-        }
+        trkFile->labelDictionary() = tracker->labelDictionary();
+        pipeline.addSink(trkFile);
     }
     // Only one of trkPath and medianPath is used
     else if (!Rf_isNull(_medianPath))
@@ -152,7 +164,7 @@ BEGIN_RCPP
     size_t nRetained = pipeline.run();
     
     if (visitationMap != nullptr)
-        visitationMap->writeToNifti(mask, as<std::string>(_mapPath));
+        visitationMap->writeToNifti(as<std::string>(_mapPath), space);
     
     delete function;
     
@@ -263,7 +275,8 @@ BEGIN_RCPP
     
     pipeline.run();
     
-    map->writeToNifti(reference, as<std::string>(_resultPath));
+    ImageSpace space(reference);
+    map->writeToNifti(as<std::string>(_resultPath), &space);
     
     return R_NilValue;
 END_RCPP

@@ -73,9 +73,9 @@ void VisitationMapDataSink::done ()
         std::transform(values.begin(), values.end(), values.begin(), [this](const double &x) { return x / static_cast<double>(totalStreamlines); });
 }
 
-void VisitationMapDataSink::writeToNifti (const RNifti::NiftiImage &reference, const std::string &fileName) const
+void VisitationMapDataSink::writeToNifti (const std::string &fileName, ImageSpace *space)
 {
-    RNifti::NiftiImage image = reference;
-    image.data() = RNifti::NiftiImageData(values.begin(), values.end(), DT_FLOAT64);
-    image.toFile(fileName);
+    if (space != nullptr)
+        values.setImageSpace(space, true);
+    values.toNifti(DT_FLOAT64).toFile(fileName);
 }

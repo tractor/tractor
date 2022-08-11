@@ -18,6 +18,7 @@ private:
     
     Image<short,3> *maskData = nullptr;
     Image<int,3> *targetData = nullptr;
+    std::map<int,std::string> dictionary;
     
     Image<ImageSpace::Vector,3> *loopcheck = nullptr;
     Image<bool,3> *visited = nullptr;
@@ -47,6 +48,7 @@ public:
         delete visited;
     }
     
+    DiffusionModel * getModel () const { return model; }
     ImageSpace::Point getSeed () const { return seed; }
     ImageSpace::Vector getRightwardsVector () const { return rightwardsVector; }
     float getInnerProductThreshold () const { return innerProductThreshold; }
@@ -72,6 +74,8 @@ public:
         delete targetData;
         targetData = new Image<int,3>(targets);
     }
+    
+    std::map<int,std::string> & labelDictionary () { return dictionary; }
     
     void setRightwardsVector (const ImageSpace::Vector &rightwardsVector)
     {
