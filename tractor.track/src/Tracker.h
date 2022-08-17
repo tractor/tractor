@@ -75,6 +75,12 @@ public:
         targetData = new Image<int,3>(targets);
     }
     
+    void clearTargets ()
+    {
+        delete targetData;
+        targetData = nullptr;
+    }
+    
     std::map<int,std::string> & labelDictionary () { return dictionary; }
     
     void setRightwardsVector (const ImageSpace::Vector &rightwardsVector)

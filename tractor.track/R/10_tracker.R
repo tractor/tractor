@@ -1,83 +1,39 @@
 # NB: The underlying C++ class is not thread-safe, so a Tracker object should not be run multiple times concurrently
-Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="character",targetInfo="list",options="list",filters="list"), methods=list(
-    initialize = function (model = nilModel(), maskPath = character(0), targetInfo = list(), curvatureThreshold = 0.2, useLoopcheck = TRUE, maxSteps = 2000, stepLength = 0.5, rightwardsVector = NULL, oneWay = FALSE, ...)
+Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",pointer="externalptr"), methods=list(
+    initialize = function (model = nilModel(), mask = NULL, curvatureThreshold = 0.2, loopcheck = TRUE, maxSteps = 2000, stepLength = 0.5, oneWay = FALSE, ...)
     {
-        object <- initFields(model=model, options=list(curvatureThreshold=curvatureThreshold, useLoopcheck=useLoopcheck, maxSteps=maxSteps, stepLength=stepLength, rightwardsVector=rightwardsVector, oneWay=oneWay), filters=list(minLength=0, maxLength=Inf, minTargetHits=0L))
+        if (nilModel(model))
+            ptr <- nilPointer()
+        else
+            ptr <- .Call("createTracker", model$getPointer(), mask, maxSteps, stepLength, curvatureThreshold, loopcheck, oneWay, PACKAGE="tractor.track")
         
-        object$setMask(maskPath)
-        object$setTargets(targetInfo)
-        
-        invisible(object)
+        initFields(model=model, pointer=ptr)
     },
     
     getModel = function () { return (model) },
     
-    setFilters = function (...)
-    {
-        args <- list(...)
-        indices <- which(names(args) != "")
-        if (length(indices) > 0)
-            .self$filters[names(args)[indices]] <- args[indices]
-        return (.self)
-    },
-    
-    setMask = function (image)
-    {
-        if (is.null(image) || length(image) == 0)
-            .self$maskPath <- character(0)
-        else if (is.character(image) && length(image) == 1)
-            .self$maskPath <- identifyImageFileNames(image)$fileStem
-        else if (is(image, "MriImage"))
-        {
-            .self$maskPath <- threadSafeTempFile("mask")
-            writeImageFile(image, .self$maskPath)
-        }
-        else
-            report(OL$Error, "Mask should be specified as a file name or MriImage object")
-        return (.self)
-    },
-    
-    setOptions = function (...)
-    {
-        args <- list(...)
-        indices <- which(names(args) != "")
-        if (length(indices) > 0)
-            .self$options[names(args)[indices]] <- args[indices]
-        return (.self)
-    },
-    
-    setTargets = function (image, indices = NULL, labels = NULL)
+    setTargets = function (image, indices = NULL, labels = NULL, terminate = FALSE)
     {
         if (is.list(image))
         {
-            if (is.null(indices))
-                indices <- image$indices
-            if (is.null(labels))
-                labels <- image$labels
+            indices <- indices %||% image$indices
+            labels <- labels %||% image$labels
             image <- image$image
         }
         
-        path <- NULL
-        if (is.character(image) && length(image) == 1)
-            path <- identifyImageFileNames(image)$fileStem
-        else if (is(image, "MriImage"))
+        if (is.character(image) && length(image) == 1 && identifyImageFileNames(image)$format == "Mrtrix")
         {
             path <- threadSafeTempFile("target")
-            writeImageFile(image, path)
+            image <- writeImageFile(image, path, "NIFTI")$fileStem
         }
-        else if (!is.null(image) && length(image) > 0)
-            report(OL$Error, "Targets should be specified as a file name or MriImage object")
         
-        if (length(indices) != length(labels))
-            report(OL$Error, "Index and label vectors should have the same length")
-        
-        .self$targetInfo <- list(path=path, indices=indices, labels=labels)
+        .Call("setTrackerTargets", pointer, list(image=image,indices=indices,labels=labels), terminate, PACKAGE="tractor.track")
         return (.self)
     },
     
     run = function (seeds, count, basename = threadSafeTempFile(), profileFun = NULL, requireMap = TRUE, requireStreamlines = FALSE, requireMedian = FALSE, terminateAtTargets = FALSE, jitter = TRUE)
     {
-        if (is.nilModel(model))
+        if (nilModel(model))
             report(OL$Error, "No diffusion model has been specified")
         if (length(maskPath) == 0)
             report(OL$Error, "No tracking mask has been specfied")
@@ -100,3 +56,8 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",maskPath="c
         return (basename)
     }
 ))
+
+createTracker <- function (model, mask, curvatureThreshold = 0.2, loopcheck = TRUE, maxSteps = 2000, stepLength = 0.5, oneWay = FALSE)
+{
+    Tracker$new(model, mask, curvatureThreshold=curvatureThreshold, loopcheck=loopcheck, maxSteps=maxSteps, stepLength=stepLength, oneWay=oneWay)
+}

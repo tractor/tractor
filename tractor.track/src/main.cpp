@@ -39,36 +39,47 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP createTracker (SEXP _model, SEXP _mask, SEXP _targetInfo, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _oneWay, SEXP _terminateAtTargets, SEXP _debugLevel)
+RcppExport SEXP createTracker (SEXP _model, SEXP _mask, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _oneWay)
 {
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
     DiffusionModel *model = modelPtr;
     ImageSpace *space = model->imageSpace();
-    const std::string orientation = space->orientation();
     
     Tracker *tracker = new Tracker(model);
     
     RNifti::NiftiImage mask(_mask);
-    mask.reorient(orientation);
+    mask.reorient(space->orientation());
     tracker->setMask(mask);
-    tracker->setDebugLevel(as<int>(_debugLevel));
     
     std::map<std::string,bool> flags;
     flags["loopcheck"] = as<bool>(_useLoopcheck);
     flags["one-way"] = as<bool>(_oneWay);
-    flags["terminate-targets"] = as<bool>(_terminateAtTargets);
     tracker->setFlags(flags);
     
     tracker->setInnerProductThreshold(as<float>(_curvatureThreshold));
     tracker->setStepLength(as<float>(_stepLength));
     tracker->setMaxSteps(as<int>(_maxSteps));
     
+    return XPtr<Tracker>(tracker);
+END_RCPP
+}
+
+RcppExport SEXP setTrackerTargets (SEXP _tracker, SEXP _targetInfo, SEXP _terminateAtTargets)
+{
+BEGIN_RCPP
+    XPtr<Tracker> trackerPtr(_tracker);
+    Tracker *tracker = trackerPtr;
+    ImageSpace *space = tracker->getModel()->imageSpace();
+    
     List targetInfo(_targetInfo);
-    if (!Rf_isNull(targetInfo["path"]))
+    if (Rf_isNull(targetInfo["image"]))
+        tracker->clearTargets();
+    else
     {
-        RNifti::NiftiImage targets(as<std::string>(targetInfo["path"]));
-        tracker->setTargets(targets.reorient(orientation));
+        RObject targets = targetInfo["image"];
+        RNifti::NiftiImage targetImage(targets);
+        tracker->setTargets(targetImage.reorient(space->orientation()));
     }
     
     if (!Rf_isNull(targetInfo["indices"]) && !Rf_isNull(targetInfo["labels"]))
@@ -82,7 +93,7 @@ BEGIN_RCPP
         tracker->labelDictionary() = labelDictionary;
     }
     
-    return XPtr<Tracker>(tracker);
+    tracker->setFlag("terminate-targets", as<bool>(_terminateAtTargets));
 END_RCPP
 }
 
@@ -105,6 +116,8 @@ BEGIN_RCPP
             rightwardsVector[i] = rightwardsVectorR[i];
     }
     tracker->setRightwardsVector(rightwardsVector);
+    
+    tracker->setDebugLevel(as<int>(_debugLevel));
     
     // Before TractographyDataSource is initialised, as RNG needed for jitter
     RNGScope scope;
