@@ -314,12 +314,17 @@ readDicomFile <- function (fileName, checkFormat = TRUE, stopTag = NULL, ignoreT
             elements <- c(elements, currentElement)
             types <- c(types, as.character(type))
             
-            # Handle sequences of indeterminate length (to date only seen in Philips data)
-            if (type == "SQ" && length == -1)
+            # Handle sequences
+            if (type == "SQ")
             {
                 if (sequenceLevel == 0)
                     values <- c(values, "(Sequence)")
-                sequenceLevel <- sequenceLevel + 1
+                
+                # Indeterminate length (to date only seen in Philips data)
+                if (length == -1)
+                    sequenceLevel <- sequenceLevel + 1
+                else
+                    seek(connection, where=length, origin="current")
                 next
             }
             
