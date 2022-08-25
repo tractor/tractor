@@ -146,8 +146,7 @@ Journal of Statistical Software 44(8):1-18.
 \url{https://www.jstatsoft.org/v44/i08/}.
 }
 \seealso{
-The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}) and
-  \code{\linkS4class{MriImage}}.
+The \code{RNifti} package, and \code{\linkS4class{MriImage}}.
 }
 \author{
 Jon Clayden

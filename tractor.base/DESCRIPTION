@@ -16,5 +16,5 @@ LazyLoad: yes
 License: GPL-2
 URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
 BugReports: https://github.com/tractor/tractor/issues
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Roxygen: list(old_usage=TRUE)
