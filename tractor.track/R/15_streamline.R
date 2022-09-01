@@ -1,5 +1,5 @@
 Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=list(line="matrix",seedIndex="integer",voxelDims="numeric",coordUnit="character",pointSpacings="numeric"), methods=list(
-    initialize = function (line = matrix(NA,0,3), seedIndex = NULL, voxelDims = NULL, coordUnit = c("vox","mm"), pointSpacings = NULL, ...)
+    initialize = function (line = emptyMatrix(), seedIndex = NULL, voxelDims = NULL, coordUnit = c("vox","mm"), pointSpacings = NULL, ...)
     {
         object <- initFields(line=promote(line,byrow=TRUE), seedIndex=as.integer(seedIndex), voxelDims=as.numeric(voxelDims)[1:3], coordUnit=match.arg(coordUnit))
 
@@ -108,7 +108,7 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     
     updatePointSpacings = function ()
     {
-        if (nrow(.self$line) == 1)
+        if (nrow(.self$line) < 2)
             .self$pointSpacings <- numeric(0)
         else
             .self$pointSpacings <- apply(diff(.self$line), 1, vectorLength)
