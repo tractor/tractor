@@ -94,6 +94,54 @@ BEGIN_RCPP
     }
     
     tracker->setFlag("terminate-targets", as<bool>(_terminateAtTargets));
+    return R_NilValue;
+END_RCPP
+}
+
+RcppExport SEXP initialiseTracker (SEXP _tracker, SEXP _seeds, SEXP _count, SEXP _jitter)
+{
+BEGIN_RCPP
+    XPtr<Tracker> trackerPtr(_tracker);
+    Tracker *tracker = trackerPtr;
+    
+    NumericMatrix seedsR(_seeds);
+    if (seedsR.ncol() != 3)
+        throw std::runtime_error("Seed matrix must have three columns");
+    
+    std::vector<ImageSpace::Point> seeds;
+    for (int i=0; i<seedsR.nrow(); i++)
+    {
+        ImageSpace::Point seed;
+        std::transform(seedsR.row(i).begin(), seedsR.row(i).end(), &seed[0], [](double &x) { return x - 1.0; });
+        seeds.push_back(seed);
+    }
+    
+    DataSource<Streamline> *source = new TractographyDataSource(tracker, seeds, as<size_t>(_count), as<bool>(_jitter));
+    Pipeline<Streamline> *pipeline = new Pipeline<Streamline>(source);
+    return XPtr<Pipeline<Streamline>>(pipeline);
+END_RCPP
+}
+
+RcppExport SEXP setFilters (SEXP _pipeline, SEXP _minLabels, SEXP _maxLabels, SEXP _minLength, SEXP _maxLength, SEXP _medianOnly, SEXP _medianQuantileLength)
+{
+BEGIN_RCPP
+    Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
+    
+    const int minLabels = as<int>(_minLabels);
+    const int maxLabels = as<int>(_maxLabels);
+    if (minLabels > 0 || maxLabels > 0)
+        pipeline->addManipulator(new LabelCountFilter(minLabels, maxLabels));
+    
+    const double minLength = as<double>(_minLength);
+    double maxLength = as<double>(_maxLength);
+    maxLength = (maxLength == R_PosInf ? 0.0 : maxLength);
+    if (minLength > 0.0 || maxLength > 0.0)
+        pipeline->addManipulator(new LengthFilter(minLength, maxLength));
+    
+    if (as<bool>(_medianOnly))
+        pipeline->addManipulator(new MedianStreamlineFilter(as<double>(_medianQuantileLength)));
+    
+    return R_NilValue;
 END_RCPP
 }
 
@@ -121,29 +169,6 @@ BEGIN_RCPP
     
     // Before TractographyDataSource is initialised, as RNG needed for jitter
     RNGScope scope;
-    
-    NumericMatrix seedsR(_seeds);
-    if (seedsR.ncol() != 3)
-        throw std::runtime_error("Seed matrix must have three columns");
-    std::vector<ImageSpace::Point> seeds;
-    for (int i=0; i<seedsR.nrow(); i++)
-    {
-        ImageSpace::Point seed;
-        std::transform(seedsR.row(i).begin(), seedsR.row(i).end(), &seed[0], [](double &x) { return x - 1.0; });
-        seeds.push_back(seed);
-    }
-    TractographyDataSource dataSource(tracker, seeds, as<size_t>(_count), as<bool>(_jitter));
-    Pipeline<Streamline> pipeline(&dataSource);
-    
-    const int minTargetHits = as<int>(_minTargetHits);
-    if (minTargetHits > 0)
-        pipeline.addManipulator(new LabelCountFilter(minTargetHits));
-    
-    const double minLength = as<double>(_minLength);
-    double maxLength = as<double>(_maxLength);
-    maxLength = (maxLength == R_PosInf ? 0.0 : maxLength);
-    if (minLength > 0.0 || maxLength > 0.0)
-        pipeline.addManipulator(new LengthFilter(minLength, maxLength));
     
     VisitationMapDataSink *visitationMap = nullptr;
     if (!Rf_isNull(_mapPath))
@@ -189,17 +214,14 @@ RcppExport SEXP trkOpen (SEXP _trkPath, SEXP _readLabels)
 {
 BEGIN_RCPP
     StreamlineFileSource *source = new StreamlineFileSource(as<std::string>(_trkPath), as<bool>(_readLabels));
-    
     StreamlineFileMetadata *metadata = source->fileMetadata();
-    std::vector<std::string> properties = metadata->properties;
-    if (properties.size() == 0)
-        properties.push_back("(none)");
+    Pipeline<Streamline> *pipeline = new Pipeline<Streamline>(source);
     
     List result;
     result["count"] = metadata->count;
     result["labels"] = source->hasLabels();
-    result["properties"] = properties;
-    result["pointer"] = XPtr<StreamlineFileSource>(source);
+    result["properties"] = metadata->properties;
+    result["pointer"] = XPtr<Pipeline<Streamline>>(pipeline);
     
     return result;
 END_RCPP

@@ -117,24 +117,16 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     }
 ))
 
-setClassUnion("ExternalPointerOrNull", c("externalptr","NULL"))
-
-StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character",selection="integer",count.="integer",labels.="logical", properties.="character", pointer.="ExternalPointerOrNull"), methods=list(
-    initialize = function (file = NULL, readLabels = TRUE, ...)
+StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character",selection="integer",count="integer",labels="logical", properties="character", pointer="externalptr", tracker="externalptr"), methods=list(
+    initialize = function (pointer = nilPointer(), fileStem = NULL, count = 0L, properties = NULL, labels = FALSE, tracker = nilPointer(), ...)
     {
-        if (length(file) == 0L || file == "")
-            return (initFields(file=character(0), selection=integer(0), count.=0L, labels.=FALSE, properties.=character(0), pointer.=NULL))
-        
-        fileStem <- ensureFileSuffix(file, NULL, strip=c("tck","trk","trkl"))
-        info <- .Call("trkOpen", fileStem, readLabels, PACKAGE="tractor.track")
-        
-        return (initFields(file=fileStem, selection=integer(0), count.=as.integer(info$count), labels.=info$labels, properties.=info$properties, pointer.=info$pointer))
+        initFields(file=as.character(fileStem), selection=integer(0), count=as.integer(count), labels=labels, properties=as.character(properties), pointer=pointer, tracker=tracker)
     },
     
     apply = function (fun, ..., simplify = TRUE)
     {
         fun <- match.fun(fun)
-        n <- ifelse(length(selection) == 0, count., length(selection))
+        n <- ifelse(length(selection) == 0, count, length(selection))
         if (!is.na(simplify))
         {
             results <- vector("list", n)
@@ -153,7 +145,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
             }
         }
         
-        .Call("trkApply", pointer., selection, .applyFunction, PACKAGE="tractor.track")
+        .Call("trkApply", pointer, selection, .applyFunction, PACKAGE="tractor.track")
         
         if (isTRUE(simplify) && n == 1)
             return (results[[1]])
@@ -164,26 +156,32 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     extractAndTruncate = function (leftLength, rightLength)
     {
         tempFile <- threadSafeTempFile()
-        .Call("trkTruncate", pointer., selection, tempFile, leftLength, rightLength, PACKAGE="tractor.track")
+        .Call("trkTruncate", pointer, selection, tempFile, leftLength, rightLength, PACKAGE="tractor.track")
         return (StreamlineSource$new(tempFile))
+    },
+    
+    filter = function (minLabels = NULL, maxLabels = NULL, minLength = NULL, maxLength = NULL, medianOnly = FALSE, medianLengthQuantile = 0.99)
+    {
+        .Call("setFilters", pointer, minLabels %||% 0L, maxLabels %||% 0L, minLength %||% 0, maxLength %||% 0, medianOnly, medianQuantileLength, PACKAGE="tractor.track")
+        invisible(.self)
     },
     
     getFileStem = function () { return (file) },
     
     getLengths = function ()
     {
-        return (.Call("trkLengths", pointer., selection, PACKAGE="tractor.track"))
+        return (.Call("trkLengths", pointer, selection, PACKAGE="tractor.track"))
     },
     
     getMapAndLengthData = function ()
     {
-        return (.Call("trkFastMapAndLengths", pointer., selection, PACKAGE="tractor.track"))
+        return (.Call("trkFastMapAndLengths", pointer, selection, PACKAGE="tractor.track"))
     },
     
     getMedian = function (quantile = 0.99, pathOnly = FALSE)
     {
         tempFile <- threadSafeTempFile()
-        .Call("trkMedian", pointer., selection, tempFile, quantile, PACKAGE="tractor.track")
+        .Call("trkMedian", pointer, selection, tempFile, quantile, PACKAGE="tractor.track")
         
         if (pathOnly)
             return (tempFile)
@@ -217,12 +215,12 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
             report(OL$Error, "A reference image or path must be provided")
         
         resultFile <- threadSafeTempFile()
-        .Call("trkMap", pointer., selection, reference, scope, normalise, resultFile, PACKAGE="tractor.track")
+        .Call("trkMap", pointer, selection, reference, scope, normalise, resultFile, PACKAGE="tractor.track")
         
         return (readImageFile(resultFile))
     },
     
-    nStreamlines = function () { return (count.) },
+    nStreamlines = function () { return (count) },
     
     select = function (indices = NULL, labels = NULL)
     {
@@ -231,7 +229,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
         else
         {
             if (is.null(indices))
-                indices <- .Call("trkFind", pointer., as.integer(labels), PACKAGE="tractor.track")
+                indices <- .Call("trkFind", pointer, as.integer(labels), PACKAGE="tractor.track")
             .self$selection <- as.integer(indices)
         }
         
@@ -240,7 +238,11 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     
     summarise = function ()
     {
-        values <- c("Number of streamlines"=count., "Streamline properties"=implode(properties.,sep=", "), "Auxiliary label file"=labels.)
+        if (nilPointer(tracker))
+            values <- c(Source="(tracker)")
+        else
+            values <- c(Source=file)
+        values <- c(values, "Number of streamlines"=count, "Streamline properties"=implode(properties,sep=", "), "Streamline labels"=labels)
         return (values)
     }
 ))
@@ -284,3 +286,20 @@ StreamlineSink <- setRefClass("StreamlineSink", fields=list(file="character",mas
         }
     }
 ))
+
+generateStreamlines <- function (tracker, seeds, countPerSeed, jitter = TRUE)
+{
+    assert(inherits(tracker,"Tracker"), "The specified tracker is not valid")
+    pointer <- .Call("initialiseTracker", tracker$getPointer(), promote(seeds,byrow=TRUE), countPerSeed, jitter, PACKAGE="tractor.track")
+    source <- StreamlineSource$new(pointer, "", nrow(seeds)*countPerSeed, tracker=tracker$getPointer())
+    invisible(source)
+}
+
+readStreamlines <- function (fileName, readLabels = TRUE)
+{
+    assert(length(fileName) == 1 && fileName != "", "A single file name should be specified")
+    fileStem <- ensureFileSuffix(fileName, NULL, strip=c("tck","trk","trkl"))
+    info <- .Call("trkOpen", fileStem, readLabels, PACKAGE="tractor.track")
+    source <- StreamlineSource$new(info$pointer, fileStem, info$count, properties=info$properties, labels=info$labels)
+    invisible(source)
+}

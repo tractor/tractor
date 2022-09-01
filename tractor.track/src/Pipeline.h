@@ -18,15 +18,15 @@ private:
     std::list<ElementType> workingSet;
     
 public:
-    Pipeline (DataSource<ElementType> * const source = NULL, const size_t blockSize = 1000)
+    Pipeline (DataSource<ElementType> * const source = nullptr, const size_t blockSize = 1000)
         : source(source), blockSize(blockSize) {}
     
     ~Pipeline ()
     {
-        size_t i;
-        for (i=0; i<manipulators.size(); i++)
+        delete source;
+        for (size_t i=0; i<manipulators.size(); i++)
             delete manipulators[i];
-        for (i=0; i<sinks.size(); i++)
+        for (size_t i=0; i<sinks.size(); i++)
             delete sinks[i];
     }
     
@@ -65,13 +65,13 @@ public:
     
     void addManipulator (DataManipulator<ElementType> * const manipulator)
     {
-        if (manipulator != NULL)
+        if (manipulator != nullptr)
             manipulators.push_back(manipulator);
     }
     
     void addSink (DataSink<ElementType> * const sink)
     {
-        if (sink != NULL)
+        if (sink != nullptr)
             sinks.push_back(sink);
     }
     
