@@ -11,6 +11,7 @@ public:
     enum struct MappingScope { All, Seed, Ends };
     
 private:
+    std::string path;
     Image<double,3> values;
     MappingScope scope;
     bool normalise;
@@ -20,10 +21,11 @@ public:
     // Delete the default constructor
     VisitationMapDataSink () = delete;
     
-    VisitationMapDataSink (const ImageRaster<3> &raster, const MappingScope scope = MappingScope::All, const bool normalise = false)
-        : scope(scope), normalise(normalise)
+    VisitationMapDataSink (const std::string &path, ImageSpace *space, const MappingScope scope = MappingScope::All, const bool normalise = false)
+        : path(path), scope(scope), normalise(normalise)
     {
-        this->values = Image<double,3>(raster, 0.0);
+        this->values = Image<double,3>(space->dim, 0.0);
+        this->values.setImageSpace(space, true);
     }
     
     void setup (const size_type &count, const_iterator begin, const_iterator end);
@@ -31,7 +33,6 @@ public:
     void done ();
     
     const Image<double,3> & getImage () const { return values; }
-    void writeToNifti (const std::string &fileName, ImageSpace *space = nullptr);
 };
 
 #endif

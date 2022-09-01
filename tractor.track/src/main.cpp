@@ -98,15 +98,26 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP initialiseTracker (SEXP _tracker, SEXP _seeds, SEXP _count, SEXP _jitter)
+RcppExport SEXP initialiseTracker (SEXP _tracker, SEXP _seeds, SEXP _count, SEXP _rightwardsVector, SEXP _jitter)
 {
 BEGIN_RCPP
     XPtr<Tracker> trackerPtr(_tracker);
     Tracker *tracker = trackerPtr;
     
+    ImageSpace::Vector rightwardsVector = ImageSpace::zeroVector();
+    if (!Rf_isNull(_rightwardsVector))
+    {
+        NumericVector rightwardsVectorR(_rightwardsVector);
+        if (rightwardsVectorR.length() != 3)
+            throw Rcpp::exception("Rightwards vector should be a point in 3D space");
+        for (int i=0; i<3; i++)
+            rightwardsVector[i] = rightwardsVectorR[i];
+    }
+    tracker->setRightwardsVector(rightwardsVector);
+    
     NumericMatrix seedsR(_seeds);
     if (seedsR.ncol() != 3)
-        throw std::runtime_error("Seed matrix must have three columns");
+        throw Rcpp::exception("Seed matrix must have three columns");
     
     std::vector<ImageSpace::Point> seeds;
     for (int i=0; i<seedsR.nrow(); i++)
@@ -138,10 +149,62 @@ BEGIN_RCPP
     if (minLength > 0.0 || maxLength > 0.0)
         pipeline->addManipulator(new LengthFilter(minLength, maxLength));
     
+    // FIXME: the pipeline block size needs to be set, but we don't know the count yet
     if (as<bool>(_medianOnly))
         pipeline->addManipulator(new MedianStreamlineFilter(as<double>(_medianQuantileLength)));
     
     return R_NilValue;
+END_RCPP
+}
+
+RcppExport SEXP runPipeline (SEXP _pipeline, SEXP _tracker, SEXP _path, SEXP _requireFile, SEXP _requireMap, SEXP _requireCallback, SEXP _streamlineFun, SEXP _callbackFun, SEXP _debugLevel)
+{
+BEGIN_RCPP
+    Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
+    Tracker *tracker = Rf_isNull(_tracker) ? nullptr : XPtr<Tracker>(_tracker).checked_get();
+    
+    ImageSpace *space = nullptr;
+    if (tracker != nullptr)
+    {
+        tracker->setDebugLevel(as<int>(_debugLevel));
+        space = tracker->getModel()->imageSpace();
+    }
+    else
+    {
+        // If the source is not a tracker, it should be a file
+        // This is safe as long as the caller is sane (passing the tracker if there is one)
+        StreamlineFileSource *fileSource = static_cast<StreamlineFileSource *>(pipeline->dataSource());
+        space = fileSource->imageSpace();
+    }   
+    
+    const std::string path = as<std::string>(_path);
+    
+    std::map<std::string,bool> requirements;
+    requirements["file"] = as<bool>(_requireFile);
+    requirements["map"] = as<bool>(_requireMap);
+    requirements["callback"] = as<bool>(_requireCallback);
+    
+    if (requirements["file"] && path.empty())
+        throw Rcpp::exception("Path must be specified if a streamline file is required");
+    
+    // For jitter and probabilistic interpolation
+    RNGScope scope;
+    
+    if (requirements["file"])
+    {
+        StreamlineFileSink *trkFile = new StreamlineFileSink(path);
+        if (tracker != nullptr)
+            trkFile->labelDictionary() = tracker->labelDictionary();
+        pipeline->addSink(trkFile);
+    }
+    if (requirements["map"])
+    {
+        if (space == nullptr)
+            throw Rcpp::exception("Visitation map cannot be created because the image space is unknown");
+        pipeline->addSink(new VisitationMapDataSink(path, space));
+    }
+    
+    return wrap(pipeline->run());
 END_RCPP
 }
 

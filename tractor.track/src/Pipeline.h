@@ -9,7 +9,7 @@
 template <class ElementType> class Pipeline
 {
 private:
-    DataSource<ElementType> *source;
+    DataSource<ElementType> *source = nullptr;
     std::vector<DataManipulator<ElementType>*> manipulators;
     std::vector<DataSink<ElementType>*> sinks;
     
@@ -30,8 +30,8 @@ public:
             delete sinks[i];
     }
     
+    DataSource<ElementType> * dataSource () const { return source; }
     void setBlockSize (const size_t blockSize) { this->blockSize = blockSize; }
-    void setSource (DataSource<ElementType> * const source) { this->source = source; }
     
     template <typename VectorElementType>
     void setSubset (const std::vector<VectorElementType> &elements)
