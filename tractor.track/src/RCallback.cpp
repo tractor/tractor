@@ -2,6 +2,31 @@
 
 #include "RCallback.h"
 
+using namespace Rcpp;
+
+void RListDataSink::put (const Streamline &data)
+{
+    const std::vector<ImageSpace::Point> points = data.getPoints();
+    
+    Rcpp::NumericMatrix pointsR(points.size(), 3);
+    const int seedIndexR = static_cast<int>(data.getSeedIndex()) + 1;
+    
+    const PointType pointType = data.getPointType();
+    
+    for (size_t i=0; i<points.size(); i++)
+    {
+        pointsR(i,0) = points[i][0] + (pointType == PointType::Voxel ? 1.0 : 0.0);
+        pointsR(i,1) = points[i][1] + (pointType == PointType::Voxel ? 1.0 : 0.0);
+        pointsR(i,2) = points[i][2] + (pointType == PointType::Voxel ? 1.0 : 0.0);
+    }
+    
+    const std::string unit = (pointType == PointType::Voxel ? "vox" : "mm");
+    
+    Language call(constructor, _["line"]=pointsR, _["seedIndex"]=seedIndexR, _["voxelDims"]=data.getVoxelDimensions(), _["coordUnit"]=unit);
+    list[currentStreamline] = call.eval();
+    currentStreamline++;
+}
+
 void RCallbackDataSink::put (const Streamline &data)
 {
     const std::vector<ImageSpace::Point> points = data.getPoints();

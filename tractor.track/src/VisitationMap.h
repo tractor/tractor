@@ -11,7 +11,6 @@ public:
     enum struct MappingScope { All, Seed, Ends };
     
 private:
-    std::string path;
     Image<double,3> values;
     MappingScope scope;
     bool normalise;
@@ -21,8 +20,8 @@ public:
     // Delete the default constructor
     VisitationMapDataSink () = delete;
     
-    VisitationMapDataSink (const std::string &path, ImageSpace *space, const MappingScope scope = MappingScope::All, const bool normalise = false)
-        : path(path), scope(scope), normalise(normalise)
+    VisitationMapDataSink (ImageSpace *space, const MappingScope scope = MappingScope::All, const bool normalise = false)
+        : scope(scope), normalise(normalise)
     {
         this->values = Image<double,3>(space->dim, 0.0);
         this->values.setImageSpace(space, true);

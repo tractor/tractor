@@ -222,6 +222,12 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     
     nStreamlines = function () { return (count) },
     
+    process = function (path = NULL, requireStreamlines = TRUE, requireMap = FALSE, mapScope = c("full","seed","ends"), requireProfile = FALSE, requireLengths = FALSE, debug = 0L)
+    {
+        mapScope <- match.arg(mapScope)
+        .Call("runPipeline", pointer, tracker, path %||% "", requireStreamlines, requireMap, mapScope, requireProfile, requireLengths, debug, Streamline$new)
+    },
+    
     select = function (indices = NULL, labels = NULL)
     {
         if (is.null(indices) && is.null(labels))
@@ -249,7 +255,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
 
 setClassUnion("MriImageOrNull", c("MriImage","NULL"))
 
-StreamlineSink <- setRefClass("StreamlineSink", fields=list(file="character",mask="MriImageOrNull",sinkPtr.="ExternalPointerOrNull"), methods=list(
+StreamlineSink <- setRefClass("StreamlineSink", fields=list(file="character",mask="MriImageOrNull",sinkPtr.="externalptr"), methods=list(
     initialize = function (file = NULL, mask = NULL, ...)
     {
         if (is.null(file) || is.null(mask))

@@ -71,6 +71,4 @@ void VisitationMapDataSink::done ()
 {
     if (normalise)
         std::transform(values.begin(), values.end(), values.begin(), [this](const double &x) { return x / static_cast<double>(totalStreamlines); });
-    if (!path.empty())
-        values.toNifti(DT_FLOAT64).toFile(path);
 }

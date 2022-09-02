@@ -157,11 +157,11 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP runPipeline (SEXP _pipeline, SEXP _tracker, SEXP _path, SEXP _requireFile, SEXP _requireMap, SEXP _requireCallback, SEXP _streamlineFun, SEXP _callbackFun, SEXP _debugLevel)
+RcppExport SEXP runPipeline (SEXP _pipeline, SEXP _tracker, SEXP _path, SEXP _requireStreamlines, SEXP _requireMap, SEXP _mapScope, SEXP _requireProfile, SEXP _requireLengths, SEXP _debugLevel, SEXP _streamlineFun)
 {
 BEGIN_RCPP
     Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
-    Tracker *tracker = Rf_isNull(_tracker) ? nullptr : XPtr<Tracker>(_tracker).checked_get();
+    Tracker *tracker = Rf_isNull(_tracker) ? nullptr : XPtr<Tracker>(_tracker).get();
     
     ImageSpace *space = nullptr;
     if (tracker != nullptr)
@@ -180,12 +180,11 @@ BEGIN_RCPP
     const std::string path = as<std::string>(_path);
     
     std::map<std::string,bool> requirements;
-    requirements["file"] = as<bool>(_requireFile);
+    requirements["file"] = as<bool>(_requireStreamlines) && !path.empty();
+    requirements["list"] = as<bool>(_requireStreamlines) && path.empty();
     requirements["map"] = as<bool>(_requireMap);
-    requirements["callback"] = as<bool>(_requireCallback);
-    
-    if (requirements["file"] && path.empty())
-        throw Rcpp::exception("Path must be specified if a streamline file is required");
+    requirements["profile"] = as<bool>(_requireProfile);
+    requirements["lengths"] = as<bool>(_requireLengths);
     
     // For jitter and probabilistic interpolation
     RNGScope scope;
@@ -197,79 +196,52 @@ BEGIN_RCPP
             trkFile->labelDictionary() = tracker->labelDictionary();
         pipeline->addSink(trkFile);
     }
+    
+    RListDataSink *list = nullptr;
+    if (requirements["list"])
+    {
+        list = new RListDataSink(_streamlineFun);
+        pipeline->addSink(list);
+    }
+    
+    VisitationMapDataSink *visitationMap = nullptr;
     if (requirements["map"])
     {
         if (space == nullptr)
             throw Rcpp::exception("Visitation map cannot be created because the image space is unknown");
-        pipeline->addSink(new VisitationMapDataSink(path, space));
-    }
-    
-    return wrap(pipeline->run());
-END_RCPP
-}
-
-RcppExport SEXP track (SEXP _tracker, SEXP _seeds, SEXP _count, SEXP _rightwardsVector, SEXP _minTargetHits, SEXP _minLength, SEXP _maxLength, SEXP _jitter, SEXP _mapPath, SEXP _trkPath, SEXP _medianPath, SEXP _profileFunction, SEXP _debugLevel)
-{
-BEGIN_RCPP
-    XPtr<Tracker> trackerPtr(_tracker);
-    Tracker *tracker = trackerPtr;
-    ImageSpace *space = tracker->getModel()->imageSpace();
-    
-    ImageSpace::Vector rightwardsVector;
-    if (Rf_isNull(_rightwardsVector))
-        rightwardsVector = ImageSpace::zeroVector();
-    else
-    {
-        NumericVector rightwardsVectorR(_rightwardsVector);
-        if (rightwardsVectorR.length() != 3)
-            throw std::runtime_error("Rightwards vector should be a point in 3D space");
-        for (int i=0; i<3; i++)
-            rightwardsVector[i] = rightwardsVectorR[i];
-    }
-    tracker->setRightwardsVector(rightwardsVector);
-    
-    tracker->setDebugLevel(as<int>(_debugLevel));
-    
-    // Before TractographyDataSource is initialised, as RNG needed for jitter
-    RNGScope scope;
-    
-    VisitationMapDataSink *visitationMap = nullptr;
-    if (!Rf_isNull(_mapPath))
-    {
-        visitationMap = new VisitationMapDataSink(space->dim);
-        pipeline.addSink(visitationMap);
-    }
-    if (!Rf_isNull(_trkPath))
-    {
-        StreamlineFileSink *trkFile = new StreamlineFileSink(as<std::string>(_trkPath));
-        trkFile->labelDictionary() = tracker->labelDictionary();
-        pipeline.addSink(trkFile);
-    }
-    // Only one of trkPath and medianPath is used
-    else if (!Rf_isNull(_medianPath))
-    {
-        pipeline.addManipulator(new MedianStreamlineFilter);
-        pipeline.addSink(new StreamlineFileSink(as<std::string>(_medianPath)));
         
-        // Pipeline must contain all streamlines at once for calculating median
-        pipeline.setBlockSize(as<size_t>(_count));
+        const std::string scopeString = as<std::string>(_mapScope);
+        VisitationMapDataSink::MappingScope scope = VisitationMapDataSink::MappingScope::All;
+        if (scopeString == "seed")
+            scope = VisitationMapDataSink::MappingScope::Seed;
+        else if (scopeString == "ends")
+            scope = VisitationMapDataSink::MappingScope::Ends;
+        
+        visitationMap = new VisitationMapDataSink(space, scope);
+        pipeline->addSink(visitationMap);
     }
     
-    Rcpp::Function *function = nullptr;
-    if (!Rf_isNull(_profileFunction))
+    StreamlineLengthsDataSink *lengths = nullptr;
+    if (requirements["lengths"])
     {
-        function = new Rcpp::Function(_profileFunction);
-        pipeline.addSink(new ProfileMatrixDataSink(*function));
+        lengths = new StreamlineLengthsDataSink;
+        pipeline->addSink(lengths);
     }
     
-    size_t nRetained = pipeline.run();
+    // Run the pipeline, storing outputs in files and/or sink objects
+    const size_t count = pipeline->run();
     
-    if (visitationMap != nullptr)
-        visitationMap->writeToNifti(as<std::string>(_mapPath), space);
+    List result;
+    result["count"] = count;
     
-    delete function;
+    if (requirements["map"])
+        result["map"] = visitationMap->getImage().toNifti(DT_FLOAT64).toPointer("visitation map");
+    if (requirements["list"])
+        result["streamlines"] = list->getList();
+    if (requirements["lengths"])
+        result["lengths"] = lengths->getLengths();
     
-    return wrap(nRetained);
+    return result;
 END_RCPP
 }
 
@@ -312,7 +284,7 @@ BEGIN_RCPP
     Pipeline<Streamline> pipeline(source);
     pipeline.setSubset(_indices);
     
-    VisitationMapDataSink *map = new VisitationMapDataSink(source->imageSpace()->dim);
+    VisitationMapDataSink *map = new VisitationMapDataSink(source->imageSpace());
     pipeline.addSink(map);
     
     StreamlineLengthsDataSink *lengths = new StreamlineLengthsDataSink;
@@ -368,13 +340,11 @@ BEGIN_RCPP
         scope = VisitationMapDataSink::MappingScope::Ends;
     
     RNifti::NiftiImage reference(as<std::string>(_imagePath), false);
-    VisitationMapDataSink *map = new VisitationMapDataSink(reference.dim(), scope, as<bool>(_normalise));
+    ImageSpace space(reference);
+    VisitationMapDataSink *map = new VisitationMapDataSink(&space, scope, as<bool>(_normalise));
     pipeline.addSink(map);
     
     pipeline.run();
-    
-    ImageSpace space(reference);
-    map->writeToNifti(as<std::string>(_resultPath), &space);
     
     return R_NilValue;
 END_RCPP
