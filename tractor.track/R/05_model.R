@@ -2,7 +2,7 @@
 
 nilPointer <- function (object = NULL)
 {
-    if (is.null(ptr)) .NilPointer else identical(object, .NilPointer)
+    if (is.null(object)) .NilPointer else identical(object, .NilPointer)
 }
 
 DiffusionModel <- setRefClass("DiffusionModel", fields=list(pointer="externalptr",type="character"), methods=list(
