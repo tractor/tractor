@@ -90,16 +90,15 @@ void TrackvisSourceFileAdapter::read (Streamline &data)
     int32_t nPoints = inputStream.readValue<int32_t>();
     if (nPoints > 0)
     {
-        vector<ImageSpace::Point> points;
-        ImageSpace::Point point;
+        vector<ImageSpace::Point> points(nPoints);
         int seed = 0;
         for (int32_t i=0; i<nPoints; i++)
         {
-            inputStream.readPoint<float>(point);
+            inputStream.readPoint<float>(points[i]);
             
             // TrackVis indexes from the left edge of each voxel
-            for (int i=0; i<3; i++)
-                point[i] = point[i] / pixdim[i] - 0.5;
+            for (int j=0; j<3; j++)
+                points[i][j] = points[i][j] / pixdim[j] - 0.5;
             
             if (nScalars > 0)
                 inputStream->seekg(4 * nScalars, ios::cur);
