@@ -225,7 +225,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     process = function (path = NULL, requireStreamlines = TRUE, requireMap = FALSE, mapScope = c("full","seed","ends"), requireProfile = FALSE, requireLengths = FALSE, debug = 0L)
     {
         mapScope <- match.arg(mapScope)
-        .Call("runPipeline", pointer, tracker, path %||% "", requireStreamlines, requireMap, mapScope, requireProfile, requireLengths, debug, Streamline$new)
+        .Call("runPipeline", pointer, tracker, selection, path %||% "", requireStreamlines, requireMap, mapScope, requireProfile, requireLengths, debug, Streamline$new)
     },
     
     select = function (indices = NULL, labels = NULL)

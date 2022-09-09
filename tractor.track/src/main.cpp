@@ -157,11 +157,13 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP runPipeline (SEXP _pipeline, SEXP _tracker, SEXP _path, SEXP _requireStreamlines, SEXP _requireMap, SEXP _mapScope, SEXP _requireProfile, SEXP _requireLengths, SEXP _debugLevel, SEXP _streamlineFun)
+RcppExport SEXP runPipeline (SEXP _pipeline, SEXP _tracker, SEXP _selection, SEXP _path, SEXP _requireStreamlines, SEXP _requireMap, SEXP _mapScope, SEXP _requireProfile, SEXP _requireLengths, SEXP _debugLevel, SEXP _streamlineFun)
 {
 BEGIN_RCPP
     Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
     Tracker *tracker = Rf_isNull(_tracker) ? nullptr : XPtr<Tracker>(_tracker).get();
+    
+    pipeline->setSubset(_selection);
     
     ImageSpace *space = nullptr;
     if (tracker != nullptr)
