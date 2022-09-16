@@ -60,7 +60,7 @@ void TrackvisSourceFileAdapter::open (StreamlineFileMetadata &metadata)
     
     inputStream.readArray<int16_t>(metadata.space->dim);
     inputStream.readArray<float>(metadata.space->pixdim);
-    this->pixdim = metadata.space->pixdim;
+    this->space = metadata.space;
     
     inputStream->seekg(12, ios::cur);
     nScalars = inputStream.readValue<int16_t>();
@@ -98,7 +98,7 @@ void TrackvisSourceFileAdapter::read (Streamline &data)
             
             // TrackVis indexes from the left edge of each voxel
             for (int j=0; j<3; j++)
-                points[i][j] = points[i][j] / pixdim[j] - 0.5;
+                points[i][j] = points[i][j] / space->pixdim[j] - 0.5;
             
             if (nScalars > 0)
                 inputStream->seekg(4 * nScalars, ios::cur);
@@ -115,7 +115,7 @@ void TrackvisSourceFileAdapter::read (Streamline &data)
         data = Streamline(vector<ImageSpace::Point>(points.rend()-seed-1, points.rend()),
                           vector<ImageSpace::Point>(points.begin()+seed, points.end()),
                           PointType::Voxel,
-                          pixdim,
+                          space,
                           false);
     }
     else

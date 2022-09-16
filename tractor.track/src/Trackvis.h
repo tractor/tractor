@@ -8,7 +8,7 @@ class TrackvisSourceFileAdapter : public SourceFileAdapter
 {
 protected:
     int nScalars, nProperties, seedProperty;
-    ImageSpace::PixdimVector pixdim;
+    ImageSpace *space = nullptr;
     
 public:
     using SourceFileAdapter::SourceFileAdapter;

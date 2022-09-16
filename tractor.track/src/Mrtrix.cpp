@@ -67,7 +67,7 @@ void MrtrixSourceFileAdapter::read (Streamline &data)
         data = Streamline(std::vector<ImageSpace::Point>(points.begin(), points.begin()+1),
                           points,
                           PointType::World,
-                          { 0, 0, 0},
+                          nullptr,
                           true);
     }
 }

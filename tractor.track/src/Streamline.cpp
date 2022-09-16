@@ -4,6 +4,9 @@
 
 double Streamline::getLength (const std::vector<ImageSpace::Point> &points) const
 {
+    if (!this->hasImageSpace())
+        throw std::runtime_error("Streamline has no image space information");
+    
     const size_t nPoints = points.size();
     
     if (points.size() < 2)
@@ -17,7 +20,7 @@ double Streamline::getLength (const std::vector<ImageSpace::Point> &points) cons
             if (pointType == PointType::Voxel)
             {
                 for (int j=0; j<3; j++)
-                    step[j] *= voxelDims[j];
+                    step[j] *= space->pixdim[j];
             }
             
             // If the spacing is consistent we only need to measure one step,
@@ -34,6 +37,9 @@ double Streamline::getLength (const std::vector<ImageSpace::Point> &points) cons
 
 void Streamline::trim (std::vector<ImageSpace::Point> &points, const double maxLength)
 {
+    if (!this->hasImageSpace())
+        throw std::runtime_error("Streamline has no image space information");
+    
     const size_t nPoints = points.size();
     
     double length = 0.0;
@@ -43,7 +49,7 @@ void Streamline::trim (std::vector<ImageSpace::Point> &points, const double maxL
         if (pointType == PointType::Voxel)
         {
             for (int j=0; j<3; j++)
-                step[j] *= voxelDims[j];
+                step[j] *= space->pixdim[j];
         }
         
         if (fixedSpacing)

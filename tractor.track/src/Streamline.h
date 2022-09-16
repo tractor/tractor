@@ -22,15 +22,12 @@ private:
     // Are points stored in voxel or world (typically mm) terms?
     PointType pointType;
     
-    // Voxel dimensions, needed for converting between voxel and world point types
-    ImageSpace::PixdimVector voxelDims;
-    
     // A set of integer labels associated with the streamline, indicating, for
     // example, the anatomical regions that the streamline passes through
     std::set<int> labels;
     
     // Reasons for termination on each side
-    Streamline::TerminationReason leftTerminationReason, rightTerminationReason;
+    TerminationReason leftTerminationReason = TerminationReason::Unknown, rightTerminationReason = TerminationReason::Unknown;
     
 protected:
     // A boolean value indicating whether or not the points are equally spaced
@@ -42,8 +39,11 @@ protected:
     
 public:
     Streamline () {}
-    Streamline (const std::vector<ImageSpace::Point> &leftPoints, const std::vector<ImageSpace::Point> &rightPoints, const PointType pointType, const ImageSpace::PixdimVector &voxelDims, const bool fixedSpacing)
-        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), voxelDims(voxelDims), fixedSpacing(fixedSpacing), leftTerminationReason(TerminationReason::Unknown), rightTerminationReason(TerminationReason::Unknown) {}
+    Streamline (const std::vector<ImageSpace::Point> &leftPoints, const std::vector<ImageSpace::Point> &rightPoints, const PointType pointType, ImageSpace *space, const bool fixedSpacing)
+        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), fixedSpacing(fixedSpacing)
+    {
+        setImageSpace(space, true);
+    }
     
     size_t nPoints () const { return std::max(static_cast<size_t>(leftPoints.size()+rightPoints.size())-1, size_t(0)); }
     size_t getSeedIndex () const { return std::max(static_cast<size_t>(leftPoints.size())-1, size_t(0)); }
@@ -53,8 +53,6 @@ public:
     std::vector<ImageSpace::Point> getPoints () const;
     PointType getPointType () const { return pointType; }
     bool usesFixedSpacing () const { return fixedSpacing; }
-    
-    const ImageSpace::PixdimVector & getVoxelDimensions () const { return voxelDims; }
     
     double getLeftLength () const  { return getLength(leftPoints); }
     double getRightLength () const { return getLength(rightPoints); }

@@ -6,6 +6,9 @@ using namespace Rcpp;
 
 void RListDataSink::put (const Streamline &data)
 {
+    if (!data.hasImageSpace())
+        throw std::runtime_error("Streamline has no image space information");
+    
     const std::vector<ImageSpace::Point> points = data.getPoints();
     
     Rcpp::NumericMatrix pointsR(points.size(), 3);
@@ -22,13 +25,16 @@ void RListDataSink::put (const Streamline &data)
     
     const std::string unit = (pointType == PointType::Voxel ? "vox" : "mm");
     
-    Language call(constructor, _["line"]=pointsR, _["seedIndex"]=seedIndexR, _["voxelDims"]=data.getVoxelDimensions(), _["coordUnit"]=unit);
+    Language call(constructor, _["line"]=pointsR, _["seedIndex"]=seedIndexR, _["voxelDims"]=data.imageSpace()->pixdim, _["coordUnit"]=unit);
     list[currentStreamline] = call.eval();
     currentStreamline++;
 }
 
 void RCallbackDataSink::put (const Streamline &data)
 {
+    if (!data.hasImageSpace())
+        throw std::runtime_error("Streamline has no image space information");
+    
     const std::vector<ImageSpace::Point> points = data.getPoints();
     
     Rcpp::NumericMatrix pointsR(points.size(), 3);
@@ -45,7 +51,7 @@ void RCallbackDataSink::put (const Streamline &data)
     
     const std::string unit = (pointType == PointType::Voxel ? "vox" : "mm");
     
-    function(pointsR, seedIndexR, data.getVoxelDimensions(), unit);
+    function(pointsR, seedIndexR, data.imageSpace()->pixdim, unit);
 }
 
 void ProfileMatrixDataSink::put (const Streamline &data)

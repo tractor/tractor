@@ -424,7 +424,7 @@ BEGIN_RCPP
         rightPoints[i-seedIndex] = point;
     }
     
-    Streamline streamline(leftPoints, rightPoints, pointType, sink->fileMetadata()->space->pixdim, as<bool>(_fixedSpacing));
+    Streamline streamline(leftPoints, rightPoints, pointType, sink->fileMetadata()->space, as<bool>(_fixedSpacing));
     std::list<Streamline> list;
     list.push_back(streamline);
     sink->setup(1);
