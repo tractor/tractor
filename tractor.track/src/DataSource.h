@@ -17,15 +17,13 @@ public:
 // Data sink: responsible for exporting or writing data elements
 template <class ElementType> class DataSink
 {
-protected:
-    typedef typename std::list<ElementType>::size_type size_type;
-    typedef typename std::list<ElementType>::const_iterator const_iterator;
-    
 public:
     virtual ~DataSink () {}
     
-    // The setup() function is called at the start of each block and provides a preview of the data, put() is called once per element, finish() is called after each block, and done() is called after all blocks are finished
-    virtual void setup (const size_type &count, const_iterator begin, const_iterator end) {}
+    // The setup() function is called at the start of each block, put() is
+    // called once per element, finish() is called after each block, and done()
+    // is called after all blocks are finished
+    virtual void setup (const size_t &count) {}
     virtual void put (const ElementType &data) {}
     virtual void finish () {}
     virtual void done () {}

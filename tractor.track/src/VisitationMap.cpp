@@ -24,11 +24,6 @@ inline void checkAndSetPoint (Image<bool,3> &visited, Image<double,3> &values, c
     }
 }
 
-void VisitationMapDataSink::setup (const size_type &count, const_iterator begin, const_iterator end)
-{
-    totalStreamlines += count;
-}
-
 void VisitationMapDataSink::put (const Streamline &data)
 {
     Image<bool,3> visited(values.dim(), false);
@@ -46,23 +41,17 @@ void VisitationMapDataSink::put (const Streamline &data)
         break;
         
         case MappingScope::Seed:
-        if (leftPoints.size() > 0)
-            checkAndSetPoint(visited, values, leftPoints[0]);
-        else if (rightPoints.size() > 0)
-            checkAndSetPoint(visited, values, rightPoints[0]);
+        if (!leftPoints.empty())
+            checkAndSetPoint(visited, values, leftPoints.front());
+        else if (!rightPoints.empty())
+            checkAndSetPoint(visited, values, rightPoints.front());
         break;
         
         case MappingScope::Ends:
-        if (leftPoints.size() > 0)
-        {
-            size_t i = leftPoints.size() - 1;
-            checkAndSetPoint(visited, values, leftPoints[i]);
-        }
-        if (rightPoints.size() > 0)
-        {
-            size_t i = rightPoints.size() - 1;
-            checkAndSetPoint(visited, values, rightPoints[i]);
-        }
+        if (!leftPoints.empty())
+            checkAndSetPoint(visited, values, leftPoints.back());
+        if (!rightPoints.empty())
+            checkAndSetPoint(visited, values, rightPoints.back());
         break;
     }
 }
@@ -70,5 +59,9 @@ void VisitationMapDataSink::put (const Streamline &data)
 void VisitationMapDataSink::done ()
 {
     if (normalise)
-        std::transform(values.begin(), values.end(), values.begin(), [this](const double &x) { return x / static_cast<double>(totalStreamlines); });
+    {
+        std::transform(values.begin(), values.end(), values.begin(), [this](const double &x) {
+            return x / static_cast<double>(totalStreamlines);
+        });
+    }
 }

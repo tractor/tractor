@@ -27,7 +27,11 @@ public:
         this->values.setImageSpace(space, true);
     }
     
-    void setup (const size_type &count, const_iterator begin, const_iterator end);
+    void setup (const size_t &count)
+    {
+        totalStreamlines += count;
+    }
+    
     void put (const Streamline &data);
     void done ();
     

@@ -74,8 +74,8 @@ size_t Pipeline<ElementType>::run ()
             // Pass the remaining data to the sink(s)
             for (int i=0; i<sinks.size(); i++)
             {
-                // Tell the sink how many elements are incoming and provide an iterator
-                sinks[i]->setup(workingSet.size(), workingSet.begin(), workingSet.end());
+                // Tell the sink how many elements are incoming
+                sinks[i]->setup(workingSet.size());
                 
                 // Pass each element to the sink
                 for (auto it=workingSet.cbegin(); it!=workingSet.cend(); it++)

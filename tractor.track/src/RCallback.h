@@ -17,7 +17,7 @@ public:
     RListDataSink (SEXP constructor)
         : constructor(constructor) {}
     
-    void setup (const size_type &count, const_iterator begin, const_iterator end)
+    void setup (const size_t &count)
     {
         list = Rcpp::List(count);
         currentStreamline = 0;
