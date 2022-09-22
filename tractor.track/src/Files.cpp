@@ -58,6 +58,15 @@ std::vector<size_t> StreamlineFileSource::matchLabels (const std::vector<int> &v
     return result;
 }
 
+void StreamlineFileSource::setup ()
+{
+    if (currentStreamline > 0)
+    {
+        source->seek(metadata->dataOffset);
+        currentStreamline = 0;
+    }
+}
+
 void StreamlineFileSource::seek (const size_t n)
 {
     if (currentStreamline == n)
@@ -66,11 +75,9 @@ void StreamlineFileSource::seek (const size_t n)
         source->seek(offsets[n]);
     else
     {
+        // Reset to the start if we've passed the streamline of interest
         if (n < currentStreamline)
-        {
-            source->seek(metadata->dataOffset);
-            currentStreamline = 0;
-        }
+            setup();
         source->skip(n - currentStreamline);
     }
     

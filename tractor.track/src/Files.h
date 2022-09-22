@@ -62,6 +62,7 @@ public:
     size_t count () const { return totalStreamlines; }
     StreamlineFileMetadata * fileMetadata () const { return metadata; }
     
+    void setup ();
     bool more () { return currentStreamline < totalStreamlines; }
     void get (Streamline &data)
     {

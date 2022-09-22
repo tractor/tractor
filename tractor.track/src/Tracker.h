@@ -117,6 +117,12 @@ public:
         this->totalStreamlines = seeds.size() * streamlinesPerSeed;
     }
     
+    void setup ()
+    {
+        currentStreamline = 0;
+        currentSeed = 0;
+    }
+    
     bool more () { return (currentStreamline < totalStreamlines); }
     
     void get (Streamline &data)
