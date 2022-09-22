@@ -138,6 +138,8 @@ RcppExport SEXP setFilters (SEXP _pipeline, SEXP _minLabels, SEXP _maxLabels, SE
 BEGIN_RCPP
     Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
     
+    pipeline->clearManipulators();
+    
     const int minLabels = as<int>(_minLabels);
     const int maxLabels = as<int>(_maxLabels);
     if (minLabels > 0 || maxLabels > 0)
@@ -163,6 +165,7 @@ BEGIN_RCPP
     Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
     Tracker *tracker = Rf_isNull(_tracker) ? nullptr : XPtr<Tracker>(_tracker).get();
     
+    pipeline->clearSinks();
     pipeline->setSubset(_selection);
     
     ImageSpace *space = nullptr;

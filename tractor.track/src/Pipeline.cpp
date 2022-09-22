@@ -12,7 +12,7 @@ size_t Pipeline<ElementType>::run ()
     std::vector<size_t> keepList;
     
     // If there's no data source there's nothing to do
-    if (source == NULL)
+    if (source == nullptr)
         return 0;
     
     // Otherwise set up the source and empty the working set

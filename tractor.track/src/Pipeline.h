@@ -23,11 +23,9 @@ public:
     
     ~Pipeline ()
     {
+        clearSinks();
+        clearManipulators();
         delete source;
-        for (size_t i=0; i<manipulators.size(); i++)
-            delete manipulators[i];
-        for (size_t i=0; i<sinks.size(); i++)
-            delete sinks[i];
     }
     
     DataSource<ElementType> * dataSource () const { return source; }
@@ -69,10 +67,24 @@ public:
             manipulators.push_back(manipulator);
     }
     
+    void clearManipulators ()
+    {
+        for (size_t i=0; i<manipulators.size(); i++)
+            delete manipulators[i];
+        manipulators.clear();
+    }
+    
     void addSink (DataSink<ElementType> * const sink)
     {
         if (sink != nullptr)
             sinks.push_back(sink);
+    }
+    
+    void clearSinks ()
+    {
+        for (size_t i=0; i<sinks.size(); i++)
+            delete sinks[i];
+        sinks.clear();
     }
     
     size_t run ();
