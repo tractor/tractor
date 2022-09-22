@@ -59,10 +59,10 @@ public:
     bool hasImageSpace () const { return (metadata != nullptr && metadata->space != nullptr); }
     ImageSpace * imageSpace () const { return metadata == nullptr ? nullptr : metadata->space; }
     
-    size_t count () const { return totalStreamlines; }
     StreamlineFileMetadata * fileMetadata () const { return metadata; }
     
     void setup ();
+    size_t count () { return totalStreamlines; }
     bool more () { return currentStreamline < totalStreamlines; }
     void get (Streamline &data)
     {

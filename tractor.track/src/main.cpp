@@ -151,10 +151,16 @@ BEGIN_RCPP
     if (minLength > 0.0 || maxLength > 0.0)
         pipeline->addManipulator(new LengthFilter(minLength, maxLength));
     
-    // FIXME: the pipeline block size needs to be set, but we don't know the count yet
     if (as<bool>(_medianOnly))
+    {
         pipeline->addManipulator(new MedianStreamlineFilter(as<double>(_medianQuantileLength)));
-    
+        
+        // Calculating a median requires all streamlines to be in one block
+        const size_t count = pipeline->dataSource()->count();
+        if (count == 0)
+            throw Rcpp::exception("Streamline source has zero or unknown size - can't calculate a median");
+        pipeline->setBlockSize(count);
+    }
     return R_NilValue;
 END_RCPP
 }

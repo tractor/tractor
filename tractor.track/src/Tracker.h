@@ -112,7 +112,7 @@ private:
     
 public:
     TractographyDataSource (Tracker * const tracker, const std::vector<ImageSpace::Point> &seeds, const size_t streamlinesPerSeed, const bool jitter)
-        : tracker(tracker), seeds(seeds), streamlinesPerSeed(streamlinesPerSeed), jitter(jitter), currentStreamline(0), currentSeed(0)
+        : tracker(tracker), seeds(seeds), streamlinesPerSeed(streamlinesPerSeed), jitter(jitter)
     {
         this->totalStreamlines = seeds.size() * streamlinesPerSeed;
     }
@@ -123,6 +123,7 @@ public:
         currentSeed = 0;
     }
     
+    size_t count () { return totalStreamlines; }
     bool more () { return (currentStreamline < totalStreamlines); }
     
     void get (Streamline &data)

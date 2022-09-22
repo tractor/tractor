@@ -5,8 +5,16 @@
 template <class ElementType> class DataSource
 {
 public:
-    // The setup() function is called before the pipeline starts, more() is used to check if more elements are available, get() retrieves an element, seek() moves to the nth element if seekable() returns true to say seeking is allowed, and done() is called after the pipeline finishes
+    virtual ~DataSource () {}
+    
+    // The setup() function is called before the pipeline starts (or to request
+    // the source to reset), count() should return the total number of elements
+    // available from the source (or 0 if this is unknown), more() is used to
+    // check if more elements are available, get() retrieves an element, seek()
+    // moves to the nth element if seekable() returns true to say seeking is
+    // allowed, and done() is called after the pipeline finishes
     virtual void setup () {}
+    virtual size_t count () { return 0; }
     virtual bool more () { return false; }
     virtual void get (ElementType &data) {}
     virtual void seek (const size_t n) {}
