@@ -3,11 +3,19 @@
 #include "Filter.h"
 #include "Image.h"
 
-// Note that this function will modify its first argument, as long as it is
-// passed by reference
+// Note that this function will modify (reorder) its first argument
 template <typename ElementType>
-static ElementType & getNthElement (std::vector<ElementType> &vec, size_t n)
+static ElementType & locateNthElement (std::vector<ElementType> &vec, size_t n)
 {
+    std::nth_element(vec.begin(), vec.begin()+n, vec.end());
+    return *(vec.begin() + n);
+}
+
+// This version copies its argument to avoid modifying the original
+template <typename ElementType>
+static ElementType & getNthElement (const std::vector<ElementType> &ivec, size_t n)
+{
+    std::vector<ElementType> vec = ivec;
     std::nth_element(vec.begin(), vec.begin()+n, vec.end());
     return *(vec.begin() + n);
 }
@@ -62,9 +70,9 @@ bool MedianStreamlineFilter::process (Streamline &data)
         }
         
         const size_t medianIndex = static_cast<size_t>(round(x.size() / 2.0));
-        leftPoints[j][0] = getNthElement(x, medianIndex);
-        leftPoints[j][1] = getNthElement(y, medianIndex);
-        leftPoints[j][2] = getNthElement(z, medianIndex);
+        leftPoints[j][0] = locateNthElement(x, medianIndex);
+        leftPoints[j][1] = locateNthElement(y, medianIndex);
+        leftPoints[j][2] = locateNthElement(z, medianIndex);
     }
     
     // Third pass: right points
@@ -86,10 +94,13 @@ bool MedianStreamlineFilter::process (Streamline &data)
         }
         
         const size_t medianIndex = static_cast<size_t>(round(x.size() / 2.0));
-        rightPoints[j][0] = getNthElement(x, medianIndex);
-        rightPoints[j][1] = getNthElement(y, medianIndex);
-        rightPoints[j][2] = getNthElement(z, medianIndex);
+        rightPoints[j][0] = locateNthElement(x, medianIndex);
+        rightPoints[j][1] = locateNthElement(y, medianIndex);
+        rightPoints[j][2] = locateNthElement(z, medianIndex);
     }
+    
+    // Empty the cache
+    cache.clear();
     
     // Replace the source data with the calculated median
     // Fixed spacing won't be preserved
