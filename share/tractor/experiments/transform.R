@@ -47,7 +47,7 @@ runExperiment <- function ()
         
         source$apply(function(x) {
             line <- RNiftyReg::applyTransform(xfm, x$getLine("vox"))
-            sink$append(Streamline$new(line, x$getSeedIndex(), targetImage$getVoxelDimensions(), "vox"))
+            sink$append(Streamline$new(line, x$getSeedIndex(), targetImage$getDimensions(), targetImage$getVoxelDimensions(), "vox"))
         }, simplify=NA)
         
         sink$close()

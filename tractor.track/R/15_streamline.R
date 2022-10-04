@@ -1,7 +1,7 @@
-Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=list(line="matrix",seedIndex="integer",voxelDims="numeric",coordUnit="character",pointSpacings="numeric"), methods=list(
-    initialize = function (line = emptyMatrix(), seedIndex = NULL, voxelDims = NULL, coordUnit = c("vox","mm"), pointSpacings = NULL, ...)
+Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=list(line="matrix",seedIndex="integer",spaceDims="integer", voxelDims="numeric",coordUnit="character",pointSpacings="numeric"), methods=list(
+    initialize = function (line = emptyMatrix(), seedIndex = NULL, spaceDims = NULL, voxelDims = NULL, coordUnit = c("vox","mm"), pointSpacings = NULL, ...)
     {
-        object <- initFields(line=promote(line,byrow=TRUE), seedIndex=as.integer(seedIndex), voxelDims=as.numeric(voxelDims)[1:3], coordUnit=match.arg(coordUnit))
+        object <- initFields(line=promote(line,byrow=TRUE), seedIndex=as.integer(seedIndex), spaceDims=as.integer(spaceDims)[1:3], voxelDims=as.numeric(voxelDims)[1:3], coordUnit=match.arg(coordUnit))
 
         if (ncol(object$line) != 3)
             report(OL$Error, "Streamline must be specified as a matrix with 3 columns")
@@ -41,6 +41,8 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     getSeedIndex = function () { return (seedIndex) },
     
     getSeedPoint = function () { return (line[seedIndex,]) },
+    
+    getSpaceDimensions = function () { return (spaceDims) },
     
     getVoxelDimensions = function () { return (voxelDims) },
     

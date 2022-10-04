@@ -45,6 +45,7 @@ runExperiment <- function ()
     }
     
     brain <- getStandardImage("brain")
+    spaceDims <- brain$getDimensions()
     voxelDims <- brain$getVoxelDimensions()
     sink <- getRefClass("StreamlineSink")$new(basename(tractName), brain)
     
@@ -81,7 +82,7 @@ runExperiment <- function ()
         
         seedIndex <- which.min(abs(indices - seedIndex))
         interpolatedPoints <- transformWorldToVoxel(interpolatedPoints, brain)
-        streamline <- getRefClass("Streamline")$new(interpolatedPoints, seedIndex, voxelDims, coordUnit="vox")
+        streamline <- getRefClass("Streamline")$new(interpolatedPoints, seedIndex, spaceDims, voxelDims, coordUnit="vox")
         sink$append(streamline)
     }
     

@@ -25,7 +25,7 @@ void RListDataSink::put (const Streamline &data)
     
     const std::string unit = (pointType == PointType::Voxel ? "vox" : "mm");
     
-    Language call(constructor, _["line"]=pointsR, _["seedIndex"]=seedIndexR, _["voxelDims"]=data.imageSpace()->pixdim, _["coordUnit"]=unit);
+    Language call(constructor, _["line"]=pointsR, _["seedIndex"]=seedIndexR, _["spaceDims"]=data.imageSpace()->dim, _["voxelDims"]=data.imageSpace()->pixdim, _["coordUnit"]=unit);
     list[currentStreamline] = call.eval();
     currentStreamline++;
 }
