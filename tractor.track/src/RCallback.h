@@ -28,30 +28,20 @@ public:
     Rcpp::List getList () const { return list; }
 };
 
-class RCallbackDataSink : public DataSink<Streamline>
+class LabelProfileDataSink : public DataSink<Streamline>
 {
 private:
-    Rcpp::Function function;
-    
-public:
-    RCallbackDataSink (const Rcpp::Function &function)
-        : function(function) {}
-    
-    void put (const Streamline &data);
-};
-
-class ProfileMatrixDataSink : public DataSink<Streamline>
-{
-private:
-    Rcpp::Function function;
     std::map<int,size_t> counts;
+    std::map<int,std::string> dictionary;
+    Rcpp::IntegerVector profile;
     
 public:
-    ProfileMatrixDataSink (const Rcpp::Function &function)
-        : function(function) {}
+    std::map<int,std::string> & labelDictionary () { return dictionary; }
     
     void put (const Streamline &data);
     void done ();
+    
+    Rcpp::IntegerVector getProfile () const { return profile; }
 };
 
 #endif

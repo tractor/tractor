@@ -232,6 +232,13 @@ BEGIN_RCPP
         pipeline->addSink(visitationMap);
     }
     
+    LabelProfileDataSink *profile = nullptr;
+    if (requirements["profile"])
+    {
+        profile = new LabelProfileDataSink;
+        pipeline->addSink(profile);
+    }
+    
     StreamlineLengthsDataSink *lengths = nullptr;
     if (requirements["lengths"])
     {
@@ -249,6 +256,8 @@ BEGIN_RCPP
         result["map"] = visitationMap->getImage().toNifti(DT_FLOAT64).toPointer("visitation map");
     if (requirements["list"])
         result["streamlines"] = list->getList();
+    if (requirements["profile"])
+        result["profile"] = profile->getProfile();
     if (requirements["lengths"])
         result["lengths"] = lengths->getLengths();
     
@@ -270,21 +279,6 @@ BEGIN_RCPP
     result["pointer"] = XPtr<Pipeline<Streamline>>(pipeline);
     
     return result;
-END_RCPP
-}
-
-RcppExport SEXP trkApply (SEXP _source, SEXP _indices, SEXP _function)
-{
-BEGIN_RCPP
-    XPtr<StreamlineFileSource> source(_source);
-    Pipeline<Streamline> pipeline(source);
-    pipeline.setSubset(_indices);
-    Function function(_function);
-    pipeline.addSink(new RCallbackDataSink(function));
-    
-    pipeline.run();
-    
-    return R_NilValue;
 END_RCPP
 }
 
