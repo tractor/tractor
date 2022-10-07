@@ -55,6 +55,14 @@ void RListDataSource::get (Streamline &data)
     currentStreamline++;
 }
 
+void RListDataSink::setup (const size_t &count)
+{
+    totalStreamlines += count;
+    List tempList = list;
+    list = List(totalStreamlines);
+    std::copy(tempList.begin(), tempList.end(), list.begin());
+}
+
 void RListDataSink::put (const Streamline &data)
 {
     if (!data.hasImageSpace())
