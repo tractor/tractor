@@ -4,6 +4,57 @@
 
 using namespace Rcpp;
 
+Rcpp::Reference RListDataSource::getElement (const size_t n)
+{
+    RObject object = list[n];
+    if (!object.inherits("Streamline"))
+        throw std::runtime_error("List element " + std::to_string(currentStreamline+1) + " is not a Streamline object");
+    return Reference(object);
+}
+
+RListDataSource::RListDataSource (SEXP list)
+    : list(list)
+{
+    totalStreamlines = static_cast<size_t>(this->list.size());
+    if (totalStreamlines > 0)
+    {
+        Rcpp::Reference first = getElement(0);
+        IntegerVector sd = first.field("spaceDims");
+        NumericVector vd = first.field("voxelDims");
+        ImageSpace *space = new ImageSpace({ sd[0], sd[1], sd[2] }, { static_cast<float>(vd[0]), static_cast<float>(vd[1]), static_cast<float>(vd[2]) });
+        setImageSpace(space);
+    }
+}
+
+void RListDataSource::get (Streamline &data)
+{
+    Reference streamline = getElement(currentStreamline);
+    
+    NumericMatrix line = streamline.field("line");
+    const size_t seedIndex = as<size_t>(streamline.field("seedIndex")) - 1;
+    const PointType pointType = as<std::string>(streamline.field("coordUnit")) == "vox" ? PointType::Voxel : PointType::Scaled;
+    
+    ImageSpace::Point point;
+    std::vector<ImageSpace::Point> leftPoints, rightPoints;
+    for (size_t i=seedIndex; i>=0; i--)
+    {
+        point[0] = line(i,0) - (pointType == PointType::Voxel ? 1.0 : 0.0);
+        point[1] = line(i,1) - (pointType == PointType::Voxel ? 1.0 : 0.0);
+        point[2] = line(i,2) - (pointType == PointType::Voxel ? 1.0 : 0.0);
+        leftPoints.push_back(point);
+    }
+    for (size_t i=seedIndex; i<line.nrow(); i++)
+    {
+        point[0] = line(i,0) - (pointType == PointType::Voxel ? 1.0 : 0.0);
+        point[1] = line(i,1) - (pointType == PointType::Voxel ? 1.0 : 0.0);
+        point[2] = line(i,2) - (pointType == PointType::Voxel ? 1.0 : 0.0);
+        rightPoints.push_back(point);
+    }
+    
+    data = Streamline(leftPoints, rightPoints, pointType, space, false);
+    currentStreamline++;
+}
+
 void RListDataSink::put (const Streamline &data)
 {
     if (!data.hasImageSpace())
@@ -23,6 +74,7 @@ void RListDataSink::put (const Streamline &data)
         pointsR(i,2) = points[i][2] + (pointType == PointType::Voxel ? 1.0 : 0.0);
     }
     
+    // FIXME: Strictly, the R class expects PointType::Scaled or PointType::Voxel only
     const std::string unit = (pointType == PointType::Voxel ? "vox" : "mm");
     
     Language call(constructor, _["line"]=pointsR, _["seedIndex"]=seedIndexR, _["spaceDims"]=data.imageSpace()->dim, _["voxelDims"]=data.imageSpace()->pixdim, _["coordUnit"]=unit);

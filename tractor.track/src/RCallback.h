@@ -6,6 +6,25 @@
 #include "DataSource.h"
 #include "Streamline.h"
 
+class RListDataSource : public DataSource<Streamline>, public ImageSpaceEmbedded
+{
+private:
+    Rcpp::List list;
+    size_t currentStreamline, totalStreamlines;
+    
+    Rcpp::Reference getElement (const size_t n);
+    
+public:
+    RListDataSource (SEXP list);
+    
+    void setup () { currentStreamline = 0; }
+    size_t count () { return totalStreamlines; }
+    bool more () { return currentStreamline < totalStreamlines; }
+    void get (Streamline &data);
+    void seek (const size_t n) { currentStreamline = n; }
+    bool seekable () { return true; }
+};
+
 class RListDataSink : public DataSink<Streamline>
 {
 private:
