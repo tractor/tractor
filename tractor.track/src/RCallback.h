@@ -17,6 +17,8 @@ private:
 public:
     RListDataSource (SEXP list);
     
+    std::string type () const { return "list"; }
+    
     void setup () { currentStreamline = 0; }
     size_t count () { return totalStreamlines; }
     bool more () { return currentStreamline < totalStreamlines; }

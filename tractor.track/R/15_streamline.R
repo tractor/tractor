@@ -119,10 +119,10 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     }
 ))
 
-StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character",selection="integer",count="integer",labels="logical", properties="character", pointer="externalptr", tracker="externalptr"), methods=list(
-    initialize = function (pointer = nilPointer(), fileStem = NULL, count = 0L, properties = NULL, labels = FALSE, tracker = nilPointer(), ...)
+StreamlineSource <- setRefClass("StreamlineSource", fields=list(type="character",file="character",selection="integer",count="integer",labels="logical", properties="character", pointer="externalptr"), methods=list(
+    initialize = function (pointer = nilPointer(), fileStem = NULL, count = 0L, properties = NULL, labels = FALSE, ...)
     {
-        initFields(file=as.character(fileStem), selection=integer(0), count=as.integer(count), labels=labels, properties=as.character(properties), pointer=pointer, tracker=tracker)
+        initFields(file=as.character(fileStem), selection=integer(0), count=as.integer(count), labels=labels, properties=as.character(properties), pointer=pointer)
     },
     
     apply = function (fun, ..., simplify = TRUE)
@@ -227,7 +227,11 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(file="character"
     process = function (path = NULL, requireStreamlines = TRUE, requireMap = FALSE, mapScope = c("full","seed","ends"), requireProfile = FALSE, requireLengths = FALSE, debug = 0L)
     {
         mapScope <- match.arg(mapScope)
-        .Call("runPipeline", pointer, tracker, selection, path %||% "", requireStreamlines, requireMap, mapScope, requireProfile, requireLengths, debug, Streamline$new)
+        
+        if (nilPointer(.self$pointer))
+            report(OL$Error, "")
+        
+        .Call("runPipeline", pointer, selection, path %||% "", requireStreamlines, requireMap, mapScope, requireProfile, requireLengths, debug, Streamline$new)
     },
     
     select = function (indices = NULL, labels = NULL)
@@ -299,7 +303,7 @@ generateStreamlines <- function (tracker, seeds, countPerSeed, jitter = TRUE)
 {
     assert(inherits(tracker,"Tracker"), "The specified tracker is not valid")
     pointer <- .Call("initialiseTracker", tracker$getPointer(), promote(seeds,byrow=TRUE), countPerSeed, jitter, PACKAGE="tractor.track")
-    source <- StreamlineSource$new(pointer, "", nrow(seeds)*countPerSeed, tracker=tracker$getPointer())
+    source <- StreamlineSource$new(pointer, "", nrow(seeds)*countPerSeed)
     invisible(source)
 }
 
@@ -309,5 +313,14 @@ readStreamlines <- function (fileName, readLabels = TRUE)
     fileStem <- ensureFileSuffix(fileName, NULL, strip=c("tck","trk","trkl"))
     info <- .Call("trkOpen", fileStem, readLabels, PACKAGE="tractor.track")
     source <- StreamlineSource$new(info$pointer, fileStem, info$count, properties=info$properties, labels=info$labels)
+    invisible(source)
+}
+
+attachStreamlines <- function (streamlines)
+{
+    if (!is.list(streamlines) && inherits(streamlines,"Streamline"))
+        streamlines <- list(streamlines)
+    pointer <- .Call("createListSource", streamlines, PACKAGE="tractor.track")
+    source <- StreamlineSource$new(pointer, "", length(streamlines))
     invisible(source)
 }

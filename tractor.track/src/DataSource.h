@@ -7,6 +7,10 @@ template <class ElementType> class DataSource
 public:
     virtual ~DataSource () {}
     
+    // This is a bit of a violation of polymorphic principles, and reliance on
+    // it to identify the subclass at hand should be kept to a minimum
+    virtual std::string type () const { return "unknown"; }
+    
     // The setup() function is called before the pipeline starts (or to request
     // the source to reset), count() should return the total number of elements
     // available from the source (or 0 if this is unknown), more() is used to

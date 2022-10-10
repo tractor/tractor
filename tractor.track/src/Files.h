@@ -61,6 +61,8 @@ public:
     
     StreamlineFileMetadata * fileMetadata () const { return metadata; }
     
+    std::string type () const { return "file"; }
+    
     void setup ();
     size_t count () { return totalStreamlines; }
     bool more () { return currentStreamline < totalStreamlines; }

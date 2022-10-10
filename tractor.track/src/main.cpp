@@ -133,6 +133,32 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP trkOpen (SEXP _path, SEXP _readLabels)
+{
+BEGIN_RCPP
+    StreamlineFileSource *source = new StreamlineFileSource(as<std::string>(_path), as<bool>(_readLabels));
+    StreamlineFileMetadata *metadata = source->fileMetadata();
+    Pipeline<Streamline> *pipeline = new Pipeline<Streamline>(source);
+    
+    List result;
+    result["count"] = metadata->count;
+    result["labels"] = source->hasLabels();
+    result["properties"] = metadata->properties;
+    result["pointer"] = XPtr<Pipeline<Streamline>>(pipeline);
+    
+    return result;
+END_RCPP
+}
+
+RcppExport SEXP createListSource (SEXP _list)
+{
+BEGIN_RCPP
+    RListDataSource *source = new RListDataSource(_list);
+    Pipeline<Streamline> *pipeline = new Pipeline<Streamline>(source);
+    return XPtr<Pipeline<Streamline>>(pipeline);
+END_RCPP
+}
+
 RcppExport SEXP setFilters (SEXP _pipeline, SEXP _minLabels, SEXP _maxLabels, SEXP _minLength, SEXP _maxLength, SEXP _medianOnly, SEXP _medianQuantileLength)
 {
 BEGIN_RCPP
@@ -165,28 +191,26 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP runPipeline (SEXP _pipeline, SEXP _tracker, SEXP _selection, SEXP _path, SEXP _requireStreamlines, SEXP _requireMap, SEXP _mapScope, SEXP _requireProfile, SEXP _requireLengths, SEXP _debugLevel, SEXP _streamlineFun)
+RcppExport SEXP runPipeline (SEXP _pipeline, SEXP _selection, SEXP _path, SEXP _requireStreamlines, SEXP _requireMap, SEXP _mapScope, SEXP _requireProfile, SEXP _requireLengths, SEXP _debugLevel, SEXP _streamlineFun)
 {
 BEGIN_RCPP
     Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
-    Tracker *tracker = Rf_isNull(_tracker) ? nullptr : XPtr<Tracker>(_tracker).get();
-    
     pipeline->clearSinks();
     pipeline->setSubset(_selection);
     
+    Tracker *tracker = nullptr;
     ImageSpace *space = nullptr;
-    if (tracker != nullptr)
+    const std::string sourceType = pipeline->dataSource()->type();
+    if (sourceType == "tracker")
     {
+        tracker = static_cast<TractographyDataSource *>(pipeline->dataSource())->streamlineTracker();
         tracker->setDebugLevel(as<int>(_debugLevel));
         space = tracker->getModel()->imageSpace();
     }
-    else
-    {
-        // If the source is not a tracker, it should be a file
-        // This is safe as long as the caller is sane (passing the tracker if there is one)
-        StreamlineFileSource *fileSource = static_cast<StreamlineFileSource *>(pipeline->dataSource());
-        space = fileSource->imageSpace();
-    }   
+    else if (sourceType == "file")
+        space = static_cast<StreamlineFileSource *>(pipeline->dataSource())->imageSpace();
+    else if (sourceType == "list")
+        space = static_cast<RListDataSource *>(pipeline->dataSource())->imageSpace();
     
     const std::string path = as<std::string>(_path);
     
@@ -260,23 +284,6 @@ BEGIN_RCPP
         result["profile"] = profile->getProfile();
     if (requirements["lengths"])
         result["lengths"] = lengths->getLengths();
-    
-    return result;
-END_RCPP
-}
-
-RcppExport SEXP trkOpen (SEXP _trkPath, SEXP _readLabels)
-{
-BEGIN_RCPP
-    StreamlineFileSource *source = new StreamlineFileSource(as<std::string>(_trkPath), as<bool>(_readLabels));
-    StreamlineFileMetadata *metadata = source->fileMetadata();
-    Pipeline<Streamline> *pipeline = new Pipeline<Streamline>(source);
-    
-    List result;
-    result["count"] = metadata->count;
-    result["labels"] = source->hasLabels();
-    result["properties"] = metadata->properties;
-    result["pointer"] = XPtr<Pipeline<Streamline>>(pipeline);
     
     return result;
 END_RCPP

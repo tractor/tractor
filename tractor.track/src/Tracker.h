@@ -117,6 +117,10 @@ public:
         this->totalStreamlines = seeds.size() * streamlinesPerSeed;
     }
     
+    Tracker * streamlineTracker () const { return tracker; }
+    
+    std::string type () const { return "tracker"; }
+    
     void setup ()
     {
         currentStreamline = 0;
