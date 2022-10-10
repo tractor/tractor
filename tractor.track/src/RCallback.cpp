@@ -19,9 +19,7 @@ RListDataSource::RListDataSource (SEXP list)
     if (totalStreamlines > 0)
     {
         Rcpp::Reference first = getElement(0);
-        IntegerVector sd = first.field("spaceDims");
-        NumericVector vd = first.field("voxelDims");
-        ImageSpace *space = new ImageSpace({ sd[0], sd[1], sd[2] }, { static_cast<float>(vd[0]), static_cast<float>(vd[1]), static_cast<float>(vd[2]) });
+        ImageSpace *space = new ImageSpace(as<ImageSpace::DimVector>(first.field("spaceDims")), as<ImageSpace::PixdimVector>(first.field("voxelDims")));
         setImageSpace(space);
     }
 }
