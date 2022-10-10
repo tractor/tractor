@@ -31,19 +31,19 @@ void RListDataSource::get (Streamline &data)
     Reference streamline = getElement(currentStreamline);
     
     NumericMatrix line = streamline.field("line");
-    const size_t seedIndex = as<size_t>(streamline.field("seedIndex")) - 1;
+    const int seedIndex = as<int>(streamline.field("seedIndex")) - 1;
     const PointType pointType = as<std::string>(streamline.field("coordUnit")) == "vox" ? PointType::Voxel : PointType::Scaled;
     
     ImageSpace::Point point;
     std::vector<ImageSpace::Point> leftPoints, rightPoints;
-    for (size_t i=seedIndex; i>=0; i--)
+    for (int i=seedIndex; i>=0; i--)
     {
         point[0] = line(i,0) - (pointType == PointType::Voxel ? 1.0 : 0.0);
         point[1] = line(i,1) - (pointType == PointType::Voxel ? 1.0 : 0.0);
         point[2] = line(i,2) - (pointType == PointType::Voxel ? 1.0 : 0.0);
         leftPoints.push_back(point);
     }
-    for (size_t i=seedIndex; i<line.nrow(); i++)
+    for (int i=seedIndex; i<line.nrow(); i++)
     {
         point[0] = line(i,0) - (pointType == PointType::Voxel ? 1.0 : 0.0);
         point[1] = line(i,1) - (pointType == PointType::Voxel ? 1.0 : 0.0);
