@@ -19,7 +19,7 @@ public:
     {
         std::vector<ElementType> vec = as<std::vector<ElementType>>(x);
         if (vec.size() != Dimensionality)
-            throw Rcpp::exception("Array does not have the expected number of elements)");
+            throw Rcpp::exception("Array does not have the expected number of elements");
         for (int i=0; i<Dimensionality; i++)
             value[i] = vec[i];
     }
