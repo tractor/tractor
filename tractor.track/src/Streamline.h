@@ -77,6 +77,43 @@ public:
     }
 };
 
+class StreamlineLabeller : public DataManipulator<Streamline>
+{
+private:
+    Image<int,3> labelMap;
+    
+public:
+    StreamlineLabeller (const Image<int,3> &labelMap)
+        : labelMap(labelMap) {}
+    
+    bool process (Streamline &data);
+};
+
+class StreamlineLabelMatcher : public DataManipulator<Streamline>
+{
+private:
+    std::vector<int> labels;
+    std::vector<size_t> matches;
+    size_t currentStreamline = 0;
+    
+public:
+    StreamlineLabelMatcher (const std::vector<int> &labels)
+        : labels(labels) {}
+    
+    bool process (Streamline &data)
+    {
+        bool match = true;
+        for (const int &label : labels)
+            match = match && data.hasLabel(label);
+        if (match)
+            matches.push_back(currentStreamline);
+        currentStreamline++;
+        return true;
+    }
+    
+    const std::vector<size_t> & getMatches () const { return matches; }
+};
+
 class StreamlineTruncator : public DataManipulator<Streamline>
 {
 private:

@@ -107,3 +107,24 @@ std::vector<ImageSpace::Point> Streamline::getPoints () const
     
     return result;
 }
+
+bool StreamlineLabeller::process (Streamline &data)
+{
+    const PointType pointType = data.getPointType();
+    
+    for (const ImageSpace::Point &point : data.getLeftPoints())
+    {
+        const int &value = labelMap.at(point, pointType);
+        if (value > 0)
+            data.addLabel(value);
+    }
+    
+    for (const ImageSpace::Point &point : data.getRightPoints())
+    {
+        const int &value = labelMap.at(point, pointType);
+        if (value > 0)
+            data.addLabel(value);
+    }
+    
+    return true;
+}
