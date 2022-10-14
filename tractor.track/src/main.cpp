@@ -308,16 +308,40 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP trkFind (SEXP _source, SEXP _labels)
+RcppExport SEXP trkFind (SEXP _pipeline, SEXP _labels, SEXP _map)
 {
 BEGIN_RCPP
-    XPtr<StreamlineFileSource> source(_source);
+    Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
+    pipeline->clearSinks();
     
-    if (!source->hasLabels())
-        Rf_error("Streamline source has no label information");
+    const std::vector<int> labels = as<std::vector<int>>(_labels);
     
-    std::vector<size_t> indices = source->matchLabels(as<int_vector>(_labels));
-    std::transform(indices.begin(), indices.end(), indices.begin(), [](const size_t x) { return static_cast<int>(x+1); });
+    bool labelIndexAvailable = false;
+    StreamlineFileSource *source = nullptr;
+    if (pipeline->dataSource()->type() == "file")
+    {
+        StreamlineFileSource *source = static_cast<StreamlineFileSource *>(pipeline->dataSource());
+        labelIndexAvailable = source->hasLabels();
+    }
+    
+    std::vector<size_t> indices;
+    if (labelIndexAvailable)
+        indices = source->matchLabels(labels);
+    else
+    {
+        // The labeller needs to be the only manipulator so that its indices will be right
+        if (!Rf_isNull(_map))
+        {
+            pipeline->clearManipulators();
+            pipeline->addManipulator(new StreamlineLabeller(_map));
+        }
+        StreamlineLabelMatcher *matcher = new StreamlineLabelMatcher(labels);
+        pipeline->addSink(matcher);
+        pipeline->run();
+        indices = matcher->getMatches();
+    }
+    
+    std::transform(indices.begin(), indices.end(), indices.begin(), [](const size_t x) { return x+1; });
     return wrap(indices);
 END_RCPP
 }

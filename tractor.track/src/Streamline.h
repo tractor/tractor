@@ -63,7 +63,7 @@ public:
     int nLabels () const                            { return static_cast<int>(labels.size()); }
     bool addLabel (const int label)                 { return labels.insert(label).second; }
     bool removeLabel (const int label)              { return (labels.erase(label) == 1); }
-    bool hasLabel (const int label)                 { return (labels.count(label) == 1); }
+    bool hasLabel (const int label) const           { return (labels.count(label) == 1); }
     const std::set<int> & getLabels () const        { return labels; }
     void setLabels (const std::set<int> &labels)    { this->labels = labels; }
     void clearLabels ()                             { labels.clear(); }
@@ -89,31 +89,6 @@ public:
     bool process (Streamline &data);
 };
 
-class StreamlineLabelMatcher : public DataManipulator<Streamline>
-{
-private:
-    std::vector<int> labels;
-    std::vector<size_t> matches;
-    size_t currentStreamline = 0;
-    
-public:
-    StreamlineLabelMatcher (const std::vector<int> &labels)
-        : labels(labels) {}
-    
-    bool process (Streamline &data)
-    {
-        bool match = true;
-        for (const int &label : labels)
-            match = match && data.hasLabel(label);
-        if (match)
-            matches.push_back(currentStreamline);
-        currentStreamline++;
-        return true;
-    }
-    
-    const std::vector<size_t> & getMatches () const { return matches; }
-};
-
 class StreamlineTruncator : public DataManipulator<Streamline>
 {
 private:
@@ -133,6 +108,30 @@ public:
         
         return true;
     }
+};
+
+class StreamlineLabelMatcher : public DataSink<Streamline>
+{
+private:
+    std::vector<int> labels;
+    std::vector<size_t> matches;
+    size_t currentStreamline = 0;
+    
+public:
+    StreamlineLabelMatcher (const std::vector<int> &labels)
+        : labels(labels) {}
+    
+    void put (const Streamline &data)
+    {
+        bool match = true;
+        for (const int &label : labels)
+            match = match && data.hasLabel(label);
+        if (match)
+            matches.push_back(currentStreamline);
+        currentStreamline++;
+    }
+    
+    const std::vector<size_t> & getMatches () const { return matches; }
 };
 
 class StreamlineLengthsDataSink : public DataSink<Streamline>
