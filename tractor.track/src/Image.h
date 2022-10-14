@@ -308,6 +308,9 @@ public:
         import(source, data_);
     }
     
+    Image (SEXP source)
+        : Image(RNifti::NiftiImage(source)) {}
+    
     Image () = default;
     
     operator SEXP () const
