@@ -22,11 +22,8 @@ transformStreamlineWithOptions <- function (options, streamline, session, refSes
 
 streamlineTractWithOptions <- function (options, session, seed, refSession = NULL, nStreamlines = 5000, rightwardsVector = NULL)
 {
-    tracker <- session$getTracker()
-    tracker$setOptions(rightwardsVector=rightwardsVector)
-    trackerPath <- tracker$run(seed, nStreamlines, requireMap=FALSE, requireStreamlines=TRUE)
-    streamSource <- StreamlineSource$new(trackerPath)
-    streamline <- streamSource$getMedian(options$lengthQuantile)
+    streamSource <- generateStreamlines(session$getTracker(), seed, nStreamlines, rightwardsVector)
+    streamline <- streamSource$filter(medianOnly=TRUE, medianLengthQuantile=options$lengthQuantile)$getStreamlines(simplify=TRUE)
     
     invisible (transformStreamlineWithOptions(options, streamline, session, refSession))
 }

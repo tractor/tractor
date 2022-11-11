@@ -116,9 +116,8 @@ runExperiment <- function ()
     else
         minTargetHits <- as.integer(minTargetHits)
     
-    tracker <- session$getTracker(mask, preferredModel=preferredModel)
+    tracker <- session$getTracker(mask, preferredModel=preferredModel, stepLength=stepLength, oneWay=oneWay)
     tracker$setTargets(targetInfo)
-    tracker$setOptions(stepLength=stepLength, oneWay=oneWay)
     tracker$setFilters(minLength=minLength, maxLength=maxLength, minTargetHits=minTargetHits)
     report(OL$Info, "Using #{toupper(tracker$getModel()$getType())} diffusion model")
     
