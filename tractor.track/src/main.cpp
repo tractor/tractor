@@ -191,7 +191,7 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP runPipeline (SEXP _pipeline, SEXP _selection, SEXP _path, SEXP _requireStreamlines, SEXP _requireMap, SEXP _mapScope, SEXP _requireProfile, SEXP _requireLengths, SEXP _debugLevel, SEXP _streamlineFun)
+RcppExport SEXP runPipeline (SEXP _pipeline, SEXP _selection, SEXP _path, SEXP _requireStreamlines, SEXP _requireMap, SEXP _mapScope, SEXP _normaliseMap, SEXP _requireProfile, SEXP _requireLengths, SEXP _leftLength, SEXP _rightLength, SEXP _debugLevel, SEXP _streamlineFun)
 {
 BEGIN_RCPP
     Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
@@ -213,6 +213,9 @@ BEGIN_RCPP
         space = static_cast<RListDataSource *>(pipeline->dataSource())->imageSpace();
     
     const std::string path = as<std::string>(_path);
+    
+    if (!Rf_isNull(_leftLength) || !Rf_isNull(_rightLength))
+        pipeline->addManipulator(new StreamlineTruncator(as<double>(_leftLength), as<double>(_rightLength)));
     
     std::map<std::string,bool> requirements;
     requirements["file"] = as<bool>(_requireStreamlines) && !path.empty();
@@ -252,7 +255,7 @@ BEGIN_RCPP
         else if (scopeString == "ends")
             scope = VisitationMapDataSink::MappingScope::Ends;
         
-        visitationMap = new VisitationMapDataSink(space, scope);
+        visitationMap = new VisitationMapDataSink(space, scope, as<bool>(_normaliseMap));
         pipeline->addSink(visitationMap);
     }
     

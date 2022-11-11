@@ -195,43 +195,29 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(type="character"
     
     getStreamlines = function (simplify = TRUE)
     {
-        .self$apply(fx(x), simplify=simplify)
+        result <- .self$process()
+        if (simplify && length(result$streamlines) == 1)
+            return (result$streamlines[[1]])
+        else
+            return (result$streamlines)
     },
     
-    getVisitationMap = function (reference = NULL, scope = c("full","seed","ends"), normalise = FALSE)
+    getVisitationMap = function (scope = c("full","seed","ends"), normalise = FALSE)
     {
-        scope <- match.arg(scope)
-        
-        if (is(reference, "MriImage"))
-        {
-            if (reference$isInternal())
-            {
-                fileName <- threadSafeTempFile()
-                writeImageFile(reference, fileName)
-                reference <- fileName
-            }
-            else
-                reference <- reference$getSource()
-        }
-        else if (!is.character(reference))
-            report(OL$Error, "A reference image or path must be provided")
-        
-        resultFile <- threadSafeTempFile()
-        .Call("trkMap", pointer, selection, reference, scope, normalise, resultFile, PACKAGE="tractor.track")
-        
-        return (readImageFile(resultFile))
+        result <- .self$process(requireStreamlines=FALSE, requireMap=TRUE, mapScope=match.arg(scope), normaliseMap=normalise)
+        return (result$map)
     },
     
     nStreamlines = function () { return (count) },
     
-    process = function (path = NULL, requireStreamlines = TRUE, requireMap = FALSE, mapScope = c("full","seed","ends"), requireProfile = FALSE, requireLengths = FALSE, debug = 0L)
+    process = function (path = NULL, requireStreamlines = TRUE, requireMap = FALSE, mapScope = c("full","seed","ends"), normaliseMap = FALSE, requireProfile = FALSE, requireLengths = FALSE, truncate = NULL, debug = 0L)
     {
         mapScope <- match.arg(mapScope)
         
         if (nilPointer(.self$pointer))
             report(OL$Error, "")
         
-        .Call("runPipeline", pointer, selection, path %||% "", requireStreamlines, requireMap, mapScope, requireProfile, requireLengths, debug, Streamline$new)
+        .Call("runPipeline", pointer, selection, path %||% "", requireStreamlines, requireMap, mapScope, normaliseMap, requireProfile, requireLengths, truncate$left, truncate$right, debug, Streamline$new)
     },
     
     select = function (indices = NULL, labels = NULL)
@@ -256,6 +242,12 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(type="character"
             values <- c(Source=file)
         values <- c(values, "Number of streamlines"=count, "Streamline properties"=implode(properties,sep=", "), "Streamline labels"=labels)
         return (values)
+    },
+    
+    writeStreamlines = function (path = threadSafeTempFile())
+    {
+        .self$process(path, requireStreamlines=TRUE)
+        invisible(path)
     }
 ))
 
@@ -299,10 +291,10 @@ StreamlineSink <- setRefClass("StreamlineSink", fields=list(file="character",mas
     }
 ))
 
-generateStreamlines <- function (tracker, seeds, countPerSeed, jitter = TRUE)
+generateStreamlines <- function (tracker, seeds, countPerSeed, rightwardsVector = NULL, jitter = TRUE)
 {
     assert(inherits(tracker,"Tracker"), "The specified tracker is not valid")
-    pointer <- .Call("initialiseTracker", tracker$getPointer(), promote(seeds,byrow=TRUE), countPerSeed, jitter, PACKAGE="tractor.track")
+    pointer <- .Call("initialiseTracker", tracker$getPointer(), promote(seeds,byrow=TRUE), countPerSeed, rightwardsVector, jitter, PACKAGE="tractor.track")
     source <- StreamlineSource$new(pointer, "", nrow(seeds)*countPerSeed)
     invisible(source)
 }
