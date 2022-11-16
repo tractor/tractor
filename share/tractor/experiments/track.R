@@ -87,12 +87,12 @@ runExperiment <- function ()
     
     tracker <- session$getTracker(mask, preferredModel=preferredModel, stepLength=stepLength, oneWay=oneWay)
     tracker$setTargets(targetInfo, terminate=terminateAtTargets)
-    tracker$setFilters(minLength=minLength, maxLength=maxLength, minTargetHits=minTargetHits)
     report(OL$Info, "Using #{toupper(tracker$getModel()$getType())} diffusion model for #{strategy} tractography")
     
     profiles <- list()
     processStreamlines <- function (streamSource, fileStem)
     {
+        streamSource$filter(minLabels=minTargetHits, minLength=minLength, maxLength=maxLength)
         result <- streamSource$process(fileStem, requireStreamlines=requireStreamlines, requireMap=requireMap, requireProfile=requireProfile)
         if (!is.null(result$map))
             writeImageFile(result$map, fileStem)

@@ -12,6 +12,8 @@ Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",pointer="ex
     
     getModel = function () { return (model) },
     
+    getPointer = function () { return (pointer) },
+    
     setTargets = function (image, indices = NULL, labels = NULL, terminate = FALSE)
     {
         if (is.list(image))

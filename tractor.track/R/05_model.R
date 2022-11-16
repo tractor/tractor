@@ -15,7 +15,7 @@ DiffusionModel <- setRefClass("DiffusionModel", fields=list(pointer="externalptr
 
 nilModel <- function (object = NULL)
 {
-    if (is.null(ptr)) .NilModel else identical(object, .NilModel)
+    if (is.null(object)) .NilModel else identical(object, .NilModel)
 }
 
 dtiDiffusionModel <- function (directionsPath)
