@@ -1,0 +1,3 @@
+# Shells: 1000
+# command_history: /Users/jon/Documents/Development/mrtrix3/bin/amp2response dwi.mif iter6_SF.mif iter6_first_dir.mif iter6_RF.txt  (version=3.0.3-152-gef69e961, project=3.0.3-152-gef69e961)
+585.806125638888 -214.122560288554 40.8719335950669 -5.29605821178147 1.99623806174061 -2.41851129329558
