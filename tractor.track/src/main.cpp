@@ -191,7 +191,7 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP runPipeline (SEXP _pipeline, SEXP _selection, SEXP _path, SEXP _requireStreamlines, SEXP _requireMap, SEXP _mapScope, SEXP _normaliseMap, SEXP _requireProfile, SEXP _requireLengths, SEXP _leftLength, SEXP _rightLength, SEXP _debugLevel, SEXP _streamlineFun)
+RcppExport SEXP runPipeline (SEXP _pipeline, SEXP _selection, SEXP _path, SEXP _requireStreamlines, SEXP _requireMap, SEXP _mapScope, SEXP _normaliseMap, SEXP _requireProfile, SEXP _requireLengths, SEXP _leftLength, SEXP _rightLength, SEXP _refImage, SEXP _debugLevel, SEXP _streamlineFun)
 {
 BEGIN_RCPP
     Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
@@ -200,6 +200,7 @@ BEGIN_RCPP
     
     Tracker *tracker = nullptr;
     ImageSpace *space = nullptr;
+    bool sharedSpace = true;
     const std::string sourceType = pipeline->dataSource()->type();
     if (sourceType == "tracker")
     {
@@ -211,6 +212,13 @@ BEGIN_RCPP
         space = static_cast<StreamlineFileSource *>(pipeline->dataSource())->imageSpace();
     else if (sourceType == "list")
         space = static_cast<RListDataSource *>(pipeline->dataSource())->imageSpace();
+    
+    if (!Rf_isNull(_refImage) && space == nullptr)
+    {
+        const RNifti::NiftiImage image(_refImage, false, true);
+        space = new ImageSpace(image);
+        sharedSpace = false;
+    }
     
     const std::string path = as<std::string>(_path);
     
@@ -287,6 +295,9 @@ BEGIN_RCPP
         result["profile"] = profile->getProfile();
     if (requirements["lengths"])
         result["lengths"] = lengths->getLengths();
+    
+    if (!sharedSpace)
+        delete space;
     
     return result;
 END_RCPP

@@ -11,7 +11,12 @@ runExperiment <- function ()
     normalise <- getConfigVariable("Normalise", FALSE)
     
     streamSource <- readStreamlines(Arguments[1], readLabels=FALSE)
-    map <- streamSource$getVisitationMap(scope, normalise)
+    
+    refImage <- NULL
+    if (nArguments() > 1)
+        refImage <- readImageFile(Arguments[2], metadataOnly=TRUE)
+    
+    map <- streamSource$getVisitationMap(scope, normalise, refImage)
     
     outputStem <- ensureFileSuffix(basename(Arguments[1]), NULL, strip="trk")
     if (scope != "full")

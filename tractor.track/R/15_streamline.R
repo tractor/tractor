@@ -202,22 +202,22 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(type="character"
             return (result$streamlines)
     },
     
-    getVisitationMap = function (scope = c("full","seed","ends"), normalise = FALSE)
+    getVisitationMap = function (scope = c("full","seed","ends"), normalise = FALSE, refImage = NULL)
     {
-        result <- .self$process(requireStreamlines=FALSE, requireMap=TRUE, mapScope=match.arg(scope), normaliseMap=normalise)
+        result <- .self$process(requireStreamlines=FALSE, requireMap=TRUE, mapScope=match.arg(scope), normaliseMap=normalise, refImage=refImage)
         return (result$map)
     },
     
     nStreamlines = function () { return (count) },
     
-    process = function (path = NULL, requireStreamlines = TRUE, requireMap = FALSE, mapScope = c("full","seed","ends"), normaliseMap = FALSE, requireProfile = FALSE, requireLengths = FALSE, truncate = NULL, debug = 0L)
+    process = function (path = NULL, requireStreamlines = TRUE, requireMap = FALSE, mapScope = c("full","seed","ends"), normaliseMap = FALSE, requireProfile = FALSE, requireLengths = FALSE, truncate = NULL, refImage = NULL, debug = 0L)
     {
         mapScope <- match.arg(mapScope)
         
         if (nilPointer(.self$pointer))
             report(OL$Error, "")
         
-        .Call("runPipeline", pointer, selection, path %||% "", requireStreamlines, requireMap, mapScope, normaliseMap, requireProfile, requireLengths, truncate$left, truncate$right, debug, Streamline$new)
+        .Call("runPipeline", pointer, selection, path %||% "", requireStreamlines, requireMap, mapScope, normaliseMap, requireProfile, requireLengths, truncate$left, truncate$right, refImage, debug, Streamline$new)
     },
     
     select = function (indices = NULL, labels = NULL)
