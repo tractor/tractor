@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+title: TractoR
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Jonathan D
+    family-names: Clayden
+    email: code@clayden.org
+    affiliation: University College London
+    orcid: 'https://orcid.org/0000-0002-6608-0619'
+  - given-names: Susana
+    family-names: Muñoz Maniega
+    affiliation: The University of Edinburgh
+    orcid: 'https://orcid.org/0000-0001-5185-6384'
+  - given-names: Fani
+    family-names: Deligianni
+    affiliation: University College London
+    orcid: 'https://orcid.org/0000-0003-1306-5017'
+  - given-names: Lena
+    family-names: Dorfschmidt
+    affiliation: University College London
+  - given-names: Kiran
+    family-names: Seunarine
+    affiliation: University College London
+repository-code: 'https://github.com/tractor/tractor'
+url: 'https://www.tractor-mri.org.uk'
+keywords:
+  - MRI
+  - neuroimaging
+  - R
+license: GPL-2.0
