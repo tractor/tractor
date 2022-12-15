@@ -291,6 +291,22 @@ StreamlineSink <- setRefClass("StreamlineSink", fields=list(file="character",mas
     }
 ))
 
+asStreamline <- function (line, seedIndex = NULL, spaceDims = NULL, voxelDims = NULL, image = NULL, coordUnit = c("vox","mm"))
+{
+    coordUnit <- match.arg(coordUnit)
+    
+    if (is.null(spaceDims) || is.null(voxelDims))
+    {
+        assert(!is.null(image), "Image and voxel dimensions or an image must be specified")
+        image <- as(image, "MriImage")
+        spaceDims <- spaceDims %||% image$getDimensions()
+        voxelDims <- voxelDims %||% image$getVoxelDimensions()
+    }
+    
+    streamline <- Streamline$new(line, seedIndex, spaceDims, voxelDims, coordUnit)
+    invisible(streamline)
+}
+
 generateStreamlines <- function (tracker, seeds, countPerSeed, rightwardsVector = NULL, jitter = TRUE)
 {
     assert(inherits(tracker,"Tracker"), "The specified tracker is not valid")
