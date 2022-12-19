@@ -1,6 +1,8 @@
 #ifndef _DATA_SOURCE_H_
 #define _DATA_SOURCE_H_
 
+#include <string>
+
 // Data source: responsible for reading or generating data elements
 template <class ElementType> class DataSource
 {

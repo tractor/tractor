@@ -1,6 +1,8 @@
 #ifndef _PIPELINE_H_
 #define _PIPELINE_H_
 
+#include <Rcpp.h>
+
 #include "DataSource.h"
 
 // Pipeline: a general blockwise processing structure
