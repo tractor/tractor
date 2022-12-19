@@ -128,3 +128,33 @@ bool StreamlineLabeller::process (Streamline &data)
     
     return true;
 }
+
+void StreamlineLabelMatcher::put (const Streamline &data)
+{
+    bool isMatch = (combine == CombineOperation::And);
+    for (size_t i=0; i<labels.size(); i++)
+    {
+        switch (combine)
+        {
+            case CombineOperation::None:
+            if (data.hasLabel(labels[i]))
+                matches[i].push_back(currentStreamline);
+            break;
+            
+            case CombineOperation::And:
+            isMatch = isMatch && data.hasLabel(labels[i]);
+            break;
+            
+            case CombineOperation::Or:
+            isMatch = isMatch || data.hasLabel(labels[i]);
+            break;
+        }
+    }
+    
+    // The second test here is unnecessary, because isMatch will never be true
+    // when no combination is performed, but it makes this explicit
+    if (isMatch && combine != CombineOperation::None)
+        matches[0].push_back(currentStreamline);
+    
+    currentStreamline++;
+}

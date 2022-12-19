@@ -322,7 +322,7 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP trkFind (SEXP _pipeline, SEXP _labels, SEXP _map)
+RcppExport SEXP trkFind (SEXP _pipeline, SEXP _labels, SEXP _map, SEXP _combine)
 {
 BEGIN_RCPP
     Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
@@ -338,24 +338,34 @@ BEGIN_RCPP
         labelIndexAvailable = source->hasLabels();
     }
     
-    std::vector<size_t> indices;
+    std::vector<std::vector<size_t>> indices;
     if (labelIndexAvailable)
-        indices = source->matchLabels(labels);
+        indices.push_back(source->matchLabels(labels));
     else
     {
+        // Convert the string "combine" argument to an enum value
+        const StreamlineLabelMatcher::CombineOperation combine = std::unordered_map<std::string,StreamlineLabelMatcher::CombineOperation>({
+            { "none", StreamlineLabelMatcher::CombineOperation::None },
+            { "and",  StreamlineLabelMatcher::CombineOperation::And },
+            { "or",   StreamlineLabelMatcher::CombineOperation::Or }
+        }).at(as<std::string>(_combine));
+        
         // The labeller needs to be the only manipulator so that its indices will be right
         if (!Rf_isNull(_map))
         {
             pipeline->clearManipulators();
             pipeline->addManipulator(new StreamlineLabeller(_map));
         }
-        StreamlineLabelMatcher *matcher = new StreamlineLabelMatcher(labels);
+        
+        StreamlineLabelMatcher *matcher = new StreamlineLabelMatcher(labels, combine);
         pipeline->addSink(matcher);
         pipeline->run();
         indices = matcher->getMatches();
     }
     
-    std::transform(indices.begin(), indices.end(), indices.begin(), [](const size_t x) { return x+1; });
+    for (std::vector<size_t> &ind : indices)
+        std::transform(ind.begin(), ind.end(), ind.begin(), [](const size_t x) { return x+1; });
+    
     return wrap(indices);
 END_RCPP
 }

@@ -112,26 +112,30 @@ public:
 
 class StreamlineLabelMatcher : public DataSink<Streamline>
 {
+public:
+    enum struct CombineOperation { None, And, Or };
+    
 private:
     std::vector<int> labels;
-    std::vector<size_t> matches;
+    CombineOperation combine;
+    // If the combine operation is None, this will be one vector per label;
+    // otherwise it will be one for all streamlines labelled as needed
+    std::vector<std::vector<size_t>> matches;
     size_t currentStreamline = 0;
     
 public:
-    StreamlineLabelMatcher (const std::vector<int> &labels)
-        : labels(labels) {}
+    // Delete the default constructor
+    StreamlineLabelMatcher () = delete;
     
-    void put (const Streamline &data)
+    StreamlineLabelMatcher (const std::vector<int> &labels, const CombineOperation combine)
+        : labels(labels), combine(combine)
     {
-        bool match = true;
-        for (const int &label : labels)
-            match = match && data.hasLabel(label);
-        if (match)
-            matches.push_back(currentStreamline);
-        currentStreamline++;
+        matches.resize(combine == CombineOperation::None ? 1 : labels.size());
     }
     
-    const std::vector<size_t> & getMatches () const { return matches; }
+    void put (const Streamline &data);
+    
+    const std::vector<std::vector<size_t>> & getMatches () const { return matches; }
 };
 
 class StreamlineLengthsDataSink : public DataSink<Streamline>
