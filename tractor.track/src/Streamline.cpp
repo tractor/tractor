@@ -110,6 +110,9 @@ std::vector<ImageSpace::Point> Streamline::getPoints () const
 
 bool StreamlineLabeller::process (Streamline &data)
 {
+    // The new labels replace any old ones
+    data.clearLabels();
+    
     const PointType pointType = data.getPointType();
     
     for (const ImageSpace::Point &point : data.getLeftPoints())

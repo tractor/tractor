@@ -77,6 +77,7 @@ public:
     }
 };
 
+// This manipulator replaces any existing labels with hits within an image
 class StreamlineLabeller : public DataManipulator<Streamline>
 {
 private:
