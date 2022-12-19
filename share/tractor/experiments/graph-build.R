@@ -31,7 +31,7 @@ runExperiment <- function ()
         library(tractor.nt)
         library(tractor.track)
         
-        streamSource <- StreamlineSource$new(tractName)
+        streamSource <- readStreamlines(tractName)
         
         report(OL$Info, "Finding streamlines passing through each region")
         matchingIndices <- vector("list", nRegions)             # Indices of streamlines passing through each region
