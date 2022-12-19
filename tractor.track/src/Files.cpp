@@ -39,25 +39,6 @@ void StreamlineFileSource::readLabels (const std::string &path)
     haveLabels = true;
 }
 
-std::vector<size_t> StreamlineFileSource::matchLabels (const std::vector<int> &values) const
-{
-    std::vector<size_t> result;
-    
-    if (haveLabels)
-    {
-        for (size_t i=0; i<totalStreamlines; i++)
-        {
-            bool success = true;
-            for (const int &value : values)
-                success = success && (labels[i].count(value) == 1);
-            if (success)
-                result.push_back(i);
-        }
-    }
-    
-    return result;
-}
-
 void StreamlineFileSource::setup ()
 {
     if (currentStreamline > 0)

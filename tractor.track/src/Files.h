@@ -54,7 +54,7 @@ public:
     }
     
     bool hasLabels () const { return haveLabels; }
-    std::vector<size_t> matchLabels (const std::vector<int> &values) const;
+    const std::vector<std::set<int>> & labelList () const { return labels; }
     
     bool hasImageSpace () const { return (metadata != nullptr && metadata->space != nullptr); }
     ImageSpace * imageSpace () const { return metadata == nullptr ? nullptr : metadata->space; }

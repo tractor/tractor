@@ -15,7 +15,6 @@
 
 using namespace Rcpp;
 
-typedef std::vector<int> int_vector;
 typedef std::vector<std::string> str_vector;
 
 RcppExport SEXP createDtiModel (SEXP _principalDirectionsPath)
@@ -334,37 +333,49 @@ BEGIN_RCPP
     StreamlineFileSource *source = nullptr;
     if (pipeline->dataSource()->type() == "file")
     {
-        StreamlineFileSource *source = static_cast<StreamlineFileSource *>(pipeline->dataSource());
+        source = static_cast<StreamlineFileSource *>(pipeline->dataSource());
         labelIndexAvailable = source->hasLabels();
     }
+    else if (pipeline->dataSource()->type() == "tracker")
+        Rf_warning("Streamlines from a tracker source are generally not stable, so indices may be unreliable");
     
-    std::vector<std::vector<size_t>> indices;
-    if (labelIndexAvailable)
-        indices.push_back(source->matchLabels(labels));
-    else
+    // Convert the string "combine" argument to an enum value
+    const StreamlineLabelMatcher::CombineOperation combine = std::unordered_map<std::string,StreamlineLabelMatcher::CombineOperation>({
+        { "none", StreamlineLabelMatcher::CombineOperation::None },
+        { "and",  StreamlineLabelMatcher::CombineOperation::And },
+        { "or",   StreamlineLabelMatcher::CombineOperation::Or }
+    }).at(as<std::string>(_combine));
+    
+    // Create the label matcher
+    StreamlineLabelMatcher *matcher = new StreamlineLabelMatcher(labels, combine);
+    bool matcherOwned = true;
+    
+    // If a map has been specified, it takes priority
+    // In this case the streamlines are relabelled and piped to the matcher
+    if (!Rf_isNull(_map) || !labelIndexAvailable)
     {
-        // Convert the string "combine" argument to an enum value
-        const StreamlineLabelMatcher::CombineOperation combine = std::unordered_map<std::string,StreamlineLabelMatcher::CombineOperation>({
-            { "none", StreamlineLabelMatcher::CombineOperation::None },
-            { "and",  StreamlineLabelMatcher::CombineOperation::And },
-            { "or",   StreamlineLabelMatcher::CombineOperation::Or }
-        }).at(as<std::string>(_combine));
-        
         // The labeller needs to be the only manipulator so that its indices will be right
         if (!Rf_isNull(_map))
         {
             pipeline->clearManipulators();
             pipeline->addManipulator(new StreamlineLabeller(_map));
         }
-        
-        StreamlineLabelMatcher *matcher = new StreamlineLabelMatcher(labels, combine);
         pipeline->addSink(matcher);
         pipeline->run();
-        indices = matcher->getMatches();
+        
+        // The pipeline object will clear up
+        matcherOwned = false;
     }
+    else if (labelIndexAvailable)
+        matcher->put(source->labelList());
+    
+    std::vector<std::vector<size_t>> indices = matcher->getMatches();
     
     for (std::vector<size_t> &ind : indices)
         std::transform(ind.begin(), ind.end(), ind.begin(), [](const size_t x) { return x+1; });
+    
+    if (matcherOwned)
+        delete matcher;
     
     return wrap(indices);
 END_RCPP

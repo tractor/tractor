@@ -124,6 +124,10 @@ private:
     std::vector<std::vector<size_t>> matches;
     size_t currentStreamline = 0;
     
+    // Checks whether the specified set of label hits matches the requirements,
+    // and stores the associated index in the list(s) of matches if so
+    void process (const std::set<int> &hits, const size_t &index);
+    
 public:
     // Delete the default constructor
     StreamlineLabelMatcher () = delete;
@@ -131,10 +135,20 @@ public:
     StreamlineLabelMatcher (const std::vector<int> &labels, const CombineOperation combine)
         : labels(labels), combine(combine)
     {
-        matches.resize(combine == CombineOperation::None ? 1 : labels.size());
+        matches.resize(combine == CombineOperation::None ? labels.size() : 1);
     }
     
-    void put (const Streamline &data);
+    void put (const Streamline &data) override
+    {
+        process(data.getLabels(), currentStreamline);
+        currentStreamline++;
+    }
+    
+    void put (const std::vector<std::set<int>> &hits)
+    {
+        for (size_t i=0; i<hits.size(); i++)
+            process(hits[i], i);
+    }
     
     const std::vector<std::vector<size_t>> & getMatches () const { return matches; }
 };
