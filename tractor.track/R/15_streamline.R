@@ -251,46 +251,6 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(type="character"
     }
 ))
 
-setClassUnion("MriImageOrNull", c("MriImage","NULL"))
-
-StreamlineSink <- setRefClass("StreamlineSink", fields=list(file="character",mask="MriImageOrNull",sinkPtr.="externalptr"), methods=list(
-    initialize = function (file = NULL, mask = NULL, ...)
-    {
-        if (is.null(file) || is.null(mask))
-            report(OL$Error, "Streamline source file and mask must be specified")
-        
-        file <- ensureFileSuffix(file, NULL, strip=c("trk","trkl"))
-        
-        return (initFields(file=file, mask=mask, sinkPtr.=NULL))
-    },
-    
-    append = function (streamline)
-    {
-        if (is.null(sinkPtr.))
-            .self$sinkPtr. <- .Call("trkCreate", file, mask, PACKAGE="tractor.track")
-        
-        if (is(streamline, "Streamline"))
-        {
-            if (!equivalent(streamline$getVoxelDimensions(), mask$getVoxelDimensions()))
-                report(OL$Error, "Streamline voxel dimensions do not match the reference image")
-            
-            fixedSpacings <- all(streamline$getPointSpacings()[1] == streamline$getPointSpacings())
-            .Call("trkAppend", sinkPtr., streamline$getLine(), streamline$getSeedIndex(), streamline$getCoordinateUnit(), fixedSpacings, PACKAGE="tractor.track")
-        }
-        
-        invisible(.self)
-    },
-    
-    close = function ()
-    {
-        if (!is.null(sinkPtr.))
-        {
-            .Call("trkClose", sinkPtr., PACKAGE="tractor.track")
-            .self$sinkPtr. <- NULL
-        }
-    }
-))
-
 asStreamline <- function (line, seedIndex = NULL, spaceDims = NULL, voxelDims = NULL, image = NULL, coordUnit = c("vox","mm"))
 {
     coordUnit <- match.arg(coordUnit)

@@ -45,11 +45,9 @@ runExperiment <- function ()
     }
     
     brain <- getStandardImage("brain")
-    spaceDims <- brain$getDimensions()
-    voxelDims <- brain$getVoxelDimensions()
-    sink <- getRefClass("StreamlineSink")$new(basename(tractName), brain)
     
-    for (i in seq_len(nSamples))
+    # Ellipsis argument is ignored, but lapply() always passes an argument
+    synthesiseStreamline <- function (...)
     {
         leftLength <- sampleMultinomialDistribution(model$getLengthDistribution("left"))
         rightLength <- sampleMultinomialDistribution(model$getLengthDistribution("right"))
@@ -82,9 +80,9 @@ runExperiment <- function ()
         
         seedIndex <- which.min(abs(indices - seedIndex))
         interpolatedPoints <- transformWorldToVoxel(interpolatedPoints, brain)
-        streamline <- getRefClass("Streamline")$new(interpolatedPoints, seedIndex, spaceDims, voxelDims, coordUnit="vox")
-        sink$append(streamline)
+        return (asStreamline(interpolatedPoints, seedIndex, image=brain, coordUnit="vox"))
     }
     
-    sink$close()
+    streamlines <- lapply(seq_len(nSamples), synthesiseStreamline)
+    attachStreamlines(streamlines)$writeStreamlines(basename(tractName))
 }
