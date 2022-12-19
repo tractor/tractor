@@ -208,6 +208,14 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(type="character"
         return (result$map)
     },
     
+    hasLabels = function () { return (labels) },
+    
+    matchLabels = function (labels, image = NULL, combine = c("none","and","or"))
+    {
+        combine <- match.arg(combine)
+        .Call("trkFind", pointer, labels, image, combine, PACKAGE="tractor.track")
+    },
+    
     nStreamlines = function () { return (count) },
     
     process = function (path = NULL, requireStreamlines = TRUE, requireMap = FALSE, mapScope = c("full","seed","ends"), normaliseMap = FALSE, requireProfile = FALSE, requireLengths = FALSE, truncate = NULL, refImage = NULL, debug = 0L)
@@ -215,22 +223,14 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(type="character"
         mapScope <- match.arg(mapScope)
         
         if (nilPointer(.self$pointer))
-            report(OL$Error, "")
+            report(OL$Error, "Streamline source pointer is not valid")
         
-        .Call("runPipeline", pointer, selection, path %||% "", requireStreamlines, requireMap, mapScope, normaliseMap, requireProfile, requireLengths, truncate$left, truncate$right, refImage, debug, Streamline$new)
+        .Call("runPipeline", pointer, selection, path %||% "", requireStreamlines, requireMap, mapScope, normaliseMap, requireProfile, requireLengths, truncate$left, truncate$right, refImage, debug, Streamline$new, PACKAGE="tractor.track")
     },
     
-    select = function (indices = NULL, labels = NULL)
+    select = function (indices = NULL)
     {
-        if (is.null(indices) && is.null(labels))
-            .self$selection <- integer(0)
-        else
-        {
-            if (is.null(indices))
-                indices <- .Call("trkFind", pointer, as.integer(labels), PACKAGE="tractor.track")
-            .self$selection <- as.integer(indices)
-        }
-        
+        .self$selection <- as.integer(indices)
         invisible(.self)
     },
     
