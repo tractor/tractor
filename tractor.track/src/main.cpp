@@ -237,6 +237,7 @@ BEGIN_RCPP
     if (requirements["file"])
     {
         StreamlineFileSink *trkFile = new StreamlineFileSink(path);
+        trkFile->setImageSpace(space);
         if (tracker != nullptr)
             trkFile->labelDictionary() = tracker->labelDictionary();
         pipeline->addSink(trkFile);

@@ -10,10 +10,12 @@ struct StreamlineFileMetadata
     size_t dataOffset = 0;
     std::vector<std::string> properties;
     ImageSpace *space = nullptr;
+    bool sharedSpace = false;
     
     ~StreamlineFileMetadata ()
     {
-        delete space;
+        if (!sharedSpace)
+            delete space;
     }
 };
 
@@ -73,7 +75,7 @@ public:
     virtual size_t capacity () const { return 0; }
     
     // Write a streamline to file and return its offset within the file
-    virtual size_t write (const Streamline &data) { return 0; }
+    virtual size_t write (const Streamline &data, const ImageSpace *space) { return 0; }
     
     // Finalise the file with the specified metadata
     virtual void close (const StreamlineFileMetadata &metadata) {}

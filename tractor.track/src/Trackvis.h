@@ -24,8 +24,8 @@ public:
     using SinkFileAdapter::SinkFileAdapter;
     
     size_t open (const bool append) override;
-    size_t capacity () { return static_cast<size_t>(std::numeric_limits<int32_t>::max()); }
-    size_t write (const Streamline &data) override;
+    size_t capacity () const override { return static_cast<size_t>(std::numeric_limits<int32_t>::max()); }
+    size_t write (const Streamline &data, const ImageSpace *space) override;
     void close (const StreamlineFileMetadata &metadata) override;
 };
 

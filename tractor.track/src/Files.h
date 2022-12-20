@@ -8,10 +8,6 @@
 
 class StreamlineFileSource : public DataSource<Streamline>
 {
-private:
-    // Prevent initialisation without a path
-    StreamlineFileSource () {}
-    
 protected:
     size_t currentStreamline = 0, totalStreamlines = 0;
     SourceFileAdapter *source = nullptr;
@@ -30,6 +26,9 @@ protected:
     void readLabels (const std::string &path);
     
 public:
+    // Prevent initialisation without a path
+    StreamlineFileSource () = delete;
+    
     StreamlineFileSource (const std::string &fileStem, const bool readLabels = true)
     {
         if (fileExists(fileStem + ".trk"))
@@ -80,10 +79,6 @@ public:
 
 class StreamlineFileSink : public DataSink<Streamline>
 {
-private:
-    // Prevent initialisation without a path
-    StreamlineFileSink () {}
-    
 protected:
     size_t currentStreamline = 0;
     std::string fileStem;
@@ -98,6 +93,9 @@ protected:
     void writeLabels (const std::string &path);
     
 public:
+    // Prevent initialisation without a path
+    StreamlineFileSink () = delete;
+    
     StreamlineFileSink (const std::string &fileStem, const bool keepLabels = true, const bool append = false)
         : fileStem(fileStem), keepLabels(keepLabels)
     {
@@ -106,13 +104,19 @@ public:
         currentStreamline = sink->open(append);
     }
     
+    virtual ~StreamlineFileSink ()
+    {
+        delete metadata;
+        delete sink;
+    }
+    
     StreamlineFileMetadata * fileMetadata () const { return metadata; }
     std::map<int,std::string> & labelDictionary () { return dictionary; }
     
     void setImageSpace (ImageSpace *space)
     {
-        delete metadata->space;
         metadata->space = space;
+        metadata->sharedSpace = true;
     }
     
     void setup (const size_t &count) override
@@ -124,7 +128,7 @@ public:
     
     void put (const Streamline &data) override
     {
-        const size_t offset = sink->write(data);
+        const size_t offset = sink->write(data, metadata->space);
         if (keepLabels)
         {
             labels.push_back(data.getLabels());

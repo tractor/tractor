@@ -161,13 +161,16 @@ size_t TrackvisSinkFileAdapter::open (const bool append)
     return 0;
 }
 
-size_t TrackvisSinkFileAdapter::write (const Streamline &data)
+size_t TrackvisSinkFileAdapter::write (const Streamline &data, const ImageSpace *space)
 {
     const size_t offset = outputStream->tellp();
     
     const size_t nPoints = data.nPoints();
     std::vector<ImageSpace::Point> points = data.getPoints();
-    const ImageSpace::PixdimVector &pixdim = data.imageSpace()->pixdim;
+    
+    if (data.imageSpace() == nullptr && space == nullptr)
+        throw std::runtime_error("Writing a streamline to TrackVis format requires space information");
+    const ImageSpace::PixdimVector &pixdim = (data.imageSpace() == nullptr ? space : data.imageSpace())->pixdim;
     
     outputStream.writeValue<int32_t>(nPoints);
     for (size_t i=0; i<nPoints; i++)
