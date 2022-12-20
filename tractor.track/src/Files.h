@@ -61,21 +61,21 @@ public:
     
     StreamlineFileMetadata * fileMetadata () const { return metadata; }
     
-    std::string type () const { return "file"; }
+    std::string type () const override { return "file"; }
     
-    void setup ();
-    size_t count () { return totalStreamlines; }
-    bool more () { return currentStreamline < totalStreamlines; }
-    void get (Streamline &data)
+    void setup () override;
+    size_t count () override { return totalStreamlines; }
+    bool more () override { return currentStreamline < totalStreamlines; }
+    void get (Streamline &data) override
     {
         source->read(data);
         if (haveLabels && labels.size() > currentStreamline)
             data.setLabels(labels[currentStreamline]);
         currentStreamline++;
     }
-    void seek (const size_t n);
-    bool seekable () { return true; }
-    void done () { source->close(); }
+    void seek (const size_t n) override;
+    bool seekable () override { return true; }
+    void done () override { source->close(); }
 };
 
 class StreamlineFileSink : public DataSink<Streamline>
@@ -115,14 +115,14 @@ public:
         metadata->space = space;
     }
     
-    void setup (const size_t &count)
+    void setup (const size_t &count) override
     {
         const size_t capacity = sink->capacity();
         if (capacity > 0 && currentStreamline + count > capacity)
             throw std::runtime_error("Total streamline count will exceed the capacity of the output file format");
     }
     
-    void put (const Streamline &data)
+    void put (const Streamline &data) override
     {
         const size_t offset = sink->write(data);
         if (keepLabels)
@@ -133,7 +133,7 @@ public:
         currentStreamline++;
     }
     
-    void done ()
+    void done () override
     {
         metadata->count = currentStreamline;
         sink->close(*metadata);

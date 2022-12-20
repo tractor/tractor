@@ -20,20 +20,20 @@ public:
     // Delete the default constructor
     VisitationMapDataSink () = delete;
     
-    VisitationMapDataSink (ImageSpace *space, const MappingScope scope = MappingScope::All, const bool normalise = false)
+    explicit VisitationMapDataSink (ImageSpace *space, const MappingScope scope = MappingScope::All, const bool normalise = false)
         : scope(scope), normalise(normalise)
     {
         this->values = Image<double,3>(space->dim, 0.0);
         this->values.setImageSpace(space, true);
     }
     
-    void setup (const size_t &count)
+    void setup (const size_t &count) override
     {
         totalStreamlines += count;
     }
     
-    void put (const Streamline &data);
-    void done ();
+    void put (const Streamline &data) override;
+    void done () override;
     
     const Image<double,3> & getImage () const { return values; }
 };

@@ -36,8 +36,10 @@ private:
     Logger logger;
     
 public:
-    Tracker () {}
-    Tracker (DiffusionModel * const model)
+    // Delete default constructor
+    Tracker () = delete;
+    
+    explicit Tracker (DiffusionModel * const model)
         : model(model) {}
     
     ~Tracker ()
@@ -120,18 +122,18 @@ public:
     
     Tracker * streamlineTracker () const { return tracker; }
     
-    std::string type () const { return "tracker"; }
+    std::string type () const override { return "tracker"; }
     
-    void setup ()
+    void setup () override
     {
         currentStreamline = 0;
         currentSeed = 0;
     }
     
-    size_t count () { return totalStreamlines; }
-    bool more () { return (currentStreamline < totalStreamlines); }
+    size_t count () override { return totalStreamlines; }
+    bool more () override { return (currentStreamline < totalStreamlines); }
     
-    void get (Streamline &data)
+    void get (Streamline &data) override
     {
         // We're not generating any more streamlines
         if (currentStreamline >= totalStreamlines)

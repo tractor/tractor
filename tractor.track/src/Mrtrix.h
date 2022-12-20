@@ -11,8 +11,8 @@ protected:
 public:
     using SourceFileAdapter::SourceFileAdapter;
     
-    void open (StreamlineFileMetadata &metadata);
-    void read (Streamline &data);
+    void open (StreamlineFileMetadata &metadata) override;
+    void read (Streamline &data) override;
 };
 
 #endif

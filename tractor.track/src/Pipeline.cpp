@@ -9,7 +9,6 @@ size_t Pipeline<ElementType>::run ()
     size_t total = 0, subsetIndex = 0;
     const bool usingSubset = (subset.size() > 0);
     bool subsetFinished = false;
-    std::vector<size_t> keepList;
     
     // If there's no data source there's nothing to do
     if (source == nullptr)

@@ -87,7 +87,7 @@ public:
     StreamlineLabeller (const Image<int,3> &labelMap)
         : labelMap(labelMap) {}
     
-    bool process (Streamline &data);
+    bool process (Streamline &data) override;
 };
 
 class StreamlineTruncator : public DataManipulator<Streamline>
@@ -99,7 +99,7 @@ public:
     StreamlineTruncator (const double maxLeftLength, const double maxRightLength)
         : maxLeftLength(maxLeftLength), maxRightLength(maxRightLength) {}
     
-    bool process (Streamline &data)
+    bool process (Streamline &data) override
     {
         data.trimLeft(maxLeftLength);
         data.trimRight(maxRightLength);
@@ -159,7 +159,7 @@ private:
     std::vector<double> lengths;
     
 public:
-    void put (const Streamline &data)
+    void put (const Streamline &data) override
     {
         lengths.push_back(data.getLeftLength() + data.getRightLength());
     }

@@ -122,7 +122,7 @@ BEGIN_RCPP
     for (int i=0; i<seedsR.nrow(); i++)
     {
         ImageSpace::Point seed;
-        std::transform(seedsR.row(i).begin(), seedsR.row(i).end(), &seed[0], [](double &x) { return x - 1.0; });
+        std::transform(seedsR.row(i).begin(), seedsR.row(i).end(), &seed[0], [](const double &x) { return x - 1.0; });
         seeds.push_back(seed);
     }
     
@@ -232,7 +232,7 @@ BEGIN_RCPP
     requirements["lengths"] = as<bool>(_requireLengths);
     
     // For jitter and probabilistic interpolation
-    RNGScope scope;
+    RNGScope rng;
     
     if (requirements["file"])
     {
@@ -366,7 +366,7 @@ BEGIN_RCPP
         // The pipeline object will clear up
         matcherOwned = false;
     }
-    else if (labelIndexAvailable)
+    else if (labelIndexAvailable)           // Must be true, but kept for clarity
         matcher->put(source->labelList());
     
     std::vector<std::vector<size_t>> indices = matcher->getMatches();

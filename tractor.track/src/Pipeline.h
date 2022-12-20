@@ -20,7 +20,7 @@ private:
     std::list<ElementType> workingSet;
     
 public:
-    Pipeline (DataSource<ElementType> * const source = nullptr, const size_t blockSize = 1000)
+    explicit Pipeline (DataSource<ElementType> * const source, const size_t blockSize = 1000)
         : source(source), blockSize(blockSize) {}
     
     ~Pipeline ()

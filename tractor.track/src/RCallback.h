@@ -17,14 +17,14 @@ private:
 public:
     RListDataSource (SEXP list);
     
-    std::string type () const { return "list"; }
+    std::string type () const override { return "list"; }
     
-    void setup () { currentStreamline = 0; }
-    size_t count () { return totalStreamlines; }
-    bool more () { return currentStreamline < totalStreamlines; }
-    void get (Streamline &data);
-    void seek (const size_t n) { currentStreamline = n; }
-    bool seekable () { return true; }
+    void setup () override { currentStreamline = 0; }
+    size_t count () override { return totalStreamlines; }
+    bool more () override { return currentStreamline < totalStreamlines; }
+    void get (Streamline &data) override;
+    void seek (const size_t n) override { currentStreamline = n; }
+    bool seekable () override { return true; }
 };
 
 class RListDataSink : public DataSink<Streamline>
@@ -38,8 +38,8 @@ public:
     RListDataSink (SEXP constructor)
         : constructor(constructor) {}
     
-    void setup (const size_t &count);
-    void put (const Streamline &data);
+    void setup (const size_t &count) override;
+    void put (const Streamline &data) override;
     
     Rcpp::List getList () const { return list; }
 };
@@ -54,8 +54,8 @@ private:
 public:
     std::map<int,std::string> & labelDictionary () { return dictionary; }
     
-    void put (const Streamline &data);
-    void done ();
+    void put (const Streamline &data) override;
+    void done () override;
     
     Rcpp::IntegerVector getProfile () const { return profile; }
 };

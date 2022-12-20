@@ -105,13 +105,13 @@ public:
             this->transform(i,i) = pixdim[i];
     }
     
-    ImageSpace (const DimVector &dim)
+    explicit ImageSpace (const DimVector &dim)
         : ImageSpace(dim, {1,1,1}, Transform::eye()) {}
     
     ImageSpace ()
         : ImageSpace({0,0,0}, {1,1,1}, Transform::eye()) {}
     
-    ImageSpace (const RNifti::NiftiImage &source)
+    explicit ImageSpace (const RNifti::NiftiImage &source)
     {
         std::vector<RNifti::NiftiImage::dim_t> vdim = source.dim();
         std::vector<RNifti::NiftiImage::pixdim_t> vpixdim = source.pixdim();
@@ -209,6 +209,7 @@ protected:
 public:
     ImageRaster () : length(0) { dims.fill(0); strides.fill(0); }
     
+    // These constructors are not explicit because we want to allow automatic conversion
     ImageRaster (const ArrayIndex &dims)
         : dims(dims)
     {
@@ -279,10 +280,10 @@ protected:
     
 public:
     // First argument may implicitly be anything that can initialise a Raster
-    Image (const Raster &raster, const Element value = Element())
+    explicit Image (const Raster &raster, const Element value = Element())
         : raster(raster), data_(raster.size(),value) {}
     
-    Image (const Raster &raster, const std::vector<Element> &data)
+    explicit Image (const Raster &raster, const std::vector<Element> &data)
         : raster(raster)
     {
         if (raster.size() == data.size())
@@ -291,7 +292,7 @@ public:
             throw std::runtime_error("Data size does not match the specified dimensions");
     }
     
-    Image (const RNifti::NiftiImage &source)
+    explicit Image (const RNifti::NiftiImage &source)
     {
         if (source.isNull())
             throw std::runtime_error("NiftiImage source is empty");
