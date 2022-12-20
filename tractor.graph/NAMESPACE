@@ -5,6 +5,9 @@ import(reportr)
 import(tractor.base)
 importFrom(Rcpp, evalCpp)
 
-exportClasses(Graph)
+exportClasses(Graph, PartitionedGraph)
+S3method(asGraph, matrix)
+S3method(asGraph, Graph)
+S3method(asGraph, PartitionedGraph)
 
 exportPattern("^[^\\.]")
