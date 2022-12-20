@@ -136,5 +136,5 @@ resolveRegions <- function (regions, session, space = "structural", parcellation
             labels <- c(labels, paste(basename(currentImage$getSource()),currentIndices,sep="_"))
     }
     
-    return (list(image=image, indices=indices, labels=labels))
+    return (list(image=image, indices=indices, labels=labels, fromParcellation=!areFiles))
 }

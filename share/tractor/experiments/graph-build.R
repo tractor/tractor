@@ -33,21 +33,24 @@ runExperiment <- function ()
         
         streamSource <- readStreamlines(tractName)
         
+        # Find the indices of streamlines passing through each region
+        # If some of the targets come from non-parcellation files, this involves a relabelling pass
+        if (all(targets$fromParcellation))
+            matchingIndices <- streamSource$matchLabels(targets$indices, combine="none")
+        else
+            matchingIndices <- streamSource$matchLabels(targets$indices, targets$image, combine="none")
+        
         report(OL$Info, "Finding streamlines passing through each region")
-        matchingIndices <- vector("list", nRegions)             # Indices of streamlines passing through each region
         regionLocations <- matrix(NA, nrow=nRegions, ncol=3)    # Physical location of each region's spatial median, in mm
         voxelCount      <- integer(nRegions)                    # Number of voxels
         volume          <- numeric(nRegions)                    # Volume in mm^3
         for (i in seq_len(nRegions))
         {
             report(OL$Verbose, "Matching region \"#{targets$labels[i]}\"")
-            index <- targets$indices[i]
-            matchingIndices[[i]] <- streamSource$select(labels=index)$getSelection()
-            regionImage <- targets$image$copy()$map(function(x) ifelse(x==index,1L,0L), sparse=TRUE)
-            regionLocations[i,] <- apply(regionImage$getNonzeroIndices(array=TRUE), 2, median)
-            regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
-            voxelCount[i] <- length(regionImage$getNonzeroIndices(array=FALSE))
-            volume[i] <- voxelCount[i] * abs(prod(regionImage$getVoxelDimensions()))
+            regionVoxels <- targets$image$find(targets$indices[i])
+            regionLocations[i,] <- transformVoxelToWorld(apply(regionVoxels,2,median), targets$image, simple=TRUE)
+            voxelCount[i] <- nrow(regionVoxels)
+            volume[i] <- voxelCount[i] * abs(prod(targets$image$getVoxelDimensions()))
         }
         
         fa <- session$getImageByType("FA", "diffusion")
@@ -79,8 +82,8 @@ runExperiment <- function ()
                 edgeList <- rbind(edgeList, c(j,i))
                 nStreamlines <- c(nStreamlines, nCurrentStreamlines)
                 
-                info <- streamSource$select(currentStreamlineIndices)$getMapAndLengthData()
-                visitedLocations <- which(info$map > 0, arr.ind=TRUE)
+                info <- streamSource$select(currentStreamlineIndices)$process(requireStreamlines=FALSE, requireMap=TRUE, requireLengths=TRUE)
+                visitedLocations <- info$map$find()
                 
                 binaryFA <- c(binaryFA, mean(fa[visitedLocations],na.rm=TRUE))
                 weightedFA <- c(weightedFA, weighted.mean(fa[visitedLocations],info$map[visitedLocations],na.rm=TRUE))
