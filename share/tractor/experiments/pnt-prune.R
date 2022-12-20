@@ -71,12 +71,11 @@ runExperiment <- function ()
         bestSeed <- as.matrix(currentData[bestSeedIndex,c("x","y","z")])
         report(OL$Info, "Best seed point is (#{implode(bestSeed,',')})")
         
-        tracker <- currentSession$getTracker()
-        tracker$setOptions(rightwardsVector=rightwardsVector)
-        trackerPath <- tracker$run(bestSeed, nStreamlines, requireMap=FALSE, requireStreamlines=TRUE)
-        streamSource <- StreamlineSource$new(trackerPath)
+        # We need a stable streamline set across multiple passes, so we write to file and then read back in
+        streamSource <- generateStreamlines(currentSession$getTracker(), bestSeed, nStreamlines, rightwardsVector=rightwardsVector)
+        streamSource <- readStreamlines(streamSource$writeStreamlines())
         
-        originalMedianLine <- streamSource$getMedian(options$lengthQuantile)
+        originalMedianLine <- streamSource$filter(medianOnly=TRUE, medianLengthQuantile=options$lengthQuantile)$getStreamlines()
         medianLine <- transformStreamlineWithOptions(options, originalMedianLine$copy(), currentSession, refSession)
         medianSpline <- newBSplineTractFromStreamline(medianLine, knotSpacing=options$knotSpacing)
         medianData <- createDataTableForSplines(list(medianSpline), reference$getTract(), "knot")
@@ -85,24 +84,23 @@ runExperiment <- function ()
 
         sessionData <- NULL
         nGroups <- (nStreamlines - 1) %/% subgroupSize + 1
-
+        
+        # Clear median filter
+        streamSource$filter()
+        
         report(OL$Info, "Creating complete data table...")
-        for (j in 1:nGroups)
+        for (j in seq_len(nGroups))
         {
             firstStreamline <- subgroupSize * (j-1) + 1
             lastStreamline <- min(j*subgroupSize, nStreamlines)
             
-            splines <- vector("list", lastStreamline-firstStreamline+1)
-            for (k in firstStreamline:lastStreamline)
-            {
-                streamline <- transformStreamlineWithOptions(options, streamSource$select(k)$getStreamlines(), currentSession, refSession)
-                splines[[k-firstStreamline+1]] <- newBSplineTractFromStreamline(streamline, knotSpacing=options$knotSpacing)
-                
-                if (k %% 50 == 0)
-                    report(OL$Verbose, "Done #{k}")
-            }
+            splines <- lapply(streamSource$select(firstStreamline:lastStreamline)$getStreamlines(), function(streamline) {
+                streamline <- transformStreamlineWithOptions(options, streamline, currentSession, refSession)
+                newBSplineTractFromStreamline(streamline, knotSpacing=options$knotSpacing)
+            })
             
             sessionData <- rbind(sessionData, createDataTableForSplines(splines,reference$getTract(),"knot"))
+            report(OL$Verbose, "Done #{lastStreamline}")
             rm(splines)
         }
 
@@ -115,7 +113,7 @@ runExperiment <- function ()
         if (length(toAccept) == 0)
         {
             report(OL$Warning, "All streamlines rejected for session #{i} - using median line")
-            streamSource <- StreamlineSource$new(streamSource$select(NULL)$getMedian(options$lengthQuantile, pathOnly=TRUE))
+            streamSource$select(NULL)$filter(medianOnly=TRUE, medianLengthQuantile=options$lengthQuantile)
         }
         else
         {
@@ -123,6 +121,7 @@ runExperiment <- function ()
             streamSource$select(toAccept)
         }
         
+        truncationPoints <- list(left=NULL, right=NULL)
         if (truncate)
         {
             # Transform the reference tract into native space, find its length
@@ -136,29 +135,19 @@ runExperiment <- function ()
                     transform <- currentSession$getTransformation("diffusion", "mni")
                 else
                     transform <- registerImages(currentSession$getRegistrationTargetFileName("diffusion"), refSession$getRegistrationTargetFileName("diffusion"))
-    
+                
                 refPoints$points <- transformPoints(transform, refPoints$points, voxel=FALSE, reverse=TRUE)
             }
             
             refSteps <- calculateStepVectors(refPoints$points, refPoints$seedPoint)
-            refLeftLength <- sum(apply(refSteps$left,1,vectorLength), na.rm=TRUE)
-            refRightLength <- sum(apply(refSteps$right,1,vectorLength), na.rm=TRUE)
-            
-            streamSource <- streamSource$extractAndTruncate(refLeftLength, refRightLength)
+            truncationPoints$left <- sum(apply(refSteps$left,1,vectorLength), na.rm=TRUE)
+            truncationPoints$right <- sum(apply(refSteps$right,1,vectorLength), na.rm=TRUE)
         }
         
         report(OL$Info, "Creating outputs")
         outputStem <- es("#{tractName}.#{currentSessionIndex}")
-        if (requireMap)
-        {
-            faPath <- currentSession$getImageFileNameByType("FA", "diffusion")
-            visitationMap <- streamSource$getVisitationMap(faPath)
-            writeImageFile(visitationMap, outputStem)
-        }
-        if (requireStreamlines)
-        {
-            sourceFile <- ensureFileSuffix(streamSource$getFileStem(), "trk")
-            file.copy(sourceFile, ensureFileSuffix(outputStem,"trk"))
-        }
+        result <- streamSource$process(outputStem, requireStreamlines=requireStreamlines, requireMap=requireMap, truncate=truncationPoints)
+        if (!is.null(result$map))
+            writeImageFile(result$map, outputStem)
     }
 }

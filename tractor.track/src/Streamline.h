@@ -1,59 +1,58 @@
 #ifndef _STREAMLINE_H_
 #define _STREAMLINE_H_
 
-#include <RcppEigen.h>
+#include <Rcpp.h>
 
-#include "Space.h"
+#include "Image.h"
 #include "DataSource.h"
+#include "BinaryStream.h"
 
-class Streamline
+class Streamline : public ImageSpaceEmbedded
 {
 public:
-    enum PointType { VoxelPointType, WorldPointType };
-    enum TerminationReason { UnknownReason, BoundsReason, MaskReason, OneWayReason, TargetReason, NoDataReason, LoopReason, CurvatureReason };
+    enum struct TerminationReason { Unknown, Bounds, Mask, OneWay, Target, NoData, Loop, Curvature };
     
 private:
     // A list of points along the streamline; the path is considered
     // piecewise linear in between. Not a matrix since size isn't known
     // in advance. 
-    std::vector<Space<3>::Point> leftPoints;
-    std::vector<Space<3>::Point> rightPoints;
+    std::vector<ImageSpace::Point> leftPoints;
+    std::vector<ImageSpace::Point> rightPoints;
     
     // Are points stored in voxel or world (typically mm) terms?
-    Streamline::PointType pointType;
-    
-    // Voxel dimensions, needed for converting between voxel and world point types
-    Eigen::ArrayXf voxelDims;
+    PointType pointType;
     
     // A set of integer labels associated with the streamline, indicating, for
     // example, the anatomical regions that the streamline passes through
     std::set<int> labels;
     
     // Reasons for termination on each side
-    Streamline::TerminationReason leftTerminationReason, rightTerminationReason;
+    TerminationReason leftTerminationReason = TerminationReason::Unknown, rightTerminationReason = TerminationReason::Unknown;
     
 protected:
     // A boolean value indicating whether or not the points are equally spaced
     // (in real-world terms)
     bool fixedSpacing;
     
-    double getLength (const std::vector<Space<3>::Point> &points) const;
-    void trim (std::vector<Space<3>::Point> &points, const double maxLength);
+    double getLength (const std::vector<ImageSpace::Point> &points) const;
+    void trim (std::vector<ImageSpace::Point> &points, const double maxLength);
     
 public:
     Streamline () {}
-    Streamline (const std::vector<Space<3>::Point> &leftPoints, const std::vector<Space<3>::Point> &rightPoints, const Streamline::PointType pointType, const Eigen::VectorXf &voxelDims, const bool fixedSpacing)
-        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), voxelDims(voxelDims), fixedSpacing(fixedSpacing), leftTerminationReason(UnknownReason), rightTerminationReason(UnknownReason) {}
+    Streamline (const std::vector<ImageSpace::Point> &leftPoints, const std::vector<ImageSpace::Point> &rightPoints, const PointType pointType, ImageSpace *space, const bool fixedSpacing)
+        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), fixedSpacing(fixedSpacing)
+    {
+        setImageSpace(space, true);
+    }
     
     size_t nPoints () const { return std::max(static_cast<size_t>(leftPoints.size()+rightPoints.size())-1, size_t(0)); }
     size_t getSeedIndex () const { return std::max(static_cast<size_t>(leftPoints.size())-1, size_t(0)); }
     
-    const std::vector<Space<3>::Point> & getLeftPoints () const { return leftPoints; }
-    const std::vector<Space<3>::Point> & getRightPoints () const { return rightPoints; }
-    Streamline::PointType getPointType () const { return pointType; }
+    const std::vector<ImageSpace::Point> & getLeftPoints () const { return leftPoints; }
+    const std::vector<ImageSpace::Point> & getRightPoints () const { return rightPoints; }
+    std::vector<ImageSpace::Point> getPoints () const;
+    PointType getPointType () const { return pointType; }
     bool usesFixedSpacing () const { return fixedSpacing; }
-    
-    const Eigen::ArrayXf & getVoxelDimensions () const { return voxelDims; }
     
     double getLeftLength () const  { return getLength(leftPoints); }
     double getRightLength () const { return getLength(rightPoints); }
@@ -64,7 +63,7 @@ public:
     int nLabels () const                            { return static_cast<int>(labels.size()); }
     bool addLabel (const int label)                 { return labels.insert(label).second; }
     bool removeLabel (const int label)              { return (labels.erase(label) == 1); }
-    bool hasLabel (const int label)                 { return (labels.count(label) == 1); }
+    bool hasLabel (const int label) const           { return (labels.count(label) == 1); }
     const std::set<int> & getLabels () const        { return labels; }
     void setLabels (const std::set<int> &labels)    { this->labels = labels; }
     void clearLabels ()                             { labels.clear(); }
@@ -76,8 +75,19 @@ public:
         leftTerminationReason = left;
         rightTerminationReason = right;
     }
+};
+
+// This manipulator replaces any existing labels with hits within an image
+class StreamlineLabeller : public DataManipulator<Streamline>
+{
+private:
+    Image<int,3> labelMap;
     
-    size_t concatenatePoints (Eigen::ArrayX3f &points) const;
+public:
+    StreamlineLabeller (const Image<int,3> &labelMap)
+        : labelMap(labelMap) {}
+    
+    bool process (Streamline &data) override;
 };
 
 class StreamlineTruncator : public DataManipulator<Streamline>
@@ -89,12 +99,58 @@ public:
     StreamlineTruncator (const double maxLeftLength, const double maxRightLength)
         : maxLeftLength(maxLeftLength), maxRightLength(maxRightLength) {}
     
-    bool process (Streamline &data)
+    bool process (Streamline &data) override
     {
         data.trimLeft(maxLeftLength);
         data.trimRight(maxRightLength);
+        
+        // Truncating streamlines may invalidate labels, so drop them
+        data.clearLabels();
+        
         return true;
     }
+};
+
+class StreamlineLabelMatcher : public DataSink<Streamline>
+{
+public:
+    enum struct CombineOperation { None, And, Or };
+    
+private:
+    std::vector<int> labels;
+    CombineOperation combine;
+    // If the combine operation is None, this will be one vector per label;
+    // otherwise it will be one for all streamlines labelled as needed
+    std::vector<std::vector<size_t>> matches;
+    size_t currentStreamline = 0;
+    
+    // Checks whether the specified set of label hits matches the requirements,
+    // and stores the associated index in the list(s) of matches if so
+    void process (const std::set<int> &hits, const size_t &index);
+    
+public:
+    // Delete the default constructor
+    StreamlineLabelMatcher () = delete;
+    
+    StreamlineLabelMatcher (const std::vector<int> &labels, const CombineOperation combine)
+        : labels(labels), combine(combine)
+    {
+        matches.resize(combine == CombineOperation::None ? labels.size() : 1);
+    }
+    
+    void put (const Streamline &data) override
+    {
+        process(data.getLabels(), currentStreamline);
+        currentStreamline++;
+    }
+    
+    void put (const std::vector<std::set<int>> &hits)
+    {
+        for (size_t i=0; i<hits.size(); i++)
+            process(hits[i], i);
+    }
+    
+    const std::vector<std::vector<size_t>> & getMatches () const { return matches; }
 };
 
 class StreamlineLengthsDataSink : public DataSink<Streamline>
@@ -103,7 +159,7 @@ private:
     std::vector<double> lengths;
     
 public:
-    void put (const Streamline &data)
+    void put (const Streamline &data) override
     {
         lengths.push_back(data.getLeftLength() + data.getRightLength());
     }

@@ -1,4 +1,4 @@
-#include <RcppEigen.h>
+#include <Rcpp.h>
 
 #include "Tracker.h"
 
@@ -6,23 +6,20 @@ using namespace std;
 
 Streamline Tracker::run ()
 {
-    if (model == NULL)
+    if (model == nullptr)
         throw std::runtime_error("No diffusion model has been specified");
     
-    const Eigen::Array3i imageDims = model->getGrid3D().dimensions();
-    std::vector<int> spaceDims(3);
-    for (int i=0; i<3; i++)
-        spaceDims[i] = imageDims(i,0);
-    const Eigen::Array3f voxelDims = model->getGrid3D().spacings();
+    const ImageSpace::DimVector imageDims = model->imageSpace()->dim;
+    const ImageSpace::PixdimVector voxelDims = model->imageSpace()->pixdim;
     
     Rcpp::Rcout << std::fixed;
     Rcpp::Rcout.precision(3);
     logger.debug1.indent() << "Tracking from seed point " << seed << endl;
     
-    if (visited == NULL)
+    if (visited == nullptr)
     {
         logger.debug2.indent() << "Creating visitation map" << endl;
-        visited = new Array<bool>(spaceDims, false);
+        visited = new Image<bool,3>(imageDims, false);
     }
     else
     {
@@ -33,23 +30,24 @@ Streamline Tracker::run ()
     if (flags["loopcheck"] && loopcheck == NULL)
     {
         logger.debug2.indent() << "Creating loopcheck vector field" << endl;
-        std::vector<int> loopcheckDims(3);
+        ImageSpace::DimVector loopcheckDims;
         for (int i=0; i<3; i++)
-            loopcheckDims[i] = static_cast<int>(ceil(spaceDims[i] / LOOPCHECK_RATIO));
-        loopcheck = new Array<Space<3>::Vector>(loopcheckDims, Space<3>::zeroVector());
+            loopcheckDims[i] = static_cast<int>(ceil(imageDims[i] / LOOPCHECK_RATIO));
+        loopcheck = new Image<ImageSpace::Vector,3>(loopcheckDims, ImageSpace::zeroVector());
     }
     
     bool starting = true;
-    bool rightwardsVectorValid = !Space<3>::zeroVector(rightwardsVector);
-    Space<3>::Point loc;
-    std::vector<int> roundedLoc(3), loopcheckLoc(3);
+    bool rightwardsVectorValid = (ImageSpace::norm(rightwardsVector) != 0.0);
+    ImageSpace::Point loc;
+    Image<bool,3>::ArrayIndex roundedLoc;
+    Image<ImageSpace::Vector,3>::ArrayIndex loopcheckLoc;
     size_t vectorLoc;
-    Space<3>::Vector previousStep = Space<3>::zeroVector();
+    ImageSpace::Vector previousStep = ImageSpace::zeroVector();
     
-    std::vector<Space<3>::Point> leftPoints, rightPoints;
+    std::vector<ImageSpace::Point> leftPoints, rightPoints;
     std::set<int> labels;
     
-    Space<3>::Point currentSeed = seed;
+    ImageSpace::Point currentSeed = seed;
     if (jitter)
     {
         for (int i=0; i<3; i++)
@@ -67,17 +65,17 @@ Streamline Tracker::run ()
     }
     
     // We go right first (dir=0), then left (dir=1)
-    Streamline::TerminationReason terminationReasons[2] = { Streamline::UnknownReason, Streamline::UnknownReason };
+    Streamline::TerminationReason terminationReasons[2] = { Streamline::TerminationReason::Unknown, Streamline::TerminationReason::Unknown };
     for (int dir=0; dir<2; dir++)
     {
         logger.debug2.indent() << "Tracking " << (dir==0 ? "\"right\"" : "\"left\"") << endl;
         
         if (flags["loopcheck"])
-            loopcheck->fill(Space<3>::zeroVector());
+            loopcheck->fill(ImageSpace::zeroVector());
         
         loc = currentSeed;
         if (rightwardsVectorValid)
-            previousStep = rightwardsVector * (dir==0 ? 1.0 : -1.0);
+            previousStep = (dir==0 ? rightwardsVector : -rightwardsVector);
         
         int step;
         int previouslyInsideMask = -1;
@@ -90,7 +88,7 @@ Streamline Tracker::run ()
             for (int i=0; i<3; i++)
             {
                 roundedLoc[i] = static_cast<int>(round(loc[i]));
-                if (roundedLoc[i] < 0 || roundedLoc[i] > spaceDims[i] - 1)
+                if (roundedLoc[i] < 0 || roundedLoc[i] > imageDims[i] - 1)
                 {
                     inBounds = false;
                     break;
@@ -98,26 +96,25 @@ Streamline Tracker::run ()
             }
             if (!inBounds)
             {
-                terminationReasons[dir] = Streamline::BoundsReason;
+                terminationReasons[dir] = Streamline::TerminationReason::Bounds;
                 logger.debug2.indent() << "Terminating: stepped out of bounds" << endl;
                 break;
             }
             
             // Index for current location
-            visited->flattenIndex(roundedLoc, vectorLoc);
+            visited->imageRaster().flattenIndex(roundedLoc, vectorLoc);
             
             // Stop if we've stepped outside the mask, possibly deferring termination if required
             if ((*maskData)[vectorLoc] == 0 && previouslyInsideMask == 1)
             {
-                terminationReasons[dir] = Streamline::MaskReason;
+                terminationReasons[dir] = Streamline::TerminationReason::Mask;
                 logger.debug2.indent() << "Terminating: stepped outside tracking mask" << endl;
                 break;
             }
             previouslyInsideMask = ((*maskData)[vectorLoc] == 0 ? 0 : 1);
             
             // Mark visit
-            if (!(*visited)[vectorLoc])
-                (*visited)[vectorLoc] = true;
+            visited->at(vectorLoc) = true;
             
             // Store current (unrounded) location if required
             // NB: This part of the code must always be reached at the seed point
@@ -129,7 +126,7 @@ Streamline Tracker::run ()
                 
                 if (flags["one-way"])
                 {
-                    terminationReasons[dir] = Streamline::OneWayReason;
+                    terminationReasons[dir] = Streamline::TerminationReason::OneWay;
                     logger.debug2.indent() << "Terminating: one-way tracking" << endl;
                     break;
                 }
@@ -142,18 +139,18 @@ Streamline Tracker::run ()
                 
                 if (flags["terminate-targets"] && (*targetData)[vectorLoc] != startTarget)
                 {
-                    terminationReasons[dir] = Streamline::TargetReason;
+                    terminationReasons[dir] = Streamline::TerminationReason::Target;
                     logger.debug2.indent() << "Terminating: target hit" << endl;
                     break;
                 }
             }
             
             // Sample a direction for the current step
-            Space<3>::Vector currentStep = model->sampleDirection(loc, previousStep);
+            ImageSpace::Vector currentStep = model->sampleDirection(loc, previousStep);
             logger.debug3.indent() << "Sampled step direction is " << currentStep << endl;
-            if (Space<3>::zeroVector(currentStep))
+            if (ImageSpace::norm(currentStep) == 0.0)
             {
-                terminationReasons[dir] = Streamline::NoDataReason;
+                terminationReasons[dir] = Streamline::TerminationReason::NoData;
                 logger.debug2.indent() << "Terminating: zero step vector" << endl;
                 break;
             }
@@ -164,10 +161,10 @@ Streamline Tracker::run ()
                 for (int i=0; i<3; i++)
                     loopcheckLoc[i] = static_cast<int>(round((loc[i] + 0.5) / LOOPCHECK_RATIO - 0.5));
                 
-                float loopcheckInnerProduct = (*loopcheck)[loopcheckLoc].dot(previousStep);
+                float loopcheckInnerProduct = ImageSpace::dot(loopcheck->at(loopcheckLoc), previousStep);
                 if (loopcheckInnerProduct < 0.0)
                 {
-                    terminationReasons[dir] = Streamline::LoopReason;
+                    terminationReasons[dir] = Streamline::TerminationReason::Loop;
                     logger.debug2.indent() << "Terminating: loop detected" << endl;
                     break;
                 }
@@ -182,10 +179,10 @@ Streamline Tracker::run ()
                 sign = 1.0;
             else
             {
-                float innerProduct = previousStep.dot(currentStep);
+                float innerProduct = ImageSpace::dot(previousStep, currentStep);
                 if (fabs(innerProduct) < innerProductThreshold)
                 {
-                    terminationReasons[dir] = Streamline::CurvatureReason;
+                    terminationReasons[dir] = Streamline::TerminationReason::Curvature;
                     logger.debug2.indent() << "Terminating: curvature too high" << endl;
                     break;
                 }
@@ -193,8 +190,11 @@ Streamline Tracker::run ()
             }
             
             // Update streamline front and previous step
-            loc += currentStep.array() / voxelDims * sign * stepLength;
-            previousStep = currentStep * sign;
+            for (int i=0; i<3; i++)
+            {
+                loc[i] += currentStep[i] / voxelDims[i] * sign * stepLength;
+                previousStep[i] = currentStep[i] * sign;
+            }
             logger.debug3.indent() << "New location is " << loc << endl;
             
             // Store the first step to ensure that subsequent samples go the same way
@@ -215,7 +215,7 @@ Streamline Tracker::run ()
     
     logger.debug1.indent() << "Tracking finished" << endl;
     
-    Streamline streamline(leftPoints, rightPoints, Streamline::VoxelPointType, voxelDims, true);
+    Streamline streamline(leftPoints, rightPoints, PointType::Voxel, model->imageSpace(), true);
     streamline.setTerminationReasons(terminationReasons[0], terminationReasons[1]);
     streamline.setLabels(labels);
     return streamline;

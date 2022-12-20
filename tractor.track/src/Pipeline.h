@@ -1,6 +1,8 @@
 #ifndef _PIPELINE_H_
 #define _PIPELINE_H_
 
+#include <Rcpp.h>
+
 #include "DataSource.h"
 
 // Pipeline: a general blockwise processing structure
@@ -9,7 +11,7 @@
 template <class ElementType> class Pipeline
 {
 private:
-    DataSource<ElementType> *source;
+    DataSource<ElementType> *source = nullptr;
     std::vector<DataManipulator<ElementType>*> manipulators;
     std::vector<DataSink<ElementType>*> sinks;
     
@@ -18,20 +20,18 @@ private:
     std::list<ElementType> workingSet;
     
 public:
-    Pipeline (DataSource<ElementType> * const source = NULL, const size_t blockSize = 1000)
+    explicit Pipeline (DataSource<ElementType> * const source, const size_t blockSize = 1000)
         : source(source), blockSize(blockSize) {}
     
     ~Pipeline ()
     {
-        size_t i;
-        for (i=0; i<manipulators.size(); i++)
-            delete manipulators[i];
-        for (i=0; i<sinks.size(); i++)
-            delete sinks[i];
+        clearSinks();
+        clearManipulators();
+        delete source;
     }
     
+    DataSource<ElementType> * dataSource () const { return source; }
     void setBlockSize (const size_t blockSize) { this->blockSize = blockSize; }
-    void setSource (DataSource<ElementType> * const source) { this->source = source; }
     
     template <typename VectorElementType>
     void setSubset (const std::vector<VectorElementType> &elements)
@@ -45,16 +45,48 @@ public:
         }
     }
     
+    void setSubset (SEXP _elements)
+    {
+        if (Rf_isNull(_elements))
+            subset.clear();
+        else
+        {
+            Rcpp::IntegerVector elements(_elements);
+            if (elements.size() == 0)
+                subset.clear();
+            else
+            {
+                subset.resize(elements.size());
+                std::transform(elements.begin(), elements.end(), subset.begin(), [](int x) { return size_t(x - 1); });
+                std::sort(subset.begin(), subset.end());
+            }
+        }
+    }
+    
     void addManipulator (DataManipulator<ElementType> * const manipulator)
     {
-        if (manipulator != NULL)
+        if (manipulator != nullptr)
             manipulators.push_back(manipulator);
+    }
+    
+    void clearManipulators ()
+    {
+        for (size_t i=0; i<manipulators.size(); i++)
+            delete manipulators[i];
+        manipulators.clear();
     }
     
     void addSink (DataSink<ElementType> * const sink)
     {
-        if (sink != NULL)
+        if (sink != nullptr)
             sinks.push_back(sink);
+    }
+    
+    void clearSinks ()
+    {
+        for (size_t i=0; i<sinks.size(); i++)
+            delete sinks[i];
+        sinks.clear();
     }
     
     size_t run ();

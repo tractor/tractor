@@ -8,7 +8,7 @@ runExperiment <- function ()
 {
     requireArguments("streamline file")
     
-    streamSource <- StreamlineSource$new(implode(Arguments, sep=" "))
+    streamSource <- readStreamlines(implode(Arguments, sep=" "))
     summary <- streamSource$summarise()
     printLabelledValues(names(summary), as.character(summary))
 }

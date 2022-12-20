@@ -67,16 +67,13 @@ runExperiment <- function ()
             metadata <- currentSession$getImageByType("maskedb0", metadataOnly=TRUE)
             sequence <- match(sort(currentPosteriors[validSeeds]), currentPosteriors)
             seeds <- as.matrix(currentData[sequence,c("x","y","z")])
-            trackerPath <- currentSession$getTracker()$run(seeds, nStreamlines, requireMap=FALSE, requireStreamlines=TRUE)
-            streamSource <- StreamlineSource$new(trackerPath)
+            tracker <- currentSession$getTracker()
             
             visitationData <- array(0, dim=metadata$getDimensions())
             for (j in 1:nValidSeeds)
             {
-                firstStreamline <- nStreamlines * (j-1) + 1
-                lastStreamline <- j * nStreamlines
-                imageForSeed <- streamSource$select(firstStreamline:lastStreamline)$getVisitationMap(metadata)
-                visitationData <- visitationData + imageForSeed$getData() * currentPosteriors[sequence[j]]
+                streamSource <- generateStreamlines(tracker, seeds[j], nStreamlines)
+                visitationData <- visitationData + streamSource$getVisitationMap()$getData() * currentPosteriors[sequence[j]]
             }
             
             report(OL$Info, "Creating visitation map")

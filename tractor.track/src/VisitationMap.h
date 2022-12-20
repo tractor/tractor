@@ -3,35 +3,39 @@
 
 #include "DataSource.h"
 #include "Streamline.h"
-#include "Array.h"
+#include "Image.h"
 
 class VisitationMapDataSink : public DataSink<Streamline>
 {
 public:
-    enum MappingScope { FullMappingScope, SeedMappingScope, EndsMappingScope };
+    enum struct MappingScope { All, Seed, Ends };
     
 private:
-    Array<double> values;
+    Image<double,3> values;
     MappingScope scope;
     bool normalise;
-    size_t totalStreamlines;
-    
-    // Hide default constructor
-    VisitationMapDataSink () {}
+    size_t totalStreamlines = 0;
     
 public:
-    VisitationMapDataSink (const std::vector<int> &dims, const MappingScope scope = FullMappingScope, const bool normalise = false)
-        : scope(scope), normalise(normalise), totalStreamlines(0)
+    // Delete the default constructor
+    VisitationMapDataSink () = delete;
+    
+    explicit VisitationMapDataSink (ImageSpace *space, const MappingScope scope = MappingScope::All, const bool normalise = false)
+        : scope(scope), normalise(normalise)
     {
-        values = Array<double>(dims, 0.0);
+        this->values = Image<double,3>(space->dim, 0.0);
+        this->values.setImageSpace(space, true);
     }
     
-    void setup (const size_type &count, const_iterator begin, const_iterator end);
-    void put (const Streamline &data);
-    void done ();
+    void setup (const size_t &count) override
+    {
+        totalStreamlines += count;
+    }
     
-    const Array<double> & getArray () const { return values; }
-    void writeToNifti (const RNifti::NiftiImage &reference, const std::string &fileName) const;
+    void put (const Streamline &data) override;
+    void done () override;
+    
+    const Image<double,3> & getImage () const { return values; }
 };
 
 #endif

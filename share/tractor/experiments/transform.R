@@ -28,7 +28,7 @@ runExperiment <- function ()
         newImage <- transformImageToSpace(image, session, tlc(targetSpace), tlc(sourceSpace), preferAffine=preferAffine, interpolation=interpolation)
         writeImageFile(newImage, paste(basename(image$getSource()),targetSpace,sep="_"))
     }
-    else if (file.exists(ensureFileSuffix(fileStem, "trk")))
+    else if (any(file.exists(ensureFileSuffix(fileStem, c("trk","tck")))))
     {
         if (is.null(sourceSpace))
         {
@@ -36,21 +36,20 @@ runExperiment <- function ()
             sourceSpace <- "diffusion"
         }
         
-        source <- StreamlineSource$new(fileStem)
+        source <- readStreamlines(fileStem, readLabels=FALSE)
         xfm <- session$getTransformation(tlc(sourceSpace),tlc(targetSpace))$getTransformObjects(preferAffine=preferAffine)
         if (RNiftyReg::isImage(xfm))
             xfm <- RNiftyReg::deformationField(xfm, jacobian=FALSE)
         
         targetImage <- session$getRegistrationTarget(tlc(targetSpace))
-        resultStem <- paste(ensureFileSuffix(basename(fileStem),NULL,strip="trk"), targetSpace, sep="_")
-        sink <- StreamlineSink$new(resultStem, targetImage)
+        resultStem <- paste(ensureFileSuffix(basename(fileStem),NULL,strip=c("trk","tck")), targetSpace, sep="_")
         
-        source$apply(function(x) {
+        streamlines <- source$getStreamlines(simplify=FALSE)
+        streamlines <- lapply(streamlines, function(x) {
             line <- RNiftyReg::applyTransform(xfm, x$getLine("vox"))
-            sink$append(Streamline$new(line, x$getSeedIndex(), targetImage$getVoxelDimensions(), "vox"))
-        }, simplify=NA)
-        
-        sink$close()
+            return (asStreamline(line, x$getSeedIndex(), image=targetImage, coordUnit="vox"))
+        })
+        attachStreamlines(streamlines)$writeStreamlines(resultStem)
     }
     else
     {

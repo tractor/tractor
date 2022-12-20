@@ -1,4 +1,4 @@
-#include <RcppEigen.h>
+#include <Rcpp.h>
 
 #include "Streamline.h"
 #include "Pipeline.h"
@@ -9,13 +9,13 @@ size_t Pipeline<ElementType>::run ()
     size_t total = 0, subsetIndex = 0;
     const bool usingSubset = (subset.size() > 0);
     bool subsetFinished = false;
-    std::vector<size_t> keepList;
     
     // If there's no data source there's nothing to do
-    if (source == NULL)
+    if (source == nullptr)
         return 0;
     
-    // Empty the working set
+    // Otherwise set up the source and empty the working set
+    source->setup();
     workingSet.clear();
     
     while (source->more() && !subsetFinished)
@@ -51,7 +51,8 @@ size_t Pipeline<ElementType>::run ()
             // Apply the manipulator(s), if there are any
             for (int i=0; i<manipulators.size(); i++)
             {
-                typename std::list<ElementType>::iterator it = workingSet.begin();
+                manipulators[i]->setup(workingSet.size());
+                auto it = workingSet.begin();
                 while (it != workingSet.end())
                 {
                     bool keep = manipulators[i]->process(*it);
@@ -72,11 +73,11 @@ size_t Pipeline<ElementType>::run ()
             // Pass the remaining data to the sink(s)
             for (int i=0; i<sinks.size(); i++)
             {
-                // Tell the sink how many elements are incoming and provide an iterator
-                sinks[i]->setup(workingSet.size(), workingSet.begin(), workingSet.end());
+                // Tell the sink how many elements are incoming
+                sinks[i]->setup(workingSet.size());
                 
                 // Pass each element to the sink
-                for (typename std::list<ElementType>::const_iterator it=workingSet.begin(); it!=workingSet.end(); it++)
+                for (auto it=workingSet.cbegin(); it!=workingSet.cend(); it++)
                     sinks[i]->put(*it);
                 
                 sinks[i]->finish();
@@ -89,6 +90,7 @@ size_t Pipeline<ElementType>::run ()
     
     for (int i=0; i<sinks.size(); i++)
         sinks[i]->done();
+    source->done();
     
     return total;
 }

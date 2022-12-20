@@ -1,28 +1,22 @@
-#include <RcppEigen.h>
+#include <Rcpp.h>
 
-#include "RNifti.h"
+#include "Image.h"
 #include "Streamline.h"
 #include "VisitationMap.h"
 
-struct divider
+inline void checkAndSetPoint (Image<bool,3> &visited, Image<double,3> &values, const ImageSpace::Point &point)
 {
-    double divisor;
-    
-    divider (double divisor)
-        : divisor(divisor) {}
-    
-    double operator() (double x) { return x/divisor; }
-};
-
-inline void checkAndSetPoint (Array<bool> &visited, Array<double> &values, const Space<3>::Point &point)
-{
-    static std::vector<int> loc(3);
-    size_t index;
+    // The code below would suffice, but this function is called a lot, so
+    // we try to reduce duplicating work between the two images by flattening
+    // separately once
+    // if (!visited.at(point)) { visited.at(point) = true; values.at(point) += 1.0; }
+    static ImageRaster<3>::ArrayIndex loc;
+    static size_t index;
     
     for (int i=0; i<3; i++)
-        loc[i] = static_cast<int>(round(point[i]));
+        loc[i] = static_cast<size_t>(round(point[i]));
     
-    values.flattenIndex(loc, index);
+    values.imageRaster().flattenIndex(loc, index);
     if (!visited[index])
     {
         visited[index] = true;
@@ -30,45 +24,34 @@ inline void checkAndSetPoint (Array<bool> &visited, Array<double> &values, const
     }
 }
 
-void VisitationMapDataSink::setup (const size_type &count, const_iterator begin, const_iterator end)
-{
-    totalStreamlines += count;
-}
-
 void VisitationMapDataSink::put (const Streamline &data)
 {
-    Array<bool> visited(values.getDimensions(), false);
+    Image<bool,3> visited(values.dim(), false);
     
-    const std::vector<Space<3>::Point> &leftPoints = data.getLeftPoints();
-    const std::vector<Space<3>::Point> &rightPoints = data.getRightPoints();
+    const std::vector<ImageSpace::Point> &leftPoints = data.getLeftPoints();
+    const std::vector<ImageSpace::Point> &rightPoints = data.getRightPoints();
     
     switch (scope)
     {
-        case FullMappingScope:
+        case MappingScope::All:
         for (size_t i=0; i<leftPoints.size(); i++)
             checkAndSetPoint(visited, values, leftPoints[i]);
         for (size_t i=0; i<rightPoints.size(); i++)
             checkAndSetPoint(visited, values, rightPoints[i]);
         break;
         
-        case SeedMappingScope:
-        if (leftPoints.size() > 0)
-            checkAndSetPoint(visited, values, leftPoints[0]);
-        else if (rightPoints.size() > 0)
-            checkAndSetPoint(visited, values, rightPoints[0]);
+        case MappingScope::Seed:
+        if (!leftPoints.empty())
+            checkAndSetPoint(visited, values, leftPoints.front());
+        else if (!rightPoints.empty())
+            checkAndSetPoint(visited, values, rightPoints.front());
         break;
         
-        case EndsMappingScope:
-        if (leftPoints.size() > 0)
-        {
-            size_t i = leftPoints.size() - 1;
-            checkAndSetPoint(visited, values, leftPoints[i]);
-        }
-        if (rightPoints.size() > 0)
-        {
-            size_t i = rightPoints.size() - 1;
-            checkAndSetPoint(visited, values, rightPoints[i]);
-        }
+        case MappingScope::Ends:
+        if (!leftPoints.empty())
+            checkAndSetPoint(visited, values, leftPoints.back());
+        if (!rightPoints.empty())
+            checkAndSetPoint(visited, values, rightPoints.back());
         break;
     }
 }
@@ -76,12 +59,9 @@ void VisitationMapDataSink::put (const Streamline &data)
 void VisitationMapDataSink::done ()
 {
     if (normalise)
-        std::transform(values.begin(), values.end(), values.begin(), divider(static_cast<double>(totalStreamlines)));
-}
-
-void VisitationMapDataSink::writeToNifti (const RNifti::NiftiImage &reference, const std::string &fileName) const
-{
-    RNifti::NiftiImage image = reference;
-    image.replaceData(values.getData(), DT_FLOAT64);
-    image.toFile(fileName);
+    {
+        std::transform(values.begin(), values.end(), values.begin(), [this](const double &x) {
+            return x / static_cast<double>(totalStreamlines);
+        });
+    }
 }

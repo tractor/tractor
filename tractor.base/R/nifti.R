@@ -13,7 +13,7 @@ niftiDatatype <- function (typeCode)
     typeIndex <- which(.Nifti$datatypes$codes == typeCode)
     if (length(typeIndex) != 1)
         report(OL$Error, "NIfTI data type code #{typeCode} is not supported")
-    datatype <- list(code=typeCode, type=.Nifti$datatypes$rTypes[typeIndex], size=.Nifti$datatypes$sizes[typeIndex], isSigned=.Nifti$datatypes$isSigned[typeIndex], name=.Nifti$datatype$names[typeIndex])
+    datatype <- list(code=typeCode, type=.Nifti$datatypes$rTypes[typeIndex], size=.Nifti$datatypes$sizes[typeIndex], isSigned=.Nifti$datatypes$isSigned[typeIndex], name=.Nifti$datatypes$names[typeIndex])
     return (datatype)
 }
 

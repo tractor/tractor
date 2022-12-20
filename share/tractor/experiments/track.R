@@ -46,32 +46,14 @@ runExperiment <- function ()
     }
     
     seedRegions <- splitAndConvertString(Arguments[-1], ",", fixed=TRUE)
-    wholeBrainSeeding <- (length(seedRegions) == 0)
     if (!is.null(targetRegions))
         targetRegions <- splitAndConvertString(targetRegions, ",", fixed=TRUE)
     
     mask <- session$getImageByType("mask", "diffusion")
     
-    applyBoundaryManipulation <- function (image)
-    {
-        if (boundaryManipulation != "none")
-        {
-            kernel <- mmand::shapeKernel(c(3,3,3), type=kernelShape)
-            if (boundaryManipulation == "erode")
-                image$map(mmand::erode, kernel=kernel)
-            else if (boundaryManipulation == "dilate")
-                image$map(mmand::dilate, kernel=kernel)
-            else if (boundaryManipulation == "inner")
-                image$map(function(x) x - mmand::erode(x,kernel=kernel))
-            else if (boundaryManipulation == "outer")
-                image$map(function(x) mmand::dilate(x,kernel=kernel) - x)
-        }
-        
-        return (image)
-    }
-    
-    if (wholeBrainSeeding)
-        seedInfo <- list(image=mask$copy(), indices=1L, labels="brain")
+    # If no seed point or region is specified, seeds can be drawn from anywhere in the brain
+    if (length(seedRegions) == 0)
+        seedInfo <- list(image=mask$copy()$binarise(), indices=1L, labels="brain")
     else if (length(seedRegions) %% 3 == 0 && isValidAs(seedRegions,"integer"))
     {
         seedMatrix <- matrix(as.integer(seedRegions), ncol=3, byrow=TRUE)
@@ -82,13 +64,10 @@ runExperiment <- function ()
     else
         seedInfo <- resolveRegions(seedRegions, session, "diffusion", parcellationConfidence)
     
-    if (is.null(anisotropyThreshold))
-        seedInfo$image <- seedInfo$image * mask
-    else
+    if (!is.null(anisotropyThreshold))
     {
         fa <- session$getImageByType("FA")
-        subthreshold <- which(fa$getData() < anisotropyThreshold, arr.ind=TRUE)
-        seedInfo$image[subthreshold] <- 0L
+        seedInfo$image[fa$find("<", anisotropyThreshold)] <- 0L
     }
     
     if (!is.null(targetRegions))
@@ -96,18 +75,8 @@ runExperiment <- function ()
     else
         targetInfo <- list(image=NULL, indices=NULL, labels=NULL)
     
-    if (requireProfile && length(targetInfo$indices) > 0)
-    {
-        profile <- matrix(NA, nrow=0, ncol=length(targetInfo$indices), dimnames=list(NULL,targetInfo$labels))
-        profileFun <- function (indices, counts)
-        {
-            line <- rep(NA, length(targetInfo$indices))
-            line[match(indices,targetInfo$indices)] <- counts
-            profile <<- rbind(profile, line)
-        }
-    }
-    else
-        profileFun <- NULL
+    if (requireProfile && length(targetInfo$indices) == 0)
+        report(OL$Error, "")
     
     if (minTargetHits == "all")
         minTargetHits <- length(targetInfo$indices)
@@ -116,77 +85,74 @@ runExperiment <- function ()
     else
         minTargetHits <- as.integer(minTargetHits)
     
-    tracker <- session$getTracker(mask, preferredModel=preferredModel)
-    tracker$setTargets(targetInfo)
-    tracker$setOptions(stepLength=stepLength, oneWay=oneWay)
-    tracker$setFilters(minLength=minLength, maxLength=maxLength, minTargetHits=minTargetHits)
-    report(OL$Info, "Using #{toupper(tracker$getModel()$getType())} diffusion model")
+    tracker <- session$getTracker(mask, preferredModel=preferredModel, stepLength=stepLength, oneWay=oneWay)
+    tracker$setTargets(targetInfo, terminate=terminateAtTargets)
+    report(OL$Info, "Using #{toupper(tracker$getModel()$getType())} diffusion model for #{strategy} tractography")
+    
+    profiles <- list()
+    processStreamlines <- function (streamSource, fileStem)
+    {
+        streamSource$filter(minLabels=minTargetHits, minLength=minLength, maxLength=maxLength)
+        result <- streamSource$process(fileStem, requireStreamlines=requireStreamlines, requireMap=requireMap, requireProfile=requireProfile)
+        if (!is.null(result$map))
+            writeImageFile(result$map, fileStem)
+        return (result$profile)
+    }
     
     startTime <- Sys.time()
     
-    if (strategy == "global")
+    # Iterate over seed regions
+    for (index in seedInfo$indices)
     {
-        seedImage <- applyBoundaryManipulation(seedInfo$image$copy()$binarise())
-        seeds <- seedImage$getNonzeroIndices(array=TRUE)
-        if (randomSeeds && nrow(seeds) > 1)
+        outputLevel <- ifelse(length(seedInfo$indices)==1, OL$Info, OL$Verbose)
+        
+        seedImage <- seedInfo$image$map(fx(ifelse(x==index, 1L, 0L)))
+        if (boundaryManipulation != "none")
         {
-            report(OL$Info, "Performing global tractography to generate #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds")
-            seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
-            tracker$run(seeds, count=1L, tractName, profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, terminateAtTargets=terminateAtTargets, jitter=jitter)
+            kernel <- mmand::shapeKernel(c(3,3,3), type=kernelShape)
+            if (boundaryManipulation == "erode")
+                seedImage$map(mmand::erode, kernel=kernel)
+            else if (boundaryManipulation == "dilate")
+                seedImage$map(mmand::dilate, kernel=kernel)
+            else if (boundaryManipulation == "inner")
+                seedImage$map(function(x) x - mmand::erode(x,kernel=kernel))
+            else if (boundaryManipulation == "outer")
+                seedImage$map(function(x) mmand::dilate(x,kernel=kernel) - x)
+        }
+        
+        seeds <- seedImage$find()
+        report(outputLevel, "There are #{nrow(seeds)} candidate seeds for region #{index}")
+        if (nrow(seeds) == 0)
+            next
+        
+        if (strategy == "voxelwise")
+        {
+            labels <- apply(seeds, 1, implode, sep="_")
+            for (i in seq_len(nrow(seeds)))
+            {
+                report(outputLevel-1, "Generating #{nStreamlines} streamlines from seed point (#{implode(seeds[i,],',')})")
+                streamSource <- generateStreamlines(tracker, seeds[i,], nStreamlines, jitter=jitter)
+                profiles[[labels[i]]] <- processStreamlines(streamSource, paste(tractName,labels[i],sep="_"))
+            }
         }
         else
         {
-            report(OL$Info, "Performing sequential global tractography with #{nrow(seeds)} seed(s), #{nStreamlines} streamlines per seed")
-            tracker$run(seeds, count=nStreamlines, tractName, profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, terminateAtTargets=terminateAtTargets, jitter=jitter)
-        }
-        
-        if (!is.null(profileFun))
-            rownames(profile) <- tractName
-    }
-    else if (strategy == "regionwise")
-    {
-        report(OL$Info, "Performing regionwise tractography for #{length(seedInfo$indices)} distinct regions")
-        for (index in seedInfo$indices)
-        {
+            report(outputLevel, "Generating #{nStreamlines} streamlines from #{ifelse(randomSeeds,'random','specified')} seeds")
             label <- seedInfo$labels[which(seedInfo$indices == index)]
-            seedImage <- applyBoundaryManipulation(seedInfo$image$copy()$map(function(x) ifelse(x==index,1L,0L)))
-            seeds <- seedImage$getNonzeroIndices(array=TRUE)
-            if (randomSeeds && nrow(seeds) > 1)
+            if (randomSeeds)
             {
-                report(OL$Verbose, "Generating #{nStreamlines} streamlines from #{nrow(seeds)} candidate seeds in region #{label}")
                 seeds <- seeds[sample(nrow(seeds),nStreamlines,replace=TRUE),]
-                tracker$run(seeds, count=1L, paste(tractName,label,sep="_"), profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, terminateAtTargets=terminateAtTargets, jitter=jitter)
+                streamSource <- generateStreamlines(tracker, seeds, 1L, jitter=jitter)
             }
             else
-            {
-                report(OL$Verbose, "Tracking in region #{label} with #{nrow(seeds)} seed(s), #{nStreamlines} streamlines per seed")
-                tracker$run(seeds, count=nStreamlines, paste(tractName,label,sep="_"), profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, terminateAtTargets=terminateAtTargets, jitter=jitter)
-            }
+                streamSource <- generateStreamlines(tracker, seeds, nStreamlines, jitter=jitter)
+            profiles[[label]] <- processStreamlines(streamSource, switch(strategy, regionwise=paste(tractName,label,sep="_"), tractName))
         }
-        
-        if (!is.null(profileFun))
-            rownames(profile) <- seedInfo$labels
-    }
-    else if (strategy == "voxelwise")
-    {
-        seedImage <- applyBoundaryManipulation(seedInfo$image$copy()$binarise())
-        seeds <- seedImage$getNonzeroIndices(array=TRUE)
-        
-        report(OL$Info, "Performing voxelwise tractography for #{nrow(seeds)} distinct seed points")
-        labels <- apply(seeds, 1, implode, sep="_")
-        for (i in seq_len(nrow(seeds)))
-        {
-            report(OL$Verbose, "Generating #{nStreamlines} streamlines from seed point (#{implode(seeds[i,],',')})")
-            tracker$run(seeds[i,], count=nStreamlines, paste(tractName,labels[i],sep="_"), profileFun=profileFun, requireMap=requireMap, requireStreamlines=requireStreamlines, terminateAtTargets=terminateAtTargets, jitter=jitter)
-        }
-        
-        if (!is.null(profileFun))
-            rownames(profile) <- labels
     }
     
     endTime <- Sys.time()
     report(OL$Info, "Tracking completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
     
-    if (!is.null(profileFun))
-        write.csv(profile, ensureFileSuffix(paste(tractName,"profile",sep="_"),"csv"))
+    if (requireProfile)
+        write.csv(do.call(rbind,profiles), ensureFileSuffix(paste(tractName,"profile",sep="_"),"csv"))
 }

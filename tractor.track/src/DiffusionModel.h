@@ -1,32 +1,23 @@
 #ifndef _DIFFUSION_MODEL_H_
 #define _DIFFUSION_MODEL_H_
 
-#include "Space.h"
-#include "Grid.h"
-#include "Array.h"
+#include "Image.h"
 
-class DiffusionModel : public Griddable3D
+class DiffusionModel : public ImageSpaceEmbedded
 {
-protected:
-    Grid<3> grid;
-    
-    std::vector<int> probabilisticRound (const Space<3>::Point &point, const int size = 3) const;
-    
 public:
     virtual ~DiffusionModel () {}
     
-    virtual Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const
+    virtual ImageSpace::Vector sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const
     {
-        return Space<3>::zeroVector();
+        return ImageSpace::zeroVector();
     }
-    
-    Grid<3> getGrid3D () const { return grid; }
 };
 
 class DiffusionTensorModel : public DiffusionModel
 {
 private:
-    Array<float> *principalDirections;
+    Image<ImageSpace::Vector,3> *principalDirections;
     
 public:
     DiffusionTensorModel ()
@@ -39,20 +30,19 @@ public:
         delete principalDirections;
     }
     
-    Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const;
+    ImageSpace::Vector sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const override;
 };
 
 class BedpostModel : public DiffusionModel
 {
 private:
-    std::vector<Array<float>*> avf, theta, phi;
-    int nCompartments;
-    int nSamples;
-    float avfThreshold;
+    std::vector<Image<float,4>*> avf, theta, phi;
+    int nCompartments = 0;
+    int nSamples = 0;
+    float avfThreshold = 0.0;
     
 public:
-    BedpostModel ()
-        : nCompartments(0), nSamples(0) {}
+    BedpostModel () {}
     
     BedpostModel (const std::vector<std::string> &avfFiles, const std::vector<std::string> &thetaFiles, const std::vector<std::string> &phiFiles);
     
@@ -72,7 +62,7 @@ public:
     
     void setAvfThreshold (const float avfThreshold) { this->avfThreshold = avfThreshold; }
     
-    Space<3>::Vector sampleDirection (const Space<3>::Point &point, const Space<3>::Vector &referenceDirection) const;
+    ImageSpace::Vector sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const override;
 };
 
 #endif

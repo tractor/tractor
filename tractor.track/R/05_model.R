@@ -1,3 +1,10 @@
+.NilPointer <- methods::new("externalptr")
+
+nilPointer <- function (object = NULL)
+{
+    if (is.null(object)) .NilPointer else identical(object, .NilPointer)
+}
+
 DiffusionModel <- setRefClass("DiffusionModel", fields=list(pointer="externalptr",type="character"), methods=list(
     getPointer = function () { return (pointer) },
     
@@ -6,14 +13,9 @@ DiffusionModel <- setRefClass("DiffusionModel", fields=list(pointer="externalptr
 
 .NilModel <- DiffusionModel$new()
 
-nilModel <- function ()
+nilModel <- function (object = NULL)
 {
-    return (.NilModel)
-}
-
-is.nilModel <- function (object)
-{
-    return (identical(object, .NilModel))
+    if (is.null(object)) .NilModel else identical(object, .NilModel)
 }
 
 dtiDiffusionModel <- function (directionsPath)

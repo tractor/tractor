@@ -3,4 +3,7 @@
 /*.Rcheck
 /*.tar.gz
 /*.zip
+/.clangd
+/.cache
+/compile_commands.json
 

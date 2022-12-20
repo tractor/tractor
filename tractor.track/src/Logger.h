@@ -1,7 +1,9 @@
 #ifndef _LOGGER_H_
 #define _LOGGER_H_
 
-#include <RcppEigen.h>
+#include <Rcpp.h>
+
+#include "Image.h"
 
 // Function pointer typedef for stream manipulators like "endl"
 typedef std::ostream& (*streamManipulator)(std::ostream&);
@@ -41,27 +43,12 @@ public:
         return *this;
     }
     
-    template<typename DataType, int Rows>
-    LoggerStream & operator<< (const Eigen::Matrix<DataType,Rows,1> &arg)
+    LoggerStream & operator<< (const ImageSpace::Point &arg)
     {
         if (*outputLevel >= myLevel)
         {
             Rcpp::Rcout << "(";
-            for (int i=0; i<arg.size(); i++)
-                Rcpp::Rcout << "\x1b[36m" << arg[i] << "\x1b[0m, ";
-            Rcpp::Rcout << "\b\b)";
-        }
-        
-        return *this;
-    }
-    
-    template<typename DataType, int Rows>
-    LoggerStream & operator<< (const Eigen::Array<DataType,Rows,1> &arg)
-    {
-        if (*outputLevel >= myLevel)
-        {
-            Rcpp::Rcout << "(";
-            for (int i=0; i<arg.size(); i++)
+            for (int i=0; i<3; i++)
                 Rcpp::Rcout << "\x1b[36m" << arg[i] << "\x1b[0m, ";
             Rcpp::Rcout << "\b\b)";
         }
@@ -122,7 +109,7 @@ public:
 class Logger
 {
 private:
-    int outputLevel;
+    int outputLevel = 1;
     
 public:
     LoggerStream debug1, debug2, debug3;

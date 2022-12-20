@@ -336,6 +336,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         info <- readNifti(fileNames, metadataOnly=metadataOnly, volumes=volumes)
     else if (fileNames$format == "Mgh")
         info <- readMgh(fileNames)
+    else if (fileNames$format == "Mrtrix")
+        info <- readMrtrix(fileNames)
     else
         report(OL$Error, "Unknown image file format: #{fileNames$format}")
     
@@ -373,44 +375,25 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     # Data has not already been read, so do it here
     if (willReadData)
     {
-        # Jump to the data offset position
-        connection <- gzfile(fileNames$imageFile, "rb")
-        if (fileNames$imageFile == fileNames$headerFile)
-            readBin(connection, "raw", n=info$storage$offset)
+        matchingDatatypes <- .Nifti$datatypes$rTypes == datatype$type & .Nifti$datatypes$sizes == datatype$size & .Nifti$datatypes$isSigned == datatype$isSigned
+        assert(any(matchingDatatypes), "Image datatype is not supported")
+        datatypeCode <- as.integer(.Nifti$datatypes$codes[which(matchingDatatypes)[1]])
         
-        # Work out how many blocks (3D volumes) we're reading, and the gaps between them
+        swapEndianness <- info$storage$endian != "" && info$storage$endian != .Platform$endian
+        
+        # Work out how many blocks (3D volumes) we're reading, and the corresponding byte offsets
         blockSize <- prod(fullDims[1:3])
         if (!is.null(volumes) && nDims > 3)
-        {
             blocks <- volumes
-            jumps <- (diff(c(0, sort(volumes))) - 1) * blockSize
-        }
         else
-        {
-            blocks <- prod(fullDims[4:7])
-            jumps <- rep(0, length(blocks))
-        }
+            blocks <- seq_len(prod(fullDims[4:7]))
+        offsets <- info$storage$offset + (blocks - 1) * blockSize * datatype$size
         
-        willRescaleData <- (info$storage$slope != 0 && !equivalent(c(info$storage$slope,info$storage$intercept), 1:0))
         coords <- values <- NULL
         for (i in seq_along(blocks))
         {
-            # Jump over blocks being ignored, if necessary
-            if (jumps[i] > 0)
-                readBin(connection, "raw", n=jumps[i]*datatype$size)
-            
             # Read the current block
-            currentData <- array(readBin(connection, what=datatype$type, n=blockSize, size=datatype$size, signed=datatype$isSigned, endian=info$storage$endian), dim=fullDims[1:3])
-            
-            # Rescale and reorder if necessary
-            # Reordering is a purely spatial operation, so we can do it blockwise
-            if (willRescaleData)
-                currentData <- currentData * info$storage$slope + info$storage$intercept
-            if (willReorderImage)
-            {
-                currentData <- updateNifti(currentData, image)
-                orientation(currentData) <- "LAS"
-            }
+            currentData <- RNifti:::readBlob(fileNames$imageFile, blockSize, datatypeCode, offsets[i], swap=swapEndianness)
             
             if (sparse)
             {
@@ -425,6 +408,8 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
                     values <- c(values, currentData[toKeep])
                 }
             }
+            else if (length(blocks) == 1)
+                data <- currentData
             else
             {
                 # Create an array for the data if it doesn't yet exist, then insert the block
@@ -440,17 +425,14 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         
         # Update the dimensions to match the image metadata
         dim(data) <- dims
-        close(connection)
+        
+        # Attach the data to the image
+        image <- updateNifti(data, image)
     }
     
     # Reorder the image if requested (as opposed to the data to be associated with it)
     if (willReorderImage)
         orientation(image) <- "LAS"
-    
-    # Attach the data if necessary
-    # NB: this must happen before conversion to MriImage, otherwise cal_min and cal_max won't be checked against the data
-    if (willReadData)
-        image <- updateNifti(data, image)
     
     # Convert to an MriImage
     attr(image, "reordered") <- reorder
@@ -464,6 +446,10 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     
     # Set the source
     image$setSource(fileNames$fileStem)
+    
+    # If the reader produced any tags, set them first (auxiliary files will overwrite duplicates)
+    if (!is.null(info$tags))
+        do.call(image$setTags, as.list(info$tags))
     
     # Read the auxiliary tags file, if one exists
     tagsFileName <- ensureFileSuffix(fileNames$fileStem, "tags")
