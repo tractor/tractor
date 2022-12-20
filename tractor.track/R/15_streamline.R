@@ -225,7 +225,13 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(type="character"
         if (nilPointer(.self$pointer))
             report(OL$Error, "Streamline source pointer is not valid")
         
-        .Call("runPipeline", pointer, selection, path %||% "", requireStreamlines, requireMap, mapScope, normaliseMap, requireProfile, requireLengths, truncate$left, truncate$right, refImage, debug, Streamline$new, PACKAGE="tractor.track")
+        result <- .Call("runPipeline", pointer, selection, path %||% "", requireStreamlines, requireMap, mapScope, normaliseMap, requireProfile, requireLengths, truncate$left, truncate$right, refImage, debug, Streamline$new, PACKAGE="tractor.track")
+        
+        # The map is a niftiImage, so convert it back to MriImage
+        if (!is.null(result$map))
+            result$map <- as(result$map, "MriImage")
+        
+        return (result)
     },
     
     select = function (indices = NULL)
