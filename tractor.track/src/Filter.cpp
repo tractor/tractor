@@ -13,7 +13,7 @@ static ElementType & locateNthElement (std::vector<ElementType> &vec, size_t n)
 
 // This version copies its argument to avoid modifying the original
 template <typename ElementType>
-static ElementType & getNthElement (const std::vector<ElementType> &ivec, size_t n)
+static ElementType getNthElement (const std::vector<ElementType> &ivec, size_t n)
 {
     std::vector<ElementType> vec = ivec;
     std::nth_element(vec.begin(), vec.begin()+n, vec.end());
