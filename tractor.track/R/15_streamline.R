@@ -125,43 +125,6 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(type="character"
         initFields(file=as.character(fileStem), selection=integer(0), count=as.integer(count), labels=labels, properties=as.character(properties), pointer=pointer)
     },
     
-    apply = function (fun, ..., simplify = TRUE)
-    {
-        fun <- match.fun(fun)
-        n <- ifelse(length(selection) == 0, count, length(selection))
-        if (!is.na(simplify))
-        {
-            results <- vector("list", n)
-            i <- 1
-        }
-        
-        .applyFunction <- function (points, seedIndex, voxelDims, coordUnit)
-        {
-            streamline <- Streamline$new(points, seedIndex, voxelDims, coordUnit)
-            if (is.na(simplify))
-                fun(streamline, ...)
-            else
-            {
-                results[[i]] <<- fun(streamline, ...)
-                i <<- i + 1
-            }
-        }
-        
-        .Call("trkApply", pointer, selection, .applyFunction, PACKAGE="tractor.track")
-        
-        if (isTRUE(simplify) && n == 1)
-            return (results[[1]])
-        else if (!is.na(simplify))
-            return (results)
-    },
-    
-    extractAndTruncate = function (leftLength, rightLength)
-    {
-        tempFile <- threadSafeTempFile()
-        .Call("trkTruncate", pointer, selection, tempFile, leftLength, rightLength, PACKAGE="tractor.track")
-        return (StreamlineSource$new(tempFile))
-    },
-    
     filter = function (minLabels = NULL, maxLabels = NULL, minLength = NULL, maxLength = NULL, medianOnly = FALSE, medianLengthQuantile = 0.99)
     {
         .Call("setFilters", pointer, minLabels %||% 0L, maxLabels %||% 0L, minLength %||% 0, maxLength %||% 0, medianOnly, medianLengthQuantile, PACKAGE="tractor.track")
@@ -169,27 +132,6 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(type="character"
     },
     
     getFileStem = function () { return (file) },
-    
-    getLengths = function ()
-    {
-        return (.Call("trkLengths", pointer, selection, PACKAGE="tractor.track"))
-    },
-    
-    getMapAndLengthData = function ()
-    {
-        return (.Call("trkFastMapAndLengths", pointer, selection, PACKAGE="tractor.track"))
-    },
-    
-    getMedian = function (quantile = 0.99, pathOnly = FALSE)
-    {
-        tempFile <- threadSafeTempFile()
-        .Call("trkMedian", pointer, selection, tempFile, quantile, PACKAGE="tractor.track")
-        
-        if (pathOnly)
-            return (tempFile)
-        else
-            return (StreamlineSource$new(tempFile)$getStreamlines())
-    },
     
     getSelection = function () { return (selection) },
     
