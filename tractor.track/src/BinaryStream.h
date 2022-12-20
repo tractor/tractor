@@ -56,7 +56,7 @@ public:
     template <typename SourceType, typename FinalType, size_t N> void readArray (std::array<FinalType,N> &values);
     template <typename SourceType, typename FinalType> void readVector (std::vector<FinalType> &values, size_t n = 0);
     template <typename SourceType> void readPoint (ImageSpace::Point &value);
-    std::string readString (const std::string delim = "\0");
+    std::string readString (const std::string &delim = "\0");
     std::string readString (const size_t n);
     
     // Allow pass-through calls to the underlying ifstream via the arrow operator

@@ -27,11 +27,11 @@ private:
     
     ImageSpace::Point seed;
     ImageSpace::Vector rightwardsVector;
-    float innerProductThreshold;
-    float stepLength;
-    int maxSteps;
-    bool jitter;
-    bool autoResetRightwardsVector;
+    float innerProductThreshold = 0.2;
+    float stepLength = 0.5;
+    int maxSteps = 2000;
+    bool jitter = false;
+    bool autoResetRightwardsVector = false;
     
     Logger logger;
     
@@ -108,7 +108,8 @@ private:
     Tracker *tracker;
     std::vector<ImageSpace::Point> seeds;
     bool jitter;
-    size_t streamlinesPerSeed, totalStreamlines, currentStreamline, currentSeed;
+    size_t streamlinesPerSeed, totalStreamlines;
+    size_t currentStreamline = 0, currentSeed = 0;
     
 public:
     TractographyDataSource (Tracker * const tracker, const std::vector<ImageSpace::Point> &seeds, const size_t streamlinesPerSeed, const bool jitter)

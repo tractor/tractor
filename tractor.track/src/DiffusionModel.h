@@ -30,20 +30,19 @@ public:
         delete principalDirections;
     }
     
-    ImageSpace::Vector sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const;
+    ImageSpace::Vector sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const override;
 };
 
 class BedpostModel : public DiffusionModel
 {
 private:
     std::vector<Image<float,4>*> avf, theta, phi;
-    int nCompartments;
-    int nSamples;
-    float avfThreshold;
+    int nCompartments = 0;
+    int nSamples = 0;
+    float avfThreshold = 0.0;
     
 public:
-    BedpostModel ()
-        : nCompartments(0), nSamples(0) {}
+    BedpostModel () {}
     
     BedpostModel (const std::vector<std::string> &avfFiles, const std::vector<std::string> &thetaFiles, const std::vector<std::string> &phiFiles);
     
@@ -63,7 +62,7 @@ public:
     
     void setAvfThreshold (const float avfThreshold) { this->avfThreshold = avfThreshold; }
     
-    ImageSpace::Vector sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const;
+    ImageSpace::Vector sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const override;
 };
 
 #endif

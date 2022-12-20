@@ -207,7 +207,7 @@ protected:
     Indexer<Dimensionality> indexer;
     
 public:
-    ImageRaster () { dims.fill(0); strides.fill(0); }
+    ImageRaster () : length(0) { dims.fill(0); strides.fill(0); }
     
     ImageRaster (const ArrayIndex &dims)
         : dims(dims)
@@ -280,10 +280,7 @@ protected:
 public:
     // First argument may implicitly be anything that can initialise a Raster
     Image (const Raster &raster, const Element value = Element())
-        : raster(raster)
-    {
-        data_ = std::vector<Element>(raster.size(), value);
-    }
+        : raster(raster), data_(raster.size(),value) {}
     
     Image (const Raster &raster, const std::vector<Element> &data)
         : raster(raster)

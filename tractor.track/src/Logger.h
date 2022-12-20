@@ -109,7 +109,7 @@ public:
 class Logger
 {
 private:
-    int outputLevel;
+    int outputLevel = 1;
     
 public:
     LoggerStream debug1, debug2, debug3;

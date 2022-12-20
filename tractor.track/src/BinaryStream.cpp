@@ -19,7 +19,7 @@ void BinaryStream::setEndianness (const std::string &endianness)
         throw std::runtime_error("Specified endianness is invalid");
 }
 
-std::string BinaryInputStream::readString (const std::string delim)
+std::string BinaryInputStream::readString (const std::string &delim)
 {
     std::string finalValue;
     std::getline(*inputStream, finalValue, delim[0]);
