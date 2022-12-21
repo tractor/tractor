@@ -1,7 +1,7 @@
-#include <Rcpp.h>
-
 #include "Filter.h"
 #include "Image.h"
+
+#include <Rcpp.h>
 
 // Note that this function will modify (reorder) its first argument
 template <typename ElementType>

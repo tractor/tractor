@@ -1,10 +1,10 @@
 #ifndef _R_CALLBACK_H_
 #define _R_CALLBACK_H_
 
-#include <Rcpp.h>
-
 #include "DataSource.h"
 #include "Streamline.h"
+
+#include <Rcpp.h>
 
 class RListDataSource : public DataSource<Streamline>, public ImageSpaceEmbedded
 {

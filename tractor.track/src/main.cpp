@@ -1,5 +1,3 @@
-#include <Rcpp.h>
-
 #include "RNifti.h"
 #include "RNiftiAPI.h"
 
@@ -12,6 +10,8 @@
 #include "VisitationMap.h"
 #include "RCallback.h"
 #include "Pipeline.h"
+
+#include <Rcpp.h>
 
 using namespace Rcpp;
 

@@ -1,8 +1,10 @@
 #ifndef _BINARY_STREAM_H_
 #define _BINARY_STREAM_H_
 
-#include <Rcpp.h>
 #include "Image.h"
+
+#include <Rcpp.h>
+
 #include <fstream>
 
 class BinaryStream

@@ -1,11 +1,11 @@
 #ifndef _STREAMLINE_H_
 #define _STREAMLINE_H_
 
-#include <Rcpp.h>
-
 #include "Image.h"
 #include "DataSource.h"
 #include "BinaryStream.h"
+
+#include <Rcpp.h>
 
 class Streamline : public ImageSpaceEmbedded
 {

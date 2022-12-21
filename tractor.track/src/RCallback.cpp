@@ -1,5 +1,3 @@
-#include <Rcpp.h>
-
 #include "RCallback.h"
 
 using namespace Rcpp;

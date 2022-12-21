@@ -1,9 +1,9 @@
 #ifndef _LOGGER_H_
 #define _LOGGER_H_
 
-#include <Rcpp.h>
-
 #include "Image.h"
+
+#include <Rcpp.h>
 
 // Function pointer typedef for stream manipulators like "endl"
 typedef std::ostream& (*streamManipulator)(std::ostream&);

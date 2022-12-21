@@ -1,13 +1,13 @@
 #ifndef _TRACKER_H_
 #define _TRACKER_H_
 
-#include <Rcpp.h>
-
 #include "Image.h"
 #include "DiffusionModel.h"
 #include "Streamline.h"
 #include "DataSource.h"
 #include "Logger.h"
+
+#include <Rcpp.h>
 
 #define LOOPCHECK_RATIO 5.0
 

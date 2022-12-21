@@ -1,8 +1,8 @@
-#include <Rcpp.h>
-
 #include "Image.h"
 #include "Streamline.h"
 #include "VisitationMap.h"
+
+#include <Rcpp.h>
 
 inline void checkAndSetPoint (Image<bool,3> &visited, Image<double,3> &values, const ImageSpace::Point &point)
 {
