@@ -163,6 +163,23 @@ public:
     }
 };
 
+template <int D, int N=D>
+struct Indexer
+{
+    Indexer<D,N-1> child;
+    
+    size_t flatten (const std::array<size_t,D> &loc, const std::array<size_t,D> &strides) const
+    {
+        return strides[N-1] * loc[N-1] + child.flatten(loc, strides);
+    }
+};
+
+template <int D>
+struct Indexer<D,1>
+{
+    size_t flatten (const std::array<size_t,D> &loc, const std::array<size_t,D> &strides) const { return loc[0]; }
+};
+
 // Handles image array functionality that does not depend on the datatype,
 // notably indexing
 template <int Dimensionality>
@@ -186,23 +203,6 @@ protected:
         }
         length *= dims[Dimensionality - 1];
     }
-    
-    template <int N>
-    struct Indexer
-    {
-        Indexer<N-1> child;
-        
-        size_t flatten (const ArrayIndex &loc, const ArrayIndex &strides) const
-        {
-            return strides[N-1] * loc[N-1] + child.flatten(loc, strides);
-        }
-    };
-    
-    template<>
-    struct Indexer<1>
-    {
-        size_t flatten (const ArrayIndex &loc, const ArrayIndex &strides) const { return loc[0]; }
-    };
     
     Indexer<Dimensionality> indexer;
     
@@ -239,6 +239,33 @@ public:
     void flattenIndex (const ArrayIndex &loc, size_t &result) const { result = indexer.flatten(loc, strides); }
 };
 
+// Ideally this helper function would be inside Image, but C++11 doesn't allow
+// full specialisation inside a class definition
+// Next best is probably a namespace, but that seems like overkill
+template <class TargetType>
+inline void importImageData (const RNifti::NiftiImage &source, std::vector<TargetType> &target)
+{
+    const RNifti::NiftiImageData sourceData = source.data();
+    std::copy(sourceData.begin(), sourceData.end(), target.begin());
+};
+
+template <>
+inline void importImageData (const RNifti::NiftiImage &source, std::vector<ImageSpace::Vector> &target)
+{
+    // We are currently assuming that vector images are 4D with fourth dimension 3 (FSL-style)
+    // This is overly restrictive, and in particular doesn't handle NIFTI_INTENT_VECTOR
+    if (source.nDims() != 4 || source->nt != 3)
+        throw std::runtime_error("NiftiImage source does not seem to be vector-valued");
+    
+    const RNifti::NiftiImageData sourceData = source.data();
+    const size_t volumeSize = source->nx * source->ny * source->nz;
+    for (size_t i=0; i<volumeSize; i++)
+    {
+        ImageSpace::Element elements[3] { sourceData[i], sourceData[i+volumeSize], sourceData[i+2*volumeSize] };
+        target[i] = ImageSpace::Vector(elements);
+    }
+}
+
 // A typed and fixed-dimensionality bounded array embedded in 3D space
 // This class focusses on handling the pixel/voxel data
 template <class ElementType, int Dimensionality>
@@ -253,30 +280,6 @@ public:
 protected:
     Raster raster;
     Vector data_;
-    
-    template <class TargetType>
-    void import (const RNifti::NiftiImage &source, std::vector<TargetType> &target)
-    {
-        const RNifti::NiftiImageData sourceData = source.data();
-        std::copy(sourceData.begin(), sourceData.end(), target.begin());
-    };
-    
-    template <>
-    void import (const RNifti::NiftiImage &source, std::vector<ImageSpace::Vector> &target)
-    {
-        // We are currently assuming that vector images are 4D with fourth dimension 3 (FSL-style)
-        // This is overly restrictive, and in particular doesn't handle NIFTI_INTENT_VECTOR
-        if (source.nDims() != 4 || source->nt != 3)
-            throw std::runtime_error("NiftiImage source does not seem to be vector-valued");
-        
-        const RNifti::NiftiImageData sourceData = source.data();
-        const size_t volumeSize = source->nx * source->ny * source->nz;
-        for (size_t i=0; i<volumeSize; i++)
-        {
-            ImageSpace::Element elements[3] { sourceData[i], sourceData[i+volumeSize], sourceData[i+2*volumeSize] };
-            target[i] = ImageSpace::Vector(elements);
-        }
-    }
     
 public:
     // First argument may implicitly be anything that can initialise a Raster
@@ -303,7 +306,7 @@ public:
         raster = Raster(source.dim());
         
         data_.resize(raster.size());
-        import(source, data_);
+        importImageData(source, data_);
     }
     
     Image (SEXP source)
