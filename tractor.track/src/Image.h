@@ -7,31 +7,52 @@
 namespace Rcpp {
 namespace traits {
 
-// Partial specialisation to allow as<array<T,D>>(...)
-template <typename ElementType>
-class Exporter<std::array<ElementType,3>>
-{
-private:
-    std::array<ElementType,3> value;
+// Partial specialisations to allow as<array<T,D>>(...) and the reverse
+template <class T, size_t N> class Exporter<std::array<T,N>>;
 
-public:
-    Exporter (SEXP x)
-    {
-        std::vector<ElementType> vec = as<std::vector<ElementType>>(x);
-        if (vec.size() != 3)
-            throw Rcpp::exception("Array does not have the expected number of elements");
-        for (int i=0; i<3; i++)
-            value[i] = vec[i];
-    }
-    
-    std::array<ElementType,3> get () { return value; }
-};
+template <class T, size_t N> SEXP wrap (const std::array<T,N> &object);
 
 } // traits namespace
 } // Rcpp namespace
 
 #include <Rcpp.h>
 #include "RNifti.h"
+
+namespace Rcpp {
+namespace traits {
+
+template <class T, size_t N>
+class Exporter<std::array<T,N>>
+{
+    const static int RTYPE = Rcpp::traits::r_sexptype_traits<T>::rtype;
+    Rcpp::Vector<RTYPE> vec;
+    
+public:
+    Exporter (SEXP x)
+        : vec(x)
+    {
+        if (vec.size() != N)
+            throw Rcpp::exception("Array does not have the expected number of elements");
+    }
+    
+    std::array<T,N> get()
+    {
+        std::array<T,N> result;
+        std::copy(vec.begin(), vec.end(), result.begin());
+        return result;
+    }
+};
+    
+template <class T, size_t N>
+SEXP wrap (const std::array<T,N> &object)
+{
+    const int RTYPE = Rcpp::traits::r_sexptype_traits<T>::rtype;
+    return Vector<RTYPE>(object.begin(), object.end());
+}
+
+} // traits namespace
+} // Rcpp namespace
+
 
 // Location conventions: voxel-indexed, scaled for voxel dimensions only (as
 // with a diagonal xform), or world coordinates fully respecting the xform
