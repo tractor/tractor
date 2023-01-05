@@ -134,6 +134,8 @@ expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = T
     arguments <- resolvePath(ore.split("\\s+", arguments))
     for (i in seq_along(arguments))
     {
+        if (file.exists(arguments[i]))
+            next
         fileName <- identifyImageFileNames(arguments[i], errorIfMissing=FALSE)
         if (!is.null(fileName))
             arguments[i] <- ifelse(suffixes, fileName$imageFile, fileName$fileStem)
