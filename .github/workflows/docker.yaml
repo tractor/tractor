@@ -23,7 +23,7 @@ jobs:
         submodules: true  
     
     - name: Build image
-      run: docker build -t tractor --label "runnumber=${GITHUB_RUN_ID}"
+      run: docker build -t tractor --label "runnumber=${GITHUB_RUN_ID}" .
     
     - name: Log in to registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
