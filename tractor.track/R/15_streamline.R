@@ -185,7 +185,7 @@ StreamlineSource <- setRefClass("StreamlineSource", fields=list(type="character"
     summarise = function ()
     {
         if (length(file) == 1 && file != "")
-            values <- c("Streamline source"=file)
+            values <- c("Streamline source"=expandFileName(file))
         else
             values <- c("Streamline source"="internal")
         values <- c(values, "Number of streamlines"=count, "Streamline properties"=implode(properties,sep=", "), "Streamline labels"=labels)
