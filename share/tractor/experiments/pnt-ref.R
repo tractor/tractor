@@ -1,8 +1,9 @@
 #@args session directory, seed point
 #@desc Create a reference tract for probabilistic neighbourhood tractography. This requires a session and seed point. A maximum angle between spline knots (in degrees) can be specified to avoid retaining aberrant parts of the tract distal to the seed. Users should not change the LengthQuantile and RegisterCandidatesToReference options from their defaults unless they know what they are doing.
 
-suppressPackageStartupMessages(require(tractor.session))
-suppressPackageStartupMessages(require(tractor.nt))
+library(tractor.track)
+library(tractor.session)
+library(tractor.nt)
 
 runExperiment <- function ()
 {
