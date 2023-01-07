@@ -3,7 +3,7 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     {
         object <- initFields(line=promote(line,byrow=TRUE), seedIndex=as.integer(seedIndex), spaceDims=as.integer(spaceDims)[1:3], voxelDims=as.numeric(voxelDims)[1:3], coordUnit=match.arg(coordUnit))
 
-        if (ncol(object$line) != 3)
+        if (nrow(object$line) != 0 && ncol(object$line) != 3)
             report(OL$Error, "Streamline must be specified as a matrix with 3 columns")
         
         if (!is.null(pointSpacings))
