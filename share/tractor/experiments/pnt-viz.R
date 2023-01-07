@@ -72,7 +72,7 @@ runExperiment <- function ()
             visitationData <- array(0, dim=metadata$getDimensions())
             for (j in 1:nValidSeeds)
             {
-                streamSource <- generateStreamlines(tracker, seeds[j], nStreamlines)
+                streamSource <- generateStreamlines(tracker, seeds[j,], nStreamlines)
                 visitationData <- visitationData + streamSource$getVisitationMap()$getData() * currentPosteriors[sequence[j]]
             }
             
