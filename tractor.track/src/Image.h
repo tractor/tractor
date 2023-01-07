@@ -260,23 +260,44 @@ public:
     void flattenIndex (const ArrayIndex &loc, size_t &result) const { result = indexer.flatten(loc, strides); }
 };
 
-// Ideally this helper function would be inside Image, but C++11 doesn't allow
-// full specialisation inside a class definition
-// Next best is probably a namespace, but that seems like overkill
-template <class TargetType>
-inline void importImageData (const RNifti::NiftiImage &source, std::vector<TargetType> &target)
+namespace internal {
+
+template <class TargetType, int Dimensionality>
+inline void importNifti (const RNifti::NiftiImage &source, std::vector<TargetType> &target, ImageRaster<Dimensionality> &raster)
 {
+    raster = ImageRaster<Dimensionality>(source.dim());
+    target.resize(raster.size());
+    
     const RNifti::NiftiImageData sourceData = source.data();
     std::copy(sourceData.begin(), sourceData.end(), target.begin());
 };
 
-template <>
-inline void importImageData (const RNifti::NiftiImage &source, std::vector<ImageSpace::Vector> &target)
+// Partial specialisation for vector-valued images
+template <int Dimensionality>
+inline void importNifti (const RNifti::NiftiImage &source, std::vector<ImageSpace::Vector> &target, ImageRaster<Dimensionality> &raster)
 {
-    // We are currently assuming that vector images are 4D with fourth dimension 3 (FSL-style)
-    // This is overly restrictive, and in particular doesn't handle NIFTI_INTENT_VECTOR
-    if (source.nDims() != 4 || source->nt != 3)
+    // Which dimension indexes over the elements of the vectors?
+    // NB: this is one-based because source->dim[0] is the dimensionality
+    int subdim = 0;
+    
+    // NIfTI style, with the intent set and the fifth dimension used for the vector
+    if (source->intent_code == NIFTI_INTENT_VECTOR && source.nDims() == 5)
+        subdim = 5;
+    // FSL style, 4D with fourth dimension matching the spatial dimensionality
+    else if (source.nDims() == 4 && source->nt == Dimensionality)
+        subdim = 4;
+    else
         throw std::runtime_error("NiftiImage source does not seem to be vector-valued");
+    
+    // Remove the last dimension, which relates to the vector elements, plus earlier unitary ones
+    auto dims = source.dim();
+    dims.pop_back();
+    while (dims.back() <= 1)
+        dims.pop_back();
+    
+    // This construction checks that the remaining dims have the right length
+    raster = ImageRaster<Dimensionality>(dims);
+    target.resize(raster.size());
     
     const RNifti::NiftiImageData sourceData = source.data();
     const size_t volumeSize = source->nx * source->ny * source->nz;
@@ -286,6 +307,8 @@ inline void importImageData (const RNifti::NiftiImage &source, std::vector<Image
         target[i] = ImageSpace::Vector(elements);
     }
 }
+
+} // internal namespace
 
 // A typed and fixed-dimensionality bounded array embedded in 3D space
 // This class focusses on handling the pixel/voxel data
@@ -324,10 +347,7 @@ public:
             throw std::runtime_error("NiftiImage source contains no voxel data");
         
         space = new ImageSpace(source);
-        raster = Raster(source.dim());
-        
-        data_.resize(raster.size());
-        importImageData(source, data_);
+        internal::importNifti(source, data_, raster);
     }
     
     Image (SEXP source)
