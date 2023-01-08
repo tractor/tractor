@@ -85,9 +85,6 @@ runExperiment <- function ()
         sessionData <- NULL
         nGroups <- (nStreamlines - 1) %/% subgroupSize + 1
         
-        # Clear median filter
-        streamSource$filter()
-        
         report(OL$Info, "Creating complete data table...")
         for (j in seq_len(nGroups))
         {

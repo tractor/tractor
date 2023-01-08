@@ -194,7 +194,6 @@ RcppExport SEXP runPipeline (SEXP _pipeline, SEXP _selection, SEXP _path, SEXP _
 {
 BEGIN_RCPP
     Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
-    pipeline->clearSinks();
     pipeline->setSubset(_selection);
     
     Tracker *tracker = nullptr;
@@ -296,6 +295,9 @@ BEGIN_RCPP
     if (requirements["lengths"])
         result["lengths"] = lengths->getLengths();
     
+    // Reset the source and clear all sinks and manipulators
+    pipeline->reset();
+    
     if (!sharedSpace)
         delete space;
     
@@ -307,8 +309,6 @@ RcppExport SEXP trkFind (SEXP _pipeline, SEXP _labels, SEXP _map, SEXP _combine)
 {
 BEGIN_RCPP
     Pipeline<Streamline> *pipeline = XPtr<Pipeline<Streamline>>(_pipeline).checked_get();
-    pipeline->clearSinks();
-    
     const std::vector<int> labels = as<std::vector<int>>(_labels);
     
     bool labelIndexAvailable = false;
@@ -355,6 +355,8 @@ BEGIN_RCPP
     
     for (std::vector<size_t> &ind : indices)
         std::transform(ind.begin(), ind.end(), ind.begin(), [](const size_t x) { return x+1; });
+    
+    pipeline->reset();
     
     if (matcherOwned)
         delete matcher;

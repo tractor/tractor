@@ -90,6 +90,14 @@ public:
     }
     
     size_t run ();
+    
+    void reset ()
+    {
+        clearSinks();
+        clearManipulators();
+        if (source != nullptr)
+            source->setup();
+    }
 };
 
 #endif
