@@ -129,6 +129,7 @@ file_found=0
 script_file="${script_name}.R"
 shift
 args="$@"
+export TRACTOR_COMMANDLINE="tractor $script_name $args"
 
 if [ -f $script_file ]; then
     file_found=1
