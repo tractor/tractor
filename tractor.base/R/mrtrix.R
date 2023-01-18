@@ -83,8 +83,7 @@ readMrtrix <- function (fileNames)
     endianString <- ifelse(is.na(datatypeMatch[,4]), "", datatypeMatch[,4])
     endian <- switch(endianString, LE="little", BE="big", .Platform$endian)
     
-    fileField <- getField("file")
-    fileMatch <- ore.search("^\\s*(\\S+) (\\d+)\\s*$", fileField)
+    fileMatch <- ore.search("^\\s*(\\S+) (\\d+)\\s*$", getField("file"))
     
     scaling <- as.numeric(getField("scaling", required=FALSE))
     if (length(scaling) == 0)
@@ -118,6 +117,11 @@ readMrtrix <- function (fileNames)
             bVectors[,flip] <- -bVectors[,flip]
         tags <- list(bVectors=bVectors, bValues=scheme[,4])
     }
+    
+    # Change case of history field, as it's now a standard tag
+    history <- getField("command_history", required=FALSE)
+    if (!is.null(history))
+        tags <- c(tags, list(commandHistory=history))
     
     # Fields are removed as they are used; remaining ones become tags
     tags <- c(tags, mergedFields)
