@@ -552,6 +552,13 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
     else if (params$format == "Mgh")
         writeMgh(image, fileNames, gzipped=params$gzipped)
     
+    if (image$isInternal())
+    {
+        image$setSource(expandFileName(fileStem))
+        if (Sys.getenv("TRACTOR_COMMANDLINE") != "")
+            image$setTags(commandHistory=Sys.getenv("TRACTOR_COMMANDLINE"), merge=TRUE)
+    }
+    
     if (writeTags && image$nTags() > 0)
     {
         tags <- image$getTags()
@@ -561,9 +568,6 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
         if (length(tags) > 0)
             writeLines(yaml::as.yaml(tags,handlers=list(Date=format.Date)), ensureFileSuffix(fileStem,"tags"))
     }
-    
-    if (image$isInternal())
-        image$setSource(expandFileName(fileStem))
     
     invisible (fileNames)
 }

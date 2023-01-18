@@ -98,7 +98,4 @@ writeMgh <- function (image, fileNames, gzipped = FALSE)
     
     writeImageData(image, connection, datatype$type, datatype$size, endian="big")
     close(connection)
-    
-    if (image$isInternal())
-        image$setSource(expandFileName(fileNames$fileStem))
 }

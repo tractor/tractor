@@ -383,11 +383,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     {
         "Update the source of the image"
         if (is.null(newSource))
-        {
             .self$source <- ""
-            if (Sys.getenv("TRACTOR_COMMANDLINE") != "")
-                .self$tags$commandHistory <- c(.self$tags$commandHistory, Sys.getenv("TRACTOR_COMMANDLINE"))
-        }
         else if (is.character(newSource) && (length(newSource) == 1))
             .self$source <- newSource
         invisible(.self)
