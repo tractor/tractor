@@ -1,3 +1,4 @@
+commandHistory: tractor dicomread . Method:divest Interactive:false FileNames:metadata
 modality: MR
 imageType: ORIGINAL_PRIMARY_M_ND_NORM
 seriesNumber: 8
@@ -17,6 +18,7 @@ phaseEncodingDirection: j
 phaseEncodingSign: -1
 dim_info: 57
 
+commandHistory: tractor dicomread . Method:divest Interactive:false FileNames:metadata
 modality: MR
 imageType: ORIGINAL_PRIMARY_M_ND_NORM
 seriesNumber: 9
