@@ -393,10 +393,10 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         invisible(.self)
     },
     
-    setTags = function (...)
+    setTags = function (..., merge = FALSE)
     {
-        "Add or replace metadata tags"
-        newTags <- deduplicate(list(...), .self$tags)
+        "Add, replace or merge metadata tags"
+        newTags <- deduplicate(list(...), .self$tags, merge=merge)
         .self$tags <- newTags[!sapply(newTags,is.null)]
         invisible(.self)
     },

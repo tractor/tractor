@@ -225,9 +225,15 @@ printLabelledValues <- function (labels, values, outputLevel = OL$Info, leftJust
 #' 
 #' This function returns its arguments, after concatenating them using \code{c}
 #' and then removing elements with duplicate names. The first element with each
-#' name will remain. Unnamed elements are retained.
+#' name will remain, possibly with subsequent elements' content appended to it.
+#' Unnamed elements are retained.
 #' 
 #' @param ... One or more vectors of any mode, usually named.
+#' @param merge If \code{FALSE}, the default, duplicate elements will simply
+#'   be discarded. If \code{TRUE}, additional elements with the same name will
+#'   be appended to the retained one. This does not apply to unnamed elements.
+#'   If this kind of deduplication actually happens, the return value will be a
+#'   list, regardless of the source type.
 #' @return The concatenated and deduplicated vector.
 #' @author Jon Clayden
 #' @references Please cite the following reference when using TractoR in your
@@ -238,11 +244,22 @@ printLabelledValues <- function (labels, values, outputLevel = OL$Info, leftJust
 #' Journal of Statistical Software 44(8):1-18.
 #' \url{https://www.jstatsoft.org/v44/i08/}.
 #' @export
-deduplicate <- function (...)
+deduplicate <- function (..., merge = FALSE)
 {
     x <- c(...)
-    if (!is.null(names(x)))
-        x <- x[names(x) == "" | !duplicated(names(x))]
+    n <- names(x)
+    if (!is.null(n))
+    {
+        isDup <- (n != "" & duplicated(n))
+        if (merge && any(isDup))
+        {
+            x <- as.list(x)
+            # For each duplicated name, replace the first matching element with a concatenated vector
+            for (dup in unique(n[isDup]))
+                x[[dup]] <- do.call("c", c(x[names(x) == dup], list(use.names=FALSE)))
+        }
+        x <- x[!isDup]
+    }
     return (x)
 }
 
