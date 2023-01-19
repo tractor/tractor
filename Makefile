@@ -67,9 +67,12 @@ install-track:
 install-graph:
 	@$(INSTALL) tractor.graph
 
+install-main:
+	@$(MAKE) install-base install-utils install-reg install-session install-track install-nt install-graph
+
 install: build
 	@rm -f install.log
-	@$(MAKE) check-and-install-libs install-base install-utils install-reg install-session install-track install-nt install-graph post-install-info
+	@$(MAKE) check-and-install-libs install-main post-install-info
 
 install-local: install
 

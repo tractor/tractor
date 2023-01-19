@@ -9,10 +9,8 @@ defaults:
 jobs:
   # This workflow contains a single job called "check"
   check:
-    # The type of runner that this job runs on
     runs-on: ubuntu-latest
     
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - name: Check out code
       uses: actions/checkout@v3
@@ -33,8 +31,8 @@ jobs:
       name: Install dependencies
       run: make install-libs
     
-    - name: Install packages
-      run: make install
+    - name: Install main packages
+      run: make install-main
     
     - name: Run tests
       run: make deeptest
