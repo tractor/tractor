@@ -1,13 +1,4 @@
-#' The SerialisableObject class
-#' 
-#' This reference class extends the standard \code{\linkS4class{envRefClass}}
-#' class, adding a function for simple serialisation of the data fields of an
-#' object, and one for finding all of the methods available for an object. A
-#' serialised object may be deserialised using the
-#' \code{\link{deserialiseReferenceObject}} function.
-#' 
-#' @export
-SerialisableObject <- setRefClass("SerialisableObject", methods=list(
+TractorObject <- setRefClass("TractorObject", methods=list(
     fields = function ()
     {
         "Retrieve a list of all field names"
@@ -18,8 +9,37 @@ SerialisableObject <- setRefClass("SerialisableObject", methods=list(
             return (allFieldNames[!(allFieldNames %~% "\\.$")])
     },
     
-    methods = function () { return (.self$getRefClass()$methods()) },
-    
+    methods = function ()
+    {
+        "Retrieve a list of all method names"
+        return (.self$getRefClass()$methods())
+    }
+))
+
+setMethod("show", "TractorObject", function (object)
+{
+    if ("summarise" %in% object$methods())
+    {
+        summaryList <- object$summarise()
+        if (is.list(summaryList) && all(c("labels","values") %in% names(summaryList)))
+            printLabelledValues(summaryList$labels, summaryList$values)
+        else if (!is.null(names(summaryList)))
+            printLabelledValues(names(summaryList), as.character(summaryList))
+    }
+    else
+        cat(paste("An object of class \"", class(object)[1], "\"\n", sep=""))
+})
+
+#' The SerialisableObject class
+#' 
+#' This reference class extends the standard \code{\linkS4class{envRefClass}}
+#' class, adding a function for simple serialisation of the data fields of an
+#' object, and one for finding all of the methods available for an object. A
+#' serialised object may be deserialised using the
+#' \code{\link{deserialiseReferenceObject}} function.
+#' 
+#' @export
+SerialisableObject <- setRefClass("SerialisableObject", contains="TractorObject", methods=list(
     serialise = function (file = NULL)
     {
         "Serialise the object to a list or file"
@@ -51,20 +71,6 @@ SerialisableObject <- setRefClass("SerialisableObject", methods=list(
         invisible(serialisedObject)
     }
 ))
-
-setMethod("show", "SerialisableObject", function (object)
-{
-    if ("summarise" %in% object$methods())
-    {
-        summaryList <- object$summarise()
-        if (is.list(summaryList) && all(c("labels","values") %in% names(summaryList)))
-            printLabelledValues(summaryList$labels, summaryList$values)
-        else if (!is.null(names(summaryList)))
-            printLabelledValues(names(summaryList), as.character(summaryList))
-    }
-    else
-        cat(paste("An object of class \"", class(object)[1], "\"\n", sep=""))
-})
 
 .NilObject <- SerialisableObject$new()
 
