@@ -3,7 +3,7 @@ name: Docker
 on:
   push:
     branches:
-    - master
+    - docker
     
     tags:
     - v*
@@ -18,7 +18,8 @@ jobs:
       contents: read
     
     steps:
-    - uses: actions/checkout@v3
+    - name: Check out code
+      uses: actions/checkout@v3
       with:
         submodules: true  
     
@@ -36,7 +37,7 @@ jobs:
         VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
         
         # Use Docker `latest` tag convention
-        [ "$VERSION" == "master" ] && VERSION=latest
+        [ "$VERSION" == "docker" ] && VERSION=latest
         
         docker tag tractor $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
