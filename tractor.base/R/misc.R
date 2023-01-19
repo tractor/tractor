@@ -663,7 +663,7 @@ threadSafeTempFile <- function (pattern = "file")
 #' @param condition An expression that resolves to a single logical value.
 #' @param value,fallback Any expression.
 #' @return \code{value}, if \code{condition} evaluates to \code{TRUE};
-#'   otherwise \code{NULL}.
+#'   otherwise \code{fallback}.
 #' @author Jon Clayden
 #' @seealso ifelse
 #' @references Please cite the following reference when using TractoR in your
