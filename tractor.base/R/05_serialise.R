@@ -1,3 +1,12 @@
+#' The TractorObject class
+#' 
+#' This reference class extends the standard \code{\linkS4class{envRefClass}}
+#' class, adding methods for finding all of the field or methods available for
+#' an object. There is also a method for summarising key elements of the object
+#' as a named character vector, which can be suitable overridden by inheriting
+#' classes. The \code{show} method prints this summary as a labelled list.
+#' 
+#' @export
 TractorObject <- setRefClass("TractorObject", methods=list(
     fields = function ()
     {
@@ -13,31 +22,34 @@ TractorObject <- setRefClass("TractorObject", methods=list(
     {
         "Retrieve a list of all method names"
         return (.self$getRefClass()$methods())
+    },
+    
+    summarise = function ()
+    {
+        "Summarise key aspects of the object"
+        return (c("Object class"=class(.self)[1]))
     }
 ))
 
 setMethod("show", "TractorObject", function (object)
 {
-    if ("summarise" %in% object$methods())
-    {
-        summaryList <- object$summarise()
-        if (is.list(summaryList) && all(c("labels","values") %in% names(summaryList)))
-            printLabelledValues(summaryList$labels, summaryList$values)
-        else if (!is.null(names(summaryList)))
-            printLabelledValues(names(summaryList), as.character(summaryList))
-    }
-    else
-        cat(paste("An object of class \"", class(object)[1], "\"\n", sep=""))
+    summaryList <- object$summarise()
+    if (is.list(summaryList) && all(c("labels","values") %in% names(summaryList)))
+        printLabelledValues(summaryList$labels, summaryList$values)
+    else if (!is.null(names(summaryList)))
+        printLabelledValues(names(summaryList), as.character(summaryList))
 })
 
 #' The SerialisableObject class
 #' 
-#' This reference class extends the standard \code{\linkS4class{envRefClass}}
-#' class, adding a function for simple serialisation of the data fields of an
-#' object, and one for finding all of the methods available for an object. A
-#' serialised object may be deserialised using the
-#' \code{\link{deserialiseReferenceObject}} function.
+#' This reference class extends \code{\linkS4class{TractorObject}} by adding a
+#' function for simple serialisation of the data fields of an object, either to
+#' a list or a file. This is intended to be used for classes whose state can
+#' meaningfully be restored from a list of standard R objects (not including
+#' transient C/C++ pointers, for example). A serialised object may be
+#' deserialised using the \code{\link{deserialiseReferenceObject}} function.
 #' 
+#' @seealso \code{\link{save}}
 #' @export
 SerialisableObject <- setRefClass("SerialisableObject", contains="TractorObject", methods=list(
     serialise = function (file = NULL)
