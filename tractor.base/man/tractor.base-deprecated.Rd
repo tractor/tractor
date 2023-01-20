@@ -23,7 +23,8 @@ newMriImageFromDicomDirectory(dicomDir, readDiffusionParams = FALSE,
 newMriImageFromFile(fileName, fileType = NULL, metadataOnly = FALSE,
   volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE)
 
-writeMriImageToFile(image, fileName = NULL, fileType = NA, overwrite = TRUE)
+writeMriImageToFile(image, fileName = NULL, fileType = NA,
+  overwrite = TRUE)
 
 newMriImageByExtraction(image, dim, loc)
 
@@ -61,7 +62,7 @@ possible?}
 converted into 3D volumes? This may occasionally be performed in error,
 which can be prevented by setting this value to \code{FALSE}.}
 
-\item{fileName}{File names, with or without appropriate extension.}
+\item{fileName}{The name of a DICOM file.}
 
 \item{fileType}{A character vector of length one, giving the file type
 required or expected. If this option is missing, the file type used for
@@ -89,10 +90,7 @@ This is recommended in most circumstances.}
 \code{writeImageFile}, an error will be raised if there is an existing
 file and this is set to FALSE.}
 
-\item{dim}{The dimension and location along that dimension for which
-data should be extracted.}
-
-\item{loc}{The dimension and location along that dimension for which
+\item{dim, loc}{The dimension and location along that dimension for which
 data should be extracted.}
 
 \item{clearance}{The number of voxels' clearance left around a trimmed
@@ -102,31 +100,6 @@ image.}
 
 \item{templateImage}{An optional \code{MriImage} object, to be used as a
 metadata template.}
-
-\item{imageDims}{Metadata for
-the new image object. These values override any from the metadata object
-or data array. See \code{\linkS4class{MriImage}} class documentation for
-details.}
-
-\item{voxelDims}{Metadata for
-the new image object. These values override any from the metadata object
-or data array. See \code{\linkS4class{MriImage}} class documentation for
-details.}
-
-\item{voxelDimUnits}{Metadata for
-the new image object. These values override any from the metadata object
-or data array. See \code{\linkS4class{MriImage}} class documentation for
-details.}
-
-\item{origin}{Metadata for
-the new image object. These values override any from the metadata object
-or data array. See \code{\linkS4class{MriImage}} class documentation for
-details.}
-
-\item{tags}{Metadata for
-the new image object. These values override any from the metadata object
-or data array. See \code{\linkS4class{MriImage}} class documentation for
-details.}
 
 \item{fun}{A function, of the appropriate arity.}
 

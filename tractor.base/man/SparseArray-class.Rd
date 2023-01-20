@@ -35,5 +35,7 @@ standard way, using matrix or vector indices; and for coercing between
 \item{\code{setCoordinatesAndData(newCoords, newData)}}{Update the nonzero locations and data values in the array}
 
 \item{\code{setDimensions(newDims)}}{Change the dimensions of the image}
+
+\item{\code{summarise()}}{Summarise key aspects of the object}
 }}
 

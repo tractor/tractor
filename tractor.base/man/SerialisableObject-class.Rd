@@ -6,17 +6,19 @@
 \alias{SerialisableObject}
 \title{The SerialisableObject class}
 \description{
-This reference class extends the standard \code{\linkS4class{envRefClass}}
-class, adding a function for simple serialisation of the data fields of an
-object, and one for finding all of the methods available for an object. A
-serialised object may be deserialised using the
-\code{\link{deserialiseReferenceObject}} function.
+This reference class extends \code{\linkS4class{TractorObject}} by adding a
+function for simple serialisation of the data fields of an object, either to
+a list or a file. This is intended to be used for classes whose state can
+meaningfully be restored from a list of standard R objects (not including
+transient C/C++ pointers, for example). A serialised object may be
+deserialised using the \code{\link{deserialiseReferenceObject}} function.
 }
 \section{Methods}{
 
 \describe{
-\item{\code{fields()}}{Retrieve a list of all field names}
-
 \item{\code{serialise(file = NULL)}}{Serialise the object to a list or file}
 }}
 
+\seealso{
+\code{\link{save}}
+}

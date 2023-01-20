@@ -74,9 +74,11 @@ reordered. See \code{\link{reorderMriImage}}}
 
 \item{\code{setSource(newSource)}}{Update the source of the image}
 
-\item{\code{setTags(...)}}{Add or replace metadata tags}
+\item{\code{setTags(..., merge = FALSE)}}{Add, replace or merge metadata tags}
 
 \item{\code{setXform(newXform)}}{Update the xform matrix associated with the image}
+
+\item{\code{summarise()}}{Summarise key aspects of the object}
 
 \item{\code{threshold(level, defaultValue = 0)}}{Threshold the image by setting values below the threshold level to zero}
 }}

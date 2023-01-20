@@ -4,10 +4,16 @@
 \alias{deduplicate}
 \title{Concatenate and deduplicate vectors}
 \usage{
-deduplicate(...)
+deduplicate(..., merge = FALSE)
 }
 \arguments{
 \item{...}{One or more vectors of any mode, usually named.}
+
+\item{merge}{If \code{FALSE}, the default, duplicate elements will simply
+be discarded. If \code{TRUE}, additional elements with the same name will
+be appended to the retained one. This does not apply to unnamed elements.
+If this kind of deduplication actually happens, the return value will be a
+list, regardless of the source type.}
 }
 \value{
 The concatenated and deduplicated vector.
@@ -15,7 +21,8 @@ The concatenated and deduplicated vector.
 \description{
 This function returns its arguments, after concatenating them using \code{c}
 and then removing elements with duplicate names. The first element with each
-name will remain. Unnamed elements are retained.
+name will remain, possibly with subsequent elements' content appended to it.
+Unnamed elements are retained.
 }
 \references{
 Please cite the following reference when using TractoR in your

@@ -4,7 +4,8 @@
 \alias{printLabelledValues}
 \title{Pretty print labelled information}
 \usage{
-printLabelledValues(labels, values, outputLevel = OL$Info, leftJustify = FALSE)
+printLabelledValues(labels, values, outputLevel = OL$Info,
+  leftJustify = FALSE)
 }
 \arguments{
 \item{labels}{A character vector of labels.}

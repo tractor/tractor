@@ -13,7 +13,7 @@ where(condition, value, fallback = NULL)
 }
 \value{
 \code{value}, if \code{condition} evaluates to \code{TRUE};
-  otherwise \code{NULL}.
+  otherwise \code{fallback}.
 }
 \description{
 This simple function checks whether its first argument is a logical value
