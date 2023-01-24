@@ -119,7 +119,7 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
     }
 ))
 
-StreamlineSource <- setRefClass("StreamlineSource", fields=list(type="character", file="character", selection="integer", count="integer",labels="logical", properties="character", pointer="externalptr"), methods=list(
+StreamlineSource <- setRefClass("StreamlineSource", contains="TractorObject", fields=list(type="character", file="character", selection="integer", count="integer",labels="logical", properties="character", pointer="externalptr"), methods=list(
     initialize = function (pointer = nilPointer(), fileStem = NULL, count = 0L, properties = NULL, labels = FALSE, ...)
     {
         initFields(file=as.character(fileStem), selection=integer(0), count=as.integer(count), labels=labels, properties=as.character(properties), pointer=pointer)

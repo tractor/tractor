@@ -5,7 +5,7 @@ nilPointer <- function (object = NULL)
     if (is.null(object)) .NilPointer else identical(object, .NilPointer)
 }
 
-DiffusionModel <- setRefClass("DiffusionModel", fields=list(pointer="externalptr",type="character"), methods=list(
+DiffusionModel <- setRefClass("DiffusionModel", contains="TractorObject", fields=list(pointer="externalptr",type="character"), methods=list(
     getPointer = function () { return (pointer) },
     
     getType = function () { return (type) }

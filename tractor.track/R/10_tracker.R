@@ -1,5 +1,5 @@
 # NB: The underlying C++ class is not thread-safe, so a Tracker object should not be run multiple times concurrently
-Tracker <- setRefClass("Tracker", fields=list(model="DiffusionModel",pointer="externalptr"), methods=list(
+Tracker <- setRefClass("Tracker", contains="TractorObject", fields=list(model="DiffusionModel",pointer="externalptr"), methods=list(
     initialize = function (model = nilModel(), mask = NULL, curvatureThreshold = 0.2, loopcheck = TRUE, maxSteps = 2000, stepLength = 0.5, oneWay = FALSE, ...)
     {
         if (nilModel(model))
