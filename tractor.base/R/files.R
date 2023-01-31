@@ -73,7 +73,7 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     else if (!is.null(fileType))
         format <- (getParametersForFileType(fileType, errorIfInvalid=TRUE))$format
     else
-        format <- ifelse(hasNiftiMagicString(headerFile), "Nifti", "Analyze")
+        format <- ifelse(niftiVersion(headerFile) == 0, "Analyze", "Nifti")
     
     fileNames <- list(fileStem=fileStem, headerFile=headerFile, imageFile=imageFile, auxiliaryFiles=auxiliaryFiles, format=format, headerSuffix=headersExist, imageSuffix=imagesExist, auxiliarySuffixes=auxiliariesExist)
     return (fileNames)
