@@ -30,7 +30,8 @@ is.emptyMatrix <- function (object)
     return (identical(object, .EmptyMatrix))
 }
 
-setClassUnion("MriImageData", c("SparseArray","array","NULL"))
+setOldClass("rgbArray")
+setClassUnion("MriImageData", c("SparseArray","rgbArray","array","NULL"))
 
 #' The MriImage class
 #' 
@@ -317,6 +318,8 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     isInternal = function () { return (source == "") },
     
     isReordered = function () { return (isTRUE(reordered)) },
+    
+    isRgb = function () { return (inherits(data,"rgbArray")) },
     
     isSparse = function () { return (is(data,"SparseArray")) },
     
