@@ -189,10 +189,10 @@ createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwl
     writeMap(fit$sse, session$getImageFileNameByType("sse","diffusion"))
     writeMap(fit$bad, file.path(session$getDirectory("diffusion"), "dti_bad"))
     
-    # FIXME: This is a temporary solution
     boundedFA <- pmin(1, pmax(0, fit$fa))
-    for (i in 1:3)
-        vectorData[cbind(intraMaskLocs,i)] <- abs(fit$eigenvectors[i,1,]) * boundedFA
-    colourFAPath <- file.path(session$getDirectory("diffusion"), "dti_colFA.nii.gz")
-    .Call("writeNiftiRgb", vectorData[,,,1], vectorData[,,,2], vectorData[,,,3], colourFAPath, maskImage, PACKAGE="RNifti")
+    channels <- t(abs(fit$eigenvectors[,1,])) * boundedFA
+    scalarData <- array(NA_integer_, dim=imageDims)
+    colourFA <- RNifti::rgbArray(replace(scalarData,intraMaskLocs,channels[,1]), replace(scalarData,intraMaskLocs,channels[,2]), replace(scalarData,intraMaskLocs,channels[,3]))
+    image <- asMriImage(colourFA, maskImage)
+    writeImageFile(image, session$getImageFileNameByType("colourfa"))
 }
