@@ -104,8 +104,7 @@ SerialisableObject <- setRefClass("SerialisableObject", contains="TractorObject"
 #' 
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
-#' Journal of Statistical Software 44(8):1-18.
-#' \url{https://www.jstatsoft.org/v44/i08/}.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 #' @export
 nilObject <- function ()
 {
@@ -173,8 +172,7 @@ is.nilObject <- function (object)
 #' 
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
-#' Journal of Statistical Software 44(8):1-18.
-#' \url{https://www.jstatsoft.org/v44/i08/}.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 #' @aliases serialisation
 #' @rdname serialisation
 #' @export
