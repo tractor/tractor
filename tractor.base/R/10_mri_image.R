@@ -351,6 +351,8 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         .self$map(function(x,y) ifelse(y==0,0,x), maskImage)
     },
     
+    nChannels = function () { return (ifelse(.self$isRgb(), attr(data,"channels") %||% 3L, 1L)) },
+    
     nSlices = function () { return (ifelse(length(imageDims) > 2, imageDims[3], 1L)) },
     
     nTags = function () { return (length(tags)) },
