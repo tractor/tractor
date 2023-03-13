@@ -1,12 +1,3 @@
-niftiDatatype <- function (typeCode)
-{
-    typeIndex <- which(.Nifti$datatypes$codes == typeCode)
-    if (length(typeIndex) != 1)
-        report(OL$Error, "NIfTI data type code #{typeCode} is not supported")
-    datatype <- list(code=typeCode, type=.Nifti$datatypes$rTypes[typeIndex], size=.Nifti$datatypes$sizes[typeIndex], isSigned=.Nifti$datatypes$isSigned[typeIndex], name=.Nifti$datatypes$names[typeIndex])
-    return (datatype)
-}
-
 readNifti <- function (fileNames, metadataOnly = FALSE, volumes = NULL)
 {
     if (!is.list(fileNames))
@@ -41,15 +32,13 @@ readNifti <- function (fileNames, metadataOnly = FALSE, volumes = NULL)
     invisible (result)
 }
 
-writeNifti <- function (image, fileNames, maxSize = NULL)
+writeNifti <- function (image, fileNames, datatype = "fit")
 {
-    if (is.null(maxSize))
+    if (datatype == "fit")
         datatype <- chooseDataTypeForImage(image, "Nifti")
-    else
-        datatype <- niftiDatatype(ifelse(maxSize >= 4, 16L, ifelse(maxSize >= 2, 4L, 2L)))
     
-    image <- retrieveNifti(image)
-    image <- updateNifti(image, list(descrip="TractoR NIfTI writer v3.3.0"))
+    image <- asNifti(image, internal=TRUE)
+    image$descrip <- "TractoR NIfTI writer v3.4.0"
     
-    RNifti::writeNifti(image, fileNames$headerFile, datatype=datatype$name)
+    RNifti::writeNifti(image, fileNames$headerFile, datatype=datatype)
 }

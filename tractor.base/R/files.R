@@ -160,95 +160,105 @@ copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE
     }
 }
 
-chooseDataTypeForImage <- function (image, format)
+chooseDataTypeForImage <- function (image, format, maxSize = NULL)
 {
     if (image$isEmpty())
-        return (NULL)
+        return ("none")
+    else if (image$isRgb())
+        return (ifelse(image$nChannels() == 4L, "rgba", "rgb"))
     else if (image$isSparse())
         data <- image$getData()$getData()
     else
         data <- image$getData()
     
     # Get the available data types for the specified format
-    datatypes <- get(paste(".",format,sep=""))$datatypes
+    datatypes <- .DatatypeCodes[[format]]
     
     # If double-mode data can be represented as integers, convert it to save space
     # Note that this slows the function down
     rType <- storage.mode(data)
-    if (rType == "double" && equivalent(as.double(data),suppressWarnings(as.integer(data))))
+    if (!is.null(maxSize) || (rType == "double" && equivalent(as.double(data),suppressWarnings(as.integer(data)))))
         rType <- "integer"
-    
-    isSigned <- (rType == "double" || min(data,na.rm=TRUE) < 0)
     
     if (rType == "double")
     {
-        singleTypeExists <- sum(datatypes$rTypes == "double" & datatypes$sizes == 4) == 1
-        doubleTypeExists <- sum(datatypes$rTypes == "double" & datatypes$sizes == 8) == 1
+        singleTypeExists <- "float" %in% names(datatypes)
+        doubleTypeExists <- "double" %in% names(datatypes)
         assert(singleTypeExists || doubleTypeExists, "Floating-point data cannot be stored using the specified file format")
         
         if (singleTypeExists && (isTRUE(getOption("tractorOutputPrecision") == "single") || !doubleTypeExists))
-            size <- 4
+            return ("float")
         else
-            size <- 8
+            return ("double")
+    }
+    else if (rType == "complex")
+    {
+        singleTypeExists <- "cfloat" %in% names(datatypes)
+        doubleTypeExists <- "cdouble" %in% names(datatypes)
+        assert(singleTypeExists || doubleTypeExists, "Complex-valued data cannot be stored using the specified file format")
         
-        isSigned <- TRUE
-        code <- datatypes$codes[datatypes$rTypes == "double" & datatypes$sizes == size]
-        name <- datatypes$names[datatypes$codes == code]
+        if (singleTypeExists && (isTRUE(getOption("tractorOutputPrecision") == "single") || !doubleTypeExists))
+            return ("cfloat")
+        else
+            return ("cdouble")
     }
     else
     {
-        compatible <- (datatypes$rTypes == "integer")
-        if (min(data,na.rm=TRUE) < 0)
-            compatible <- compatible & datatypes$isSigned
+        dataRange <- range(data, na.rm=TRUE)
+        needSigned <- (dataRange[1] < 0)
+        compatible <- names(datatypes) %~% ifelse(needSigned, "^int", "int")
         
-        maximumValues <- 2^(datatypes$sizes*8 - as.integer(datatypes$isSigned)) - 1
-        largestAbsoluteDataValue <- max(abs(max(data,na.rm=TRUE)), abs(min(data,na.rm=TRUE)))
-        compatible <- compatible & (largestAbsoluteDataValue <= maximumValues)
+        bitSizes <- as.numeric(ore_switch(names(datatypes), "\\d+$"="\\0", "0"))
+        maximumValues <- 2^(bitSizes - as.integer(names(datatypes) %~% "^int")) - 1
+        if (is.null(maxSize))
+            compatible <- compatible & (max(abs(dataRange)) <= maximumValues)
+        else
+        {
+            # If specified, the maximum datatype size must be obeyed. We then
+            # fit the data if possible; otherwise we take the highest upper
+            # bound available
+            compatible <- compatible & (bitSizes <= maxSize * 8)
+            compatible <- compatible & (max(abs(dataRange)) <= maximumValues | maximumValues == max(maximumValues[compatible]))
+        }
         
         # Prefer Analyze-compatible data types for NIfTI files
-        if (format == "Nifti" && any(compatible[datatypes$codes <= 64]))
-            compatible <- compatible & (datatypes$codes <= 64)
+        if (format == "Nifti" && any(datatypes[compatible] <= 64))
+            compatible <- compatible & (datatypes <= 64)
         
         assert(any(compatible), "No compatible data type exists for the specified image and file format")
         
         maximumValues[!compatible] <- Inf
-        code <- datatypes$codes[which.min(maximumValues)]
-        size <- datatypes$sizes[datatypes$codes == code]
-        isSigned <- datatypes$isSigned[datatypes$codes == code]
-        name <- datatypes$names[datatypes$codes == code]
+        return (names(datatypes)[which.min(maximumValues)])
     }
-    
-    return (list(code=code, type=rType, size=size, isSigned=isSigned, name=name))
 }
 
-#' Working with MRI images stored in NIfTI, Analyze and MGH formats
+#' Working with MRI images stored in various formats
 #' 
 #' Functions for reading, writing, locating, copying and removing MRI images
-#' stored in NIfTI, Analyze and MGH formats.
+#' stored in NIfTI, Analyze, MGH and MRtrix formats.
 #' 
 #' NIfTI and Analyze are related formats for storing magnetic resonance images.
 #' NIfTI is a more recent extension of Analyze, and contains more specific
 #' information about, for example, the orientation of the image. Its use is
 #' therefore recommended where possible. MGH format is used by the popular
-#' image processing package FreeSurfer. These formats use a number of different
-#' file extensions, but the details are abstracted away from the user by these
-#' functions.
+#' image processing package FreeSurfer, and MRtrix format by the software of
+#' the same name. These formats use a number of different file extensions, but
+#' the details are abstracted away from the user by these functions.
 #' 
 #' TractoR does not allow for files with the same basic name using multiple
-#' Analyze/NIfTI/MGH formats in a single directory (e.g. \code{"foo.nii"} AND
-#' \code{"foo.img"}), and these functions will produce an error if multiple
-#' compatible files exist.
+#' Analyze/NIfTI/MGH/MRtrix formats in a single directory (e.g.
+#' \code{"foo.nii"} AND \code{"foo.img"}), and these functions will produce an
+#' error if multiple compatible files exist.
 #' 
 #' Suitable values for \code{fileType} (and the \code{tractorFileType} option,
-#' which is used as a default) are \code{ANALYZE}, \code{NIFTI},
-#' \code{NIFTI_PAIR} (the two-file NIfTI format), \code{MGH},
-#' \code{ANALYZE_GZ}, \code{NIFTI_GZ}, \code{NIFTI_PAIR_GZ} and \code{MGH_GZ}.
-#' The latter four are gzipped versions of the former four. \code{NIFTI_GZ} is
-#' recommended unless there is a need for one of the others. This is the
-#' default value for the \code{tractorFileType} option, but that can be changed
-#' using a call to \code{\link{options}}, or by setting the
-#' \code{TRACTOR_FILETYPE} environment variable before loading the tractor.base
-#' package.
+#' which is used as a default for writing) are \code{"NIFTI"},
+#' \code{"NIFTI_PAIR"} (the two-file NIfTI format), \code{"MGH"}, and
+#' corresponding gzipped versions of these with \code{"_GZ"} appended. File
+#' types \code{"ANALYZE"} and \code{"MRTRIX"}, and \code{"_GZ"} variants, are
+#' additionally available for reading only. \code{"NIFTI_GZ"} is the default
+#' value for the \code{tractorFileType} option, but that can be changed using a
+#' call to \code{\link{options}}, or by setting the \code{TRACTOR_FILETYPE}
+#' environment variable before loading the \code{tractor.base} package.
 #' 
 #' Since multiple files may be involved, copying, moving or symlinking images
 #' is not trivial. \code{copyImageFiles} and \code{symlinkImageFiles} are
@@ -282,10 +292,12 @@ chooseDataTypeForImage <- function (image, format)
 #' @param overwrite Logical value: overwrite an existing image file? For
 #'   \code{writeImageFile}, an error will be raised if there is an existing
 #'   file and this is set to FALSE.
-#' @param maxSize If not \code{NULL}, the maximum number of bytes per pixel to
-#'   use when storing the data. This can lead to a substantial loss of
-#'   precision, and is usually not desirable. Only used when writing to the
-#'   NIfTI file format.
+#' @param datatype A datatype string, such as \code{"uint8"} or \code{"float"},
+#'   specifying the pixel datatype to use when storing the data. If specified,
+#'   this must be a type supported by the requested (or default) file format.
+#'   The default, \code{"fit"}, results in a datatype being chosen that is wide
+#'   enough to fit the range of the data elements. An error will arise if
+#'   there's no such type.
 #' @param writeTags Logical value: should tags be written in YAML format to an
 #'   auxiliary file?
 #' @param errorIfMissing Logical value: raise an error if no suitable files
@@ -358,7 +370,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     if (!is.null(info$storage))
     {
         datatype <- info$storage$datatype
-        report(OL$Debug, "Image datatype is #{datatype$size}-byte #{ifelse(datatype$isSigned,'signed','unsigned')} #{datatype$type}")
+        report(OL$Debug, "Image datatype is #{datatype} (#{.Datatypes[[datatype]]$size}-byte #{ifelse(.Datatypes[[datatype]]$signed,'signed','unsigned')})")
     }
     report(OL$Debug, "Image orientation is #{orientation(image)}")
     
@@ -374,9 +386,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     # Data has not already been read, so do it here
     if (willReadData)
     {
-        matchingDatatypes <- .Nifti$datatypes$rTypes == datatype$type & .Nifti$datatypes$sizes == datatype$size & .Nifti$datatypes$isSigned == datatype$isSigned
-        assert(any(matchingDatatypes), "Image datatype is not supported")
-        datatypeCode <- as.integer(.Nifti$datatypes$codes[which(matchingDatatypes)[1]])
+        assert(datatype %in% names(.DatatypeCodes$Nifti), "Image datatype is not supported")
         
         swapEndianness <- info$storage$endian != "" && info$storage$endian != .Platform$endian
         
@@ -386,13 +396,13 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
             blocks <- volumes
         else
             blocks <- seq_len(prod(fullDims[4:7]))
-        offsets <- info$storage$offset + (blocks - 1) * blockSize * datatype$size
+        offsets <- info$storage$offset + (blocks - 1) * blockSize * .Datatypes[[datatype]]$size
         
         coords <- values <- NULL
         for (i in seq_along(blocks))
         {
             # Read the current block
-            currentData <- RNifti:::readBlob(fileNames$imageFile, blockSize, datatypeCode, offsets[i], swap=swapEndianness)
+            currentData <- RNifti:::readBlob(fileNames$imageFile, blockSize, .DatatypeCodes$Nifti[datatype], offsets[i], swap=swapEndianness)
             
             if (sparse)
             {
@@ -413,7 +423,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
             {
                 # Create an array for the data if it doesn't yet exist, then insert the block
                 if (is.null(data))
-                    data <- array(as(0,datatype$type), dim=c(fullDims[1:3],length(blocks)))
+                    data <- array(as(0,.Datatypes[[datatype]]$rType), dim=c(fullDims[1:3],length(blocks)))
                 data[,,,i] <- currentData
             }
         }
@@ -471,14 +481,17 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     return (image)
 }
 
-writeImageData <- function (image, connection, type, size, endian = .Platform$endian)
+writeImageData <- function (image, connection, datatype, endian = .Platform$endian)
 {
+    # RNifti handles RGB(A) for NIfTI/ANALYZE; no other write format supports it
+    assert(!(datatype %in% c("rgb","rgba")), "Cannot write RGB data at the moment")
+    
     image <- as(image, "MriImage")
     data <- image$getData()
     dims <- image$getDimensions()
     
     # writeBin() can only write 2^31 - 1 bytes, so work blockwise if necessary
-    if (image$isSparse() || prod(dims) * size >= 2^31)
+    if (image$isSparse() || prod(dims) * .Datatypes[[datatype]]$size >= 2^31)
     {
         nDims <- image$getDimensionality()
         for (i in seq_len(dims[nDims]))
@@ -487,16 +500,16 @@ writeImageData <- function (image, connection, type, size, endian = .Platform$en
             indices[[nDims]] <- i
             currentData <- as.array(do.call("[", c(list(data),indices)))
             
-            storage.mode(currentData) <- type
+            storage.mode(currentData) <- .Datatypes[[datatype]]$rType
             attributes(currentData) <- NULL
-            writeBin(currentData, connection, size=size, endian=endian)
+            writeBin(currentData, connection, size=.Datatypes[[datatype]]$size, endian=endian)
         }
     }
     else
     {
-        storage.mode(data) <- type
+        storage.mode(data) <- .Datatypes[[datatype]]$rType
         attributes(data) <- NULL
-        writeBin(data, connection, size=size, endian=endian)
+        writeBin(data, connection, size=.Datatypes[[datatype]]$size, endian=endian)
     }
 }
 
@@ -511,7 +524,7 @@ writeGradientDirections <- function (directions, bValues, fileName)
 
 #' @rdname files
 #' @export
-writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE, maxSize = NULL, writeTags = FALSE)
+writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE, datatype = "fit", writeTags = FALSE)
 {
     image <- as(image, "MriImage")
     
@@ -547,9 +560,9 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
     if (params$format == "Analyze")
         report(OL$Error, "Writing to ANALYZE format is no longer supported")
     else if (params$format == "Nifti")
-        writeNifti(image, fileNames, maxSize=maxSize)
+        writeNifti(image, fileNames, datatype=datatype)
     else if (params$format == "Mgh")
-        writeMgh(image, fileNames, gzipped=params$gzipped)
+        writeMgh(image, fileNames, datatype=datatype, gzipped=params$gzipped)
     
     if (image$isInternal())
     {

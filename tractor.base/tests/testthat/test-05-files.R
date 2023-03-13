@@ -39,7 +39,7 @@ test_that("we can read and write NIfTI-1 files", {
     expect_flag(unreorderedImage[50,59,33], "no consistent meaning")
     expect_equal(RNifti:::orientation(unreorderedImage$getXform()), "LIA")
     
-    writePath <- image$writeToFile(tempfile(), "NIFTI_GZ", maxSize=1)
+    writePath <- image$writeToFile(tempfile(), "NIFTI_GZ", datatype="uint8")
     expect_lt(file.size(writePath$imageFile), file.size(path))
     rereadImage <- readImageFile(writePath$fileStem)
     expect_equal(image[50,59,33], rereadImage[50,59,33], tolerance=0.1)

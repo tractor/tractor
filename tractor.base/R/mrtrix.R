@@ -73,13 +73,13 @@ readMrtrix <- function (fileNames)
     orientation(xform) <- orientation
     
     datatypeString <- as.character(getField("datatype"))
-    if (datatypeString == "Bit" || datatypeString %~% "^C")
-        report(OL$Error, "Bit and complex datatypes are not supported")
-    datatypeMatch <- ore.search("^(U)?(Int|Float)(8|16|32|64)(LE|BE)?$", datatypeString)
-    datatype <- list(code=0,
-                     type=ifelse(datatypeMatch[,2]=="Int", "integer", "double"),
-                     size=as.integer(datatypeMatch[,3]) / 8L,
-                     isSigned=!is.na(datatypeMatch[,1]) || datatypeMatch[,2]=="Float")
+    assert(datatypeString != "Bit", "Bit datatype is not supported")
+    
+    datatypeMatch <- ore.search("^(C)?(U?Int|Float)(8|16|32|64)(LE|BE)?$", datatypeString)
+    if (datatypeMatch[,2] == "Float")
+        datatype <- tolower(es("#{datatypeMatch[,1]}#{ifelse(datatypeMatch[,3]=='32','float','double')}"))
+    else
+        datatype <- tolower(es("#{datatypeMatch[,2]}#{datatypeMatch[,3]}"))
     endianString <- ifelse(is.na(datatypeMatch[,4]), "", datatypeMatch[,4])
     endian <- switch(endianString, LE="little", BE="big", .Platform$endian)
     

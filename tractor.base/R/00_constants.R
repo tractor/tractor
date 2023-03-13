@@ -2,11 +2,23 @@
 .Workspace$deserialisers <- list()
 .Workspace$pathHandlers <- list()
 
-.Analyze <- list(
-    datatypes=list(codes=c(     2,          4,          8,          16,         64),
-                   rTypes=c(   "integer",  "integer",  "integer",  "double",   "double"),
-                   sizes=c(     1,          2,          4,          4,          8),
-                   isSigned=c(  FALSE,      TRUE,       TRUE,       TRUE,       TRUE)))
+# RGB types are handled specially
+.Datatypes <- list(int8=list(   rType="integer", size=1,  signed=TRUE),
+                   uint8=list(  rType="integer", size=1,  signed=FALSE),
+                   int16=list(  rType="integer", size=2,  signed=TRUE),
+                   uint16=list( rType="integer", size=2,  signed=FALSE),
+                   int32=list(  rType="integer", size=4,  signed=TRUE),
+                   uint32=list( rType="integer", size=4,  signed=FALSE),
+                   int64=list(  rType="integer", size=8,  signed=TRUE),
+                   uint64=list( rType="integer", size=8,  signed=FALSE),
+                   float=list(  rType="double",  size=4,  signed=TRUE),
+                   double=list( rType="double",  size=8,  signed=TRUE),
+                   cfloat=list( rType="complex", size=8,  signed=TRUE),
+                   cdouble=list(rType="complex", size=16, signed=TRUE))
+
+.DatatypeCodes <- list(Analyze=c(uint8=2L, int16=4L, int32=8L, float=16L, cfloat=32L, double=64L, rgb=128L),
+                       Nifti=c(uint8=2L, int16=4L, int32=8L, float=16L, cfloat=32L, double=64L, rgb=128L, int8=256L, uint16=512L, uint32=768L, cdouble=1792L, rgba=2304L),
+                       Mgh=c(uint8=0L, int32=1L, float=3L, int16=4L))
 
 .Dicom <- list(
     nonCharTypes=list(codes=c("OF", "FL", "FD", "SL", "SS", "UL", "US", "AT"),
@@ -19,24 +31,6 @@
     transferSyntaxes=list("1.2.840.10008.1.2"   = list(endian="little",explicitTypes=FALSE),
                           "1.2.840.10008.1.2.1" = list(endian="little",explicitTypes=TRUE),
                           "1.2.840.10008.1.2.2" = list(endian="big",explicitTypes=TRUE)))
-
-.Nifti <- list(
-    datatypes=list(codes=c(     2,          4,          8,          16,         64,         256,        512,        768),
-                   rTypes=c(   "integer",  "integer",  "integer",  "double",   "double",   "integer",  "integer",  "integer"),
-                   sizes=c(     1,          2,          4,          4,          8,          1,          2,          4),
-                   isSigned=c(  FALSE,      TRUE,       TRUE,       TRUE,       TRUE,       TRUE,       FALSE,      FALSE),
-                   names=c(    "uint8",    "int16",    "int32",    "float",    "double",   "int8",     "uint16",   "uint32")),
-    units=list(unknown=0, m=1, mm=2, um=3, s=8, ms=16, us=24),
-    xformCodes=list(unknown=0, scannerAnatomical=1, alignedAnatomical=2, talairach=3, mni=4),
-    magicStrings=list(list(c(charToRaw("ni1"),as.raw(0)), c(charToRaw("n+1"),as.raw(0))),
-                      list(c(charToRaw("ni2"),as.raw(0)), c(charToRaw("n+2"),as.raw(0)))))
-
-.Mgh <- list(
-    datatypes=list(codes=c(     0,          4,          1,          3      ),
-                   rTypes=c(   "integer",  "integer",  "integer",  "double"),
-                   sizes=c(     1,          2,          4,          4      ),
-                   isSigned=c(  FALSE,      TRUE,       TRUE,       TRUE   ),
-                   names=c(    "uint8",    "int16",    "int32",    "float" )))
 
 .Bids <- list(
     mappingFromJson=c(MagneticFieldStrength="fieldStrength", ManufacturersModelName="scannerModelName", SpacingBetweenSlices="sliceSpacing", TotalReadoutTime="effectiveReadoutTime", MultibandAccelerationFactor="multibandFactor", ImageComments="comments"),

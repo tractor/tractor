@@ -48,22 +48,21 @@ readMgh <- function (fileNames)
     qform(header) <- structure(xform, code=2L)
     header$pixdim[seq_len(nDims)+1] <- voxelDims[1:nDims]
     
-    typeIndex <- which(.Mgh$datatypes$codes == typeCode)
-    if (length(typeIndex) != 1)
-        report(OL$Error, "The MGH data type code is not valid")
-    datatype <- list(code=typeCode, type=.Mgh$datatypes$rTypes[typeIndex], size=.Mgh$datatypes$sizes[typeIndex], isSigned=.Mgh$datatypes$isSigned[typeIndex])
+    assert(typeCode %in% .DatatypeCodes$Mgh, "The MGH data type code is not valid")
+    datatype <- names(.DatatypeCodes$Mgh)[.DatatypeCodes$Mgh == typeCode]
     
     storage <- list(offset=284, datatype=datatype, endian="big")
     invisible (list(image=NULL, header=header, storage=storage))
 }
 
-writeMgh <- function (image, fileNames, gzipped = FALSE)
+writeMgh <- function (image, fileNames, datatype = "fit", gzipped = FALSE)
 {
     image <- as(image, "MriImage")
     
     fileFun <- (if (gzipped) gzfile else file)
     
-    datatype <- chooseDataTypeForImage(image, "Mgh")
+    if (datatype == "fit")
+        datatype <- chooseDataTypeForImage(image, "Mgh")
     
     dims <- image$getDimensions()
     ndims <- image$getDimensionality()
@@ -89,13 +88,13 @@ writeMgh <- function (image, fileNames, gzipped = FALSE)
     
     writeBin(as.integer(1), connection, size=4, endian="big")
     writeBin(as.integer(fullDims), connection, size=4, endian="big")
-    writeBin(as.integer(datatype$code), connection, size=4, endian="big")
+    writeBin(as.integer(.DatatypeCodes$Mgh[datatype]), connection, size=4, endian="big")
     writeBin(raw(4), connection)
     writeBin(as.integer(1), connection, size=2, endian="big")
     writeBin(as.double(abs(fullVoxelDims)), connection, size=4, endian="big")
     writeBin(as.double(xformlikeMatrix), connection, size=4, endian="big")
     writeBin(raw(194), connection)
     
-    writeImageData(image, connection, datatype$type, datatype$size, endian="big")
+    writeImageData(image, connection, datatype, endian="big")
     close(connection)
 }
