@@ -8,5 +8,6 @@ runExperiment <- function ()
     maxSize <- getConfigVariable("MaxBytesPerPixel", 2L)
     
     image <- readImageFile(Arguments[1])
-    writeImageFile(image, Arguments[nArguments()], maxSize=maxSize)
+    datatype <- tractor.base:::chooseDataTypeForImage(image, "Nifti", maxSize=maxSize)
+    writeImageFile(image, Arguments[nArguments()], datatype=datatype)
 }

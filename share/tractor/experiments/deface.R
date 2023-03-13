@@ -70,5 +70,5 @@ runExperiment <- function ()
     image$map(function(x,y) ifelse(y==1,0,x), transformedMask)
     fileNames <- image$writeToFile(Arguments[nArguments()])
     if (requireMask)
-        transformedMask$writeToFile(paste(fileNames$fileStem, "facemask", sep="_"), maxSize=1)
+        transformedMask$writeToFile(paste(fileNames$fileStem, "facemask", sep="_"), datatype="uint8")
 }
