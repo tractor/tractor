@@ -6,7 +6,7 @@ transformImage <- function (transform, newImage = NULL, index = 1, preferAffine 
     if (is.null(newImage))
         newImage <- transform$getSourceImage(index, reverse)
     
-    assert(!newImage$isRgb(), "RGB images cannot be transformed yet")
+    assert(!is(newImage,"MriImage") || !newImage$isRgb(), "RGB images cannot be transformed yet")
     
     xfm <- transform$getTransformObjects(index, reverse, preferAffine, half)
     result <- applyTransform(xfm, newImage, interpolation=.interpolationNameToCode(interpolation))
