@@ -24,9 +24,6 @@ augmentedInfoPanel <- function (indexNames = NULL)
 #' @export
 polarPlotPanel <- function (directions, bValues = NULL)
 {
-    escapeToQuit <- isTRUE(names(dev.cur()) %in% c("quartz","RStudioGD"))
-    quitInstructions <- paste(ifelse(escapeToQuit,"Press Esc","Right click"), "to leave interactive mode", sep=" ")
-    
     if (is.null(bValues))
         bValues <- rep(1, nrow(directions))
     
@@ -41,7 +38,7 @@ polarPlotPanel <- function (directions, bValues = NULL)
         axes <- setdiff(1:3, which.min(correlations))
         view <- c("sagittal","coronal","axial")[which.min(correlations)]
     
-        plot(NA, xlim=c(-maxDataValue,maxDataValue), ylim=c(-maxDataValue,maxDataValue), xlab=quitInstructions, ylab="intensity", col.lab="grey70", bty="n", main=paste("Location: (",implode(point,","),")\nView: ",view,sep=""), xaxt="n", yaxt="n", asp=1)
+        plot(NA, xlim=c(-maxDataValue,maxDataValue), ylim=c(-maxDataValue,maxDataValue), xlab=RNifti:::.quitInstructions(), ylab="intensity", col.lab="grey70", bty="n", main=paste("Location: (",implode(point,","),")\nView: ",view,sep=""), xaxt="n", yaxt="n", asp=1)
         ticks <- list(x=pretty(par("xaxp")[1:2]), y=pretty(par("yaxp")[1:2]))
         axis(1, ticks$x, abs(ticks$x))
         axis(2, ticks$y, abs(ticks$y))
