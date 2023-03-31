@@ -363,6 +363,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     # Extract some metadata
     nDims <- ndim(image)
     dims <- dim(image)
+    pixdims <- pixdim(image)
     fullDims <- c(dims, rep(1,max(0,7-nDims)))
     nVoxels <- prod(dims)
     
@@ -383,13 +384,14 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     willReadData <- (!metadataOnly && !RNifti:::hasData(image))
     willReorderImage <- (reorder && orientation(image) != "LAS")
     
+    assert(!willReadData || datatype %in% names(.DatatypeCodes$Nifti), "Image datatype is not supported")
+    
+    inBlockOrder <- info$storage$blockOrder %||% TRUE
+    swapEndianness <- info$storage$endian != "" && info$storage$endian != .Platform$endian
+    
     # Data has not already been read, so do it here
-    if (willReadData)
+    if (willReadData && inBlockOrder)
     {
-        assert(datatype %in% names(.DatatypeCodes$Nifti), "Image datatype is not supported")
-        
-        swapEndianness <- info$storage$endian != "" && info$storage$endian != .Platform$endian
-        
         # Work out how many blocks (3D volumes) we're reading, and the corresponding byte offsets
         blockSize <- prod(fullDims[1:3])
         if (!is.null(volumes) && nDims > 3)
@@ -434,10 +436,32 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
         
         # Update the dimensions to match the image metadata
         dim(data) <- dims
-        
-        # Attach the data to the image
-        image <- updateNifti(data, image)
     }
+    else if (!inBlockOrder)
+    {
+        assert(length(dims) == 4, "Only 4D images out of block order are supported")
+        
+        perm <- c(2:4, 1L)
+        image$dim[2:(nDims+1)] <- dims[perm]
+        image$pixdim[2:(nDims+1)] <- pixdims[perm]
+        
+        if (willReadData)
+        {
+            data <- RNifti:::readBlob(fileNames$imageFile, nVoxels, .DatatypeCodes$Nifti[datatype], info$storage$offset, swap=swapEndianness)
+            
+            dim(data) <- dims
+            data <- aperm(data, perm)
+            
+            if (!is.null(volumes))
+                data <- data[,,,volumes]
+            if (sparse)
+                data <- as(data, "SparseArray")
+        }
+    }
+    
+    # Attach the data to the image
+    if (willReadData)
+        image <- updateNifti(data, image)
     
     # Reorder the image if requested (as opposed to the data to be associated with it)
     if (willReorderImage)

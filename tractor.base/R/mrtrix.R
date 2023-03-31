@@ -54,12 +54,12 @@ readMrtrix <- function (fileNames)
     layoutMatch <- ore.search("^(\\+|-)(\\d)$", getField("layout"), simplify=FALSE)
     signs <- ifelse(layoutMatch[,,1] == "+", 1, -1)
     axes <- as.integer(layoutMatch[,,2]) + 1L
-    if (length(axes) > 3 && any(axes[4:length(axes)] != 4:length(axes)))
-        report(OL$Error, "Images not stored in volume block order are not yet supported")
+    blockOrder <- (length(axes) <= 3 || all(which(axes > 3) > 3))
     
     # Find the inverse axis permutation and create an orientation string matching the data layout
     perm <- match(seq_along(axes), axes)
-    orientation <- implode(c("I","P","L","","R","A","S")[pad(signs[perm]*perm,3L,3L)[1:3]+4], sep="")
+    spacePerm <- perm[perm <= 3]
+    orientation <- implode(c("I","P","L","","R","A","S")[pad(signs[spacePerm]*spacePerm,3L,3L)[1:3]+4], sep="")
     
     # MRtrix stores the transform relative to the basic layout, and without
     # scaling for voxel dimensions, so we have to restore the scale factors and
@@ -126,6 +126,6 @@ readMrtrix <- function (fileNames)
     # Fields are removed as they are used; remaining ones become tags
     tags <- c(tags, mergedFields)
     
-    storage <- list(offset=as.integer(fileMatch[,2]), datatype=datatype, endian=endian)
+    storage <- list(offset=as.integer(fileMatch[,2]), datatype=datatype, endian=endian, blockOrder=blockOrder)
     invisible (list(image=NULL, header=header, storage=storage, tags=tags))
 }
