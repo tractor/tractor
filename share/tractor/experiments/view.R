@@ -11,7 +11,7 @@ runExperiment <- function ()
     
     requestedViewer <- getConfigVariable("Viewer", NULL, "character", validValues=c("tractor","fsleyes","fslview","freeview"))
     fixedWindow <- getConfigVariable("FixedWindow", TRUE, deprecated=TRUE)
-    plotType <- getConfigVariable("PlotType", NULL, "character", validValues=c("none","time","orientation"))
+    plotType <- getConfigVariable("PlotType", NULL, "character", validValues=c("none","time","orientation","sharmonic"))
     directionsFile <- getConfigVariable("DirectionsFile", NULL, "character")
     
     if (nArguments() > 1)
@@ -60,7 +60,7 @@ runExperiment <- function ()
         }
     }
     
-    infoPanel <- switch(plotType, time=RNifti::timeSeriesPanel, orientation=polarPlotPanel(directions[,1:3],directions[,4]))
+    infoPanel <- switch(plotType, time=RNifti::timeSeriesPanel, orientation=polarPlotPanel(directions[,1:3],directions[,4]), sharmonic=tractor.base:::sphericalHarmonicPanel)
     viewerArguments <- c(as.list(Arguments), list(wait=TRUE,lookupTable=lookupTable,infoPanel=infoPanel))
     if (!is.null(requestedViewer))
         viewerArguments <- c(viewerArguments, list(viewer=requestedViewer))
