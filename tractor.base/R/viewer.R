@@ -54,66 +54,6 @@ polarPlotPanel <- function (directions, bValues = NULL)
     })
 }
 
-sphericalHarmonicPanel <- function (point, data, labels)
-{
-    assocLegendreTheta <- function (l, m)
-    {
-        if (m < 0 || m > l)
-            function(theta) rep(0, length(theta))
-        else if (l == 0)
-            function(theta) rep(1, length(theta))
-        else if (l == 1 && m == 0)
-            cos
-        else if (l == 1 && m == 1)
-            sin
-        else if (l == m)
-            function(theta) prod(seq(2*l-1, 1, -2)) * sin(theta)^l
-        else
-            function(theta) (cos(theta) * (2*l-1) * assocLegendreTheta(l-1,m)(theta) - (l+m-1) * assocLegendreTheta(l-2,m)(theta)) / (l - m)
-    }
-    
-    sphericalHarmonic <- function (l, m)
-    {
-        assert(m >= -l && m <= l, "m must be between -l and l")
-        if (m == 0)
-            return (function(theta, phi) sqrt((2*l+1) / (4*pi)) * assocLegendreTheta(l,0)(theta))
-        constantFactor <- sqrt(2) * sqrt((2*l+1) * factorial(l-abs(m)) / factorial(l+abs(m)) / (4*pi))
-        if (m < 0)
-            function(theta, phi) constantFactor * assocLegendreTheta(l,-m)(theta) * sin(-m*phi)
-        else
-            function(theta, phi) constantFactor * assocLegendreTheta(l,m)(theta) * cos(m*phi)
-    }
-    
-    spherePlot <- function (fun, latsteps = 32, longsteps = 64, rmax = 1)
-    {
-        theta <- seq(0, pi, length.out=latsteps)
-        phi <- seq(0, 2*pi, length.out=longsteps)
-        misc3d::parametric3d(function(u,v) fun(u,v) * sin(u) * cos(v),
-                             function(u,v) fun(u,v) * sin(u) * sin(v),
-                             function(u,v) fun(u,v) * cos(u),
-                             theta, phi,
-                             engine="standard",
-                             color=function(x,y,z) rgb(abs(x), abs(y), abs(z), maxColorValue=rmax),
-                             col.mesh=shades::opacity("white", 0.05),
-                             xlim=c(-rmax,rmax), ylim=c(-rmax,rmax), zlim=c(-rmax,rmax))
-    }
-    
-    lmax <- sapply(data, function(x) switch(as.character(length(x)), "6"=2, "15"=4, "28"=6, "45"=8, "66"=10, 0))
-    assert(!all(lmax == 0), "Data length does not match expectations for a spherical harmonic coefficient series")
-    i <- max(which(lmax > 0))
-    
-    basis <- NULL
-    for (l in seq(0,lmax[i],2))
-        basis <- c(basis, lapply(-l:l, function(m) sphericalHarmonic(l,m)))
-    
-    spherePlot(function (theta, phi) {
-        result <- rep(0, length(theta))
-        for (j in seq_along(basis))
-            result <- result + data[[i]][j] * basis[[j]](theta, phi)
-        return (result)
-    }, rmax=data[[i]][1]*1.1)
-}
-
 #' A simple interactive viewer for MriImage objects
 #' 
 #' The \code{viewImages} function provides a simple interactive viewer for
