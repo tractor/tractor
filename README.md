@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tractor/tractor.svg?branch=master)](https://travis-ci.org/tractor/tractor) [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.10010.svg)](http://dx.doi.org/10.5281/zenodo.10010)
+[![CI](https://github.com/tractor/tractor/actions/workflows/ci.yaml/badge.svg)](https://github.com/tractor/tractor/actions/workflows/ci.yaml) [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.10010.svg)](http://dx.doi.org/10.5281/zenodo.10010)
 
 TractoR is an [R-based](http://www.r-project.org) platform for medical image processing, tractography and graph analysis. It is focussed on handling magnetic resonance images, but many of its core functions are applicable to any kind of image. The package is full-stack free and open-source, as R is itself free software, and it is easy to extend and build upon. Downloads are available from the [project web site](http://www.tractor-mri.org.uk/downloads).
 
