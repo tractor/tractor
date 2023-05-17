@@ -15,6 +15,10 @@
   <link href="assets/style.css" rel="stylesheet">
 </head>
 
+<!-- Google tag (gtag.js) -->
+
+
+
 <body>
 
 <header>
@@ -31,8 +35,8 @@
       <span><a href="downloads.html">Downloads</a></span>
       <span><a href="changelog.html">Changelog</a></span>
       <span><a href="references.html">References</a></span>
-      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
       <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+      <span><a rel="me" href="https://fosstodon.org/@tractor">Mastodon</a></span>
     </div>
   </nav>
 </div>
@@ -43,6 +47,34 @@
 <h1>Changelog</h1>
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
+
+<h2 id="340-2023-05-17">3.4.0 (2023-05-17)</h2>
+
+<ul>
+<li>Heuristic neighbourhood tractography is defunct. All <code>hnt-</code> experiment scripts have been removed, along with the underlying functions. This approach has been deprecated since 2017, and has no remaining advantages compared to <a href="PNT-tutorial.html">probabilistic neighbourhood tractography</a>.</li>
+<li>There is new interoperability with <a href="https://www.mrtrix.org">MRtrix3</a>, including read support for the <a href="https://mrtrix.readthedocs.io/en/latest/getting_started/image_data.html"><code>mif</code> image format and <code>tck</code> tractography format</a>. These files can now be used as input to scripts like <code>image</code>, <code>trkinfo</code> and <code>graph-build</code>.</li>
+<li>TractoR’s tractography functions have been substantially refactored for better generality, partly to accommodate MRtrix <code>tck</code> files as input. As a result it is no longer necessary for streamlines to be written to file before being further used – they can be generated and processed entirely in memory.</li>
+<li>MRtrix-format <code>tck</code> tractography files can be converted to TrackVis <code>trk</code> format using the new <code>tck2trk</code> script.</li>
+<li>The MRtrix viewer, MRView, is now available as an external viewer through the <code>view</code> script.</li>
+<li>The new <code>compare</code> script compares image values to check whether two images contain the same data.</li>
+<li>A history of the TractoR scripts used to generate a given image is now stored in the <code>commandHistory</code> tag, and merged with the equivalent from MRtrix where relevant.</li>
+<li>True RGB NIfTI files are now supported for reading and writing, and internal methods for the <code>tensorfit</code> script will now produce an RGB colour fractional anisotropy map. RGB images cannot yet be transformed between spaces, though.</li>
+<li>A colour fractional anisotropy map is now additionally produced by the internal diffusion tensor fitting code.</li>
+<li>Complex-valued images are also now supported internally.</li>
+<li>When interpreting file paths, <code>furrow</code> will now leave any that are explicitly given (without requiring an extension to be added) as they are. This is partly because <code>trk</code> and <code>tck</code> files with the same base name can currently coexist.</li>
+<li>It is now possible for more object types to be summarised by <code>peek</code>.</li>
+<li>Workflow prerequisites are now checked more carefully.</li>
+<li>The <code>apply</code> script is now much more memory-efficient when combining many images.</li>
+<li>Functions from <code>tractor.base</code> that were deprecated in the 3.0.0 release have now been removed.</li>
+</ul>
+
+<h2 id="335-2021-04-30">3.3.5 (2021-04-30)</h2>
+
+<ul>
+<li>The <a href="https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/eddy">eddy</a> workflow now adds the argument <code>--data_is_shelled</code> when calling the <code>eddy</code> executable, since the absence of this flag frequently caused confusion among users. This has no effect on the output from the workflow, except to silence an error from <code>eddy</code> which is often spurious.</li>
+<li>The <code>dpreproc</code> script now also checks for the <code>eddy_openmp</code> variant executable name before deciding not to run eddy.</li>
+<li>A mistake in the self-documentation of the <code>workflow</code> script has been corrected.</li>
+</ul>
 
 <h2 id="334-2021-01-12">3.3.4 (2021-01-12)</h2>
 
@@ -950,14 +982,7 @@
 
 </div>
 
-<script src="assets/jquery-3.2.0.min.js"></script>
-<script src="assets/jquery.hypher.min.js"></script>
-<script src="assets/en-gb.js"></script>
-<script async type="text/javascript">
-  $('p,li').hyphenate('en-gb');
-</script>
 <script async src="assets/prism.js"></script>
-
 
 </body>
 

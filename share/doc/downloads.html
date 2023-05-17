@@ -15,6 +15,10 @@
   <link href="assets/style.css" rel="stylesheet">
 </head>
 
+<!-- Google tag (gtag.js) -->
+
+
+
 <body>
 
 <header>
@@ -31,8 +35,8 @@
       <span><a href="downloads.html">Downloads</a></span>
       <span><a href="changelog.html">Changelog</a></span>
       <span><a href="references.html">References</a></span>
-      <span><a href="https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=TRACTOR">Mailing list</a></span>
       <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
+      <span><a rel="me" href="https://fosstodon.org/@tractor">Mastodon</a></span>
     </div>
   </nav>
 </div>
@@ -43,7 +47,7 @@
 <h1>Downloads</h1>
 
 <div id="download-box">
-  <p>The latest version of TractoR is <span id="version">v3.3.3</span>.</p>
+  <p>The latest version of TractoR is <span id="version"></span>.</p>
   <img src="download.png" alt="Download icon">
   <p>Download <a href="#" onclick="ga('send','event','Downloads','Downloaded','tarball'); window.location.href='http://www.tractor-mri.org.uk/tractor.tar.gz'">tractor.tar.gz</a> or <a href="#" onclick="ga('send','event','Downloads','Downloaded','zipball'); window.location.href='http://www.tractor-mri.org.uk/tractor.zip'">tractor.zip</a>.</p>
 </div>
@@ -72,14 +76,7 @@
 
 </div>
 
-<script src="assets/jquery-3.2.0.min.js"></script>
-<script src="assets/jquery.hypher.min.js"></script>
-<script src="assets/en-gb.js"></script>
-<script async type="text/javascript">
-  $('p,li').hyphenate('en-gb');
-</script>
 <script async src="assets/prism.js"></script>
-
 
 </body>
 

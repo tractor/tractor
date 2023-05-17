@@ -77,6 +77,11 @@ div#main {
     margin: 0px auto;
     text-align: justify;
     padding-bottom: 30px;
+    
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
 }
 
 @media (max-width: 767px) {
