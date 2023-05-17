@@ -63,31 +63,24 @@ polarPlotPanel <- function (directions, bValues = NULL)
 #' @param colourScales A list of colour scales to use for each image, which
 #'   will be recycled to the length of \code{images}. See
 #'   \code{\link{getColourScale}} for details. The default is to use greyscale.
-#' @param point For \code{viewImages}, a length 3 integer vector giving the
-#'   initial location of the crosshairs, in voxels. For info panel functions,
-#'   the current location of the crosshairs.
+#' @param point A length-3 integer vector giving the initial location of the
+#'   crosshairs, in voxels.
 #' @param interactive A single logical value. If \code{TRUE}, the plot is
 #'   interactive.
 #' @param crosshairs A single logical value. If \code{TRUE}, the crosshairs are
 #'   displayed.
 #' @param orientationLabels A single logical value. If \code{TRUE}, orientation
 #'   labels are displayed.
-#' @param fixedWindow A single logical value. If \code{TRUE}, each image is
-#'   windowed globally, rather than for each slice.
-#' @param indexNames A list whose elements are either \code{NULL} or a named
-#'   character vector giving the names associated with each index in the image.
 #' @param infoPanel A function with at least three arguments, which must plot
 #'   something to fill the bottom-right panel of the viewer after each change
 #'   of crosshair location. The three mandatory arguments correspond to the
 #'   current location in the image, the image values at that location, and the
 #'   names of each image. The \code{defaultInfoPanel} and
-#'   \code{timeSeriesPanel} functions are valid examples.
+#'   \code{timeSeriesPanel} functions from package \code{RNifti} are valid
+#'   examples.
 #' @param \dots Additional arguments to \code{infoPanel}.
-#' @param data A list giving the data value(s) at the current crosshair
-#'   location in each image displayed. Typically numeric, but in principle may
-#'   be of any mode, and will be character mode when \code{indexNames} is not
-#'   \code{NULL}.
-#' @param imageNames A character vector giving a name for each image displayed.
+#' @param indexNames A list whose elements are either \code{NULL} or a named
+#'   character vector giving the names associated with each index in the image.
 #' @param directions A matrix of 3D acquisition direction vectors, one per row.
 #' @param bValues A vector of b-values, if the image is diffusion-weighted.
 #' @return These functions are called for their side effects.
@@ -105,7 +98,7 @@ polarPlotPanel <- function (directions, bValues = NULL)
 #' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 #' @rdname viewer
 #' @export
-viewImages <- function (images, colourScales = NULL, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, infoPanel = defaultInfoPanel, ...)
+viewImages <- function (images, colourScales = NULL, point = NULL, interactive = TRUE, crosshairs = TRUE, orientationLabels = TRUE, infoPanel = RNifti::defaultInfoPanel, ...)
 {
     if (is.list(images))
         images <- lapply(images, as, "MriImage")

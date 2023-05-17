@@ -12,7 +12,7 @@ polarPlotPanel(directions, bValues = NULL)
 
 viewImages(images, colourScales = NULL, point = NULL, interactive = TRUE,
   crosshairs = TRUE, orientationLabels = TRUE,
-  infoPanel = defaultInfoPanel, ...)
+  infoPanel = RNifti::defaultInfoPanel, ...)
 }
 \arguments{
 \item{indexNames}{A list whose elements are either \code{NULL} or a named
@@ -28,9 +28,8 @@ character vector giving the names associated with each index in the image.}
 will be recycled to the length of \code{images}. See
 \code{\link{getColourScale}} for details. The default is to use greyscale.}
 
-\item{point}{For \code{viewImages}, a length 3 integer vector giving the
-initial location of the crosshairs, in voxels. For info panel functions,
-the current location of the crosshairs.}
+\item{point}{A length-3 integer vector giving the initial location of the
+crosshairs, in voxels.}
 
 \item{interactive}{A single logical value. If \code{TRUE}, the plot is
 interactive.}
@@ -46,19 +45,10 @@ something to fill the bottom-right panel of the viewer after each change
 of crosshair location. The three mandatory arguments correspond to the
 current location in the image, the image values at that location, and the
 names of each image. The \code{defaultInfoPanel} and
-\code{timeSeriesPanel} functions are valid examples.}
+\code{timeSeriesPanel} functions from package \code{RNifti} are valid
+examples.}
 
 \item{\dots}{Additional arguments to \code{infoPanel}.}
-
-\item{fixedWindow}{A single logical value. If \code{TRUE}, each image is
-windowed globally, rather than for each slice.}
-
-\item{data}{A list giving the data value(s) at the current crosshair
-location in each image displayed. Typically numeric, but in principle may
-be of any mode, and will be character mode when \code{indexNames} is not
-\code{NULL}.}
-
-\item{imageNames}{A character vector giving a name for each image displayed.}
 }
 \value{
 These functions are called for their side effects.
@@ -78,8 +68,7 @@ work:
 
 J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
-Journal of Statistical Software 44(8):1-18.
-\url{https://www.jstatsoft.org/v44/i08/}.
+Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 }
 \seealso{
 \code{\link{getColourScale}}
