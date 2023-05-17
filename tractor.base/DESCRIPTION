@@ -12,8 +12,6 @@ Description: Functions for working with magnetic resonance images. Reading and
     interactive and non-interactive visualisation; flexible image manipulation;
     metadata and sparse image handling.
 Encoding: UTF-8
-LazyLoad: yes
-LazyData: yes
 License: GPL-2
 URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
 BugReports: https://github.com/tractor/tractor/issues

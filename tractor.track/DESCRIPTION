@@ -10,7 +10,6 @@ LinkingTo: Rcpp, RNifti
 Suggests: tractor.reg
 Description: The tractor.track package provides functions for performing tractography using diffusion MRI data
 Encoding: UTF-8
-LazyLoad: yes
 License: GPL-2
 URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
 BugReports: https://github.com/tractor/tractor/issues
