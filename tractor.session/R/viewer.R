@@ -21,7 +21,8 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
     lookupTableMappings <- list(tractor=list(Greyscale=1,grayscale=1,greyscale=1,"Red-Yellow"=2,heat=2,.default=tolower),
                                 fsleyes=list(grayscale="greyscale",greyscale="greyscale",heat="red-yellow",.default=tolower),
                                 fslview=list(grayscale="Greyscale",greyscale="Greyscale",heat="Red-Yellow",.default=capitalise),
-                                freeview=list(Greyscale="grayscale",greyscale="grayscale","Red-Yellow"="heat",.default=tolower))
+                                freeview=list(Greyscale="grayscale",greyscale="grayscale","Red-Yellow"="heat",.default=tolower),
+                                mrview=list(grayscale="Gray",greyscale="Gray",heat="Hot","red-yellow"="Hot",.default=capitalise))
     lookupTable <- lapply(lookupTable, function (l) {
         if (is.character(l) && l %in% names(lookupTableMappings[[viewer]]))
             return (lookupTableMappings[[viewer]][[l]])
@@ -113,6 +114,8 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
             showImagesInFslview(imageFileNames, wait=wait, lookupTable=unlist(lookupTable), opacity=opacity)
         else if (viewer == "freeview")
             showImagesInFreeview(imageFileNames, wait=wait, lookupTable=unlist(lookupTable), opacity=opacity)
+        else if (viewer == "mrview")
+            showImagesInMrview(imageFileNames, wait=wait, lookupTable=unlist(lookupTable), opacity=opacity)
         
         # If we're not waiting for the program to exit, we can't delete the images yet
         if (wait)

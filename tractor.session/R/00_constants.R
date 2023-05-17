@@ -1,6 +1,6 @@
 .StandardBrainPath <- NULL
 
-.Viewers <- c("tractor", "fsleyes", "fslview", "freeview")
+.Viewers <- c("tractor", "fsleyes", "fslview", "freeview", "mrview")
 
 .AllSessionDirectories <- c("diffusion", "fdt", "bedpost", "transforms", "structural", "freesurfer", "functional")
 
