@@ -389,7 +389,11 @@ decomposeTransformation <- function (transform)
     if (!("affine" %in% transform$getTypes()))
         report(OL$Error, "Decomposition can only be performed for affine transformations")
     
-    return (lapply(transform$getTransformObjects(1:transform$nRegistrations(),preferAffine=TRUE), decomposeAffine))
+    affines <- transform$getTransformObjects(1:transform$nRegistrations(),preferAffine=TRUE)
+    if (is.list(affines))
+        return (lapply(affines, decomposeAffine))
+    else
+        return (decomposeAffine(affines))
 }
 
 mergeTransformations <- function (transforms, newSourceImage)
