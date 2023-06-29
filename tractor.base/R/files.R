@@ -28,7 +28,6 @@ getParametersForFileType <- function (fileType = NA, format = NA, singleFile = N
 identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
 {
     suffixes <- unique(c(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes, auxiliaries))
-    fileName <- expandFileName(fileName)
     files <- ensureFileSuffix(fileName, suffixes)
     exist <- file.exists(files)
     headersExist <- intersect(unique(.FileTypes$headerSuffixes), suffixes[exist])
@@ -62,7 +61,7 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     typeIndices <- which(.FileTypes$headerSuffixes == headersExist &
                          .FileTypes$imageSuffixes == imagesExist)
     
-    fileStem <- ensureFileSuffix(fileName, NULL, strip=suffixes)
+    fileStem <- expandFileName(ensureFileSuffix(fileName, NULL, strip=suffixes))
     headerFile <- ensureFileSuffix(fileStem, headersExist)
     imageFile <- ensureFileSuffix(fileStem, imagesExist)
     auxiliaryFiles <- ensureFileSuffix(fileStem, auxiliariesExist)

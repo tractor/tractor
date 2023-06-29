@@ -401,7 +401,7 @@ expandFileName <- function (fileName, base = getwd())
     # Absolute paths are assumed to start with an optional drive letter and colon (for Windows), and then a slash or backslash
     # This covers C:\dir\file, \dir\file, \\server\dir\file, //server/dir/file and /dir/file, but not URLs
     # Cf. https://docs.microsoft.com/en-gb/windows/win32/fileio/naming-a-file#fully-qualified-vs-relative-paths
-    fileName <- ifelse(fileName %~% "^([A-Za-z]:)?[/\\\\]", fileName, file.path(base,fileName))
+    fileName <- ifelse(fileName %~% "^([A-Za-z]:)?[/\\\\]|^~", fileName, file.path(base,fileName))
     return (normalizePath(fileName, .Platform$file.sep, FALSE))
 }
 
