@@ -14,7 +14,7 @@ session_name=`basename "$TRACTOR_SESSION_PATH"`
     exit 1
 }
 
-target_dir=`${FURROW} -z echo @freesurfer/mri/orig`
+target_dir=`${FURROW} -rz echo @freesurfer/mri/orig`
 
 set -x
 ${FURROW} mkdir -p "$target_dir"

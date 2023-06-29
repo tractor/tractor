@@ -7,6 +7,7 @@ trap 'exit $status' 0 1 2 15
 full_command="$0 $*"
 write_history=1
 suffixes=1
+relative=0
 working_dir=${TRACTOR_WORKING_DIR:-.}
 
 usage()
@@ -21,6 +22,8 @@ usage()
     echo "  -z          Do not write the command line used into a history log file"
     echo "  -n          Do not append a suffix to image filenames, giving the file"
     echo "              stem instead"
+    echo "  -r          Generate paths relative to the working directory, rather"
+    echo "              than absolute paths"
     echo "  -w dir      Specify the working directory, which will be created if"
     echo "              necessary. Default is '.', the current directory"
     echo
@@ -39,11 +42,12 @@ usage()
 
 [ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
 
-while getopts "hznw:" opt; do
+while getopts "hznrw:" opt; do
     case "$opt" in
         h) usage; status=0; exit ;;
         z) write_history=0 ;;
         n) suffixes=0 ;;
+        r) relative=1 ;;
         w) working_dir=`echo $OPTARG | sed 's/\/$//'` ;;
         ?) usage 1>&2; exit ;;
     esac
@@ -65,7 +69,7 @@ shift
 
 [ -d "${TRACTOR_HOME}/lib/R" ] && export R_LIBS="${TRACTOR_HOME}/lib/R"
 
-args=`echo "library(utils); library(tractor.utils); library(tractor.session); expandArguments('$*','$working_dir',$suffixes)" | "$R" --slave --vanilla`
+args=`echo "library(utils); library(tractor.utils); library(tractor.session); expandArguments('$*','$working_dir',$suffixes,$relative)" | "$R" --slave --vanilla`
 
 status=$?
 [ $status -ne 0 ] && exit

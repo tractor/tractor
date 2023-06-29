@@ -125,20 +125,26 @@ requireArguments <- function (...)
         report(OL$Error, "At least ", length(args), " argument(s) must be specified: ", implode(args,", "))
 }
 
-expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = TRUE)
+expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = TRUE, relative = FALSE)
 {
     setOutputLevel(OL$Warning)
     setwd(workingDirectory)
     suffixes <- as.logical(suffixes)
+    relative <- as.logical(relative)
     
     arguments <- resolvePath(ore.split("\\s+", arguments))
     for (i in seq_along(arguments))
     {
         if (file.exists(arguments[i]))
+        {
+            arguments[i] <- ifelse(relative, shQuote(relativePath(arguments[i],workingDirectory)), shQuote(arguments[i]))
             next
+        }
         fileName <- identifyImageFileNames(arguments[i], errorIfMissing=FALSE)
         if (!is.null(fileName))
             arguments[i] <- ifelse(suffixes, fileName$imageFile, fileName$fileStem)
+        if (arguments[i] != names(arguments)[i])
+            arguments[i] <- ifelse(relative, shQuote(relativePath(arguments[i],workingDirectory)), shQuote(arguments[i]))
         else if (arguments[i] %~% "=")
         {
             parts <- resolvePath(ore.split("=", arguments[i]))
@@ -147,6 +153,8 @@ expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = T
                 fileName <- identifyImageFileNames(parts[j], errorIfMissing=FALSE)
                 if (!is.null(fileName))
                     parts[j] <- ifelse(suffixes, fileName$imageFile, fileName$fileStem)
+                if (parts[j] != names(parts)[j])
+                    parts[j] <- ifelse(relative, shQuote(relativePath(parts[j],workingDirectory)), shQuote(parts[j]))
             }
             arguments[i] <- implode(parts, sep="=")
         }
