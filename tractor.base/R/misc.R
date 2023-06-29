@@ -362,10 +362,13 @@ relativePath <- function (path, referencePath)
     mainPieces <- mainPieces[mainPieces != "."]
     refPieces <- ore.split(ore.escape(.Platform$file.sep), expandFileName(referencePath))
     refPieces <- refPieces[refPieces != "."]
+    refIsDir <- isTRUE(file.info(referencePath)$isdir)
     
     shorterLength <- min(length(mainPieces), length(refPieces))
-    firstDifferentPiece <- min(which(mainPieces[1:shorterLength] != refPieces[1:shorterLength])[1], shorterLength, na.rm=TRUE)
-    newPieces <- c(rep("..", length(refPieces)-firstDifferentPiece), mainPieces[firstDifferentPiece:length(mainPieces)])
+    firstDifferentPiece <- min(which(mainPieces[1:shorterLength] != refPieces[1:shorterLength])[1], shorterLength+1, na.rm=TRUE)
+    newPieces <- rep("..", max(0, length(refPieces)-firstDifferentPiece+as.integer(refIsDir)))
+    if (length(mainPieces >= firstDifferentPiece))
+        newPieces <- c(newPieces, mainPieces[firstDifferentPiece:length(mainPieces)])
     
     return (implode(newPieces, sep=.Platform$file.sep))
 }
