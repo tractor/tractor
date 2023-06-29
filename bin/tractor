@@ -19,7 +19,7 @@ profile_performance=0
 parallelisation_factor=1
 batch_mode=0
 verbose_level=1
-working_dir="."
+working_dir=${TRACTOR_WORKING_DIR:-.}
 distribution_version="ersion unknown"
 
 command_flags=""
@@ -181,7 +181,7 @@ if [ $write_history -eq 1 ]; then
     [ $nohistory_flag -eq 1 ] && write_history=0
 fi
 
-[ ! -e $working_dir ] && mkdir -p $working_dir
+[ ! -e "$working_dir" ] && mkdir -p "$working_dir"
 
 export verbose_level
 if [ $verbose_level -eq 1 ]; then

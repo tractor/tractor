@@ -14,7 +14,7 @@ qsub_options=""
 parallelisation_factor=${TRACTOR_PLOUGH_THREADS:-1}
 debug=0
 repetitions=0
-working_dir="."
+working_dir=${TRACTOR_WORKING_DIR:-.}
 distribution_version="ersion unknown"
 
 tractor_flags=""

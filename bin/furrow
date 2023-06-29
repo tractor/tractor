@@ -7,7 +7,7 @@ trap 'exit $status' 0 1 2 15
 full_command="$0 $*"
 write_history=1
 suffixes=1
-working_dir="."
+working_dir=${TRACTOR_WORKING_DIR:-.}
 
 usage()
 {
@@ -56,7 +56,7 @@ shift "$(($OPTIND-1))"
     exit
 }
 
-[ ! -e $working_dir ] && mkdir -p $working_dir
+[ ! -e "$working_dir" ] && mkdir -p "$working_dir"
 
 command="$1"
 shift
@@ -70,7 +70,7 @@ args=`echo "library(utils); library(tractor.utils); library(tractor.session); ex
 status=$?
 [ $status -ne 0 ] && exit
 
-cd $working_dir && eval $command "$args"
+cd "$working_dir" && eval "$command $args"
 
 status=$?
 
