@@ -595,7 +595,7 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
             image$setTags(commandHistory=Sys.getenv("TRACTOR_COMMANDLINE"), merge=TRUE)
     }
     
-    if (writeTags && image$nTags() > 0)
+    if ((writeTags || file.exists(ensureFileSuffix(fileStem,"tags"))) && image$nTags() > 0)
     {
         tags <- image$getTags()
         if (all(c("bVectors","bValues") %in% names(tags)))
