@@ -12,7 +12,7 @@ working_dir=${TRACTOR_WORKING_DIR:-.}
 
 usage()
 {
-    echo "furrow (program v3.3.0, distribution v$distribution_version)"
+    echo "furrow (program v3.4.1, distribution v$distribution_version)"
     echo "Channel a command through TractoR's shorthand"
     echo
     echo "Usage: furrow [-zn] [-w working_dir] command [arg1 [arg2 ...]]"

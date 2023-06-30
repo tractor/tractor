@@ -32,7 +32,7 @@
     <div id="links">
       <span><a href="home.html">Home</a></span>
       <span><a href="home.html#site-contents">Contents</a></span>
-      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="install.html">Installation</a></span>
       <span><a href="changelog.html">Changelog</a></span>
       <span><a href="references.html">References</a></span>
       <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
@@ -69,7 +69,7 @@
 
 <p>The <code>tractor</code> shell script is a convenience interface for performing common tasks using the TractoR packages. It is based around a set of R script files, one per task, each of which contains a <code>runExperiment()</code> function. (The <code>console</code> script is a rare exception.) The shell script in turn calls a binary program which uses R’s APIs to provide an alternative front-end to the usual <code>R</code> program. It loads the <code>tractor.utils</code> package and calls the <code>bootstrapExperiment()</code> function to set up the required environment and execute the <code>runExperiment()</code> function for the requested script. The shell script also facilitates passing information between the command line and R, reporting errors and warnings, and maintaining a command history. </p>
 
-<p>Further information on the usage and function of the <code>tractor</code> shell script can be found in its man page (type <code>man tractor</code> from the shell, assuming that <a href="getting-started.html">your MANPATH is set correctly</a>).</p>
+<p>Further information on the usage and function of the <code>tractor</code> shell script can be found in its man page (type <code>man tractor</code> from the shell, assuming that <a href="install.html">your MANPATH is set correctly</a>).</p>
 
 <h2 id="writing-your-own-tractor-scripts">Writing your own TractoR scripts</h2>
 

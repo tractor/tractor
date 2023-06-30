@@ -32,7 +32,7 @@
     <div id="links">
       <span><a href="home.html">Home</a></span>
       <span><a href="home.html#site-contents">Contents</a></span>
-      <span><a href="downloads.html">Downloads</a></span>
+      <span><a href="install.html">Installation</a></span>
       <span><a href="changelog.html">Changelog</a></span>
       <span><a href="references.html">References</a></span>
       <span><a href="https://twitter.com/tracto_r">Twitter</a></span>
@@ -47,6 +47,17 @@
 <h1>Changelog</h1>
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
+
+<h2 id="341-2023-06-30">3.4.1 (2023-06-30)</h2>
+
+<ul>
+<li>Several tweaks have been made to better support paths containing spaces, particularly for session paths in workflows. In support of this, two small new features have been added: the new <code>TRACTOR_WORKING_DIR</code> environment variable is now used as a default working directory by <code>tractor</code>, <code>plough</code> and <code>furrow</code>, if it is set, and <code>furrow</code> gains a <code>-r</code> flag to request relative paths be substituted rather than absolute ones. This is used in certain workflows to work around third-party tools’ own difficulties with paths containing spaces.</li>
+<li>When writing an image to file, any existing “tags” file with the corresponding name is now always overwritten, to avoid the auxiliary file getting out of sync with the image file.</li>
+<li>Relative paths should now be correct when the reference path is a directory.</li>
+<li>The working directory should no longer be erroneously prepended to image paths beginning with a tilde (<code>~</code>), which indicates a home directory on Unix-like systems.</li>
+<li>The <code>bids</code> would sometimes attempt to copy an image file with no extension, leading to an error. This has been corrected.</li>
+<li>Decomposition applied to a transformation object containing only one transform now works as expected.</li>
+</ul>
 
 <h2 id="340-2023-05-17">3.4.0 (2023-05-17)</h2>
 

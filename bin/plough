@@ -22,7 +22,7 @@ tractor_options=""
 
 usage()
 {
-    echo "plough (program v3.3.0, distribution v$distribution_version)"
+    echo "plough (program v3.4.1, distribution v$distribution_version)"
     echo "Plough through your TractoR analysis!"
     echo
     echo "Usage: plough [-GXD] -C config_file [-V variable_name] [-R repetitions]"
