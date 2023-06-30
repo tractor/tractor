@@ -64,7 +64,10 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     fileStem <- expandFileName(ensureFileSuffix(fileName, NULL, strip=suffixes))
     headerFile <- ensureFileSuffix(fileStem, headersExist)
     imageFile <- ensureFileSuffix(fileStem, imagesExist)
-    auxiliaryFiles <- ensureFileSuffix(fileStem, auxiliariesExist)
+    if (is.null(auxiliaries))
+        auxiliaryFiles <- NULL
+    else
+        auxiliaryFiles <- ensureFileSuffix(fileStem, auxiliariesExist)
     
     # ANALYZE and NIFTI_PAIR file types use the same filename suffixes
     if (length(typeIndices) == 1)
