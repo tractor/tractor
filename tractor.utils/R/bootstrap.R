@@ -150,12 +150,34 @@ findExperiment <- function (exptName)
 
 callExperiment <- function (exptName, args = NULL, configFiles = NULL, outputLevel = getOutputLevel(), ...)
 {
+    if (length(exptName) != 1L)
+        report(OL$Error, "Experiment name should be a single string")
+    
+    # If the experiment name contains a space and the arguments are empty,
+    # assume they're bundled into one string command-line style
+    if (exptName %~% "\\s" && is.null(args))
+    {
+        match <- ore.search("^(\\S+)\\s+(.+)$", exptName)
+        exptName <- match[1,1]
+        args <- match[1,2]
+    }
+    
     scriptFile <- findExperiment(exptName)
     bootstrapExperiment(scriptFile, outputLevel=outputLevel, configFiles=configFiles, configText=implode(args,sep=" "), standalone=FALSE, ...)
 }
 
 debugExperiment <- function (exptName, args = NULL, configFiles = NULL, breakpoint = NULL, ...)
 {
+    if (length(exptName) != 1L)
+        report(OL$Error, "Experiment name should be a single string")
+    
+    if (exptName %~% "\\s" && is.null(args))
+    {
+        match <- ore.search("^(\\S+)\\s+(.+)$", exptName)
+        exptName <- match[1,1]
+        args <- match[1,2]
+    }
+    
     scriptFile <- findExperiment(exptName)
     report(OL$Info, "Debugging experiment script ", scriptFile)
     bootstrapExperiment(scriptFile, outputLevel=OL$Debug, configFiles=configFiles, configText=implode(args,sep=" "), standalone=FALSE, debug=is.null(breakpoint), breakpoint=breakpoint, ...)
