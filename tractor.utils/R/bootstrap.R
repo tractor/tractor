@@ -164,6 +164,9 @@ callExperiment <- function (exptName, args = NULL, configFiles = NULL, outputLev
     
     scriptFile <- findExperiment(exptName)
     bootstrapExperiment(scriptFile, outputLevel=outputLevel, configFiles=configFiles, configText=implode(args,sep=" "), standalone=FALSE, ...)
+    
+    # Clean up global variables created by bootstrapExperiment()
+    rm(list=c("Arguments","ConfigVariables"), envir=globalenv())
 }
 
 debugExperiment <- function (exptName, args = NULL, configFiles = NULL, breakpoint = NULL, ...)
