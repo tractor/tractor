@@ -40,7 +40,7 @@ runExperiment <- function ()
             report(OL$Info, "Copying image ", i, " of ", nImages)
         
             if (isTRUE(file.info(Arguments[i+1])$isdir))
-                image <- readDicomDirectory(Arguments[i+1], method=dicomReader)$image
+                image <- readDicomDirectory(Arguments[i+1], method=dicomReader, interactive=FALSE)$image
             else if (!imageFileExists(Arguments[i+1]))
             {
                 report(OL$Warning, "Complete image file does not exist: \"", Arguments[i+1], "\"")
