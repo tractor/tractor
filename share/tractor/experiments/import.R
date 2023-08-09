@@ -16,18 +16,21 @@ runExperiment <- function ()
     
     if (weighting %in% c("diffusion","functional"))
     {
-        if (nImages > 1)
-            report(OL$Error, "Only one image may be specified in the case of #{weighting} data")
-        
         session$getDirectory(weighting, createIfMissing=TRUE)
         
-        if (isTRUE(file.info(Arguments[2])$isdir))
-            image <- readDicomDirectory(Arguments[2], method=dicomReader)$image
-        else
-            image <- readImageFile(Arguments[2])
+        images <- lapply(Arguments[-1], function (path) {
+            if (isTRUE(file.info(path)$isdir))
+                readDicomDirectory(path, method=dicomReader, interactive=FALSE)$image
+            else
+                readImageFile(path)
+        })
         
-        if (image$getDimensionality() != 4)
-            report(OL$Error, "A #{weighting} dataset must be four-dimensional")
+        if (length(images) == 1)
+            image <- images[[1]]
+        else
+            image <- do.call(mergeMriImages, c(images, list(bindDim=4L, padTags=TRUE)))
+        
+        assert(image$getDimensionality() == 4L, "A #{weighting} dataset must be four-dimensional")
         
         writeImageFile(image, session$getImageFileNameByType("rawdata",weighting), writeTags=TRUE)
     }
