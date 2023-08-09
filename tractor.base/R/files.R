@@ -486,22 +486,34 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     if (!is.null(info$tags))
         do.call(image$setTags, as.list(info$tags))
     
-    # Read the auxiliary tags file, if one exists
+    # Read the auxiliary tags file, if one exists (TractoR or BIDS JSON)
     tagsFileName <- ensureFileSuffix(fileNames$fileStem, "tags")
+    jsonFileName <- ensureFileSuffix(fileNames$fileStem, "json")
     if (file.exists(tagsFileName))
         do.call(image$setTags, yaml::yaml.load_file(tagsFileName))
+    else if (file.exists(jsonFileName))
+        do.call(image$setTags, convertJsonToTags(readLines(jsonFileName)))
     
     # Read diffusion directions, if present
-    dirsFileName <- ensureFileSuffix(fileNames$fileStem, "dirs")
-    if (file.exists(dirsFileName))
+    dirsFileNames <- ensureFileSuffix(fileNames$fileStem, c("dirs","bval","bvec"))
+    if (file.exists(dirsFileNames[1]))
     {
-        dirs <- as.matrix(read.table(dirsFileName))
+        dirs <- as.matrix(read.table(dirsFileNames[1]))
         if (!is.null(volumes))
             dirs <- dirs[volumes,,drop=FALSE]
         if (ncol(dirs) == 4 && nrow(dirs) == image$nVolumes())
             image$setTags(bVectors=dirs[,1:3,drop=FALSE], bValues=dirs[,4])
         else
             flag(OL$Warning, "Auxiliary directions file does not match image - ignoring")
+    }
+    else if (all(file.exists(dirsFileNames[2:3])))
+    {
+        bValues <- drop(as.matrix(read.table(dirsFileNames[2])))
+        directions <- t(as.matrix(read.table(dirsFileNames[3])))
+        if (length(bValues) == image$nVolumes() && nrow(directions) == image$nVolumes())
+            image$setTags(bVectors=directions, bValues=bValues)
+        else
+            flag(OL$Warning, "Auxiliary bval/bvec files do not match image - ignoring")
     }
     
     return (image)
