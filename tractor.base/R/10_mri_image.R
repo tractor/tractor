@@ -829,7 +829,7 @@ mergeMriImages <- function (..., bindDim = NULL, padTags = FALSE)
         return (images[[1]])
     if (!allEqual(sapply(images, orientation)))
         images <- lapply(images, reorderMriImage)
-    if (!allEqual(lapply(images, xform), tolerance=1e-4))
+    if (!allEqual(lapply(images, xform), tolerance=1e-4, check.attributes=FALSE))
         report(OL$Warning, "Merging images with nonequal xforms - this is probably unwise")
     
     dimensionalities <- sapply(images, function(x) x$getDimensionality())
