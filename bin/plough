@@ -116,8 +116,7 @@ shift "$(($OPTIND-1))"
     done
     
     [ $stdin_empty -eq 0 ] && {
-        echo $text | sed 's/,$/ ]/' >$stdin_file
-        cat $stdin_file
+        echo "$text" | sed 's/,$/ ]/' >$stdin_file
         config_file="$stdin_file:$config_file"
     }
 }
