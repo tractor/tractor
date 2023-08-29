@@ -1,6 +1,11 @@
 name: CI
 
-on: [ push, pull_request ]
+on:
+  push:
+    # The docker branch tracks master, so it doesn't need testing separately
+    branches-ignore:
+      docker
+  pull_request:
 
 defaults:
   run:
