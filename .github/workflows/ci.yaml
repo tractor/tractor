@@ -41,3 +41,7 @@ jobs:
     
     - name: Run tests
       run: make deeptest
+    
+    - name: Generate debug test output
+      if: failure()
+      run: make dtest
