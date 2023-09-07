@@ -16,8 +16,9 @@ jobs:
   check:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        R: [ '3.0.0', '4.0.0', 'release' ]
+        R: [ '3.6.0', '4.0.0', 'release' ]
     
     steps:
     - name: Check out code
