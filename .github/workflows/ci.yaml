@@ -12,6 +12,7 @@ jobs:
     # The type of runner that this job runs on
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         R: [ '3.0.2', '4.0.0', 'release' ]
     
