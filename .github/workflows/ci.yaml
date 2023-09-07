@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        R: [ '3.6.0', '4.0.0', 'release' ]
+        R: [ '3.6.2', '4.3.0', 'release' ]
     
     steps:
     - name: Check out code
