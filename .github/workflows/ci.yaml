@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        R: [ '3.0.2', '4.0.0', 'release' ]
+        R: [ '3.5.0', '4.0.0', 'release' ]
     
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -32,4 +32,4 @@ jobs:
       run: make install
     
     - name: Run tests
-      run: make test
+      run: make deeptest
