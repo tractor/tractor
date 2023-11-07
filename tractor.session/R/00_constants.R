@@ -2,7 +2,7 @@
 
 .Viewers <- c("tractor", "fsleyes", "fslview", "freeview", "mrview")
 
-.AllSessionDirectories <- c("diffusion", "fdt", "bedpost", "transforms", "structural", "freesurfer", "functional")
+.AllSessionDirectories <- c("diffusion", "fdt", "bedpost", "mrtrix", "transforms", "structural", "freesurfer", "functional")
 
 .PrimarySessionDirectories <- c("diffusion", "structural", "functional")
 
