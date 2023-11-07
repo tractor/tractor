@@ -15,8 +15,7 @@
     
     # Assume path separator (.Platform$file.sep) is "/"
     registerPathHandler("^([^@=\\s]+)?@(\\w+)(/)?([\\w.-/]+)?(%(\\d+))?$", function(path, index=1, defaultSessionPath=".") {
-        # The match has to have been done just before calling this function (although this is not thread-safe)
-        groups <- groups(ore.lastmatch())
+        groups <- groups(attr(path, "match"))
         groupsPresent <- !is.na(groups)
         
         # The string matches, so group 2 must be present

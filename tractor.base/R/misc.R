@@ -340,9 +340,10 @@ resolvePath <- function (path, ...)
     sapply(path, function(p) {
         for (i in seq_along(.Workspace$pathHandlers))
         {
-            if (p %~% names(.Workspace$pathHandlers)[i])
+            match <- ore.search(names(.Workspace$pathHandlers)[i], p)
+            if (!is.null(match))
             {
-                result <- .Workspace$pathHandlers[[i]](p, ...)
+                result <- .Workspace$pathHandlers[[i]](structure(p,match=match), ...)
                 if (!is.null(result))
                 {
                     report(OL$Debug, "Resolving #{p} to #{result}")
