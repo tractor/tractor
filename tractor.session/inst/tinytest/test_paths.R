@@ -33,3 +33,6 @@ expect_equal(resolvePath("FSP@diffusion/directions.txt",index=2), file.path(fstp
 # Shorthand for when the session directory is the current directory
 setwd(fsp)
 expect_equal(resolvePath("@MD"), file.path(fstp,"diffusion","dti_MD"))
+
+# Using an explicit suffix
+expect_equal(resolvePath("@FA.mif"), tractor.base::ensureFileSuffix(file.path(fstp,"diffusion","dti_FA"),"mif"))

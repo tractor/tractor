@@ -14,19 +14,29 @@
     }
     
     # Assume path separator (.Platform$file.sep) is "/"
-    registerPathHandler("^([^@=\\s]+)?@(\\w+)(/)?([\\w.-/]+)?(%(\\d+))?$", function(path, index=1, defaultSessionPath=".") {
-        groups <- groups(attr(path, "match"))
+    registerPathHandler("^(?<dir>[^@=\\s]+)?@((?<baresubdir>\\w+/)|(?<subdir>\\w+/)?(?<name>[\\w-]+)(?<index>%(\\d+))?(?<suffix>(\\.\\w+){0,2}))$", function(path, index=1L, defaultSessionPath=".") {
+    #                     | optional session path (default ".")
+    #                                         | bare subdirectory branch (should end with a slash)
+    #                                                              | file branch (subdirectory optional)
+        groups <- drop(groups(attr(path, "match")))
         groupsPresent <- !is.na(groups)
         
-        # The string matches, so group 2 must be present
-        session <- attachMriSession(ifelse(groupsPresent[1], groups[1], defaultSessionPath))
-        if (groupsPresent[6])
-            index <- as.integer(groups[6])
-        if (groupsPresent[3] && groupsPresent[4])
-            return (session$getImageFileNameByType(groups[4], groups[2], index=index, fallback=TRUE))
-        else if (groupsPresent[3])
-            return (session$getDirectory(groups[2]))
+        # The string matches, so the name group must be present
+        session <- attachMriSession(ifelse(groupsPresent["dir"], groups["dir"], defaultSessionPath))
+        if (groupsPresent["index"])
+            index <- as.integer(ore_subst("$%", "", groups["index"]))
+        
+        if (groupsPresent["baresubdir"])
+            return (session$getDirectory(ore_subst("/$", "", groups["baresubdir"])))
         else
-            return (session$getImageFileNameByType(groups[2], index=index, fallback=TRUE))
+        {
+            place <- NULL
+            if (groupsPresent["subdir"])
+                place <- ore_subst("/$", "", groups["subdir"])
+            path <- session$getImageFileNameByType(groups["name"], place=place, index=index, fallback=TRUE)
+            if (groupsPresent["suffix"])
+                path <- paste0(path, groups["suffix"])
+            return (path)
+        }
     })
 }
