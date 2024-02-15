@@ -697,7 +697,7 @@ where <- function (condition, value, fallback = NULL)
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 #' @name infix
-#' @export
+#' @rawNamespace if (getRversion() < "4.4") export("%||%")
 "%||%" <- function (X, Y)
 {
     if (is.null(X)) Y else X
