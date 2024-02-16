@@ -1,7 +1,10 @@
-setOldClass(c("niftiImage", "internalImage"))
+setOldClass("niftiImage")
+setOldClass(c("internalImage", "niftiImage"))
 
-.convertNiftiImage <- function (from)
-{
+if (requireNamespace("divest",quietly=TRUE) && packageVersion("divest") >= "1.0")
+    setOldClass(c("divestImage", "internalImage", "niftiImage"))
+
+setAs("niftiImage", "MriImage", function (from) {
     # Pick up divest attributes and convert to tags (anonymising by default)
     attribs <- attributes(from)
     anonymise <- attr(from, "anonymise") %||% TRUE
@@ -36,23 +39,23 @@ setOldClass(c("niftiImage", "internalImage"))
     reordered <- attr(from, "reordered") %||% FALSE
     
     return (MriImage$new(imageDims=dim(from), pixdim(from), voxelDimUnits=pixunits(from), origin=origin(from), xform=xform(from), reordered=reordered, tags=tags, data=data))
-}
-
-setAs("niftiImage", "MriImage", .convertNiftiImage)
-setAs("internalImage", "MriImage", .convertNiftiImage)
-
-setAs("MriImage", "nifti", function(from) {
-    if (is.null(getOption("niftiAuditTrail")))
-        options(niftiAuditTrail=FALSE)
-    
-    nifti <- as.array(retrieveNifti(from))
-    if (RNifti:::hasData(nifti))
-        nifti <- updateNifti(nifti, list(cal_min=min(nifti,na.rm=TRUE), cal_max=max(nifti,na.rm=TRUE)))
-    
-    return (oro.nifti::nii2oro(nifti))
 })
 
-setAs("nifti", "MriImage", function(from) as(retrieveNifti(from), "MriImage"))
+if (requireNamespace("oro.nifti", quietly=TRUE))
+{
+    setAs("MriImage", "nifti", function(from) {
+        if (is.null(getOption("niftiAuditTrail")))
+            options(niftiAuditTrail=FALSE)
+        
+        nifti <- as.array(retrieveNifti(from))
+        if (RNifti:::hasData(nifti))
+            nifti <- updateNifti(nifti, list(cal_min=min(nifti,na.rm=TRUE), cal_max=max(nifti,na.rm=TRUE)))
+        
+        return (oro.nifti::nii2oro(nifti))
+    })
+    
+    setAs("nifti", "MriImage", function(from) as(retrieveNifti(from), "MriImage"))
+}
 
 # MriImage methods for RNifti generics
 #' @export
