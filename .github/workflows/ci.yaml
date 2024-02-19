@@ -31,6 +31,10 @@ jobs:
       with:
         r-version: ${{ matrix.R }}
     
+    # igraph depends on glpk in the 2.0.x series, so this is required for deep testing
+    - name: Install upstream system dependencies
+      run: sudo apt-get install -y libglpk-dev
+    
     - name: Cache dependencies
       id: cache-deps
       uses: actions/cache@v3
