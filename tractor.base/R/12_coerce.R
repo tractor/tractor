@@ -41,21 +41,18 @@ setAs("niftiImage", "MriImage", function (from) {
     return (MriImage$new(imageDims=dim(from), pixdim(from), voxelDimUnits=pixunits(from), origin=origin(from), xform=xform(from), reordered=reordered, tags=tags, data=data))
 })
 
-if (requireNamespace("oro.nifti", quietly=TRUE))
-{
-    setAs("MriImage", "nifti", function(from) {
-        if (is.null(getOption("niftiAuditTrail")))
-            options(niftiAuditTrail=FALSE)
-        
-        nifti <- as.array(retrieveNifti(from))
-        if (RNifti:::hasData(nifti))
-            nifti <- updateNifti(nifti, list(cal_min=min(nifti,na.rm=TRUE), cal_max=max(nifti,na.rm=TRUE)))
-        
-        return (oro.nifti::nii2oro(nifti))
-    })
+setAs("MriImage", "nifti", function(from) {
+    if (is.null(getOption("niftiAuditTrail")))
+        options(niftiAuditTrail=FALSE)
     
-    setAs("nifti", "MriImage", function(from) as(retrieveNifti(from), "MriImage"))
-}
+    nifti <- as.array(retrieveNifti(from))
+    if (RNifti:::hasData(nifti))
+        nifti <- updateNifti(nifti, list(cal_min=min(nifti,na.rm=TRUE), cal_max=max(nifti,na.rm=TRUE)))
+    
+    return (oro.nifti::nii2oro(nifti))
+})
+
+setAs("nifti", "MriImage", function(from) as(retrieveNifti(from), "MriImage"))
 
 # MriImage methods for RNifti generics
 #' @export
