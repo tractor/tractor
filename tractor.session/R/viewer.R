@@ -61,7 +61,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
         if (!is.null(opacity))
         {
             for (i in seq_along(images))
-                colourScales[[i]]$colours <- shades::opacity(colourScales[[i]]$colours, recycle(opacity))
+                colourScales[[i]]$colours <- shades::opacity(colourScales[[i]]$colours, shades::recycle(opacity))
         }
         
         if (is.null(infoPanel))
