@@ -67,6 +67,9 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
     }
 }
 
+if (!requireNamespace("igraph", quietly=TRUE))
+    exit_file("The \"igraph\" package is not available")
+
 # Random binary graph
 testMetricAgreement(randomGraph(10, M=20))
 
