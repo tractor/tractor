@@ -1,8 +1,6 @@
 setOldClass("niftiImage")
 setOldClass(c("internalImage", "niftiImage"))
-
-if (requireNamespace("divest",quietly=TRUE) && packageVersion("divest") >= "1.0")
-    setOldClass(c("divestImage", "internalImage", "niftiImage"))
+setOldClass(c("divestImage", "internalImage", "niftiImage"))
 
 setAs("niftiImage", "MriImage", function (from) {
     # Pick up divest attributes and convert to tags (anonymising by default)
