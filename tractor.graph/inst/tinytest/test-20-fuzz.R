@@ -31,7 +31,21 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
     i_density <- igraph::edge_density(i_graph, loops=t_graph$isSelfConnected())
     expect_equal(t_density, i_density, info=info)
     
+    # Some metrics are not supported by igraph for directed graphs
+    if (!t_graph$isDirected())
+    {
+        # Clustering coefficients
+        # igraph returns NaN when there are no triangles
+        i_clustering <- igraph::transitivity(i_graph, "barrat", isolates="zero")
+        expect_equal(clusteringCoefficients(t_graph,method="barrat"), i_clustering, info=info)
+        
+        # Laplacian matrix
+        expect_equivalent(laplacianMatrix(t_graph), igraph::laplacian_matrix(i_graph,sparse=FALSE), info=info)
+    }
+    
     # Convert weights to costs
+    # NB: this is needed only for quantities tested below, so timing of the
+    # inversion is significant
     if (t_graph$isWeighted())
         igraph::E(i_graph)$weight <- 1 / igraph::E(i_graph)$weight
     
@@ -50,22 +64,17 @@ testMetricAgreement <- function (t_graph, i_graph = as(t_graph,"igraph"))
     expect_equivalent(graphEfficiency(t_graph,type="global"), i_global_eff, info=info)
     
     # Some metrics are not supported by igraph for directed graphs
-    if(!t_graph$isDirected())
+    if (!t_graph$isDirected())
     {
-        # Clustering coefficients
-        # igraph returns NaN when there are no triangles
-        i_clustering <- igraph::transitivity(i_graph, "barrat", isolates="zero")
-        expect_equal(clusteringCoefficients(t_graph,method="barrat"), i_clustering, info=info)
-        
         # Betweenness centrality
         t_bc <- structure(betweennessCentrality(t_graph$getAssociationMatrix()), dim=NULL)
         i_bc <- igraph::betweenness(i_graph)
         expect_equal(t_bc, 2*i_bc, info=info)
-        
-        # Laplacian matrix
-        expect_equivalent(laplacianMatrix(t_graph), igraph::laplacian_matrix(i_graph,sparse=FALSE), info=info)
     }
 }
+
+if (!requireNamespace("igraph", quietly=TRUE))
+    exit_file("The \"igraph\" package is not available")
 
 # Random binary graph
 testMetricAgreement(randomGraph(10, M=20))
