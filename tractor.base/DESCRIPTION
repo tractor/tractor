@@ -13,7 +13,7 @@ Description: Functions for working with magnetic resonance images. Reading and
     metadata and sparse image handling.
 Encoding: UTF-8
 License: GPL-2
-URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
+URL: https://www.tractor-mri.org.uk, https://github.com/tractor/tractor
 BugReports: https://github.com/tractor/tractor/issues
 RoxygenNote: 7.2.3
 Roxygen: list(old_usage=TRUE)

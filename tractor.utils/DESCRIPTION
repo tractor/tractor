@@ -10,5 +10,5 @@ Suggests: parallel, yaml, tractor.session
 Description: The tractor.utils package primarily provides functions that facilitate the interaction between the TractoR shell script and R, but some other utility functions are also included.
 Encoding: UTF-8
 License: GPL-2
-URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
+URL: https://www.tractor-mri.org.uk, https://github.com/tractor/tractor
 BugReports: https://github.com/tractor/tractor/issues

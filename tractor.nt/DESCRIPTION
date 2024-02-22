@@ -10,5 +10,5 @@ Suggests: tractor.reg
 Description: The tractor.nt package provides a reference implementation for white matter segmentation with neighbourhood tractography (NT). Functions for performing both heuristic and model-based NT are included.
 Encoding: UTF-8
 License: GPL-2
-URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
+URL: https://www.tractor-mri.org.uk, https://github.com/tractor/tractor
 BugReports: https://github.com/tractor/tractor/issues

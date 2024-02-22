@@ -662,8 +662,7 @@ threadSafeTempFile <- function (pattern = "file")
 #' 
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
-#' Journal of Statistical Software 44(8):1-18.
-#' \url{http://www.jstatsoft.org/v44/i08/}.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 #' @export
 where <- function (condition, value, fallback = NULL)
 {

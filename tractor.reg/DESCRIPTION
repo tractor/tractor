@@ -9,5 +9,5 @@ Suggests: RNifti
 Description: The tractor.reg package provides functions for performing image registration. It interfaces with the RNiftyReg R package, and with the FLIRT tool from the FSL library.
 Encoding: UTF-8
 License: GPL-2
-URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
+URL: https://www.tractor-mri.org.uk, https://github.com/tractor/tractor
 BugReports: https://github.com/tractor/tractor/issues
