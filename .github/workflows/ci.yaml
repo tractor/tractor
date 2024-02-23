@@ -76,7 +76,7 @@ jobs:
     
     - name: Parse and install dependencies
       run: |
-        deps <- read.dcf("DESCRIPTION", c("Depends","Imports","LinkingTo","Suggests","Enhances"))
+        deps <- read.dcf(file.path("tractor.base","DESCRIPTION"), c("Depends","Imports","LinkingTo","Suggests","Enhances"))
         deps <- na.omit(unlist(strsplit(deps, "\\s*,\\s*", perl=TRUE)))
         deps <- setdiff(unique(sub("\\s*\\([^\\)]+\\)\\s*$", "", deps, perl=TRUE)), c("R", rownames(installed.packages())))
         install.packages(deps)
