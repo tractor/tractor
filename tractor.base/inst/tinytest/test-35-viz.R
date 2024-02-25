@@ -1,5 +1,5 @@
 reportr::setOutputLevel(Warning)
-options(reportrStderrLevel=reportr::OL$Fatal)
+options(reportrStderrLevel=reportr::OL$Fatal, mmand.threads=1L)
 
 # Internal viewer
 image <- readImageFile(system.file("extdata", "nifti", "maskedb0.nii.gz", package="tractor.base"))
