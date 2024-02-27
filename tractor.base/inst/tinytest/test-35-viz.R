@@ -6,12 +6,12 @@ image <- readImageFile(system.file("extdata", "nifti", "maskedb0.nii.gz", packag
 expect_null(viewImages(image, interactive=FALSE))
 
 # Static visualisations
-image <- readImageFile(system.file("extdata", "nifti", "maskedb0.nii.gz", package="tractor.base"))
-fov <- image$getFieldOfView()
-file <- ensureFileSuffix(tempfile(), "png")
-
-if (requireNamespace("loder", quietly=TRUE))
+if (at_home() && requireNamespace("loder", quietly=TRUE))
 {
+    image <- readImageFile(system.file("extdata", "nifti", "maskedb0.nii.gz", package="tractor.base"))
+    fov <- image$getFieldOfView()
+    file <- ensureFileSuffix(tempfile(), "png")
+    
     createSliceGraphic(image, z=30, device="png", file=file)
     expect_equal(attr(loder::inspectPng(file),"width"), fov[1])
     createProjectionGraphic(image, 3, device="png", file=file)
