@@ -1,7 +1,8 @@
-setOldClass(c("niftiImage", "internalImage"))
+setOldClass("niftiImage")
+setOldClass(c("internalImage", "niftiImage"))
+setOldClass(c("divestImage", "internalImage", "niftiImage"))
 
-.convertNiftiImage <- function (from)
-{
+setAs("niftiImage", "MriImage", function (from) {
     # Pick up divest attributes and convert to tags (anonymising by default)
     attribs <- attributes(from)
     anonymise <- attr(from, "anonymise") %||% TRUE
@@ -36,10 +37,7 @@ setOldClass(c("niftiImage", "internalImage"))
     reordered <- attr(from, "reordered") %||% FALSE
     
     return (MriImage$new(imageDims=dim(from), pixdim(from), voxelDimUnits=pixunits(from), origin=origin(from), xform=xform(from), reordered=reordered, tags=tags, data=data))
-}
-
-setAs("niftiImage", "MriImage", .convertNiftiImage)
-setAs("internalImage", "MriImage", .convertNiftiImage)
+})
 
 setAs("MriImage", "nifti", function(from) {
     if (is.null(getOption("niftiAuditTrail")))

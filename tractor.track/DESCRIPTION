@@ -1,6 +1,6 @@
 Package: tractor.track
-Version: 3.4.0
-Date: 2023-05-17
+Version: 3.4.2
+Date: 2024-02-22
 Title: Diffusion tractography in TractoR
 Author: Jon Clayden and Fani Deligianni
 Maintainer: Jon Clayden <code@clayden.org>
@@ -11,5 +11,5 @@ Suggests: tractor.reg
 Description: The tractor.track package provides functions for performing tractography using diffusion MRI data
 Encoding: UTF-8
 License: GPL-2
-URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
+URL: https://www.tractor-mri.org.uk, https://github.com/tractor/tractor
 BugReports: https://github.com/tractor/tractor/issues

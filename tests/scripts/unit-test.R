@@ -7,5 +7,11 @@ runExperiment <- function ()
     
     library(Arguments[1], character.only=TRUE)
     
-    testthat::test_dir(file.path(Arguments[1],"tests","testthat"), stop_on_failure=TRUE)
+    results <- tinytest::test_all(Arguments[1])
+    
+    if (tinytest::any_fail(results))
+    {
+        print(results)
+        report(OL$Error, "One or more tests failed")
+    }
 }

@@ -1,6 +1,6 @@
 Package: tractor.nt
-Version: 3.4.0
-Date: 2023-05-17
+Version: 3.4.2
+Date: 2024-02-22
 Title: Neighbourhood tractography methods for white matter segmentation
 Author: Jon Clayden and Fani Deligianni
 Maintainer: Jon Clayden <code@clayden.org>
@@ -10,5 +10,5 @@ Suggests: tractor.reg
 Description: The tractor.nt package provides a reference implementation for white matter segmentation with neighbourhood tractography (NT). Functions for performing both heuristic and model-based NT are included.
 Encoding: UTF-8
 License: GPL-2
-URL: http://www.tractor-mri.org.uk, https://github.com/tractor/tractor
+URL: https://www.tractor-mri.org.uk, https://github.com/tractor/tractor
 BugReports: https://github.com/tractor/tractor/issues

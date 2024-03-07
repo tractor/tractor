@@ -1,10 +1,10 @@
 [![CI](https://github.com/tractor/tractor/actions/workflows/ci.yaml/badge.svg)](https://github.com/tractor/tractor/actions/workflows/ci.yaml) [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.10010.svg)](http://dx.doi.org/10.5281/zenodo.10010)
 
-TractoR is an [R-based](http://www.r-project.org) platform for medical image processing, tractography and graph analysis. It is focussed on handling magnetic resonance images, but many of its core functions are applicable to any kind of image. The package is full-stack free and open-source, as R is itself free software, and it is easy to extend and build upon. Downloads are available from the [project web site](http://www.tractor-mri.org.uk/downloads).
+TractoR is an [R-based](http://www.r-project.org) platform for medical image processing, tractography and graph analysis. It is focussed on handling magnetic resonance images, but many of its core functions are applicable to any kind of image. The package is full-stack free and open-source, as R is itself free software, and it is easy to extend and build upon. Downloads are available from the [project web site](https://www.tractor-mri.org.uk/downloads).
 
 ## Overview
 
-There are several sources of documentation available. For installation instructions, please see the `INSTALL.md` file. For general information on the package, its capabilities and conventions, please see the [TractoR paper](http://www.jstatsoft.org/v44/i08/) and/or the [project home page](http://www.tractor-mri.org.uk). The latter is mirrored in the TractoR distribution, and can be found at `share/doc/home.html`. Standard R documentation is available, function by function, for the core `tractor.base` package and all first- and third-party dependency packages (which are included in the main download).
+There are several sources of documentation available. For installation instructions, please see the `INSTALL.md` file. For general information on the package, its capabilities and conventions, please see the [TractoR paper](https://www.jstatsoft.org/v44/i08/) and/or the [project home page](https://www.tractor-mri.org.uk). The latter is mirrored in the TractoR distribution, and can be found at `share/doc/home.html`. Standard R documentation is available, function by function, for the core `tractor.base` package and all first- and third-party dependency packages (which are included in the main download).
 
 Please see below for information on
 
@@ -37,7 +37,7 @@ parc <- readImageFile("parcellation.nii.gz")
 showImagesInViewer(t1, parc)
 ```
 
-![Parcellation overlaid on brain](http://www.tractor-mri.org.uk/parcellation.png)
+![Parcellation overlaid on brain](https://www.tractor-mri.org.uk/parcellation.png)
 
 (with the `tractor.session` package loaded). Notice that both the numerical index and the name of the region currently under the crosshair is given in the info panel at the bottom right.
 
@@ -49,7 +49,7 @@ grad <- t1$copy()$map(function(x) dilate(x,k) - erode(x,k))
 showImagesInViewer(grad)
 ```
 
-![Morphological gradient of brain image](http://www.tractor-mri.org.uk/gradient.png)
+![Morphological gradient of brain image](https://www.tractor-mri.org.uk/gradient.png)
 
 Notice the use of the `map()` method, which can be used to replace the data in an image with the result of applying a function, in this case an anonymous function constructed within the call.
 
@@ -107,6 +107,6 @@ Running a particular script is a matter of typing `tractor`, followed by the scr
 tractor graph-viz data/graph/diffusion ShowBrain:true
 ```
 
-![Morphological gradient of brain image](http://www.tractor-mri.org.uk/graph.png)
+![Morphological gradient of brain image](https://www.tractor-mri.org.uk/graph.png)
 
 The examples in the previous section can be replicated in this way by using the `imageinfo` and `view` scripts. Try it! Further information on the `tractor` command is available from its `man` page, by typing `man tractor`.
