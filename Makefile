@@ -110,7 +110,7 @@ utest: lib/R/tinytest lib/R/oro.nifti lib/R/igraph
 deeptest: utest test
 
 create-md5:
-	@$(GIT) ls-files | grep -v -e '^lib/' -e '^md5.txt' -e '\.git' | xargs $(MD5) -r >md5.txt
+	@$(GIT) ls-files | grep -v -e '^lib/' -e '^md5\.txt' -e '\.git' -e 'tests/data/images' | xargs $(MD5) -r >md5.txt
 
 check-md5:
 	@mkdir -p tmp
