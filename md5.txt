@@ -6,9 +6,9 @@ d654c028827567e62ddbde4fa5b100d8 CITATION.cff
 a5391c7555bd912343ae34a4ebf8ba89 Dockerfile
 6df8bfd02fd1dd8e238c7525eccbb8f5 INSTALL.md
 10b634d9e14144c8b6aa3562b4877ede LICENSE
-557f2c428f5ce3e7848ee9337e537ad0 Makefile
+a128c76b85b9ed75b9356ad806f3b871 Makefile
 4f35cdd9c87b6d7b766823a4ee3a9a59 README.md
-a04a1335aea3f7a6ce9e0595b404f7c7 VERSION
+91333fc1f54ea20888ca61e7f0c63c23 VERSION
 f13a73bd17fbe0f54870413c386c301a bin/extra/tractor_Rinstall
 5493da6482c836e47652578590daa718 bin/furrow
 87c38f3730a914abe1738c8c52679e4c bin/plough
@@ -21,7 +21,7 @@ a09a862f22f56b5a661c3d9ad22d2c94 share/doc/TractoR-for-R-users.html
 ce088d53ef9561c4dd85577f4c4e10ba share/doc/assets/prism.css
 cdca90be556c2e5f8dfb1482e0fc09e9 share/doc/assets/prism.js
 6b43348eebd7eec7694595976f84b74e share/doc/assets/style.css
-31c54dcf47005f494690538d7810e274 share/doc/changelog.html
+3bbc4eafac4dcebc8be2aa97d3e0f670 share/doc/changelog.html
 e64c8bf71e4b734c86afe8a7ccfe7d22 share/doc/connectivity-graphs.html
 f8d1b523df854498067db69fcc1a8b61 share/doc/conventions.html
 a819a5c58a57f1f317888c4037b82a7b share/doc/diffusion-processing.html
@@ -33,7 +33,7 @@ cd8cec91833ffa792d4ad33729f8acbf share/doc/graph-brain.png
 fd0b3ec2dc56fcc4ad96953aab138c0e share/doc/graph-matrix.png
 aa9d14c499979d80fdff28dfbf0db5d5 share/doc/guidelines-for-contributors.html
 3c11235b2bef0c0b296fc0482a9d6e4b share/doc/home.html
-709b9f6c966bf73c06b475a395307e73 share/doc/install.html
+3962c2eb60fb5e0fa5b3e1fec961fbe4 share/doc/install.html
 f200f315d515320dc4e8c1fe13f52a59 share/doc/nitrc.png
 614b517b59fcee58ec3e0365c5db0d47 share/doc/paper/index.html
 b34a574652afa4baf8b594b9262b8c4c share/doc/principal-directions.png
