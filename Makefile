@@ -95,7 +95,6 @@ clean:
 distclean: clean
 	@rm -f lib/.timestamp
 	@rm -f bin/exec/tractor src/tractor.o src/build.log install.log
-	@rm -f tractor.track/config.log tractor.track/config.status tractor.track/src/Makevars tractor.track/src/config.h
 
 test:
 	@cd tests && $(MAKE) run-tests R=$(R)
