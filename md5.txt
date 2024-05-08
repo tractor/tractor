@@ -6,7 +6,7 @@ d654c028827567e62ddbde4fa5b100d8 CITATION.cff
 a5391c7555bd912343ae34a4ebf8ba89 Dockerfile
 6df8bfd02fd1dd8e238c7525eccbb8f5 INSTALL.md
 10b634d9e14144c8b6aa3562b4877ede LICENSE
-a128c76b85b9ed75b9356ad806f3b871 Makefile
+54caee9bdcb6278b7b434e4e5990e55c Makefile
 4f35cdd9c87b6d7b766823a4ee3a9a59 README.md
 91333fc1f54ea20888ca61e7f0c63c23 VERSION
 f13a73bd17fbe0f54870413c386c301a bin/extra/tractor_Rinstall
@@ -21,7 +21,7 @@ a09a862f22f56b5a661c3d9ad22d2c94 share/doc/TractoR-for-R-users.html
 ce088d53ef9561c4dd85577f4c4e10ba share/doc/assets/prism.css
 cdca90be556c2e5f8dfb1482e0fc09e9 share/doc/assets/prism.js
 6b43348eebd7eec7694595976f84b74e share/doc/assets/style.css
-3bbc4eafac4dcebc8be2aa97d3e0f670 share/doc/changelog.html
+402e6f86230d1f36ee8c497e6b014cbb share/doc/changelog.html
 e64c8bf71e4b734c86afe8a7ccfe7d22 share/doc/connectivity-graphs.html
 f8d1b523df854498067db69fcc1a8b61 share/doc/conventions.html
 a819a5c58a57f1f317888c4037b82a7b share/doc/diffusion-processing.html
