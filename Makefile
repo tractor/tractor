@@ -95,7 +95,6 @@ clean:
 distclean: clean
 	@rm -f lib/.timestamp
 	@rm -f bin/exec/tractor src/tractor.o src/build.log install.log
-	@rm -f tractor.track/config.log tractor.track/config.status tractor.track/src/Makevars tractor.track/src/config.h
 
 test:
 	@cd tests && $(MAKE) run-tests R=$(R)
@@ -110,7 +109,7 @@ utest: lib/R/tinytest lib/R/oro.nifti lib/R/igraph
 deeptest: utest test
 
 create-md5:
-	@$(GIT) ls-files | grep -v -e '^lib/' -e '^md5.txt' -e '\.git' | xargs $(MD5) -r >md5.txt
+	@$(GIT) ls-files | grep -v -e '^lib/' -e '^md5\.txt' -e '\.git' -e 'tests/data/images' | xargs $(MD5) -r >md5.txt
 
 check-md5:
 	@mkdir -p tmp
