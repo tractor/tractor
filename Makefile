@@ -8,7 +8,7 @@ ECHO_N=/bin/echo -n
 GIT=git
 MD5=md5
 DOCKER=docker
-INSTALL=$(ENV) R=$(R) bin/extra/tractor_Rinstall
+INSTALL=$(ENV) R=$(R) libexec/tractor_Rinstall
 
 default: build post-build-info
 
