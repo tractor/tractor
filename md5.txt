@@ -21,7 +21,7 @@ a09a862f22f56b5a661c3d9ad22d2c94 share/doc/TractoR-for-R-users.html
 ce088d53ef9561c4dd85577f4c4e10ba share/doc/assets/prism.css
 cdca90be556c2e5f8dfb1482e0fc09e9 share/doc/assets/prism.js
 6b43348eebd7eec7694595976f84b74e share/doc/assets/style.css
-0cdc829c86f8dd2fd205b543430db833 share/doc/changelog.html
+f7b9c675744e2370df3c577d93c4e3b7 share/doc/changelog.html
 e64c8bf71e4b734c86afe8a7ccfe7d22 share/doc/connectivity-graphs.html
 f8d1b523df854498067db69fcc1a8b61 share/doc/conventions.html
 a819a5c58a57f1f317888c4037b82a7b share/doc/diffusion-processing.html
