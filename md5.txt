@@ -6,13 +6,13 @@ d654c028827567e62ddbde4fa5b100d8 CITATION.cff
 a5391c7555bd912343ae34a4ebf8ba89 Dockerfile
 6df8bfd02fd1dd8e238c7525eccbb8f5 INSTALL.md
 10b634d9e14144c8b6aa3562b4877ede LICENSE
-54caee9bdcb6278b7b434e4e5990e55c Makefile
+e1d6e601c8748c40f300c0b6b19e0240 Makefile
 4f35cdd9c87b6d7b766823a4ee3a9a59 README.md
-91333fc1f54ea20888ca61e7f0c63c23 VERSION
-f13a73bd17fbe0f54870413c386c301a bin/extra/tractor_Rinstall
+68f1560d7c59e92e5bee309a9002b561 VERSION
 5493da6482c836e47652578590daa718 bin/furrow
 87c38f3730a914abe1738c8c52679e4c bin/plough
-13d20ff8668604f15df3e2d342940949 bin/tractor
+ac2602621fb86b030089a09c6f54e2da bin/tractor
+f13a73bd17fbe0f54870413c386c301a libexec/tractor_Rinstall
 74b0ab00769a078716a0bab6f79df013 share/doc/PNT-tutorial.html
 78cbf95bd737b9df0f4362be46eeddc9 share/doc/TractoR-and-DICOM.html
 a09a862f22f56b5a661c3d9ad22d2c94 share/doc/TractoR-for-R-users.html
@@ -21,7 +21,7 @@ a09a862f22f56b5a661c3d9ad22d2c94 share/doc/TractoR-for-R-users.html
 ce088d53ef9561c4dd85577f4c4e10ba share/doc/assets/prism.css
 cdca90be556c2e5f8dfb1482e0fc09e9 share/doc/assets/prism.js
 6b43348eebd7eec7694595976f84b74e share/doc/assets/style.css
-402e6f86230d1f36ee8c497e6b014cbb share/doc/changelog.html
+f7b9c675744e2370df3c577d93c4e3b7 share/doc/changelog.html
 e64c8bf71e4b734c86afe8a7ccfe7d22 share/doc/connectivity-graphs.html
 f8d1b523df854498067db69fcc1a8b61 share/doc/conventions.html
 a819a5c58a57f1f317888c4037b82a7b share/doc/diffusion-processing.html
@@ -200,7 +200,7 @@ a7c54b216209e166f7761ba3ef3eba9c share/tractor/workflows/bet-diffusion.sh
 4648461097ea21d330783e633c9c65e9 share/tractor/workflows/helpers/create-fdt-files.sh
 1a9580c72bc9cc6987e36ae54a526250 share/tractor/workflows/reconall.sh
 9867a3913abae72af396b44b768e0c03 share/tractor/workflows/topup.sh
-287775a645875b5fb51129703da26a3d src/Makefile
+3eff5e8839a5f16605523fe7aa239e84 src/Makefile
 7b9621baec8086b19845dad2d2e75c50 src/tractor.c
 1cecacd480381783c18c9e1513434037 src/tractor.h
 746308829575e17c3331bbcb00c0898b tests/00_Basics/005_hello.save
