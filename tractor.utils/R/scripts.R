@@ -159,5 +159,5 @@ expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = T
             arguments[i] <- implode(parts, sep="=")
         }
     }
-    cat(implode(arguments, sep=" "))
+    return (arguments)
 }
