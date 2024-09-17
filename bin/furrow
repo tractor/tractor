@@ -43,7 +43,7 @@ expandedArgs <- character(0)
 if (!is.null(args$arg))
     expandedArgs <- expandArguments(args$arg, args$workdir, !args$stems, args$relative)
 
-setwd(args$workdir)
+# NB: expandArguments() sets the working directory
 status <- system2(args$command, expandedArgs)
 
 # # We are now in the working directory, so don't preface the log filename with it
