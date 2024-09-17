@@ -1,4 +1,4 @@
-#! /usr/bin/env Rscript --vanilla --default-packages=utils
+#! /usr/bin/env Rscript --vanilla --default-packages=utils,methods
 
 # FIXME: warn and guess TRACTOR_HOME if unset
 if (Sys.getenv("TRACTOR_HOME") != "")
@@ -29,10 +29,11 @@ if (isTRUE(args$help)) {
     quit("no")
 }
 
-if (is.null(args$workdir)
+if (is.null(args$workdir)) {
     args$workdir <- "."
-else if (!file.exists(args$workdir))
+} else if (!file.exists(args$workdir)) {
     dir.create(args$workdir, recursive=TRUE)
+}
 
 expandedArgs <- character(0)
 if (!is.null(args$arg))
