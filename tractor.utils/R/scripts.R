@@ -132,7 +132,7 @@ expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = T
     suffixes <- as.logical(suffixes)
     relative <- as.logical(relative)
     
-    arguments <- resolvePath(ore.split("\\s+", arguments))
+    arguments <- resolvePath(arguments)
     for (i in seq_along(arguments))
     {
         if (file.exists(arguments[i]))
