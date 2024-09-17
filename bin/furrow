@@ -11,12 +11,16 @@ library(tractor.session)
 if (Sys.getenv("COLUMNS") != "")
     options(width=as.integer(Sys.getenv("COLUMNS")))
 
+defaultWorkingDirectory <- "."
+if (Sys.getenv("TRACTOR_WORKING_DIR") != "")
+    defaultWorkingDirectory <- Sys.getenv("TRACTOR_WORKING_DIR")
+
 parser <- arrg("furrow",
             opt("h,help", "Display this usage information and exit"),
             opt("z,nohistory", "Do not write the command line used into a history log file"),
             opt("n,stems", "Do not append a suffix to image filenames, giving the file stem instead"),
             opt("r,relative", "Generate paths relative to the working directory, rather than absolute paths"),
-            opt("w,workdir", "Specify the working directory, which will be created if necessary", arg="dir", default="."),
+            opt("w,workdir", "Specify the working directory, which will be created if necessary", arg="dir", default=defaultWorkingDirectory),
             patterns=list(pat("command", "arg...?", options="znrw"),
                           pat(options="h!")),
             # FIXME: read distribution version from file rather than hard-coding
