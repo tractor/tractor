@@ -46,7 +46,12 @@ if (!is.null(args$arg))
 # NB: expandArguments() sets the working directory
 status <- system2(args$command, expandedArgs)
 
-# # We are now in the working directory, so don't preface the log filename with it
-# [ $write_history -eq 1 ] && echo "[`date`] $full_command [${status}S]" >> tractor-history.log
+# We are now in the working directory, so don't preface the log filename with it
+# FIXME: extract full path to furrow from commandArgs(F)
+if (!isTRUE(args$nohistory)) {
+    handle <- file("tractor-history.log", "a")
+    writeLines(ore::es("[#{date()}] furrow #{paste(commandArgs(TRUE),collapse=' ')} [#{status}S]"), handle)
+    close(handle)
+}
 
 quit("no", status)
