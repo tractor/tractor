@@ -1,8 +1,24 @@
 #! /usr/bin/env Rscript --vanilla --default-packages=utils,methods
 
-# FIXME: warn and guess TRACTOR_HOME if unset
-if (Sys.getenv("TRACTOR_HOME") != "")
-    .libPaths(c(file.path(Sys.getenv("TRACTOR_HOME"), "lib", "R"), .libPaths()))
+# Find the normalised path to this script
+path <- normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value=TRUE)))
+validPath <- (length(path) == 1 && file.exists(path))
+
+# Read or guess TRACTOR_HOME
+homePath <- Sys.getenv("TRACTOR_HOME")
+if (homePath == "") {
+    if (validPath) {
+        homePath <- normalizePath(file.path(dirname(path), ".."))
+        warning("TRACTOR_HOME is not set: it will be guessed as ", homePath, immediate.=TRUE)
+    } else {
+        stop("TRACTOR_HOME is not set and cannot be guessed")
+    }
+}
+
+tractorVersion <- readLines(file.path(homePath, "VERSION"))
+
+# Set the library path and load packages
+.libPaths(c(file.path(homePath, "lib", "R")))
 
 library(arrg)
 library(tractor.utils)
@@ -23,8 +39,7 @@ parser <- arrg("furrow",
             opt("w,workdir", "Specify the working directory, which will be created if necessary", arg="dir", default=defaultWorkingDirectory),
             patterns=list(pat("command", "arg...?", options="znrw"),
                           pat(options="h!")),
-            # FIXME: read distribution version from file rather than hard-coding
-            header=c("furrow (program v3.5.0, distribution v3.5.0)", "Channel a command through TractoR's shorthand"),
+            header=c(ore::es("furrow (program v3.5.0, distribution v#{tractorVersion})"), "Channel a command through TractoR's shorthand"),
             footer="Run the specified command, which can be any standard program or script on the PATH, after first expanding TractoR's image-path shorthand, such as @FA for the fractional anisotropy map in the current session directory, or /data/subject1@diffusion/data for the diffusion data series from the session rooted at /data/subject1.")
 
 args <- parser$parse()
@@ -47,10 +62,9 @@ if (!is.null(args$arg))
 status <- system2(args$command, expandedArgs)
 
 # We are now in the working directory, so don't preface the log filename with it
-# FIXME: extract full path to furrow from commandArgs(F)
 if (!isTRUE(args$nohistory)) {
     handle <- file("tractor-history.log", "a")
-    writeLines(ore::es("[#{date()}] furrow #{paste(commandArgs(TRUE),collapse=' ')} [#{status}S]"), handle)
+    writeLines(ore::es("[#{date()}] #{ifelse(validPath,path,'furrow')} #{paste(commandArgs(TRUE),collapse=' ')} [#{status}S]"), handle)
     close(handle)
 }
 
