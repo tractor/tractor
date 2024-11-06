@@ -5,6 +5,7 @@ on:
     # The docker branch tracks master, so it doesn't need testing separately
     branches-ignore:
       docker
+      debug
   pull_request:
 
 defaults:
