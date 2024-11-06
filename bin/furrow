@@ -59,7 +59,7 @@ if (!is.null(args$arg))
     expandedArgs <- expandArguments(args$arg, args$workdir, !args$stems, args$relative)
 
 # NB: expandArguments() sets the working directory
-status <- system2(args$command, expandedArgs)
+# status <- system2(args$command, expandedArgs)
 
 # We are now in the working directory, so don't preface the log filename with it
 if (!isTRUE(args$nohistory)) {
