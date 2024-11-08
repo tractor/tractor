@@ -1,4 +1,4 @@
-#! /usr/bin/env Rscript --vanilla --default-packages=utils,methods
+#! /usr/bin/env -S Rscript --vanilla --default-packages=utils,methods
 
 # Find the normalised path to this script
 path <- normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value=TRUE)))
