@@ -1,82 +1,71 @@
-#! /bin/bash
+#! /usr/bin/env -S Rscript --vanilla --default-packages=utils,methods
 
-status=1
-tmpdir=${TMPDIR:-/tmp}
-trap 'exit $status' 0 1 2 15
+# Find the normalised path to this script
+path <- normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value=TRUE)))
+validPath <- (length(path) == 1 && file.exists(path))
 
-full_command="$0 $*"
-write_history=1
-suffixes=1
-relative=0
-working_dir=${TRACTOR_WORKING_DIR:-.}
-
-usage()
-{
-    echo "furrow (program v3.4.1, distribution v$distribution_version)"
-    echo "Channel a command through TractoR's shorthand"
-    echo
-    echo "Usage: furrow [-zn] [-w working_dir] command [arg1 [arg2 ...]]"
-    echo "       furrow -h"
-    echo
-    echo "  -h          Display this usage information and exit"
-    echo "  -z          Do not write the command line used into a history log file"
-    echo "  -n          Do not append a suffix to image filenames, giving the file"
-    echo "              stem instead"
-    echo "  -r          Generate paths relative to the working directory, rather"
-    echo "              than absolute paths"
-    echo "  -w dir      Specify the working directory, which will be created if"
-    echo "              necessary. Default is '.', the current directory"
-    echo
-    echo "Run the specified command, which can be any standard program or script on"
-    echo "the PATH, after first expanding TractoR's image-path shorthand, such as"
-    echo "@FA for the fractional anisotropy map in the current session directory,"
-    echo "or /data/subject1@diffusion/data for the diffusion data series from the"
-    echo "session rooted at /data/subject1."
-    echo
+# Read or guess TRACTOR_HOME
+homePath <- Sys.getenv("TRACTOR_HOME")
+if (homePath == "") {
+    if (validPath) {
+        homePath <- normalizePath(file.path(dirname(path), ".."))
+        warning("TRACTOR_HOME is not set: it will be guessed as ", homePath, immediate.=TRUE)
+    } else {
+        stop("TRACTOR_HOME is not set and cannot be guessed")
+    }
 }
 
-[ -z "${TRACTOR_HOME}" ] && {
-    echo "Note: The TRACTOR_HOME environment variable is not set; it will be guessed"
-    export TRACTOR_HOME=`echo $0 | sed 's/\/bin\/tractor$//'`
+tractorVersion <- readLines(file.path(homePath, "VERSION"))
+
+# Set the library path and load packages
+.libPaths(c(file.path(homePath, "lib", "R")))
+
+library(arrg)
+library(tractor.utils)
+library(tractor.session)
+
+if (Sys.getenv("COLUMNS") != "")
+    options(width=as.integer(Sys.getenv("COLUMNS")))
+
+defaultWorkingDirectory <- "."
+if (Sys.getenv("TRACTOR_WORKING_DIR") != "")
+    defaultWorkingDirectory <- Sys.getenv("TRACTOR_WORKING_DIR")
+
+parser <- arrg("furrow",
+            opt("h,help", "Display this usage information and exit"),
+            opt("z,nohistory", "Do not write the command line used into a history log file"),
+            opt("n,stems", "Do not append a suffix to image filenames, giving the file stem instead"),
+            opt("r,relative", "Generate paths relative to the working directory, rather than absolute paths"),
+            opt("w,workdir", "Specify the working directory, which will be created if necessary", arg="dir", default=defaultWorkingDirectory),
+            patterns=list(pat("command", "arg...?", options="znrw"),
+                          pat(options="h!")),
+            header=c(ore::es("furrow (program v3.5.0, distribution v#{tractorVersion})"), "Channel a command through TractoR's shorthand"),
+            footer="Run the specified command, which can be any standard program or script on the PATH, after first expanding TractoR's image-path shorthand, such as @FA for the fractional anisotropy map in the current session directory, or /data/subject1@diffusion/data for the diffusion data series from the session rooted at /data/subject1.")
+
+args <- parser$parse()
+if (isTRUE(args$help)) {
+    parser$show()
+    quit("no")
 }
 
-[ -f "${TRACTOR_HOME}/VERSION" ] && distribution_version=`cat "${TRACTOR_HOME}/VERSION"`
-
-while getopts "hznrw:" opt; do
-    case "$opt" in
-        h) usage; status=0; exit ;;
-        z) write_history=0 ;;
-        n) suffixes=0 ;;
-        r) relative=1 ;;
-        w) working_dir=`echo $OPTARG | sed 's/\/$//'` ;;
-        ?) usage 1>&2; exit ;;
-    esac
-done
-
-shift "$(($OPTIND-1))"
-
-[ $# -eq 0 ] && {
-    echo "Error: No command given. Type \"furrow -h\" for help" 1>&2
-    exit
+if (is.null(args$workdir)) {
+    args$workdir <- "."
+} else if (!file.exists(args$workdir)) {
+    dir.create(args$workdir, recursive=TRUE)
 }
 
-[ ! -e "$working_dir" ] && mkdir -p "$working_dir"
+expandedArgs <- character(0)
+if (!is.null(args$arg))
+    expandedArgs <- expandArguments(args$arg, args$workdir, !args$stems, args$relative)
 
-command="$1"
-shift
-
-[ -z "$R" ] && R=R
-
-[ -d "${TRACTOR_HOME}/lib/R" ] && export R_LIBS="${TRACTOR_HOME}/lib/R"
-
-args=`echo "library(utils); library(tractor.utils); library(tractor.session); expandArguments('$*','$working_dir',$suffixes,$relative)" | "$R" --slave --vanilla`
-
-status=$?
-[ $status -ne 0 ] && exit
-
-cd "$working_dir" && eval "$command $args"
-
-status=$?
+# NB: expandArguments() sets the working directory
+status <- system2(args$command, expandedArgs)
 
 # We are now in the working directory, so don't preface the log filename with it
-[ $write_history -eq 1 ] && echo "[`date`] $full_command [${status}S]" >> tractor-history.log
+if (!isTRUE(args$nohistory)) {
+    handle <- file("tractor-history.log", "a")
+    writeLines(ore::es("[#{date()}] #{ifelse(validPath,path,'furrow')} #{paste(commandArgs(TRUE),collapse=' ')} [#{status}S]"), handle)
+    close(handle)
+}
+
+quit("no", status)

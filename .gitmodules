@@ -37,3 +37,6 @@
 [submodule "lib/jsonlite"]
 	path = lib/jsonlite
 	url = https://github.com/tractor/jsonlite.git
+[submodule "lib/arrg"]
+	path = lib/arrg
+	url = https://github.com/jonclayden/arrg.git
