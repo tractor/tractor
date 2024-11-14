@@ -21,4 +21,4 @@ fi
 
 set -x
 
-${FURROW} ${TRACTOR_COMMAND} $algorithm -force -grad @mrtrix/directions.txt -mask @mrtrix/mask ${TRACTOR_COMMAND_ARGS} @mrtrix/data @mrtrix/wmresp.txt @wmfod.mif.gz "$mtargs"
+${FURROW} ${TRACTOR_COMMAND} $algorithm -force -grad @mrtrix/directions.txt -mask @mrtrix/mask ${TRACTOR_COMMAND_ARGS} @mrtrix/data @mrtrix/wmresp.txt @wmfod.mif.gz $mtargs
