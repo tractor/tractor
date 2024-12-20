@@ -104,6 +104,8 @@ DiffusionScheme <- setRefClass("DiffusionScheme", contains="SerialisableObject",
     
     nShells = function () { return (max(shellIndices)) },
     
+    nVolumes = function () { return (length(bValues)) },
+    
     rotate = function (rotation)
     {
         assert(equivalent(dim(rotation), c(3L,3L)) && equivalent(det(rotation), 1), "Argument does not look like a 3D rotation matrix")
@@ -137,6 +139,37 @@ writeMatrix <- function (matrix, fileName, missing = NA)
     writeLines(lines, fileName)
 }
 
+#' Read and write diffusion schemes
+#' 
+#' These functions read diffusion acquisition scheme objects from, and write
+#' them to, text-based matrix files. They can handle both FSL-style (two-file)
+#' and TractoR-style (single file) formats; in the two-file case either file
+#' name can be specified.
+#' 
+#' Three main naming conventions for these files are recognised. TractoR's
+#' preferred format is a single file with a ".dirs" extension, with the 
+#' direction information stored one volume per row and b-values in the final
+#' column. FSL uses files called "bvecs" and "bvals", with values stored one
+#' volume per column; if the specified basic file name is exactly one of these
+#' two then this format is assumed. BIDS uses the same format, but in files
+#' named for the associated image with ".bvec" and ".bval" extensions. Any
+#' other naming convention can be forced when writing by wrapping the file
+#' name in a call to \code{\link{I}}, the "as-is" function.
+#' 
+#' @param fileName A string specifying a file name or stem.
+#' @param ... Further arguments to the \code{\link{DiffusionScheme}}
+#'   constructor, to adjust how shells are interpreted.
+#' @param A \code{\link{DiffusionScheme}} object to write to file.
+#' @return \code{readDiffusionScheme} returns a \code{\link{DiffusionScheme}}
+#'   object. \code{writeDiffusionScheme} is called for its side effect.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 readDiffusionScheme <- function (fileName, ...)
 {
     bValues <- directions <- NULL
@@ -171,6 +204,8 @@ readDiffusionScheme <- function (fileName, ...)
     return (DiffusionScheme$new(drop(bValues), directions, ...))
 }
 
+#' @rdname readDiffusionScheme
+#' @export
 writeDiffusionScheme <- function (scheme, fileName)
 {
     files <- c(bValues=NA_character_, directions=NA_character_)
@@ -186,6 +221,17 @@ writeDiffusionScheme <- function (scheme, fileName)
         files["directions"] <- fileName
     else
         files["directions"] <- candidateFiles[1]
+    
+    # If there's an image at the target path that doesn't match the scheme, produce a warning
+    fileStem <- ensureFileSuffix(filename, NULL)
+    if (!inherits(fileName,"AsIs") && imageFileExists(fileStem))
+    {
+        metadata <- readImageFile(fileStem)
+        if (metadata$getDimensionality() != 4L)
+            report(OL$Warning, "Image matching scheme path #{fileStem} is not 4D")
+        else if (metadata$getDimensions()[4L] != scheme$nVolumes())
+            report(OL$Warning, "Image matching scheme path #{fileStem} does not have the expected number of volumes")
+    }
     
     if (is.na(files["bValues"]))
     {
