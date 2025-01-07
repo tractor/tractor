@@ -157,6 +157,10 @@ writeMatrix <- function (matrix, fileName, missing = NA)
 #' name in a call to \code{\link{I}}, the "as-is" function.
 #' 
 #' @param fileName A string specifying a file name or stem.
+#' @param bValues A numeric vector of b-values, or a single string naming a
+#'   file containing them (in a format readable by \code{\link{read.table}}).
+#'   The default is \code{NULL}, meaning that they should be read from the
+#'   \code{fileName} or a sidecar "bval" file.
 #' @param ... Further arguments to the \code{\link{DiffusionScheme}}
 #'   constructor, to adjust how shells are interpreted.
 #' @param A \code{\link{DiffusionScheme}} object to write to file.
@@ -170,14 +174,17 @@ writeMatrix <- function (matrix, fileName, missing = NA)
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 #' @export
-readDiffusionScheme <- function (fileName, ...)
+readDiffusionScheme <- function (fileName, bValues = NULL, ...)
 {
-    bValues <- directions <- NULL
+    directions <- NULL
+    if (is.character(bValues) && length(bValues) == 1L && file.exists(bValues))
+        bValues <- readMatrix(bValues)
+    
     if (file.exists(fileName))
     {
         directions <- readMatrix(fileName)
         if (basename(fileName) == "bvecs")
-            bValues <- readMatrix(file.path(dirname(fileName), "bvals"))
+            bValues <- bValues %||% readMatrix(file.path(dirname(fileName), "bvals"))
     }
     else
     {
@@ -186,14 +193,14 @@ readDiffusionScheme <- function (fileName, ...)
             directions <- readMatrix(candidateFiles[1])
         else if (all(file.exists(candidateFiles[2:3])))
         {
-            bValues <- readMatrix(candidateFiles[2])
+            bValues <- bValues %||% readMatrix(candidateFiles[2])
             directions <- readMatrix(candidateFiles[3])
         }
     }
     
     if (NCOL(directions) == 4L)
     {
-        bValues <- directions[,4]
+        bValues <- bValues %||% directions[,4]
         directions <- directions[,1:3]
     }
     if (is.null(bValues) || is.null(directions))
@@ -226,7 +233,7 @@ writeDiffusionScheme <- function (scheme, fileName)
     fileStem <- ensureFileSuffix(filename, NULL)
     if (!inherits(fileName,"AsIs") && imageFileExists(fileStem))
     {
-        metadata <- readImageFile(fileStem)
+        metadata <- readImageFile(fileStem, metadataOnly=TRUE)
         if (metadata$getDimensionality() != 4L)
             report(OL$Warning, "Image matching scheme path #{fileStem} is not 4D")
         else if (metadata$getDimensions()[4L] != scheme$nVolumes())
@@ -243,4 +250,69 @@ writeDiffusionScheme <- function (scheme, fileName)
         writeMatrix(t(scheme$getGradientDirections()), files["directions"], missing=0)
         writeMatrix(promote(scheme$getBValues(),byrow=TRUE), files["bValues"], missing=0)
     }
+}
+
+#' Assign image volumes to shells
+#' 
+#' This function guesses the assignment of image volumes to shells, expanding
+#' a list of unique b-values to one value per volume. This is achieved by
+#' performing k-means clustering on the mean intensities of each volume. The
+#' set of unique b-values must be known beforehand, and no sanity checking is
+#' performed on the intensities for each shell except ordering.
+#' 
+#' @param image A 4D diffusion-weighted image, whose mean volume intensities
+#'   will be used to cluster the acquisition into shells. It does not need to
+#'   already have gradient direction or b-value information associated with it.
+#' @param bValues A numeric vector of unique b-values.
+#' @return A numeric vector expanding the original \code{bValues} to one value
+#'   per volume of the \code{image}.
+#' 
+#' @note The procedure performed by this function is a heuristic, and may
+#'   produce inaccurate results if some shell b-values are close together, if
+#'   there are many unique b-values, if the assumption of decreasing mean
+#'   intensity with increasing b-value doesn't hold, etc. If the full
+#'   acquisition scheme is known then it is alway better to specify it
+#'   explicitly.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
+fillShells <- function (image, bValues)
+{
+    if (!is(image, "MriImage"))
+        image <- asMriImage(image)
+    
+    assert(image$getDimensionality() == 4L, "Specified image is not 4D")
+    nVolumes <- image$getDimensions()[4L]
+    
+    bValues <- as.numeric(bValues)
+    assert(length(bValues) <= nVolumes, "#{length(bValues)} b-values were specified, but the image only has #{nVolumes} volumes")
+    
+    if (length(bValues) < nVolumes)
+    {
+        shellValues <- sort(unique(bValues))
+        nShells <- length(shellValues)
+        
+        meanIntensities <- image$apply(4, mean, na.rm=TRUE)
+        kMeansResult <- kmeans(meanIntensities, nShells, nstart=3L)
+        
+        # Increasing b-value corresponds to decreasing image intensity
+        bValues <- rep(NA, nVolumes)
+        shellCounts <- integer(0L)
+        clusterOrder <- order(kMeansResult$centers, decreasing=TRUE)
+        for (i in seq_len(nShells))
+        {
+            indices <- which(kMeansResult$cluster == clusterOrder[i])
+            shellCounts <- c(shellCounts, length(indices))
+            bValues[indices] <- shellValues[i]
+        }
+        
+        report(OL$Info, "Implied shell sizes are #{implode(shellCounts,', ')} for b-values of #{implode(shellValues,', ')} s/mm^2")
+    }
+    
+    return (bValues)
 }
