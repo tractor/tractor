@@ -121,8 +121,15 @@ requireArguments <- function (...)
     
     if (is.numeric(args) && nArguments() < args)
         report(OL$Error, "At least ", args, " argument(s) must be specified")
-    else if (is.character(args) && nArguments() < length(args))
-        report(OL$Error, "At least ", length(args), " argument(s) must be specified: ", implode(args,", "))
+    else if (is.character(args))
+    {
+        assert(nArguments() >= length(args), "At least #{length(args)} argument(s) must be specified: ", implode(args,", "))
+        
+        # Name the global argument vector and reassign it
+        arguments <- get("Arguments")
+        names(arguments) <- replace(rep("",length(arguments)), seq_along(args), args)
+        assign("Arguments", arguments, envir=globalenv())
+    }
 }
 
 expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = TRUE, relative = FALSE)
