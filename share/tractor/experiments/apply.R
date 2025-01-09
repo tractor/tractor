@@ -28,7 +28,7 @@ runExperiment <- function ()
     }
     
     assert(nInputs > 0, "At least one input image must be specified")
-    assert(is.null(combine) || nInputs <= 26, "Images beyond the 26th cannot be referred to by the expression", level=OL$Warning)
+    assert(!is.null(combine) || nInputs <= 26, "Images beyond the 26th cannot be referred to by the expression", level=OL$Warning)
     expression <- implode(Arguments[-(1:nInputs)], sep=" ")
     
     if (is.null(combine))
