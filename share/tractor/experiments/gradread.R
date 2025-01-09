@@ -7,18 +7,15 @@ runExperiment <- function ()
 {
     requireArguments("destination", "directions file", "b-values")
     
-    destinationStem <- ensureFileSuffix(Arguments["destination"], NULL)
     # True if destination exists and is a directory - assume this is a session
     if (isTRUE(file.info(Arguments["destination"])$isdir))
-        destination <- attachMriSession(Arguments["destination"])
+        destination <- attachMriSession(Arguments["destination"])$getImageFileNameByType("rawdata", "diffusion")
     # If the target matches an image, we will adopt a standard suffix
     else if (imageFileExists(destinationStem))
         destination <- Arguments["destination"]
     # Otherwise take the destination path literally, with whatever suffix it has
     else
         destination <- I(Arguments["destination"])
-    
-    sourceFile <- Arguments["directions file"]
     
     if (nArguments() == 3 && file.exists(Arguments["b-values"]))
         bValues <- Arguments["b-values"]
@@ -29,70 +26,10 @@ runExperiment <- function ()
             bValues <- c(0, bValues)
     }
     
-    bvecs <- as.matrix(read.table(fileName))
-    if (nrow(bvecs) != 3)
-    {
-        if (ncol(bvecs) == 3)
-        {
-            report(OL$Info, "Transposing gradient vector matrix")
-            bvecs <- t(bvecs)
-        }
-        else
-            report(OL$Error, "The gradient vector matrix must have one dimension equal to 3")
-    }
-    
-    if (!bValueFile)
-    {
-        report(OL$Info, "Loading raw data image")
-        dataImage <- session$getImageByType("rawdata", "diffusion")
-        
-        nVectorsFile <- ncol(bvecs)
-        nVectorsImage <- dataImage$getDimensions()[4]
-        bvals <- rep(NA, nVectorsImage)
-        report(OL$Info, "Gradient vector matrix has #{nVectorsFile} columns; data image contains #{nVectorsImage} volumes")
-        
-        meanIntensities <- dataImage$apply(4, mean, na.rm=TRUE)
-        kMeansResult <- kmeans(meanIntensities, nBValues, nstart=3)
-    
-        if (nVectorsFile != nVectorsImage)
-        {
-            if (min(bValues) != 0 || nBValues > 2)
-                report(OL$Error, "Partial gradient vector matrices can only be used when there is one nonzero b-value")
-            else if (!(nVectorsFile %in% kMeansResult$size))
-                report(OL$Error, "K-means cluster sizes are #{kMeansResult$size[1]} and #{kMeansResult$size[2]} - neither matches your text file")
-            else
-            {
-                highBValueCluster <- which(kMeansResult$size == nVectorsFile)
-                lowBValueCluster <- ifelse(highBValueCluster==1, 2, 1)
-                if (kMeansResult$centers[highBValueCluster] > kMeansResult$centers[lowBValueCluster])
-                    report(OL$Warning, "High b-value images seem to have higher mean signal")
-            
-                highBValueIndices <- which(kMeansResult$cluster == highBValueCluster)
-                lowBValueIndices <- which(kMeansResult$cluster == lowBValueCluster)
-                report(OL$Info, "Image volume(s) ", implode(lowBValueIndices,sep=", ",finalSep=" and "), " appear(s) to have lower diffusion weighting")
-            
-                newBVecs <- matrix(NA, nrow=3, ncol=nVectorsImage)
-                newBVecs[,highBValueIndices] <- bvecs
-                newBVecs[,lowBValueIndices] <- 0
-                bvecs <- newBVecs
-                bvals[highBValueIndices] <- max(bValues)
-                bvals[lowBValueIndices] <- 0
-            }
-        }
-        else
-        {
-            clusterOrder <- order(kMeansResult$centers, decreasing=TRUE)
-            for (i in seq_len(nBValues))
-            {
-                indices <- which(kMeansResult$cluster == clusterOrder[i])
-                bvals[indices] <- bValues[i]
-            }
-        }
-    }
+    scheme <- readDiffusionScheme(Arguments["directions file"], bValues, ensureFileSuffix(destination,NULL))
     
     report(OL$Info, "Writing gradient direction files")
-    scheme <- SimpleDiffusionScheme$new(bvals, t(bvecs))
-    session$updateDiffusionScheme(scheme, unrotated=TRUE)
+    scheme$writeToFile(destination)
     
     print(scheme)
 }
