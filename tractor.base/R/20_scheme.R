@@ -212,7 +212,7 @@ readDiffusionScheme <- function (fileName, bValues = NULL, imagePath = NULL, ...
     
     # By now both should have been identified
     if (is.null(bValues) || is.null(directions))
-        output(OL$Error, "No diffusion scheme found for path #{fileName}")
+        report(OL$Error, "No diffusion scheme found for path #{fileName}")
     
     # Handle mismatches between the number of b-values and directions using the supplied image
     # If this doesn't apply, DiffusionScheme's constructor will produce an error when it checks its arguments
