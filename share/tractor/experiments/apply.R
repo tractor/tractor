@@ -7,7 +7,7 @@
 
 runExperiment <- function ()
 {
-    requireArguments("image file(s)", "R expression")
+    requireArguments("image file(s)", "R expression", name=FALSE)
     
     nInputs <- getConfigVariable("Inputs", NULL, "integer")
     combine <- getConfigVariable("Combine", NULL, "character", validValues=c("mean","sum","prod","min","max"))

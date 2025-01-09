@@ -115,7 +115,7 @@ nArguments <- function ()
         return (length(get("Arguments")))
 }
 
-requireArguments <- function (...)
+requireArguments <- function (..., name = TRUE)
 {
     args <- c(...)
     
@@ -125,10 +125,14 @@ requireArguments <- function (...)
     {
         assert(nArguments() >= length(args), "At least #{length(args)} argument(s) must be specified: ", implode(args,", "))
         
-        # Name the global argument vector and reassign it
-        arguments <- get("Arguments")
-        names(arguments) <- replace(rep("",length(arguments)), seq_along(args), args)
-        assign("Arguments", arguments, envir=globalenv())
+        # Name the global argument vector and reassign it, if required
+        # This allows expected arguments to be indexed by name, but can cause problems in some contexts (e.g. for "apply")
+        if (name)
+        {
+            arguments <- get("Arguments")
+            names(arguments) <- replace(rep("",length(arguments)), seq_along(args), args)
+            assign("Arguments", arguments, envir=globalenv())
+        }
     }
 }
 
