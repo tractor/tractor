@@ -161,6 +161,11 @@ writeMatrix <- function (matrix, fileName, missing = NA)
 #'   file containing them (in a format readable by \code{\link{read.table}}).
 #'   The default is \code{NULL}, meaning that they should be read from the
 #'   \code{fileName} or a sidecar "bval" file.
+#' @param imagePath An optional string giving the path to an image. If fewer
+#'   b-values are given than the number of gradient directions in the file,
+#'   the image will be read and passed to \code{\link{fillShells}} to fill in
+#'   the gaps. This is a convenience feature, but is heuristic-based and so
+#'   may not always be reliable.
 #' @param ... Further arguments to the \code{\link{DiffusionScheme}}
 #'   constructor, to adjust how shells are interpreted.
 #' @param A \code{\link{DiffusionScheme}} object to write to file.
@@ -174,7 +179,7 @@ writeMatrix <- function (matrix, fileName, missing = NA)
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 #' @export
-readDiffusionScheme <- function (fileName, bValues = NULL, ...)
+readDiffusionScheme <- function (fileName, bValues = NULL, imagePath = NULL, ...)
 {
     directions <- NULL
     if (is.character(bValues) && length(bValues) == 1L && file.exists(bValues))
@@ -198,13 +203,34 @@ readDiffusionScheme <- function (fileName, bValues = NULL, ...)
         }
     }
     
+    # The b-values may be combined with the directions
     if (NCOL(directions) == 4L)
     {
         bValues <- bValues %||% directions[,4]
         directions <- directions[,1:3]
     }
+    
+    # By now both should have been identified
     if (is.null(bValues) || is.null(directions))
         output(OL$Error, "No diffusion scheme found for path #{fileName}")
+    
+    # Handle mismatches between the number of b-values and directions using the supplied image
+    # If this doesn't apply, DiffusionScheme's constructor will produce an error when it checks its arguments
+    if (length(bValues) != nrow(directions) && !is.null(imagePath))
+    {
+        # Expand the b-values based on mean volume intensities
+        report(OL$Info, "Reading image data to estimate shell structure")
+        bValues <- fillShells(readImageFile(imagePath), unique(bValues))
+        
+        # If there are more image volumes than directions, specifically because b=0 volumes are omitted, we can patch that up by adding zero rows
+        if (length(bValues) > nrow(directions) && sum(bValues != 0) == nrow(directions))
+        {
+            report(OL$Info, "Inserting zero-magnitude directions for b=0 volumes")
+            allDirections <- matrix(0, nrow=length(bValues), ncol=3L)
+            allDirections[bValues != 0,] <- directions
+            directions <- allDirections
+        }
+    }
     
     bValues[is.na(bValues)] <- 0
     directions[is.na(directions)] <- 0
