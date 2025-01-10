@@ -51,12 +51,9 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
                 fileName <- file.path(diffusionDir, "directions-orig.txt")
             else
                 fileName <- file.path(diffusionDir, "directions.txt")
-        
+            
             if (file.exists(fileName))
-            {
-                gradientSet <- unname(as.matrix(read.table(fileName)))
-                scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
-            }
+                scheme <- readDiffusionScheme(fileName)
         }
         return (scheme)
     },
