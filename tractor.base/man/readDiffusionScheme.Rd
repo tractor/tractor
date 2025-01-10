@@ -23,14 +23,16 @@ the image will be read and passed to \code{\link{fillShells}} to fill in
 the gaps. This is a convenience feature, but is heuristic-based and so
 may not always be reliable.}
 
-\item{...}{Further arguments to the \code{\link{DiffusionScheme}}
+\item{...}{Further arguments to the \code{\linkS4class{DiffusionScheme}}
 constructor, to adjust how shells are interpreted.}
 
-\item{A}{\code{\link{DiffusionScheme}} object to write to file.}
+\item{scheme}{A \code{\linkS4class{DiffusionScheme}} object to write to
+file.}
 }
 \value{
-\code{readDiffusionScheme} returns a \code{\link{DiffusionScheme}}
-  object. \code{writeDiffusionScheme} is called for its side effect.
+\code{readDiffusionScheme} returns a \code{DiffusionScheme} object,
+  or \code{NULL} if one cannot be read. \code{writeDiffusionScheme} is
+  called for its side effect.
 }
 \description{
 These functions read diffusion acquisition scheme objects from, and write

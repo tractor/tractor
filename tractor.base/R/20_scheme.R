@@ -166,11 +166,13 @@ writeMatrix <- function (matrix, fileName, missing = NA)
 #'   the image will be read and passed to \code{\link{fillShells}} to fill in
 #'   the gaps. This is a convenience feature, but is heuristic-based and so
 #'   may not always be reliable.
-#' @param ... Further arguments to the \code{\link{DiffusionScheme}}
+#' @param ... Further arguments to the \code{\linkS4class{DiffusionScheme}}
 #'   constructor, to adjust how shells are interpreted.
-#' @param A \code{\link{DiffusionScheme}} object to write to file.
-#' @return \code{readDiffusionScheme} returns a \code{\link{DiffusionScheme}}
-#'   object. \code{writeDiffusionScheme} is called for its side effect.
+#' @param scheme A \code{\linkS4class{DiffusionScheme}} object to write to
+#'   file.
+#' @return \code{readDiffusionScheme} returns a \code{DiffusionScheme} object,
+#'   or \code{NULL} if one cannot be read. \code{writeDiffusionScheme} is
+#'   called for its side effect.
 #' @author Jon Clayden
 #' @references Please cite the following reference when using TractoR in your
 #' work:
@@ -211,8 +213,9 @@ readDiffusionScheme <- function (fileName, bValues = NULL, imagePath = NULL, ...
     }
     
     # By now both should have been identified
+    # TODO: make this optionally an error
     if (is.null(bValues) || is.null(directions))
-        report(OL$Error, "No diffusion scheme found for path #{fileName}")
+        return (NULL)
     
     # Handle mismatches between the number of b-values and directions using the supplied image
     # If this doesn't apply, DiffusionScheme's constructor will produce an error when it checks its arguments
