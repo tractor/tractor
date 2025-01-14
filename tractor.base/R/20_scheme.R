@@ -259,7 +259,7 @@ writeDiffusionScheme <- function (scheme, fileName)
         files["directions"] <- candidateFiles[1]
     
     # If there's an image at the target path that doesn't match the scheme, produce a warning
-    fileStem <- ensureFileSuffix(filename, NULL)
+    fileStem <- ensureFileSuffix(fileName, NULL)
     if (!inherits(fileName,"AsIs") && imageFileExists(fileStem))
     {
         metadata <- readImageFile(fileStem, metadataOnly=TRUE)
