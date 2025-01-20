@@ -1,7 +1,7 @@
-#! /usr/bin/env -S Rscript --vanilla --default-packages=utils,methods
+#! /usr/bin/env -S lr -v -l utils
 
-# Find the normalised path to this script
-path <- normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value=TRUE)))
+# Find the path to this script
+path <- Sys.getenv("LITTLER_SCRIPT_PATH")
 validPath <- (length(path) == 1 && file.exists(path))
 
 # Read or guess TRACTOR_HOME
@@ -42,7 +42,7 @@ parser <- arrg("furrow",
             header=c(ore::es("furrow (program v3.5.0, distribution v#{tractorVersion})"), "Channel a command through TractoR's shorthand"),
             footer="Run the specified command, which can be any standard program or script on the PATH, after first expanding TractoR's image-path shorthand, such as @FA for the fractional anisotropy map in the current session directory, or /data/subject1@diffusion/data for the diffusion data series from the session rooted at /data/subject1.")
 
-args <- parser$parse()
+args <- parser$parse(argv)
 if (isTRUE(args$help)) {
     parser$show()
     quit("no")
