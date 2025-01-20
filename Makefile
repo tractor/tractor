@@ -15,7 +15,11 @@ default: build post-build-info
 post-build-info:
 	@$(ECHO) 'Run "make install" to install packages'
 
-build:
+bin/lr: lib/littler
+	@$(INSTALL) lib/littler
+	@cp lib/R/littler/bin/r bin/lr
+
+build: bin/lr
 	@$(ECHO_N) "Building tractor executable... "
 	@cd src && $(R) CMD make >build.log 2>&1 && $(ECHO) "OK" || ( $(ECHO) "FAIL"; exit 0 )
 
@@ -94,7 +98,7 @@ clean:
 
 distclean: clean
 	@rm -f lib/.timestamp
-	@rm -f libexec/tractor src/tractor.o src/build.log install.log
+	@rm -f bin/lr libexec/tractor src/tractor.o src/build.log install.log
 
 test:
 	@cd tests && $(MAKE) run-tests R=$(R)
