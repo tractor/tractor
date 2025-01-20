@@ -40,3 +40,6 @@
 [submodule "lib/arrg"]
 	path = lib/arrg
 	url = https://github.com/jonclayden/arrg.git
+[submodule "lib/littler"]
+	path = lib/littler
+	url = https://github.com/tractor/littler.git
