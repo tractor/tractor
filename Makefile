@@ -71,7 +71,7 @@ install-track:
 install-graph:
 	@$(INSTALL) tractor.graph
 
-install-main:
+install-main: build
 	@$(MAKE) install-base install-utils install-reg install-session install-track install-nt install-graph
 
 install: build
