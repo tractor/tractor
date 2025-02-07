@@ -67,7 +67,11 @@ runWorkflow <- function (name, session, ..., .args = "")
     workflowFile <- findWorkflow(name)
     
     env <- list(...)
-    env <- structure(as.character(env), names=names(env))
+    if (length(env) > 0L)
+    {
+        env <- env[!sapply(env, is.null)]
+        env <- structure(as.character(env), names=names(env))
+    }
     
     directory <- as.character(session)
     if (length(directory) != 1)
