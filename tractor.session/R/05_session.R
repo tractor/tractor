@@ -307,8 +307,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     updateDiffusionScheme = function (scheme = NULL, unrotated = FALSE)
     {
-        if (!is.null(scheme) && !is(scheme, "SimpleDiffusionScheme"))
-            report(OL$Error, "Specified scheme is not a SimpleDiffusionScheme object")
+        if (!is.null(scheme) && !is(scheme, "DiffusionScheme"))
+            report(OL$Error, "Specified scheme is not a DiffusionScheme object")
         
         # No point in reading and writing from the same location at the same time
         if (is.null(scheme))

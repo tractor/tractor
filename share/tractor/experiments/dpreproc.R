@@ -129,7 +129,7 @@ runExperiment <- function ()
                     bVectors[missing,] <- 0
                 }
                 report(OL$Info, "Constructing acquisition scheme")
-                scheme <- SimpleDiffusionScheme$new(bValues, bVectors)
+                scheme <- asDiffusionScheme(bVectors, bValues)
                 print(scheme)
             }
             
@@ -142,7 +142,7 @@ runExperiment <- function ()
                 if (!is.null(gradientSet))
                 {
                     report(OL$Info, "Gradient cache hit - using stored gradient scheme")
-                    scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
+                    scheme <- asDiffusionScheme(gradientSet[,1:3,drop=FALSE], gradientSet[,4])
                     session$updateDiffusionScheme(scheme, unrotated=TRUE)
                 }
             }

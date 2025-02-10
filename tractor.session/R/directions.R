@@ -85,7 +85,7 @@ flipGradientVectorsForSession <- function (session, axes, unrotated = FALSE)
     scheme <- session$getDiffusionScheme(unrotated=unrotated)
     directions <- scheme$getGradientDirections()
     directions[,axes] <- (-directions[,axes])
-    scheme <- SimpleDiffusionScheme$new(scheme$getBValues(), directions)
+    scheme <- asDiffusionScheme(directions, scheme$getBValues())
     session$updateDiffusionScheme(scheme, unrotated=unrotated)
 }
 
@@ -100,7 +100,7 @@ rotateGradientVectorsForSession <- function (session)
     unrotatedScheme <- session$getDiffusionScheme(unrotated=TRUE)
     directions <- unrotatedScheme$getGradientDirections()
     directions <- sapply(1:nrow(directions), function(i) decompositions[[i]]$rotationMatrix %*% directions[i,])
-    rotatedScheme <- SimpleDiffusionScheme$new(unrotatedScheme$getBValues(), t(directions))
+    rotatedScheme <- asDiffusionScheme(t(directions), unrotatedScheme$getBValues())
     session$updateDiffusionScheme(unrotatedScheme, unrotated=TRUE)
     session$updateDiffusionScheme(rotatedScheme)
 }

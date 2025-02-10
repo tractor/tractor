@@ -7,7 +7,7 @@ createDiffusionTensorFromComponents <- function (components)
 
 estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), requireMetrics = TRUE, convergenceLevel = 1e-3)
 {
-    if (!is(scheme, "SimpleDiffusionScheme") && !is.matrix(scheme))
+    if (!is(scheme, "DiffusionScheme") && !is.matrix(scheme))
         report(OL$Error, "The specified scheme object is not valid")
     
     method <- match.arg(method)
