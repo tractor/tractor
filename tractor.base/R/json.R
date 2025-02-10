@@ -45,9 +45,9 @@ convertJsonToTags <- function (bids)
         value <- bids[[bidsName]]
         if (bidsName == "PhaseEncodingDirection")
         {
-            groups <- ore::groups(ore.search("^([ijk])(-)?$", value))
-            tags$phaseEncodingDirection <- groups[,1]
-            tags$phaseEncodingSign <- ifelse(is.na(groups[,2]), 1L, -1L)
+            groups <- ore::groups(ore.search("^([ijk])([+-])?$", value, simplify=FALSE))
+            tags$phaseEncodingDirection <- groups[,1,]
+            tags$phaseEncodingSign <- ifelse(is.na(groups[,2,]) | groups[,2,] == "+", 1L, -1L)
         }
         
         # Tag names mostly reflect the BIDS ones, but with the first letter downcased
