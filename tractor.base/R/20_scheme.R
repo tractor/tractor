@@ -127,6 +127,48 @@ DiffusionScheme <- setRefClass("DiffusionScheme", contains="SerialisableObject",
     }
 ))
 
+#' Create a DiffusionScheme object from data
+#' 
+#' This is a generic function that converts another object to a
+#' \code{DiffusionScheme} by extracting the relevant information. There are
+#' methods for matrices (of gradient directions) and \code{MriImage} objects.
+#' An image passed as an argument to the latter must have the \code{bValues}
+#' and \code{bVectors} tags set appropriately.
+#' 
+#' @param x An object to coerce to a \code{DiffusionScheme}.
+#' @param ... Additional arguments to methods.
+#' @param bValues A vector of b-values, required when \code{x} is a matrix of
+#'   gradient directions.
+#' @return A \code{DiffusionScheme} object.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
+asDiffusionScheme <- function (x, ...)
+{
+    UseMethod("asDiffusionScheme")
+}
+
+#' @export
+asDiffusionScheme.matrix <- function (x, bValues, ...)
+{
+    return (DiffusionScheme$new(bValues, x))
+}
+
+#' @export
+asDiffusionScheme.MriImage <- function (x, ...)
+{
+    assert(all(x$hasTags(c("bValues","bVectors"))), "Image does not contain b-value and diffusion direction metadata")
+    return (DiffusionScheme$new(x$getTags("bValues"), x$getTags("bVectors")))
+}
+
+#' @export
+asDiffusionScheme.DiffusionScheme <- function (x, ...) { return (x) }
+
 readMatrix <- function (fileName) as.matrix(read.table(fileName))
 
 writeMatrix <- function (matrix, fileName, missing = NA)
