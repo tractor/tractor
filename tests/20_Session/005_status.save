@@ -8,7 +8,7 @@ DIFFUSION:
   Number of shells              : 1
   Diffusion b-values            : 0, 1000 s/mm^2
   Number of gradient directions : 2, 10
-  Fibre orientation model(s)    : DTI, FSL-BEDPOSTX (1 fibre per voxel)
+  Fibre orientation model(s)    : DTI, CSD, FSL-BEDPOSTX (1 fibre per voxel)
 
 FUNCTIONAL:
   Data dimensions    : 64 x 64 x 30 x 15 voxels
