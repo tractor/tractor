@@ -9,6 +9,7 @@ runExperiment <- function ()
 	
 	algorithm <- getConfigVariable("Algorithm", "auto", validValues=c("auto", "tournier", "tax", "dhollander"))
 	order <- getConfigVariable("Order", NULL, "integer")
+	force <- getConfigVariable("Force", FALSE)
 	
 	if (algorithm == "auto")
 	{
@@ -17,8 +18,6 @@ runExperiment <- function ()
 		report(OL$Info, "Choosing \"#{algorithm}\" CSD algorithm for #{nShells}-shell data")
 	}
 	
-	mrtrixDir <- session$getDirectory("mrtrix")
-	if (!file.exists(file.path(mrtrixDir, "wmresp.txt")))
-		runWorkflow("dwi2response", session, Algorithm=algorithm, Order=order)
-	runWorkflow("dwi2fod", session, Order=order)
+	runWorkflow("dwi2response", session, Algorithm=algorithm, Order=order, Force=as.integer(force))
+	runWorkflow("dwi2fod", session, Order=order, Force=as.integer(force))
 }
