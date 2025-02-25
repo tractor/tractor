@@ -104,7 +104,7 @@ runExperiment <- function ()
                 write.table(t(tags$bVectors), ensureFileSuffix(to,"bvec"), row.names=FALSE, col.names=FALSE)
             tags <- tags[!(names(tags) %~% "^(toffset|bValues|bVectors)$|_")]
             if (length(tags) > 0)
-                writeLines(tractor.base:::convertTagsToJson(tags), ensureFileSuffix(to,"json"))
+                RNifti::toBidsJson(tags, ensureFileSuffix(to,"json"), rename=TRUE)
         }
         
         # If the source file was not in NIfTI format (which BIDS requires), read and rewrite it

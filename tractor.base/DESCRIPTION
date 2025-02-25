@@ -4,8 +4,8 @@ Date: 2024-02-27
 Title: Read, Manipulate and Visualise Magnetic Resonance Images
 Author: Jon Clayden
 Maintainer: Jon Clayden <code@clayden.org>
-Imports: methods, ore (>= 1.3.0), reportr, shades, RNifti
-Suggests: mmand, loder, divest, jsonlite, yaml, tinytest
+Imports: methods, ore (>= 1.3.0), RNifti (>= 1.8.0), reportr, shades
+Suggests: mmand, loder, divest, yaml, tinytest
 Enhances: oro.nifti
 Description: Functions for working with magnetic resonance images. Reading and
     writing of popular file formats (DICOM, Analyze, NIfTI-1, NIfTI-2, MGH);

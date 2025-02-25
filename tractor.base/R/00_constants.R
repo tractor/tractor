@@ -32,12 +32,6 @@
                           "1.2.840.10008.1.2.1" = list(endian="little",explicitTypes=TRUE),
                           "1.2.840.10008.1.2.2" = list(endian="big",explicitTypes=TRUE)))
 
-.Bids <- list(
-    mappingFromJson=c(MagneticFieldStrength="fieldStrength", ManufacturersModelName="scannerModelName", SpacingBetweenSlices="sliceSpacing", TotalReadoutTime="effectiveReadoutTime", MultibandAccelerationFactor="multibandFactor", ImageComments="comments"),
-    mappingToJson=c(fieldStrength="MagneticFieldStrength", scannerModelName="ManufacturersModelName", sliceSpacing="SpacingBetweenSlices", effectiveReadoutTime="TotalReadoutTime", multibandFactor="MultibandAccelerationFactor", comments="ImageComments"),
-    toIgnore="^[iI]mageType$",
-    toScale="^(Echo|Repetition)Time$")
-
 .FileTypes <- list(
     typeNames=c(     "ANALYZE", "NIFTI", "NIFTI_PAIR", "ANALYZE_GZ", "NIFTI_GZ", "NIFTI_PAIR_GZ", "MGH", "MGH_GZ", "MRTRIX", "MRTRIX_GZ"),
     formatNames=c(   "Analyze", "Nifti", "Nifti",      "Analyze",    "Nifti",    "Nifti",         "Mgh", "Mgh",    "Mrtrix", "Mrtrix"),

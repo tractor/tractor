@@ -492,7 +492,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     if (file.exists(tagsFileName))
         do.call(image$setTags, yaml::yaml.load_file(tagsFileName))
     else if (file.exists(jsonFileName))
-        do.call(image$setTags, convertJsonToTags(readLines(jsonFileName)))
+        do.call(image$setTags, fromBidsJson(jsonFileName, rename=TRUE))
     
     # Read diffusion directions, if present
     dirsFileNames <- ensureFileSuffix(fileNames$fileStem, c("dirs","bval","bvec"))
