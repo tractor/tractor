@@ -130,13 +130,50 @@ describeExperiment <- function (scriptFile, fill = FALSE)
     invisible(NULL)
 }
 
+experimentPaths <- function ()
+{
+    packagePaths <- unlist(lapply(splitAndConvertString(Sys.getenv("TRACTOR_PACKAGES"), "[:,]"), function(p) system.file("tractor", "experiments", package=p)))
+    return (c(getwd(),
+              file.path(Sys.getenv("HOME"), ".tractor"),
+              splitAndConvertString(Sys.getenv("TRACTOR_PATH"), ":", fixed=TRUE),
+              packagePaths[packagePaths != ""],
+              file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "experiments")))
+}
+
+scanExperiments <- function (pattern = NULL)
+{
+    path <- list.files(experimentPaths(), "\\.[rR]$", full.names=TRUE)
+    name <- ensureFileSuffix(basename(path), NULL, strip="[rR]")
+    
+    if (!is.null(pattern))
+    {
+        match <- name %~% pattern
+        path <- path[match]
+        name <- name[match]
+    }
+    
+    n <- length(path)
+    nohistory <- example <- logical(n)
+    args <- description <- character(n)
+    for (i in seq_len(n))
+    {
+        lines <- readLines(path[i])
+        nohistory[i] <- any(lines %~% "^\\s*\\#\\@nohistory\\s+TRUE")
+        example[i] <- any(lines %~% "^\\s*\\#\\@example\\s+(.+)$")
+        
+        if (any(lines %~% "^\\s*\\#\\@args\\s+(.+)$"))
+            args[i] <- implode(groups(ore.lastmatch()), sep=", ")
+        if (any(lines %~% "^\\s*\\#\\@desc\\s+(.+)$"))
+            description[i] <- implode(groups(ore.lastmatch()), sep=" ")
+    }
+    
+    return (data.frame(name=name, path=path, args=args, description=description, nohistory=nohistory, example=example))
+}
+
 findExperiment <- function (exptName)
 {
-    exptFile <- ensureFileSuffix(exptName, "R")    
-    pathDirs <- c(file.path(Sys.getenv("HOME"), ".tractor"),
-                  splitAndConvertString(Sys.getenv("TRACTOR_PATH"), ":", fixed=TRUE),
-                  file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "experiments"))
-    possibleLocations <- c(expandFileName(exptFile), file.path(pathDirs,exptFile))
+    exptFile <- ensureFileSuffix(exptName, "R")
+    possibleLocations <- file.path(experimentPaths(), exptFile)
     filesExist <- file.exists(possibleLocations)
     
     if (sum(filesExist) == 0)
