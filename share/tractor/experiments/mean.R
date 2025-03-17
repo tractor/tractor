@@ -1,5 +1,6 @@
 #@args metric image, [mask image]
 #@desc Calculate the mean or weighted mean value of a metric within the nonzero region of a brain volume. The specified mask image can be used as a binary mask (the default) or as a set of weights (with AveragingMode:weighted). In the latter case any weight threshold given is ignored. If the mask is missing then the metric image is itself the mask.
+#@group General analysis
 
 runExperiment <- function ()
 {

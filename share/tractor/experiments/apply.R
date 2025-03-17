@@ -4,6 +4,7 @@
 #@example tractor apply image1 image2 "log(a+b)"
 #@example # Threshold and binarise two images, then add them together
 #@example tractor apply image1 image2 "ifelse(a>=1,1,0)" Combine:sum
+#@group General analysis
 
 runExperiment <- function ()
 {

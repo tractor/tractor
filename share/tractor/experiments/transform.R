@@ -1,5 +1,6 @@
 #@desc Transform a point or image between named spaces as they relate to a particular session. Registration will be performed implicitly if necessary. The PointType option allows "world" coordinates or FSL-style zero-based voxel indices to be converted to TractoR's one-based voxel indices. The latter is always used for output.
 #@args session directory, image file or point
+#@group Working with sessions
 
 library(tractor.track)
 

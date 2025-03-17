@@ -1,4 +1,5 @@
 #@desc List all available TractoR experiment scripts, arranged into categories.
+#@group Utilities
 #@nohistory TRUE
 
 library(tractor.base)

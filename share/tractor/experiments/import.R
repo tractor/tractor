@@ -1,5 +1,6 @@
 #@args session directory, image files or DICOM directories
 #@desc Import images from DICOM, Analyze, NIfTI or MGH files, copying them into the appropriate places in a session directory. If any of the specified paths point to a directory they will be assumed to contain DICOM files. Images may be T1, T2, proton density or diffusion weighted, or functional. For diffusion data this is an alternative to stage 1 of the "dpreproc" script, but without the ability to read gradient directions. TractoR does not currently provide facilities for preprocessing functional data, so such images must already be fully preprocessed. Multiple T1-weighted images (only) will be coregistered together and a median reference image created, unless Coregister:false is given.
+#@group Working with sessions
 
 library(tractor.session)
 

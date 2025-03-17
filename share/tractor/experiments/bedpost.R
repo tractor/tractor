@@ -1,5 +1,6 @@
 #@args [session directory]
 #@desc Runs the FSL BEDPOSTX algorithm to fit a "ball-and-sticks" model to diffusion MRI data using Markov chain Monte Carlo. Note that BEDPOSTX will be run using a 3 fibre model at each voxel by default: this allows for (up to) 3 fibre directions within each voxel. This maximum can be changed with the FibresPerVoxel option, although run time will increase somewhat if it is set higher. A multiexponential diffusion model will be used if the dataset includes more than one nonzero b-value. In any case this process typically takes several hours. If BEDPOSTX has previously been run for the specified session directory (default "."), then it will not be run again unless Force:true is given.
+#@group Diffusion processing
 
 library(tractor.session)
 

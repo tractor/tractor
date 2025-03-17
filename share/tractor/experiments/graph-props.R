@@ -1,5 +1,6 @@
 #@desc Print out various graph-theoretical properties of a graph object. Any edge weight threshold specified is applied before the calculations. If IgnoreSign:true is given then then edges with weights greater than the threshold or less than its negative will be retained; this will be done by default if the threshold is positive. Note that further properties of the graph, such as the attributes which are defined for it, may be seen using the "peek" script.
 #@args graph file
+#@group Graph and network analysis
 #@nohistory TRUE
 
 library(tractor.base)

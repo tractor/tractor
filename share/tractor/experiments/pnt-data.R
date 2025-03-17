@@ -1,5 +1,6 @@
 #@desc Create B-spline tract representations and calculate characteristics of interest for a set of seed points in a brain volume. This is a prerequisite for training or using a tract matching model. For training, a specific seed point (using the R voxel convention) will likely be required. For using a model, the a seed need not be given, in which case a region of width SearchWidth voxels around the reference tract seed point will be used, subject to the specified AnisotropyThreshold. The TractName specified must match that given to the "pnt-ref" experiment. The old SessionList option can be specified to update the output from the TractoR 2.x version of this script.
 #@args session directory, [seed point]
+#@group Probabilistic neighbourhood tractography
 
 library(tractor.track)
 library(tractor.session)

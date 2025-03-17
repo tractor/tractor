@@ -1,5 +1,6 @@
 #@args source image file, target image file, [output file]
 #@desc Nonlinearly register a source image to a target image, estimating a transformation between them and optionally producing a transformed output image. NiftyReg is used for this operation. The registration can be initialised from an existing transformation (which will be updated), or from an affine text file or control point image.
+#@group Registration
 
 library(tractor.reg)
 

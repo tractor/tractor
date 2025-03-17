@@ -1,5 +1,6 @@
 #@desc Manipulate images within the file system, ensuring that all relevant files are handled, including auxiliary files. This script uses subcommands, so the first argument specifies exactly which operation will be performed. Available operations are "copy", "move" (or "rename"), "remove" (or "delete") and "link" - the latter for creating symlinks if the file system supports them. Standard Unix short forms of each command are also acceptable. Symlinks will use relative paths to the original file unless RelativeLinks:false is given. Existing files will be overwritten by default.
 #@args subcommand, image(s), [directory]
+#@group General analysis
 
 # To ensure that '@' shorthand is expanded properly
 library(tractor.session)

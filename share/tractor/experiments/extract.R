@@ -1,5 +1,6 @@
 #@args image file, data value(s) to extract
 #@desc Create a volume which is the same as the input volume, except that all voxels whose value is in the list of data values to extract are set to one, and all other voxels are given the value zero. The base name of the output files is specified with the RegionName option.
+#@group General analysis
 
 library(tractor.session)
 

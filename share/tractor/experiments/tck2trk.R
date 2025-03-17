@@ -1,5 +1,6 @@
 #@args tck file, reference image
 #@desc Convert an MRtrix .tck file to TrackVis .trk format. The second (image) argument is used to provide the reference space for the tracks.
+#@group Tractography
 
 library(tractor.track)
 

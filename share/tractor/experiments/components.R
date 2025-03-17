@@ -1,5 +1,6 @@
 #@desc Identify connected components in an image (i.e., regions of contiguously nonzero voxels), and create a new image replacing each voxel value with its component number. Component numbers will be sorted by size if the SortBySize option is true. Diagonal neighbours are only considered if IncludeDiagonal is true.
 #@args image file
+#@group Image processing
 
 library(mmand)
 

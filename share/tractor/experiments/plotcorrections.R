@@ -1,5 +1,6 @@
 #@desc Plot rotation angles, translations, scales or skews over the time course of an acquisition. These are obtained by reading and decomposing the transformation matrices created by the eddy current correction tool used. The "dpreproc" script must therefore have been run on the session directory (default ".") before running this experiment. A CSV file containing the correction numbers will also be produced if RequireValues:true is given.
 #@args [session directory]
+#@group Diffusion processing
 #@interactive TRUE
 
 library(tractor.session)

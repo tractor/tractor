@@ -153,11 +153,12 @@ scanExperiments <- function (pattern = NULL)
     }
     
     n <- length(path)
-    nohistory <- example <- logical(n)
-    args <- description <- character(n)
+    interactive <- nohistory <- example <- logical(n)
+    args <- description <- group <- character(n)
     for (i in seq_len(n))
     {
         lines <- readLines(path[i])
+        interactive[i] <- any(lines %~% "^\\s*\\#\\@interactive\\s+TRUE")
         nohistory[i] <- any(lines %~% "^\\s*\\#\\@nohistory\\s+TRUE")
         example[i] <- any(lines %~% "^\\s*\\#\\@example\\s+(.+)$")
         
@@ -165,9 +166,11 @@ scanExperiments <- function (pattern = NULL)
             args[i] <- implode(groups(ore.lastmatch()), sep=", ")
         if (any(lines %~% "^\\s*\\#\\@desc\\s+(.+)$"))
             description[i] <- implode(groups(ore.lastmatch()), sep=" ")
+        if (any(lines %~% "^\\s*\\#\\@group\\s+(.+)$"))
+            group[i] <- implode(groups(ore.lastmatch()), sep=" ")
     }
     
-    return (data.frame(name=name, path=path, args=args, description=description, nohistory=nohistory, example=example))
+    return (data.frame(name=name, group=group, path=path, args=args, description=description, interactive=interactive, nohistory=nohistory, example=example))
 }
 
 findExperiment <- function (exptName)

@@ -4,6 +4,7 @@
 #@example tractor slice session@FA tract X:max Y:max Z:max Alpha:log
 #@example # A contact-sheet style version
 #@example tractor slice session@FA tract Z:all Clearance:4 Alpha:log
+#@group Visualisation
 
 runExperiment <- function ()
 {

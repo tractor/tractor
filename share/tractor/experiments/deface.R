@@ -1,5 +1,6 @@
 #@desc Attempt to mask out the part of an image, typically a high-resolution structural image, which corresponds to the face. This operation is usually performed to help preserve participant anonymity, by preventing 3D reconstruction of the face. It is achieved by linearly registering the image to MNI space, reverse-transforming a face mask back to the original space, and then masking out the face region. Where anonymity is important, users are strongly advised to check the results to ensure that the operation has had the desired effect. If no output file is specified then the input file will be overwritten.
 #@args image file, [output file]
+#@group Structural processing
 
 library(tractor.reg)
 library(tractor.session)

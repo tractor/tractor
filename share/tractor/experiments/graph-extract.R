@@ -1,5 +1,6 @@
 #@desc Create a subgraph by extracting only a subset of the nodes of the specified graph, and their interconnections. Nodes may be specified by name or parcellation index, separated by spaces or commas.
 #@args session directory, regions to retain
+#@group Graph and network analysis
 
 library(tractor.reg)
 library(tractor.session)

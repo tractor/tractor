@@ -1,5 +1,6 @@
 #@args image file, centre point
 #@desc Create an Analyze/NIfTI/MGH volume containing a region of interest with a box, disc or diamond shape. The specified Width may include multiple values and does not need to be the same for each dimension. The output file name is set with the ROIName option.
+#@group General analysis
 
 library(tractor.reg)
 library(mmand)

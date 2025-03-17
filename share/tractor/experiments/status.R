@@ -1,5 +1,6 @@
 #@args [session directory]
 #@desc Print the status of a session directory (default "."), including various information about what processes have been run on it.
+#@group Working with sessions
 #@nohistory TRUE
 
 library(tractor.session)
