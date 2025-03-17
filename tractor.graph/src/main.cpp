@@ -4,6 +4,7 @@
 #include "lemon/bfs.h"
 #include "lemon/dijkstra.h"
 #include "lemon/bellman_ford.h"
+#include "lemon/connectivity.h"
 
 using namespace Rcpp;
 using namespace lemon;
@@ -275,5 +276,22 @@ BEGIN_RCPP
     }
     
     return result;
+END_RCPP
+}
+
+RcppExport SEXP connectedComponents (SEXP _graph)
+{
+BEGIN_RCPP
+    XPtr<RGraph> graphPtr(_graph);
+    RGraph *g = graphPtr;
+    
+    std::vector<int> labels(g->order, NA_INTEGER);
+    SmartDigraph::NodeMap<int> memberships(g->graph);
+    connectedComponents(g->graph, memberships);
+    
+    for (SmartDigraph::NodeIt node(g->graph); node != INVALID; ++node)
+        labels[g->indices[node]] = memberships[node] + 1;
+    
+    return wrap(labels);
 END_RCPP
 }
