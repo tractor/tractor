@@ -6,45 +6,48 @@ library(tractor.base)
 
 runExperiment <- function ()
 {
-    patterns <- c("DICOM handling"="(^dicom)|(^age$)",
-                  "Image processing"="^(binarise|components|morph|smooth|trim)$",
-                  "General analysis"="(^apply$)|(^image)|(^extract$)|(^values$)|(^mean$)|(^mkroi$)|(^reshape$)",
-                  "Visualisation"="^(slice|view)$",
-                  "Registration"="^reg-",
-                  "Working with sessions"="^(clone|import|status|transform)$",
-                  "Diffusion processing"="dpreproc|(^dir)|(^grad)|(^trk)|bedpost|tensor|track|plotcorrections",
-                  "Structural processing"="^(deface|parcellate|freesurf)$",
-                  "Probabilistic neighbourhood tractography"="^pnt-",
-                  "Graph and network analysis"="^graph")
+    descriptions <- getConfigVariable("Descriptions", FALSE)
     
-    standardDir <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "experiments")
-    files <- sort(list.files(standardDir, "\\.R$"))
-    filesWithoutExtensions <- ensureFileSuffix(files, NULL, strip="R")
-    cat("\n")
-    for (category in names(patterns))
+    expts <- scanExperiments()
+    groups <- with(expts, tapply(name, group, "[", simplify=FALSE))
+    unnamed <- which(names(groups) == "")
+    if (length(unnamed) == 1L)
+        groups <- c(groups[-unnamed], list("(Ungrouped)"=groups[[unnamed]]))
+    
+    groupNames <- names(groups)
+    nameLengths <- nchar(groupNames)
+    contentLengths <- sapply(groups, fx(max(nchar(x))))
+    screenWidth <- getOption("width", 80L)
+    
+    if (descriptions)
     {
-        cat(es("#{category}:\n  "))
-        match <- filesWithoutExtensions %~% patterns[category]
-        cat(filesWithoutExtensions[match], sep=", ", fill=TRUE)
-        filesWithoutExtensions <- filesWithoutExtensions[!match]
-        cat("\n")
+        contentWidth <- max(contentLengths)
+        descriptionWidth <- screenWidth - contentWidth - 6L
+        for (i in seq_along(groups))
+        {
+            padding <- contentWidth - nchar(groups[[i]]) + 2
+            cat(colour(groupNames[i],"cyan","bold"), ":\n", sep="")
+            for (j in seq_along(groups[[i]]))
+            {
+                name <- groups[[i]][j]
+                description <- expts$description[expts$name==name]
+                if (nchar(description) == 0L)
+                    description <- "(No description)"
+                else if (nchar(description) > descriptionWidth)
+                    description <- paste0(substr(description, 1, descriptionWidth-3), "...")
+                cat("  ", name, rep(" ",padding[j]), colour(description, "white", "italic"), "\n", sep="")
+            }
+            cat("\n")
+        }
     }
-    
-    if (length(filesWithoutExtensions) > 0)
+    else
     {
-        cat(es("Other scripts:\n  "))
-        cat(filesWithoutExtensions, sep=", ", fill=TRUE)
-        cat("\n")
-    }
-    
-    pathDirs <- unlist(strsplit(Sys.getenv("TRACTOR_PATH"), ":", fixed=TRUE))
-    for (pathDir in pathDirs)
-    {
-        files <- list.files(pathDir, "\\.R$")
-        filesWithoutExtensions <- ensureFileSuffix(files, NULL, strip="R")
-        cat(es("Additional scripts found in #{pathDir}:\n  "))
-        cat(filesWithoutExtensions, sep=", ", fill=TRUE)
-        cat("\n")
+        colWidths <- pmax(nameLengths + 1, contentLengths + 2)
+        width <- colWidths[1]
+        for (i in seq_along(groups)[-1])
+        {
+            
+        }
     }
     
     cat("For information on a particular script, run \"tractor -o <script>\"\n\n", file=stderr())
