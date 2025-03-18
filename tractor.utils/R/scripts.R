@@ -37,6 +37,19 @@ setAs("character", "integer", function(from) {
     return (result)
 })
 
+colour <- function (strings, col = "default", mod = c("none","bold","dim","italic"))
+{
+    if (isTRUE(as(Sys.getenv("TRACTOR_NOCOLOUR"), "logical")))
+        return (strings)
+    else
+    {
+        mod <- match.arg(mod)
+        modString <- switch(mod, none="", bold="1;", dim="2;", italic="3;")
+        code <- switch(tolower(col), black=30L, red=31L, green=32L, yellow=33L, blue=34L, magenta=35L, cyan=36L, white=37L, default=39L)
+        return (paste0("\x1b[", modString, code, "m", strings, "\x1b[22;0m"))
+    }
+}
+
 isValidAs <- function (value, mode)
 {
     coercedValue <- suppressWarnings(as(value, mode))
