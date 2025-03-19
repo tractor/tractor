@@ -6,7 +6,7 @@
 #@example tractor track /data/subject1 white_matter TargetRegions:cerebal_cortex TerminateAtTargets:true
 #@example # Seed just outside a particular grey matter region
 #@example tractor track /data/subject1 postcentral_gyrus_left BoundaryManipulation:outer
-#@group Tractography
+#@group Streamline tractography
 
 library(ore)
 library(tractor.track)

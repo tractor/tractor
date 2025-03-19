@@ -1,6 +1,6 @@
 #@desc Visualise the results of evaluating a data set against a PNT model, creating an Analyze/NIfTI/MGH volume representing the best matching tract. A single seed point is used in each case, but individual streamlines generated from this seed are retained or rejected depending on their likelihood under the model. If a session directory is not specified then an image will be created for each session path stored in the dataset.
 #@args [session directories]
-#@group Probabilistic neighbourhood tractography
+#@group Neighbourhood tractography
 
 library(tractor.reg)
 library(tractor.track)

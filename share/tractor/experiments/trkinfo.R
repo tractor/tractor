@@ -1,6 +1,6 @@
 #@desc Print basic information about a streamline file in .trk format, including the number of streamlines stored and associated properties.
 #@args streamline file
-#@group Tractography
+#@group Streamline tractography
 #@nohistory TRUE
 
 library(tractor.track)
