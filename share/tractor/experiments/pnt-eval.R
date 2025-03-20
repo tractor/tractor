@@ -1,8 +1,8 @@
 #@desc Evaluate a data set against the specified model (which must already exist) and calculate matching probabilities. The specified DatasetName should match that used for "pnt-data". The output file name is controlled by the ResultsName option.
 #@group Neighbourhood tractography
 
-suppressPackageStartupMessages(require(tractor.session))
-suppressPackageStartupMessages(require(tractor.nt))
+library(tractor.session)
+library(tractor.nt)
 
 runExperiment <- function ()
 {

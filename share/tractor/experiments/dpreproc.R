@@ -5,7 +5,7 @@
 #@group Diffusion processing
 #@interactive TRUE
 
-suppressPackageStartupMessages(require(tractor.session))
+library(tractor.session)
 
 runExperiment <- function ()
 {

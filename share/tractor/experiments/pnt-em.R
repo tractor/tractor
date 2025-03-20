@@ -1,8 +1,8 @@
 #@desc Run Expectation-Maximisation to fit a tract matching model and apply it to a dataset. This script is generally used instead of the "pnt-train" and "pnt-eval" combination. The TractName and DatasetName should match those given to the "pnt-data" script. AlphaPriorMean controls the shape of the prior distribution; 0 indicates no prior. For small datasets in particular, 1 is usually a good setting. For larger datasets the effect of this parameter will be small.
 #@group Neighbourhood tractography
 
-suppressPackageStartupMessages(require(tractor.session))
-suppressPackageStartupMessages(require(tractor.nt))
+library(tractor.session)
+library(tractor.nt)
 
 runExperiment <- function ()
 {

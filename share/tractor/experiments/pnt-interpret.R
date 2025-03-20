@@ -2,8 +2,8 @@
 #@args [session directories]
 #@group Neighbourhood tractography
 
-suppressPackageStartupMessages(require(tractor.session))
-suppressPackageStartupMessages(require(tractor.nt))
+library(tractor.session)
+library(tractor.nt)
 
 runExperiment <- function ()
 {
