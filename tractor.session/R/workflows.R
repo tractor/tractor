@@ -1,9 +1,12 @@
 findWorkflow <- function (name)
 {
+    packagePaths <- unlist(lapply(splitAndConvertString(Sys.getenv("TRACTOR_PACKAGES"), "[:,]"), function(p) system.file("tractor", "workflows", package=p)))
+    
     workflowFile <- ensureFileSuffix(name, "sh")
     pathDirs <- c(".",
                   file.path(Sys.getenv("HOME"), ".tractor"),
                   splitAndConvertString(Sys.getenv("TRACTOR_PATH"), ":", fixed=TRUE),
+                  packagePaths[packagePaths != ""],
                   file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "workflows"))
     possibleLocations <- file.path(pathDirs, workflowFile)
     filesExist <- file.exists(possibleLocations)
