@@ -107,8 +107,8 @@ dtest:
 	@cd tests && $(MAKE) debug-tests R=$(R)
 
 utest: lib/R/tinytest lib/R/oro.nifti lib/R/igraph
-	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.base
-	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.graph
+	@$(ENV) TRACTOR_HOME=. TRACTOR_PACKAGES=tractor.utils bin/tractor -i -v0 unit-test tractor.base
+	@$(ENV) TRACTOR_HOME=. TRACTOR_PACKAGES=tractor.utils bin/tractor -i -v0 unit-test tractor.graph
 
 deeptest: utest test
 
