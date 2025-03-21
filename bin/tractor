@@ -125,36 +125,13 @@ script_name=`echo $1 | sed 's/\.R$//'`
 
 [ -d "${TRACTOR_HOME}/lib/R" ] && export R_LIBS="${TRACTOR_HOME}/lib/R"
 
-file_found=0
-script_file="${script_name}.R"
 shift
 args="$@"
 export TRACTOR_COMMANDLINE="tractor $script_name $args"
 
-if [ -f $script_file ]; then
-    file_found=1
-elif [ -f "$working_dir/$script_file" ]; then
-    script_file="$working_dir/$script_file"
-    file_found=1
-elif [ -f "$HOME/.tractor/$script_file" ]; then
-    script_file="$HOME/.tractor/$script_file"
-    file_found=1
-fi
-
-if [ $file_found -ne 1 ]; then
-    for d in `echo "$TRACTOR_PATH:${TRACTOR_HOME}${TRACTOR_HOME+/share/tractor/experiments}" | sed 's/:/ /g'`
-        do
-        if [ -f "$d/$script_file" ]
-            then
-            script_file="$d/$script_file"
-            file_found=1
-            break
-        fi
-    done
-fi
-
-[ $file_found -ne 1 ] && {
-    echo "Error: Script file \"${script_file}\" not found" 1>&2
+script_file=`echo "library(utils); library(tractor.utils); cat(findExperiment('$script_name'))" | "$R" --slave --vanilla 2>&1`
+[ $? -eq 0 ] || {
+    echo "Error: Script file \"${script_name}.R\" not found" 1>&2
     exit
 }
 
