@@ -12,28 +12,38 @@ defaults:
     shell: bash
 
 jobs:
-  # This workflow contains a single job called "check"
-  check:
+  # Main TractoR tests, on Linux only
+  integration-check:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        R: [ '3.5.0', '4.0.0', 'release' ]
     
     steps:
     - name: Check out code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     
     - name: Install and set up R
       uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: ${{ matrix.R }}
+    
+    # igraph depends on glpk in the 2.0.x series, so this is required for deep testing
+    - name: Install upstream system dependencies
+      run: sudo apt-get install -y libglpk-dev
     
     - name: Cache dependencies
       id: cache-deps
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: lib/R
-        key: ${{ runner.os }}-deps-${{ hashFiles('lib/*/DESCRIPTION') }}
+        key: ${{ runner.os }}-deps-${{ matrix.R }}-${{ hashFiles('lib/*/DESCRIPTION') }}
     
-    - if: ${{ steps.cache-deps.outputs.cache-hit != 'true' }}
-      name: Install dependencies
+    - name: Install dependencies
+      if: ${{ steps.cache-deps.outputs.cache-hit != 'true' }}
       run: make install-libs
     
     - name: Install main packages
@@ -41,3 +51,47 @@ jobs:
     
     - name: Run tests
       run: make deeptest
+  
+  # Standard R CMD check on tractor.base package (Linux and Windows)
+  base-check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        R: [ release, devel ]
+    
+    runs-on: ${{ matrix.os }}
+    
+    # No submodules needed in this case, as we'll install dependencies from CRAN
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Install and set up R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: ${{ matrix.R }}
+    
+    - name: Parse and install dependencies
+      run: |
+        deps <- read.dcf(file.path("tractor.base","DESCRIPTION"), c("Depends","Imports","LinkingTo","Suggests","Enhances"))
+        deps <- na.omit(unlist(strsplit(deps, "\\s*,\\s*", perl=TRUE)))
+        deps <- setdiff(unique(sub("\\s*\\([^\\)]+\\)\\s*$", "", deps, perl=TRUE)), c("R", rownames(installed.packages())))
+        install.packages(deps)
+      shell: Rscript {0}
+    
+    - name: Build package
+      run: R CMD build tractor.base
+    
+    - name: Check package
+      run: R CMD check --no-manual tractor.base*tar.gz
+    
+    # Upload the check directory as an artefact on failure
+    - name: Upload check results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.os }}-R${{ matrix.R }}-check
+        path: tractor.base.Rcheck

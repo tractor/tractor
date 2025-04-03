@@ -13,11 +13,9 @@
   <link href="https://fonts.googleapis.com/css?family=Roboto%7CSource+Code+Pro" rel="stylesheet">
   <link href="assets/prism.css" rel="stylesheet">
   <link href="assets/style.css" rel="stylesheet">
+  
+  
 </head>
-
-<!-- Google tag (gtag.js) -->
-
-
 
 <body>
 
@@ -48,6 +46,33 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="345-2025-04-03">3.4.5 (2025-04-03)</h2>
+
+<ul>
+<li>The required <code>RNiftyReg</code> could fail to install on some platforms. This has now been corrected, and other bug-fixes to the package back-ported.</li>
+</ul>
+
+<h2 id="344-2024-05-21">3.4.4 (2024-05-21)</h2>
+
+<ul>
+<li>Auxiliary binaries from the <code>bin/exec</code> and <code>bin/extra</code> subdirectories have been moved to <code>libexec</code> to help with packaging TractoR for Homebrew according to its expectations.</li>
+</ul>
+
+<h2 id="343-2024-05-08">3.4.3 (2024-05-08)</h2>
+
+<ul>
+<li>Dependency packages <code>jsonlite</code>, <code>yaml</code>, <code>Rcpp</code> and <code>RNifti</code> have been updated for compatibility with the now-released R 4.4.0.</li>
+</ul>
+
+<h2 id="342-2024-03-01">3.4.2 (2024-03-01)</h2>
+
+<ul>
+<li>Package unit tests have been moved from the <code>testthat</code> to the <code>tinytest</code> framework.</li>
+<li>Several tweaks have been made to improve compatibility with R 4.3.x and the upcoming R 4.4.0, as well as <code>divest</code> 1.0 and <code>igraph</code> 2.0.</li>
+<li>The minimum required version of R has been updated in the documentation to 3.5.0. This was already the case, but the documentation was out of date. TractoR’s continuous integration tests now also run on old versions of R to help ensure the minimum version specified is accurate.</li>
+<li>Two spurious errors that could arise during an interactive run of the <code>dpreproc</code> script have been corrected.</li>
+</ul>
+
 <h2 id="341-2023-06-30">3.4.1 (2023-06-30)</h2>
 
 <ul>
@@ -55,7 +80,7 @@
 <li>When writing an image to file, any existing “tags” file with the corresponding name is now always overwritten, to avoid the auxiliary file getting out of sync with the image file.</li>
 <li>Relative paths should now be correct when the reference path is a directory.</li>
 <li>The working directory should no longer be erroneously prepended to image paths beginning with a tilde (<code>~</code>), which indicates a home directory on Unix-like systems.</li>
-<li>The <code>bids</code> would sometimes attempt to copy an image file with no extension, leading to an error. This has been corrected.</li>
+<li>The <code>bids</code> script would sometimes attempt to copy an image file with no extension, leading to an error. This has been corrected.</li>
 <li>Decomposition applied to a transformation object containing only one transform now works as expected.</li>
 </ul>
 

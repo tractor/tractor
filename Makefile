@@ -8,7 +8,7 @@ ECHO_N=/bin/echo -n
 GIT=git
 MD5=md5
 DOCKER=docker
-INSTALL=$(ENV) R=$(R) bin/extra/tractor_Rinstall
+INSTALL=$(ENV) R=$(R) libexec/tractor_Rinstall
 
 default: build post-build-info
 
@@ -37,8 +37,8 @@ install-libs: lib/.timestamp
 
 check-and-install-libs: install-libs
 
-lib/R/testthat:
-	@$(INSTALL) -c testthat
+lib/R/tinytest:
+	@$(INSTALL) -c tinytest
 
 lib/R/oro.nifti:
 	@$(INSTALL) -c oro.nifti
@@ -94,8 +94,7 @@ clean:
 
 distclean: clean
 	@rm -f lib/.timestamp
-	@rm -f bin/exec/tractor src/tractor.o src/build.log install.log
-	@rm -f tractor.track/config.log tractor.track/config.status tractor.track/src/Makevars tractor.track/src/config.h
+	@rm -f libexec/tractor src/tractor.o src/build.log install.log
 
 test:
 	@cd tests && $(MAKE) run-tests R=$(R)
@@ -103,14 +102,14 @@ test:
 dtest:
 	@cd tests && $(MAKE) debug-tests R=$(R)
 
-utest: lib/R/testthat lib/R/oro.nifti lib/R/igraph
+utest: lib/R/tinytest lib/R/oro.nifti lib/R/igraph
 	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.base
 	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.graph
 
 deeptest: utest test
 
 create-md5:
-	@$(GIT) ls-files | grep -v -e '^lib/' -e '^md5.txt' -e '\.git' | xargs $(MD5) -r >md5.txt
+	@$(GIT) ls-files | grep -v -e '^lib/' -e '^md5\.txt' -e '\.git' -e 'tests/data/images' | xargs $(MD5) -r >md5.txt
 
 check-md5:
 	@mkdir -p tmp
