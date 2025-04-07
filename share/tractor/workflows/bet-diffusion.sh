@@ -11,7 +11,7 @@ ${FURROW} -z test -f @diffusion/refb0 || {
     exit 1
 }
 
-result_stem=`${FURROW} -z -n echo @maskedb0`
+result_stem=`${FURROW} -z -n -r echo @maskedb0`
 
 set -x
 ${FURROW} -r ${TRACTOR_COMMAND} @refb0 @maskedb0 -m -f "$IntensityThreshold" -g "$VerticalGradient"
