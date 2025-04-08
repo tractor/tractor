@@ -8,7 +8,7 @@ runExperiment <- function ()
 {
     requireArguments("graph file")
     
-    method <- getConfigVariable("Method", "principal-networks", validValues=c("principal-networks","modularity"))
+    method <- getConfigVariable("Method", "principal-networks", validValues=c("principal-networks","modularity","connected"))
     refPartitionFile <- getConfigVariable("ReferencePartition", NULL, "character")
     edgeWeightThreshold <- getConfigVariable("EdgeWeightThreshold", 0)
     eigenvalueThreshold <- getConfigVariable("EigenvalueThreshold", NULL, "numeric")
@@ -39,8 +39,8 @@ runExperiment <- function ()
         if (graph$isWeighted())
             graph <- thresholdEdges(graph, edgeWeightThreshold, ignoreSign=TRUE)
         
-        report(OL$Info, "Partitioning based on modularity")
-        partition <- partitionGraph(graph, method=method)
+        report(OL$Info, "Partitioning based on #{ifelse(method=='modularity','modularity','connectedness')}")
+        partition <- partitionGraph(graph, method=method, dropTrivial=dropTrivial)
         subgraphs <- lapply(partition$getCommunities(), fx(inducedSubgraph(graph,x)))
     }
     
