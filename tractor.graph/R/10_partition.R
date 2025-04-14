@@ -169,7 +169,7 @@ modularity <- function (graph, ...)
 }
 
 #' @export
-partitionGraph <- function (graph, method = c("modularity","connected"), dropTrivial = TRUE)
+partitionGraph <- function (graph, method = c("modularity","connected"), dropTrivial = FALSE)
 {
     graph <- asGraph(graph, strict=TRUE)
     method <- match.arg(method)
