@@ -6,5 +6,5 @@ An object of class "PartitionedGraph"
          Edge density : 7.95%
     Vertex attributes : voxelCount, volume, name
       Edge attributes : nStreamlines, binaryFA, weightedFA, binaryMD, weightedMD, streamlineLength, uniqueVoxels, voxelVisits
-Number of communities : 8
-   Community coverage : 98.53%
+Number of communities : 7
+   Community coverage : 97.06%
