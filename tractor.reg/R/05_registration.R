@@ -1,4 +1,4 @@
-.TransformTypes <- c("affine", "nonlinear", "reverse-nonlinear")
+TransformTypes <- c("affine", "nonlinear", "reverse-nonlinear")
 
 .checkAndConvertTransform <- function (xfm, name = NULL)
 {
@@ -22,21 +22,21 @@ TransformSet <- setRefClass("TransformSet", contains="SerialisableObject", field
     
     getObject = function (type)
     {
-        type <- match.arg(type, .TransformTypes)
+        type <- match.arg(type, TransformTypes)
         return (loadTransform(objects[[type]]))
     },
     
-    getTypes = function () { return (intersect(.TransformTypes, names(objects))) },
+    getTypes = function () { return (intersect(TransformTypes, names(objects))) },
     
     hasType = function (type)
     {
-        type <- match.arg(type, .TransformTypes)
+        type <- match.arg(type, TransformTypes)
         return (!is.null(objects[[type]]))
     },
     
     setObject = function (object, type)
     {
-        type <- match.arg(type, .TransformTypes)
+        type <- match.arg(type, TransformTypes)
         .self$objects[[type]] <- .checkAndConvertTransform(object, type)
         invisible(.self)
     }
@@ -91,6 +91,8 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
         
         return (object)
     },
+    
+    getTransformSets = function (indices = 1:n) { return (transforms[indices]) },
     
     getTypes = function ()
     {
@@ -178,7 +180,7 @@ readRegistration <- function (path)
         
         for (i in seq_len(reg$nTransforms()))
         {
-            # Order must match .TransformTypes static variable above
+            # Order must match TransformTypes static variable above
             paths <- file.path(dirPath, paste0(c("forward","forward","reverse"), i, c(".mat","","")))
             for (j in seq_along(paths))
             {
@@ -187,7 +189,7 @@ readRegistration <- function (path)
                     object <- readAffine(paths[j], source=reg$getSource(), target=reg$getTarget())
                 else if (imageFileExists(paths[j]))
                     object <- RNiftyReg::readNifti(paths[j], source=reg$getSource(), target=reg$getTarget(), internal=TRUE)
-                reg$setTransforms(object, .TransformTypes[j], i)
+                reg$setTransforms(object, TransformTypes[j], i)
             }
         }
         return (reg)
@@ -196,14 +198,36 @@ readRegistration <- function (path)
         report(OL$Error, "No registration found at path #{path}")
 }
 
+reverseRegistration <- function (registration)
+{
+    assert(is(registration,"Registration"), "Registration argument is not of the appropriate class")
+    
+    transformSets <- registration$getTransformSets()
+    reversed <- Registration$new(registration$getTarget(), registration$getSource(), registration$getMethod())
+    
+    affines <- lapply(transformSets, function (set) {
+        affine <- set$getObject("affine")
+        return (where(!is.null(affine), invertAffine(affine)))
+    })
+    reversed$setTransforms(affines, "affine")
+    
+    irreversible <- sapply(transformSets, function(set) xor(set$hasType("nonlinear"), set$hasType("reverse-nonlinear")))
+    assert(sum(irreversible) == 0, "#{sum(irreversible)} nonlinear transforms do not have inverse counterparts", level=OL$Warning)
+    
+    reversed$setTransforms(lapply(transformSets, function(set) set$getObject("reverse-nonlinear")), "nonlinear")
+    reversed$setTransforms(lapply(transformSets, function(set) set$getObject("nonlinear")), "reverse-nonlinear")
+    
+    return (reversed)
+}
+
 registerImages <- function (source, target, registration = NULL, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)
 {
-    if (!is.null(method))
-        method <- match.arg(method, c("niftyreg","fsl"))
-    types <- match.arg(types, .TransformTypes, several.ok=TRUE)
+    method <- match.arg(method, c("niftyreg","fsl"))
+    types <- match.arg(types, TransformTypes, several.ok=TRUE)
     
     if (!is.null(registration))
     {
+        assert(is(registration,"Registration"), "Registration argument is not of the appropriate class")
         if (missing(source))
             source <- registration$getSource()
         if (missing(target))
@@ -218,8 +242,7 @@ registerImages <- function (source, target, registration = NULL, sourceMask = NU
     {
         if (any(types %~% "nonlinear"))
             report(OL$Error, "FSL-FLIRT does not perform nonlinear registration")
-        
-        result <- registerImagesWithFlirt(registration, sourceMaskFileName=getImageAsFileName(sourceMask,allowNull=TRUE), targetMaskFileName=getImageAsFileName(targetMask,allowNull=TRUE), affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
+        result <- registerImagesWithFlirt(registration, sourceMask=sourceMask, targetMask=targetMask, affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
     }
     
     return (result)
