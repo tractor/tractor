@@ -102,6 +102,8 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
     
     nTransforms = function () { return (n) },
     
+    reverse = function () { return (reverseRegistration(.self)) },
+    
     setTransforms = function (objects, type, indices = NULL)
     {
         if (!is.null(objects) && !is.list(objects))
@@ -133,7 +135,7 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
     }
 ))
 
-readRegistration <- function (path)
+readRegistration <- function (path, validate = TRUE)
 {
     pathStem <- ensureFileSuffix(ore.subst("/$","",path), NULL, strip=c("xfmb","Rdata"))
     dirPath <- ensureFileSuffix(pathStem, "xfmb")
@@ -169,7 +171,11 @@ readRegistration <- function (path)
         }
         # Current format (from TractoR 3.5)
         else
-            return (deserialiseReferenceObject(object=fields))
+        {
+            reg <- deserialiseReferenceObject(object=fields)
+            assert(!validate || is(reg,"Registration"), "Serialised object is not a Registration object")
+            return (reg)
+        }
     }
     # Directory-based format (.xfmb) used by TractoR 3.0 to 3.4
     else if (file.exists(dirPath) && file.info(dirPath)$isdir)
@@ -196,6 +202,14 @@ readRegistration <- function (path)
     }
     else
         report(OL$Error, "No registration found at path #{path}")
+}
+
+createRegistration <- function (source, target, method = "fixed", ...)
+{
+    registration <- Registration$new(source, target, method)
+    xfm <- buildAffine(source=source, target=target, ...)
+    registration$setTransforms(rep(list(xfm), registration$nTransforms()))
+    return (registration)
 }
 
 reverseRegistration <- function (registration)
