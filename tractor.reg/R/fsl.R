@@ -1,22 +1,7 @@
-.imagePath <- function (image)
+registerImagesWithFlirt <- function (transform, sourceMaskFileName = NULL, targetMaskFileName = NULL, initAffine = NULL, affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)
 {
-    if (is.character(image))
-        return (image)
-    else if (is(image,"MriImage") && !image$isInternal())
-        return (image$getSource())
-    else
-    {
-        fileName <- threadSafeTempFile()
-        RNifti::writeNifti(image, fileName)
-        return (fileName)
-    }
-}
-
-registerImagesWithFlirt <- function (registration, sourceMask = NULL, targetMask = NULL, initAffine = NULL, affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)
-{
-    assert(registration$nTransforms() == 1, "The FSL-FLIRT interface is currently only for single registrations")
-    sourceFileName <- .imagePath(registration$getSource())
-    targetFileName <- .imagePath(registration$getTarget())
+    sourceFileName <- transform$getSourceImagePath()
+    targetFileName <- transform$getTargetImagePath()
     
     if (!any(affineDof == c(6,7,9,12)))
         report(OL$Error, "The specified affine degrees of freedom is not valid")
@@ -32,10 +17,10 @@ registerImagesWithFlirt <- function (registration, sourceMask = NULL, targetMask
         outputFileName <- threadSafeTempFile()
         outputFileExpression <- es("-out #{outputFileName}")
     }
-    if (!is.null(sourceMask))
-        inweightExpression <- es("-inweight #{.imagePath(sourceMask)}")
-    if (!is.null(targetMask))
-        refweightExpression <- es("-refweight #{.imagePath(targetMask)}")
+    if (!is.null(sourceMaskFileName))
+        inweightExpression <- es("-inweight #{sourceMaskFileName}")
+    if (!is.null(targetMaskFileName))
+        refweightExpression <- es("-refweight #{targetMaskFileName}")
     if (!is.null(initAffine))
     {
         inputMatrixFile <- ensureFileSuffix(threadSafeTempFile(), "mat")
@@ -55,11 +40,11 @@ registerImagesWithFlirt <- function (registration, sourceMask = NULL, targetMask
     report(OL$Info, "FSL-FLIRT registration completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
     
     affine <- readAffine(outputMatrixFile, sourceFileName, targetFileName, type="fsl")
-    registration$setTransforms(affine, "affine")
+    transform$updateFromObjects(affineMatrices=list(affine), method="fsl")
     
-    result <- list(registration=registration, transformedImage=NULL, reverseTransformedImage=NULL)
+    result <- list(transform=transform, transformedImage=NULL, reverseTransformedImage=NULL)
     if (!estimateOnly)
-        result$transformedImage <- readImageFile(outputFileName, reorder=FALSE)
+        result$transformedImage <- as(readNifti(outputFileName), "MriImage")
     
     # Tidy up
     if (!is.null(initAffine))
