@@ -27,28 +27,23 @@ runExperiment <- function ()
     if (!estimateOnly && nArguments() < 3)
         report(OL$Error, "An output file name is required (as a third argument)")
     
-    init <- transform <- NULL
+    init <- registration <- NULL
     source <- identifyImageFileNames(Arguments[1])$fileStem
     target <- identifyImageFileNames(Arguments[2])$fileStem
     
+    assert(!is.null(transformName) || nArguments() > 2, "Transformation name must be specified if there is no output file")
+    
     if (is.null(transformName))
-    {
-        # Create an output transformation name from output image name
-        # This file will NOT be used for initialisation, and will simply be overwritten if it exists
-        if (nArguments() >= 3)
-            transform <- attachTransformation(Arguments[3], source, target)
-        else
-            report(OL$Error, "Transformation name must be specified if there is no output file")
-    }
+        transformName <- Arguments[3]
     else
     {
-        transform <- attachTransformation(transformName, source, target)
-        if (!is(transform, "Transformation"))
+        registration <- readRegistration(transformName, validate=FALSE)
+        if (!is(registration, "Registration"))
             report(OL$Warning, "Existing transformation file is not valid")
-        else if (is.null(initAffineFile) && "affine" %in% transform$getTypes())
+        else if (is.null(initAffineFile) && "affine" %in% names(registration$getTypes()))
         {
             report(OL$Info, "Using affine matrix stored in transformation for initialisation")
-            init <- transform$getTransformObjects(1:transform$nRegistrations(), preferAffine=TRUE, errorIfMissing=FALSE)
+            init <- registration$getTransforms(preferAffine=TRUE, errorIfMissing=FALSE)
         }
     }
     
@@ -56,8 +51,9 @@ runExperiment <- function ()
         init <- RNiftyReg::readAffine(initAffineFile, source, target, type=initAffineType)
     
     report(OL$Info, "Performing registration")
-    result <- registerImages(transform=transform, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method=method, types="affine", affineDof=degreesOfFreedom, estimateOnly=estimateOnly, interpolation=interpolation, init=init, linearOptions=list(nLevels=nLevels,maxIterations=maxIterations,useBlockPercentage=useBlockPercentage,symmetric=symmetric))
+    result <- registerImages(registration=registration, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method=method, types="affine", affineDof=degreesOfFreedom, estimateOnly=estimateOnly, interpolation=interpolation, init=init, linearOptions=list(nLevels=nLevels,maxIterations=maxIterations,useBlockPercentage=useBlockPercentage,symmetric=symmetric))
     
+    result$registration$serialise(transformName)
     if (!estimateOnly)
         writeImageFile(result$transformedImage, Arguments[3])
     

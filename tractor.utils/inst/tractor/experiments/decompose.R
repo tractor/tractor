@@ -10,8 +10,9 @@ runExperiment <- function ()
     session <- attachMriSession(Arguments[1])
     index <- as.numeric(Arguments[2])
     
-    transform <- getVolumeTransformationForSession(session, "diffusion")
-    decomposition <- decomposeTransformation(transform)[[index]]
+    registration <- getVolumeTransformationForSession(session, "diffusion")
+    decomposition <- RNiftyReg::decomposeAffine(registration$getTransforms(index, preferAffine=TRUE))
+    
     
     report(OL$Info, "Translation (mm): ", implode(round(decomposition$translation,6),", "))
     report(OL$Info, "Scales          : ", implode(round(decomposition$scales,6),", "))

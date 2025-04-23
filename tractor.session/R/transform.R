@@ -166,8 +166,7 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
     if (method == "none")
     {
         report(OL$Info, "Storing identity transforms")
-        volume <- session$getImageByType("rawdata", type, volumes=1)
-        transforms <- rep(list(tractor.reg::identityTransformation(volume,targetImage)), nVolumes)
+        registration <- createRegistration(sourceMetadata, targetImage)
         
         report(OL$Info, "Symlinking data volume")
         symlinkImageFiles(session$getImageFileNameByType("rawdata",type), session$getImageFileNameByType("data",type), overwrite=TRUE)
@@ -183,7 +182,7 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
         {
             report(OL$Info, "Coregistering data to reference volume...")
             result <- tractor.reg::registerImages(session$getImageFileNameByType("rawdata",type), targetImage, targetMask=maskImage, types="affine", method="niftyreg", ..., linearOptions=c(list(nLevels=nLevels,sequentialInit=TRUE),options))
-            transforms <- result$transform
+            registration <- result$registration
             
             report(OL$Info, "Writing out transformed data")
             writeImageFile(result$transformedImage, session$getImageFileNameByType("data",type))
@@ -191,8 +190,9 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
         else
         {
             finalArray <- array(NA, dim=sourceMetadata$getDimensions())
-            transforms <- vector("list", nVolumes)
-        
+            registration <- createRegistration(sourceMetadata, targetImage)
+            
+            # FLIRT interface can only handle one volume at a time
             report(OL$Info, "Coregistering data to reference volume...")
             for (i in seq_len(nVolumes))
             {
@@ -200,7 +200,7 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
                 volume <- session$getImageByType("rawdata", type, volumes=i)
                 result <- tractor.reg::registerImages(volume, targetImage, targetMask=maskImage, types="affine", method=method, ..., linearOptions=c(list(nLevels=nLevels),options))
                 finalArray[,,,i] <- result$transformedImage$getData()
-                transforms[[i]] <- result$transform
+                registration$setTransforms(result$registration$getTransforms(), "affine")
             }
         
             report(OL$Info, "Writing out transformed data")
@@ -209,28 +209,19 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
         }
     }
     
-    if (!is(transforms, "Transformation"))
-        transforms <- tractor.reg::mergeTransformations(transforms, sourceMetadata$getSource())
-    transforms$move(file.path(session$getDirectory(type), "coreg"))
-    
-    return (transforms)
+    registration$serialise(file.path(session$getDirectory(type), "coreg"))
+    return (registration)
 }
 
 getVolumeTransformationForSession <- function (session, type)
 {
-    if (!is(session, "MriSession"))
-        report(OL$Error, "Specified session is not an MriSession object")
+    assert(is(session,"MriSession"), "Specified session is not an MriSession object")
     
-    directory <- session$getDirectory(type)
-    transformFileName <- file.path(directory, "coreg_xfm.Rdata")
-    transformDirName <- file.path(directory, "coreg.xfmb")
-    
-    if (file.exists(transformDirName))
-        return (tractor.reg::attachTransformation(transformDirName))
-    else if (file.exists(transformFileName))
-        return (tractor.reg::attachTransformation(transformFileName)$move(transformDirName))
+    regName <- file.path(session$getDirectory(type), "coreg")
+    if (file.exists(regName) || dir.exists(ensureFileSuffix(regName, "xfmb")))
+        return (tractor.reg::readRegistration(regName))
     else if (type == "diffusion")
         return (readEddyCorrectTransformsForSession(session))
     else
-        report(OL$Error, "Transformation file does not exist for ", type, " data")
+        report(OL$Error, "Transformation file does not exist for #{type} data")
 }

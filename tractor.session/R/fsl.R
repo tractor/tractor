@@ -183,7 +183,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     
     sourcePath <- session$getImageFileNameByType("rawdata", "diffusion")
     targetPath <- session$getImageFileNameByType("refb0", "diffusion")
-    transform <- tractor.reg::Transformation$new(threadSafeTempFile(), sourcePath, targetPath)
+    registration <- tractor.reg::createRegistration(sourcePath, targetPath, "fsl")
     
     eddyParamsFile <- file.path(session$getDirectory("fdt"), "data.eddy_parameters")
     eddyCorrectLogFile <- file.path(session$getDirectory("fdt"), "data.ecclog")
@@ -191,7 +191,6 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     {
         corrections <- as.matrix(read.table(eddyParamsFile))
         affines <- lapply(seq_len(nrow(corrections)), function(i) solve(RNiftyReg::buildAffine(translation=corrections[i,1:3], angles=corrections[i,4:6], source=targetPath)))
-        transform$updateFromObjects(affineMatrices=affines, method="fsl")
     }
     else if (file.exists(eddyCorrectLogFile))
     {
@@ -205,14 +204,13 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
         if (is.null(index))
             index <- seq_len(nrow(matrices) / 4)
         
-        matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
-        transform$updateFromObjects(affineMatrices=matrices, method="fsl", convert=TRUE)
+        affines <- lapply(index, function(i) RNiftyReg:::convertAffine(matrices[(((i-1)*4)+1):(i*4),], sourcePath, targetPath))
     }
     else
         report(OL$Error, "No eddy current correction log was found")
     
-    transform$move(file.path(session$getDirectory("diffusion"), "coreg"))
-    invisible (transform)
+    registration$setTransforms(affines, "affine")
+    invisible(registration)
 }
 
 runDtifitWithSession <- function (session, weightedLeastSquares = FALSE)
