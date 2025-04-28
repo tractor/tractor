@@ -70,10 +70,10 @@ setClassUnion("Registrand", c("MriImage","niftiHeader","character"))
 #' 
 #' @field source The source (a.k.a. moving, floating) image, a string giving
 #'   the path to it, or a [RNifti::niftiHeader()] object encapsulating its
-#'   metadata. May have one more dimension than the target.
+#'   metadata. May have one more dimension than the target image.
 #' @field target The target (a.k.a. fixed, reference) image, providing the
-#'   output grid and coordinate system for the registration. Can be any of the
-#'   same forms as the source image.
+#'   output grid and coordinate system for the registration. Can be in any of
+#'   the same forms as the source image.
 #' @field method A character vector naming the methods used to create the
 #'   transforms.
 #' @field n An integer giving the number of transforms stored in the object.
@@ -270,7 +270,33 @@ readRegistration <- function (path, validate = TRUE)
         report(OL$Error, "No registration found at path #{path}")
 }
 
-createRegistration <- function (source, target, method = "fixed", ...)
+#' Create an unoptimised registration
+#' 
+#' This function creates a basic registration object representing a simple
+#' linear mapping between the specified source and target images. By default
+#' this is essentially an identity transform.
+#' 
+#' @param source The source (a.k.a. moving, floating) image, a string giving
+#'   the path to it, or a [RNifti::niftiHeader()] object encapsulating its
+#'   metadata. May have one more dimension than the target image.
+#' @param target The target (a.k.a. fixed, reference) image, providing the
+#'   output grid and coordinate system for the registration. Can be in any of
+#'   the same forms as the source image.
+#' @param method A string naming the registration method. This is just a label,
+#'   and has no functional consequence.
+#' @param ... Additional arguments to [RNiftyReg::buildAffine()], allowing
+#'   for rotation angles, translations, etc., to be applied.
+#' @return A registration object.
+#' @seealso [registerImages()], which creates optimised registrations.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
+createRegistration <- function (source, target, method = "identity", ...)
 {
     registration <- Registration$new(source, target, method)
     xfm <- buildAffine(source=source, target=target, ...)
@@ -278,6 +304,21 @@ createRegistration <- function (source, target, method = "fixed", ...)
     return (registration)
 }
 
+#' Reverse a registration
+#' 
+#' This function inverts the sense of an existing registration, swapping the
+#' source and target images and inverting the associated transforms.
+#' 
+#' @param An existing [Registration] object.
+#' @return The reversed registration object.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 reverseRegistration <- function (registration)
 {
     assert(is(registration,"Registration"), "Registration argument is not of the appropriate class")
@@ -300,6 +341,32 @@ reverseRegistration <- function (registration)
     return (reversed)
 }
 
+#' Register two images
+#' 
+#' This function performs one or more fully optimised image registrations,
+#' finding transforms that maximise the alignment between the transformed
+#' source image and the target image with respect to a suitable similarity
+#' measure.
+#' 
+#' The work of the registration is done by the `RNiftyReg` package, or by
+#' FSL-FLIRT (which must be installed and on the system path). The function
+#' serves as a unified interface to both of these backends. Which one is used
+#' depends on the value of the `method` argument.
+#' 
+#' @inheritParams createRegistration
+#' @param registration An existing [Registration] object to update with the
+#'   new transforms, or `NULL` to create a new one.
+#' @param sourceMask, targetMask Images in the source and target space
+#'   weighting or masking key areas for the optimisation.
+#' @param method A string naming the backend to use: `"fsl"` or `"niftyreg"`.
+#'   The default is determined by the `tractorRegistrationMethod` option,
+#'   which in turn considers the `TRACTOR_REG_METHOD` environment variable. If
+#'   none of these are set then the default will be `"niftyreg"`.
+#' @param types A vector of transform types to calculate. Must be a subset of
+#'   [TransformTypes]. The default is affine-only.
+#' @param affineDof The number of degrees of freedom for linear transforms (3D
+#'   values are used even if the images are 2D). FSL-FLIRT accepts values of 6
+#'   (rigid-body), 7, 9 and 12; NiftyReg accepts only 6 and 12.
 registerImages <- function (source, target, registration = NULL, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)
 {
     method <- match.arg(method, c("niftyreg","fsl"))
