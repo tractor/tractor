@@ -1,3 +1,5 @@
+#' Valid transform types
+#' @export
 TransformTypes <- c("affine", "nonlinear", "reverse-nonlinear")
 
 .checkAndConvertTransform <- function (xfm, name = NULL)
@@ -12,6 +14,17 @@ TransformTypes <- c("affine", "nonlinear", "reverse-nonlinear")
         report(OL$Error, "Transform object \"#{name}\" is invalid")
 }
 
+#' The TransformSet class
+#' 
+#' This class represents a set of transformations relating to a single 2D or 3D
+#' registration. They may encapsulate linear (affine) and/or nonlinear mappings
+#' between the corresponding source and target spaces, and are compatible with
+#' the `RNiftyReg` package.
+#' 
+#' @field objects A list of transform objects, which are stored internally in
+#'   the format returned by the [RNiftyReg::saveTransform()] function.
+#' 
+#' @export
 TransformSet <- setRefClass("TransformSet", contains="SerialisableObject", fields=list(objects="list"), methods=list(
     initialize = function (objects = list(), ...)
     {
@@ -47,6 +60,33 @@ TransformSet <- setRefClass("TransformSet", contains="SerialisableObject", field
 setOldClass("niftiHeader")
 setClassUnion("Registrand", c("MriImage","niftiHeader","character"))
 
+#' The Registration class
+#' 
+#' This class represents a complete image registration operation, including the
+#' two images being aligned and a set of associated transformations between
+#' them, which may be the result of an optimisation. Transforms can be added to
+#' the object after it is first created, allowing for an incremental refinement
+#' of the registration, for example from linear to nonlinear.
+#' 
+#' @field source The source (a.k.a. moving, floating) image, a string giving
+#'   the path to it, or a [RNifti::niftiHeader()] object encapsulating its
+#'   metadata. May have one more dimension than the target.
+#' @field target The target (a.k.a. fixed, reference) image, providing the
+#'   output grid and coordinate system for the registration. Can be any of the
+#'   same forms as the source image.
+#' @field method A character vector naming the methods used to create the
+#'   transforms.
+#' @field n An integer giving the number of transforms stored in the object.
+#'   If the source and target images have the same dimensionality this will be
+#'   1; otherwise it is the size of the highest dimension of the source image.
+#' @field transforms A list of [TransformSet] objects containing the transforms
+#'   from source to target space (and potentially the reverse). When a
+#'   registration object is first initialised these sets will all be empty.
+#' 
+#' @note `MriImage` source and target images should not be reordered, as
+#'   usually performed by [tractor.base::readImageFile()], if the resulting
+#'   transforms need to be consistent with the original files.
+#' @export
 Registration <- setRefClass("Registration", contains="SerialisableObject", fields=list(source="Registrand", target="Registrand", method="character", n="integer", transforms="list"), methods=list(
     initialize = function (source = niftiHeader(), target = niftiHeader(), method = "", ...)
     {
@@ -69,6 +109,7 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
     
     getTransforms = function (indices = 1:n, reverse = FALSE, preferAffine = FALSE, half = FALSE, errorIfMissing = TRUE)
     {
+        "Extract one or more transforms, favouring nonlinear warps by default"
         if (length(indices) > 1)
             return (lapply(indices, .self$getTransforms, reverse=reverse, preferAffine=preferAffine, half=half, errorIfMissing=errorIfMissing))
         
@@ -96,16 +137,22 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
     
     getTypes = function ()
     {
+        "Return a named vector of counts of each type of transform stored"
         types <- lapply(transforms, function(x) x$getTypes())
         return (table(unlist(types)))
     },
     
     nTransforms = function () { return (n) },
     
-    reverse = function () { return (reverseRegistration(.self)) },
+    reverse = function ()
+    {
+        "Create an inverted registration with source and target images swapped"
+        return (reverseRegistration(.self))
+    },
     
     setTransforms = function (objects, type, indices = NULL)
     {
+        "Add or replace some transforms of a given type, starting from the first by default"
         if (!is.null(objects) && !is.list(objects))
             objects <- list(objects)
         if (is.null(indices))
@@ -117,6 +164,7 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
     
     summarise = function ()
     {
+        "Summarise the registration"
         sourceSummary <- as(source,"MriImage")$summarise()
         targetSummary <- as(target,"MriImage")$summarise()
         
@@ -135,6 +183,24 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
     }
 ))
 
+#' Read a registration from file
+#' 
+#' Read a complete registration from file, including all associated transforms.
+#' This function handles flat file and directory (.xfmb) formats used by all
+#' recent versions of TractoR.
+#' 
+#' @param path A string giving the path to the file or directory.
+#' @param validate Boolean value. If `TRUE`, the default, a deserialised
+#'   object is checked to make sure it is of class [Registration].
+#' @return A registration object.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 readRegistration <- function (path, validate = TRUE)
 {
     pathStem <- ensureFileSuffix(ore.subst("/$","",path), NULL, strip=c("xfmb","Rdata"))

@@ -11,3 +11,4 @@ Encoding: UTF-8
 License: GPL-2
 URL: https://www.tractor-mri.org.uk, https://github.com/tractor/tractor
 BugReports: https://github.com/tractor/tractor/issues
+Roxygen: list(markdown=TRUE)
