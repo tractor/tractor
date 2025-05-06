@@ -263,3 +263,26 @@ registerDeserialiser <- function (className, deserialiser)
     
     invisible(NULL)
 }
+
+#' Optional types
+#' 
+#' This function declares an optional type, a union of the named class (which
+#' must already be defined) and \code{NULL}. It is meant for use in packages.
+#' 
+#' @param className A string naming an existing (S4) class.
+#' @author Jon Clayden
+#' @seealso \code{\link[methods]{setClassUnion}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
+Optional <- function (className)
+{
+    unionName <- paste0("Optional", className)
+    if (!isClassUnion(unionName))
+        setClassUnion(unionName, c(className,"NULL"), where=topenv(parent.frame()))
+    invisible(unionName)
+}
