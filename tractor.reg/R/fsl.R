@@ -57,9 +57,8 @@ registerImagesWithFlirt <- function (registration, sourceMask = NULL, targetMask
     affine <- readAffine(outputMatrixFile, sourceFileName, targetFileName, type="fsl")
     registration$setTransforms(affine, "affine")
     
-    result <- list(registration=registration, transformedImage=NULL, reverseTransformedImage=NULL)
     if (!estimateOnly)
-        result$transformedImage <- readImageFile(outputFileName, reorder=FALSE)
+        registration$setTransformedImage(readImageFile(outputFileName, reorder=FALSE))
     
     # Tidy up
     if (!is.null(initAffine))
@@ -67,5 +66,5 @@ registerImagesWithFlirt <- function (registration, sourceMask = NULL, targetMask
     unlink(outputMatrixFile)
     unlink(logFile)
     
-    return (result)
+    invisible(registration)
 }

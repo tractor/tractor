@@ -82,12 +82,14 @@ setClassUnion("Registrand", c("MriImage","niftiHeader","character"))
 #' @field transforms A list of [TransformSet] objects containing the transforms
 #'   from source to target space (and potentially the reverse). When a
 #'   registration object is first initialised these sets will all be empty.
+#' @field transformed. An optional transformed (output) image, or \code{NULL}.
+#'   This field is not serialised with the object.
 #' 
 #' @note `MriImage` source and target images should not be reordered, as
 #'   usually performed by [tractor.base::readImageFile()], if the resulting
 #'   transforms need to be consistent with the original files.
 #' @export
-Registration <- setRefClass("Registration", contains="SerialisableObject", fields=list(source="Registrand", target="Registrand", method="character", n="integer", transforms="list"), methods=list(
+Registration <- setRefClass("Registration", contains="SerialisableObject", fields=list(source="Registrand", target="Registrand", method="character", n="integer", transforms="list", transformed.=Optional("MriImage")), methods=list(
     initialize = function (source = niftiHeader(), target = niftiHeader(), method = "", ...)
     {
         # niftiHeader() works for all valid registrands
@@ -98,7 +100,7 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
         assert(dimDifference %in% 0:1, "Source image should have the same dimensionality as the target, or one higher")
         count <- ifelse(dimDifference == 0, 1L, sourceDims[sourceDims[1]+1])
         xfms <- rep(list(TransformSet$new()), count)
-        initFields(source=source, target=target, method=method, n=count, transforms=xfms, ...)
+        initFields(source=source, target=target, method=method, n=count, transforms=xfms, transformed.=NULL, ...)
     },
     
     getMethod = function () { return (method) },
@@ -106,6 +108,8 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
     getSource = function () { return (source) },
     
     getTarget = function () { return (target) },
+    
+    getTransformedImage = function () { return (transformed.) },
     
     getTransforms = function (indices = 1:n, reverse = FALSE, preferAffine = FALSE, half = FALSE, errorIfMissing = TRUE)
     {
@@ -148,6 +152,13 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
     {
         "Create an inverted registration with source and target images swapped"
         return (reverseRegistration(.self))
+    },
+    
+    setTransformedImage = function (image)
+    {
+        "Update the transformed source image"
+        .self$transformed. <- where(!is.null(image), as(image,"MriImage"))
+        invisible(.self)
     },
     
     setTransforms = function (objects, type, indices = NULL)
@@ -353,9 +364,17 @@ reverseRegistration <- function (registration)
 #' serves as a unified interface to both of these backends. Which one is used
 #' depends on the value of the `method` argument.
 #' 
-#' @inheritParams createRegistration
+#' @param source The source (a.k.a. moving, floating) image, or a string giving
+#'   the path to it. Image pixel/voxel data is required for full registration,
+#'   so a header object or `MriImage` containing only metadata will not work.
+#'   May have one more dimension than the target image, if `method` is
+#'   `"niftyreg"`.
+#' @param target The target (a.k.a. fixed, reference) image, providing the
+#'   output grid and coordinate system for the registration.
 #' @param registration An existing [Registration] object to update with the
-#'   new transforms, or `NULL` to create a new one.
+#'   new transforms, or `NULL` to create a new one. If this argument is
+#'   specified then the source and target images will be taken from it, and
+#'   should not also be specified.
 #' @param sourceMask, targetMask Images in the source and target space
 #'   weighting or masking key areas for the optimisation.
 #' @param method A string naming the backend to use: `"fsl"` or `"niftyreg"`.
@@ -366,31 +385,53 @@ reverseRegistration <- function (registration)
 #'   [TransformTypes]. The default is affine-only.
 #' @param affineDof The number of degrees of freedom for linear transforms (3D
 #'   values are used even if the images are 2D). FSL-FLIRT accepts values of 6
-#'   (rigid-body), 7, 9 and 12; NiftyReg accepts only 6 and 12.
+#'   (rigid-body), 7 (global rescale), 9 (traditional) and 12 (affine);
+#'   NiftyReg accepts only 6 and 12.
+#' @param estimateOnly Boolean value. If `TRUE`, the transform will be
+#'   estimated but the source image will not be resampled into the target
+#'   space; otherwise the transformed source image will be added to the result.
+#' @param interpolation An integer indicating the type of interpolation to
+#'   apply when resampling. Both backends accept 0 (nearest neighbour), 1
+#'   (blinear or trilinear, the default) and 3 (cubic spline); FSL additionally
+#'   accepts 2 (sinc).
+#' @param ... Additional arguments to method-specific functions. The FSL
+#'   backend currently takes no other arguments; for NiftyReg a list named
+#'   `linearOptions` can be used to provide additional arguments to
+#'   [RNiftyReg::niftyreg.linear()], and one named `nonlinearOptions` for
+#'   [RNiftyReg::niftyreg.nonlinear()].
+#' @return A registration object. If the `registration` argument was not `NULL`
+#'   then this is an updated version of it.
+#' @seealso [createRegistration()], which creates unoptimised registrations
+#    such as identity transforms and simple rotations.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 registerImages <- function (source, target, registration = NULL, sourceMask = NULL, targetMask = NULL, method = getOption("tractorRegistrationMethod"), types = "affine", affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)
 {
-    method <- match.arg(method, c("niftyreg","fsl"))
+    method <- match.arg(tolower(method), c("niftyreg","fsl"))
     types <- match.arg(types, TransformTypes, several.ok=TRUE)
     
-    if (!is.null(registration))
+    if (is.null(registration))
+        registration <- Registration$new(source, target, method)
+    else
     {
         assert(is(registration,"Registration"), "Registration argument is not of the appropriate class")
-        if (missing(source))
-            source <- registration$getSource()
-        if (missing(target))
-            target <- registration$getTarget()
+        assert(missing(source) && missing(target), "New source and target images cannot be specified for an existing registration")
     }
-    else
-        registration <- Registration$new(source, target, method)
     
+    # These submethods modify their first argument
     if (method == "niftyreg")
-        result <- registerImagesWithNiftyreg(registration, sourceMask=sourceMask, targetMask=targetMask, types=types, affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
+        registerImagesWithNiftyreg(registration, sourceMask=sourceMask, targetMask=targetMask, types=types, affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
     else if (method == "fsl")
     {
-        if (any(types %~% "nonlinear"))
-            report(OL$Error, "FSL-FLIRT does not perform nonlinear registration")
-        result <- registerImagesWithFlirt(registration, sourceMask=sourceMask, targetMask=targetMask, affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
+        assert(!any(types %~% "nonlinear"), "FSL-FLIRT does not perform nonlinear registration")
+        registerImagesWithFlirt(registration, sourceMask=sourceMask, targetMask=targetMask, affineDof=affineDof, estimateOnly=estimateOnly, interpolation=interpolation, ...)
     }
     
-    return (result)
+    return (registration)
 }

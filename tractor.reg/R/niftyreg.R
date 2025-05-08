@@ -42,6 +42,9 @@ registerImagesWithNiftyreg <- function (registration, sourceMask = NULL, targetM
         xfms <- lapply(seq_along(linearResult$forwardTransforms), function(i) forward(linearResult,i))
         registration$setTransforms(xfms, "affine")
         
+        if (!estimateOnly)
+            registration$setTransformedImage(linearResult$image)
+        
         # Update affine initialisation from the result
         init <- xfms
     }
@@ -75,18 +78,10 @@ registerImagesWithNiftyreg <- function (registration, sourceMask = NULL, targetM
             xfms <- lapply(seq_along(nonlinearResult$reverseTransforms), function(i) reverse(nonlinearResult,i))
             registration$setTransforms(xfms, "reverse-nonlinear")
         }
+        
+        if (!estimateOnly)
+            registration$setTransformedImage(nonlinearResult$image)
     }
     
-    transformedImage <- reverseTransformedImage <- NULL
-    if (!estimateOnly)
-    {
-        if (!is.null(nonlinearResult$image))
-            transformedImage <- as(nonlinearResult$image, "MriImage")
-        else
-            transformedImage <- as(linearResult$image, "MriImage")
-        if (!is.null(nonlinearResult$reverseTransforms) && length(nonlinearResult$reverseTransforms) == 1)
-            reverseTransformedImage <- as(applyTransform(reverse(nonlinearResult), nonlinearResult$target, interpolation=interpolation), "MriImage")
-    }
-    
-    return (list(registration=registration, transformedImage=transformedImage, reverseTransformedImage=reverseTransformedImage))
+    invisible(registration)
 }
