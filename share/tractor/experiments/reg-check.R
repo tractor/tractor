@@ -1,5 +1,5 @@
 #@desc Visualise the result of a registration by overlaying the "morphological gradient" of the transformed source image, which shows up edges, on the target image.
-#@args transform directory, [source image file]
+#@args registration file, [source image file]
 #@group Registration
 
 library(tractor.reg)
@@ -12,7 +12,7 @@ runExperiment <- function ()
     preferAffine <- getConfigVariable("PreferAffine", FALSE)
     reverse <- getConfigVariable("Reverse", FALSE)
     
-    transform <- attachTransformation(Arguments[1])
+    registration <- readRegistration(Arguments[1])
     
     if (nArguments() > 1)
         sourceImage <- readImageFile(implode(Arguments[-1]," "))

@@ -47,15 +47,17 @@ runExperiment <- function ()
         }
     }
     
+    if (is.null(registration))
+        registration <- createRegistration(source, target, method)
     if (!is.null(initAffineFile))
         init <- RNiftyReg::readAffine(initAffineFile, source, target, type=initAffineType)
     
     report(OL$Info, "Performing registration")
-    result <- registerImages(registration=registration, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method=method, types="affine", affineDof=degreesOfFreedom, estimateOnly=estimateOnly, interpolation=interpolation, init=init, linearOptions=list(nLevels=nLevels,maxIterations=maxIterations,useBlockPercentage=useBlockPercentage,symmetric=symmetric))
+    registration <- registerImages(registration=registration, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method=method, types="affine", affineDof=degreesOfFreedom, estimateOnly=estimateOnly, interpolation=interpolation, init=init, linearOptions=list(nLevels=nLevels,maxIterations=maxIterations,useBlockPercentage=useBlockPercentage,symmetric=symmetric))
     
-    result$registration$serialise(transformName)
+    registration$serialise(transformName)
     if (!estimateOnly)
-        writeImageFile(result$transformedImage, Arguments[3])
+        writeImageFile(registration$getTransformedImage(), Arguments[3])
     
     invisible(NULL)
 }

@@ -60,6 +60,8 @@ runExperiment <- function ()
         }
     }
     
+    if (is.null(registration))
+        registration <- createRegistration(source, target, method)
     if (!is.null(initControlFile) && !symmetric)
         init <- RNiftyReg::readNifti(initControlFile)
     else if (!is.null(initAffineFile))
@@ -70,11 +72,11 @@ runExperiment <- function ()
         types <- c("reverse-nonlinear", types)
     
     report(OL$Info, "Performing registration")
-    result <- registerImages(registration=registration, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method="niftyreg", types=types, estimateOnly=estimateOnly, interpolation=interpolation, init=init, nonlinearOptions=list(nLevels=nLevels,maxIterations=maxIterations,nBins=nBins,bendingEnergyWeight=bendingEnergyWeight,linearEnergyWeight=linearEnergyWeight,jacobianWeight=jacobianWeight,finalSpacing=rep(finalSpacing,3),spacingUnit=spacingUnit))
+    registration <- registerImages(registration=registration, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method="niftyreg", types=types, estimateOnly=estimateOnly, interpolation=interpolation, init=init, nonlinearOptions=list(nLevels=nLevels,maxIterations=maxIterations,nBins=nBins,bendingEnergyWeight=bendingEnergyWeight,linearEnergyWeight=linearEnergyWeight,jacobianWeight=jacobianWeight,finalSpacing=rep(finalSpacing,3),spacingUnit=spacingUnit))
     
-    result$registration$serialise(transformName)
+    registration$serialise(transformName)
     if (!estimateOnly)
-        writeImageFile(result$transformedImage, Arguments[3])
+        writeImageFile(registration$getTransformedImage(), Arguments[3])
     
     invisible(NULL)
 }

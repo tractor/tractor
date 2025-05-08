@@ -181,11 +181,10 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
         if (method == "niftyreg")
         {
             report(OL$Info, "Coregistering data to reference volume...")
-            result <- tractor.reg::registerImages(session$getImageFileNameByType("rawdata",type), targetImage, targetMask=maskImage, types="affine", method="niftyreg", ..., linearOptions=c(list(nLevels=nLevels,sequentialInit=TRUE),options))
-            registration <- result$registration
+            registration <- tractor.reg::registerImages(session$getImageFileNameByType("rawdata",type), targetImage, targetMask=maskImage, types="affine", method="niftyreg", ..., linearOptions=c(list(nLevels=nLevels,sequentialInit=TRUE),options))
             
             report(OL$Info, "Writing out transformed data")
-            writeImageFile(result$transformedImage, session$getImageFileNameByType("data",type))
+            writeImageFile(registration$getTransformedImage(), session$getImageFileNameByType("data",type))
         }
         else
         {
@@ -198,9 +197,9 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
             {
                 report(OL$Verbose, "Reading and registering volume ", i)
                 volume <- session$getImageByType("rawdata", type, volumes=i)
-                result <- tractor.reg::registerImages(volume, targetImage, targetMask=maskImage, types="affine", method=method, ..., linearOptions=c(list(nLevels=nLevels),options))
-                finalArray[,,,i] <- result$transformedImage$getData()
-                registration$setTransforms(result$registration$getTransforms(), "affine")
+                currentReg <- tractor.reg::registerImages(volume, targetImage, targetMask=maskImage, types="affine", method=method, ..., linearOptions=c(list(nLevels=nLevels),options))
+                finalArray[,,,i] <- currentReg$getTransformedImage()$getData()
+                registration$setTransforms(currentReg$getTransforms(), "affine")
             }
         
             report(OL$Info, "Writing out transformed data")

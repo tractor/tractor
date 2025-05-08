@@ -77,7 +77,7 @@ runExperiment <- function ()
             {
                 currentImage <- session$getImageByType("t1", "structural", index=i)
                 result <- registerImages(currentImage, reference, types="affine", affineDof=6)
-                data[,,,i] <- result$transformedImage$getData()
+                data[,,,i] <- result$getTransformedImage()$getData()
             }
             
             # NB: For n=2, the mean and median are equivalent, but the mean is quicker to calculate
