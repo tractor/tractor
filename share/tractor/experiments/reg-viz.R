@@ -21,11 +21,10 @@ runExperiment <- function ()
     else
         sourceImage <- NULL
     
-    transform <- attachTransformation(Arguments[1])
-    if (!is(transform, "Transformation"))
-        report(OL$Error, "The specified file does not contain a valid Transformation object")
+    reg <- readRegistration(Arguments[1])
     
-    plot(transform, xLoc=x, yLoc=y, zLoc=z, sourceImage=sourceImage, preferAffine=preferAffine, reverse=reverse)
+    # FIXME: there is currently no plot() method for Registration objects
+    plot(reg, xLoc=x, yLoc=y, zLoc=z, sourceImage=sourceImage, preferAffine=preferAffine, reverse=reverse)
     
     if (ask("Copy figure to pdf file? [yn]", valid=c("y","n")) == "y")
         dev.print(pdf, file=ensureFileSuffix(transformName,"pdf",strip="Rdata"))

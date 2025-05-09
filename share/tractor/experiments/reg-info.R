@@ -7,7 +7,7 @@ library(tractor.reg)
 
 runExperiment <- function ()
 {
-    transform <- attachTransformation(Arguments[1])
+    reg <- readRegistration(Arguments[1])
     setOutputLevel(OL$Info)
-    print(transform)
+    print(reg)
 }

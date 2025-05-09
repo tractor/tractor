@@ -18,7 +18,7 @@ runExperiment <- function ()
     if (is.null(space))
     {
         transform <- registerImages(image, getStandardImage("brain",reorder=FALSE), types="affine", estimateOnly=TRUE, linearOptions=list(symmetric=TRUE))
-        transform <- transform$invert()
+        transform <- transform$reverse()
     }
     else
     {

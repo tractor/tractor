@@ -206,7 +206,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     {
         strategy <- caches.$transformStrategies[[es("#{sourceSpace}2#{targetSpace}")]]
         if ("reverse" %in% strategy)
-            return (.self$getTransformation(targetSpace,sourceSpace)$invert())
+            return (.self$getTransformation(targetSpace,sourceSpace)$reverse())
         else
         {
             options <- list(targetMask=NULL, estimateOnly=TRUE)
@@ -243,9 +243,9 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             options <- c(list(sourceImageFile,targetImageFile), options)
             
             report(OL$Info, "Transformation strategy from #{ifelse(sourceSpace=='mni','MNI',sourceSpace)} to #{ifelse(targetSpace=='mni','MNI',targetSpace)} space is #{implode(strategy,', ',' and ')} - registering images")
-            result <- do.call(tractor.reg::registerImages, options)
-            result$transform$move(transformDir)
-            return (result$transform)
+            registration <- do.call(tractor.reg::registerImages, options)
+            registrationresult$transform$move(transformDir)
+            return (registration)
         }
     },
     
