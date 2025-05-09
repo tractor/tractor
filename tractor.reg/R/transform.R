@@ -1,16 +1,51 @@
-transformImage <- function (transform, newImage = NULL, index = 1, preferAffine = FALSE, reverse = FALSE, half = FALSE, interpolation = 1)
+#' Apply a transform
+#' 
+#' These functions transform between image spaces using a precalculated linear
+#' or nonlinear transform. Transforms can be in `RNiftyReg` format, or
+#' encapsulated in a `Registration` object.
+#' 
+#' @param transform An `RNiftyReg` transform (affine matrix or control point
+#'   image), or a [Registration] object.
+#' @param image An image to transform into the target space of the transform.
+#'   If `NULL`, and `transform` is a `Registration` object, the source image
+#'   for the registration will be used by default. (It must be a complete
+#'   image for this to work, not just a header.)
+#' @param ... Additional arguments to the `getTransforms()` method of the
+#'   `Registration` class, if `transform` is of that class. This allows reverse
+#'   or half transforms to be applied.
+#' @param interpolation Integer image interpolation degree or name: 0
+#'   (nearestneighbour), 1 (trilinear) or 3 (cubicspline).
+#' @param points A numeric vector specifying a single point to transform
+#'   between spaces, or a matrix with one point per row.
+#' @param voxel Boolean value, indicating whether the specified `points` are in
+#'   voxel terms (`TRUE`) or world terms (`FALSE`). The latter is only
+#'   supported when `transform` is a full registration, because source and
+#'   target space information is required.
+#' @param nearest Boolean value: should the resulting points be rounded to the
+#'   nearest integer? This can save a little computation for nonlinear
+#'   transforms, but should be `FALSE` if subvoxel precision is needed.
+#' @return `transformImage` returns a transformed `MriImage` object.
+#'   `transformPoints` returns a transformed numeric vector or matrix of
+#'   points.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
+transformImage <- function (transform, image = NULL, ..., interpolation = 1)
 {
-    if (!is(transform, "Transformation"))
-        report(OL$Error, "The specified transform is not a Transformation object")
+    if (is(transform, "Registration"))
+    {
+        image <- image %||% transform$getSource()
+        transform <- transform$getTransforms(...)
+    }
     
-    if (is.null(newImage))
-        newImage <- transform$getSourceImage(index, reverse)
+    assert(!is(image,"MriImage") || !image$isRgb(), "RGB images cannot be transformed yet")
     
-    assert(!is(newImage,"MriImage") || !newImage$isRgb(), "RGB images cannot be transformed yet")
-    
-    xfm <- transform$getTransformObjects(index, reverse, preferAffine, half)
-    result <- applyTransform(xfm, newImage, interpolation=.interpolationNameToCode(interpolation))
-    
+    result <- applyTransform(transform, image, interpolation=.interpolationNameToCode(interpolation))
     return (as(result, "MriImage"))
 }
 
@@ -46,19 +81,20 @@ transformParcellation <- function (transform, parcellation, threshold = 0.5, ind
     return (list(image=finalImage, regions=parcellation$regions))
 }
 
-transformPoints <- function (transform, points, voxel = TRUE, index = 1, preferAffine = FALSE, reverse = FALSE, half = FALSE, nearest = FALSE)
+#' @rdname transformImage
+#' @export
+transformPoints <- function (transform, points, ..., voxel = TRUE, nearest = FALSE)
 {
-    if (!is(transform, "Transformation"))
-        report(OL$Error, "The specified transform is not a Transformation object")
+    if (is(transform, "Registration"))
+        transform <- transform$getTransforms(...)
     
     if (!voxel)
-        points <- worldToVoxel(points, transform$getSourceImage(index,reverse))
+        points <- RNifti::worldToVoxel(points, attr(transform,"source"))
     
-    xfm <- transform$getTransformObjects(index, reverse, preferAffine, half)
-    newPoints <- applyTransform(xfm, points, nearest=nearest)
+    newPoints <- applyTransform(transform, points, nearest=nearest)
     
     if (!voxel)
-        newPoints <- voxelToWorld(newPoints, transform$getTargetImage(index,reverse))
+        newPoints <- RNifti::voxelToWorld(newPoints, attr(transform,"target"))
     
     return (newPoints)
 }

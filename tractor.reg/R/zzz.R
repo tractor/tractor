@@ -9,3 +9,6 @@
             options(tractorRegistrationMethod="niftyreg")
     }
 }
+
+#' @import methods reportr tractor.base RNiftyReg
+NULL
