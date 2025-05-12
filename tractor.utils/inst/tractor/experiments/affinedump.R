@@ -1,11 +1,11 @@
-#@args transformation file
+#@args registration file
 
 library(tractor.reg)
 
 runExperiment <- function ()
 {
-    requireArguments("transformation file")
+    requireArguments("registration file")
     
-    transform <- attachTransformation(Arguments[1])
-    print(transform$getTransformObjects(1, preferAffine=TRUE))
+    transform <- readRegistration(Arguments[1])
+    print(transform$getTransforms(1, preferAffine=TRUE))
 }

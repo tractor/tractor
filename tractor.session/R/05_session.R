@@ -223,28 +223,29 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             if (all(c("nonlinear","symmetric") %in% strategy))
                 options$types <- c(options$types, "reverse-nonlinear")
             
-            transformDir <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"xfmb"))
-            transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"Rdata"))
-            if (file.exists(transformFile) && !file.exists(transformDir))
+            registration <- NULL
+            regPath <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), es("#{sourceSpace}2#{targetSpace}"))
+            if (any(file.exists(ensureFileSuffix(regPath, c("Rdata","xfmb")))))
             {
-                tractor.reg::attachTransformation(transformFile)$move(transformDir)
-                unlink(transformFile)
-            }
-            if (file.exists(transformDir))
-            {
-                transform <- tractor.reg::attachTransformation(transformDir)
-                if (all(options$types %in% transform$getTypes()))
-                    return (transform)
+                # If this doesn't contain the required transforms it will be updated below
+                registration <- readRegistration(regPath)
+                if (all(options$types %in% names(registration$getTypes())))
+                    return (registration)
             }
             
+            # No suitable registration exists, so we need to run one
             imageTypes <- .resolveRegistrationTargets(.self, sourceSpace, targetSpace)
             sourceImageFile <- .self$getImageFileNameByType(imageTypes[1], sourceSpace)
             targetImageFile <- .self$getImageFileNameByType(imageTypes[2], targetSpace)
-            options <- c(list(sourceImageFile,targetImageFile), options)
+            options <- c(list(sourceImageFile, targetImageFile, registration=registration), options)
             
             report(OL$Info, "Transformation strategy from #{ifelse(sourceSpace=='mni','MNI',sourceSpace)} to #{ifelse(targetSpace=='mni','MNI',targetSpace)} space is #{implode(strategy,', ',' and ')} - registering images")
             registration <- do.call(tractor.reg::registerImages, options)
-            registrationresult$transform$move(transformDir)
+            
+            registration$serialise(regPath)
+            if (dir.exists(ensureFileSuffix(regPath, "xfmb")))
+                unlink(ensureFileSuffix(regPath,"xfmb"), recursive=TRUE)
+            
             return (registration)
         }
     },
