@@ -44,18 +44,19 @@ transformImage <- function (transform, image = NULL, ..., interpolation = 1)
     }
     
     assert(!is(image,"MriImage") || !image$isRgb(), "RGB images cannot be transformed yet")
+    assert(all.equal(RNifti::xform(image), RNifti::xform(attr(transform,"source"))), "Specified image is not in the same space as the registration's source image")
     
     result <- applyTransform(transform, image, interpolation=.interpolationNameToCode(interpolation))
     return (as(result, "MriImage"))
 }
 
 # Parcellation images can be transformed using nearest neighbour interpolation, but this function gives more flexibility while still ensuring a sensible, nonoverlapping result
-transformParcellation <- function (transform, parcellation, threshold = 0.5, index = 1, preferAffine = FALSE, reverse = FALSE, half = FALSE)
+transformParcellation <- function (transform, parcellation, ..., threshold = 0.5)
 {
-    if (!is(transform, "Transformation"))
-        report(OL$Error, "The specified transform is not a Transformation object")
+    if (is(transform, "Registration"))
+        transform <- transform$getTransforms(...)
     
-    targetSpace <- transform$getTargetImage(index, reverse)
+    targetSpace <- as(attr(transform,"target"), "MriImage")
     
     # NB: "threshold * (1-.Machine$double.neg.eps)" should always evaluate (just) strictly less than "threshold"
     # This allows values at threshold to be kept without adding an extra evaluation every time below
@@ -66,7 +67,7 @@ transformParcellation <- function (transform, parcellation, threshold = 0.5, ind
     for (i in uniqueIndices)
     {
         currentImage <- parcellation$image$copy()$map(function(x) ifelse(x==i,1,0))
-        transformedImage <- transformImage(transform, currentImage, index=index, preferAffine=preferAffine, reverse=reverse, half=half, interpolation=1)
+        transformedImage <- transformImage(transform, currentImage, interpolation=1)
         toUpdate <- which(transformedImage$getData() > maxValues)
         if (length(toUpdate) > 0)
         {
