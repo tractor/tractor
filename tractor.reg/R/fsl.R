@@ -1,15 +1,26 @@
-.imagePath <- function (image)
+.imagePath <- function (image, resolve = FALSE, create = TRUE)
 {
     if (is.character(image))
+    {
+        # Resolve symlinked file path if required
+        if (resolve)
+        {
+            linkTarget <- Sys.readlink(identifyImageFileNames(image)$imageFile)
+            if (!is.na(linkTarget) && linkTarget != "")
+                return (expandFileName(linkTarget, dirname(image)))
+        }
         return (image)
+    }
     else if (is(image,"MriImage") && !image$isInternal())
         return (image$getSource())
-    else
+    else if (create)
     {
         fileName <- threadSafeTempFile()
         RNifti::writeNifti(image, fileName)
         return (fileName)
     }
+    else
+        return (NULL)
 }
 
 registerImagesWithFlirt <- function (registration, sourceMask = NULL, targetMask = NULL, initAffine = NULL, affineDof = 12, estimateOnly = FALSE, interpolation = 1, ...)

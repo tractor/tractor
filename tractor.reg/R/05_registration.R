@@ -176,6 +176,8 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
     summarise = function ()
     {
         "Summarise the registration"
+        sourcePath <- .imagePath(source, resolve=TRUE, create=FALSE) %||% "(none)"
+        targetPath <- .imagePath(target, resolve=TRUE, create=FALSE) %||% "(none)"
         sourceSummary <- as(source,"MriImage")$summarise()
         targetSummary <- as(target,"MriImage")$summarise()
         
@@ -186,9 +188,9 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
         else
             typeSummary <- implode(sort(paste0(names(types), " (", types, ")")), ", ")
         
-        values <- c(sourceSummary$values[match(c("Image dimensions","Voxel dimensions"), sourceSummary$labels)], targetSummary$values[match(c("Image dimensions","Voxel dimensions"), targetSummary$labels)])
+        values <- c(sourcePath, sourceSummary$values[match(c("Image dimensions","Voxel dimensions"), sourceSummary$labels)], targetPath, targetSummary$values[match(c("Image dimensions","Voxel dimensions"), targetSummary$labels)])
         values <- c(methodString, typeSummary, values)
-        names(values) <- c("Registration method", "Stored transformations", "Source image dimensions", "Source voxel dimensions", "Target image dimensions", "Target voxel dimensions")
+        names(values) <- c("Registration method", "Stored transformations", "Source image path", "Source image dimensions", "Source voxel dimensions", "Target image path", "Target image dimensions", "Target voxel dimensions")
         
         return (values)
     }
