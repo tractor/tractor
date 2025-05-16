@@ -5,7 +5,7 @@
 #' encapsulated in a `Registration` object.
 #' 
 #' @param transform An `RNiftyReg` transform (affine matrix or control point
-#'   image), or a [Registration] object.
+#'   image), or a `[Registration]` object.
 #' @param image An image to transform into the target space of the transform.
 #'   If `NULL`, and `transform` is a `Registration` object, the source image
 #'   for the registration will be used by default. (It must be a complete

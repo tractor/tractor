@@ -320,7 +320,7 @@ createRegistration <- function (source, target, method = "identity", ...)
 #' This function inverts the sense of an existing registration, swapping the
 #' source and target images and inverting the associated transforms.
 #' 
-#' @param An existing [Registration] object.
+#' @param An existing `[Registration]` object.
 #' @return The reversed registration object.
 #' @author Jon Clayden
 #' @references Please cite the following reference when using TractoR in your
@@ -371,7 +371,7 @@ reverseRegistration <- function (registration)
 #'   `"niftyreg"`.
 #' @param target The target (a.k.a. fixed, reference) image, providing the
 #'   output grid and coordinate system for the registration.
-#' @param registration An existing [Registration] object to update with the
+#' @param registration An existing `[Registration]` object to update with the
 #'   new transforms, or `NULL` to create a new one. If this argument is
 #'   specified then the source and target images will be taken from it, and
 #'   should not also be specified.
@@ -382,7 +382,7 @@ reverseRegistration <- function (registration)
 #'   which in turn considers the `TRACTOR_REG_METHOD` environment variable. If
 #'   none of these are set then the default will be `"niftyreg"`.
 #' @param types A vector of transform types to calculate. Must be a subset of
-#'   [TransformTypes]. The default is affine-only.
+#'   `[TransformTypes]`. The default is affine-only.
 #' @param affineDof The number of degrees of freedom for linear transforms (3D
 #'   values are used even if the images are 2D). FSL-FLIRT accepts values of 6
 #'   (rigid-body), 7 (global rescale), 9 (traditional) and 12 (affine);
