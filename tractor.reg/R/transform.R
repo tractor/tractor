@@ -4,6 +4,16 @@
 #' or nonlinear transform. Transforms can be in `RNiftyReg` format, or
 #' encapsulated in a `Registration` object.
 #' 
+#' These functions are interfaces to [RNiftyReg::applyTransform()], which
+#' transforms both points and images. Note that image values are regridded in
+#' the space of the transform's target image, and so interpolation is generally
+#' required; the `interpolation` argument selects between different functions
+#' for this. Parcellation images are labelled, so interpolated values do not
+#' make sense in this case. Instead, each labelled region is extracted
+#' individually and transformed with linear interpolation into the target
+#' space; the highest-valued label is assigned to a voxel if its interpolated
+#' value is above a user-defined threshold.
+#' 
 #' @param transform An `RNiftyReg` transform (affine matrix or control point
 #'   image), or a `[Registration]` object.
 #' @param image An image to transform into the target space of the transform.
@@ -15,6 +25,11 @@
 #'   or half transforms to be applied.
 #' @param interpolation Integer image interpolation degree or name: 0
 #'   (nearestneighbour), 1 (trilinear) or 3 (cubicspline).
+#' @param parcellation A list in the form created by [readParcellation()],
+#'   representing a labelled image and associated metadata.
+#' @param threshold The minimum interpolated value for a label to be retained
+#'   in the transformed parcellation. Higher values will produce conservative
+#'   parcellations, and lower values more inclusive ones.
 #' @param points A numeric vector specifying a single point to transform
 #'   between spaces, or a matrix with one point per row.
 #' @param voxel Boolean value, indicating whether the specified `points` are in
@@ -51,6 +66,8 @@ transformImage <- function (transform, image = NULL, ..., interpolation = 1)
 }
 
 # Parcellation images can be transformed using nearest neighbour interpolation, but this function gives more flexibility while still ensuring a sensible, nonoverlapping result
+#' @rdname transformImage
+#' @export
 transformParcellation <- function (transform, parcellation, ..., threshold = 0.5)
 {
     if (is(transform, "Registration"))
