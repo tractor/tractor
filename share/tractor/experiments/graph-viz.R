@@ -55,7 +55,7 @@ runExperiment <- function ()
             
             edgePoints <- brainMask$getNonzeroIndices()
             if (graph$getVertexLocationUnit() == "mm")
-                edgePoints <- transformVoxelToWorld(edgePoints, brainMask, simple=TRUE)
+                edgePoints <- RNifti::voxelToWorld(edgePoints, brainMask, simple=TRUE)
             fieldOfView <- brainMask$getFieldOfView()
         }
         

@@ -81,7 +81,7 @@ runExperiment <- function ()
         interpolatedPoints <- promote(apply(points, 2, mmand::resample, indices, mmand::mnKernel(1,0)), byrow=TRUE)
         
         seedIndex <- which.min(abs(indices - seedIndex))
-        interpolatedPoints <- transformWorldToVoxel(interpolatedPoints, brain)
+        interpolatedPoints <- RNifti::worldToVoxel(interpolatedPoints, brain)
         return (asStreamline(interpolatedPoints, seedIndex, image=brain, coordUnit="vox"))
     }
     

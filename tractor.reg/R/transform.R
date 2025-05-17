@@ -116,23 +116,3 @@ transformPoints <- function (transform, points, ..., voxel = TRUE, nearest = FAL
     
     return (newPoints)
 }
-
-translatePoints <- function (points, offset)
-{
-    if (is.matrix(points))
-        return (t(apply(points, 1, "+", offset)))
-    else if (is.numeric(points))
-        return (points + offset)
-    else
-        report(OL$Error, "Points must be specified as a numeric vector or matrix")
-}
-
-transformVoxelToWorld <- function (points, image, simple = FALSE, ...)
-{
-    RNiftyReg::voxelToWorld(points, image, simple=simple, ...)
-}
-
-transformWorldToVoxel <- function (points, image, simple = FALSE, ...)
-{
-    RNiftyReg::worldToVoxel(points, image, simple=simple, ...)
-}

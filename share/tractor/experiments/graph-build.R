@@ -49,7 +49,7 @@ runExperiment <- function ()
         {
             report(OL$Verbose, "Matching region \"#{targets$labels[i]}\"")
             regionVoxels <- targets$image$find(targets$indices[i])
-            regionLocations[i,] <- transformVoxelToWorld(apply(regionVoxels,2,median), targets$image, simple=TRUE)
+            regionLocations[i,] <- RNifti::voxelToWorld(apply(regionVoxels,2,median), targets$image, simple=TRUE)
             voxelCount[i] <- nrow(regionVoxels)
             volume[i] <- voxelCount[i] * abs(prod(targets$image$getVoxelDimensions()))
         }
@@ -123,7 +123,7 @@ runExperiment <- function ()
             regionImage <- targets$image$copy()$map(function(x) ifelse(x==index,1L,0L), sparse=TRUE)
             allLocations <- regionImage$getNonzeroIndices(array=TRUE)
             regionLocations[i,] <- apply(allLocations, 2, median)
-            regionLocations[i,] <- transformVoxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
+            regionLocations[i,] <- RNifti::voxelToWorld(regionLocations[i,], regionImage, simple=TRUE)
             voxelCount[i] <- length(regionImage$getNonzeroIndices(array=FALSE))
             volume[i] <- voxelCount[i] * abs(prod(regionImage$getVoxelDimensions()))
             

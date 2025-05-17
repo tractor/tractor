@@ -137,9 +137,9 @@ changePointType <- function (points, image, newPointType, oldPointType = NULL)
     if (oldPointType == newPointType)
         newPoints <- points
     else if (oldPointType == "mm" && newPointType != "mm")
-        newPoints <- tractor.reg::transformWorldToVoxel(points, image) - offsets[[newPointType]]
+        newPoints <- RNifti::worldToVoxel(points, image) - offsets[[newPointType]]
     else if (oldPointType != "mm" && newPointType == "mm")
-        newPoints <- tractor.reg::transformVoxelToWorld(points + offsets[[oldPointType]], image)
+        newPoints <- RNifti::voxelToWorld(points + offsets[[oldPointType]], image)
     else
         newPoints <- points + offsets[[oldPointType]] - offsets[[newPointType]]
     
