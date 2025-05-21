@@ -9,6 +9,10 @@ Optional(className)
 \arguments{
 \item{className}{A string naming an existing (S4) class.}
 }
+\value{
+The name of the union class (invisibly), which will be the original
+  class name with "Optional" prepended to it.
+}
 \description{
 This function declares an optional type, a union of the named class (which
 must already be defined) and \code{NULL}. It is meant for use in packages.

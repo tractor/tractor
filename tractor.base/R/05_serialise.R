@@ -307,6 +307,8 @@ ListOf <- function (className)
 #' must already be defined) and \code{NULL}. It is meant for use in packages.
 #' 
 #' @param className A string naming an existing (S4) class.
+#' @return The name of the union class (invisibly), which will be the original
+#'   class name with "Optional" prepended to it.
 #' @author Jon Clayden
 #' @seealso \code{\link[methods]{setClassUnion}}
 #' @references Please cite the following reference when using TractoR in your

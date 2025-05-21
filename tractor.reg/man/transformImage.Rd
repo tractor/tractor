@@ -14,7 +14,7 @@ transformPoints(transform, points, ..., voxel = TRUE, nearest = FALSE)
 }
 \arguments{
 \item{transform}{An \code{RNiftyReg} transform (affine matrix or control point
-image), or a \verb{[Registration]} object.}
+image), or a \link{Registration} object.}
 
 \item{image}{An image to transform into the target space of the transform.
 If \code{NULL}, and \code{transform} is a \code{Registration} object, the source image

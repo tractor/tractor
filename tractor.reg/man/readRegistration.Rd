@@ -14,7 +14,7 @@ registrationPath(path)
 without the file extension.}
 
 \item{validate}{Boolean value. If \code{TRUE}, the default, a deserialised
-object is checked to make sure it is of class \verb{[Registration]}.}
+object is checked to make sure it is of class \link{Registration}.}
 }
 \value{
 For \code{readRegistration()}, a registration object (an error is
