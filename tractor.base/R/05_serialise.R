@@ -264,6 +264,43 @@ registerDeserialiser <- function (className, deserialiser)
     invisible(NULL)
 }
 
+#' @export
+ListOf <- function (className)
+{
+    listClassName <- paste0(className, "List")
+    if (isClass(listClassName, where=topenv(parent.frame())))
+        return (invisible(listClassName))
+    
+    setRefClass(listClassName, contains="SerialisableObject", fields=list(elements="list"), methods=list(
+        initialize = function (count = 0L, value = NULL, ...)
+        {
+            elementClassName <- ore::ore_subst("List$","",.refClassDef@className)
+            value <- where(is.null(value), new(elementClassName), as(value,elementClassName))
+            initFields(elements=rep(list(value), count))
+        },
+        
+        count = function () { return (length(elements)) },
+        
+        serialise = function (file = NULL)
+        {
+            "Serialise the object to a list or file"
+            originalClass <- class(.self)
+            originalPackage <- attr(originalClass,"package")
+            attributes(originalClass) <- NULL
+            
+            serialisedObject <- lapply(elements, function (x) x$serialise())
+            attr(serialisedObject, "originalClass") <- originalClass
+            attr(serialisedObject, "originalPackage") <- originalPackage
+            
+            if (!is.null(file))
+                save(serialisedObject, file=ensureFileSuffix(file,"Rdata"))
+            
+            invisible(serialisedObject)
+        }
+    ), where=topenv(parent.frame()))
+    invisible(listClassName)
+}
+
 #' Optional types
 #' 
 #' This function declares an optional type, a union of the named class (which
