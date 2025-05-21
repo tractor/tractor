@@ -35,7 +35,7 @@ runExperiment <- function ()
     
     if (is.null(transformName))
         transformName <- Arguments[3]
-    else
+    else if (!is.null(registrationPath(transformName)))
     {
         registration <- readRegistration(transformName, validate=FALSE)
         if (!is(registration, "Registration"))
