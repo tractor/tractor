@@ -2,22 +2,28 @@
 % Please edit documentation in R/05_registration.R
 \name{readRegistration}
 \alias{readRegistration}
+\alias{registrationPath}
 \title{Read a registration from file}
 \usage{
 readRegistration(path, validate = TRUE)
+
+registrationPath(path)
 }
 \arguments{
-\item{path}{A string giving the path to the file or directory.}
+\item{path}{A string giving the path to the file or directory, with or
+without the file extension.}
 
 \item{validate}{Boolean value. If \code{TRUE}, the default, a deserialised
-object is checked to make sure it is of class \link{Registration}.}
+object is checked to make sure it is of class \verb{[Registration]}.}
 }
 \value{
-A registration object.
+For \code{readRegistration()}, a registration object (an error is
+signalled if no suitable files exist). For \code{registrationPath()}, the
+resolved path to the registration on disk, or \code{NULL}.
 }
 \description{
 Read a complete registration from file, including all associated transforms.
-This function handles flat file and directory (.xfmb) formats used by all
+These functions handle flat file and directory (.xfmb) formats used by all
 recent versions of TractoR.
 }
 \references{

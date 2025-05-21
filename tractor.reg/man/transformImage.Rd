@@ -2,16 +2,19 @@
 % Please edit documentation in R/transform.R
 \name{transformImage}
 \alias{transformImage}
+\alias{transformParcellation}
 \alias{transformPoints}
 \title{Apply a transform}
 \usage{
 transformImage(transform, image = NULL, ..., interpolation = 1)
 
+transformParcellation(transform, parcellation, ..., threshold = 0.5)
+
 transformPoints(transform, points, ..., voxel = TRUE, nearest = FALSE)
 }
 \arguments{
 \item{transform}{An \code{RNiftyReg} transform (affine matrix or control point
-image), or a \link{Registration} object.}
+image), or a \verb{[Registration]} object.}
 
 \item{image}{An image to transform into the target space of the transform.
 If \code{NULL}, and \code{transform} is a \code{Registration} object, the source image
@@ -24,6 +27,13 @@ or half transforms to be applied.}
 
 \item{interpolation}{Integer image interpolation degree or name: 0
 (nearestneighbour), 1 (trilinear) or 3 (cubicspline).}
+
+\item{parcellation}{A list in the form created by \code{\link[=readParcellation]{readParcellation()}},
+representing a labelled image and associated metadata.}
+
+\item{threshold}{The minimum interpolated value for a label to be retained
+in the transformed parcellation. Higher values will produce conservative
+parcellations, and lower values more inclusive ones.}
 
 \item{points}{A numeric vector specifying a single point to transform
 between spaces, or a matrix with one point per row.}
@@ -46,6 +56,17 @@ points.
 These functions transform between image spaces using a precalculated linear
 or nonlinear transform. Transforms can be in \code{RNiftyReg} format, or
 encapsulated in a \code{Registration} object.
+}
+\details{
+These functions are interfaces to \code{\link[RNiftyReg:applyTransform]{RNiftyReg::applyTransform()}}, which
+transforms both points and images. Note that image values are regridded in
+the space of the transform's target image, and so interpolation is generally
+required; the \code{interpolation} argument selects between different functions
+for this. Parcellation images are labelled, so interpolated values do not
+make sense in this case. Instead, each labelled region is extracted
+individually and transformed with linear interpolation into the target
+space; the highest-valued label is assigned to a voxel if its interpolated
+value is above a user-defined threshold.
 }
 \references{
 Please cite the following reference when using TractoR in your

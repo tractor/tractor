@@ -199,13 +199,16 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
 #' Read a registration from file
 #' 
 #' Read a complete registration from file, including all associated transforms.
-#' This function handles flat file and directory (.xfmb) formats used by all
+#' These functions handle flat file and directory (.xfmb) formats used by all
 #' recent versions of TractoR.
 #' 
-#' @param path A string giving the path to the file or directory.
+#' @param path A string giving the path to the file or directory, with or
+#'   without the file extension.
 #' @param validate Boolean value. If `TRUE`, the default, a deserialised
 #'   object is checked to make sure it is of class [Registration].
-#' @return A registration object.
+#' @return For `readRegistration()`, a registration object (an error is
+#'   signalled if no suitable files exist). For `registrationPath()`, the
+#'   resolved path to the registration on disk, or `NULL`.
 #' @author Jon Clayden
 #' @references Please cite the following reference when using TractoR in your
 #' work:
@@ -216,11 +219,11 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
 #' @export
 readRegistration <- function (path, validate = TRUE)
 {
-    pathStem <- ensureFileSuffix(ore.subst("/$","",path), NULL, strip=c("xfmb","Rdata"))
-    dirPath <- ensureFileSuffix(pathStem, "xfmb")
-    filePath <- ensureFileSuffix(pathStem, "Rdata")
+    path <- registrationPath(path)
     
-    if (file.exists(filePath))
+    if (is.null(path))
+        report(OL$Error, "No registration found at path #{path}")
+    else if (!file.info(path)$isdir)
     {
         convertImage <- function (rawImage)
         {
@@ -229,10 +232,10 @@ readRegistration <- function (path, validate = TRUE)
             else if (!is.null(rawImage$data))
                 return (deserialiseReferenceObject(object=rawImage))
             else
-                report(OL$Error, "Old-style serialised transform file #{filePath} cannot be updated")
+                report(OL$Error, "Old-style serialised transform file #{path} cannot be updated")
         }
         
-        fields <- deserialiseReferenceObject(filePath, raw=TRUE)
+        fields <- deserialiseReferenceObject(path, raw=TRUE)
         
         # Dead-end format only used in prerelease TractoR 3.0
         if ("version" %in% names(fields))
@@ -257,16 +260,16 @@ readRegistration <- function (path, validate = TRUE)
         }
     }
     # Directory-based format (.xfmb) used by TractoR 3.0 to 3.4
-    else if (file.exists(dirPath) && file.info(dirPath)$isdir)
+    else
     {
-        methodFile <- file.path(dirPath, "method.txt")
+        methodFile <- file.path(path, "method.txt")
         method <- ifelse(file.exists(methodFile), readLines(methodFile)[1], "")
-        reg <- Registration$new(file.path(dirPath,"source"), file.path(dirPath,"target"), method)
+        reg <- Registration$new(file.path(path,"source"), file.path(path,"target"), method)
         
         for (i in seq_len(reg$nTransforms()))
         {
             # Order must match TransformTypes static variable above
-            paths <- file.path(dirPath, paste0(c("forward","forward","reverse"), i, c(".mat","","")))
+            paths <- file.path(path, paste0(c("forward","forward","reverse"), i, c(".mat","","")))
             for (j in seq_along(paths))
             {
                 object <- NULL
@@ -279,8 +282,22 @@ readRegistration <- function (path, validate = TRUE)
         }
         return (reg)
     }
+}
+
+#' @rdname readRegistration
+#' @export
+registrationPath <- function (path)
+{
+    pathStem <- ensureFileSuffix(ore_subst("/$","",path), NULL, strip=c("xfmb","Rdata"))
+    filePath <- ensureFileSuffix(pathStem, "Rdata")
+    dirPath <- ensureFileSuffix(pathStem, "xfmb")
+    
+    if (file.exists(filePath))
+        return (filePath)
+    else if (dir.exists(dirPath))
+        return (dirPath)
     else
-        report(OL$Error, "No registration found at path #{path}")
+        return (NULL)
 }
 
 #' Create an unoptimised registration
