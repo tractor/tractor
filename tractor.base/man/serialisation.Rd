@@ -17,9 +17,10 @@ deserialiseReferenceObject(file = NULL, object = NULL, raw = FALSE)
 registerDeserialiser(className, deserialiser)
 }
 \arguments{
-\item{object}{For \code{serialiseReferenceObject}, a list or object
-inheriting from \code{\linkS4class{SerialisableObject}}. For other
-functions, an object in (raw) serialised form. See Details.}
+\item{object}{For \code{serialiseReferenceObject}, any object, but only
+those inheriting from \code{\linkS4class{SerialisableObject}} and
+\code{\link{loso}} objects are treated specially. For other functions, an
+object in (raw) serialised form. See Details.}
 
 \item{expectedClass}{A class name which the object is expected to inherit.
 Any class is acceptable if this parameter is \code{NULL}.}
@@ -37,7 +38,10 @@ fields, and returning a suitable deserialised object.}
 }
 \value{
 \code{isDeserialisable} returns \code{TRUE} if the \code{object} is
-  deserialisable and inherits from the specified class.
+  deserialisable and (if specified) inherits from the required class,
+  otherwise \code{FALSE}. If its argument is serialisable then
+  \code{serialiseReferenceObject} returns the serialised version, invisibly;
+  otherwise it returns the unmodified object, again invisibly.
   \code{deserialiseReferenceObject} returns a raw or reconstituted object
   after deserialisation.
 }
@@ -51,8 +55,8 @@ backward compatibility when new member functions are added.
 }
 \details{
 The \code{serialiseReferenceObject} function, or the \code{serialise} member
-function of the \code{\link{SerialisableObject}} class can be used to create
-and/or \code{\link{save}} a version of an object which contains a
+function of the \code{\link{SerialisableObject}} class, can be used to
+create and/or \code{\link{save}} a version of an object which contains a
 hierarchical representation of the data embedded in it. These serialised
 objects are standard R lists, with an \code{"originalClass"} attribute
 describing the class of the original object. The
@@ -75,7 +79,7 @@ Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 }
 \seealso{
 \code{\linkS4class{SerialisableObject}}, \code{\link{save}},
-\code{\link{load}}, \code{\link{writeImageFile}}.
+\code{\link{load}}, \code{\link{loso}}, \code{\link{writeImageFile}}.
 }
 \author{
 Jon Clayden

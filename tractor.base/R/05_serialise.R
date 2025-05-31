@@ -89,32 +89,7 @@ SerialisableObject <- setRefClass("SerialisableObject", contains="TractorObject"
     serialise = function (file = NULL)
     {
         "Serialise the object to a list or file"
-        originalClass <- class(.self)
-        originalPackage <- attr(originalClass,"package")
-        attributes(originalClass) <- NULL
-        
-        # Fields with names ending in "." will not be returned, and therefore not be serialised
-        fields <- .self$fields()
-        serialisedObject <- list()
-
-        for (field in fields)
-        {
-            fieldValue <- get(field)
-
-            if (is(fieldValue, "SerialisableObject"))
-                serialisedObject <- c(serialisedObject, list(fieldValue$serialise(NULL)))
-            else
-                serialisedObject <- c(serialisedObject, list(fieldValue))
-        }
-
-        names(serialisedObject) <- fields
-        attr(serialisedObject, "originalClass") <- originalClass
-        attr(serialisedObject, "originalPackage") <- originalPackage
-
-        if (!is.null(file))
-            save(serialisedObject, file=ensureFileSuffix(file,"Rdata"))
-        
-        invisible(serialisedObject)
+        serialiseReferenceObject(.self, file)
     }
 ))
 
@@ -167,8 +142,8 @@ is.nilObject <- function (object)
 #' backward compatibility when new member functions are added.
 #' 
 #' The \code{serialiseReferenceObject} function, or the \code{serialise} member
-#' function of the \code{\link{SerialisableObject}} class can be used to create
-#' and/or \code{\link{save}} a version of an object which contains a
+#' function of the \code{\link{SerialisableObject}} class, can be used to
+#' create and/or \code{\link{save}} a version of an object which contains a
 #' hierarchical representation of the data embedded in it. These serialised
 #' objects are standard R lists, with an \code{"originalClass"} attribute
 #' describing the class of the original object. The
@@ -181,9 +156,10 @@ is.nilObject <- function (object)
 #' NIfTI/Analyze format is usually preferable, and can be done using
 #' \code{\link{writeImageFile}}.
 #' 
-#' @param object For \code{serialiseReferenceObject}, a list or object
-#'   inheriting from \code{\linkS4class{SerialisableObject}}. For other
-#'   functions, an object in (raw) serialised form. See Details.
+#' @param object For \code{serialiseReferenceObject}, any object, but only
+#'   those inheriting from \code{\linkS4class{SerialisableObject}} and
+#'   \code{\link{loso}} objects are treated specially. For other functions, an
+#'   object in (raw) serialised form. See Details.
 #' @param expectedClass A class name which the object is expected to inherit.
 #'   Any class is acceptable if this parameter is \code{NULL}.
 #' @param file A file name to deserialise from.
@@ -194,13 +170,16 @@ is.nilObject <- function (object)
 #' @param deserialiser A function taking as its argument a list of serialised
 #'   fields, and returning a suitable deserialised object.
 #' @return \code{isDeserialisable} returns \code{TRUE} if the \code{object} is
-#'   deserialisable and inherits from the specified class.
+#'   deserialisable and (if specified) inherits from the required class,
+#'   otherwise \code{FALSE}. If its argument is serialisable then
+#'   \code{serialiseReferenceObject} returns the serialised version, invisibly;
+#'   otherwise it returns the unmodified object, again invisibly.
 #'   \code{deserialiseReferenceObject} returns a raw or reconstituted object
 #'   after deserialisation.
 #' 
 #' @author Jon Clayden
 #' @seealso \code{\linkS4class{SerialisableObject}}, \code{\link{save}},
-#' \code{\link{load}}, \code{\link{writeImageFile}}.
+#' \code{\link{load}}, \code{\link{loso}}, \code{\link{writeImageFile}}.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -224,12 +203,23 @@ isDeserialisable <- function (object, expectedClass = NULL)
 #' @export
 serialiseReferenceObject <- function (object, file = NULL)
 {
+    originalClass <- class(object)
+    originalPackage <- attr(originalClass, "package")
+    attributes(originalClass) <- NULL
+    
     if (is(object, "SerialisableObject"))
-        serialisedObject <- object$serialise()
-    else if (is.list(object))
-        serialisedObject <- lapply(object, serialiseReferenceObject)
+    {
+        # Fields with names ending in "." will not be returned by the fields() method, and therefore not be serialised
+        serialisedObject <- sapply(object$fields(), function (name) {
+            field <- object$field(name)
+            serialiseReferenceObject(field)
+        }, simplify=FALSE, USE.NAMES=TRUE)
+        serialisedObject <- structure(serialisedObject, originalClass=originalClass, originalPackage=originalPackage)
+    }
+    else if (is(object, "loso"))
+        serialisedObject <- structure(lapply(object,serialiseReferenceObject), originalClass="loso")
     else
-        report(OL$Error, "Object to serialise must be a list or a SerialisableObject")
+        serialisedObject <- object
     
     if (!is.null(file))
         save(serialisedObject, file=ensureFileSuffix(file,"Rdata"))
@@ -248,14 +238,9 @@ deserialiseReferenceObject <- function (file = NULL, object = NULL, raw = FALSE)
         object <- get(load(ensureFileSuffix(file,"Rdata")))
     }
     
-    if (!isDeserialisable(object))
-    {
-        if (is.list(object))
-            return (invisible(lapply(object, function(x) deserialiseReferenceObject(object=x,raw=raw))))
-        else
-            report(OL$Error, "The specified object or file is not deserialisable")
-    }
-    else if (raw)
+    assert(isDeserialisable(object), "The specified object or file is not deserialisable")
+    
+    if (raw)
         return (invisible(object))
     
     fields <- lapply(object, function (field) {
