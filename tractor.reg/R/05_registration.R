@@ -29,7 +29,7 @@ TransformSet <- setRefClass("TransformSet", contains="SerialisableObject", field
     initialize = function (objects = list(), ...)
     {
         initObjects <- c(objects, list(...))
-        initObjects <- mapply(.checkAndConvertTransform, initObjects, names(initObjects) %||% "")
+        initObjects <- lapply(initObjects, function(x) .checkAndConvertTransform(x, names(x)))
         initFields(objects=initObjects, ...)
     },
     
@@ -89,7 +89,7 @@ setClassUnion("Registrand", c("MriImage","niftiHeader","character"))
 #'   usually performed by [tractor.base::readImageFile()], if the resulting
 #'   transforms need to be consistent with the original files.
 #' @export
-Registration <- setRefClass("Registration", contains="SerialisableObject", fields=list(source="Registrand", target="Registrand", method="character", n="integer", transforms="list", transformed.=Optional("MriImage")), methods=list(
+Registration <- setRefClass("Registration", contains="SerialisableObject", fields=list(source="Registrand", target="Registrand", method="character", n="integer", transforms="loso", transformed.=Optional("MriImage")), methods=list(
     initialize = function (source = niftiHeader(), target = niftiHeader(), method = "", ...)
     {
         # niftiHeader() works for all valid registrands
@@ -98,8 +98,11 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
         targetDims <- RNifti::niftiHeader(target)$dim
         dimDifference <- sourceDims[1] - targetDims[1]
         assert(dimDifference %in% 0:1, "Source image should have the same dimensionality as the target, or one higher")
-        count <- ifelse(dimDifference == 0, 1L, sourceDims[sourceDims[1]+1])
-        xfms <- rep(list(TransformSet$new()), count)
+        
+        args <- list(...)
+        count <- args$n %||% ifelse(dimDifference == 0, 1L, sourceDims[sourceDims[1]+1])
+        xfms <- args$transforms %||% loso(TransformSet$new(), count=count)
+        
         initFields(source=source, target=target, method=method, n=count, transforms=xfms, transformed.=NULL, ...)
     },
     
@@ -330,7 +333,7 @@ createRegistration <- function (source, target, method = "identity", ...)
 {
     registration <- Registration$new(source, target, method)
     xfm <- buildAffine(source=source, target=target, ...)
-    registration$setTransforms(rep(list(xfm), registration$nTransforms()))
+    registration$setTransforms(rep(list(xfm), registration$nTransforms()), "affine")
     return (registration)
 }
 

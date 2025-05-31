@@ -55,8 +55,8 @@ registerImagesWithNiftyreg <- function (registration, sourceMask = NULL, targetM
         if (is.null(init))
             flag(OL$Warning, "Running nonlinear registration without initialisation is not recommended")
         
-        nonlinearOptions$source <- registration$getSourceImage()
-        nonlinearOptions$target <- registration$getTargetImage()
+        nonlinearOptions$source <- registration$getSource()
+        nonlinearOptions$target <- registration$getTarget()
         nonlinearOptions$sourceMask <- sourceMask
         nonlinearOptions$targetMask <- targetMask
         nonlinearOptions$init <- init
