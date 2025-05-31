@@ -40,6 +40,40 @@ setMethod("show", "TractorObject", function (object)
         printLabelledValues(names(summaryList), as.character(summaryList))
 })
 
+#' Lists of serialisable objects
+#' 
+#' This function creates objects of S3 class \code{"loso"}, which are standard
+#' lists with this class attribute set. These objects can be used within
+#' \code{\linkS4class{SerialisableObject}} objects for fields that contain
+#' multiple objects which may themselves be serialisable. Otherwise their
+#' functionality is the same as a normal list.
+#' 
+#' @param ... List elements.
+#' @param count If only one element is provided, an optional integer specifying
+#'   the number of times to repeat the element. This allows lists of a fixed
+#'   size to be created using a default value.
+#' @return A list of class \code{"loso"}.
+#' 
+#' @author Jon Clayden
+#' @seealso \code{\linkS4class{SerialisableObject}}, \code{\link{save}},
+#' \code{\link{load}}, \code{\link{writeImageFile}}.
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
+loso <- function (..., count = NA)
+{
+    value <- list(...)
+    if (length(value) == 1L && !is.na(count))
+        value <- rep(value, count)
+    return (structure(value, class="loso"))
+}
+
+setOldClass("loso")
+
 #' The SerialisableObject class
 #' 
 #' This reference class extends \code{\linkS4class{TractorObject}} by adding a
