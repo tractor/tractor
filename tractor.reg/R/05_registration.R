@@ -36,7 +36,8 @@ TransformSet <- setRefClass("TransformSet", contains="SerialisableObject", field
     getObject = function (type)
     {
         type <- match.arg(type, TransformTypes)
-        return (loadTransform(objects[[type]]))
+        object <- objects[[type]]
+        return (where(!is.null(object), loadTransform(object)))
     },
     
     getTypes = function () { return (intersect(TransformTypes, names(objects))) },

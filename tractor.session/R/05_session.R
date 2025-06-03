@@ -228,7 +228,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             if (any(file.exists(ensureFileSuffix(regPath, c("Rdata","xfmb")))))
             {
                 # If this doesn't contain the required transforms it will be updated below
-                registration <- readRegistration(regPath)
+                registration <- tractor.reg::readRegistration(regPath)
                 if (all(options$types %in% names(registration$getTypes())))
                     return (registration)
             }

@@ -107,7 +107,7 @@ transformPointsToSpace <- function (points, session, newSpace, oldSpace = NULL, 
     
     if (outputVoxel && pointType == "mm")
     {
-        points <- changePointType(points, transform$getSourceImage(), "r", "mm")
+        points <- changePointType(points, transform$getSource(), "r", "mm")
         pointType <- "r"
     }
     
