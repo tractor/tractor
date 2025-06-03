@@ -12,7 +12,7 @@ only one level, but regions are included in the return value if they match
 on any term.}
 
 \item{parcellation}{A list object representing a parcellation, as produced
-by \verb{[readParcellation()]}.}
+by \code{\link[=readParcellation]{readParcellation()}}.}
 
 \item{labels}{Boolean value. If \code{TRUE}, the labels of the matching regions
 are returned; otherwise the integer indices.}

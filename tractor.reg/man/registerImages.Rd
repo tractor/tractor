@@ -4,19 +4,10 @@
 \alias{registerImages}
 \title{Register two images}
 \usage{
-registerImages(
-  source,
-  target,
-  registration = NULL,
-  sourceMask = NULL,
-  targetMask = NULL,
-  method = getOption("tractorRegistrationMethod"),
-  types = "affine",
-  affineDof = 12,
-  estimateOnly = FALSE,
-  interpolation = 1,
-  ...
-)
+registerImages(source, target, registration = NULL, sourceMask = NULL,
+  targetMask = NULL, method = getOption("tractorRegistrationMethod"),
+  types = "affine", affineDof = 12, estimateOnly = FALSE,
+  interpolation = 1, ...)
 }
 \arguments{
 \item{source}{The source (a.k.a. moving, floating) image, or a string giving

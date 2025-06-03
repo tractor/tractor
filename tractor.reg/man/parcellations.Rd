@@ -16,8 +16,8 @@ writeParcellation(parcellation, ...)
 \code{NULL}, this will default to the same path as the image but with a \code{"lut"}
 file extension.}
 
-\item{...}{Additional arguments to \verb{[tractor.base::readImageFile()]} or
-\verb{[tractor.base::writeImageFile()]}, as appropriate.}
+\item{...}{Additional arguments to \code{\link[tractor.base:files]{tractor.base::readImageFile()}} or
+\code{\link[tractor.base:files]{tractor.base::writeImageFile()}}, as appropriate.}
 
 \item{parcellation}{A list object representing a parcellation, as produced
 by \code{readParcellation}.}

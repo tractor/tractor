@@ -41,13 +41,8 @@ This field is not serialised with the object.}
 \section{Methods}{
 
 \describe{
-\item{\code{getTransforms(
-  indices = 1:n,
-  reverse = FALSE,
-  preferAffine = FALSE,
-  half = FALSE,
-  errorIfMissing = TRUE
-)}}{Extract one or more transforms, favouring nonlinear warps by default}
+\item{\code{getTransforms(indices = 1:n, reverse = FALSE, preferAffine = FALSE,
+  half = FALSE, errorIfMissing = TRUE)}}{Extract one or more transforms, favouring nonlinear warps by default}
 
 \item{\code{getTypes()}}{Return a named vector of counts of each type of transform stored}
 
