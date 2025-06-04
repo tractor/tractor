@@ -53,7 +53,11 @@ setMethod("show", "TractorObject", function (object)
 #'   the number of times to repeat the element. This allows lists of a fixed
 #'   size to be created using a default value.
 #' @return A list of class \code{"loso"}.
-#' 
+#' @note TractoR's serialisable objects are reference classes, and so naive use
+#'   of \code{\link{rep}} to create a list of object copies will have reference
+#'   semantics whereby each object refers to the same set of fields, which is
+#'   rarely the intention. This function explicitly creates a deep copy for
+#'   each replicate to avoid this.
 #' @author Jon Clayden
 #' @seealso \code{\linkS4class{SerialisableObject}}, \code{\link{save}},
 #' \code{\link{load}}, \code{\link{writeImageFile}}.
@@ -68,7 +72,12 @@ loso <- function (..., count = NA)
 {
     value <- list(...)
     if (length(value) == 1L && !is.na(count))
+    {
         value <- rep(value, count)
+        # Reference objects need to be explicitly deep-copied
+        for (i in seq_len(count-1))
+            value[[i+1]] <- value[[i+1]]$copy()
+    }
     return (structure(value, class="loso"))
 }
 

@@ -23,6 +23,13 @@ lists with this class attribute set. These objects can be used within
 multiple objects which may themselves be serialisable. Otherwise their
 functionality is the same as a normal list.
 }
+\note{
+TractoR's serialisable objects are reference classes, and so naive use
+  of \code{\link{rep}} to create a list of object copies will have reference
+  semantics whereby each object refers to the same set of fields, which is
+  rarely the intention. This function explicitly creates a deep copy for
+  each replicate to avoid this.
+}
 \references{
 Please cite the following reference when using TractoR in your
 work:
