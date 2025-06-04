@@ -25,8 +25,9 @@ runExperiment <- function ()
     
     plotTransform(reg, x=x, y=y, z=z, sourceImage=sourceImage, preferAffine=preferAffine, reverse=reverse)
     
+    graphicName <- paste0(ensureFileSuffix(basename(Arguments[1]), NULL, strip=c("Rdata","xfmb")), "_", c("x","y","z")[!is.na(c(x,y,z))], na.omit(c(x,y,z)))
     if (ask("Copy figure to pdf file? [yn]", valid=c("y","n")) == "y")
-        dev.print(pdf, file=ensureFileSuffix(transformName,"pdf",strip="Rdata"))
+        dev.print(pdf, file=ensureFileSuffix(graphicName,"pdf"))
     
     invisible(NULL)
 }
