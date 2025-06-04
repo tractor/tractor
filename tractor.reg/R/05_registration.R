@@ -276,12 +276,15 @@ readRegistration <- function (path, validate = TRUE)
             paths <- file.path(path, paste0(c("forward","forward","reverse"), i, c(".mat","","")))
             for (j in seq_along(paths))
             {
+                # NB: affines are assumed to always be stored in NiftyReg form
                 object <- NULL
                 if (paths[j] %~% ".mat$" && file.exists(paths[j]))
                     object <- readAffine(paths[j], source=reg$getSource(), target=reg$getTarget())
                 else if (imageFileExists(paths[j]))
                     object <- RNiftyReg::readNifti(paths[j], source=reg$getSource(), target=reg$getTarget(), internal=TRUE)
-                reg$setTransforms(object, TransformTypes[j], i)
+                
+                if (!is.null(object))
+                    reg$setTransforms(object, TransformTypes[j], i)
             }
         }
         return (reg)
