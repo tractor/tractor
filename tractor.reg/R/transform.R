@@ -163,9 +163,10 @@ plotTransform <- function (transform, ..., x = NA, y = NA, z = NA, sourceImage =
     if (is(transform, "Registration"))
     {
         # The source attribute of the transform does not contain data so isn't sufficient
+        registration <- transform
+        transform <- registration$getTransforms(...)
         if (is.null(sourceImage))
-            sourceImage <- as(transform$getSource(), "MriImage")
-        transform <- transform$getTransforms(...)
+            sourceImage <- as(registration$getSource(isTRUE(attr(transform, "reversed"))), "MriImage")
     }
     else
         sourceImage <- as(sourceImage %||% attr(transform, "source"), "MriImage")
@@ -180,8 +181,8 @@ plotTransform <- function (transform, ..., x = NA, y = NA, z = NA, sourceImage =
     deformationField <- deformationField(transform, jacobian=TRUE)
     
     # Find the requested slice of the Jacobian map and deformation field
-    jacobian <- reorderMriImage(as(jacobian(deformationField),"MriImage"))$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
-    field <- reorderMriImage(as(deformationField,"MriImage"))$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
+    jacobian <- reorderMriImage(jacobian(deformationField))$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
+    field <- reorderMriImage(deformationField)$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
     
     # Convert the field to voxel positions and find the closest plane (on average) in source space
     fieldDims <- dim(field)
