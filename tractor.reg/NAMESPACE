@@ -3,6 +3,7 @@
 export(TransformTypes)
 export(createRegistration)
 export(matchRegions)
+export(plotTransform)
 export(readParcellation)
 export(readRegistration)
 export(registerImages)

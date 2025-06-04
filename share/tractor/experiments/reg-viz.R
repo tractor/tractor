@@ -23,8 +23,7 @@ runExperiment <- function ()
     
     reg <- readRegistration(Arguments[1])
     
-    # FIXME: there is currently no plot() method for Registration objects
-    plot(reg, xLoc=x, yLoc=y, zLoc=z, sourceImage=sourceImage, preferAffine=preferAffine, reverse=reverse)
+    plotTransform(reg, x=x, y=y, z=z, sourceImage=sourceImage, preferAffine=preferAffine, reverse=reverse)
     
     if (ask("Copy figure to pdf file? [yn]", valid=c("y","n")) == "y")
         dev.print(pdf, file=ensureFileSuffix(transformName,"pdf",strip="Rdata"))

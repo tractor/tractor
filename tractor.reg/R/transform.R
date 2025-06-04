@@ -116,3 +116,92 @@ transformPoints <- function (transform, points, ..., voxel = TRUE, nearest = FAL
     
     return (newPoints)
 }
+
+#' Plot a transform's deformation field
+#' 
+#' This function visualises a transform in terms of its deformation field in a
+#' specified plane. It shows a slice in source space, overlaid with a field of
+#' marks showing the locations of target voxel centres. The colours of the
+#' marks correspond to the local Jacobian determinant, indicating whether there
+#' is an expansion or contraction in the area. The Jacobian will be constant
+#' for linear transforms.
+#' 
+#' @inheritParams transformImage
+#' @param x,y,z Coordinate elements (after standard image reordering). Exactly
+#'   one of these should be specified, identifying the plane in target space
+#'   that you want to visualise.
+#' @param sourceImage The full source image, if it cannot be derived from the
+#'   `transform`. This will be used for the base layer of the plot.
+#' 
+#' @note There will generally not be a plane in source space that matches the
+#'   specified target space plane exactly. The source plane used is the slice
+#'   in the same orientation that is closest on average to the target space
+#'   points, but the overlay is an approximation only, and in some cases may
+#'   not be a very good one.
+#' @export
+plotTransform <- function (transform, ..., x = NA, y = NA, z = NA, sourceImage = NULL)
+{
+    reorderPoints <- function (points, image)
+    {
+        rotationMatrix <- RNifti::rotation(image$getXform())
+        orientation <- apply(abs(rotationMatrix) > 0.5, 2, which)
+        orientation <- orientation * sign(rotationMatrix[cbind(orientation,1:3)]) * c(-1,1,1)
+        dimPermutation <- match(1:3, abs(orientation))
+        points <- points[,dimPermutation,drop=FALSE]
+        
+        ordering <- orientation[dimPermutation]
+        if (any(ordering < 0))
+        {
+            dims <- image$getDimensions()[1:3]
+            for (i in which(ordering < 0))
+                points[,i] <- dims[i] - points[,i] + 1
+        }
+        
+        return (points)
+    }
+    
+    if (is(transform, "Registration"))
+    {
+        # The source attribute of the transform does not contain data so isn't sufficient
+        if (is.null(sourceImage))
+            sourceImage <- as(transform$getSource(), "MriImage")
+        transform <- transform$getTransforms(...)
+    }
+    else
+        sourceImage <- as(sourceImage %||% attr(transform, "source"), "MriImage")
+    assert(!sourceImage$isEmpty(), "A full source image is required")
+    
+    loc <- c(x, y, z)
+    throughPlaneAxis <- which(!is.na(loc))
+    assert(length(throughPlaneAxis) == 1L, "Exactly one element of the location should be specified")
+    inPlaneAxes <- setdiff(1:3, throughPlaneAxis)
+    
+    # Calculate the deformation field
+    deformationField <- deformationField(transform, jacobian=TRUE)
+    
+    # Find the requested slice of the Jacobian map and deformation field
+    jacobian <- reorderMriImage(as(jacobian(deformationField),"MriImage"))$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
+    field <- reorderMriImage(as(deformationField,"MriImage"))$getSlice(throughPlaneAxis, loc[throughPlaneAxis])
+    
+    # Convert the field to voxel positions and find the closest plane (on average) in source space
+    fieldDims <- dim(field)
+    dim(field) <- c(prod(fieldDims[1:2]), fieldDims[3])
+    fieldVoxels <- reorderPoints(worldToVoxel(field,sourceImage$getMetadata()), sourceImage$getMetadata())
+    sourceLoc <- rep(NA, 3)
+    sourceLoc[throughPlaneAxis] <- round(mean(fieldVoxels[,throughPlaneAxis], na.rm=TRUE))
+    fieldVoxels <- fieldVoxels[,inPlaneAxes]
+    
+    # Use the 2.5% trimmed range of the whole Jacobian map to create a colour scale (centred at 1)
+    jacobianTrimmedRange <- quantile(abs(as.array(jacobian(deformationField))), c(0.025,0.975), na.rm=TRUE) - 1
+    vizLimit <- max(abs(jacobianTrimmedRange))
+    report(OL$Info, "Jacobian colour range is from #{1-vizLimit} to #{1+vizLimit}", round=3)
+    colourIndices <- 1 + round(99 * ((abs(jacobian)-1) + vizLimit) / (2*vizLimit))
+    colourIndices[colourIndices < 1] <- 1
+    colourIndices[colourIndices > 100] <- 100
+    colours <- paste(getColourScale(4)$colours, "60", sep="")
+    
+    # Create the visualisation
+    createSliceGraphic(sourceImage, sourceLoc[1], sourceLoc[2], sourceLoc[3])
+    width <- sourceImage$getDimensions()[inPlaneAxes] - 1
+    points((fieldVoxels[,1]-1)/width[1], (fieldVoxels[,2]-1)/width[2], pch=3, col=colours[colourIndices])
+}
