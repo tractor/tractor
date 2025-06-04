@@ -216,9 +216,14 @@ getVolumeTransformationForSession <- function (session, type)
 {
     assert(is(session,"MriSession"), "Specified session is not an MriSession object")
     
-    regName <- file.path(session$getDirectory(type), "coreg")
-    if (file.exists(regName) || dir.exists(ensureFileSuffix(regName, "xfmb")))
-        return (tractor.reg::readRegistration(regName))
+    directory <- session$getDirectory(type)
+    transformDirName <- file.path(directory, "coreg.xfmb")
+    transformFileName <- file.path(directory, "coreg_xfm.Rdata")
+    
+    if (dir.exists(transformDirName) || file.exists(ensureFileSuffix(transformDirName,"Rdata","xfmb")))
+        return (tractor.reg::readRegistration(transformDirName))
+    else if (file.exists(transformFileName))
+        return (tractor.reg::readRegistration(transformFileName))
     else if (type == "diffusion")
         return (readEddyCorrectTransformsForSession(session))
     else
