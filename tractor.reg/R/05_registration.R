@@ -109,9 +109,9 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
     
     getMethod = function () { return (method) },
     
-    getSource = function () { return (source) },
+    getSource = function (reverse = FALSE) { if (reverse) target else source },
     
-    getTarget = function () { return (target) },
+    getTarget = function (reverse = FALSE) { if (reverse) source else target },
     
     getTransformedImage = function () { return (transformed.) },
     
@@ -138,7 +138,8 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
         if (half)
             object <- halfTransform(object)
         
-        return (object)
+        # This attribute lets functions that pass ellipsis arguments through whether a reversed transform was requested
+        return (structure(object, reversed=reverse))
     },
     
     getTransformSets = function (indices = 1:n) { return (transforms[indices]) },
