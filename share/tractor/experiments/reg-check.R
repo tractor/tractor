@@ -13,23 +13,24 @@ runExperiment <- function ()
     reverse <- getConfigVariable("Reverse", FALSE)
     
     registration <- readRegistration(Arguments[1])
+    transform <- registration$getTransforms(preferAffine=preferAffine, reverse=reverse)
     
     if (nArguments() > 1)
         sourceImage <- readImageFile(implode(Arguments[-1]," "))
     else
-        sourceImage <- transform$getSourceImage(reverse=reverse, reorder=TRUE)
+        sourceImage <- reorderMriImage(registration$getSource(reverse))
     
-    targetImage <- transform$getTargetImage(reverse=reverse, reorder=TRUE)
+    targetImage <- reorderMriImage(registration$getTarget(reverse))
     
-    transformedImage <- transformImage(transform, sourceImage, preferAffine=preferAffine, reverse=reverse, interpolation=1)
+    transformedImage <- transformImage(transform, sourceImage, interpolation=1)
     kernel <- shapeKernel(3, min(3,transformedImage$getDimensionality()), type="diamond")
     gradient <- dilate(transformedImage,kernel) - erode(transformedImage,kernel)
     gradient[!is.finite(gradient)] <- 0
     outlineImage <- asMriImage(threshold(gradient,method="kmeans",binarise=FALSE), transformedImage)
     
-    writeImageFile(outlineImage, paste(basename(sourceImage$getSource()),"outline",sep="_"))
+    fileStem <- where(sourceImage$isInternal(), "", paste0(basename(sourceImage$getSource()), "_"))
+    writeImageFile(outlineImage, paste0(fileStem,"outline"))
     
     loc <- round(dim(targetImage) / 2)
-    prefix <- paste(basename(sourceImage$getSource()), "overlay", sep="_")
-    tractor.base:::compositeImages(list(targetImage,outlineImage), x=loc[1], y=loc[2], z=loc[3], colourScales="red", projectOverlays=FALSE, alpha=0.5, prefix=prefix)
+    tractor.base:::compositeImages(list(targetImage,outlineImage), x=loc[1], y=loc[2], z=loc[3], colourScales="red", projectOverlays=FALSE, alpha=0.5, prefix=paste0(fileStem,"overlay"))
 }
