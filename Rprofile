@@ -3,7 +3,7 @@ tractorHome <- Sys.getenv("TRACTOR_HOME")
 if (tractorHome == "") {
 	message("TRACTOR_HOME environment variable not set - TractoR will not be available")
 } else {
-	.libPaths(c(.libPaths(), file.path(tractorHome,"lib","R")))
+	.libPaths(c(file.path(tractorHome,"lib","R"), .libPaths()))
 	
 	tractor <<- function (exptName = "console", args = NULL, configFiles = NULL, outputLevel = reportr::OL$Warning, ...) {
 		tractor.utils::callExperiment(exptName, args, configFiles, outputLevel, ...)
