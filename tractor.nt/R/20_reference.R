@@ -1,8 +1,6 @@
-setClassUnion("MriSessionOrNull", c("MriSession","NULL"))
-
 setOldClass("tractOptions")
 
-ReferenceTract <- setRefClass("ReferenceTract", contains="SerialisableObject", fields=list(tract="BSplineTract",standardSeed="numeric",seedUnit="character",session="MriSessionOrNull",options="tractOptions"), methods=list(
+ReferenceTract <- setRefClass("ReferenceTract", contains="SerialisableObject", fields=list(tract="BSplineTract",standardSeed="numeric",seedUnit="character",session=Optional("MriSession"),options="tractOptions"), methods=list(
     initialize = function (tract = nilObject(), standardSeed = NULL, seedUnit = "", session = NULL, options = NULL)
     {
         if (is.null(options))

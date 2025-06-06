@@ -107,7 +107,7 @@ transformPointsToSpace <- function (points, session, newSpace, oldSpace = NULL, 
     
     if (outputVoxel && pointType == "mm")
     {
-        points <- changePointType(points, transform$getSourceImage(), "r", "mm")
+        points <- changePointType(points, transform$getSource(), "r", "mm")
         pointType <- "r"
     }
     
@@ -137,9 +137,9 @@ changePointType <- function (points, image, newPointType, oldPointType = NULL)
     if (oldPointType == newPointType)
         newPoints <- points
     else if (oldPointType == "mm" && newPointType != "mm")
-        newPoints <- tractor.reg::transformWorldToVoxel(points, image) - offsets[[newPointType]]
+        newPoints <- RNifti::worldToVoxel(points, image) - offsets[[newPointType]]
     else if (oldPointType != "mm" && newPointType == "mm")
-        newPoints <- tractor.reg::transformVoxelToWorld(points + offsets[[oldPointType]], image)
+        newPoints <- RNifti::voxelToWorld(points + offsets[[oldPointType]], image)
     else
         newPoints <- points + offsets[[oldPointType]] - offsets[[newPointType]]
     
@@ -166,8 +166,7 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
     if (method == "none")
     {
         report(OL$Info, "Storing identity transforms")
-        volume <- session$getImageByType("rawdata", type, volumes=1)
-        transforms <- rep(list(tractor.reg::identityTransformation(volume,targetImage)), nVolumes)
+        registration <- createRegistration(sourceMetadata, targetImage)
         
         report(OL$Info, "Symlinking data volume")
         symlinkImageFiles(session$getImageFileNameByType("rawdata",type), session$getImageFileNameByType("data",type), overwrite=TRUE)
@@ -182,25 +181,25 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
         if (method == "niftyreg")
         {
             report(OL$Info, "Coregistering data to reference volume...")
-            result <- tractor.reg::registerImages(session$getImageFileNameByType("rawdata",type), targetImage, targetMask=maskImage, types="affine", method="niftyreg", ..., linearOptions=c(list(nLevels=nLevels,sequentialInit=TRUE),options))
-            transforms <- result$transform
+            registration <- tractor.reg::registerImages(session$getImageFileNameByType("rawdata",type), targetImage, targetMask=maskImage, types="affine", method="niftyreg", ..., linearOptions=c(list(nLevels=nLevels,sequentialInit=TRUE),options))
             
             report(OL$Info, "Writing out transformed data")
-            writeImageFile(result$transformedImage, session$getImageFileNameByType("data",type))
+            writeImageFile(registration$getTransformedImage(), session$getImageFileNameByType("data",type))
         }
         else
         {
             finalArray <- array(NA, dim=sourceMetadata$getDimensions())
-            transforms <- vector("list", nVolumes)
-        
+            registration <- createRegistration(sourceMetadata, targetImage)
+            
+            # FLIRT interface can only handle one volume at a time
             report(OL$Info, "Coregistering data to reference volume...")
             for (i in seq_len(nVolumes))
             {
                 report(OL$Verbose, "Reading and registering volume ", i)
                 volume <- session$getImageByType("rawdata", type, volumes=i)
-                result <- tractor.reg::registerImages(volume, targetImage, targetMask=maskImage, types="affine", method=method, ..., linearOptions=c(list(nLevels=nLevels),options))
-                finalArray[,,,i] <- result$transformedImage$getData()
-                transforms[[i]] <- result$transform
+                currentReg <- tractor.reg::registerImages(volume, targetImage, targetMask=maskImage, types="affine", method=method, ..., linearOptions=c(list(nLevels=nLevels),options))
+                finalArray[,,,i] <- currentReg$getTransformedImage()$getData()
+                registration$setTransforms(currentReg$getTransforms(), "affine")
             }
         
             report(OL$Info, "Writing out transformed data")
@@ -209,28 +208,24 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
         }
     }
     
-    if (!is(transforms, "Transformation"))
-        transforms <- tractor.reg::mergeTransformations(transforms, sourceMetadata$getSource())
-    transforms$move(file.path(session$getDirectory(type), "coreg"))
-    
-    return (transforms)
+    registration$serialise(file.path(session$getDirectory(type), "coreg"))
+    return (registration)
 }
 
 getVolumeTransformationForSession <- function (session, type)
 {
-    if (!is(session, "MriSession"))
-        report(OL$Error, "Specified session is not an MriSession object")
+    assert(is(session,"MriSession"), "Specified session is not an MriSession object")
     
     directory <- session$getDirectory(type)
-    transformFileName <- file.path(directory, "coreg_xfm.Rdata")
     transformDirName <- file.path(directory, "coreg.xfmb")
+    transformFileName <- file.path(directory, "coreg_xfm.Rdata")
     
-    if (file.exists(transformDirName))
-        return (tractor.reg::attachTransformation(transformDirName))
+    if (dir.exists(transformDirName) || file.exists(ensureFileSuffix(transformDirName,"Rdata","xfmb")))
+        return (tractor.reg::readRegistration(transformDirName))
     else if (file.exists(transformFileName))
-        return (tractor.reg::attachTransformation(transformFileName)$move(transformDirName))
+        return (tractor.reg::readRegistration(transformFileName))
     else if (type == "diffusion")
         return (readEddyCorrectTransformsForSession(session))
     else
-        report(OL$Error, "Transformation file does not exist for ", type, " data")
+        report(OL$Error, "Transformation file does not exist for #{type} data")
 }

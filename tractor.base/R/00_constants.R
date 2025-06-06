@@ -1,5 +1,5 @@
 .Workspace <- new.env()
-.Workspace$deserialisers <- list()
+.Workspace$deserialisers <- list(loso=function(fields) do.call(loso,fields))
 .Workspace$pathHandlers <- list()
 
 # RGB types are handled specially

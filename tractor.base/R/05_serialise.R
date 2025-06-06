@@ -40,6 +40,49 @@ setMethod("show", "TractorObject", function (object)
         printLabelledValues(names(summaryList), as.character(summaryList))
 })
 
+#' Lists of serialisable objects
+#' 
+#' This function creates objects of S3 class \code{"loso"}, which are standard
+#' lists with this class attribute set. These objects can be used within
+#' \code{\linkS4class{SerialisableObject}} objects for fields that contain
+#' multiple objects which may themselves be serialisable. Otherwise their
+#' functionality is the same as a normal list.
+#' 
+#' @param ... List elements.
+#' @param count If only one element is provided, an optional integer specifying
+#'   the number of times to repeat the element. This allows lists of a fixed
+#'   size to be created using a default value.
+#' @return A list of class \code{"loso"}.
+#' @note TractoR's serialisable objects are reference classes, and so naive use
+#'   of \code{\link{rep}} to create a list of object copies will have reference
+#'   semantics whereby each object refers to the same set of fields, which is
+#'   rarely the intention. This function explicitly creates a deep copy for
+#'   each replicate to avoid this.
+#' @author Jon Clayden
+#' @seealso \code{\linkS4class{SerialisableObject}}, \code{\link{save}},
+#' \code{\link{load}}, \code{\link{writeImageFile}}.
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
+loso <- function (..., count = NA)
+{
+    value <- list(...)
+    if (length(value) == 1L && !is.na(count))
+    {
+        value <- rep(value, count)
+        # Reference objects need to be explicitly deep-copied
+        for (i in seq_len(count-1))
+            value[[i+1]] <- value[[i+1]]$copy()
+    }
+    return (structure(value, class="loso"))
+}
+
+setOldClass("loso")
+
 #' The SerialisableObject class
 #' 
 #' This reference class extends \code{\linkS4class{TractorObject}} by adding a
@@ -55,32 +98,7 @@ SerialisableObject <- setRefClass("SerialisableObject", contains="TractorObject"
     serialise = function (file = NULL)
     {
         "Serialise the object to a list or file"
-        originalClass <- class(.self)
-        originalPackage <- attr(originalClass,"package")
-        attributes(originalClass) <- NULL
-        
-        # Fields with names ending in "." will not be returned, and therefore not be serialised
-        fields <- .self$fields()
-        serialisedObject <- list()
-
-        for (field in fields)
-        {
-            fieldValue <- get(field)
-
-            if (is(fieldValue, "SerialisableObject"))
-                serialisedObject <- c(serialisedObject, list(fieldValue$serialise(NULL)))
-            else
-                serialisedObject <- c(serialisedObject, list(fieldValue))
-        }
-
-        names(serialisedObject) <- fields
-        attr(serialisedObject, "originalClass") <- originalClass
-        attr(serialisedObject, "originalPackage") <- originalPackage
-
-        if (!is.null(file))
-            save(serialisedObject, file=ensureFileSuffix(file,"Rdata"))
-        
-        invisible(serialisedObject)
+        serialiseReferenceObject(.self, file)
     }
 ))
 
@@ -133,8 +151,8 @@ is.nilObject <- function (object)
 #' backward compatibility when new member functions are added.
 #' 
 #' The \code{serialiseReferenceObject} function, or the \code{serialise} member
-#' function of the \code{\link{SerialisableObject}} class can be used to create
-#' and/or \code{\link{save}} a version of an object which contains a
+#' function of the \code{\link{SerialisableObject}} class, can be used to
+#' create and/or \code{\link{save}} a version of an object which contains a
 #' hierarchical representation of the data embedded in it. These serialised
 #' objects are standard R lists, with an \code{"originalClass"} attribute
 #' describing the class of the original object. The
@@ -147,9 +165,10 @@ is.nilObject <- function (object)
 #' NIfTI/Analyze format is usually preferable, and can be done using
 #' \code{\link{writeImageFile}}.
 #' 
-#' @param object For \code{serialiseReferenceObject}, a list or object
-#'   inheriting from \code{\linkS4class{SerialisableObject}}. For other
-#'   functions, an object in (raw) serialised form. See Details.
+#' @param object For \code{serialiseReferenceObject}, any object, but only
+#'   those inheriting from \code{\linkS4class{SerialisableObject}} and
+#'   \code{\link{loso}} objects are treated specially. For other functions, an
+#'   object in (raw) serialised form. See Details.
 #' @param expectedClass A class name which the object is expected to inherit.
 #'   Any class is acceptable if this parameter is \code{NULL}.
 #' @param file A file name to deserialise from.
@@ -160,13 +179,16 @@ is.nilObject <- function (object)
 #' @param deserialiser A function taking as its argument a list of serialised
 #'   fields, and returning a suitable deserialised object.
 #' @return \code{isDeserialisable} returns \code{TRUE} if the \code{object} is
-#'   deserialisable and inherits from the specified class.
+#'   deserialisable and (if specified) inherits from the required class,
+#'   otherwise \code{FALSE}. If its argument is serialisable then
+#'   \code{serialiseReferenceObject} returns the serialised version, invisibly;
+#'   otherwise it returns the unmodified object, again invisibly.
 #'   \code{deserialiseReferenceObject} returns a raw or reconstituted object
 #'   after deserialisation.
 #' 
 #' @author Jon Clayden
 #' @seealso \code{\linkS4class{SerialisableObject}}, \code{\link{save}},
-#' \code{\link{load}}, \code{\link{writeImageFile}}.
+#' \code{\link{load}}, \code{\link{loso}}, \code{\link{writeImageFile}}.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -190,12 +212,23 @@ isDeserialisable <- function (object, expectedClass = NULL)
 #' @export
 serialiseReferenceObject <- function (object, file = NULL)
 {
+    originalClass <- class(object)
+    originalPackage <- attr(originalClass, "package")
+    attributes(originalClass) <- NULL
+    
     if (is(object, "SerialisableObject"))
-        serialisedObject <- object$serialise()
-    else if (is.list(object))
-        serialisedObject <- lapply(object, serialiseReferenceObject)
+    {
+        # Fields with names ending in "." will not be returned by the fields() method, and therefore not be serialised
+        serialisedObject <- sapply(object$fields(), function (name) {
+            field <- object$field(name)
+            serialiseReferenceObject(field)
+        }, simplify=FALSE, USE.NAMES=TRUE)
+        serialisedObject <- structure(serialisedObject, originalClass=originalClass, originalPackage=originalPackage)
+    }
+    else if (is(object, "loso"))
+        serialisedObject <- structure(lapply(object,serialiseReferenceObject), originalClass="loso")
     else
-        report(OL$Error, "Object to serialise must be a list or a SerialisableObject")
+        serialisedObject <- object
     
     if (!is.null(file))
         save(serialisedObject, file=ensureFileSuffix(file,"Rdata"))
@@ -214,14 +247,9 @@ deserialiseReferenceObject <- function (file = NULL, object = NULL, raw = FALSE)
         object <- get(load(ensureFileSuffix(file,"Rdata")))
     }
     
-    if (!isDeserialisable(object))
-    {
-        if (is.list(object))
-            return (invisible(lapply(object, function(x) deserialiseReferenceObject(object=x,raw=raw))))
-        else
-            report(OL$Error, "The specified object or file is not deserialisable")
-    }
-    else if (raw)
+    assert(isDeserialisable(object), "The specified object or file is not deserialisable")
+    
+    if (raw)
         return (invisible(object))
     
     fields <- lapply(object, function (field) {
@@ -262,4 +290,29 @@ registerDeserialiser <- function (className, deserialiser)
     .Workspace$deserialisers[[className]] <- deserialiser
     
     invisible(NULL)
+}
+
+#' Optional types
+#' 
+#' This function declares an optional type, a union of the named class (which
+#' must already be defined) and \code{NULL}. It is meant for use in packages.
+#' 
+#' @param className A string naming an existing (S4) class.
+#' @return The name of the union class (invisibly), which will be the original
+#'   class name with "Optional" prepended to it.
+#' @author Jon Clayden
+#' @seealso \code{\link[methods]{setClassUnion}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
+Optional <- function (className)
+{
+    unionName <- paste0("Optional", className)
+    if (!isClassUnion(unionName))
+        setClassUnion(unionName, c(className,"NULL"), where=topenv(parent.frame()))
+    invisible(unionName)
 }

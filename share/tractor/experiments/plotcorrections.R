@@ -32,8 +32,8 @@ runExperiment <- function ()
                                       scale=c("X (left-right)","Y (anterior-posterior)","Z (superior-inferior)"),
                                       skew=c("X-Y", "X-Z", "Y-Z"))
     
-        transform <- getVolumeTransformationForSession(session, "diffusion")
-        decomposition <- decomposeTransformation(transform)
+        transformSets <- getVolumeTransformationForSession(session,"diffusion")$getTransformSets()
+        decomposition <- lapply(transformSets, function(set) RNiftyReg::decomposeAffine(set$getObject("affine")))
         if (currentMode == "rotation")
             values <- sapply(decomposition, function(x) x$angles / pi * 180)
         else

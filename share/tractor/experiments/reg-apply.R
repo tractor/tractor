@@ -17,11 +17,15 @@ runExperiment <- function ()
     transformName <- splitAndConvertString(transformName, ",", fixed=TRUE)
     if (length(transformName) > 1)
     {
-        transforms <- lapply(transformName, attachTransformation)
-        transform <- composeTransformations(transforms)
+        transforms <- lapply(transformName, function (name) {
+            reg <- readRegistration(name)
+            assert(reg$nTransforms() == 1, "")
+            reg$getTransforms(preferAffine=preferAffine, reverse=reverse, half=half)
+        })
+        transform <- do.call(RNiftyReg::composeTransforms, transforms)
     }
     else
-        transform <- attachTransformation(transformName)
+        transform <- readRegistration(transformName)$getTransforms(preferAffine=preferAffine, reverse=reverse, half=half)
     
     transformedImage <- transformImage(transform, RNiftyReg::readNifti(Arguments[1]), preferAffine=preferAffine, reverse=reverse, half=half, interpolation=interpolation)
     writeImageFile(transformedImage, Arguments[2])

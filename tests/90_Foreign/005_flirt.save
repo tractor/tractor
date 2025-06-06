@@ -1,6 +1,5 @@
     Registration method : fsl
- Stored transformations : affine
-     Currently inverted : FALSE
+ Stored transformations : affine (1)
 Source image dimensions : 96 x 96 x 60 voxels
 Source voxel dimensions : 2.5 x 2.5 x 2.5 mm
 Target image dimensions : 197 x 233 x 189 voxels

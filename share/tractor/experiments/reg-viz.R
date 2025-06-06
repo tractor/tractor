@@ -1,4 +1,4 @@
-#@args transform directory, [source image file]
+#@args registration file, [source image file]
 #@desc Visualise the deformation field corresponding to the specified transformation. A slice axis and location in voxels (using the R convention, indexing from 1) should be given in TARGET space, although the visualisation is shown in source space, projected into the plane that is most closely correspondent. The overlay shows the projection of the target space in source space, with each point coloured according to the local Jacobian determinant: red indicates that the transformation produces a local expansion, and blue a local contraction. If the source image is not provided, its location will be determined from the metadata stored with the transformation if possible. If Reverse:true is given, the inverse transformation will be visualised if it is available. Nonlinear transformations will take priority unless PreferAffine:true is given.
 #@group Registration
 #@interactive TRUE
@@ -21,14 +21,13 @@ runExperiment <- function ()
     else
         sourceImage <- NULL
     
-    transform <- attachTransformation(Arguments[1])
-    if (!is(transform, "Transformation"))
-        report(OL$Error, "The specified file does not contain a valid Transformation object")
+    reg <- readRegistration(Arguments[1])
     
-    plot(transform, xLoc=x, yLoc=y, zLoc=z, sourceImage=sourceImage, preferAffine=preferAffine, reverse=reverse)
+    plotTransform(reg, x=x, y=y, z=z, sourceImage=sourceImage, preferAffine=preferAffine, reverse=reverse)
     
+    graphicName <- paste0(ensureFileSuffix(basename(Arguments[1]), NULL, strip=c("Rdata","xfmb")), "_", c("x","y","z")[!is.na(c(x,y,z))], na.omit(c(x,y,z)))
     if (ask("Copy figure to pdf file? [yn]", valid=c("y","n")) == "y")
-        dev.print(pdf, file=ensureFileSuffix(transformName,"pdf",strip="Rdata"))
+        dev.print(pdf, file=ensureFileSuffix(graphicName,"pdf"))
     
     invisible(NULL)
 }

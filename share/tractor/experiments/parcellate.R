@@ -29,8 +29,7 @@ runExperiment <- function ()
             report(OL$Info, "Reading Freesurfer reference image and registering to the session's T1w image")
             freesurferSpaceImage <- readImageFile(freesurferSpaceReference)
             t1Image <- session$getImageByType("refT1", "structural")
-            result <- registerImages(freesurferSpaceImage, t1Image, estimateOnly=TRUE)
-            freesurferTransform <- result$transform
+            freesurferTransform <- registerImages(freesurferSpaceImage, t1Image, estimateOnly=TRUE)
         }
         else
             freesurferTransform <- session$getTransformation("freesurfer", "structural")

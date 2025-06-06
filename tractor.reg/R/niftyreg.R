@@ -1,19 +1,16 @@
 .interpolationNameToCode <- function (interpolation)
 {
     if (is.character(interpolation))
-        code <- switch(interpolation, nearestneighbour=0, trilinear=1, sinc=2, spline=3, cubicspline=3, NULL)
+        code <- switch(interpolation, nearestneighbour=0L, trilinear=1L, sinc=2L, spline=3L, cubicspline=3L, NULL)
     else
         code <- interpolation
     
-    if (code == 2)
-        report(OL$Error, "NiftyReg does not support sinc interpolation")
-    else if (is.null(code))
-        report(OL$Error, "Interpolation type \"#{interpolation}\" is not valid")
-    
+    assert(!is.null(code), "Interpolation type \"#{interpolation}\" is not valid")
+    assert(code != 2, "NiftyReg does not support sinc interpolation")
     return (code)
 }
 
-registerImagesWithNiftyreg <- function (transform, sourceMask = NULL, targetMask = NULL, init = NULL, types = c("affine","nonlinear","reverse-nonlinear"), affineDof = 12, estimateOnly = FALSE, interpolation = 1, linearOptions = list(), nonlinearOptions = list())
+registerImagesWithNiftyreg <- function (registration, sourceMask = NULL, targetMask = NULL, init = NULL, types = TransformTypes, affineDof = 12, estimateOnly = FALSE, interpolation = 1, linearOptions = list(), nonlinearOptions = list())
 {
     types <- match.arg(types, several.ok=TRUE)
     interpolation <- .interpolationNameToCode(interpolation)
@@ -26,8 +23,8 @@ registerImagesWithNiftyreg <- function (transform, sourceMask = NULL, targetMask
         if (!any(affineDof == c(6,12)))
             report(OL$Error, "Only 6 and 12 degrees of freedom are supported by NiftyReg")
         
-        linearOptions$source <- transform$getSourceImage()
-        linearOptions$target <- transform$getTargetImage()
+        linearOptions$source <- registration$getSource()
+        linearOptions$target <- registration$getTarget()
         linearOptions$sourceMask <- sourceMask
         linearOptions$targetMask <- targetMask
         linearOptions$init <- init
@@ -42,10 +39,14 @@ registerImagesWithNiftyreg <- function (transform, sourceMask = NULL, targetMask
         endTime <- Sys.time()
         report(OL$Info, "Linear registration completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
         
-        transform$updateFromResult(linearResult)
+        xfms <- lapply(seq_along(linearResult$forwardTransforms), function(i) forward(linearResult,i))
+        registration$setTransforms(xfms, "affine")
+        
+        if (!estimateOnly)
+            registration$setTransformedImage(linearResult$image)
         
         # Update affine initialisation from the result
-        init <- forward(linearResult)
+        init <- xfms
     }
     
     # Run the nonlinear part of the registration, if required
@@ -54,8 +55,8 @@ registerImagesWithNiftyreg <- function (transform, sourceMask = NULL, targetMask
         if (is.null(init))
             flag(OL$Warning, "Running nonlinear registration without initialisation is not recommended")
         
-        nonlinearOptions$source <- transform$getSourceImage()
-        nonlinearOptions$target <- transform$getTargetImage()
+        nonlinearOptions$source <- registration$getSource()
+        nonlinearOptions$target <- registration$getTarget()
         nonlinearOptions$sourceMask <- sourceMask
         nonlinearOptions$targetMask <- targetMask
         nonlinearOptions$init <- init
@@ -70,19 +71,17 @@ registerImagesWithNiftyreg <- function (transform, sourceMask = NULL, targetMask
         endTime <- Sys.time()
         report(OL$Info, "Nonlinear registration completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
         
-        transform$updateFromResult(nonlinearResult)
+        xfms <- lapply(seq_along(nonlinearResult$forwardTransforms), function(i) forward(nonlinearResult,i))
+        registration$setTransforms(xfms, "nonlinear")
+        if (nonlinearOptions$symmetric)
+        {
+            xfms <- lapply(seq_along(nonlinearResult$reverseTransforms), function(i) reverse(nonlinearResult,i))
+            registration$setTransforms(xfms, "reverse-nonlinear")
+        }
+        
+        if (!estimateOnly)
+            registration$setTransformedImage(nonlinearResult$image)
     }
     
-    transformedImage <- reverseTransformedImage <- NULL
-    if (!estimateOnly)
-    {
-        if (!is.null(nonlinearResult$image))
-            transformedImage <- as(nonlinearResult$image, "MriImage")
-        else
-            transformedImage <- as(linearResult$image, "MriImage")
-        if (!is.null(nonlinearResult$reverseTransforms) && length(nonlinearResult$reverseTransforms) == 1)
-            reverseTransformedImage <- as(applyTransform(reverse(nonlinearResult), nonlinearResult$target, interpolation=interpolation), "MriImage")
-    }
-    
-    return (list(transform=transform, transformedImage=transformedImage, reverseTransformedImage=reverseTransformedImage))
+    invisible(registration)
 }

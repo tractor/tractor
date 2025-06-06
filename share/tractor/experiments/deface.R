@@ -17,8 +17,8 @@ runExperiment <- function ()
     space <- guessSpace(image, errorIfOutOfSession=FALSE)
     if (is.null(space))
     {
-        result <- registerImages(image, getStandardImage("brain",reorder=FALSE), types="affine", estimateOnly=TRUE, linearOptions=list(symmetric=TRUE))
-        transform <- result$transform$invert()
+        transform <- registerImages(image, getStandardImage("brain",reorder=FALSE), types="affine", estimateOnly=TRUE, linearOptions=list(symmetric=TRUE))
+        transform <- transform$reverse()
     }
     else
     {

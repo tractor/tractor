@@ -94,8 +94,8 @@ rotateGradientVectorsForSession <- function (session)
     if (!is(session, "MriSession"))
         report(OL$Error, "Specified session is not an MriSession object")
     
-    transform <- getVolumeTransformationForSession(session, "diffusion")
-    decompositions <- tractor.reg::decomposeTransformation(transform)
+    transformSets <- getVolumeTransformationForSession(session,"diffusion")$getTransformSets()
+    decompositions <- lapply(transformSets, function(set) RNiftyReg::decomposeAffine(set$getObject("affine")))
     
     unrotatedScheme <- session$getDiffusionScheme(unrotated=TRUE)
     directions <- unrotatedScheme$getGradientDirections()
