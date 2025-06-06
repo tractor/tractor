@@ -43,3 +43,6 @@
 [submodule "lib/littler"]
 	path = lib/littler
 	url = https://github.com/tractor/littler.git
+[submodule "lib/RcppArray"]
+	path = lib/RcppArray
+	url = https://github.com/jonclayden/RcppArray.git
