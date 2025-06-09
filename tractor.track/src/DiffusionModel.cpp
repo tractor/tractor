@@ -30,9 +30,12 @@ BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std:
     
     for (int i=0; i<nCompartments; i++)
     {
-        avf[i] = new Image<float,4>(RNifti::NiftiImage(avfFiles[i]).reorient("LAS"));
-        theta[i] = new Image<float,4>(RNifti::NiftiImage(thetaFiles[i]).reorient("LAS"));
-        phi[i] = new Image<float,4>(RNifti::NiftiImage(phiFiles[i]).reorient("LAS"));
+        RNifti::NiftiImage avfImage(avfFiles[i]);
+        avf[i] = new Image<float,4>(avfImage.reorient("LAS"));
+        RNifti::NiftiImage thetaImage(thetaFiles[i]);
+        theta[i] = new Image<float,4>(thetaImage.reorient("LAS"));
+        RNifti::NiftiImage phiImage(phiFiles[i]);
+        phi[i] = new Image<float,4>(phiImage.reorient("LAS"));
     }
     
     copyImageSpace(*avf[0]);
