@@ -10,18 +10,10 @@ runExperiment <- function ()
 {
     requireArguments("image file(s)")
     
-    exist <- imageFileExists(Arguments)
-    if (any(!exist))
-        report(OL$Warning, "Image(s) #{implode(Arguments[!exist],sep=', ',finalSep=' and ')} do not exist")
-    
-    images <- lapply(Arguments[exist], readImageFile)
-    dims <- sapply(images, dim, simplify="array")
-    if (any(diff(t(dims)) != 0))
-        report(OL$Error, "Images must have the same dimensions")
-    
     x <- getConfigVariable("X", NULL, "character")
     y <- getConfigVariable("Y", NULL, "character")
     z <- getConfigVariable("Z", NULL, "character")
+    volume <- getConfigVariable("Volume", NULL, "integer")
     clearance <- getConfigVariable("Clearance", NULL, "character")
     nColumns <- getConfigVariable("Columns", NULL, "integer")
     windowLimits <- getConfigVariable("WindowLimits", NULL, "character")
@@ -36,6 +28,15 @@ runExperiment <- function ()
     
     if (is.null(x) && is.null(y) && is.null(z))
         report(OL$Error, "At least one of X, Y and Z should be specified")
+    
+    exist <- imageFileExists(Arguments)
+    if (any(!exist))
+        report(OL$Warning, "Image(s) #{implode(Arguments[!exist],sep=', ',finalSep=' and ')} do not exist")
+    
+    images <- lapply(Arguments[exist], readImageFile, volumes=volume)
+    dims <- sapply(images, dim, simplify="array")
+    if (any(diff(t(dims)) != 0))
+        report(OL$Error, "Images must have the same dimensions")
     
     colourScales <- splitAndConvertString(colourScales, ",", fixed=TRUE)
     colourScales <- lapply(colourScales, function(scale) switch(scale, greyscale=1L, grayscale=1L, heat=2L, rainbow=3L, "blue-red"=4L, reds=5L, blues=6L, "yellow-red"=7L, viridis=8L, scale))
