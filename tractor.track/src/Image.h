@@ -108,29 +108,17 @@ public:
 class ImageSpaceEmbedded
 {
 protected:
-    ImageSpace *space = nullptr;
-    bool sharedSpace = false;
+    std::shared_ptr<ImageSpace> space;
     
 public:
-    virtual ~ImageSpaceEmbedded ()
-    {
-        if (!sharedSpace)
-            delete space;
-    }
+    // operator bool is defined for std::shared_ptr
+    bool hasImageSpace () const { return bool(space); }
+    std::shared_ptr<ImageSpace> & imageSpace () { return space; }
+    const std::shared_ptr<ImageSpace> & imageSpace () const { return space; }
     
-    bool hasImageSpace () const { return (space != nullptr); }
-    ImageSpace * imageSpace () const { return space; }
-    
-    void copyImageSpace (const ImageSpaceEmbedded &other)
+    void setImageSpace (const ImageSpace &source)
     {
-        this->space = new ImageSpace(*other.imageSpace());
-        sharedSpace = false;
-    }
-    
-    void setImageSpace (ImageSpace * const space, const bool shared = false)
-    {
-        this->space = space;
-        sharedSpace = shared;
+        space.reset(new ImageSpace(source));
     }
 };
 
@@ -296,7 +284,7 @@ public:
         if (source->data == nullptr)
             throw std::runtime_error("NiftiImage source contains no voxel data");
         
-        space = new ImageSpace(source);
+        space.reset(new ImageSpace(source));
         internal::importNifti(source, data_, raster);
     }
     
