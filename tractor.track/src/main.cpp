@@ -43,7 +43,7 @@ RcppExport SEXP createTracker (SEXP _model, SEXP _mask, SEXP _maxSteps, SEXP _st
 BEGIN_RCPP
     XPtr<DiffusionModel> modelPtr(_model);
     DiffusionModel *model = modelPtr;
-    ImageSpace *space = model->imageSpace();
+    auto space = model->imageSpace();
     
     Tracker *tracker = new Tracker(model);
     
@@ -69,7 +69,7 @@ RcppExport SEXP setTrackerTargets (SEXP _tracker, SEXP _targetInfo, SEXP _termin
 BEGIN_RCPP
     XPtr<Tracker> trackerPtr(_tracker);
     Tracker *tracker = trackerPtr;
-    ImageSpace *space = tracker->getModel()->imageSpace();
+    auto space = tracker->getModel()->imageSpace();
     
     List targetInfo(_targetInfo);
     if (Rf_isNull(targetInfo["image"]))

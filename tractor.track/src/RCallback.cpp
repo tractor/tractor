@@ -18,7 +18,7 @@ RListDataSource::RListDataSource (SEXP list)
     {
         Rcpp::Reference first = getElement(0);
         ImageSpace *space = new ImageSpace(as<ImageSpace::DimVector>(first.field("spaceDims")), as<ImageSpace::PixdimVector>(first.field("voxelDims")));
-        setImageSpace(space);
+        this->space.reset(space);
     }
 }
 
