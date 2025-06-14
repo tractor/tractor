@@ -112,6 +112,8 @@ void TrackvisSourceFileAdapter::read (Streamline &data)
         if (nProperties > 0)
             inputStream->seekg(4 * (nProperties-seedProperty-1), ios::cur);
         
+        if (space != nullptr)
+            data.setImageSpace(*space);
         data.setPoints(vector<ImageSpace::Point>(points.rend()-seed-1, points.rend()),
                        vector<ImageSpace::Point>(points.begin()+seed, points.end()),
                        PointType::Voxel,
