@@ -197,25 +197,24 @@ BEGIN_RCPP
     pipeline->setSubset(_selection);
     
     Tracker *tracker = nullptr;
-    ImageSpace *space = nullptr;
-    bool sharedSpace = true;
+    ImageSpace space;
     const std::string sourceType = pipeline->dataSource()->type();
     if (sourceType == "tracker")
     {
         tracker = static_cast<TractographyDataSource *>(pipeline->dataSource())->streamlineTracker();
         tracker->setDebugLevel(as<int>(_debugLevel));
-        space = tracker->getModel()->imageSpace();
+        space = *(tracker->getModel()->imageSpace());
     }
     else if (sourceType == "file")
-        space = static_cast<StreamlineFileSource *>(pipeline->dataSource())->imageSpace();
+        space = *(static_cast<StreamlineFileSource *>(pipeline->dataSource())->imageSpace());
     else if (sourceType == "list")
-        space = static_cast<RListDataSource *>(pipeline->dataSource())->imageSpace();
+        space = *(static_cast<RListDataSource *>(pipeline->dataSource())->imageSpace());
     
-    if (!Rf_isNull(_refImage) && space == nullptr)
+    // Assume the space was default-constructed if the first dimension is zero
+    if (!Rf_isNull(_refImage) && space.dim[0] == 0)
     {
         const RNifti::NiftiImage image(_refImage, false, true);
-        space = new ImageSpace(image);
-        sharedSpace = false;
+        space = ImageSpace(image);
     }
     
     const std::string path = as<std::string>(_path);
@@ -236,7 +235,7 @@ BEGIN_RCPP
     if (requirements["file"])
     {
         StreamlineFileSink *trkFile = new StreamlineFileSink(path);
-        trkFile->setImageSpace(space);
+        trkFile->setImageSpace(&space);
         if (tracker != nullptr)
             trkFile->labelDictionary() = tracker->labelDictionary();
         pipeline->addSink(trkFile);
@@ -249,21 +248,24 @@ BEGIN_RCPP
         pipeline->addSink(list);
     }
     
-    VisitationMapDataSink *visitationMap = nullptr;
+    VisitationMapDataSink *visitationMapSink = nullptr;
+    Image<double,3> *visitationMapImage = nullptr;
     if (requirements["map"])
     {
-        if (space == nullptr)
+        if (space.dim[0] == 0)
             throw Rcpp::exception("Visitation map cannot be created because the image space is unknown");
         
         const std::string scopeString = as<std::string>(_mapScope);
-        VisitationMapDataSink::MappingScope scope = VisitationMapDataSink::MappingScope::All;
+        auto scope = VisitationMapDataSink::MappingScope::All;
         if (scopeString == "seed")
             scope = VisitationMapDataSink::MappingScope::Seed;
         else if (scopeString == "ends")
             scope = VisitationMapDataSink::MappingScope::Ends;
         
-        visitationMap = new VisitationMapDataSink(space, scope, as<bool>(_normaliseMap));
-        pipeline->addSink(visitationMap);
+        visitationMapImage = new Image<double,3>(space.dim);
+        visitationMapImage->setImageSpace(space);
+        visitationMapSink = new VisitationMapDataSink(visitationMapImage, scope, as<bool>(_normaliseMap));
+        pipeline->addSink(visitationMapSink);
     }
     
     LabelProfileDataSink *profile = nullptr;
@@ -287,7 +289,7 @@ BEGIN_RCPP
     result["count"] = count;
     
     if (requirements["map"])
-        result["map"] = visitationMap->getImage().toNifti(DT_FLOAT64).toPointer("visitation map");
+        result["map"] = visitationMapImage->toNifti(DT_FLOAT64).toPointer("visitation map");
     if (requirements["list"])
         result["streamlines"] = list->getList();
     if (requirements["profile"])
@@ -298,8 +300,9 @@ BEGIN_RCPP
     // Reset the source and clear all sinks and manipulators
     pipeline->reset();
     
-    if (!sharedSpace)
-        delete space;
+    // Do this here to avoid leaving the sink with an invalid pointer
+    if (requirements["map"])
+        delete visitationMapImage;
     
     return result;
 END_RCPP

@@ -11,7 +11,7 @@ public:
     enum struct MappingScope { All, Seed, Ends };
     
 private:
-    Image<double,3> values;
+    Image<double,3> *values = nullptr;
     MappingScope scope;
     bool normalise;
     size_t totalStreamlines = 0;
@@ -20,11 +20,10 @@ public:
     // Delete the default constructor
     VisitationMapDataSink () = delete;
     
-    explicit VisitationMapDataSink (ImageSpace *space, const MappingScope scope = MappingScope::All, const bool normalise = false)
-        : scope(scope), normalise(normalise)
+    explicit VisitationMapDataSink (Image<double,3> * const values, const MappingScope scope = MappingScope::All, const bool normalise = false)
+        : values(values), scope(scope), normalise(normalise)
     {
-        this->values = Image<double,3>(space->dim, 0.0);
-        this->values.setImageSpace(space, true);
+        this->values->fill(0.0);
     }
     
     void setup (const size_t &count) override
@@ -34,8 +33,6 @@ public:
     
     void put (const Streamline &data) override;
     void done () override;
-    
-    const Image<double,3> & getImage () const { return values; }
 };
 
 #endif

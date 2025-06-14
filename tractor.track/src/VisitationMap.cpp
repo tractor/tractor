@@ -26,7 +26,7 @@ inline void checkAndSetPoint (Image<bool,3> &visited, Image<double,3> &values, c
 
 void VisitationMapDataSink::put (const Streamline &data)
 {
-    Image<bool,3> visited(values.dim(), false);
+    Image<bool,3> visited(values->dim(), false);
     
     const std::vector<ImageSpace::Point> &leftPoints = data.getLeftPoints();
     const std::vector<ImageSpace::Point> &rightPoints = data.getRightPoints();
@@ -35,23 +35,23 @@ void VisitationMapDataSink::put (const Streamline &data)
     {
         case MappingScope::All:
         for (size_t i=0; i<leftPoints.size(); i++)
-            checkAndSetPoint(visited, values, leftPoints[i]);
+            checkAndSetPoint(visited, *values, leftPoints[i]);
         for (size_t i=0; i<rightPoints.size(); i++)
-            checkAndSetPoint(visited, values, rightPoints[i]);
+            checkAndSetPoint(visited, *values, rightPoints[i]);
         break;
         
         case MappingScope::Seed:
         if (!leftPoints.empty())
-            checkAndSetPoint(visited, values, leftPoints.front());
+            checkAndSetPoint(visited, *values, leftPoints.front());
         else if (!rightPoints.empty())
-            checkAndSetPoint(visited, values, rightPoints.front());
+            checkAndSetPoint(visited, *values, rightPoints.front());
         break;
         
         case MappingScope::Ends:
         if (!leftPoints.empty())
-            checkAndSetPoint(visited, values, leftPoints.back());
+            checkAndSetPoint(visited, *values, leftPoints.back());
         if (!rightPoints.empty())
-            checkAndSetPoint(visited, values, rightPoints.back());
+            checkAndSetPoint(visited, *values, rightPoints.back());
         break;
     }
 }
@@ -60,7 +60,7 @@ void VisitationMapDataSink::done ()
 {
     if (normalise)
     {
-        std::transform(values.begin(), values.end(), values.begin(), [this](const double &x) {
+        std::transform(values->begin(), values->end(), values->begin(), [this](const double &x) {
             return x / static_cast<double>(totalStreamlines);
         });
     }
