@@ -47,7 +47,8 @@ void RListDataSource::get (Streamline &data)
         rightPoints.push_back(point);
     }
     
-    data = Streamline(leftPoints, rightPoints, pointType, space, false);
+    data.setPoints(leftPoints, rightPoints, pointType, false);
+    data.imageSpace() = space;
     currentStreamline++;
 }
 

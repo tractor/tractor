@@ -215,7 +215,8 @@ Streamline Tracker::run ()
     
     logger.debug1.indent() << "Tracking finished" << endl;
     
-    Streamline streamline(leftPoints, rightPoints, PointType::Voxel, model->imageSpace(), true);
+    Streamline streamline(leftPoints, rightPoints, PointType::Voxel, true);
+    streamline.imageSpace() = model->imageSpace();
     streamline.setTerminationReasons(terminationReasons[0], terminationReasons[1]);
     streamline.setLabels(labels);
     return streamline;

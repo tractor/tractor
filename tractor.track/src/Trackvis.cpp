@@ -112,11 +112,10 @@ void TrackvisSourceFileAdapter::read (Streamline &data)
         if (nProperties > 0)
             inputStream->seekg(4 * (nProperties-seedProperty-1), ios::cur);
         
-        data = Streamline(vector<ImageSpace::Point>(points.rend()-seed-1, points.rend()),
-                          vector<ImageSpace::Point>(points.begin()+seed, points.end()),
-                          PointType::Voxel,
-                          space,
-                          false);
+        data.setPoints(vector<ImageSpace::Point>(points.rend()-seed-1, points.rend()),
+                       vector<ImageSpace::Point>(points.begin()+seed, points.end()),
+                       PointType::Voxel,
+                       false);
     }
     else
     {
@@ -168,9 +167,9 @@ size_t TrackvisSinkFileAdapter::write (const Streamline &data, const ImageSpace 
     const size_t nPoints = data.nPoints();
     std::vector<ImageSpace::Point> points = data.getPoints();
     
-    if (data.imageSpace() == nullptr && space == nullptr)
+    if (!data.hasImageSpace() && space == nullptr)
         throw std::runtime_error("Writing a streamline to TrackVis format requires space information");
-    const ImageSpace::PixdimVector &pixdim = (data.imageSpace() == nullptr ? space : data.imageSpace())->pixdim;
+    const ImageSpace::PixdimVector &pixdim = (data.hasImageSpace() ? data.imageSpace().get() : space)->pixdim;
     
     outputStream.writeValue<int32_t>(nPoints);
     for (size_t i=0; i<nPoints; i++)

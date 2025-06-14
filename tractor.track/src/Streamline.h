@@ -39,10 +39,24 @@ protected:
     
 public:
     Streamline () {}
-    Streamline (const std::vector<ImageSpace::Point> &leftPoints, const std::vector<ImageSpace::Point> &rightPoints, const PointType pointType, ImageSpace *space, const bool fixedSpacing)
-        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), fixedSpacing(fixedSpacing)
+    
+    Streamline (const ImageSpaceEmbedded &object) { space = object.imageSpace(); }
+    
+    Streamline (const std::vector<ImageSpace::Point> &leftPoints, const std::vector<ImageSpace::Point> &rightPoints, const PointType pointType, const bool fixedSpacing)
+        : leftPoints(leftPoints), rightPoints(rightPoints), pointType(pointType), fixedSpacing(fixedSpacing) {}
+    
+    // Update points without affecting the space
+    void setPoints (const std::vector<ImageSpace::Point> &leftPoints, const std::vector<ImageSpace::Point> &rightPoints, const PointType pointType, const bool fixedSpacing)
     {
-        setImageSpace(space, true);
+        this->leftPoints = leftPoints;
+        this->rightPoints = rightPoints;
+        this->pointType = pointType;
+        this->fixedSpacing = fixedSpacing;
+        
+        // Invalidate any existing labels and termination reasons
+        labels.clear();
+        leftTerminationReason = TerminationReason::Unknown;
+        rightTerminationReason = TerminationReason::Unknown;
     }
     
     size_t nPoints () const { return std::max(static_cast<size_t>(leftPoints.size()+rightPoints.size())-1, size_t(0)); }
