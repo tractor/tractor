@@ -1,4 +1,3 @@
-#include <RcppArray.h>
 #include "RCallback.h"
 
 using namespace Rcpp;

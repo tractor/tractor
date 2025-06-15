@@ -1,7 +1,7 @@
 #ifndef _IMAGE_H_
 #define _IMAGE_H_
 
-#include <Rcpp.h>
+#include "RcppArray.h"
 #include "RNifti.h"
 
 // Location conventions: voxel-indexed, scaled for voxel dimensions only (as
