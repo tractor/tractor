@@ -4,6 +4,8 @@
 #include "RcppArray.h"
 #include "RNifti.h"
 
+#include <memory>
+
 // Location conventions: voxel-indexed, scaled for voxel dimensions only (as
 // with a diagonal xform), or world coordinates fully respecting the xform
 enum struct PointType { Voxel, Scaled, World };
