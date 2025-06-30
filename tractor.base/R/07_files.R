@@ -1,4 +1,4 @@
-processFiles <- function (fileSet, stems, target, action = c("copy","move","symlink"), relative = TRUE)
+processFiles <- function (fileSet, stems, target, action = c("copy","move","symlink"), overwrite = TRUE, relative = TRUE)
 {
     action <- match.arg(action)
     results <- list()
@@ -11,7 +11,7 @@ processFiles <- function (fileSet, stems, target, action = c("copy","move","syml
         info <- fileSet$findFormat(stems[i])
         if (is.null(info))
         {
-            report(OL$Warning, "No valid format found for file stem #{stem}")
+            report(OL$Warning, "No valid format found for file stem #{stems[i]}")
             next
         }
         
@@ -31,18 +31,28 @@ processFiles <- function (fileSet, stems, target, action = c("copy","move","syml
         targetFiles <- targetFiles[!noop]
         
         if (action == "copy")
-            success <- file.copy(sourceFiles, targetFiles, overwrite=TRUE)
+        {
+            report(OL$Verbose, "Copying #{embrace(sourceFiles)} => #{embrace(targetFiles)}")
+            success <- file.copy(sourceFiles, targetFiles, overwrite=overwrite)
+        }
         else if (action == "move")
         {
-            success <- file.copy(sourceFiles, targetFiles, overwrite=TRUE)
+            report(OL$Verbose, "Moving #{embrace(sourceFiles)} => #{embrace(targetFiles)}")
+            success <- file.copy(sourceFiles, targetFiles, overwrite=overwrite)
             if (all(success))
                 unlink(sourceFiles)
         }
         else if (action == "symlink")
         {
             existingTargets <- !is.na(Sys.readlink(targetFiles))
-            if (any(existingTargets))
+            if (overwrite && any(existingTargets))
                 unlink(targetFiles[existingTargets])
+            else if (!overwrite && any(existingTargets))
+            {
+                report(OL$Verbose, "Existing targets #{embrace(targetFiles[existingTargets])} will not be overwritten")
+                sourceFiles <- sourceFiles[!existingTargets]
+                targetFiles <- targetFiles[!existingTargets]
+            }
             if (relative)
             {
                 for (j in seq_along(sourceFiles))
@@ -77,7 +87,7 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
     {
         stem <- ensureFileSuffix(expandFileName(path), NULL, strip=unlist(formats))
         if (length(stem) > 1L)
-            return (setNames(lapply(stem, .self$findFormat), stem))
+            return (setNames(lapply(stem, .self$findFormat), path))
         
         for (formatName in names(formats))
         {
@@ -106,11 +116,15 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
             return (!sapply(findFormat(path), is.null))
     },
 
-    copy = function (stem, target) { processFiles(.self, stem, target, action="copy") },
+    copyTo = function (stem, target, overwrite = TRUE) { processFiles(.self, stem, target, action="copy") },
 
-    move = function (stem, target) { processFiles(.self, stem, target, action="move") },
+    moveTo = function (stem, target, overwrite = TRUE) { processFiles(.self, stem, target, action="move") },
 
-    symlink = function (stem, target, relative = TRUE) { processFiles(.self, stem, target, action="symlink", relative=relative) },
+    symlinkTo = function (stem, target, overwrite = FALSE, relative = TRUE)
+    {
+        action <- ifelse(isTRUE(getOption("tractorNoSymlinks")), "copy", "symlink")
+        processFiles(.self, stem, target, action=action, relative=relative)
+    },
 
     delete = function (stem)
     {
@@ -130,10 +144,10 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
 
 niftiVersionCheck <- function (versions)
 {
-    return (function(x) niftiVersion(x) %in% versions)
+    return (function(x) all(RNifti::niftiVersion(x) %in% versions))
 }
 
-#' @rdName FileSet-class
+#' @rdname FileSet-class
 #' @export
 ImageFiles <- FileSet$new(formats=list(
     nifti="nii",
