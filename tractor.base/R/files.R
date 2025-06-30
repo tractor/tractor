@@ -27,14 +27,11 @@ getParametersForFileType <- function (fileType = NA, format = NA, singleFile = N
 #' @export
 identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
 {
-    suffixes <- unique(c(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes, auxiliaries))
-    files <- ensureFileSuffix(fileName, suffixes)
-    exist <- file.exists(files)
-    headersExist <- intersect(unique(.FileTypes$headerSuffixes), suffixes[exist])
-    imagesExist <- intersect(unique(.FileTypes$imageSuffixes), suffixes[exist])
-    auxiliariesExist <- intersect(unique(auxiliaries), suffixes[exist])
+    fileSet <- ImageFiles$copy()
+    fileSet$auxiliaries <- auxiliaries
+    format <- fileSet$findFormat(fileName)
     
-    if (length(headersExist) < 1 || length(imagesExist) < 1)
+    if (is.null(format))
     {
         originalFileName <- fileName
         fileName <- resolvePath(originalFileName, ...)
@@ -50,34 +47,27 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
         else
             return (identifyImageFileNames(fileName, fileType=fileType, errorIfMissing=errorIfMissing, auxiliaries=auxiliaries))
     }
-    else if (length(headersExist) > 1 || length(imagesExist) > 1)
+    # FIXME: Can't check this at the moment
+    # else if (length(headersExist) > 1 || length(imagesExist) > 1)
+    # {
+    #     if (errorIfMissing)
+    #         report(OL$Error, "Multiple compatible image files exist: #{fileName}")
+    #     else
+    #         return (NULL)
+    # }
+    # return (list(format=formatName, stem=stem, requiredFiles=setNames(paths,suffixes), auxiliaryFiles=auxPaths))
+    
+    if (length(format$requiredFiles) == 1L)
+        headerFile <- imageFile <- format$requiredFiles
+    else
     {
-        if (errorIfMissing)
-            report(OL$Error, "Multiple compatible image files exist: #{fileName}")
-        else
-            return (NULL)
+        headerFile <- format$requiredFiles[names(format$requiredFiles) %~|% "^hdr"]
+        imageFile <- format$requiredFiles[names(format$requiredFiles) %~|% "^img"]
     }
     
-    typeIndices <- which(.FileTypes$headerSuffixes == headersExist &
-                         .FileTypes$imageSuffixes == imagesExist)
+    oldFormatName <- ore_subst("^[a-z]", toupper, ore_subst("_.+$","",format$format))
     
-    fileStem <- expandFileName(ensureFileSuffix(fileName, NULL, strip=suffixes))
-    headerFile <- ensureFileSuffix(fileStem, headersExist)
-    imageFile <- ensureFileSuffix(fileStem, imagesExist)
-    if (is.null(auxiliaries))
-        auxiliaryFiles <- NULL
-    else
-        auxiliaryFiles <- ensureFileSuffix(fileStem, auxiliariesExist)
-    
-    # ANALYZE and NIFTI_PAIR file types use the same filename suffixes
-    if (length(typeIndices) == 1)
-        format <- .FileTypes$format[typeIndices]
-    else if (!is.null(fileType))
-        format <- (getParametersForFileType(fileType, errorIfInvalid=TRUE))$format
-    else
-        format <- ifelse(niftiVersion(headerFile) == 0, "Analyze", "Nifti")
-    
-    fileNames <- list(fileStem=fileStem, headerFile=headerFile, imageFile=imageFile, auxiliaryFiles=auxiliaryFiles, format=format, headerSuffix=headersExist, imageSuffix=imagesExist, auxiliarySuffixes=auxiliariesExist)
+    fileNames <- list(fileStem=format$stem, headerFile=headerFile, imageFile=imageFile, auxiliaryFiles=format$auxiliaryFiles, format=oldFormatName, headerSuffix=names(headerFile), imageSuffix=names(imageFile), auxiliarySuffixes=names(format$auxiliaryFiles))
     return (fileNames)
 }
 
@@ -85,81 +75,31 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
 #' @export
 imageFileExists <- function (fileName, fileType = NULL)
 {
-    return (sapply(fileName, function (file) {
-        !is.null(identifyImageFileNames(file, fileType, errorIfMissing=FALSE))
-    }))
+    return (ImageFiles$arePresent(fileName))
 }
 
 #' @rdname files
 #' @export
 removeImageFiles <- function (fileName, ...)
 {
-    info <- identifyImageFileNames(fileName, ...)
-    if (!is.null(info))
-    {
-        files <- unique(c(info$headerFile, info$imageFile, info$auxiliaryFiles))
-        report(OL$Debug, "Unlinking files #{embrace(files)}")
-        unlink(files)
-    }
+    ImageFiles$delete(fileName)
 }
 
 #' @rdname files
 #' @export
 symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...)
 {
-    if (isTRUE(getOption("tractorNoSymlinks")))
-        return (copyImageFiles(from, to, overwrite, ...))
-    
-    if (length(from) != length(to))
-        report(OL$Error, "The number of source and target file names must match")
-    
-    suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)
-    
-    for (i in seq_along(from))
-    {
-        info <- identifyImageFileNames(from[i], ...)
-        currentSource <- unique(c(info$headerFile, info$imageFile, info$auxiliaryFiles))
-        currentTarget <- unique(ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix,info$auxiliarySuffixes), strip=suffixes))
-        
-        # NB: file.exists() requires the target of an existing link to exist, but we want to know whether the link itself exists
-        if (overwrite && any(!is.na(Sys.readlink(currentTarget))))
-            unlink(currentTarget)
-        if (relative)
-        {
-            for (j in seq_along(currentSource))
-                currentSource[j] <- relativePath(currentSource[j], currentTarget[j])
-        }
-        
-        report(OL$Verbose, "Linking #{embrace(currentSource)} => #{embrace(currentTarget)}")
-        file.symlink(currentSource, currentTarget)
-    }
+    ImageFiles$symlinkTo(from, to, overwrite=overwrite, relative=relative)
 }
 
 #' @rdname files
 #' @export
 copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE, ...)
 {
-    if (length(from) != length(to))
-        report(OL$Error, "The number of source and target file names must match")
-    
-    suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)
-    
-    for (i in seq_along(from))
-    {
-        info <- identifyImageFileNames(from[i], ...)
-        currentSource <- c(info$headerFile, info$imageFile, info$auxiliaryFiles)
-        currentTarget <- ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix,info$auxiliarySuffixes), strip=suffixes)
-        
-        # Don't try to copy an image onto itself
-        if (all(currentSource == currentTarget))
-            next
-        
-        report(OL$Verbose, "#{ifelse(deleteOriginals,'Moving','Copying')} #{embrace(unique(currentSource))} => #{embrace(unique(currentTarget))}")
-        success <- file.copy(unique(currentSource), unique(currentTarget), overwrite=overwrite)
-        
-        if (all(success) && deleteOriginals)
-            removeImageFiles(from[i], ...)
-    }
+    if (deleteOriginals)
+        ImageFiles$moveTo(from, to, overwrite=overwrite)
+    else
+        ImageFiles$copyTo(from, to, overwrite=overwrite)
 }
 
 chooseDataTypeForImage <- function (image, format, maxSize = NULL)
