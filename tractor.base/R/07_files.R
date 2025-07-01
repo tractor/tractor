@@ -137,7 +137,12 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
                 next
             }
             filesToDelete <- c(info$requiredFiles, info$auxiliaryFiles)
-            unlink(filesToDelete[file.exists(filesToDelete)], recursive=TRUE, expand=FALSE)
+            
+            # The expand argument was added in R 4.0.0
+            if (getRversion() >= "4.0")
+                unlink(filesToDelete[file.exists(filesToDelete)], recursive=TRUE, expand=FALSE)
+            else
+                unlink(filesToDelete[file.exists(filesToDelete)], recursive=TRUE)
         }
     }
 ))
