@@ -29,7 +29,7 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
 {
     fileSet <- ImageFiles$copy()
     fileSet$auxiliaries <- auxiliaries
-    format <- fileSet$findFormat(fileName)
+    format <- fileSet$findFormat(fileName, all=TRUE)
     
     if (is.null(format))
     {
@@ -47,15 +47,11 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
         else
             return (identifyImageFileNames(fileName, fileType=fileType, errorIfMissing=errorIfMissing, auxiliaries=auxiliaries))
     }
-    # FIXME: Can't check this at the moment
-    # else if (length(headersExist) > 1 || length(imagesExist) > 1)
-    # {
-    #     if (errorIfMissing)
-    #         report(OL$Error, "Multiple compatible image files exist: #{fileName}")
-    #     else
-    #         return (NULL)
-    # }
-    # return (list(format=formatName, stem=stem, requiredFiles=setNames(paths,suffixes), auxiliaryFiles=auxPaths))
+    else if (length(format$otherFiles) > 0L)
+    {
+        assert(!errorIfMissing, "Multiple compatible image files exist: #{fileName}")
+        return (NULL)
+    }
     
     if (length(format$requiredFiles) == 1L)
         headerFile <- imageFile <- format$requiredFiles

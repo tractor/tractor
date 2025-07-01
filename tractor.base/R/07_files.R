@@ -83,12 +83,16 @@ processFiles <- function (fileSet, stems, target, action = c("copy","move","syml
 #' 
 #' @export
 FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats="list", validators="list", auxiliaries="character"), methods=list(
-    findFormat = function (path)
+    findFormat = function (path, all = FALSE)
     {
         stem <- ensureFileSuffix(expandFileName(path), NULL, strip=unlist(formats))
         if (length(stem) > 1L)
             return (setNames(lapply(stem, .self$findFormat), path))
         
+        auxPaths <- setNames(ensureFileSuffix(stem, auxiliaries), auxiliaries)
+        auxPaths <- auxPaths[file.exists(auxPaths)]
+        
+        result <- NULL
         for (formatName in names(formats))
         {
             suffixes <- formats[[formatName]]
@@ -99,13 +103,19 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
                 if (!is.null(validator) && !isTRUE(try(validator(setNames(paths, suffixes)), silent=TRUE)))
                     next
                 
-                auxPaths <- setNames(ensureFileSuffix(stem, auxiliaries), auxiliaries)
-                auxPaths <- auxPaths[file.exists(auxPaths)]
-                
-                return (list(format=formatName, stem=stem, requiredFiles=setNames(paths,suffixes), auxiliaryFiles=auxPaths))
+                if (is.null(result))
+                {
+                    result <- list(format=formatName, stem=stem, requiredFiles=setNames(paths,suffixes), auxiliaryFiles=auxPaths)
+                    if (!all) break
+                }
+                else
+                {
+                    result$otherFormats <- c(result$otherFormats, formatName)
+                    result$otherFiles <- c(result$otherFiles, paths)
+                }
             }
         }
-        return (NULL)
+        return (result)
     },
     
     arePresent = function (path)
