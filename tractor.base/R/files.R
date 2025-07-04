@@ -27,8 +27,7 @@ getParametersForFileType <- function (fileType = NA, format = NA, singleFile = N
 #' @export
 identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
 {
-    fileSet <- ImageFiles$copy()
-    fileSet$auxiliaries <- auxiliaries
+    fileSet <- ImageFileSet$new(auxiliaries)
     format <- fileSet$findFormat(fileName, all=TRUE)
     
     if (is.null(format))
@@ -71,21 +70,21 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
 #' @export
 imageFileExists <- function (fileName, fileType = NULL)
 {
-    return (ImageFiles$arePresent(fileName))
+    return (ImageFileSet$new()$arePresent(fileName))
 }
 
 #' @rdname files
 #' @export
 removeImageFiles <- function (fileName, ...)
 {
-    ImageFiles$delete(fileName)
+    ImageFileSet$new()$delete(fileName)
 }
 
 #' @rdname files
 #' @export
 symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...)
 {
-    ImageFiles$symlinkTo(from, to, overwrite=overwrite, relative=relative)
+    ImageFileSet$new()$symlinkTo(from, to, overwrite=overwrite, relative=relative)
 }
 
 #' @rdname files
@@ -93,9 +92,9 @@ symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...
 copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE, ...)
 {
     if (deleteOriginals)
-        ImageFiles$moveTo(from, to, overwrite=overwrite)
+        ImageFileSet$new()$moveTo(from, to, overwrite=overwrite)
     else
-        ImageFiles$copyTo(from, to, overwrite=overwrite)
+        ImageFileSet$new()$copyTo(from, to, overwrite=overwrite)
 }
 
 chooseDataTypeForImage <- function (image, format, maxSize = NULL)

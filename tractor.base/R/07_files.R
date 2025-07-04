@@ -168,9 +168,7 @@ niftiVersionCheck <- function (versions)
     return (function(x) all(RNifti::niftiVersion(x) %in% versions))
 }
 
-#' @rdname FileSet-class
-#' @export
-ImageFiles <- FileSet$new(formats=list(
+.imageFormats <- list(
     nifti="nii",
     nifti_gz="nii.gz",
     nifti_pair=c("hdr","img"),
@@ -180,12 +178,61 @@ ImageFiles <- FileSet$new(formats=list(
     mgh="mgh",
     mgh_gz="mgz",
     analyze=c("hdr","img"),
-    analyze_gz=c("hdr.gz","img.gz")
-), validators=list(
+    analyze_gz=c("hdr.gz","img.gz"))
+
+.imageValidators <- list(
     nifti=niftiVersionCheck(1:2),
     nifti_gz=niftiVersionCheck(1:2),
     nifti_pair=niftiVersionCheck(1:2),
     nifti_pair_gz=niftiVersionCheck(1:2),
     analyze=niftiVersionCheck(0),
-    analyze_gz=niftiVersionCheck(0)
-), auxiliaries=c("lut","dirs","tags","json"))
+    analyze_gz=niftiVersionCheck(0))
+
+#' @export
+ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defaultMap="list"), methods=list(
+    initialize = function (auxiliaries = c("dirs","lut","tags"), defaultMap = list(), ...)
+    {
+        object <- callSuper(formats=.imageFormats, validators=.imageValidators, auxiliaries=auxiliaries)
+        object$defaultMap <- defaultMap
+        return (object)
+    },
+    
+    findFormat = function (path, all = FALSE)
+    {
+        stem <- ensureFileSuffix(expandFileName(path), NULL, strip=unlist(formats))
+        if (length(stem) > 1L)
+            return (setNames(lapply(stem, .self$findFormat), path))
+        
+        result <- callSuper(stem, all=all)
+        if (!is.null(result))
+            return (result)
+        
+        mapFile <- file.path(dirname(stem), "map.yaml")
+        if (file.exists(mapFile))
+        {
+            map <- yaml::read_yaml(mapFile)
+            value <- map[[basename(stem)]]
+            return (where(!is.null(value), findFormat(file.path(dirname(stem), value))))
+        }
+        else
+        {
+            value <- defaultMap[[basename(stem)]]
+            return (where(!is.null(value), findFormat(file.path(dirname(stem), value))))
+        }
+    },
+    
+    mapTo = function (stem, target, overwrite = TRUE, relative = TRUE)
+    {
+        if (!arePresent(target))
+            moveTo(stem, target, overwrite=overwrite)
+        
+        stem <- ensureFileSuffix(expandFileName(stem), NULL, strip=unlist(formats))
+        for (s in stem)
+        {
+            mapFile <- file.path(dirname(s), "map.yaml")
+            map <- where(file.exists(mapFile), yaml::read_yaml(mapFile), list())
+            map[[basename(s)]] <- where(relative, relativePath(target,s), target)
+            yaml::write_yaml(map, mapFile)
+        }
+    }
+))

@@ -4,14 +4,7 @@
 \name{FileSet-class}
 \alias{FileSet-class}
 \alias{FileSet}
-\alias{ImageFiles}
 \title{The FileSet class}
-\format{
-An object of class \code{FileSet} of length 1.
-}
-\usage{
-ImageFiles
-}
 \description{
 This reference class manages a set of related files based on a common file
 stem and required or suffixes. It supports operations such as copying,
@@ -32,4 +25,3 @@ or all of the supported formats.}
 }}
 
 
-\keyword{datasets}
