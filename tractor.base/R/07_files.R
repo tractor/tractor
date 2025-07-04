@@ -37,10 +37,16 @@ processFiles <- function (fileSet, stems, target, action = c("copy","move","syml
         }
         else if (action == "move")
         {
+            # Try file.rename() first, as it doesn't involve copying the data (but usually can't cross file systems)
             report(OL$Verbose, "Moving #{embrace(sourceFiles)} => #{embrace(targetFiles)}")
-            success <- file.copy(sourceFiles, targetFiles, overwrite=overwrite)
-            if (all(success))
-                unlink(sourceFiles)
+            success <- file.rename(sourceFiles, targetFiles)
+            if (any(!success))
+            {
+                failed <- which(!success)
+                success[failed] <- file.copy(sourceFiles[failed], targetFiles[failed], overwrite=overwrite)
+                if (all(success))
+                    unlink(sourceFiles[failed])
+            }
         }
         else if (action == "symlink")
         {
@@ -140,13 +146,13 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
     {
         for (s in stem)
         {
-            info <- findFormat(s)
+            info <- findFormat(s, all=TRUE)
             if (is.null(info))
             {
                 report(OL$Warning, "No valid format found for file stem #{s}")
                 next
             }
-            filesToDelete <- c(info$requiredFiles, info$auxiliaryFiles)
+            filesToDelete <- c(info$requiredFiles, info$auxiliaryFiles, info$otherFiles)
             
             # The expand argument was added in R 4.0.0
             if (getRversion() >= "4.0")
