@@ -194,9 +194,9 @@ niftiVersionCheck <- function (versions)
 
 #' @export
 ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defaultMap="list"), methods=list(
-    initialize = function (auxiliaries = c("dirs","lut","tags"), defaultMap = list(), ...)
+    initialize = function (formats = .imageFormats, validators = .imageValidators, auxiliaries = c("dirs","lut","tags"), defaultMap = list(), ...)
     {
-        object <- callSuper(formats=.imageFormats, validators=.imageValidators, auxiliaries=auxiliaries)
+        object <- callSuper(formats=formats, validators=validators, auxiliaries=auxiliaries)
         object$defaultMap <- defaultMap
         return (object)
     },
