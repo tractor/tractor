@@ -203,9 +203,19 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
         if (length(stem) > 1L)
             return (setNames(lapply(stem, .self$findFormat), path))
         
+        # If the stem matches literally then set header and image fields and return
         result <- callSuper(stem, all=all)
         if (!is.null(result))
+        {
+            if (length(result$requiredFiles) == 1L)
+                result$headerFile <- result$imageFile <- result$requiredFiles
+            else
+            {
+                result$headerFile <- result$requiredFiles[names(result$requiredFiles) %~|% "^hdr"]
+                result$imageFile <- result$requiredFiles[names(result$requiredFiles) %~|% "^img"]
+            }
             return (result)
+        }
         
         mapFile <- file.path(dirname(stem), "map.yaml")
         if (file.exists(mapFile))
@@ -236,3 +246,8 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
         }
     }
 ))
+
+.ImageFiles <- ImageFileSet$new()
+
+#' @export
+imageFiles <- function () { return (.ImageFiles) }

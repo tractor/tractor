@@ -52,17 +52,9 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
         return (NULL)
     }
     
-    if (length(format$requiredFiles) == 1L)
-        headerFile <- imageFile <- format$requiredFiles
-    else
-    {
-        headerFile <- format$requiredFiles[names(format$requiredFiles) %~|% "^hdr"]
-        imageFile <- format$requiredFiles[names(format$requiredFiles) %~|% "^img"]
-    }
-    
     oldFormatName <- ore_subst("^[a-z]", toupper, ore_subst("_.+$","",format$format))
     
-    fileNames <- list(fileStem=format$stem, headerFile=headerFile, imageFile=imageFile, auxiliaryFiles=format$auxiliaryFiles, format=oldFormatName, headerSuffix=names(headerFile), imageSuffix=names(imageFile), auxiliarySuffixes=names(format$auxiliaryFiles))
+    fileNames <- list(fileStem=format$stem, headerFile=format$headerFile, imageFile=format$imageFile, auxiliaryFiles=format$auxiliaryFiles, format=oldFormatName, headerSuffix=names(format$headerFile), imageSuffix=names(imageFile), auxiliarySuffixes=names(format$auxiliaryFiles))
     return (fileNames)
 }
 
@@ -70,21 +62,21 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
 #' @export
 imageFileExists <- function (fileName, fileType = NULL)
 {
-    return (ImageFileSet$new()$arePresent(fileName))
+    return (imageFiles()$arePresent(fileName))
 }
 
 #' @rdname files
 #' @export
 removeImageFiles <- function (fileName, ...)
 {
-    ImageFileSet$new()$delete(fileName)
+    imageFiles()$delete(fileName)
 }
 
 #' @rdname files
 #' @export
 symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...)
 {
-    ImageFileSet$new()$symlinkTo(from, to, overwrite=overwrite, relative=relative)
+    imageFiles()$symlinkTo(from, to, overwrite=overwrite, relative=relative)
 }
 
 #' @rdname files
@@ -92,9 +84,9 @@ symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...
 copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE, ...)
 {
     if (deleteOriginals)
-        ImageFileSet$new()$moveTo(from, to, overwrite=overwrite)
+        imageFiles()$moveTo(from, to, overwrite=overwrite)
     else
-        ImageFileSet$new()$copyTo(from, to, overwrite=overwrite)
+        imageFiles()$copyTo(from, to, overwrite=overwrite)
 }
 
 chooseDataTypeForImage <- function (image, format, maxSize = NULL)
