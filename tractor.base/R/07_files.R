@@ -121,7 +121,7 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
                 }
             }
         }
-        return (result)
+        return (where(!is.null(result), structure(result, class="concreteFileSet")))
     },
     
     arePresent = function (path)
