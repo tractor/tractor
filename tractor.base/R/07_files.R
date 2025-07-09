@@ -1,21 +1,38 @@
-processFiles <- function (fileSet, stems, target, action = c("copy","move","symlink"), overwrite = TRUE, relative = TRUE)
+processFiles <- function (fileSet, stems, target = NULL, action = c("copy","move","symlink","delete"), overwrite = TRUE, relative = TRUE, all = FALSE)
 {
     action <- match.arg(action)
+    if (action == "symlink" && isTRUE(getOption("tractorNoSymlinks")))
+        action <- "copy"
     results <- list()
     
-    dirTarget <- length(target) == 1L && dir.exists(target)
-    assert(dirTarget || length(stems) == length(target), "If the target isn't an existing directory it should match the source in length")
+    if (action != "delete")
+    {
+        dirTarget <- length(target) == 1L && dir.exists(target)
+        assert(dirTarget || length(stems) == length(target), "If the target isn't an existing directory it should match the source in length")
+    }
     
     for (i in seq_along(stems))
     {
-        info <- fileSet$findFormat(stems[i])
+        info <- fileSet$findFormat(stems[i], all=all)
         if (is.null(info))
         {
             report(OL$Warning, "No valid format found for file stem #{stems[i]}")
             next
         }
         
-        sourceFiles <- c(info$requiredFiles, info$auxiliaryFiles)
+        sourceFiles <- c(info$requiredFiles, info$auxiliaryFiles, info$otherFiles)
+        
+        if (action == "delete")
+        {
+            # The expand argument was added in R 4.0.0
+            if (getRversion() >= "4.0")
+                success <- unlink(filesToDelete[file.exists(filesToDelete)], recursive=TRUE, expand=FALSE)
+            else
+                success <- unlink(filesToDelete[file.exists(filesToDelete)], recursive=TRUE)
+            results[[stems[i]]] <- (success == 0)
+            next
+        }
+        
         if (dirTarget)
             targetFiles <- file.path(target, basename(sourceFiles))
         else
@@ -79,8 +96,7 @@ processFiles <- function (fileSet, stems, target, action = c("copy","move","syml
 #' stem and required or suffixes. It supports operations such as copying,
 #' moving, symlinking, validating and deleting files, ensuring that all
 #' constituent files are handled consistently. It is designed for handling
-#' alternative file formats or composite file types. \code{ImageFiles} is a
-#' concrete instance of the class
+#' alternative file formats or composite file types.
 #'
 #' @field formats A named list mapping format names to required file suffixes.
 #' @field validators An optional named list of validation functions for some
@@ -89,24 +105,26 @@ processFiles <- function (fileSet, stems, target, action = c("copy","move","syml
 #' 
 #' @export
 FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats="list", validators="list", auxiliaries="character"), methods=list(
-    findFormat = function (path, all = FALSE)
+    findFormat = function (path, intent = c("read","write"), all = FALSE)
     {
         stem <- ensureFileSuffix(expandFileName(path), NULL, strip=unlist(formats))
         if (length(stem) > 1L)
             return (setNames(lapply(stem, .self$findFormat), path))
         
+        intent <- match.arg(intent)
         auxPaths <- setNames(ensureFileSuffix(stem, auxiliaries), auxiliaries)
-        auxPaths <- auxPaths[file.exists(auxPaths)]
+        if (intent == "read")
+            auxPaths <- auxPaths[file.exists(auxPaths)]
         
         result <- NULL
         for (formatName in names(formats))
         {
             suffixes <- formats[[formatName]]
             paths <- ensureFileSuffix(stem, suffixes)
-            if (all(file.exists(paths)))
+            if (intent == "write" || all(file.exists(paths)))
             {
                 validator <- validators[[formatName]]
-                if (!is.null(validator) && !isTRUE(try(validator(setNames(paths, suffixes)), silent=TRUE)))
+                if (intent == "read" && !is.null(validator) && !isTRUE(try(validator(setNames(paths, suffixes)), silent=TRUE)))
                     next
                 
                 if (is.null(result))
@@ -136,31 +154,9 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
 
     moveTo = function (stem, target, overwrite = TRUE) { processFiles(.self, stem, target, action="move") },
 
-    symlinkTo = function (stem, target, overwrite = FALSE, relative = TRUE)
-    {
-        action <- ifelse(isTRUE(getOption("tractorNoSymlinks")), "copy", "symlink")
-        processFiles(.self, stem, target, action=action, relative=relative)
-    },
+    symlinkTo = function (stem, target, overwrite = FALSE, relative = TRUE) { processFiles(.self, stem, target, action="symlink", relative=relative) },
 
-    delete = function (stem)
-    {
-        for (s in stem)
-        {
-            info <- findFormat(s, all=TRUE)
-            if (is.null(info))
-            {
-                report(OL$Warning, "No valid format found for file stem #{s}")
-                next
-            }
-            filesToDelete <- c(info$requiredFiles, info$auxiliaryFiles, info$otherFiles)
-            
-            # The expand argument was added in R 4.0.0
-            if (getRversion() >= "4.0")
-                unlink(filesToDelete[file.exists(filesToDelete)], recursive=TRUE, expand=FALSE)
-            else
-                unlink(filesToDelete[file.exists(filesToDelete)], recursive=TRUE)
-        }
-    },
+    delete = function (stem) { processFiles(.self, stem, action="delete", all=TRUE) },
     
     subset = function (match, ...)
     {
