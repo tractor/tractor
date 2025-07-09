@@ -27,7 +27,7 @@ getParametersForFileType <- function (fileType = NA, format = NA, singleFile = N
 #' @export
 identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
 {
-    fileSet <- ImageFileSet$new(auxiliaries)
+    fileSet <- ImageFileSet$new(auxiliaries=auxiliaries)
     format <- fileSet$findFormat(fileName, all=TRUE)
     
     if (is.null(format))
@@ -54,7 +54,7 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
     
     oldFormatName <- ore_subst("^[a-z]", toupper, ore_subst("_.+$","",format$format))
     
-    fileNames <- list(fileStem=format$stem, headerFile=format$headerFile, imageFile=format$imageFile, auxiliaryFiles=format$auxiliaryFiles, format=oldFormatName, headerSuffix=names(format$headerFile), imageSuffix=names(imageFile), auxiliarySuffixes=names(format$auxiliaryFiles))
+    fileNames <- list(fileStem=format$stem, headerFile=format$headerFile, imageFile=format$imageFile, auxiliaryFiles=format$auxiliaryFiles, format=oldFormatName, headerSuffix=names(format$headerFile), imageSuffix=names(format$imageFile), auxiliarySuffixes=names(format$auxiliaryFiles))
     return (fileNames)
 }
 

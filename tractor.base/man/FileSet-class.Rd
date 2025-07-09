@@ -10,8 +10,7 @@ This reference class manages a set of related files based on a common file
 stem and required or suffixes. It supports operations such as copying,
 moving, symlinking, validating and deleting files, ensuring that all
 constituent files are handled consistently. It is designed for handling
-alternative file formats or composite file types. \code{ImageFiles} is a
-concrete instance of the class
+alternative file formats or composite file types.
 }
 \section{Fields}{
 
