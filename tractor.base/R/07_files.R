@@ -160,6 +160,14 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
             else
                 unlink(filesToDelete[file.exists(filesToDelete)], recursive=TRUE)
         }
+    },
+    
+    subset = function (match, ...)
+    {
+        regex <- where(is_ore(match), match, ore(match, options="i", syntax="fixed"))
+        subformats <- formats[names(formats) %~% regex]
+        subvalidators <- validators[names(validators) %~% regex]
+        return (getRefClass(.self)$new(formats=subformats, validators=subvalidators), ...)
     }
 ))
 
