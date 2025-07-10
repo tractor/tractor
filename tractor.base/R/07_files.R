@@ -26,9 +26,9 @@ processFiles <- function (fileSet, stems, target = NULL, action = c("copy","move
         {
             # The expand argument was added in R 4.0.0
             if (getRversion() >= "4.0")
-                success <- unlink(filesToDelete[file.exists(filesToDelete)], recursive=TRUE, expand=FALSE)
+                success <- unlink(sourceFiles, recursive=TRUE, expand=FALSE)
             else
-                success <- unlink(filesToDelete[file.exists(filesToDelete)], recursive=TRUE)
+                success <- unlink(sourceFiles, recursive=TRUE)
             results[[stems[i]]] <- (success == 0)
             next
         }
