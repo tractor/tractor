@@ -62,21 +62,21 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
 #' @export
 imageFileExists <- function (fileName, fileType = NULL)
 {
-    return (imageFiles()$arePresent(fileName))
+    return (imageFiles(fileName)$present())
 }
 
 #' @rdname files
 #' @export
 removeImageFiles <- function (fileName, ...)
 {
-    imageFiles()$delete(fileName)
+    imageFiles(fileName)$delete()
 }
 
 #' @rdname files
 #' @export
 symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...)
 {
-    imageFiles()$symlinkTo(from, to, overwrite=overwrite, relative=relative)
+    imageFiles(from)$symlink(to, overwrite=overwrite, relative=relative)
 }
 
 #' @rdname files
@@ -84,9 +84,9 @@ symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...
 copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE, ...)
 {
     if (deleteOriginals)
-        imageFiles()$moveTo(from, to, overwrite=overwrite)
+        imageFiles(from)$move(to, overwrite=overwrite)
     else
-        imageFiles()$copyTo(from, to, overwrite=overwrite)
+        imageFiles(from)$copy(to, overwrite=overwrite)
 }
 
 chooseDataTypeForImage <- function (image, format, maxSize = NULL)

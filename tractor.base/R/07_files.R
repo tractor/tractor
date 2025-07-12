@@ -105,6 +105,27 @@ processFiles <- function (fileSet, stems, target = NULL, action = c("copy","move
 #' 
 #' @export
 FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats="list", validators="list", auxiliaries="character"), methods=list(
+    atPath = function (path)
+    {
+        return (structure(list(
+            copy = function (target, overwrite = TRUE) { processFiles(.self, path, target, action="copy") },
+            
+            delete = function () { processFiles(.self, path, action="delete", all=TRUE) },
+            
+            move = function (target, overwrite = TRUE) { processFiles(.self, path, target, action="move") },
+            
+            present = function ()
+            {
+                if (length(path) == 1L)
+                    return (!is.null(.self$findFormat(path)))
+                else
+                    return (!sapply(.self$findFormat(path), is.null))
+            },
+            
+            symlink = function (target, overwrite = FALSE, relative = TRUE) { processFiles(.self, path, target, action="symlink", overwrite=overwrite, relative=relative) }
+        ), fileSet=.self))
+    },
+    
     findFormat = function (path, intent = c("read","write"), all = FALSE)
     {
         stem <- ensureFileSuffix(expandFileName(path), NULL, strip=unlist(formats))
@@ -141,22 +162,6 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
         }
         return (where(!is.null(result), structure(result, class="concreteFileSet")))
     },
-    
-    arePresent = function (path)
-    {
-        if (length(path) == 1L)
-            return (!is.null(findFormat(path)))
-        else
-            return (!sapply(findFormat(path), is.null))
-    },
-
-    copyTo = function (stem, target, overwrite = TRUE) { processFiles(.self, stem, target, action="copy") },
-
-    moveTo = function (stem, target, overwrite = TRUE) { processFiles(.self, stem, target, action="move") },
-
-    symlinkTo = function (stem, target, overwrite = FALSE, relative = TRUE) { processFiles(.self, stem, target, action="symlink", relative=relative) },
-
-    delete = function (stem) { processFiles(.self, stem, action="delete", all=TRUE) },
     
     subset = function (match, ...)
     {
@@ -254,4 +259,10 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
 .ImageFiles <- ImageFileSet$new()
 
 #' @export
-imageFiles <- function () { return (.ImageFiles) }
+imageFiles <- function (path = NULL)
+{
+    if (is.null(path))
+        return (.ImageFiles)
+    else
+        return (.ImageFiles$atPath(path))
+}
