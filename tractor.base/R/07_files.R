@@ -111,6 +111,8 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
         format <- .self$findFormat(path)
         
         return (structure(list(
+            format = function () { return (format) },
+            
             copy = function (target, overwrite = TRUE) { processFiles(.self, path, target, action="copy", overwrite=overwrite) },
             
             delete = function () { processFiles(.self, path, action="delete", all=TRUE) },
@@ -123,12 +125,20 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
         ), fileSet=.self))
     },
     
-    findFormat = function (path, intent = c("read","write"), all = FALSE)
+    fileStem = function (path)
     {
         stem <- ensureFileSuffix(expandFileName(path), NULL, strip=unlist(formats))
-        if (length(stem) > 1L)
-            return (setNames(lapply(stem, .self$findFormat), path))
+        return (where(is.na(path), NA_character_, stem))
+    },
+    
+    findFormat = function (path, intent = c("read","write"), all = FALSE)
+    {
+        if (length(path) > 1L)
+            return (setNames(lapply(path, .self$findFormat), path))
+        if (is.na(path))
+            return (NULL)
         
+        stem <- .self$fileStem(path)
         intent <- match.arg(intent)
         auxPaths <- setNames(ensureFileSuffix(stem, auxiliaries), auxiliaries)
         if (intent == "read")
@@ -173,11 +183,7 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
 FileMap <- setRefClass("FileMap", contains="TractorObject", fields=list(directory="character", map="list"), methods=list(
     initialize = function (path = "", ...)
     {
-        dir <- expandFileName(path)
-        if (file.exists(dir) && !file.info(dir)$isdir)
-            dir <- dirname(path)
-        if (!dir.exists(dir))
-            dir.create(dir, recursive=TRUE)
+        dir <- expandFileName(ifelse(dir.exists(path), path, dirname(path)))
         object <- initFields(directory=dir, map=list())
         object$read()
         return (object)
@@ -202,15 +208,25 @@ FileMap <- setRefClass("FileMap", contains="TractorObject", fields=list(director
     read = function ()
     {
         file <- .self$getFile()
-        if (file.exists(file))
+        if (directory != "" && file.exists(file))
             .self$map <- yaml::read_yaml(mapFile)
         invisible (.self)
     },
     
     write = function ()
     {
-        if (length(map) > 0L)
-            yaml::write_yaml(map, .self$getFile())
+        file <- .self$getFile()
+        if (directory != "")
+        {
+            if (length(map) > 0L)
+            {
+                if (!dir.exists(directory))
+                    dir.create(directory, recursive=TRUE)
+                yaml::write_yaml(map, file)
+            }
+            else if (file.exists(file))
+                unlink(file)
+        }
         invisible (.self)
     },
     
@@ -283,11 +299,13 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
             if (.super$present())
                 .super$delete()
             else
-                map$dropElement(basename(format$stem))
+                map$dropElement(basename(.self$fileStem(path)))
         }
         result$map <- function (target, overwrite = TRUE, relative = TRUE)
         {
-            if (.super$present())
+            if (is.null(.self$findFormat(target)))
+                .super$move(target)
+            else if (!is.null(.self$findFormat(path)))
             {
                 if (overwrite)
                     .super$delete()
@@ -297,8 +315,9 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
                     return (FALSE)
                 }
             }
+            target <- .self$fileStem(target)
             value <- where(relative, relativePath(target,path), target)
-            map$setElement(basename(format$stem), value)
+            map$setElement(basename(.self$fileStem(path)), value)
             return (TRUE)
         }
         return (result)
@@ -306,9 +325,12 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
     
     findFormat = function (path, all = FALSE)
     {
-        stem <- ensureFileSuffix(expandFileName(path), NULL, strip=unlist(formats))
-        if (length(stem) > 1L)
-            return (setNames(lapply(stem, .self$findFormat), path))
+        if (length(path) > 1L)
+            return (setNames(lapply(path, .self$findFormat), path))
+        if (is.na(path))
+            return (NULL)
+        
+        stem <- .self$fileStem(path)
         
         # If the stem matches literally then set header and image fields and return
         result <- callSuper(stem, all=all)
