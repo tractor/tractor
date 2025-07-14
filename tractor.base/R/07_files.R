@@ -107,20 +107,17 @@ processFiles <- function (fileSet, stems, target = NULL, action = c("copy","move
 FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats="list", validators="list", auxiliaries="character"), methods=list(
     atPath = function (path)
     {
+        assert(length(path) == 1L, "Path should be a single string")
+        format <- .self$findFormat(path)
+        
         return (structure(list(
-            copy = function (target, overwrite = TRUE) { processFiles(.self, path, target, action="copy") },
+            copy = function (target, overwrite = TRUE) { processFiles(.self, path, target, action="copy", overwrite=overwrite) },
             
             delete = function () { processFiles(.self, path, action="delete", all=TRUE) },
             
-            move = function (target, overwrite = TRUE) { processFiles(.self, path, target, action="move") },
+            move = function (target, overwrite = TRUE) { processFiles(.self, path, target, action="move", overwrite=overwrite) },
             
-            present = function ()
-            {
-                if (length(path) == 1L)
-                    return (!is.null(.self$findFormat(path)))
-                else
-                    return (!sapply(.self$findFormat(path), is.null))
-            },
+            present = function () { return (!is.null(format)) },
             
             symlink = function (target, overwrite = FALSE, relative = TRUE) { processFiles(.self, path, target, action="symlink", overwrite=overwrite, relative=relative) }
         ), fileSet=.self))
@@ -172,6 +169,74 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
     }
 ))
 
+#' @export
+FileMap <- setRefClass("FileMap", contains="TractorObject", fields=list(directory="character", map="list"), methods=list(
+    initialize = function (path = "", ...)
+    {
+        dir <- expandFileName(path)
+        if (file.exists(dir) && !file.info(dir)$isdir)
+            dir <- dirname(path)
+        if (!dir.exists(dir))
+            dir.create(dir, recursive=TRUE)
+        object <- initFields(directory=dir, map=list())
+        object$read()
+        return (object)
+    },
+    
+    dropElement = function (key) { .self$setElement(key, NULL) },
+    
+    getDirectory = function () { return (directory) },
+    
+    getElement = function (key) { return (map[[key]]) },
+    
+    getFile = function () { return (file.path(directory, "map.yaml")) },
+    
+    getMap = function (sorted = FALSE) { where(sorted, map[sort(names(map))], map) },
+    
+    setElement = function (key, value)
+    {
+        .self$map[[key]] <- value
+        invisible (.self)
+    },
+    
+    read = function ()
+    {
+        file <- .self$getFile()
+        if (file.exists(file))
+            .self$map <- yaml::read_yaml(mapFile)
+        invisible (.self)
+    },
+    
+    write = function ()
+    {
+        if (length(map) > 0L)
+            yaml::write_yaml(map, .self$getFile())
+        invisible (.self)
+    },
+    
+    finalize = function () { .self$write() }
+))
+
+#' @export
+setMethod("[", signature(x="FileMap",i="character",j="missing"), function (x, i, j, ..., drop = TRUE) {
+    x$getElement(i)
+})
+
+#' @export
+setReplaceMethod("[", signature(x="FileMap",i="character",j="missing"), function (x, i, j, ..., value) {
+    x$setElement(i, value)
+})
+
+#' @export
+setMethod("==", signature(e1="FileMap",e2="FileMap"), function (e1, e2) {
+    isTRUE(all.equal(e1$getMap(TRUE), e2$getMap(TRUE)))
+})
+
+#' @export
+setMethod("!=", signature(e1="FileMap",e2="FileMap"), function (e1, e2) {
+    !isTRUE(all.equal(e1$getMap(TRUE), e2$getMap(TRUE)))
+})
+
 niftiVersionCheck <- function (versions)
 {
     return (function(x) all(RNifti::niftiVersion(x) %in% versions))
@@ -206,6 +271,39 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
         return (object)
     },
     
+    atPath = function (path)
+    {
+        .super <- callSuper(path)
+        map <- FileMap$new(path)
+        
+        result <- .super
+        result$delete <- function ()
+        {
+            # Deleting a mapped image just unmaps it
+            if (.super$present())
+                .super$delete()
+            else
+                map$dropElement(basename(format$stem))
+        }
+        result$map <- function (target, overwrite = TRUE, relative = TRUE)
+        {
+            if (.super$present())
+            {
+                if (overwrite)
+                    .super$delete()
+                else
+                {
+                    report(OL$Verbose, "Existing image path #{path} will not be replaced by a mapping")
+                    return (FALSE)
+                }
+            }
+            value <- where(relative, relativePath(target,path), target)
+            map$setElement(basename(format$stem), value)
+            return (TRUE)
+        }
+        return (result)
+    },
+    
     findFormat = function (path, all = FALSE)
     {
         stem <- ensureFileSuffix(expandFileName(path), NULL, strip=unlist(formats))
@@ -226,32 +324,13 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
             return (result)
         }
         
-        mapFile <- file.path(dirname(stem), "map.yaml")
-        if (file.exists(mapFile))
-        {
-            map <- yaml::read_yaml(mapFile)
-            value <- map[[basename(stem)]]
-            return (where(!is.null(value), findFormat(file.path(dirname(stem), value))))
-        }
+        mapValue <- FileMap$new(stem)$getElement(basename(stem))
+        if (!is.null(mapValue))
+            return (findFormat(file.path(dirname(stem), mapValue)))
         else
         {
             value <- defaultMap[[basename(stem)]]
             return (where(!is.null(value), findFormat(file.path(dirname(stem), value))))
-        }
-    },
-    
-    mapTo = function (stem, target, overwrite = TRUE, relative = TRUE)
-    {
-        if (!arePresent(target))
-            moveTo(stem, target, overwrite=overwrite)
-        
-        stem <- ensureFileSuffix(expandFileName(stem), NULL, strip=unlist(formats))
-        for (s in stem)
-        {
-            mapFile <- file.path(dirname(s), "map.yaml")
-            map <- where(file.exists(mapFile), yaml::read_yaml(mapFile), list())
-            map[[basename(s)]] <- where(relative, relativePath(target,s), target)
-            yaml::write_yaml(map, mapFile)
         }
     }
 ))
