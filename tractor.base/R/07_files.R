@@ -1,4 +1,4 @@
-processFiles <- function (source, target = NULL, action = c("copy","move","symlink","delete"), overwrite = TRUE, relative = TRUE)
+processFiles <- function (source, target = NULL, action = c("copy","move","symlink","delete"), overwrite = TRUE, relative = TRUE, all = FALSE)
 {
     action <- match.arg(action)
     if (action == "symlink" && isTRUE(getOption("tractorNoSymlinks")))
@@ -26,7 +26,11 @@ processFiles <- function (source, target = NULL, action = c("copy","move","symli
         if (is.null(source[[i]]))
             next
         else if (inherits(source[[i]], "concreteFileSet"))
-            sourceFiles <- c(source[[i]]$requiredFiles, source[[i]]$auxiliaryFiles, source[[i]]$otherFiles)
+        {
+            sourceFiles <- c(source[[i]]$requiredFiles, source[[i]]$auxiliaryFiles)
+            if (all)
+                sourceFiles <- c(sourceFiles, source[[i]]$otherFiles)
+        }
         else
             sourceFiles <- source[[i]]
         
@@ -116,7 +120,7 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
     atPaths = function (paths)
     {
         # assert(length(path) == 1L, "Path should be a single string")
-        formats <- lapply(paths, function(path) .self$findFormat(path))
+        formats <- lapply(paths, function(path) .self$findFormat(path, all=TRUE))
         
         return (structure(list(
             formats = function () { return (formats) },
