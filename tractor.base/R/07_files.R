@@ -1,26 +1,34 @@
-processFiles <- function (fileSet, stems, target = NULL, action = c("copy","move","symlink","delete"), overwrite = TRUE, relative = TRUE, all = FALSE)
+processFiles <- function (source, target = NULL, action = c("copy","move","symlink","delete"), overwrite = TRUE, relative = TRUE)
 {
     action <- match.arg(action)
     if (action == "symlink" && isTRUE(getOption("tractorNoSymlinks")))
         action <- "copy"
-    results <- list()
+    
+    sourceNames <- names(source)
+    if (is.character(source))
+    {
+        sourceNames <- sourceNames %||% source
+        source <- as.list(source)
+    }
+    else if (inherits(source, "concreteFileSet"))
+        source <- list(source)
+    assert(is.list(source), "Source must be a character vector, concrete file set or list")
     
     if (action != "delete")
     {
         dirTarget <- length(target) == 1L && dir.exists(target)
-        assert(dirTarget || length(stems) == length(target), "If the target isn't an existing directory it should match the source in length")
+        assert(dirTarget || length(source) == length(target), "If the target isn't an existing directory it should match the source in length")
     }
     
-    for (i in seq_along(stems))
+    results <- structure(vector("list",length(source)), names=sourceNames)
+    for (i in seq_along(source))
     {
-        info <- fileSet$findFormat(stems[i], all=all)
-        if (is.null(info))
-        {
-            report(OL$Warning, "No valid format found for file stem #{stems[i]}")
+        if (is.null(source[[i]]))
             next
-        }
-        
-        sourceFiles <- c(info$requiredFiles, info$auxiliaryFiles, info$otherFiles)
+        else if (inherits(source[[i]], "concreteFileSet"))
+            sourceFiles <- c(source[[i]]$requiredFiles, source[[i]]$auxiliaryFiles, source[[i]]$otherFiles)
+        else
+            sourceFiles <- source[[i]]
         
         if (action == "delete")
         {
@@ -29,7 +37,7 @@ processFiles <- function (fileSet, stems, target = NULL, action = c("copy","move
                 success <- unlink(sourceFiles, recursive=TRUE, expand=FALSE)
             else
                 success <- unlink(sourceFiles, recursive=TRUE)
-            results[[stems[i]]] <- (success == 0)
+            results[[i]] <- (success == 0)
             next
         }
         
@@ -85,7 +93,7 @@ processFiles <- function (fileSet, stems, target = NULL, action = c("copy","move
             report(OL$Verbose, "Linking #{embrace(sourceFiles)} => #{embrace(targetFiles)}")
             success <- file.symlink(sourceFiles, targetFiles)
         }
-        results[[stems[i]]] <- success
+        results[[i]] <- success
     }
     return (results)
 }
@@ -105,40 +113,40 @@ processFiles <- function (fileSet, stems, target = NULL, action = c("copy","move
 #' 
 #' @export
 FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats="list", validators="list", auxiliaries="character"), methods=list(
-    atPath = function (path)
+    atPaths = function (paths)
     {
-        assert(length(path) == 1L, "Path should be a single string")
-        format <- .self$findFormat(path)
+        # assert(length(path) == 1L, "Path should be a single string")
+        formats <- lapply(paths, function(path) .self$findFormat(path))
         
         return (structure(list(
-            format = function () { return (format) },
+            formats = function () { return (formats) },
             
-            copy = function (target, overwrite = TRUE) { processFiles(.self, path, target, action="copy", overwrite=overwrite) },
+            copy = function (target, overwrite = TRUE) { processFiles(formats, target, action="copy", overwrite=overwrite) },
             
-            delete = function () { processFiles(.self, path, action="delete", all=TRUE) },
+            delete = function () { processFiles(formats, action="delete", all=TRUE) },
             
-            move = function (target, overwrite = TRUE) { processFiles(.self, path, target, action="move", overwrite=overwrite) },
+            move = function (target, overwrite = TRUE) { processFiles(formats, target, action="move", overwrite=overwrite) },
             
-            present = function () { return (!is.null(format)) },
+            present = function () { return (!sapply(formats, is.null)) },
             
-            symlink = function (target, overwrite = FALSE, relative = TRUE) { processFiles(.self, path, target, action="symlink", overwrite=overwrite, relative=relative) }
-        ), fileSet=.self))
+            symlink = function (target, overwrite = FALSE, relative = TRUE) { processFiles(formats, target, action="symlink", overwrite=overwrite, relative=relative) }
+        ), fileSet=.self, class="fileSetHandle"))
     },
     
-    fileStem = function (path)
+    fileStem = function (paths)
     {
-        stem <- ensureFileSuffix(expandFileName(path), NULL, strip=unlist(formats))
-        return (where(is.na(path), NA_character_, stem))
+        stem <- ensureFileSuffix(expandFileName(paths), NULL, strip=unlist(formats))
+        return (ifelse(is.na(paths), NA_character_, stem))
     },
     
-    findFormat = function (path, intent = c("read","write"), all = FALSE)
+    findFormat = function (paths, intent = c("read","write"), all = FALSE)
     {
-        if (length(path) > 1L)
-            return (setNames(lapply(path, .self$findFormat), path))
-        if (is.na(path))
+        if (length(paths) > 1L)
+            return (setNames(lapply(paths, .self$findFormat), paths))
+        if (is.na(paths))
             return (NULL)
         
-        stem <- .self$fileStem(path)
+        stem <- .self$fileStem(paths)
         intent <- match.arg(intent)
         auxPaths <- setNames(ensureFileSuffix(stem, auxiliaries), auxiliaries)
         if (intent == "read")
@@ -148,22 +156,22 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
         for (formatName in names(formats))
         {
             suffixes <- formats[[formatName]]
-            paths <- ensureFileSuffix(stem, suffixes)
-            if (intent == "write" || all(file.exists(paths)))
+            realPaths <- ensureFileSuffix(stem, suffixes)
+            if (intent == "write" || all(file.exists(realPaths)))
             {
                 validator <- validators[[formatName]]
-                if (intent == "read" && !is.null(validator) && !isTRUE(try(validator(setNames(paths, suffixes)), silent=TRUE)))
+                if (intent == "read" && !is.null(validator) && !isTRUE(try(validator(setNames(realPaths, suffixes)), silent=TRUE)))
                     next
                 
                 if (is.null(result))
                 {
-                    result <- list(format=formatName, stem=stem, requiredFiles=setNames(paths,suffixes), auxiliaryFiles=auxPaths)
+                    result <- list(format=formatName, stem=stem, requiredFiles=setNames(realPaths,suffixes), auxiliaryFiles=auxPaths)
                     if (!all) break
                 }
                 else
                 {
                     result$otherFormats <- c(result$otherFormats, formatName)
-                    result$otherFiles <- c(result$otherFiles, paths)
+                    result$otherFiles <- c(result$otherFiles, realPaths)
                 }
             }
         }
@@ -228,9 +236,7 @@ FileMap <- setRefClass("FileMap", contains="TractorObject", fields=list(director
                 unlink(file)
         }
         invisible (.self)
-    },
-    
-    finalize = function () { .self$write() }
+    }
 ))
 
 #' @export
@@ -299,7 +305,7 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
             if (.super$present())
                 .super$delete()
             else
-                map$dropElement(basename(.self$fileStem(path)))
+                map$dropElement(basename(.self$fileStem(path)))$write()
         }
         result$map <- function (target, overwrite = TRUE, relative = TRUE)
         {
@@ -317,7 +323,7 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
             }
             target <- .self$fileStem(target)
             value <- where(relative, relativePath(target,path), target)
-            map$setElement(basename(.self$fileStem(path)), value)
+            map$setElement(basename(.self$fileStem(path)), value)$write()
             return (TRUE)
         }
         return (result)
@@ -360,10 +366,10 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
 .ImageFiles <- ImageFileSet$new()
 
 #' @export
-imageFiles <- function (path = NULL)
+imageFiles <- function (paths = NULL)
 {
-    if (is.null(path))
+    if (is.null(paths))
         return (.ImageFiles)
     else
-        return (.ImageFiles$atPath(path))
+        return (.ImageFiles$atPaths(paths))
 }
