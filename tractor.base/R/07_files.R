@@ -332,14 +332,14 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
         return (result)
     },
     
-    findFormat = function (path, intent = c("read","write"), all = FALSE)
+    findFormat = function (paths, intent = c("read","write"), all = FALSE)
     {
-        if (length(path) > 1L)
-            return (setNames(lapply(path, .self$findFormat), path))
-        if (is.na(path))
+        if (length(paths) > 1L)
+            return (setNames(lapply(paths, .self$findFormat), paths))
+        if (is.na(paths))
             return (NULL)
         
-        stem <- .self$fileStem(path)
+        stem <- .self$fileStem(paths)
         intent <- match.arg(intent)
         
         # If the stem matches literally then set header and image fields and return
