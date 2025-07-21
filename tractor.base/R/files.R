@@ -1,31 +1,6 @@
-getParametersForFileType <- function (fileType = NA, format = NA, singleFile = NA, gzipped = NA, errorIfInvalid = TRUE)
-{
-    if (is.character(fileType))
-        typeIndex <- which(.FileTypes$typeNames == toupper(fileType))
-    else
-        typeIndex <- which(.FileTypes$formatNames == format & .FileTypes$singleFile == singleFile & .FileTypes$gzipped == gzipped)
-    
-    if (length(typeIndex) != 1)
-    {
-        if (errorIfInvalid)
-            report(OL$Error, "Specified file type information is incomplete or invalid")
-        else
-            return (NULL)
-    }
-    
-    parameters <- list(name=.FileTypes$typeNames[typeIndex],
-                       format=.FileTypes$formatNames[typeIndex],
-                       singleFile=.FileTypes$singleFile[typeIndex],
-                       gzipped=.FileTypes$gzipped[typeIndex],
-                       headerSuffix=.FileTypes$headerSuffixes[typeIndex],
-                       imageSuffix=.FileTypes$imageSuffixes[typeIndex])
-    
-    return (parameters)
-}
-
 #' @rdname files
 #' @export
-identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
+identifyImageFileNames <- function (fileName, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
 {
     fileSet <- ImageFileSet$new(auxiliaries=auxiliaries)
     format <- fileSet$findFormat(fileName, all=TRUE)
@@ -44,7 +19,7 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
                 return (NULL)
         }
         else
-            return (identifyImageFileNames(fileName, fileType=fileType, errorIfMissing=errorIfMissing, auxiliaries=auxiliaries))
+            return (identifyImageFileNames(fileName, errorIfMissing=errorIfMissing, auxiliaries=auxiliaries))
     }
     else if (length(format$otherFiles) > 0L)
     {
@@ -60,7 +35,7 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
 
 #' @rdname files
 #' @export
-imageFileExists <- function (fileName, fileType = NULL)
+imageFileExists <- function (fileName)
 {
     return (imageFiles(fileName)$present())
 }
@@ -264,10 +239,10 @@ chooseDataTypeForImage <- function (image, format, maxSize = NULL)
 #' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 #' @rdname files
 #' @export
-readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
+readImageFile <- function (fileName, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
 {
     # Find the relevant files
-    fileNames <- identifyImageFileNames(fileName, fileType, ...)
+    fileNames <- identifyImageFileNames(fileName, ...)
     
     # Parse the files
     # These functions should return either a complete image or a NIfTI-like
@@ -489,7 +464,7 @@ writeGradientDirections <- function (directions, bValues, fileName)
 
 #' @rdname files
 #' @export
-writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE, datatype = "fit", writeTags = FALSE)
+writeImageFile <- function (image, fileName = NULL, fileType = getOption("tractorFileType"), overwrite = TRUE, datatype = "fit", writeTags = FALSE)
 {
     image <- as(image, "MriImage")
     
@@ -499,51 +474,42 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
         report(OL$Error, "This image has no associated file name; it must be specified")
     else
         fileName <- image$getSource()
+    assert(length(fileName) == 1L, "Image file path should be a single string")
     
-    params <- getParametersForFileType(fileType, errorIfInvalid=FALSE)
-    if (is.null(params))
-        params <- getParametersForFileType(getOption("tractorFileType"), errorIfInvalid=FALSE)
-    
-    suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)
-    
-    files <- ensureFileSuffix(fileName, suffixes)
-    exist <- file.exists(files)
-    
+    files <- imageFiles(fileName)
     if (overwrite)
-        unlink(files[exist])
-    else if (sum(exist) > 0)
+        files$delete()
+    else if (files$present())
         report(OL$Error, "File exists and cannot be overwritten")
     
-    fileStem <- ensureFileSuffix(fileName, NULL, strip=suffixes)
-    headerFile <- ensureFileSuffix(fileStem, params$headerSuffix)
-    imageFile <- ensureFileSuffix(fileStem, params$imageSuffix)
-    fileNames <- list(fileStem=fileStem, headerFile=headerFile, imageFile=imageFile)
+    info <- imageFiles()$subset(fileType)$findFormat(fileName, intent="write")
+    fileNames <- list(fileStem=info$stem, headerFile=info$headerFile, imageFile=info$imageFile)
     
-    if (!image$isReordered() && params$format != "Nifti")
+    if (!image$isReordered() && !(info$format %~% "^nifti"))
         report(OL$Error, "An unreordered image can only be written to NIfTI format")
     
-    if (params$format == "Analyze")
+    if (info$format %~% "^analyze")
         report(OL$Error, "Writing to ANALYZE format is no longer supported")
-    else if (params$format == "Nifti")
+    else if (info$format %~% "^nifti")
         writeNifti(image, fileNames, datatype=datatype)
-    else if (params$format == "Mgh")
-        writeMgh(image, fileNames, datatype=datatype, gzipped=params$gzipped)
+    else if (info$format %~% "^mgh")
+        writeMgh(image, fileNames, datatype=datatype, gzipped=(info$format %~% "gz$"))
     
     if (image$isInternal())
     {
-        image$setSource(expandFileName(fileStem))
+        image$setSource(expandFileName(info$stem))
         if (Sys.getenv("TRACTOR_COMMANDLINE") != "")
             image$setTags(commandHistory=Sys.getenv("TRACTOR_COMMANDLINE"), merge=TRUE)
     }
     
-    if ((writeTags || file.exists(ensureFileSuffix(fileStem,"tags"))) && image$nTags() > 0)
+    if ((writeTags || file.exists(ensureFileSuffix(info$stem,"tags"))) && image$nTags() > 0)
     {
         tags <- image$getTags()
         if (all(c("bVectors","bValues") %in% names(tags)))
-            writeGradientDirections(image$getTags("bVectors"), image$getTags("bValues"), ensureFileSuffix(fileStem,"dirs"))
+            writeGradientDirections(image$getTags("bVectors"), image$getTags("bValues"), ensureFileSuffix(info$stem,"dirs"))
         tags <- tags[!(names(tags) %in% c("bVectors","bValues"))]
         if (length(tags) > 0)
-            writeLines(yaml::as.yaml(tags,handlers=list(Date=format.Date)), ensureFileSuffix(fileStem,"tags"))
+            writeLines(yaml::as.yaml(tags,handlers=list(Date=format.Date)), ensureFileSuffix(info$stem,"tags"))
     }
     
     invisible (fileNames)
