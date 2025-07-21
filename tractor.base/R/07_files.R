@@ -119,7 +119,6 @@ processFiles <- function (source, target = NULL, action = c("copy","move","symli
 FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats="list", validators="list", auxiliaries="character"), methods=list(
     atPaths = function (paths)
     {
-        # assert(length(path) == 1L, "Path should be a single string")
         formats <- lapply(paths, function(path) .self$findFormat(path, all=TRUE))
         
         return (structure(list(
@@ -187,7 +186,7 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
         regex <- where(is_ore(match), match, ore(match, options="i", syntax="fixed"))
         subformats <- formats[names(formats) %~% regex]
         subvalidators <- validators[names(validators) %~% regex]
-        return (getRefClass(.self)$new(formats=subformats, validators=subvalidators), ...)
+        return (.self$getRefClass()$new(formats=subformats, validators=subvalidators, ...))
     }
 ))
 
@@ -333,7 +332,7 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
         return (result)
     },
     
-    findFormat = function (path, all = FALSE)
+    findFormat = function (path, intent = c("read","write"), all = FALSE)
     {
         if (length(path) > 1L)
             return (setNames(lapply(path, .self$findFormat), path))
@@ -341,9 +340,10 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
             return (NULL)
         
         stem <- .self$fileStem(path)
+        intent <- match.arg(intent)
         
         # If the stem matches literally then set header and image fields and return
-        result <- callSuper(stem, all=all)
+        result <- callSuper(stem, intent=intent, all=all)
         if (!is.null(result))
         {
             if (length(result$requiredFiles) == 1L)
