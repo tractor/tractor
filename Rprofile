@@ -9,7 +9,7 @@ if (tractorHome == "") {
 	}
 	
 	if (interactive()) {
-		message(paste("TractoR is available at", tractorHome, " - tractor() loads all packages"))
+		message(paste("TractoR is available at", tractorHome, "- tractor() loads all packages"))
 	}
 }
 
