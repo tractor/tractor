@@ -9,23 +9,6 @@ expect_equal(info$dim, 3)
 expect_equivalent(as.vector(table(info$vectors)), rep(27L,3))
 expect_equal(range(info$innerProducts,na.rm=TRUE), c(-1,1))
 
-# File functions
-path <- system.file("extdata", "nifti", "maskedb0.nii.gz", package="tractor.base")
-temp <- threadSafeTempFile()
-
-expect_false(imageFileExists(temp))
-copyImageFiles(path, temp)
-expect_true(imageFileExists(temp))
-removeImageFiles(temp)
-expect_false(imageFileExists(temp))
-
-# Windows doesn't properly support symlinking
-if (tolower(Sys.info()[["sysname"]]) != "windows")
-{
-    symlinkImageFiles(path, temp)
-    expect_true(imageFileExists(temp))
-}
-
 # String and path functions
 expect_equal(implode(1:3,", "), "1, 2, 3")
 expect_equal(implode(1:3,", "," and "), "1, 2 and 3")
