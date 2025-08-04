@@ -119,20 +119,20 @@ processFiles <- function (source, target = NULL, action = c("copy","move","symli
 FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats="list", validators="list", auxiliaries="character"), methods=list(
     atPaths = function (paths)
     {
-        formats <- lapply(paths, function(path) .self$findFormat(path, all=TRUE))
+        .info <- lapply(paths, function(path) .self$findFormat(path, all=TRUE))
         
         return (structure(list(
-            formats = function () { return (formats) },
+            info = function () { return (.info) },
             
-            copy = function (target, overwrite = TRUE) { processFiles(formats, target, action="copy", overwrite=overwrite) },
+            copy = function (target, overwrite = TRUE) { processFiles(.info, target, action="copy", overwrite=overwrite) },
             
-            delete = function () { processFiles(formats, action="delete", all=TRUE) },
+            delete = function () { processFiles(.info, action="delete", all=TRUE) },
             
-            move = function (target, overwrite = TRUE) { processFiles(formats, target, action="move", overwrite=overwrite) },
+            move = function (target, overwrite = TRUE) { processFiles(.info, target, action="move", overwrite=overwrite) },
             
-            present = function () { return (!sapply(formats, is.null)) },
+            present = function () { return (!sapply(.info, is.null)) },
             
-            symlink = function (target, overwrite = FALSE, relative = TRUE) { processFiles(formats, target, action="symlink", overwrite=overwrite, relative=relative) }
+            symlink = function (target, overwrite = FALSE, relative = TRUE) { processFiles(.info, target, action="symlink", overwrite=overwrite, relative=relative) }
         ), fileSet=.self, class="fileSetHandle"))
     },
     
