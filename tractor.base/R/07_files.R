@@ -194,25 +194,27 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
 FileMap <- setRefClass("FileMap", contains="TractorObject", fields=list(directory="character", map="list"), methods=list(
     initialize = function (path = "", ...)
     {
-        dir <- expandFileName(ifelse(dir.exists(path), path, dirname(path)))
+        dir <- unique(expandFileName(ifelse(dir.exists(path), path, dirname(path))))
+        assert(length(dir) > 0L, "No path was specified to initialise a map")
+        assert(length(dir) == 1L, "All paths must be in the same directory")
         object <- initFields(directory=dir, map=list())
         object$read()
         return (object)
     },
     
-    dropElement = function (key) { .self$setElement(key, NULL) },
+    dropElements = function (keys) { .self$setElements(keys, NULL) },
     
     getDirectory = function () { return (directory) },
     
-    getElement = function (key) { return (map[[key]]) },
+    getElements = function (keys) { return (unlist(map[keys])) },
     
     getFile = function () { return (file.path(directory, "map.yaml")) },
     
     getMap = function (sorted = FALSE) { where(sorted, map[sort(names(map))], map) },
     
-    setElement = function (key, value)
+    setElements = function (keys, values)
     {
-        .self$map[[key]] <- value
+        .self$map[keys] <- values
         invisible (.self)
     },
     
@@ -244,12 +246,12 @@ FileMap <- setRefClass("FileMap", contains="TractorObject", fields=list(director
 
 #' @export
 setMethod("[", signature(x="FileMap",i="character",j="missing"), function (x, i, j, ..., drop = TRUE) {
-    x$getElement(i)
+    x$getElements(i)
 })
 
 #' @export
 setReplaceMethod("[", signature(x="FileMap",i="character",j="missing"), function (x, i, j, ..., value) {
-    x$setElement(i, value)
+    x$setElements(i, value)
 })
 
 #' @export
@@ -296,25 +298,30 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
         return (object)
     },
     
-    atPath = function (path)
+    atPaths = function (paths)
     {
-        .super <- callSuper(path)
-        map <- FileMap$new(path)
+        .super <- callSuper(paths)
+        .info <- .super$info()
+        .map <- FileMap$new(paths)
         
         result <- .super
         result$delete <- function ()
         {
+            # Call .super, not .self, because for these purposes we don't want to resolve maps
+            present <- .super$present()
+            if (any(present))
+                processFiles(.info[present], action="delete", all=TRUE)
             # Deleting a mapped image just unmaps it
-            if (.super$present())
-                .super$delete()
-            else
-                map$dropElement(basename(.self$fileStem(path)))$write()
+            if (any(!present))
+                .map$dropElements(basename(.self$fileStem(paths[!present])))$write()
         }
         result$map <- function (target, overwrite = TRUE, relative = TRUE)
         {
-            if (is.null(.self$findFormat(target)))
-                .super$move(target)
-            else if (!is.null(.self$findFormat(path)))
+            singleTarget <- (length(target) == 1)
+            targetsMissing <- sapply(.self$findFormat(target), is.null)
+            if (any(targetsMissing))
+                processFiles(.info[targetsMissing], where(singleTarget,target,target[targetsMissing]), action="move")
+            if (any(.super$present()))
             {
                 if (overwrite)
                     .super$delete()
@@ -325,8 +332,13 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
                 }
             }
             target <- .self$fileStem(target)
-            value <- where(relative, relativePath(target,path), target)
-            map$setElement(basename(.self$fileStem(path)), value)$write()
+            for (i in seq_along(paths))
+            {
+                currentTarget <- where(singleTarget, target, target[i])
+                currentPath <- where(relative, relativePath(currentTarget,paths[i]), currentTarget)
+                .map$setElement(basename(.self$fileStem(paths[i])), currentPath)
+            }
+            .map$write()
             return (TRUE)
         }
         return (result)
@@ -356,7 +368,7 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
             return (result)
         }
         
-        mapValue <- FileMap$new(stem)$getElement(basename(stem))
+        mapValue <- FileMap$new(stem)$getElements(basename(stem))
         if (!is.null(mapValue))
             return (findFormat(file.path(dirname(stem), mapValue)))
         else
