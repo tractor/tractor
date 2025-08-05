@@ -10,10 +10,10 @@
 \alias{writeImageFile}
 \title{Working with MRI images stored in various formats}
 \usage{
-identifyImageFileNames(fileName, fileType = NULL, errorIfMissing = TRUE,
+identifyImageFileNames(fileName, errorIfMissing = TRUE,
   auxiliaries = c("dirs", "lut", "tags"), ...)
 
-imageFileExists(fileName, fileType = NULL)
+imageFileExists(fileName)
 
 removeImageFiles(fileName, ...)
 
@@ -21,19 +21,15 @@ symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE, ...)
 
 copyImageFiles(from, to, overwrite = FALSE, deleteOriginals = FALSE, ...)
 
-readImageFile(fileName, fileType = NULL, metadataOnly = FALSE,
-  volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
+readImageFile(fileName, metadataOnly = FALSE, volumes = NULL,
+  sparse = FALSE, mask = NULL, reorder = TRUE, ...)
 
-writeImageFile(image, fileName = NULL, fileType = NA, overwrite = TRUE,
+writeImageFile(image, fileName = NULL,
+  fileType = getOption("tractorFileType"), overwrite = TRUE,
   datatype = "fit", writeTags = FALSE)
 }
 \arguments{
 \item{fileName, from, to}{File names, with or without appropriate extension.}
-
-\item{fileType}{A character vector of length one, giving the file type
-required or expected. If this option is missing, the file type used for
-writing images will be taken from the \code{tractorFileType} option. See
-Details.}
 
 \item{errorIfMissing}{Logical value: raise an error if no suitable files
 were found?}
@@ -75,6 +71,11 @@ image is of interest. Ignored if \code{sparse} is not \code{TRUE}.}
 This is recommended in most circumstances.}
 
 \item{image}{An \code{\linkS4class{MriImage}} object.}
+
+\item{fileType}{A character vector of length one, giving the file type
+required or expected. If this option is missing, the file type used for
+writing images will be taken from the \code{tractorFileType} option. See
+Details.}
 
 \item{datatype}{A datatype string, such as \code{"uint8"} or \code{"float"},
 specifying the pixel datatype to use when storing the data. If specified,
