@@ -33,3 +33,11 @@ expect_true(imageFiles(altPath1)$present())
 metadata <- readImageFile(altPath1, metadataOnly=TRUE)
 expect_equal(metadata$getDimensions(), c(96,96,60))
 
+files <- imageFiles(altPath1)
+mapFile <- file.path(dirname(altPath1), "map.yaml")
+expect_false(file.exists(mapFile))
+expect_false(imageFiles(altPath2)$present())
+files$map(altPath2)
+expect_true(file.exists(mapFile))
+expect_true(imageFiles(altPath2)$present())
+
