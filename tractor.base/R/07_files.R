@@ -298,7 +298,7 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
         result$map <- function (target, overwrite = TRUE, relative = TRUE)
         {
             singleTarget <- (length(target) == 1)
-            targetsMissing <- sapply(.self$findFormat(target), is.null)
+            targetsMissing <- sapply(lapply(target,.self$findFormat), is.null)
             if (any(targetsMissing))
                 processFiles(.info[targetsMissing], where(singleTarget,target,target[targetsMissing]), action="move")
             if (any(.super$present()))
@@ -316,7 +316,7 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
             {
                 currentTarget <- where(singleTarget, target, target[i])
                 currentPath <- where(relative, relativePath(currentTarget,paths[i]), currentTarget)
-                .map$setElement(basename(.self$fileStem(paths[i])), currentPath)
+                .map$setElements(basename(.self$fileStem(paths[i])), currentPath)
             }
             .map$write()
             return (TRUE)
