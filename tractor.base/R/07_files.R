@@ -244,26 +244,6 @@ FileMap <- setRefClass("FileMap", contains="TractorObject", fields=list(director
     }
 ))
 
-#' @export
-setMethod("[", signature(x="FileMap",i="character",j="missing"), function (x, i, j, ..., drop = TRUE) {
-    x$getElements(i)
-})
-
-#' @export
-setReplaceMethod("[", signature(x="FileMap",i="character",j="missing"), function (x, i, j, ..., value) {
-    x$setElements(i, value)
-})
-
-#' @export
-setMethod("==", signature(e1="FileMap",e2="FileMap"), function (e1, e2) {
-    isTRUE(all.equal(e1$getMap(TRUE), e2$getMap(TRUE)))
-})
-
-#' @export
-setMethod("!=", signature(e1="FileMap",e2="FileMap"), function (e1, e2) {
-    !isTRUE(all.equal(e1$getMap(TRUE), e2$getMap(TRUE)))
-})
-
 niftiVersionCheck <- function (versions)
 {
     return (function(x) all(RNifti::niftiVersion(x) %in% versions))
