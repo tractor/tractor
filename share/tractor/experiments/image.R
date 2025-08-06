@@ -1,4 +1,4 @@
-#@desc Manipulate images within the file system, ensuring that all relevant files are handled, including auxiliary files. This script uses subcommands, so the first argument specifies exactly which operation will be performed. Available operations are "copy", "move" (or "rename"), "remove" (or "delete") and "link" - the latter for creating symlinks if the file system supports them. Standard Unix short forms of each command are also acceptable. Symlinks will use relative paths to the original file unless RelativeLinks:false is given. Existing files will be overwritten by default.
+#@desc Manipulate images within the file system, ensuring that all relevant files are handled, including auxiliary files. This script uses subcommands, so the first argument specifies exactly which operation will be performed. Available operations are "copy", "move" (or "rename"), "remove" (or "delete"), "link" and "map". Standard Unix short forms of each command are also acceptable. Linking creates symlinks if the file system supports them; mapping uses a YAML "map file" to achieve a similar effect in a more portable way. Symlinks and maps will use relative paths to the original file unless RelativeLinks:false is given. Existing files will be overwritten by default.
 #@args subcommand, image(s), [directory]
 #@group General analysis
 
@@ -13,7 +13,7 @@ runExperiment <- function ()
     overwrite <- getConfigVariable("Overwrite", TRUE)
     relativeLinks <- getConfigVariable("RelativeLinks", TRUE)
     
-    subcommand <- match.arg(Arguments[1], c("cp","copy","mv","move","rename","rm","remove","delete","ln","link"))
+    subcommand <- match.arg(Arguments[1], c("cp","copy","mv","move","rename","rm","remove","delete","ln","link","map"))
     
     if (subcommand %in% c("rm","remove","delete"))
         removeImageFiles(Arguments[-1], auxiliaries=auxiliaries)
@@ -39,7 +39,9 @@ runExperiment <- function ()
             to <- resolvePath(Arguments[3])
         }
         
-        if (subcommand %in% c("ln","link"))
+        if (subcommand == "map")
+            imageFiles(from)$map(to, overwrite=overwrite, relative=relativeLinks)
+        else if (subcommand %in% c("ln","link"))
             symlinkImageFiles(from, to, overwrite=overwrite, relative=relativeLinks, auxiliaries=auxiliaries)
         else
         {
