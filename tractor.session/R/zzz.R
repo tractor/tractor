@@ -24,7 +24,7 @@
         # The string matches, so the name group must be present
         session <- attachMriSession(ifelse(groupsPresent["dir"], groups["dir"], defaultSessionPath))
         if (groupsPresent["index"])
-            index <- as.integer(ore_subst("$%", "", groups["index"]))
+            index <- as.integer(ore_subst("^%", "", groups["index"]))
         
         if (groupsPresent["baresubdir"])
             return (session$getDirectory(ore_subst("/$", "", groups["baresubdir"])))
