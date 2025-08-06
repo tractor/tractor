@@ -104,21 +104,26 @@ processFiles <- function (source, target = NULL, action = c("copy","move","symli
 
 #' The FileSet class
 #' 
-#' This reference class manages a set of related files based on a common file
-#' stem and required or suffixes. It supports operations such as copying,
-#' moving, symlinking, validating and deleting files, ensuring that all
-#' constituent files are handled consistently. It is designed for handling
-#' alternative file formats or composite file types.
-#'
+#' This reference class manages sets of related files based on a common file
+#' stem and required and/or optional suffixes. It is designed for handling
+#' alternative file formats or composite file types. The class represents the
+#' group of file formats in the abstract; its methods handle specific files and
+#' support operations such as copying, moving, symlinking, validating and
+#' deleting those files, ensuring that all constituent files are handled
+#' consistently.
+#' 
 #' @field formats A named list mapping format names to required file suffixes.
 #' @field validators An optional named list of validation functions for some
 #'   or all of the supported formats.
 #' @field auxiliaries A character vector of optional auxiliary file suffixes.
 #' 
+#' @seealso \code{\link{ImageFileSet}} is a subclass specialised for image
+#'   files.
 #' @export
 FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats="list", validators="list", auxiliaries="character"), methods=list(
     atPaths = function (paths)
     {
+        "Return a handle object to manipulate files at specific paths"
         .info <- lapply(paths, function(path) .self$findFormat(path, all=TRUE))
         
         return (structure(list(
@@ -138,12 +143,14 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
     
     fileStem = function (paths)
     {
+        "Obtain a file stem for each specified path, dropping format-specific suffixes"
         stem <- ensureFileSuffix(expandFileName(paths), NULL, strip=unlist(formats))
         return (ifelse(is.na(paths), NA_character_, stem))
     },
     
     findFormat = function (paths, intent = c("read","write"), all = FALSE)
     {
+        "Identify and potentially validate files to find the format used at specific paths"
         if (length(paths) > 1L)
             return (setNames(lapply(paths, .self$findFormat), paths))
         if (is.na(paths))
@@ -183,6 +190,7 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
     
     subset = function (match, ...)
     {
+        "Create a variant object that only encapsulates the specified subset of formats"
         regex <- where(is_ore(match), match, ore(match, options="i", syntax="fixed"))
         subformats <- formats[names(formats) %~% regex]
         subvalidators <- validators[names(validators) %~% regex]
@@ -190,6 +198,27 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
     }
 ))
 
+#' @export
+print.fileSetHandle <- function (x, ...)
+{
+    info <- x$info()
+    n <- length(info)
+    cat(es("Handle to #{n} file #{pluralise('set',n=n)}\n")
+    if (n == 1L)
+    {
+        suffixes <- c(names(info[[1]]$requiredFiles), names(info[[1]]$auxiliaryFiles))
+        cat(es("- Path stem: #{info[[1]]$stem}\n", ))
+        cat(es("- Suffixes present: #{implode(suffixes,', ')}\n"))
+    }
+    cat(es("- Member functions: #{implode(names(x),', ')}\n"))
+}
+
+#' The FileMap class
+#' 
+#' A reference class to represent a file map and handle persisting it to file.
+#' A file map is a directory-specific dictionary keyed by file names (without
+#' suffixes), whose values point to the actual locations of the associated
+#' files. This saves duplicating large files such as images.
 #' @export
 FileMap <- setRefClass("FileMap", contains="TractorObject", fields=list(directory="character", map="list"), methods=list(
     initialize = function (path = "", ...)
