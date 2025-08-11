@@ -6,11 +6,13 @@
 \alias{FileSet}
 \title{The FileSet class}
 \description{
-This reference class manages a set of related files based on a common file
-stem and required or suffixes. It supports operations such as copying,
-moving, symlinking, validating and deleting files, ensuring that all
-constituent files are handled consistently. It is designed for handling
-alternative file formats or composite file types.
+This reference class manages sets of related files based on a common file
+stem and required and/or optional suffixes. It is designed for handling
+alternative file formats or composite file types. The class represents the
+group of file formats in the abstract; its methods handle specific files and
+support operations such as copying, moving, symlinking, validating and
+deleting those files, ensuring that all constituent files are handled
+consistently.
 }
 \section{Fields}{
 
@@ -23,4 +25,19 @@ or all of the supported formats.}
 \item{\code{auxiliaries}}{A character vector of optional auxiliary file suffixes.}
 }}
 
+\section{Methods}{
 
+\describe{
+\item{\code{atPaths(paths)}}{Return a handle object to manipulate files at specific paths}
+
+\item{\code{fileStem(paths)}}{Obtain a file stem for each specified path, dropping format-specific suffixes}
+
+\item{\code{findFormat(paths, intent = c("read", "write"), all = FALSE)}}{Identify and potentially validate files to find the format used at specific paths}
+
+\item{\code{subset(match, ...)}}{Create a variant object that only encapsulates the specified subset of formats}
+}}
+
+\seealso{
+\code{\link{ImageFileSet}} is a subclass specialised for image
+  files.
+}
