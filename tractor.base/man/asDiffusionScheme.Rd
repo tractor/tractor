@@ -2,9 +2,18 @@
 % Please edit documentation in R/20_scheme.R
 \name{asDiffusionScheme}
 \alias{asDiffusionScheme}
+\alias{asDiffusionScheme.matrix}
+\alias{asDiffusionScheme.MriImage}
+\alias{asDiffusionScheme.DiffusionScheme}
 \title{Create a DiffusionScheme object from data}
 \usage{
 asDiffusionScheme(x, ...)
+
+\method{asDiffusionScheme}{matrix}(x, bValues, ...)
+
+\method{asDiffusionScheme}{MriImage}(x, ...)
+
+\method{asDiffusionScheme}{DiffusionScheme}(x, ...)
 }
 \arguments{
 \item{x}{An object to coerce to a \code{DiffusionScheme}.}

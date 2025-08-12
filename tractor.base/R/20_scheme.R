@@ -153,12 +153,14 @@ asDiffusionScheme <- function (x, ...)
     UseMethod("asDiffusionScheme")
 }
 
+#' @rdname asDiffusionScheme
 #' @export
 asDiffusionScheme.matrix <- function (x, bValues, ...)
 {
     return (DiffusionScheme$new(bValues, x))
 }
 
+#' @rdname asDiffusionScheme
 #' @export
 asDiffusionScheme.MriImage <- function (x, ...)
 {
@@ -166,6 +168,7 @@ asDiffusionScheme.MriImage <- function (x, ...)
     return (DiffusionScheme$new(x$getTags("bValues"), x$getTags("bVectors")))
 }
 
+#' @rdname asDiffusionScheme
 #' @export
 asDiffusionScheme.DiffusionScheme <- function (x, ...) { return (x) }
 
