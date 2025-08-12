@@ -117,8 +117,8 @@ processFiles <- function (source, target = NULL, action = c("copy","move","symli
 #'   or all of the supported formats.
 #' @field auxiliaries A character vector of optional auxiliary file suffixes.
 #' 
-#' @seealso \code{\link{ImageFileSet}} is a subclass specialised for image
-#'   files.
+#' @seealso \code{\linkS4class{ImageFileSet}} is a subclass specialised for
+#'   image files.
 #' @export
 FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats="list", validators="list", auxiliaries="character"), methods=list(
     atPaths = function (paths)
@@ -451,19 +451,36 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
 #' reference classes, handle and abstract away this complexity.
 #' 
 #' The \code{imageFiles} function returns either a preinitialised instance of
-#' the \code{\link{ImageFileSet}} class, which handles file set logic in the
-#' abstract, or (if given a vector of paths as an argument) calls that
+#' the \code{\linkS4class{ImageFileSet}} class, which handles file set logic
+#' in the abstract, or (if given a vector of paths as an argument) calls that
 #' instance's \code{atPaths} method, which facilitates handling specific files.
 #' If non-default parameters to the class constructor are required then a
 #' custom \code{ImageFileSet} object can be created directly instead.
 #' 
+#' \code{imageFileExists}, \code{removeImageFiles}, \code{symlinkImageFiles}
+#' and \code{copyImageFiles} are simple wrapper functions that exist for
+#' backwards compatibility. \code{copyImageFiles(from, to)}, for example, is
+#' equivalent to \code{imageFiles(from)$copy(to)}.
+#' 
 #' @param paths Optionally, a character vector of image paths with or without
 #'   suitable suffixes.
-#' @return If \code{paths} is \code{NULL}, a singleton reference object of
-#'   class \code{ImageFileSet} which can be used to identify and manipulate
-#'   image files anywhere on the file system. If \code{paths} is specified, an
-#'   S3 object of class \code{fileSetHandle}, a list of functions which can be
-#'   used to manipulate the actual files at those paths. The functions are
+#' @param fileName,from Character vectors of image paths.
+#' @param to Character vector of target file names, or a single existing
+#'   directory to copy or symlink into.
+#' @param overwrite Logical value: if \code{TRUE}, existing files will be
+#'   overwritten; otherwise creating files with existing names will just fail.
+#' @param relative Logical value: if \code{TRUE}, the path stored in the
+#'   symlink will be relative (e.g. \code{"../some_dir/some_image.nii"}) rather
+#'   than absolute (e.g. \code{"/path/to/some_dir/some_image.nii"}).
+#' @param deleteOriginals Logical value: if \code{TRUE}, \code{copyImageFiles}
+#'   performs a move rather than a copy.
+#' @param \dots Currently unused.
+#' @return If \code{paths} is \code{NULL}, \code{imageFiles} returns a
+#'   singleton reference object of class \code{ImageFileSet} which can be used
+#'   to identify and manipulate image files anywhere on the file system. If
+#'   \code{paths} is specified, an S3 object of class \code{fileSetHandle}, a
+#'   list of functions which can be used to manipulate the actual files at
+#'   those paths. The functions are
 #'   \describe{
 #'     \item{stems()}{Return the file stems associated with the paths.}
 #'     \item{info()}{Return information about existing files, as a list with
@@ -473,7 +490,7 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
 #'       file names or a directory).}
 #'     \item{delete()}{Delete the files or any map reference to them.}
 #'     \item{map(target, overwrite=TRUE, relative=TRUE)}{Map the files to a new
-#'       location (see \code{\link{FileMap}} for details).}
+#'       location (see \code{\linkS4class{FileMap}} for details).}
 #'     \item{move(target, overwrite=TRUE)}{Move the files to target paths (new
 #'       file names or a directory).}
 #'     \item{present()}{Return Boolean values indicating whether or not
@@ -481,10 +498,13 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
 #'     \item{symlink(target, overwrite=TRUE, relative=TRUE)}{Symlink the files
 #'       to target paths (if supported by the OS and file system).}
 #'   }
+#'   \code{imageFileExists} returns a logical vector indicating whether or not
+#'   valid image files exist at each specified path. Other functions are called
+#'   for their side-effects.
 #' @author Jon Clayden
-#' @seealso Using \code{\link{ImageFileSet}} provides a lower-level and more
-#'   flexible interface; \code{\link{readImageFile}} can be used if you just
-#'   want to read an image into memory.
+#' @seealso Using \code{\linkS4class{ImageFileSet}} provides a lower-level and
+#'   more flexible interface; \code{\link{readImageFile}} can be used if you
+#'   just want to read an image into memory.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
@@ -505,4 +525,35 @@ imageFiles <- function (paths = NULL)
         return (.ImageFiles)
     else
         return (.ImageFiles$atPaths(paths))
+}
+
+#' @rdname imageFiles
+#' @export
+imageFileExists <- function (fileName)
+{
+    return (imageFiles(fileName)$present())
+}
+
+#' @rdname imageFiles
+#' @export
+removeImageFiles <- function (fileName, ...)
+{
+    imageFiles(fileName)$delete()
+}
+
+#' @rdname imageFiles
+#' @export
+symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...)
+{
+    imageFiles(from)$symlink(to, overwrite=overwrite, relative=relative)
+}
+
+#' @rdname imageFiles
+#' @export
+copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE, ...)
+{
+    if (deleteOriginals)
+        imageFiles(from)$move(to, overwrite=overwrite)
+    else
+        imageFiles(from)$copy(to, overwrite=overwrite)
 }

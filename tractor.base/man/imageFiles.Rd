@@ -2,20 +2,50 @@
 % Please edit documentation in R/07_files.R
 \name{imageFiles}
 \alias{imageFiles}
+\alias{imageFileExists}
+\alias{removeImageFiles}
+\alias{symlinkImageFiles}
+\alias{copyImageFiles}
 \title{Image file sets}
 \usage{
 imageFiles(paths = NULL)
+
+imageFileExists(fileName)
+
+removeImageFiles(fileName, ...)
+
+symlinkImageFiles(from, to, overwrite = FALSE, relative = TRUE, ...)
+
+copyImageFiles(from, to, overwrite = FALSE, deleteOriginals = FALSE, ...)
 }
 \arguments{
 \item{paths}{Optionally, a character vector of image paths with or without
 suitable suffixes.}
+
+\item{fileName, from}{Character vectors of image paths.}
+
+\item{\dots}{Currently unused.}
+
+\item{to}{Character vector of target file names, or a single existing
+directory to copy or symlink into.}
+
+\item{overwrite}{Logical value: if \code{TRUE}, existing files will be
+overwritten; otherwise creating files with existing names will just fail.}
+
+\item{relative}{Logical value: if \code{TRUE}, the path stored in the
+symlink will be relative (e.g. \code{"../some_dir/some_image.nii"}) rather
+than absolute (e.g. \code{"/path/to/some_dir/some_image.nii"}).}
+
+\item{deleteOriginals}{Logical value: if \code{TRUE}, \code{copyImageFiles}
+performs a move rather than a copy.}
 }
 \value{
-If \code{paths} is \code{NULL}, a singleton reference object of
-  class \code{ImageFileSet} which can be used to identify and manipulate
-  image files anywhere on the file system. If \code{paths} is specified, an
-  S3 object of class \code{fileSetHandle}, a list of functions which can be
-  used to manipulate the actual files at those paths. The functions are
+If \code{paths} is \code{NULL}, \code{imageFiles} returns a
+  singleton reference object of class \code{ImageFileSet} which can be used
+  to identify and manipulate image files anywhere on the file system. If
+  \code{paths} is specified, an S3 object of class \code{fileSetHandle}, a
+  list of functions which can be used to manipulate the actual files at
+  those paths. The functions are
   \describe{
     \item{stems()}{Return the file stems associated with the paths.}
     \item{info()}{Return information about existing files, as a list with
@@ -25,7 +55,7 @@ If \code{paths} is \code{NULL}, a singleton reference object of
       file names or a directory).}
     \item{delete()}{Delete the files or any map reference to them.}
     \item{map(target, overwrite=TRUE, relative=TRUE)}{Map the files to a new
-      location (see \code{\link{FileMap}} for details).}
+      location (see \code{\linkS4class{FileMap}} for details).}
     \item{move(target, overwrite=TRUE)}{Move the files to target paths (new
       file names or a directory).}
     \item{present()}{Return Boolean values indicating whether or not
@@ -33,6 +63,9 @@ If \code{paths} is \code{NULL}, a singleton reference object of
     \item{symlink(target, overwrite=TRUE, relative=TRUE)}{Symlink the files
       to target paths (if supported by the OS and file system).}
   }
+  \code{imageFileExists} returns a logical vector indicating whether or not
+  valid image files exist at each specified path. Other functions are called
+  for their side-effects.
 }
 \description{
 TractoR supports several medical imaging file formats, some of which are
@@ -46,11 +79,16 @@ reference classes, handle and abstract away this complexity.
 }
 \details{
 The \code{imageFiles} function returns either a preinitialised instance of
-the \code{\link{ImageFileSet}} class, which handles file set logic in the
-abstract, or (if given a vector of paths as an argument) calls that
+the \code{\linkS4class{ImageFileSet}} class, which handles file set logic
+in the abstract, or (if given a vector of paths as an argument) calls that
 instance's \code{atPaths} method, which facilitates handling specific files.
 If non-default parameters to the class constructor are required then a
 custom \code{ImageFileSet} object can be created directly instead.
+
+\code{imageFileExists}, \code{removeImageFiles}, \code{symlinkImageFiles}
+and \code{copyImageFiles} are simple wrapper functions that exist for
+backwards compatibility. \code{copyImageFiles(from, to)}, for example, is
+equivalent to \code{imageFiles(from)$copy(to)}.
 }
 \examples{
 path <- system.file("extdata", "analyze", "maskedb0.img.gz",
@@ -69,9 +107,9 @@ Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 }
 \seealso{
-Using \code{\link{ImageFileSet}} provides a lower-level and more
-  flexible interface; \code{\link{readImageFile}} can be used if you just
-  want to read an image into memory.
+Using \code{\linkS4class{ImageFileSet}} provides a lower-level and
+  more flexible interface; \code{\link{readImageFile}} can be used if you
+  just want to read an image into memory.
 }
 \author{
 Jon Clayden

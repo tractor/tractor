@@ -38,6 +38,6 @@ or all of the supported formats.}
 }}
 
 \seealso{
-\code{\link{ImageFileSet}} is a subclass specialised for image
-  files.
+\code{\linkS4class{ImageFileSet}} is a subclass specialised for
+  image files.
 }

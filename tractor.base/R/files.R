@@ -1,4 +1,39 @@
-#' @rdname files
+#' Resolve image paths
+#' 
+#' This function identifies characteristics of an image on disk, including
+#' associated auxiliary files. Its functionality has essentially been
+#' superseded by methods of the \code{\linkS4class{ImageFileSet}} class, but
+#' it remains as an alternative interface to that functionality for backwards
+#' compatibility.
+#' 
+#' @param fileName A character vector of image paths.
+#' @param errorIfMissing Logical value: raise an error if no suitable files
+#'   were found?
+#' @param auxiliaries A character vector of auxiliary file suffixes to search
+#'   for.
+#' @param \dots Additional arguments to \code{\link{resolvePath}}.
+#' @return A list with the following elements, describing the identified files:
+#'   \describe{
+#'     \item{fileStem}{The file name without extension.}
+#'     \item{headerFile}{The full header file name.}
+#'     \item{imageFile}{The full image file name.}
+#'     \item{auxiliaryFiles}{The full path to any auxiliary files.}
+#'     \item{format}{The basic format of the files (\code{"Nifti"},
+#'       \code{"Analyze"}, etc.).}
+#'     \item{headerSuffix}{The file suffix associated with the header file.}
+#'     \item{imageSuffix}{The file suffix associated with the image file.}
+#'     \item{auxiliarySuffixes}{The file suffixes associated with any
+#'       auxiliary files.}
+#'   }
+#' 
+#' @author Jon Clayden
+#' @seealso \code{\link{imageFiles}}, \code{\link{resolvePath}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 #' @export
 identifyImageFileNames <- function (fileName, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
 {
@@ -31,37 +66,6 @@ identifyImageFileNames <- function (fileName, errorIfMissing = TRUE, auxiliaries
     
     fileNames <- list(fileStem=format$stem, headerFile=format$headerFile, imageFile=format$imageFile, auxiliaryFiles=format$auxiliaryFiles, format=oldFormatName, headerSuffix=names(format$headerFile), imageSuffix=names(format$imageFile), auxiliarySuffixes=names(format$auxiliaryFiles))
     return (fileNames)
-}
-
-#' @rdname files
-#' @export
-imageFileExists <- function (fileName)
-{
-    return (imageFiles(fileName)$present())
-}
-
-#' @rdname files
-#' @export
-removeImageFiles <- function (fileName, ...)
-{
-    imageFiles(fileName)$delete()
-}
-
-#' @rdname files
-#' @export
-symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...)
-{
-    imageFiles(from)$symlink(to, overwrite=overwrite, relative=relative)
-}
-
-#' @rdname files
-#' @export
-copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE, ...)
-{
-    if (deleteOriginals)
-        imageFiles(from)$move(to, overwrite=overwrite)
-    else
-        imageFiles(from)$copy(to, overwrite=overwrite)
 }
 
 chooseDataTypeForImage <- function (image, format, maxSize = NULL)
@@ -136,7 +140,7 @@ chooseDataTypeForImage <- function (image, format, maxSize = NULL)
     }
 }
 
-#' Working with MRI images stored in various formats
+#' Reading and writing image files
 #' 
 #' Functions for reading, writing, locating, copying and removing MRI images
 #' stored in NIfTI, Analyze, MGH and MRtrix formats.
@@ -164,38 +168,29 @@ chooseDataTypeForImage <- function (image, format, maxSize = NULL)
 #' call to \code{\link{options}}, or by setting the \code{TRACTOR_FILETYPE}
 #' environment variable before loading the \code{tractor.base} package.
 #' 
-#' Since multiple files may be involved, copying, moving or symlinking images
-#' is not trivial. \code{copyImageFiles} and \code{symlinkImageFiles} are
-#' wrappers around the standard functions \code{\link{file.copy}} and
-#' \code{\link{file.symlink}} which handle this complexity.
-#' 
-#' @param fileName,from,to File names, with or without appropriate extension.
-#' @param image An \code{\linkS4class{MriImage}} object.
-#' @param fileType A character vector of length one, giving the file type
-#'   required or expected. If this option is missing, the file type used for
-#'   writing images will be taken from the \code{tractorFileType} option. See
-#'   Details.
-#' @param auxiliaries A character vector of auxiliary file suffixes to search
-#'   for.
+#' @param fileName A file path, with or without appropriate extension.
 #' @param metadataOnly Logical value: if \code{TRUE}, only metadata are read
 #'   into the object.
 #' @param volumes An optional integer vector specifying a subset of volumes to
 #'   read (generally to save memory). If given, only the requested volumes in
 #'   the 4D file will be read.
 #' @param sparse Logical value: should the image data be stored in a
-#'  \code{\linkS4class{SparseArray}} object?
+#'   \code{\linkS4class{SparseArray}} object?
 #' @param mask An optional \code{\linkS4class{MriImage}} object representing a
 #'   mask, outside of which the image to be read should be considered to be
 #'   zero. This can be used to save memory when only a small part of a large
 #'   image is of interest. Ignored if \code{sparse} is not \code{TRUE}.
 #' @param reorder Logical value: should the image data be reordered to LAS?
 #'   This is recommended in most circumstances.
-#' @param \dots For \code{identifyImageFileNames}, additional arguments to
-#'   \code{\link{resolvePath}}. Elsewhere, additional arguments to
-#'   \code{identifyImageFileNames}.
-#' @param overwrite Logical value: overwrite an existing image file? For
-#'   \code{writeImageFile}, an error will be raised if there is an existing
-#'   file and this is set to FALSE.
+#' @param \dots Additional arguments to \code{\link{identifyImageFileNames}}.
+#' @param image An \code{\linkS4class{MriImage}} object.
+#' @param fileType A character vector of length one, giving the file type
+#'   required or expected. If this option is missing, the file type used for
+#'   writing images will be taken from the \code{tractorFileType} option. See
+#'   Details.
+#' @param overwrite Logical value: overwrite an existing image file? An error
+#'   will be raised if there is an existing file and this is set to
+#'   \code{FALSE}.
 #' @param datatype A datatype string, such as \code{"uint8"} or \code{"float"},
 #'   specifying the pixel datatype to use when storing the data. If specified,
 #'   this must be a type supported by the requested (or default) file format.
@@ -204,29 +199,9 @@ chooseDataTypeForImage <- function (image, format, maxSize = NULL)
 #'   there's no such type.
 #' @param writeTags Logical value: should tags be written in YAML format to an
 #'   auxiliary file?
-#' @param errorIfMissing Logical value: raise an error if no suitable files
-#'   were found?
-#' @param deleteOriginals Logical value: if \code{TRUE}, \code{copyImageFiles}
-#'   performs a move rather than a copy.
-#' @param relative Logical value: if \code{TRUE}, the path stored in the
-#'   symlink will be relative (e.g. \code{"../some_dir/some_image.nii"}) rather
-#'   than absolute (e.g. \code{"/path/to/some_dir/some_image.nii"}).
 #' @return \code{readImageFile} returns an \code{\linkS4class{MriImage}}
-#'   object. \code{imageFileExists} returns \code{TRUE} if an existing file
-#'   with the specified name exists (all file extensions are checked), and
-#'   \code{FALSE} otherwise. \code{removeImageFiles} returns the result of
-#'   \code{\link{unlink}} applied to all relevant files. \code{writeImageFile}
-#'   and \code{identifyImageFileNames} return a list with the following elements,
-#'   describing the identified or written files:
-#'   \describe{
-#'     \item{fileStem}{The file name without extension.}
-#'     \item{headerFile}{The full header file name.}
-#'     \item{imageFile}{The full image file name.}
-#'     \item{format}{The format of the files (\code{"Nifti"}, \code{"Analyze"}
-#'       or \code{"Mgh"}). Not returned by \code{writeImageFile}.}
-#'   }
-#'   \code{copyImageFiles} and \code{symlinkImageFiles} are called for their
-#'   side effects.
+#'   object. \code{writeImageFile} returns a list giving details of the file
+#'   paths that were written to.
 #' 
 #' @author Jon Clayden
 #' @seealso The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}) and
@@ -237,7 +212,6 @@ chooseDataTypeForImage <- function (image, format, maxSize = NULL)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
-#' @rdname files
 #' @export
 readImageFile <- function (fileName, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
 {
@@ -462,7 +436,7 @@ writeGradientDirections <- function (directions, bValues, fileName)
     writeLines(lines, fileName)
 }
 
-#' @rdname files
+#' @rdname readImageFile
 #' @export
 writeImageFile <- function (image, fileName = NULL, fileType = getOption("tractorFileType"), overwrite = TRUE, datatype = "fit", writeTags = FALSE)
 {
