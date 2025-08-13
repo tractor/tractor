@@ -131,6 +131,12 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
             
             info = function () { return (.info) },
             
+            read = function (...)
+            {
+                images <- lapply(paths, readImageFile, ...)
+                return (where(length(images) == 1, images[[1]], images))
+            },
+            
             copy = function (target, overwrite = TRUE) { processFiles(.info, target, action="copy", overwrite=overwrite) },
             
             delete = function () { processFiles(.info, action="delete", all=TRUE) },
@@ -486,6 +492,8 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
 #'     \item{info()}{Return information about existing files, as a list with
 #'       one element per path. An element will be \code{NULL} if no
 #'       corresponding files currently exist.}
+#'     \item{read(...)}{Read the images into memory and return them as
+#'       \code{\linkS4class{MriImage}} objects.}
 #'     \item{copy(target, overwrite=TRUE)}{Copy the files to target paths (new
 #'       file names or a directory).}
 #'     \item{delete()}{Delete the files or any map reference to them.}
