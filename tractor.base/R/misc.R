@@ -189,7 +189,8 @@ embrace <- function (strings)
 #'   justified; otherwise they will be right justified.
 #' @return This function is called for its side effect.
 #' @author Jon Clayden
-#' @seealso \code{\link{setOutputLevel}} for the reportr output level system.
+#' @seealso \code{\link[reportr]{setOutputLevel}} for the \code{reportr} output
+#'   level system.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
