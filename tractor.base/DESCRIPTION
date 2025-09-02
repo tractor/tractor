@@ -1,9 +1,9 @@
 Package: tractor.base
-Version: 3.4.2
-Date: 2024-02-27
+Version: 3.4.5.1
+Date: 2025-09-02
 Title: Read, Manipulate and Visualise Magnetic Resonance Images
-Author: Jon Clayden
-Maintainer: Jon Clayden <code@clayden.org>
+Authors@R: person("Jon", "Clayden", role=c("cre","aut"),
+    email="code@clayden.org", comment=c(ORCID="0000-0002-6608-0619"))
 Imports: methods, ore (>= 1.3.0), reportr, shades, RNifti
 Suggests: mmand, loder, divest, jsonlite, yaml, tinytest
 Enhances: oro.nifti
