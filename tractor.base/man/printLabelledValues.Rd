@@ -35,7 +35,8 @@ Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 }
 \seealso{
-\code{\link{setOutputLevel}} for the reportr output level system.
+\code{\link[reportr]{setOutputLevel}} for the \code{reportr} output
+  level system.
 }
 \author{
 Jon Clayden
