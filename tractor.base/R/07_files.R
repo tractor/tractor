@@ -133,7 +133,9 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
             
             read = function (...)
             {
-                images <- lapply(paths, readImageFile, ...)
+                images <- lapply(.info, function(i) {
+                    where(!is.null(i), readImageFile(i$stem, ...))
+                })
                 return (where(length(images) == 1, images[[1]], images))
             },
             
