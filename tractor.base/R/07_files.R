@@ -154,8 +154,7 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
     fileStem = function (paths)
     {
         "Obtain a file stem for each specified path, dropping format-specific suffixes"
-        stem <- ensureFileSuffix(expandFileName(paths), NULL, strip=unlist(formats))
-        return (ifelse(is.na(paths), NA_character_, stem))
+        return (ensureFileSuffix(paths, NULL, strip=unlist(formats)))
     },
     
     findFormat = function (paths, intent = c("read","write"), all = FALSE)
