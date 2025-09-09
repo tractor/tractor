@@ -124,7 +124,8 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
     atPaths = function (paths)
     {
         "Return a handle object to manipulate files at specific paths"
-        .info <- lapply(paths, function(path) .self$findFormat(path, all=TRUE))
+        paths <- .self$resolvePaths(paths)
+        .info <- .self$findFormat(paths, all=TRUE)
         
         return (structure(list(
             stems = function () { return (.self$fileStem(paths)) },
@@ -157,44 +158,61 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
         return (ensureFileSuffix(paths, NULL, strip=unlist(formats)))
     },
     
-    findFormat = function (paths, intent = c("read","write"), all = FALSE)
+    findFormat = function (paths, intent = c("read","write"), preference = NULL, all = FALSE)
     {
         "Identify and potentially validate files to find the format used at specific paths"
-        if (length(paths) > 1L)
-            return (setNames(lapply(paths, .self$findFormat), paths))
-        if (is.na(paths))
-            return (NULL)
-        
-        stem <- .self$fileStem(paths)
+        paths <- .self$resolvePaths(paths)
         intent <- match.arg(intent)
-        auxPaths <- setNames(ensureFileSuffix(stem, auxiliaries), auxiliaries)
-        if (intent == "read")
-            auxPaths <- auxPaths[file.exists(auxPaths)]
+        results <- setNames(rep(list(NULL), length(paths)), paths)
         
-        result <- NULL
-        for (formatName in names(formats))
+        for (path in na.omit(paths))
         {
-            suffixes <- formats[[formatName]]
-            realPaths <- ensureFileSuffix(stem, suffixes)
-            if (intent == "write" || all(file.exists(realPaths)))
+            stem <- .self$fileStem(path)
+            auxPaths <- setNames(ensureFileSuffix(stem, auxiliaries), auxiliaries)
+            if (intent == "read")
+                auxPaths <- auxPaths[file.exists(auxPaths)]
+            
+            # Favour preferential formats, if any were specified
+            formatNames <- names(formats)
+            if (length(preference) > 0L)
             {
-                validator <- validators[[formatName]]
-                if (intent == "read" && !is.null(validator) && !isTRUE(try(validator(setNames(realPaths, suffixes)), silent=TRUE)))
-                    next
-                
-                if (is.null(result))
+                preferred <- formatNames %in% as.character(preference)
+                formatNames <- c(formatNames[preferred], formatNames[!preferred])
+            }
+            
+            result <- NULL
+            for (formatName in formatNames)
+            {
+                suffixes <- formats[[formatName]]
+                realPaths <- ensureFileSuffix(stem, suffixes)
+                if (intent == "write" || all(file.exists(realPaths)))
                 {
-                    result <- list(format=formatName, stem=stem, requiredFiles=setNames(realPaths,suffixes), auxiliaryFiles=auxPaths)
-                    if (!all) break
-                }
-                else
-                {
-                    result$otherFormats <- c(result$otherFormats, formatName)
-                    result$otherFiles <- c(result$otherFiles, realPaths)
+                    validator <- validators[[formatName]]
+                    if (intent == "read" && !is.null(validator) && !isTRUE(try(validator(setNames(realPaths, suffixes)), silent=TRUE)))
+                        next
+                    
+                    if (is.null(result))
+                    {
+                        result <- structure(list(format=formatName, stem=stem, requiredFiles=setNames(realPaths,suffixes), auxiliaryFiles=auxPaths), class="concreteFileSet")
+                        if (!all) break
+                    }
+                    else
+                    {
+                        result$otherFormats <- c(result$otherFormats, formatName)
+                        result$otherFiles <- c(result$otherFiles, realPaths)
+                    }
                 }
             }
+            results[[path]] <- result
         }
-        return (where(!is.null(result), structure(result, class="concreteFileSet")))
+        
+        return (results)
+    },
+    
+    resolvePaths = function (paths)
+    {
+        "Perform any special path handling and resolve final paths"
+        return (expandFileName(tractor.base::resolvePath(paths)))
     },
     
     subset = function (match, ...)
@@ -279,6 +297,8 @@ FileMap <- setRefClass("FileMap", contains="TractorObject", fields=list(director
         "Return the in-memory map, optionally sorted by key"
         where(sorted, map[sort(names(map))], map)
     },
+    
+    nElements = function () { return (length(map)) },
     
     setElements = function (keys, values)
     {
@@ -382,7 +402,7 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
         result$map <- function (target, overwrite = TRUE, relative = TRUE)
         {
             singleTarget <- (length(target) == 1)
-            targetsMissing <- sapply(lapply(target,.self$findFormat), is.null)
+            targetsMissing <- sapply(.self$findFormat(target), is.null)
             if (any(targetsMissing))
                 processFiles(.info[targetsMissing], where(singleTarget,target,target[targetsMissing]), action="move")
             if (any(.super$present()))
@@ -410,19 +430,14 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
     
     findFormat = function (paths, intent = c("read","write"), all = FALSE)
     {
-        "Identify and potentially validate files to find the format used at specific paths"
-        if (length(paths) > 1L)
-            return (setNames(lapply(paths, .self$findFormat), paths))
-        if (is.na(paths))
-            return (NULL)
+        # The superclass method calls .self$resolvePaths(), which handles map
+        # redirection through the override below
+        results <- callSuper(paths, intent=intent, preference=tolower(getOption("tractorFileType")), all=all)
         
-        stem <- .self$fileStem(paths)
-        intent <- match.arg(intent)
-        
-        # If the stem matches literally then set header and image fields and return
-        result <- callSuper(stem, intent=intent, all=all)
-        if (!is.null(result))
-        {
+        # Set header and image fields if files are found
+        return (lapply(results, function(result) {
+            if (is.null(result))
+                return (NULL)
             if (length(result$requiredFiles) == 1L)
                 result$headerFile <- result$imageFile <- result$requiredFiles
             else
@@ -431,16 +446,26 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
                 result$imageFile <- result$requiredFiles[names(result$requiredFiles) %~|% "^img"]
             }
             return (result)
-        }
+        }))
+    },
+    
+    resolvePaths = function (paths)
+    {
+        paths <- callSuper(paths)
         
-        mapValue <- FileMap$new(stem)$getElements(basename(stem))
-        if (!is.null(mapValue))
-            return (findFormat(file.path(dirname(stem), mapValue)))
-        else
-        {
-            value <- defaultMap[[basename(stem)]]
-            return (where(!is.null(value), findFormat(file.path(dirname(stem), value))))
-        }
+        # Obtain a map and check if it's non-empty
+        map <- FileMap$new(paths)
+        if (map$nElements() == 0L && length(defaultMap) == 0L)
+            return (paths)
+        
+        # Perform map redirection, if relevant
+        stems <- sapply(.self$fileStem(paths), function(stem) {
+            mapValue <- map$getElements(basename(stem)) %||% defaultMap[[basename(stem)]]
+            if (!is.null(mapValue))
+                stem <- file.path(dirname(stem), mapValue)
+            return (stem)
+        })
+        return (stems)
     }
 ))
 
