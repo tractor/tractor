@@ -252,6 +252,12 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     imageExists = function (type, place = NULL, index = 1) { return (imageFileExists(.self$getImageFileNameByType(type, place, index))) },
     
+    imageFiles = function (type, place = NULL, index = 1, fallback = FALSE)
+    {
+        path <- .self$getImageFileNameByType(type, place, index, fallback)
+        return (tractor.base::imageFiles(path, defaultMap=.self$getMap(place)))
+    },
+    
     unlinkDirectory = function (type, ask = TRUE)
     {
         dirToRemove <- expandFileName(.self$getDirectory(type))
