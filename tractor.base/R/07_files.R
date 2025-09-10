@@ -203,7 +203,10 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
                     }
                 }
             }
-            results[[path]] <- result
+            
+            # Avoid assigning NULL, which removes the element
+            if (!is.null(result))
+                results[[path]] <- result
         }
         
         return (results)
