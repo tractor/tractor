@@ -38,7 +38,7 @@
 identifyImageFileNames <- function (fileName, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
 {
     fileSet <- ImageFileSet$new(auxiliaries=auxiliaries)
-    format <- fileSet$findFormat(fileName, all=TRUE)
+    format <- fileSet$findFormat(fileName,all=TRUE)[[1]]
     
     if (is.null(format))
     {
@@ -456,7 +456,7 @@ writeImageFile <- function (image, fileName = NULL, fileType = getOption("tracto
     else if (files$present())
         report(OL$Error, "File exists and cannot be overwritten")
     
-    info <- imageFiles()$subset(fileType)$findFormat(fileName, intent="write")
+    info <- imageFiles()$subset(fileType)$findFormat(fileName,intent="write")[[1]]
     fileNames <- list(fileStem=info$stem, headerFile=info$headerFile, imageFile=info$imageFile)
     
     if (!image$isReordered() && !(info$format %~% "^nifti"))
