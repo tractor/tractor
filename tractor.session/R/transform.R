@@ -168,8 +168,9 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
         report(OL$Info, "Storing identity transforms")
         registration <- createRegistration(sourceMetadata, targetImage)
         
-        report(OL$Info, "Symlinking data volume")
-        symlinkImageFiles(session$getImageFileNameByType("rawdata",type), session$getImageFileNameByType("data",type), overwrite=TRUE)
+        report(OL$Info, "Mapping data volume")
+        target <- session$getImageFileNameByType("data", type)
+        session$imageFiles("rawdata",type)$map(target)
     }
     else
     {

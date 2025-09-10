@@ -92,8 +92,9 @@ runExperiment <- function ()
         }
         else
         {
-            report(OL$Info, "Symlinking volume to reference")
-            symlinkImageFiles(session$getImageFileNameByType("t1","structural",index=1), session$getImageFileNameByType("refT1","structural"))
+            report(OL$Info, "Mapping volume to reference")
+            target <- session$getImageFileNameByType("refT1", "structural")
+            session$imageFiles("t1","structural",index=1)$map(target)
         }
     }
 }
