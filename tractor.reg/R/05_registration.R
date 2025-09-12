@@ -201,6 +201,20 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
     }
 ))
 
+.RegistrationFile <- tractor.base:::FileSet$new(formats=list(flat="Rdata", folder="xfmb"), validators=list(folder=dir.exists))
+
+#' @rdname readRegistration
+#' @export
+registrationFile <- function (path = NULL)
+{
+    if (is.null(path))
+        return (.RegistrationFile)
+    else if (inherits(path, "fileSetHandle"))
+        return (path)
+    else
+        return (.RegistrationFile$atPaths(path))
+}
+
 #' Read a registration from file
 #' 
 #' Read a complete registration from file, including all associated transforms.
@@ -208,12 +222,13 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
 #' recent versions of TractoR.
 #' 
 #' @param path A string giving the path to the file or directory, with or
-#'   without the file extension.
+#'   without the file extension. May be `NULL` for `registrationFile()`.
 #' @param validate Boolean value. If `TRUE`, the default, a deserialised
 #'   object is checked to make sure it is of class [Registration].
-#' @return For `readRegistration()`, a registration object (an error is
-#'   signalled if no suitable files exist). For `registrationPath()`, the
-#'   resolved path to the registration on disk, or `NULL`.
+#' @return For `readRegistration()`, a registration object. (An error is
+#'   signalled if no suitable files exist.) For `registrationFile()`, a
+#'   file handle object for the relevant path or (if `path` was `NULL`) a
+#'   generic `FileSet` object.
 #' @author Jon Clayden
 #' @references Please cite the following reference when using TractoR in your
 #' work:
@@ -224,11 +239,12 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
 #' @export
 readRegistration <- function (path, validate = TRUE)
 {
-    path <- registrationPath(path)
+    file <- registrationFile(path)
+    info <- file$info()[[1]]
     
-    if (is.null(path))
+    if (!file$present())
         report(OL$Error, "No registration found at path #{path}")
-    else if (!file.info(path)$isdir)
+    else if (info$format == "flat")
     {
         convertImage <- function (rawImage)
         {
@@ -240,7 +256,7 @@ readRegistration <- function (path, validate = TRUE)
                 report(OL$Error, "Old-style serialised transform file #{path} cannot be updated")
         }
         
-        fields <- deserialiseReferenceObject(path, raw=TRUE)
+        fields <- deserialiseReferenceObject(info$requiredFiles, raw=TRUE)
         
         # Dead-end format only used in prerelease TractoR 3.0
         if ("version" %in% names(fields))
@@ -267,6 +283,7 @@ readRegistration <- function (path, validate = TRUE)
     # Directory-based format (.xfmb) used by TractoR 3.0 to 3.4
     else
     {
+        path <- info$requiredFiles
         methodFile <- file.path(path, "method.txt")
         method <- ifelse(file.exists(methodFile), readLines(methodFile)[1], "")
         reg <- Registration$new(file.path(path,"source"), file.path(path,"target"), method)
@@ -290,22 +307,6 @@ readRegistration <- function (path, validate = TRUE)
         }
         return (reg)
     }
-}
-
-#' @rdname readRegistration
-#' @export
-registrationPath <- function (path)
-{
-    pathStem <- ensureFileSuffix(ore_subst("/$","",path), NULL, strip=c("xfmb","Rdata"))
-    filePath <- ensureFileSuffix(pathStem, "Rdata")
-    dirPath <- ensureFileSuffix(pathStem, "xfmb")
-    
-    if (file.exists(filePath))
-        return (filePath)
-    else if (dir.exists(dirPath))
-        return (dirPath)
-    else
-        return (NULL)
 }
 
 #' Create an unoptimised registration

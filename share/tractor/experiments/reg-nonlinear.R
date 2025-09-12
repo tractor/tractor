@@ -40,12 +40,13 @@ runExperiment <- function ()
     target <- identifyImageFileNames(Arguments[2])$fileStem
     
     assert(!is.null(transformName) || nArguments() > 2, "Transformation name must be specified if there is no output file")
+    regFile <- registrationFile(transformName)
     
     if (is.null(transformName))
         transformName <- Arguments[3]
-    else if (!is.null(registrationPath(transformName)))
+    else if (regFile$present())
     {
-        registration <- readRegistration(transformName, validate=FALSE)
+        registration <- readRegistration(regFile, validate=FALSE)
         if (!is(registration, "Registration"))
             report(OL$Warning, "Existing transformation file is not valid")
         else if (!symmetric && is.null(initControlFile) && "nonlinear" %in% names(registration$getTypes()))

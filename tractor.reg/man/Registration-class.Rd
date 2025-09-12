@@ -57,6 +57,6 @@ This field is not serialised with the object.}
 
 \note{
 \code{MriImage} source and target images should not be reordered, as
-usually performed by \code{\link[tractor.base:files]{tractor.base::readImageFile()}}, if the resulting
+usually performed by \code{\link[tractor.base:readImageFile]{tractor.base::readImageFile()}}, if the resulting
 transforms need to be consistent with the original files.
 }
