@@ -1,5 +1,6 @@
 #@desc Subsample a diffusion acquisition scheme, and optionally the associated data. Arguments after the first specify the number of directions to take from each shell, in ascending order by b-value (including b=0). This may be done based on the original order of acquisition (the "sequential" method), randomly or following the model of mutually repelling electrostatic charges, which aims to ensure the subset is maximally separated on the sphere. In the latter case the DecayPower option can be used to choose between several variants of the model: 1 corresponds to Coulombic energy, 2 (the default) corresponds to electrostatic force, and larger values correspond to ultra-repulsive variants. The UnweightedMethod option determines the method for unweighted (b=0) shells, and the WeightedMethod determines all others. If the source argument is a session directory, and Data is TRUE, then (raw) image data will also be subsetted and extracted. The results are written to file using the specified SubsetName as a basename.
 #@args source, [number of directions per shell]
+#@group Diffusion processing
 
 library(tractor.session)
 
@@ -31,6 +32,7 @@ runExperiment <- function ()
 	
 	coulombSample <- function (dirs, n)
 	{
+		# Sample directions following Koay et al., 2011 (DOI 10.1118/1.3615163)
 		N <- nrow(dirs)
 		crossTerms <- matrix(NA, N, N)
 		
