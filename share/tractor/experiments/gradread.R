@@ -1,5 +1,5 @@
 #@args destination, directions file, [b-values]
-#@desc Read diffusion gradient directions from a text file, and update the specified session directory. The text file should contain the diffusion gradient vectors applied to the data set, given either one-per-column or one-per-row, normalised or unnormalised, and with or without zeroes for b=0 measurements. If exactly one b-value is given then zero is assumed to be used in addition; otherwise all b-values must be given. A file containing the b-values for each volume in order may also be given as the third argument.
+#@desc Read diffusion gradient directions from a text file, and update the specified destination, which can be a session directory, image sidecar file or standalone file. The source file should contain the diffusion gradient vectors applied to the data set, given either one-per-column or one-per-row, normalised or unnormalised, and with or without zeroes for b=0 measurements. If exactly one b-value is given then zero is assumed to be used in addition; otherwise all b-values must be given. A file containing the b-values for each volume in order may also be given as a third argument.
 #@group Diffusion processing
 
 library(tractor.session)
