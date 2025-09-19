@@ -470,11 +470,10 @@ writeImageFile <- function (image, fileName = NULL, fileType = getOption("tracto
         writeMgh(image, fileNames, datatype=datatype, gzipped=(info$format %~% "gz$"))
     
     if (image$isInternal())
-    {
         image$setSource(expandFileName(info$stem))
-        if (Sys.getenv("TRACTOR_COMMANDLINE") != "")
-            image$setTags(commandHistory=Sys.getenv("TRACTOR_COMMANDLINE"), merge=TRUE)
-    }
+    
+    if (Sys.getenv("TRACTOR_COMMANDLINE") != "")
+        image$setTags(commandHistory=Sys.getenv("TRACTOR_COMMANDLINE"), merge=TRUE)
     
     if ((writeTags || file.exists(ensureFileSuffix(info$stem,"tags"))) && image$nTags() > 0)
     {
