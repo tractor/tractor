@@ -255,7 +255,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     imageFiles = function (type, place = NULL, index = 1, fallback = FALSE)
     {
         path <- .self$getImageFileNameByType(type, place, index, fallback)
-        return (tractor.base::imageFiles(path, defaultMap=.self$getMap(place)))
+        fileSet <- tractor.base:::ImageFileSet(defaultMap=.self$getMap(place))
+        return (fileSet$atPaths(path))
     },
     
     unlinkDirectory = function (type, ask = TRUE)

@@ -315,7 +315,7 @@ FileMap <- setRefClass("FileMap", contains="TractorObject", fields=list(director
         "Read the map file into memory"
         file <- .self$getFile()
         if (directory != "" && file.exists(file))
-            .self$map <- yaml::read_yaml(mapFile)
+            .self$map <- yaml::read_yaml(file)
         invisible (.self)
     },
     

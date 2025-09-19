@@ -93,8 +93,8 @@ runExperiment <- function ()
         else
         {
             report(OL$Info, "Mapping volume to reference")
-            target <- session$getImageFileNameByType("refT1", "structural")
-            session$imageFiles("t1","structural",index=1)$map(target)
+            target <- session$getImageFileNameByType("t1", "structural", index=1)
+            session$imageFiles("refT1","structural")$map(target)
         }
     }
 }
