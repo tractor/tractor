@@ -61,14 +61,17 @@ runExperiment <- function ()
 	n <- as(Arguments[-1], "integer")
 	indices <- integer(0L)
 	
-	session <- NULL
 	if (isTRUE(file.info(Arguments["source"])$isdir))
 	{
 		session <- attachMriSession(Arguments["source"])
 		scheme <- session$getDiffusionScheme()
+		files <- session$imageFiles("rawdata", "diffusion")
 	}
 	else
+	{
 		scheme <- readDiffusionScheme(Arguments["source"])
+		files <- imageFiles(Arguments["source"])
+	}
 	
 	shells <- scheme$getShellIndices()
 	directions <- scheme$getGradientDirections()
@@ -104,9 +107,9 @@ runExperiment <- function ()
 	assert(length(indices) > 0, "No volumes selected")
 	
 	scheme <- asDiffusionScheme(directions[indices,,drop=FALSE], bValues=bValues[indices])
-	if (includeData && !is.null(session))
+	if (includeData && files$present())
 	{
-		image <- session$getImageByType("rawdata", "diffusion", volumes=indices)
+		image <- files$read(volumes=indices)
 		image$setTags(bVectors=scheme$getGradientDirections(), bValues=scheme$getBValues())
 		if (createSession)
 		{
