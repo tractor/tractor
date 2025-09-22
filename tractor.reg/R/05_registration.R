@@ -338,7 +338,20 @@ readRegistration <- function (path, validate = TRUE)
 createRegistration <- function (source, target, method = "identity", ...)
 {
     registration <- Registration$new(source, target, method)
-    xfm <- buildAffine(source=source, target=target, ...)
+    
+    # The buildAffine() function expects source and target to have the same
+    # dimensionality, so work around this if necessary
+    # FIXME: Ultimately this should be resolved in RNiftyReg
+    if (registration$nTransforms() == 1L)
+        xfm <- buildAffine(source=RNifti::niftiHeader(source), target=RNifti::niftiHeader(target), ...)
+    else
+    {
+        sourceBlock <- RNifti::niftiHeader(source)
+        sourceBlock$dim[sourceBlock$dim[1]+1] <- 1
+        sourceBlock$dim[1] <- sourceBlock$dim[1] - 1
+        xfm <- buildAffine(source=sourceBlock, target=RNifti::niftiHeader(target), ...)
+    }
+    
     registration$setTransforms(rep(list(xfm), registration$nTransforms()), "affine")
     return (registration)
 }
