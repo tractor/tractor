@@ -190,7 +190,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     if (file.exists(eddyParamsFile))
     {
         corrections <- as.matrix(read.table(eddyParamsFile))
-        affines <- lapply(seq_len(nrow(corrections)), function(i) solve(RNiftyReg::buildAffine(translation=corrections[i,1:3], angles=corrections[i,4:6], source=targetPath)))
+        affines <- lapply(seq_len(nrow(corrections)), function(i) RNiftyReg::invertAffine(RNiftyReg::buildAffine(translation=corrections[i,1:3], angles=corrections[i,4:6], source=targetPath)))
     }
     else if (file.exists(eddyCorrectLogFile))
     {
@@ -210,6 +210,7 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
         report(OL$Error, "No eddy current correction log was found")
     
     registration$setTransforms(affines, "affine")
+    registration$serialise(file.path(session$getDirectory("diffusion"), "coreg_xfm.Rdata"))
     invisible(registration)
 }
 
