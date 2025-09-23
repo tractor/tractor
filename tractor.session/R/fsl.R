@@ -226,12 +226,12 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     runWorkflow("bet-diffusion", session, IntensityThreshold=intensityThreshold, VerticalGradient=verticalGradient)
 }
 
-runBedpostWithSession <- function (session, nFibres = 3, how = c("fg","bg","screen","tmux"))
+runBedpostWithSession <- function (session, nFibres = 3)
 {
     session <- as(session, "MriSession")
     session$unlinkDirectory("bedpost")
     modelSpecification <- ifelse(session$getDiffusionScheme()$nShells() > 1, "\"-model 2\"", "")
-    runWorkflow("bedpostx", session, Context=match.arg(how), FibresPerVoxel=nFibres, ModelSpec=modelSpecification)
+    runWorkflow("bedpostx", session, FibresPerVoxel=nFibres, ModelSpec=modelSpecification)
 }
 
 getBedpostNumberOfFibresForSession <- function (session)

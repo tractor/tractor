@@ -9,7 +9,6 @@ runExperiment <- function ()
     session <- attachMriSession(ifelse(nArguments()==0, ".", Arguments[1]))
     
     nFibres <- getConfigVariable("FibresPerVoxel", 3, "integer")
-    howRunBedpost <- getConfigVariable("Context", "fg", validValues=c("fg","bg","screen","tmux"), deprecated=TRUE)
     force <- getConfigVariable("Force", FALSE)
     
     if (!force && imageFileExists(session$getImageFileNameByType("avf")))
@@ -28,6 +27,6 @@ runExperiment <- function ()
         if (dataMetadata$getDimensions()[4] != sum(scheme$nDirections()))
             report(OL$Error, "Total number of directions (", sum(scheme$nDirections()), ") does not match the data file (", dataMetadata$getDimensions()[4], " volumes)")
         
-        runBedpostWithSession(session, nFibres, how=howRunBedpost)
+        runBedpostWithSession(session, nFibres)
     }
 }
