@@ -226,7 +226,7 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     runWorkflow("bet-diffusion", session, IntensityThreshold=intensityThreshold, VerticalGradient=verticalGradient)
 }
 
-runBedpostWithSession <- function (session, nFibres = 3, how = c("fg","bg","screen"))
+runBedpostWithSession <- function (session, nFibres = 3, how = c("fg","bg","screen","tmux"))
 {
     session <- as(session, "MriSession")
     session$unlinkDirectory("bedpost")

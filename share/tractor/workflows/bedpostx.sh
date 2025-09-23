@@ -19,5 +19,6 @@ case "$Context" in
     fg) ${FURROW} ${TRACTOR_COMMAND} @fdt/ -n $FibresPerVoxel $ModelSpec ;;
     bg) ${FURROW} ${TRACTOR_COMMAND} @fdt/ -n $FibresPerVoxel $ModelSpec & ;;
     screen) screen -d -m ${FURROW} ${TRACTOR_COMMAND} @fdt/ -n $FibresPerVoxel $ModelSpec ;;
+    tmux) tmux new -d ${FURROW} ${TRACTOR_COMMAND} @fdt/ -n $FibresPerVoxel $ModelSpec ;;
     *) echo "Error: The specified context is not valid" 1>&2; exit 1 ;;
 esac
