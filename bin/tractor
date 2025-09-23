@@ -62,8 +62,9 @@ usage()
     echo "'.R' extension. The program searches in the current working directory for"
     echo "the specified script first, followed by any directory specified using the"
     echo "'-w' option, then ~/.tractor, and finally the share/tractor/experiments"
-    echo "directory under \$TRACTOR_HOME. The \$TRACTOR_PATH environment variable can"
-    echo "be used to specify additional paths. The man page has details."
+    echo "directory under \$TRACTOR_HOME. The \$TRACTOR_PATH and \$TRACTOR_PACKAGES"
+    echo "environment variables can be used to specify additional paths. The man"
+    echo "page has details."
     echo
     echo "To find out what scripts are available, type \"tractor list\". To find out"
     echo "what a given script does, type \"tractor -o (script name)\"."

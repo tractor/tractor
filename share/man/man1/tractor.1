@@ -13,7 +13,7 @@ tractor \- Command line interface for the TractoR MRI analysis project
 .SH DESCRIPTION
 The \fBtractor\fR program provides a simple shell interface to the packages making up the core of the TractoR project, via a set of experiment \fIscripts\fR which encapsulate common tasks. A \fIscript\fR may take a number of \fIarguments\fR and/or configuration parameters, which can be specified on the command line or in a separate file (see "Script Configuration and Arguments" below). In the second synopsis form, using the '\-o' flag, the program will give a description of the specified experiment, along with a list of the options relevant to it. The final form summarises the flags available to the \fBtractor\fR program itself.
 .PP
-The \fIscript\fR, a text file containing R code, need not be specified with the '\.R' extension. The program searches in the current working directory for the named \fIscript\fR first, followed by any directory specified using the '\-w' flag, then ~/\.tractor, and finally \fB$TRACTOR_HOME\fR/share/tractor/experiments. Additional search paths can be specified using the \fBTRACTOR_PATH\fR variable (see "Environment Variables" below). Any \fIscript\fR not in one of these locations must be specified using its full path.
+The \fIscript\fR, a text file containing R code, need not be specified with the '\.R' extension. The program searches in the current working directory for the named \fIscript\fR first, followed by any directory specified using the '\-w' flag, then ~/\.tractor, and finally \fB$TRACTOR_HOME\fR/share/tractor/experiments. Additional search paths can be specified using the \fBTRACTOR_PATH\fR and \fBTRACTOR_PACKAGES\fR variables (see "Environment Variables" below). Any \fIscript\fR not in one of these locations must be specified using its full path.
 .PP
 By default, a log file containing a history of all TractoR experiments run is created or updated in the working directory. This can be useful to keep track of what has been done, but it can be disabled using the '\-z' flag to reduce clutter if desired. Calls to scripts which are purely informative are not usually logged.
 .PP
@@ -55,7 +55,7 @@ Produce verbose output: the \fIlevel\fR determines the amount of extra informati
 Specify a subarchitecture (e.g. 'x86_64'), which is passed to R. This option can be used to switch between subarchitectures on systems, such as Mac OS X, which support them, thereby switching, for example, between 32-bit and 64-bit builds of R.
 .TP
 .B \-w \fIworking_dir\fB
-Specify the working directory for the experiment, which will be created if necessary (default is the current directory).
+Specify the working directory for the experiment, which will be created if necessary. The default is set by the \fBTRACTOR_WORKING_DIR\fR environment variable, if it is set; otherwise it is the current directory.
 .TP
 .B \-c \fIconfig_file\fB
 Specify a configuration file in YAML format. Note the path to the file is relative to the current directory, rather than the working directory specified with '\-w' (if any). This flag may be specified multiple times.
@@ -131,7 +131,9 @@ tractor \-v2 track /data/subject1 34,23,17 Streamlines:5000
 This example runs the 'track' script, generating moderately verbose output ('\-v2'). It passes two unnamed arguments, a session directory ('/data/subject1') and a seed point ('34,23,17'); one named parameter, 'Streamlines', is set to '5000'.
 
 .SH ENVIRONMENT VARIABLES
-At present the \fBtractor\fR program makes use of two environment variables, \fBTRACTOR_HOME\fR and \fBTRACTOR_PATH\fR, when looking for \fIscript\fR files. If no \fIscript\fR is found in the current or working directory, or in ~/\.tractor, the program next searches any directories given by the \fBTRACTOR_PATH\fR environment variable. (The format of this variable is the same as the standard \fBPATH\fR, with multiple directories separated by colons.) The default search location, \fB$TRACTOR_HOME\fR/share/tractor/experiments, is searched last. 
+At present the \fBtractor\fR program makes use of three environment variables, \fBTRACTOR_HOME\fR, \fBTRACTOR_PATH\fR and \fBTRACTOR_PACKAGES\fR, when looking for \fIscript\fR files. If no \fIscript\fR is found in the current or working directory, or in ~/\.tractor, the program next searches any directories given by the \fBTRACTOR_PATH\fR environment variable. (The format of this variable is the same as the standard \fBPATH\fR, with multiple directories separated by colons.) Next, any R packages specified in \fBTRACTOR_PACKAGES\fR are checked (a \fIscript\fR would need to be in its tractor/experiments subdirectory). The default search location, \fB$TRACTOR_HOME\fR/share/tractor/experiments, is searched last. 
+.PP
+The working directory defaults to \fBTRACTOR_WORKING_DIR\fR if it is set. TractoR's use of colour in output can be suppressed by setting \fBTRACTOR_NOCOLOUR\fR or \fBTRACTOR_NOCOLOR\fR to a non-empty value.
 
 .SH DIAGNOSTICS
 Return value is 0 if no errors were generated by the experiment script, and 1 otherwise. The exact number of errors and warnings generated is written to \fBstdout\fR(4) unless the '\-q' flag is given.

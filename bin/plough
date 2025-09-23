@@ -27,7 +27,7 @@ usage()
     echo "plough (program v3.4.1, distribution v$distribution_version)"
     echo "Plough through your TractoR analysis!"
     echo
-    echo "Usage: plough [-GXD] -C config_file [-V variable_name] [-R repetitions]"
+    echo "Usage: plough [-GXDI] -C config_file [-V variable_name] [-R repetitions]"
     echo "              [-Q grid_queue] [-O grid_options] [-P factor]"
     echo "              [tractor_flags] script [arg1 [arg2 ...]]"
     echo "       plough -H"

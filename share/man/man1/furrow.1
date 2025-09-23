@@ -4,7 +4,7 @@
 furrow \- Preprocessor for TractoR's session shorthand
 
 .SH SYNOPSIS
-.B furrow \fR[\fB\-zn\fR] [\fB\-w \fIworking_dir\fR] \fIcommand\fR [\fIarguments\fR]\fB
+.B furrow \fR[\fB\-znr\fR] [\fB\-w \fIworking_dir\fR] \fIcommand\fR [\fIarguments\fR]\fB
 .br
 .B furrow \-h
 
@@ -13,16 +13,19 @@ The \fBfurrow\fR program is a simple wrapper around the specified \fIcommand\fR,
 
 .SH OPTIONS
 .TP
-.B \-h
+.B \-h, \-\-help
 Display usage information and quit.
 .TP
-.B \-z
+.B \-z, \-\-nohistory
 Do not write the command line used into a history log file.
 .TP
-.B \-n
+.B \-n, \-\-stems
 Do not append a suffix to image filenames, giving the file stem instead. Substituting the full image filename is usually best for compatibility with other software, but the stem may occasionally be needed (e.g. for creating derived paths), in which case this flag should be specified.
 .TP
-.B \-w \fIworking_dir\fB
+.B \-r, \-\-relative
+Generate paths relative to the working directory, rather than absolute paths. This will generally produce shorter paths and may help work around incompatibilities with whitespace in full paths.
+.TP
+.B \-w \fIdir\fB, \-\-workdir=\fIdir\fB
 Specify the working directory for the \fIcommand\fR, which will be created if necessary. If \fIworking_dir\fR is a session directory, this allows 'working_dir@FA' to be abbreviated to just '@FA', which results in a more concise command when more than one image is referenced. The default is the current directory.
 
 .SH EXAMPLES
