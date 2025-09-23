@@ -14,25 +14,6 @@ runExperiment <- function ()
     nStreamlines <- getConfigVariable("Streamlines", 1000)
     datasetName <- getConfigVariable("DatasetName", "data")
     overwrite <- getConfigVariable("Overwrite", FALSE)
-    sessionList <- getConfigVariable("SessionList", NULL, "character", deprecated=TRUE)
-    
-    # For backwards compatibility: update an old dataset file
-    if (!is.null(sessionList))
-    {
-        assert(overwrite, "The SessionList variable is only used to update old files - also set Overwrite:true if you want to do this")
-        
-        fileName <- ensureFileSuffix(datasetName, "txt")
-        data <- read.table(fileName)
-        
-        if (!("subject" %in% colnames(data)))
-            report(OL$Error, "Subject number must be stored in the old dataset")
-        index <- which(colnames(data) == "subject")
-        data[,index] <- sessionList[data[,index]]
-        colnames(data)[index] <- "sessionPath"
-        
-        write.table(data, file=fileName)
-        return (invisible(NULL))
-    }
     
     requireArguments("session directory")
     session <- attachMriSession(Arguments[1])

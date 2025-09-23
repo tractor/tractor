@@ -11,7 +11,6 @@ runExperiment <- function ()
     requireArguments("image file(s)")
     
     requestedViewer <- getConfigVariable("Viewer", NULL, "character", validValues=c("tractor","fsleyes","fslview","freeview","mrview"))
-    fixedWindow <- getConfigVariable("FixedWindow", TRUE, deprecated=TRUE)
     plotType <- getConfigVariable("PlotType", NULL, "character", validValues=c("none","time","orientation"))
     directionsFile <- getConfigVariable("DirectionsFile", NULL, "character")
     
