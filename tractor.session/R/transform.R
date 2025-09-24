@@ -79,7 +79,7 @@ transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, pr
 transformParcellationToSpace <- function (parcellation, session, newSpace, oldSpace = "structural", threshold = 0.5, preferAffine = FALSE)
 {
     transform <- .findTransformation(parcellation$image, session, newSpace, oldSpace)
-    newParcellation <- tractor.reg::transformParcellation(transform, parcellation, threshold, preferAffine=preferAffine)
+    newParcellation <- tractor.reg::transformParcellation(transform, parcellation, threshold=threshold, preferAffine=preferAffine)
     
     return (newParcellation)
 }
