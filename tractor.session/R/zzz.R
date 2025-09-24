@@ -14,7 +14,7 @@
     }
     
     # Assume path separator (.Platform$file.sep) is "/"
-    registerPathHandler("^(?<dir>[^@=\\s]+)?@((?<baresubdir>\\w+/)|(?<subdir>\\w+/)?(?<name>[\\w-]+)(?<index>%(\\d+))?(?<suffix>(\\.\\w+){0,2}))$", function(path, index=1L, defaultSessionPath=".") {
+    registerPathHandler("^(?<dir>[^@=\\s]+)?@((?<baresubdir>\\w+/)|(?<subdir>\\w+/)?(?<name>[\\w/-]+)(?<index>%(\\d+))?(?<suffix>(\\.\\w+){0,2}))$", function(path, index=1L, defaultSessionPath=".") {
     #                     | optional session path (default ".")
     #                                         | bare subdirectory branch (should end with a slash)
     #                                                              | file branch (subdirectory optional)
