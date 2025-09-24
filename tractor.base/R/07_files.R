@@ -132,14 +132,6 @@ FileSet <- setRefClass("FileSet", contains="TractorObject", fields=list(formats=
             
             info = function () { return (.info) },
             
-            read = function (...)
-            {
-                images <- lapply(.info, function(i) {
-                    where(!is.null(i), readImageFile(i$stem, ...))
-                })
-                return (where(length(images) == 1, images[[1]], images))
-            },
-            
             copy = function (target, overwrite = TRUE) { processFiles(.info, target, action="copy", overwrite=overwrite) },
             
             delete = function () { processFiles(.info, action="delete", all=TRUE) },
@@ -392,6 +384,13 @@ ImageFileSet <- setRefClass("ImageFileSet", contains="FileSet", fields=list(defa
         .map <- FileMap$new(paths)
         
         result <- .super
+        result$read = function (...)
+        {
+            images <- lapply(.info, function(i) {
+                where(!is.null(i), readImageFile(i$stem, ...))
+            })
+            return (where(length(images) == 1, images[[1]], images))
+        }
         result$delete <- function ()
         {
             # Call .super, not .self, because for these purposes we don't want to resolve maps
