@@ -1,5 +1,6 @@
 reportr::setOutputLevel(Warning)
 options(reportrStderrLevel=reportr::OL$Fatal)
+Sys.setenv(TRACTOR_COMMANDLINE="")
 
 path <- system.file("extdata", "mgh", "maskedb0.mgz", package="tractor.base")
 image <- readImageFile(path)
