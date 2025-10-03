@@ -1,22 +1,32 @@
 .resolveRegistrationTargets <- function (session, sourceSpace, targetSpace)
 {
-    f <- function (mode, space)
+    `%with%` <- function (X,Y) { if (is.null(X) || is.null(Y)) NULL else list(X,Y) }
+    
+    registrand <- function (mode, space)
     {
         type <- .RegistrationTargets[[space]][[mode]]
-        if (!is.null(type) && session$imageExists(type,space))
-            return (type)
-        else
-            return (character(0))
+        if (!is.null(type))
+        {
+            files <- session$imageFiles(type, space)
+            if (files$present())
+            {
+                # File types RNifti can't handle need to be read by TractoR
+                if (files$info()[[1]]$format %~% "^(analyze|nifti)")
+                    return (files$stems())
+                else
+                    return (files$read(reorder=FALSE))
+            }
+        }
+        return (NULL)
     }
     
-    `%|%` <- function(X,Y) if (length(X) == 2) X else Y
-    
-    # Odd semantics here, to be sure, but it saves some typing
-    # The infix operator separates possible return values, in order of preference
-    c(f("unmasked",sourceSpace), f("unmasked",targetSpace)) %|% c(f("masked",sourceSpace), f("masked",targetSpace)) %|% {
-        flag(OL$Warning, "Coregistering images with and without brain extraction may not produce good results")
-        c(.RegistrationTargets[[sourceSpace]][[1]], .RegistrationTargets[[targetSpace]][[1]])
-    }
+    return ((registrand("unmasked",sourceSpace) %with% registrand("unmasked",targetSpace)) %||%
+            (registrand("masked",sourceSpace) %with% registrand("masked",targetSpace)) %||% {
+                flag(OL$Warning, "Coregistering images with and without brain extraction may not produce good results")
+                sourceMode <- names(.RegistrationTargets[[sourceSpace]])[1]
+                targetMode <- names(.RegistrationTargets[[targetSpace]])[1]
+                registrand(sourceMode,sourceSpace) %with% registrand(targetMode,targetSpace)
+            })
 }
 
 MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",caches.="list"), methods=list(
@@ -234,10 +244,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             }
             
             # No suitable registration exists, so we need to run one
-            imageTypes <- .resolveRegistrationTargets(.self, sourceSpace, targetSpace)
-            sourceImageFile <- .self$getImageFileNameByType(imageTypes[1], sourceSpace)
-            targetImageFile <- .self$getImageFileNameByType(imageTypes[2], targetSpace)
-            options <- c(list(sourceImageFile, targetImageFile, registration=registration), options)
+            images <- .resolveRegistrationTargets(.self, sourceSpace, targetSpace)
+            options <- c(images, list(registration=registration), options)
             
             report(OL$Info, "Transformation strategy from #{ifelse(sourceSpace=='mni','MNI',sourceSpace)} to #{ifelse(targetSpace=='mni','MNI',targetSpace)} space is #{implode(strategy,', ',' and ')} - registering images")
             registration <- do.call(tractor.reg::registerImages, options)
@@ -255,8 +263,13 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     imageFiles = function (type, place = NULL, index = 1, fallback = FALSE)
     {
         path <- .self$getImageFileNameByType(type, place, index, fallback)
-        fileSet <- tractor.base:::ImageFileSet(defaultMap=.self$getMap(place))
-        return (fileSet$atPaths(path))
+        if (!is.null(place) && tolower(place) == "mni")
+            return (tractor.base::imageFiles(path))
+        else
+        {
+            fileSet <- tractor.base:::ImageFileSet(defaultMap=.self$getMap(place))
+            return (fileSet$atPaths(path))
+        }
     },
     
     unlinkDirectory = function (type, ask = TRUE)
