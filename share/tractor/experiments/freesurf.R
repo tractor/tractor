@@ -27,7 +27,7 @@ runExperiment <- function ()
     if (parcellationName != "none" && !session$imageExists("parcellation","structural"))
     {
         regionFilePath <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "parcellations", ensureFileSuffix(parcellationName,"lut"))
-        parcellation <- readParcellation(session$getImageFileNameByType(parcellationName), regionFilePath)
+        parcellation <- readParcellation(session$getImageFileNameByType(parcellationName), regionFilePath, reorder=FALSE)
         parcellation$image <- transformImageToSpace(parcellation$image, session, "structural", "freesurfer", interpolation=0)
         writeParcellation(parcellation, session$getImageFileNameByType("parcellation","structural"))
     }
