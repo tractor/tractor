@@ -1,0 +1,79 @@
+modality: MR
+fieldStrength: 1.5
+imagingFrequency: 63.678954
+manufacturer: Siemens
+scannerModelName: Avanto
+deviceSerialNumber: '25471'
+stationName: RP4MRA2
+procedureStepDescription: MRI Head
+softwareVersions: syngo MR B17
+MRAcquisitionType: 3D
+studyDescription: GOSH^BRAIN
+seriesDescription: fl3D_1x1x1_sag
+protocolName: fl3D_1x1x1_sag
+scanningSequence: GR
+sequenceVariant: SP
+scanOptions: PFP
+sequenceName: '*fl3d1'
+imageType:
+- ORIGINAL
+- PRIMARY
+- M
+- ND
+- NORM
+nonlinearGradientCorrection: no
+seriesNumber: 2
+acquisitionTime: '08:41:32.747500'
+acquisitionNumber: 1
+sliceThickness: 1
+SAR: 0.0143815
+tablePosition:
+- 0
+- 0
+- 0
+echoTime: 4.94
+repetitionTime: 11.0
+flipAngle: 15
+partialFourier: 0.875
+baseResolution: 256
+shimSetting:
+- -154
+- -44
+- 291
+- 1361
+- 103
+- 81
+- 175
+- 153
+txRefAmp: 216.651
+phaseResolution: 1
+receiveCoilName: 32Ch_Head
+coilString: C:HEA;HEP
+pulseSequenceDetails: '%SiemensSeq%\gre'
+coilCombinationMethod: Adaptive Combine
+consistencyInfo: N4_VB17A_LATEST_20090307
+matrixCoilMode: SENSE
+percentPhaseFOV: 90.625
+percentSampling: 100
+phaseEncodingSteps: 203
+acquisitionMatrixPE: 232
+reconMatrixPE: 232
+pixelBandwidth: 140
+dwellTime: 1.4e-05
+imageOrientationPatientDICOM:
+- 0
+- 1
+- 0
+- 0
+- 0
+- -1
+imageOrientationText: Sag
+inPlanePhaseEncodingDirectionDICOM: ROW
+bidsGuess:
+- anat
+- _acq-fl3_run-2_part-mag_T2starw
+conversionSoftware: dcm2niix
+conversionSoftwareVersion: v1.0.20241001
+dim_info: 54
+cal_max: 570.0
+

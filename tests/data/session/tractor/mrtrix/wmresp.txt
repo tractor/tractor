@@ -1,3 +1,3 @@
 # Shells: 1000
-# command_history: /usr/local/mrtrix3/bin/amp2response dwi.mif iter6_SF.mif iter6_first_dir.mif iter6_RF.txt  (version=3.0.4)
-586.168105938219 -214.203995447721 40.9637868887308 -5.4263761670841 2.1819883474593 -2.63996476585785
+# command_history: /usr/local/mrtrix3/bin/amp2response dwi.mif iter5_SF.mif iter5_first_dir.mif iter5_RF.txt -lmax 4  (version=3.0.4)
+663.687024229281 -250.141999407674 43.6625635143279
