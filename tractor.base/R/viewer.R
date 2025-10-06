@@ -10,10 +10,10 @@ augmentedInfoPanel <- function (indexNames = NULL)
             indexNames <- list(indexNames)
         return (function (point, data, labels) {
             data <- lapply(seq_along(data), function(i) {
-                if (is.null(indexNames[[i]]))
+                if (is.null(indexNames[[i]]) || is.na(indexNames[[i]][as.character(data[[i]])]))
                     data[[i]]
                 else
-                    es("#{data[[i]] (#{indexNames[[i]][as.character(data[[i]])]})}")
+                    es("#{data[[i]]} (#{indexNames[[i]][as.character(data[[i]])]})")
             })
             RNifti::defaultInfoPanel(point, data, labels)
         })
