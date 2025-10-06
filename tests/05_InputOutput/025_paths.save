@@ -1,8 +1,8 @@
  Image dimensions : 96 x 96 x 60 voxels
  Voxel dimensions : 2.5 x 2.5 x 2.5 mm
 Coordinate origin : (49.81,39.07,23.02)
-  Additional tags : cal_min, cal_max
+  Additional tags : cal_max
  Image dimensions : 96 x 96 x 60 x 12 voxels
- Voxel dimensions : 2.5 x 2.5 x 2.5 mm x 1 s
+ Voxel dimensions : 2.5 x 2.5 x 2.5 mm x 8.3 s
 Coordinate origin : (49.81,39.07,23.02)
-  Additional tags : (none)
+  Additional tags : bVectors, bValues, cal_max
