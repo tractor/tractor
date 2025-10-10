@@ -266,7 +266,7 @@ deserialiseReferenceObject <- function (file = NULL, object = NULL, raw = FALSE)
     
     className <- attr(object, "originalClass")
     if (className %in% names(.Workspace$deserialisers))
-        finalObject <- .Workspace$deserialisers[[className]](fields)
+        finalObject <- .Workspace$deserialisers[[className]](fields, file=file)
     else
     {
         if (!is.null(packageName))
