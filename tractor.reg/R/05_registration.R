@@ -178,6 +178,22 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
         invisible(.self)
     },
     
+    serialise = function (file = NULL)
+    {
+        "Serialise the registration to file"
+        object <- serialiseReferenceObject(.self)
+        if (is.null(file))
+            return (object)
+        
+        # Special-case handling if we're serialising to a file: convert paths
+        # to be relative to the serialised file
+        if (is.character(object$source))
+            object$source <- relativePath(object$source, file)
+        if (is.character(object$target))
+            object$target <- relativePath(object$target, file)
+        serialiseReferenceObject(object, file)
+    },
+    
     summarise = function ()
     {
         "Summarise the registration"
@@ -275,7 +291,8 @@ readRegistration <- function (path, validate = TRUE)
         # Current format (from TractoR 3.5)
         else
         {
-            reg <- deserialiseReferenceObject(object=fields)
+            # Re-deserialise from the file to ensure the custom deserialiser is used
+            reg <- deserialiseReferenceObject(info$requiredFiles)
             assert(!validate || is(reg,"Registration"), "Serialised object is not a Registration object")
             return (reg)
         }
