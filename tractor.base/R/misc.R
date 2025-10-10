@@ -406,7 +406,13 @@ expandFileName <- function (fileName, base = getwd())
     # This covers C:\dir\file, \dir\file, \\server\dir\file, //server/dir/file and /dir/file, but not URLs
     # Cf. https://docs.microsoft.com/en-gb/windows/win32/fileio/naming-a-file#fully-qualified-vs-relative-paths
     result <- ifelse(fileName %~% "^([A-Za-z]:)?[/\\\\]|^~", fileName, file.path(base,fileName))
-    result <- normalizePath(result, .Platform$file.sep, FALSE)
+    
+    # normalizePath() may do nothing if the file doesn't exist, but this is fairly common for TractoR, e.g., when resolving stems, so if the file doesn't exist normalise its parent directory and stick the file back on
+    exist <- file.exists(result)
+    result[exist] <- normalizePath(result[exist], .Platform$file.sep, FALSE)
+    result[!exist] <- file.path(normalizePath(dirname(result[!exist]), .Platform$file.sep, FALSE), basename(result[!exist]))
+    
+    # Pass through NAs
     return (ifelse(is.na(fileName), NA_character_, result))
 }
 
