@@ -218,6 +218,7 @@ inline void importNifti (const RNifti::NiftiImage &source, std::vector<ImageSpac
 {
     // Which dimension indexes over the elements of the vectors?
     // NB: this is one-based because source->dim[0] is the dimensionality
+    // FIXME: currently unused, and unclear if needed (maybe to calculate volumeSize below?)
     int subdim = 0;
     
     // NIfTI style, with the intent set and the fifth dimension used for the vector

@@ -34,7 +34,7 @@ bool MedianStreamlineFilter::process (Streamline &data)
         return false;
     
     // Lengths are in steps here
-    std::vector<size_t> leftLengths(count), rightLengths(count);
+    std::vector<size_t> leftLengths(count,0), rightLengths(count,0);
     const PointType pointType = cache[0].getPointType();
     
     // First pass: find lengths
@@ -69,7 +69,7 @@ bool MedianStreamlineFilter::process (Streamline &data)
             }
         }
         
-        const size_t medianIndex = static_cast<size_t>(round(x.size() / 2.0));
+        const size_t medianIndex = static_cast<size_t>(round((x.size()-1) / 2.0));
         leftPoints[j][0] = locateNthElement(x, medianIndex);
         leftPoints[j][1] = locateNthElement(y, medianIndex);
         leftPoints[j][2] = locateNthElement(z, medianIndex);
@@ -93,7 +93,7 @@ bool MedianStreamlineFilter::process (Streamline &data)
             }
         }
         
-        const size_t medianIndex = static_cast<size_t>(round(x.size() / 2.0));
+        const size_t medianIndex = static_cast<size_t>(round((x.size()-1) / 2.0));
         rightPoints[j][0] = locateNthElement(x, medianIndex);
         rightPoints[j][1] = locateNthElement(y, medianIndex);
         rightPoints[j][2] = locateNthElement(z, medianIndex);
