@@ -1,5 +1,6 @@
 #@args [session directory]
 #@desc Check the signs of the diffusion gradient directions associated with a session directory (default "."), flip them as necessary, and optionally update the gradient cache. By default, a least-squares diffusion tensor fit is performed for one slice in each orientation, and the principal directions shown for the user to judge whether their orientations are appropriate.
+#@group Diffusion processing
 #@interactive TRUE
 
 library(tractor.session)

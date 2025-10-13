@@ -4,10 +4,11 @@
 #@example tractor apply image1 image2 "log(a+b)"
 #@example # Threshold and binarise two images, then add them together
 #@example tractor apply image1 image2 "ifelse(a>=1,1,0)" Combine:sum
+#@group General analysis
 
 runExperiment <- function ()
 {
-    requireArguments("image file(s)", "R expression")
+    requireArguments("image file(s)", "R expression", name=FALSE)
     
     nInputs <- getConfigVariable("Inputs", NULL, "integer")
     combine <- getConfigVariable("Combine", NULL, "character", validValues=c("mean","sum","prod","min","max"))
@@ -28,7 +29,7 @@ runExperiment <- function ()
     }
     
     assert(nInputs > 0, "At least one input image must be specified")
-    assert(is.null(combine) || nInputs <= 26, "Images beyond the 26th cannot be referred to by the expression", level=OL$Warning)
+    assert(!is.null(combine) || nInputs <= 26, "Images beyond the 26th cannot be referred to by the expression", level=OL$Warning)
     expression <- implode(Arguments[-(1:nInputs)], sep=" ")
     
     if (is.null(combine))

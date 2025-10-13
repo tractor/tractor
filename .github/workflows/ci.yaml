@@ -4,7 +4,8 @@ on:
   push:
     # The docker branch tracks master, so it doesn't need testing separately
     branches-ignore:
-      docker
+    - docker
+    - debug
   pull_request:
 
 defaults:
@@ -18,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        R: [ '3.5.0', '4.0.0', 'release' ]
+        R: [ '3.6.2', '4.2.3', 'release' ]
     
     steps:
     - name: Check out code
@@ -51,6 +52,10 @@ jobs:
     
     - name: Run tests
       run: make deeptest
+    
+    - name: Generate debug test output
+      if: failure()
+      run: make dtest
   
   # Standard R CMD check on tractor.base package (Linux and Windows)
   base-check:

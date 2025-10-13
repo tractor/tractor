@@ -6,14 +6,16 @@ ECHO=/bin/echo
 ECHO_N=/bin/echo -n
 DIFF=diff -b
 TIME=time -p
+TEE=tee
 
+DEBUG=0
 COLUMNS=40
 TRACTOR_HOME=$(PWD)/..
-TRACTOR_PATH=$(TRACTOR_HOME)/tests/scripts
+TRACTOR_PACKAGES=tractor.utils
 TRACTOR=$(TRACTOR_HOME)/bin/tractor -q -z -i -v0
 PLOUGH=$(TRACTOR_HOME)/bin/plough -q -z -i -v0
-FURROW=$(TRACTOR_HOME)/bin/furrow -z
-export COLUMNS TRACTOR_HOME TRACTOR_PATH TRACTOR PLOUGH FURROW
+FURROW=$(TRACTOR_HOME)/bin/lr -v -l utils $(TRACTOR_HOME)/bin/furrow -z
+export COLUMNS TRACTOR_HOME TRACTOR_PACKAGES TRACTOR PLOUGH FURROW
 
 # Tests are run three levels down
 TRACTOR_TEST_DATA=../../../data
@@ -35,7 +37,7 @@ run-tests:
 	@echo "All tests completed"
 
 debug-tests:
-	@$(MAKE) run-tests TRACTOR="$(TRACTOR) -d"
+	@$(MAKE) run-tests TRACTOR="$(TRACTOR) -d" DEBUG=1
 
 create-tests:
 	@$(MAKE) `find . -name '0*.sh' -print | sort | sed 's/\.sh$$/\.save/'` || exit 1
@@ -46,6 +48,9 @@ create-tests:
 	@test `grep -c "#@data" $<` -eq 0 || cp -R `grep '#@data' $< | sed 's/#@data //'` tmp/$*/
 	@if test -f $*.skip && $(BASH) $*.skip 2>&1; then \
 	 	$(ECHO) "SKIPPED"; \
+	 elif test $(DEBUG) -eq 1; then \
+	 	$(ECHO) "$<"; \
+	 	cd tmp/$* && $(BASH) "../../../$<" 2>&1 | $(TEE) "../../../$@"; \
 	 else \
 	 	$(TIME) ( cd tmp/$* && $(BASH) "../../../$<" >"../../../$@" 2>&1 ) >tmp/$*/.time 2>&1 || ( $(ECHO) "FAIL"; cat $@; rm -f $@; exit 1 ); \
 		real=`grep '^real' tmp/$*/.time | sed 's/real *//'`; $(DIFF) $*.save $@ >tmp/$*/.diff 2>&1 && ( $(ECHO) "OK ($$real s)" ) || ( $(ECHO) "FAIL"; cat tmp/$*/.diff; rm -f $@; exit 1 ); \

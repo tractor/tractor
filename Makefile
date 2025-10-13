@@ -15,7 +15,11 @@ default: build post-build-info
 post-build-info:
 	@$(ECHO) 'Run "make install" to install packages'
 
-build:
+bin/lr: lib/littler
+	@$(INSTALL) lib/littler
+	@cp lib/R/littler/bin/r bin/lr
+
+build: bin/lr
 	@$(ECHO_N) "Building tractor executable... "
 	@cd src && $(R) CMD make >build.log 2>&1 && $(ECHO) "OK" || ( $(ECHO) "FAIL"; exit 0 )
 
@@ -30,7 +34,7 @@ post-install-info:
 	@$(ECHO)
 	@$(ECHO) "The ~/.bashrc file can be created if it does not already exist."
 
-lib/.timestamp: lib/ore lib/reportr lib/corpcor lib/loder lib/shades lib/yaml lib/jsonlite lib/Rcpp lib/RcppEigen lib/mmand lib/RNifti lib/divest lib/RNiftyReg
+lib/.timestamp: lib/ore lib/reportr lib/arrg lib/corpcor lib/loder lib/shades lib/yaml lib/jsonlite lib/Rcpp lib/RcppArray lib/RcppEigen lib/mmand lib/RNifti lib/divest lib/RNiftyReg
 	@$(INSTALL) $? && touch lib/.timestamp
 
 install-libs: lib/.timestamp
@@ -67,7 +71,7 @@ install-track:
 install-graph:
 	@$(INSTALL) tractor.graph
 
-install-main:
+install-main: build
 	@$(MAKE) install-base install-utils install-reg install-session install-track install-nt install-graph
 
 install: build
@@ -94,7 +98,7 @@ clean:
 
 distclean: clean
 	@rm -f lib/.timestamp
-	@rm -f libexec/tractor src/tractor.o src/build.log install.log
+	@rm -f bin/lr libexec/tractor src/tractor.o src/build.log install.log
 
 test:
 	@cd tests && $(MAKE) run-tests R=$(R)
@@ -103,8 +107,9 @@ dtest:
 	@cd tests && $(MAKE) debug-tests R=$(R)
 
 utest: lib/R/tinytest lib/R/oro.nifti lib/R/igraph
-	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.base
-	@$(ENV) TRACTOR_HOME=. bin/tractor -i -v0 tests/scripts/unit-test tractor.graph
+	@$(ENV) TRACTOR_HOME=. TRACTOR_PACKAGES=tractor.utils bin/tractor -i -v0 unit-test tractor.base
+	@$(ENV) TRACTOR_HOME=. TRACTOR_PACKAGES=tractor.utils bin/tractor -i -v0 unit-test tractor.session
+	@$(ENV) TRACTOR_HOME=. TRACTOR_PACKAGES=tractor.utils bin/tractor -i -v0 unit-test tractor.graph
 
 deeptest: utest test
 

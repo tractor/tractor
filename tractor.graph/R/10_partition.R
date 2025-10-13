@@ -169,10 +169,11 @@ modularity <- function (graph, ...)
 }
 
 #' @export
-partitionGraph <- function (graph, method = "modularity")
+partitionGraph <- function (graph, method = c("modularity","connected"), dropTrivial = FALSE)
 {
     graph <- asGraph(graph, strict=TRUE)
     method <- match.arg(method)
+    communities <- NULL
     
     if (method == "modularity")
     {
@@ -198,8 +199,23 @@ partitionGraph <- function (graph, method = "modularity")
         }
         
         communities <- findPartition(connectedVertices(graph))
-        report(OL$Info, "Graph has been partitioned into #{length(communities)} parts, containing #{implode(sapply(communities,length),sep=', ',finalSep=' and ')} vertices")
-        
+    }
+    else if (method == "connected")
+    {
+        memberships <- .Call("connectedComponents", .graphPointer(graph), PACKAGE="tractor.graph")
+        communities <- lapply(unique(memberships), function (value) which(memberships == value))
+    }
+    
+    sizes <- sapply(communities, length)
+    if (dropTrivial && any(sizes < 2L))
+    {
+        communities <- communities[sizes > 1L]
+        sizes <- sapply(communities, length)
+    }
+    
+    if (length(communities) > 0)
+    {
+        report(OL$Info, "Graph has been partitioned into #{length(communities)} parts, containing #{implode(sizes,sep=', ',finalSep=' and ')} vertices")
         return (asPartitionedGraph(graph, communities=communities))
     }
 }

@@ -1,5 +1,6 @@
 #@args image file, volume numbers
 #@desc Trim an image, keeping or discarding the specified volumes (depending on the value of the Mode option), with 1 being the first volume. Note that the original image will be OVERWRITTEN by the new, smaller image.
+#@group Image processing
 
 runExperiment <- function ()
 {

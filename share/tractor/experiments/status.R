@@ -1,5 +1,6 @@
 #@args [session directory]
 #@desc Print the status of a session directory (default "."), including various information about what processes have been run on it.
+#@group Working with sessions
 #@nohistory TRUE
 
 library(tractor.session)
@@ -42,6 +43,10 @@ runExperiment <- function ()
         modelStrings <- NULL
         if (session$imageExists("eigenvector", "diffusion", 1))
             modelStrings <- c(modelStrings, "DTI")
+        if (session$imageExists("csffod") || session$imageExists("gmfod"))
+            modelStrings <- c(modelStrings, "MSMT-CSD")
+        else if (session$imageExists("wmfod"))
+            modelStrings <- c(modelStrings, "CSD")
         nFibres <- getBedpostNumberOfFibresForSession(session)
         if (nFibres > 0)
             modelStrings <- c(modelStrings, es("FSL-BEDPOSTX (#{nFibres} #{pluralise('fibre',n=nFibres)} per voxel)"))

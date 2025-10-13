@@ -1,9 +1,10 @@
 #@desc Visualise the results of evaluating a data set against a PNT model, creating an Analyze/NIfTI/MGH volume representing the best matching tract. The number of seed points contributing to the final tract is affected by the options MaximumSeedPoints and MinimumPosterior. In the default case a single seed point will always be used, but with MaximumSeedPoints:5 MinimumPosterior:0.01, for example, then up to 5 seeds will contribute, if that many have matching posterior probabilities of at least 0.01. If a session directory is not specified then an image will be created for each session path stored in the dataset.
 #@args [session directories]
+#@group Neighbourhood tractography
 
-suppressPackageStartupMessages(require(tractor.session))
-suppressPackageStartupMessages(require(tractor.nt))
-suppressPackageStartupMessages(require(tractor.track))
+library(tractor.session)
+library(tractor.nt)
+library(tractor.track)
 
 runExperiment <- function ()
 {

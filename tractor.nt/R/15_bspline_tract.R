@@ -126,8 +126,8 @@ newBSplineTractFromStreamline <- function (streamlineTract, knotSpacing = NULL, 
             flag(OL$Warning, "Seed knot is outside the line")
             return (NULL)
         }
-
-        line <- tractor.reg::translatePoints(streamlineTract$getLine(), -streamlineTract$getSeedPoint())
+        
+        line <- t(apply(streamlineTract$getLine(), 1, "-", streamlineTract$getSeedPoint()))
         data <- data.frame(t=pointLocs, x=line[,1], y=line[,2], z=line[,3])
         knotRange <- range(knots)
         data <- subset(data, t>=knotRange[1] & t<=knotRange[2])

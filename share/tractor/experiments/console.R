@@ -1,4 +1,5 @@
 #@desc Start up the TractoR console, an interactive R session with all TractoR packages loaded.
+#@group Utilities
 #@nohistory TRUE
 
 library(ore)

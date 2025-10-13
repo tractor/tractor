@@ -183,15 +183,14 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
     
     sourcePath <- session$getImageFileNameByType("rawdata", "diffusion")
     targetPath <- session$getImageFileNameByType("refb0", "diffusion")
-    transform <- tractor.reg::Transformation$new(threadSafeTempFile(), sourcePath, targetPath)
+    registration <- tractor.reg::createRegistration(sourcePath, targetPath, "fsl")
     
     eddyParamsFile <- file.path(session$getDirectory("fdt"), "data.eddy_parameters")
     eddyCorrectLogFile <- file.path(session$getDirectory("fdt"), "data.ecclog")
     if (file.exists(eddyParamsFile))
     {
         corrections <- as.matrix(read.table(eddyParamsFile))
-        affines <- lapply(seq_len(nrow(corrections)), function(i) solve(RNiftyReg::buildAffine(translation=corrections[i,1:3], angles=corrections[i,4:6], source=targetPath)))
-        transform$updateFromObjects(affineMatrices=affines, method="fsl")
+        affines <- lapply(seq_len(nrow(corrections)), function(i) RNiftyReg::invertAffine(RNiftyReg::buildAffine(translation=corrections[i,1:3], angles=corrections[i,4:6], source=targetPath)))
     }
     else if (file.exists(eddyCorrectLogFile))
     {
@@ -205,14 +204,14 @@ readEddyCorrectTransformsForSession <- function (session, index = NULL)
         if (is.null(index))
             index <- seq_len(nrow(matrices) / 4)
         
-        matrices <- lapply(index, function(i) matrices[(((i-1)*4)+1):(i*4),])
-        transform$updateFromObjects(affineMatrices=matrices, method="fsl", convert=TRUE)
+        affines <- lapply(index, function(i) RNiftyReg:::convertAffine(matrices[(((i-1)*4)+1):(i*4),], sourcePath, targetPath))
     }
     else
         report(OL$Error, "No eddy current correction log was found")
     
-    transform$move(file.path(session$getDirectory("diffusion"), "coreg"))
-    invisible (transform)
+    registration$setTransforms(affines, "affine")
+    registration$serialise(file.path(session$getDirectory("diffusion"), "coreg_xfm.Rdata"))
+    invisible(registration)
 }
 
 runDtifitWithSession <- function (session, weightedLeastSquares = FALSE)
@@ -227,12 +226,12 @@ runBetWithSession <- function (session, intensityThreshold = 0.5, verticalGradie
     runWorkflow("bet-diffusion", session, IntensityThreshold=intensityThreshold, VerticalGradient=verticalGradient)
 }
 
-runBedpostWithSession <- function (session, nFibres = 3, how = c("fg","bg","screen"))
+runBedpostWithSession <- function (session, nFibres = 3)
 {
     session <- as(session, "MriSession")
     session$unlinkDirectory("bedpost")
     modelSpecification <- ifelse(session$getDiffusionScheme()$nShells() > 1, "\"-model 2\"", "")
-    runWorkflow("bedpostx", session, Context=match.arg(how), FibresPerVoxel=nFibres, ModelSpec=modelSpecification)
+    runWorkflow("bedpostx", session, FibresPerVoxel=nFibres, ModelSpec=modelSpecification)
 }
 
 getBedpostNumberOfFibresForSession <- function (session)

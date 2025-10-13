@@ -243,17 +243,17 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
         if (any(index <= 0))
             report(OL$Error, "Zero and negative indices are not yet supported")
     }
-    else if (!is.list(i) && nArgs != (nDims + 1))
+    # Don't evaluate i unless necessary - it may be missing
+    else if (nArgs != (nDims + 1) && !is.list(i))
         report(OL$Error, "Number of dimensions given does not match image")
     else
     {
-        if (is.list(i))
-            args <- i
-        else
-            args <- .evaluateIndices(i, j, ...)
+        args <- .evaluateIndices(i, j, ...)
+        if (is.list(args[[1]]))
+            args <- args[[1]]
         
         args <- lapply(seq_len(nDims), function(i) {
-            if (is.null(args[i]))
+            if (is.null(args[[i]]))
                 1:dims[i]
             else
                 args[[i]]

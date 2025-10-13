@@ -36,7 +36,6 @@
     62  NA                                              Right-vessel                     "#A020F0"  other                right       NA
     63  choroid_plexus_right                            Right-choroid-plexus             "#00C8DD"  other                right       NA
     77  NA                                              WM-hypointensities               "#C846FF"  other                NA          NA
-    80  NA                                              non-WM-hypointensities           "#A46CE2"  other                NA          NA
     85  optic_chiasm                                    Optic-Chiasm                     "#EAA91E"  other                NA          NA
    251  corpus_callosum_posterior                       CC_Posterior                     "#000040"  white_matter         NA          NA
    252  corpus_callosum_mid-posterior                   CC_Mid_Posterior                 "#000070"  white_matter         NA          NA

@@ -1,5 +1,6 @@
 reportr::setOutputLevel(Warning)
 options(reportrStderrLevel=reportr::OL$Fatal)
+Sys.setenv(TRACTOR_COMMANDLINE="")
 
 expect_flag <- function (object, ...) {
     object

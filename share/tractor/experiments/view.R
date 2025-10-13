@@ -1,5 +1,6 @@
 #@args image file(s)
 #@desc Display one or more image files. The viewer used will be taken from the TRACTOR_VIEWER environment variable if it is not specified explicitly, and will default to "tractor" if this is not set. Note that TractoR's internal viewer uses the R convention for voxel locations (starting at 1), whereas fslview and freeview use the FSL/C convention (starting at 0). For the internal viewer only, the fourth viewer panel can be used to show variation across a 4D series with respect to time or orientation. This wrapper script will automatically work around a problem with fslview and certain file datatypes.
+#@group Visualisation
 #@interactive TRUE
 #@nohistory TRUE
 
@@ -10,7 +11,6 @@ runExperiment <- function ()
     requireArguments("image file(s)")
     
     requestedViewer <- getConfigVariable("Viewer", NULL, "character", validValues=c("tractor","fsleyes","fslview","freeview","mrview"))
-    fixedWindow <- getConfigVariable("FixedWindow", TRUE, deprecated=TRUE)
     plotType <- getConfigVariable("PlotType", NULL, "character", validValues=c("none","time","orientation"))
     directionsFile <- getConfigVariable("DirectionsFile", NULL, "character")
     

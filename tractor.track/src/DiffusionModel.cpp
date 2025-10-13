@@ -6,8 +6,8 @@ DiffusionTensorModel::DiffusionTensorModel (const std::string &pdFile)
 {
     RNifti::NiftiImage image(pdFile);
     image.reorient("LAS");
-    space = new ImageSpace(image);
     principalDirections = new Image<ImageSpace::Vector,3>(image);
+    space = principalDirections->imageSpace();
 }
 
 ImageSpace::Vector DiffusionTensorModel::sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const
@@ -30,12 +30,15 @@ BedpostModel::BedpostModel (const std::vector<std::string> &avfFiles, const std:
     
     for (int i=0; i<nCompartments; i++)
     {
-        avf[i] = new Image<float,4>(RNifti::NiftiImage(avfFiles[i]).reorient("LAS"));
-        theta[i] = new Image<float,4>(RNifti::NiftiImage(thetaFiles[i]).reorient("LAS"));
-        phi[i] = new Image<float,4>(RNifti::NiftiImage(phiFiles[i]).reorient("LAS"));
+        RNifti::NiftiImage avfImage(avfFiles[i]);
+        avf[i] = new Image<float,4>(avfImage.reorient("LAS"));
+        RNifti::NiftiImage thetaImage(thetaFiles[i]);
+        theta[i] = new Image<float,4>(thetaImage.reorient("LAS"));
+        RNifti::NiftiImage phiImage(phiFiles[i]);
+        phi[i] = new Image<float,4>(phiImage.reorient("LAS"));
     }
     
-    copyImageSpace(*avf[0]);
+    space = avf[0]->imageSpace();
     nSamples = avf[0]->dim()[3];
 }
 

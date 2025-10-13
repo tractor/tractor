@@ -1,5 +1,6 @@
 #@args session directory, image type
 #@desc Print the full path to the specified image type within a session directory. Some image types, such as "data", can exist in multiple places, and in these cases the Place option can be used to disambiguate the request. The Index option can be use to choose between indexed images, such as diffusion tensor eigenvalue maps.
+#@group Utilities
 #@nohistory TRUE
 
 library(tractor.session)

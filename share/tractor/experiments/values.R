@@ -1,5 +1,6 @@
 #@args image file, [mask file]
 #@desc Print out the values of the specified image, optionally limiting the region of interest to the nonzero voxels in a mask in the same space.
+#@group General analysis
 
 runExperiment <- function ()
 {

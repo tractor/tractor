@@ -1,3 +1,33 @@
+#' Read and write parcellations
+#' 
+#' A parcellation is an integer-valued image in which each unique value
+#' represents a labelled region. The image is therefore associated with some
+#' metadata about each region, which may include a name, a tissue type and a
+#' colour to use when visualising the image. TractoR stores this metadata in
+#' sidecar files with a `"lut"` file extension, structured as a table. These
+#' functions read and write this format alongside the associated image.
+#' 
+#' @param imageFileName Path to an image file.
+#' @param regionFileName Path to the associated region metadata file. If
+#'   `NULL`, this will default to the same path as the image but with a `"lut"`
+#'   file extension.
+#' @param parcellation A list object representing a parcellation, as produced
+#'   by `readParcellation`.
+#' @param ... Additional arguments to [tractor.base::readImageFile()] or
+#'   [tractor.base::writeImageFile()], as appropriate.
+#' @return For `readParcellation`, a list with components
+#'   - `image`: an `MriImage` object representing the image, and
+#'   - `regions`: a `data.frame` containing the region metadata.
+#'   `writeParcellation` is called for its side-effect.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @rdname parcellations
+#' @export
 readParcellation <- function (imageFileName, regionFileName = NULL, ...)
 {
     image <- readImageFile(imageFileName, ...)
@@ -7,6 +37,8 @@ readParcellation <- function (imageFileName, regionFileName = NULL, ...)
     return (list(image=image, regions=regions))
 }
 
+#' @rdname parcellations
+#' @export
 writeParcellation <- function (parcellation, ...)
 {
     image <- parcellation$image
@@ -55,6 +87,31 @@ writeParcellation <- function (parcellation, ...)
     writeLines(lines, regionFileName)
 }
 
+#' Match regions to a parcellation
+#' 
+#' This function matches region names or indices to values within a
+#' parcellation. Integer-valued region specifications (including number
+#' strings) are matched against region indices; other names are matched to
+#' regions by label, lobe, tissue type and hemisphere in that order of
+#' preference.
+#' 
+#' @param regions Region names and/or integer indices. Each value is matched at
+#'   only one level, but regions are included in the return value if they match
+#'   on any term.
+#' @param parcellation A list object representing a parcellation, as produced
+#'   by [readParcellation()].
+#' @param labels Boolean value. If `TRUE`, the labels of the matching regions
+#'   are returned; otherwise the integer indices.
+#' @return Values corresponding to the matching regions: labels or indices,
+#'   depending on the value of `labels`.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 matchRegions <- function (regions, parcellation, labels = FALSE)
 {
     if (!is.character(regions) && !is.integer(regions))
@@ -89,6 +146,37 @@ matchRegions <- function (regions, parcellation, labels = FALSE)
         return (parcellation$regions$index[matches])
 }
 
+#' Combine and resolve region labels
+#' 
+#' This function is a session-aware means of combining standard parcellations
+#' with additional images to produce a hybrid labelled image for further use.
+#' 
+#' @param regions Named parcellation labels, and/or image file paths.
+#' @param session An `MriSession` object representing the session of interest.
+#' @param space The space in which the combined parcellation is required.
+#'   Implicit co-registration will be performed and the structural space
+#'   parcellation transformed in, if necessary. Some kind of ultimate source
+#'   parcellation must exist unless all `regions` are file names.
+#' @param parcellationConfidence Threshold level, ultimately passed to
+#'   [transformParcellation()] if a transformation is required.
+#' @return A list with elements
+#'   - `image`: an integer-valued image representing the combined parcellation;
+#'   - `indices`: the index values of the requested regions of interest, which
+#'     may not match the source images if there is a label clash;
+#'   - `labels`: the extracted region labels, which are based on the file name
+#'     where they don't come from a standard parcellation; and
+#'   - `fromParcellation`: a logical vector indicating which `indices` and
+#'     `labels` come from a standard parcellation.
+#' @seealso If only matching against a specific parcellation is needed,
+#'   [matchRegions()] can be used instead.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 resolveRegions <- function (regions, session, space = "structural", parcellationConfidence = 0.5)
 {
     if (!is(session, "MriSession"))

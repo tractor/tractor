@@ -1,5 +1,5 @@
 .Workspace <- new.env()
-.Workspace$deserialisers <- list()
+.Workspace$deserialisers <- list(loso=function(fields,...) do.call(loso,fields))
 .Workspace$pathHandlers <- list()
 
 # RGB types are handled specially
@@ -31,12 +31,6 @@
     transferSyntaxes=list("1.2.840.10008.1.2"   = list(endian="little",explicitTypes=FALSE),
                           "1.2.840.10008.1.2.1" = list(endian="little",explicitTypes=TRUE),
                           "1.2.840.10008.1.2.2" = list(endian="big",explicitTypes=TRUE)))
-
-.Bids <- list(
-    mappingFromJson=c(MagneticFieldStrength="fieldStrength", ManufacturersModelName="scannerModelName", SpacingBetweenSlices="sliceSpacing", TotalReadoutTime="effectiveReadoutTime", MultibandAccelerationFactor="multibandFactor", ImageComments="comments"),
-    mappingToJson=c(fieldStrength="MagneticFieldStrength", scannerModelName="ManufacturersModelName", sliceSpacing="SpacingBetweenSlices", effectiveReadoutTime="TotalReadoutTime", multibandFactor="MultibandAccelerationFactor", comments="ImageComments"),
-    toIgnore="^[iI]mageType$",
-    toScale="^(Echo|Repetition)Time$")
 
 .FileTypes <- list(
     typeNames=c(     "ANALYZE", "NIFTI", "NIFTI_PAIR", "ANALYZE_GZ", "NIFTI_GZ", "NIFTI_PAIR_GZ", "MGH", "MGH_GZ", "MRTRIX", "MRTRIX_GZ"),

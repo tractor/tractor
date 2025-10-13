@@ -1,5 +1,6 @@
 #@args image file, kernel width
 #@desc Smooth an image using a Gaussian smoothing kernel. The kernel width may be specified using the standard deviation, sigma (WidthType:sd), or the full width at half maximum (WidthType:fwhm). If only one width value is specified then the kernel will be isotropic and have dimensionality equal to that of the image (unless the image has more than three dimensions, in which case it will be 3D). Otherwise the dimensionality of the kernel will be given by the number of values specified. Values can be unequal for an anisotropic kernel.
+#@group Image processing
 
 library(mmand)
 

@@ -1,5 +1,6 @@
 #@args [directories]
 #@desc Create an Analyze/NIfTI/MGH volume by combining data from a set of DICOM files stored in the specified directories (default "."). 3D or 4D images will be created, as appropriate, using file names based on the original folder name or the series metadata. TractoR's own internal DICOM-reading code is used by default, for backwards compatibility, but in this case only the UntileMosaics option is used, and each source directory must contain only one image series. The alternative (and recommended) "divest" back-end is based on the well-established and more robust "dcm2niix" tool, and allows multiple series to be handled without pre-sorting, retention of key metadata in auxiliary .tags files, and heuristic-based automatic session construction. NIfTI-1 is always used as the output format in the latter case.
+#@group DICOM handling
 #@interactive TRUE
 
 library(RNifti)

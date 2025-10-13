@@ -1,5 +1,6 @@
 #@args [file name]
 #@desc Produce a full list of all the DICOM tags contained in the specified file. If the name given corresponds to a directory then the tags for the first DICOM file found in that directory will be shown. If the file name is missing the current directory will be used. Descriptions of the tag, rather than its DICOM group and element numbers, will be given unless Descriptions:false is specified. Siemens ASCII fields will be printed instead of the main DICOM tags if SiemensAscii is true.
+#@group DICOM handling
 #@nohistory TRUE
 
 library(tractor.base)

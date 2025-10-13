@@ -1,9 +1,12 @@
 findWorkflow <- function (name)
 {
+    packagePaths <- unlist(lapply(splitAndConvertString(Sys.getenv("TRACTOR_PACKAGES"), "[:,]"), function(p) system.file("tractor", "workflows", package=p)))
+    
     workflowFile <- ensureFileSuffix(name, "sh")
     pathDirs <- c(".",
                   file.path(Sys.getenv("HOME"), ".tractor"),
                   splitAndConvertString(Sys.getenv("TRACTOR_PATH"), ":", fixed=TRUE),
+                  packagePaths[packagePaths != ""],
                   file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "workflows"))
     possibleLocations <- file.path(pathDirs, workflowFile)
     filesExist <- file.exists(possibleLocations)
@@ -62,12 +65,16 @@ precheckWorkflow <- function (file, session, commandOnly = FALSE)
     return (result)
 }
 
-runWorkflow <- function (name, session, ...)
+runWorkflow <- function (name, session, ..., .args = "")
 {
     workflowFile <- findWorkflow(name)
     
     env <- list(...)
-    env <- structure(as.character(env), names=names(env))
+    if (length(env) > 0L)
+    {
+        env <- env[!sapply(env, is.null)]
+        env <- structure(as.character(env), names=names(env))
+    }
     
     directory <- as.character(session)
     if (length(directory) != 1)
@@ -79,11 +86,10 @@ runWorkflow <- function (name, session, ...)
     tractorFlags <- na.omit(matches(ore.search("-[dziva](\\s+[^-]\\S*)?", Sys.getenv("TRACTOR_FLAGS"), all=TRUE)))
     furrowFlags <- na.omit(matches(ore.search("-z", Sys.getenv("TRACTOR_FLAGS"), all=TRUE)))
     
-    tractorPath <- file.path(Sys.getenv("TRACTOR_HOME"), "bin", "tractor")
-    furrowPath <- file.path(Sys.getenv("TRACTOR_HOME"), "bin", "furrow")
+    path <- paste(file.path(Sys.getenv("TRACTOR_HOME"),"bin"), Sys.getenv("PATH"), sep=":")
     
     sysenv <- Sys.getenv()
-    controlenv <- c(TRACTOR_COMMAND=check$commandPath, TRACTOR_SESSION_PATH=directory, TRACTOR_WORKING_DIR=directory, TRACTOR=es("#{tractorPath} -q #{implode(tractorFlags,' ')}"), FURROW=es("#{furrowPath} #{implode(furrowFlags,' ')}"), TRACTOR_FLAGS="", PS4="\x1b[32m==> \x1b[0m")
+    controlenv <- c(PATH=path, TRACTOR_COMMAND=check$commandPath, TRACTOR_COMMAND_ARGS=implode(.args," "), TRACTOR_SESSION_PATH=directory, TRACTOR_WORKING_DIR=directory, TRACTOR=es("tractor -q #{implode(tractorFlags,' ')}"), FURROW=es("furrow #{implode(furrowFlags,' ')}"), TRACTOR_FLAGS="", PS4="\x1b[32m==> \x1b[0m")
     env <- deduplicate(c(env, controlenv, sysenv[names(sysenv) %~|% "^TRACTOR_"]))
     env[env %~% "\\s"] <- es("\"#{env[env %~% '\\\\s']}\"")
     env <- paste(names(env), env, sep="=")

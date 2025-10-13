@@ -19,11 +19,11 @@ target_dir=`${FURROW} -rz echo @freesurfer/mri/orig`
 set -x
 ${FURROW} mkdir -p "$target_dir"
 for i in `seq 1 99`; do
-    target=`printf "${target_dir}/%03d.mgz" $i`
+    target=`printf "${target_dir}/%03d" $i`
     ${FURROW} -z test -f "@t1%$i" || break
     ${TRACTOR} image cp "@t1%$i" "$target"
     ${TRACTOR} chfiletype "$target" MGH_GZ
 done
 ${FURROW} ln -s @freesurfer/ "$SUBJECTS_DIR/$session_name"
-${FURROW} ${TRACTOR_COMMAND} -subjid "$session_name" "$FreesurferOptions"
-${FURROW} rm -f "$SUBJECTS_DIR/$session_name"
+${TRACTOR_COMMAND} -subjid "$session_name" "$FreesurferOptions"
+rm -f "$SUBJECTS_DIR/$session_name"

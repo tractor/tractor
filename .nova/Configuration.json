@@ -1,4 +1,7 @@
 {
+  "todo.workspace-ignore-paths" : [
+    "lib"
+  ],
   "workspace.art_style" : 1,
   "workspace.color" : 11
 }

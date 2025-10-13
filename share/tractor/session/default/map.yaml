@@ -1,6 +1,7 @@
 diffusion: diffusion
 fdt: fdt
 bedpost: fdt.bedpostX
+mrtrix: mrtrix
 transforms: transforms
 structural: structural
 freesurfer: freesurfer

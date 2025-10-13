@@ -1,6 +1,6 @@
 Package: tractor.reg
-Version: 3.4.2
-Date: 2024-02-22
+Version: 3.5.0
+Date: 2025-10-10
 Title: Image registration in TractoR
 Author: Jon Clayden
 Maintainer: Jon Clayden <code@clayden.org>
@@ -11,3 +11,5 @@ Encoding: UTF-8
 License: GPL-2
 URL: https://www.tractor-mri.org.uk, https://github.com/tractor/tractor
 BugReports: https://github.com/tractor/tractor/issues
+Roxygen: list(markdown=TRUE, old_usage=TRUE)
+RoxygenNote: 7.3.2

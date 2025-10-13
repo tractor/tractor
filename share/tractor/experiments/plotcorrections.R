@@ -1,5 +1,6 @@
 #@desc Plot rotation angles, translations, scales or skews over the time course of an acquisition. These are obtained by reading and decomposing the transformation matrices created by the eddy current correction tool used. The "dpreproc" script must therefore have been run on the session directory (default ".") before running this experiment. A CSV file containing the correction numbers will also be produced if RequireValues:true is given.
 #@args [session directory]
+#@group Diffusion processing
 #@interactive TRUE
 
 library(tractor.session)
@@ -31,8 +32,8 @@ runExperiment <- function ()
                                       scale=c("X (left-right)","Y (anterior-posterior)","Z (superior-inferior)"),
                                       skew=c("X-Y", "X-Z", "Y-Z"))
     
-        transform <- getVolumeTransformationForSession(session, "diffusion")
-        decomposition <- decomposeTransformation(transform)
+        transformSets <- getVolumeTransformationForSession(session,"diffusion")$getTransformSets()
+        decomposition <- lapply(transformSets, function(set) RNiftyReg::decomposeAffine(set$getObject("affine")))
         if (currentMode == "rotation")
             values <- sapply(decomposition, function(x) x$angles / pi * 180)
         else

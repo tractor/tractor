@@ -4,7 +4,7 @@ showImagesInMrview <- function (imageFileNames, wait = FALSE, lookupTable = NULL
     prefixes <- c("", rep("overlay.",length(imageFileNames)-1))
     
     # Add directives to load the images and disable interpolation
-    imageFileNames <- es("-#{prefixes}load #{imageFileNames} -#{prefixes}interpolation 0")
+    imageFileNames <- es("-#{prefixes}load #{shQuote(imageFileNames)} -#{prefixes}interpolation 0")
     
     if (!is.null(lookupTable))
     {

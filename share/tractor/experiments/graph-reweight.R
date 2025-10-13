@@ -2,6 +2,7 @@
 #@desc Reweight a graph object using edge and/or vertex attributes already stored with it. There are a lot of possible weighting schemes so this is done by specifying a general R expression in terms of the attribute names. (These can be seen using "peek".) Since there are two vertices associated with each edge (one at each end), the vertex attributes must be merged into a single value before they can be used; the VertexAttributes option allows this to be done in various ways.
 #@example # Weight edges by the number of streamlines connecting the two vertices, divided by mean voxel count
 #@example tractor graph-reweight graph "nStreamlines/voxelCount" VertexAttributes:mean
+#@group Graph and network analysis
 
 library(tractor.graph)
 

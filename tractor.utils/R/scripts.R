@@ -37,6 +37,19 @@ setAs("character", "integer", function(from) {
     return (result)
 })
 
+colour <- function (strings, col = "default", mod = c("none","bold","dim","italic"))
+{
+    if (isTRUE(as(Sys.getenv("TRACTOR_NOCOLOUR"), "logical")))
+        return (strings)
+    else
+    {
+        mod <- match.arg(mod)
+        modString <- switch(mod, none="", bold="1;", dim="2;", italic="3;")
+        code <- switch(tolower(col), black=30L, red=31L, green=32L, yellow=33L, blue=34L, magenta=35L, cyan=36L, white=37L, default=39L)
+        return (paste0("\x1b[", modString, code, "m", strings, "\x1b[22;0m"))
+    }
+}
+
 isValidAs <- function (value, mode)
 {
     coercedValue <- suppressWarnings(as(value, mode))
@@ -115,14 +128,25 @@ nArguments <- function ()
         return (length(get("Arguments")))
 }
 
-requireArguments <- function (...)
+requireArguments <- function (..., name = TRUE)
 {
     args <- c(...)
     
     if (is.numeric(args) && nArguments() < args)
         report(OL$Error, "At least ", args, " argument(s) must be specified")
-    else if (is.character(args) && nArguments() < length(args))
-        report(OL$Error, "At least ", length(args), " argument(s) must be specified: ", implode(args,", "))
+    else if (is.character(args))
+    {
+        assert(nArguments() >= length(args), "At least #{length(args)} argument(s) must be specified: ", implode(args,", "))
+        
+        # Name the global argument vector and reassign it, if required
+        # This allows expected arguments to be indexed by name, but can cause problems in some contexts (e.g. for "apply")
+        if (name)
+        {
+            arguments <- get("Arguments")
+            names(arguments) <- replace(rep("",length(arguments)), seq_along(args), args)
+            assign("Arguments", arguments, envir=globalenv())
+        }
+    }
 }
 
 expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = TRUE, relative = FALSE)
@@ -132,7 +156,7 @@ expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = T
     suffixes <- as.logical(suffixes)
     relative <- as.logical(relative)
     
-    arguments <- resolvePath(ore.split("\\s+", arguments))
+    arguments <- resolvePath(arguments)
     for (i in seq_along(arguments))
     {
         if (file.exists(arguments[i]))
@@ -159,5 +183,5 @@ expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = T
             arguments[i] <- implode(parts, sep="=")
         }
     }
-    cat(implode(arguments, sep=" "))
+    return (arguments)
 }

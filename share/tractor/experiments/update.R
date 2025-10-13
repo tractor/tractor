@@ -1,4 +1,5 @@
 #@desc Check for a newer version of TractoR, and optionally update the installation. With Reinstall:true, the existing installation will be overwritten even if the latest version is not newer.
+#@group Utilities
 #@interactive TRUE
 #@nohistory TRUE
 

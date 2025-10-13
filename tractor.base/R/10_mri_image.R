@@ -451,7 +451,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
 ))
 
 # Register deserialiser for MriImageMetadata legacy class
-registerDeserialiser("MriImageMetadata", function (fields) {
+registerDeserialiser("MriImageMetadata", function (fields, ...) {
     object <- MriImage$new(imageDims=fields$imagedims, voxelDims=fields$voxdims, voxelDimUnits=fields$voxunit, source=fields$source, origin=fields$origin, xform=fields$storedXform, tags=fields$tags, data=NULL)
     return (object)
 })

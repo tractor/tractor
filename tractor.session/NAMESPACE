@@ -3,6 +3,6 @@ import(reportr)
 import(tractor.base)
 import(yaml)
 
-exportClasses(MriSession, SimpleDiffusionScheme)
+exportClasses(MriSession)
 
 exportPattern("^[^\\.]")

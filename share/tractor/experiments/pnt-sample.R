@@ -1,4 +1,5 @@
 #@desc Sample synthetic streamlines, in MNI standard space, using a reference tract and PNT dispersion model. Beginning at the seed or anchor point stored with the reference tract, the algorithm steps outwards in each direction in turn. At each step it samples an angular deviation from the reference tract from the model, and a direction from a uniform distribution over the resulting circle (see Muñoz Maniega et al., J. Imaging, 2018 for details). Each streamline is resampled to the specified point separation, and then saved to a .trk file for visualisation. The result is an indication of the range of "plausible" deviations from the reference tract, under the model.
+#@group Neighbourhood tractography
 
 library(tractor.reg)
 library(tractor.track)
@@ -80,7 +81,7 @@ runExperiment <- function ()
         interpolatedPoints <- promote(apply(points, 2, mmand::resample, indices, mmand::mnKernel(1,0)), byrow=TRUE)
         
         seedIndex <- which.min(abs(indices - seedIndex))
-        interpolatedPoints <- transformWorldToVoxel(interpolatedPoints, brain)
+        interpolatedPoints <- RNifti::worldToVoxel(interpolatedPoints, brain)
         return (asStreamline(interpolatedPoints, seedIndex, image=brain, coordUnit="vox"))
     }
     

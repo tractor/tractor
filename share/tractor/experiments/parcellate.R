@@ -1,5 +1,6 @@
 #@args session directory, segmentation images
 #@desc Read and merge together parcellations for a T1-weighted image. (The "freesurf" script is a simpler alternative if you just want to use Freesurfer.) Labels in segmentations specified later in the command will take priority over duplicates appearing in earlier segmentations. The special symbol '@' can be used to indicate that the session hierarchy should be checked for the parcellation in question. Any existing parcellation will be taken as a starting point unless IgnoreExisting:true is given. A region description file in the format used in $TRACTOR_HOME/share/tractor/parcellations must be provided for any parcellation type which is not specified there.
+#@group Structural processing
 
 library(tractor.reg)
 library(tractor.session)
@@ -28,8 +29,7 @@ runExperiment <- function ()
             report(OL$Info, "Reading Freesurfer reference image and registering to the session's T1w image")
             freesurferSpaceImage <- readImageFile(freesurferSpaceReference)
             t1Image <- session$getImageByType("refT1", "structural")
-            result <- registerImages(freesurferSpaceImage, t1Image, estimateOnly=TRUE)
-            freesurferTransform <- result$transform
+            freesurferTransform <- registerImages(freesurferSpaceImage, t1Image, estimateOnly=TRUE)
         }
         else
             freesurferTransform <- session$getTransformation("freesurfer", "structural")

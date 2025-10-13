@@ -1,40 +1,46 @@
-getParametersForFileType <- function (fileType = NA, format = NA, singleFile = NA, gzipped = NA, errorIfInvalid = TRUE)
-{
-    if (is.character(fileType))
-        typeIndex <- which(.FileTypes$typeNames == toupper(fileType))
-    else
-        typeIndex <- which(.FileTypes$formatNames == format & .FileTypes$singleFile == singleFile & .FileTypes$gzipped == gzipped)
-    
-    if (length(typeIndex) != 1)
-    {
-        if (errorIfInvalid)
-            report(OL$Error, "Specified file type information is incomplete or invalid")
-        else
-            return (NULL)
-    }
-    
-    parameters <- list(name=.FileTypes$typeNames[typeIndex],
-                       format=.FileTypes$formatNames[typeIndex],
-                       singleFile=.FileTypes$singleFile[typeIndex],
-                       gzipped=.FileTypes$gzipped[typeIndex],
-                       headerSuffix=.FileTypes$headerSuffixes[typeIndex],
-                       imageSuffix=.FileTypes$imageSuffixes[typeIndex])
-    
-    return (parameters)
-}
-
-#' @rdname files
+#' Resolve image paths
+#' 
+#' This function identifies characteristics of an image on disk, including
+#' associated auxiliary files. Its functionality has essentially been
+#' superseded by methods of the \code{\linkS4class{ImageFileSet}} class, but
+#' it remains as an alternative interface to that functionality for backwards
+#' compatibility.
+#' 
+#' @param fileName A character vector of image paths.
+#' @param errorIfMissing Logical value: raise an error if no suitable files
+#'   were found?
+#' @param auxiliaries A character vector of auxiliary file suffixes to search
+#'   for.
+#' @param \dots Additional arguments to \code{\link{resolvePath}}.
+#' @return A list with the following elements, describing the identified files:
+#'   \describe{
+#'     \item{fileStem}{The file name without extension.}
+#'     \item{headerFile}{The full header file name.}
+#'     \item{imageFile}{The full image file name.}
+#'     \item{auxiliaryFiles}{The full path to any auxiliary files.}
+#'     \item{format}{The basic format of the files (\code{"Nifti"},
+#'       \code{"Analyze"}, etc.).}
+#'     \item{headerSuffix}{The file suffix associated with the header file.}
+#'     \item{imageSuffix}{The file suffix associated with the image file.}
+#'     \item{auxiliarySuffixes}{The file suffixes associated with any
+#'       auxiliary files.}
+#'   }
+#' 
+#' @author Jon Clayden
+#' @seealso \code{\link{imageFiles}}, \code{\link{resolvePath}}
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#' 
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 #' @export
-identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
+identifyImageFileNames <- function (fileName, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
 {
-    suffixes <- unique(c(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes, auxiliaries))
-    files <- ensureFileSuffix(fileName, suffixes)
-    exist <- file.exists(files)
-    headersExist <- intersect(unique(.FileTypes$headerSuffixes), suffixes[exist])
-    imagesExist <- intersect(unique(.FileTypes$imageSuffixes), suffixes[exist])
-    auxiliariesExist <- intersect(unique(auxiliaries), suffixes[exist])
+    fileSet <- ImageFileSet$new(auxiliaries=auxiliaries)
+    format <- fileSet$findFormat(fileName,all=TRUE)[[1]]
     
-    if (length(headersExist) < 1 || length(imagesExist) < 1)
+    if (is.null(format))
     {
         originalFileName <- fileName
         fileName <- resolvePath(originalFileName, ...)
@@ -48,118 +54,18 @@ identifyImageFileNames <- function (fileName, fileType = NULL, errorIfMissing = 
                 return (NULL)
         }
         else
-            return (identifyImageFileNames(fileName, fileType=fileType, errorIfMissing=errorIfMissing, auxiliaries=auxiliaries))
+            return (identifyImageFileNames(fileName, errorIfMissing=errorIfMissing, auxiliaries=auxiliaries))
     }
-    else if (length(headersExist) > 1 || length(imagesExist) > 1)
+    else if (length(format$otherFiles) > 0L)
     {
-        if (errorIfMissing)
-            report(OL$Error, "Multiple compatible image files exist: #{fileName}")
-        else
-            return (NULL)
+        assert(!errorIfMissing, "Multiple compatible image files exist: #{fileName}")
+        return (NULL)
     }
     
-    typeIndices <- which(.FileTypes$headerSuffixes == headersExist &
-                         .FileTypes$imageSuffixes == imagesExist)
+    oldFormatName <- ore_subst("^[a-z]", toupper, ore_subst("_.+$","",format$format))
     
-    fileStem <- expandFileName(ensureFileSuffix(fileName, NULL, strip=suffixes))
-    headerFile <- ensureFileSuffix(fileStem, headersExist)
-    imageFile <- ensureFileSuffix(fileStem, imagesExist)
-    if (is.null(auxiliaries))
-        auxiliaryFiles <- NULL
-    else
-        auxiliaryFiles <- ensureFileSuffix(fileStem, auxiliariesExist)
-    
-    # ANALYZE and NIFTI_PAIR file types use the same filename suffixes
-    if (length(typeIndices) == 1)
-        format <- .FileTypes$format[typeIndices]
-    else if (!is.null(fileType))
-        format <- (getParametersForFileType(fileType, errorIfInvalid=TRUE))$format
-    else
-        format <- ifelse(niftiVersion(headerFile) == 0, "Analyze", "Nifti")
-    
-    fileNames <- list(fileStem=fileStem, headerFile=headerFile, imageFile=imageFile, auxiliaryFiles=auxiliaryFiles, format=format, headerSuffix=headersExist, imageSuffix=imagesExist, auxiliarySuffixes=auxiliariesExist)
+    fileNames <- list(fileStem=format$stem, headerFile=format$headerFile, imageFile=format$imageFile, auxiliaryFiles=format$auxiliaryFiles, format=oldFormatName, headerSuffix=names(format$headerFile), imageSuffix=names(format$imageFile), auxiliarySuffixes=names(format$auxiliaryFiles))
     return (fileNames)
-}
-
-#' @rdname files
-#' @export
-imageFileExists <- function (fileName, fileType = NULL)
-{
-    return (sapply(fileName, function (file) {
-        !is.null(identifyImageFileNames(file, fileType, errorIfMissing=FALSE))
-    }))
-}
-
-#' @rdname files
-#' @export
-removeImageFiles <- function (fileName, ...)
-{
-    info <- identifyImageFileNames(fileName, ...)
-    if (!is.null(info))
-    {
-        files <- unique(c(info$headerFile, info$imageFile, info$auxiliaryFiles))
-        report(OL$Debug, "Unlinking files #{embrace(files)}")
-        unlink(files)
-    }
-}
-
-#' @rdname files
-#' @export
-symlinkImageFiles <- function (from, to, overwrite = FALSE, relative = TRUE, ...)
-{
-    if (isTRUE(getOption("tractorNoSymlinks")))
-        return (copyImageFiles(from, to, overwrite, ...))
-    
-    if (length(from) != length(to))
-        report(OL$Error, "The number of source and target file names must match")
-    
-    suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)
-    
-    for (i in seq_along(from))
-    {
-        info <- identifyImageFileNames(from[i], ...)
-        currentSource <- unique(c(info$headerFile, info$imageFile, info$auxiliaryFiles))
-        currentTarget <- unique(ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix,info$auxiliarySuffixes), strip=suffixes))
-        
-        # NB: file.exists() requires the target of an existing link to exist, but we want to know whether the link itself exists
-        if (overwrite && any(!is.na(Sys.readlink(currentTarget))))
-            unlink(currentTarget)
-        if (relative)
-        {
-            for (j in seq_along(currentSource))
-                currentSource[j] <- relativePath(currentSource[j], currentTarget[j])
-        }
-        
-        report(OL$Verbose, "Linking #{embrace(currentSource)} => #{embrace(currentTarget)}")
-        file.symlink(currentSource, currentTarget)
-    }
-}
-
-#' @rdname files
-#' @export
-copyImageFiles <- function (from, to, overwrite = FALSE, deleteOriginals = FALSE, ...)
-{
-    if (length(from) != length(to))
-        report(OL$Error, "The number of source and target file names must match")
-    
-    suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)
-    
-    for (i in seq_along(from))
-    {
-        info <- identifyImageFileNames(from[i], ...)
-        currentSource <- c(info$headerFile, info$imageFile, info$auxiliaryFiles)
-        currentTarget <- ensureFileSuffix(expandFileName(to[i]), c(info$headerSuffix,info$imageSuffix,info$auxiliarySuffixes), strip=suffixes)
-        
-        # Don't try to copy an image onto itself
-        if (all(currentSource == currentTarget))
-            next
-        
-        report(OL$Verbose, "#{ifelse(deleteOriginals,'Moving','Copying')} #{embrace(unique(currentSource))} => #{embrace(unique(currentTarget))}")
-        success <- file.copy(unique(currentSource), unique(currentTarget), overwrite=overwrite)
-        
-        if (all(success) && deleteOriginals)
-            removeImageFiles(from[i], ...)
-    }
 }
 
 chooseDataTypeForImage <- function (image, format, maxSize = NULL)
@@ -234,7 +140,7 @@ chooseDataTypeForImage <- function (image, format, maxSize = NULL)
     }
 }
 
-#' Working with MRI images stored in various formats
+#' Reading and writing image files
 #' 
 #' Functions for reading, writing, locating, copying and removing MRI images
 #' stored in NIfTI, Analyze, MGH and MRtrix formats.
@@ -262,38 +168,29 @@ chooseDataTypeForImage <- function (image, format, maxSize = NULL)
 #' call to \code{\link{options}}, or by setting the \code{TRACTOR_FILETYPE}
 #' environment variable before loading the \code{tractor.base} package.
 #' 
-#' Since multiple files may be involved, copying, moving or symlinking images
-#' is not trivial. \code{copyImageFiles} and \code{symlinkImageFiles} are
-#' wrappers around the standard functions \code{\link{file.copy}} and
-#' \code{\link{file.symlink}} which handle this complexity.
-#' 
-#' @param fileName,from,to File names, with or without appropriate extension.
-#' @param image An \code{\linkS4class{MriImage}} object.
-#' @param fileType A character vector of length one, giving the file type
-#'   required or expected. If this option is missing, the file type used for
-#'   writing images will be taken from the \code{tractorFileType} option. See
-#'   Details.
-#' @param auxiliaries A character vector of auxiliary file suffixes to search
-#'   for.
+#' @param fileName A file path, with or without appropriate extension.
 #' @param metadataOnly Logical value: if \code{TRUE}, only metadata are read
 #'   into the object.
 #' @param volumes An optional integer vector specifying a subset of volumes to
 #'   read (generally to save memory). If given, only the requested volumes in
 #'   the 4D file will be read.
 #' @param sparse Logical value: should the image data be stored in a
-#'  \code{\linkS4class{SparseArray}} object?
+#'   \code{\linkS4class{SparseArray}} object?
 #' @param mask An optional \code{\linkS4class{MriImage}} object representing a
 #'   mask, outside of which the image to be read should be considered to be
 #'   zero. This can be used to save memory when only a small part of a large
 #'   image is of interest. Ignored if \code{sparse} is not \code{TRUE}.
 #' @param reorder Logical value: should the image data be reordered to LAS?
 #'   This is recommended in most circumstances.
-#' @param \dots For \code{identifyImageFileNames}, additional arguments to
-#'   \code{\link{resolvePath}}. Elsewhere, additional arguments to
-#'   \code{identifyImageFileNames}.
-#' @param overwrite Logical value: overwrite an existing image file? For
-#'   \code{writeImageFile}, an error will be raised if there is an existing
-#'   file and this is set to FALSE.
+#' @param \dots Additional arguments to \code{\link{identifyImageFileNames}}.
+#' @param image An \code{\linkS4class{MriImage}} object.
+#' @param fileType A character vector of length one, giving the file type
+#'   required or expected. If this option is missing, the file type used for
+#'   writing images will be taken from the \code{tractorFileType} option. See
+#'   Details.
+#' @param overwrite Logical value: overwrite an existing image file? An error
+#'   will be raised if there is an existing file and this is set to
+#'   \code{FALSE}.
 #' @param datatype A datatype string, such as \code{"uint8"} or \code{"float"},
 #'   specifying the pixel datatype to use when storing the data. If specified,
 #'   this must be a type supported by the requested (or default) file format.
@@ -302,29 +199,9 @@ chooseDataTypeForImage <- function (image, format, maxSize = NULL)
 #'   there's no such type.
 #' @param writeTags Logical value: should tags be written in YAML format to an
 #'   auxiliary file?
-#' @param errorIfMissing Logical value: raise an error if no suitable files
-#'   were found?
-#' @param deleteOriginals Logical value: if \code{TRUE}, \code{copyImageFiles}
-#'   performs a move rather than a copy.
-#' @param relative Logical value: if \code{TRUE}, the path stored in the
-#'   symlink will be relative (e.g. \code{"../some_dir/some_image.nii"}) rather
-#'   than absolute (e.g. \code{"/path/to/some_dir/some_image.nii"}).
 #' @return \code{readImageFile} returns an \code{\linkS4class{MriImage}}
-#'   object. \code{imageFileExists} returns \code{TRUE} if an existing file
-#'   with the specified name exists (all file extensions are checked), and
-#'   \code{FALSE} otherwise. \code{removeImageFiles} returns the result of
-#'   \code{\link{unlink}} applied to all relevant files. \code{writeImageFile}
-#'   and \code{identifyImageFileNames} return a list with the following elements,
-#'   describing the identified or written files:
-#'   \describe{
-#'     \item{fileStem}{The file name without extension.}
-#'     \item{headerFile}{The full header file name.}
-#'     \item{imageFile}{The full image file name.}
-#'     \item{format}{The format of the files (\code{"Nifti"}, \code{"Analyze"}
-#'       or \code{"Mgh"}). Not returned by \code{writeImageFile}.}
-#'   }
-#'   \code{copyImageFiles} and \code{symlinkImageFiles} are called for their
-#'   side effects.
+#'   object. \code{writeImageFile} returns a list giving details of the file
+#'   paths that were written to.
 #' 
 #' @author Jon Clayden
 #' @seealso The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}) and
@@ -335,12 +212,11 @@ chooseDataTypeForImage <- function (image, format, maxSize = NULL)
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
-#' @rdname files
 #' @export
-readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
+readImageFile <- function (fileName, metadataOnly = FALSE, volumes = NULL, sparse = FALSE, mask = NULL, reorder = TRUE, ...)
 {
     # Find the relevant files
-    fileNames <- identifyImageFileNames(fileName, fileType, ...)
+    fileNames <- identifyImageFileNames(fileName, ...)
     
     # Parse the files
     # These functions should return either a complete image or a NIfTI-like
@@ -492,7 +368,7 @@ readImageFile <- function (fileName, fileType = NULL, metadataOnly = FALSE, volu
     if (file.exists(tagsFileName))
         do.call(image$setTags, yaml::yaml.load_file(tagsFileName))
     else if (file.exists(jsonFileName))
-        do.call(image$setTags, convertJsonToTags(readLines(jsonFileName)))
+        do.call(image$setTags, fromBidsJson(jsonFileName, rename=TRUE))
     
     # Read diffusion directions, if present
     dirsFileNames <- ensureFileSuffix(fileNames$fileStem, c("dirs","bval","bvec"))
@@ -560,9 +436,9 @@ writeGradientDirections <- function (directions, bValues, fileName)
     writeLines(lines, fileName)
 }
 
-#' @rdname files
+#' @rdname readImageFile
 #' @export
-writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = TRUE, datatype = "fit", writeTags = FALSE)
+writeImageFile <- function (image, fileName = NULL, fileType = getOption("tractorFileType"), overwrite = TRUE, datatype = "fit", writeTags = FALSE)
 {
     image <- as(image, "MriImage")
     
@@ -572,51 +448,41 @@ writeImageFile <- function (image, fileName = NULL, fileType = NA, overwrite = T
         report(OL$Error, "This image has no associated file name; it must be specified")
     else
         fileName <- image$getSource()
+    assert(length(fileName) == 1L, "Image file path should be a single string")
     
-    params <- getParametersForFileType(fileType, errorIfInvalid=FALSE)
-    if (is.null(params))
-        params <- getParametersForFileType(getOption("tractorFileType"), errorIfInvalid=FALSE)
-    
-    suffixes <- union(.FileTypes$headerSuffixes, .FileTypes$imageSuffixes)
-    
-    files <- ensureFileSuffix(fileName, suffixes)
-    exist <- file.exists(files)
-    
+    files <- imageFiles(fileName)
     if (overwrite)
-        unlink(files[exist])
-    else if (sum(exist) > 0)
+        files$delete()
+    else if (files$present())
         report(OL$Error, "File exists and cannot be overwritten")
     
-    fileStem <- ensureFileSuffix(fileName, NULL, strip=suffixes)
-    headerFile <- ensureFileSuffix(fileStem, params$headerSuffix)
-    imageFile <- ensureFileSuffix(fileStem, params$imageSuffix)
-    fileNames <- list(fileStem=fileStem, headerFile=headerFile, imageFile=imageFile)
+    info <- imageFiles()$subset(fileType)$findFormat(fileName,intent="write")[[1]]
+    fileNames <- list(fileStem=info$stem, headerFile=info$headerFile, imageFile=info$imageFile)
     
-    if (!image$isReordered() && params$format != "Nifti")
+    if (!image$isReordered() && !(info$format %~% "^nifti"))
         report(OL$Error, "An unreordered image can only be written to NIfTI format")
     
-    if (params$format == "Analyze")
+    if (info$format %~% "^analyze")
         report(OL$Error, "Writing to ANALYZE format is no longer supported")
-    else if (params$format == "Nifti")
+    else if (info$format %~% "^nifti")
         writeNifti(image, fileNames, datatype=datatype)
-    else if (params$format == "Mgh")
-        writeMgh(image, fileNames, datatype=datatype, gzipped=params$gzipped)
+    else if (info$format %~% "^mgh")
+        writeMgh(image, fileNames, datatype=datatype, gzipped=(info$format %~% "gz$"))
     
     if (image$isInternal())
-    {
-        image$setSource(expandFileName(fileStem))
-        if (Sys.getenv("TRACTOR_COMMANDLINE") != "")
-            image$setTags(commandHistory=Sys.getenv("TRACTOR_COMMANDLINE"), merge=TRUE)
-    }
+        image$setSource(expandFileName(info$stem))
     
-    if ((writeTags || file.exists(ensureFileSuffix(fileStem,"tags"))) && image$nTags() > 0)
+    if (Sys.getenv("TRACTOR_COMMANDLINE") != "")
+        image$setTags(commandHistory=Sys.getenv("TRACTOR_COMMANDLINE"), merge=TRUE)
+    
+    if ((writeTags || file.exists(ensureFileSuffix(info$stem,"tags"))) && image$nTags() > 0)
     {
         tags <- image$getTags()
         if (all(c("bVectors","bValues") %in% names(tags)))
-            writeGradientDirections(image$getTags("bVectors"), image$getTags("bValues"), ensureFileSuffix(fileStem,"dirs"))
+            writeGradientDirections(image$getTags("bVectors"), image$getTags("bValues"), ensureFileSuffix(info$stem,"dirs"))
         tags <- tags[!(names(tags) %in% c("bVectors","bValues"))]
         if (length(tags) > 0)
-            writeLines(yaml::as.yaml(tags,handlers=list(Date=format.Date)), ensureFileSuffix(fileStem,"tags"))
+            writeLines(yaml::as.yaml(tags,handlers=list(Date=format.Date)), ensureFileSuffix(info$stem,"tags"))
     }
     
     invisible (fileNames)

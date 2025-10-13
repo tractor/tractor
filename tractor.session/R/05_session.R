@@ -1,22 +1,32 @@
 .resolveRegistrationTargets <- function (session, sourceSpace, targetSpace)
 {
-    f <- function (mode, space)
+    `%with%` <- function (X,Y) { if (is.null(X) || is.null(Y)) NULL else list(X,Y) }
+    
+    registrand <- function (mode, space)
     {
         type <- .RegistrationTargets[[space]][[mode]]
-        if (!is.null(type) && session$imageExists(type,space))
-            return (type)
-        else
-            return (character(0))
+        if (!is.null(type))
+        {
+            files <- session$imageFiles(type, space)
+            if (files$present())
+            {
+                # File types RNifti can't handle need to be read by TractoR
+                if (files$info()[[1]]$format %~% "^(analyze|nifti)")
+                    return (files$stems())
+                else
+                    return (files$read(reorder=FALSE))
+            }
+        }
+        return (NULL)
     }
     
-    `%|%` <- function(X,Y) if (length(X) == 2) X else Y
-    
-    # Odd semantics here, to be sure, but it saves some typing
-    # The infix operator separates possible return values, in order of preference
-    c(f("unmasked",sourceSpace), f("unmasked",targetSpace)) %|% c(f("masked",sourceSpace), f("masked",targetSpace)) %|% {
-        flag(OL$Warning, "Coregistering images with and without brain extraction may not produce good results")
-        c(.RegistrationTargets[[sourceSpace]][[1]], .RegistrationTargets[[targetSpace]][[1]])
-    }
+    return ((registrand("unmasked",sourceSpace) %with% registrand("unmasked",targetSpace)) %||%
+            (registrand("masked",sourceSpace) %with% registrand("masked",targetSpace)) %||% {
+                flag(OL$Warning, "Coregistering images with and without brain extraction may not produce good results")
+                sourceMode <- names(.RegistrationTargets[[sourceSpace]])[1]
+                targetMode <- names(.RegistrationTargets[[targetSpace]])[1]
+                registrand(sourceMode,sourceSpace) %with% registrand(targetMode,targetSpace)
+            })
 }
 
 MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",caches.="list"), methods=list(
@@ -51,12 +61,9 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
                 fileName <- file.path(diffusionDir, "directions-orig.txt")
             else
                 fileName <- file.path(diffusionDir, "directions.txt")
-        
+            
             if (file.exists(fileName))
-            {
-                gradientSet <- unname(as.matrix(read.table(fileName)))
-                scheme <- SimpleDiffusionScheme$new(gradientSet[,4], gradientSet[,1:3])
-            }
+                scheme <- readDiffusionScheme(fileName)
         }
         return (scheme)
     },
@@ -209,7 +216,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     {
         strategy <- caches.$transformStrategies[[es("#{sourceSpace}2#{targetSpace}")]]
         if ("reverse" %in% strategy)
-            return (.self$getTransformation(targetSpace,sourceSpace)$invert())
+            return (.self$getTransformation(targetSpace,sourceSpace)$reverse())
         else
         {
             options <- list(targetMask=NULL, estimateOnly=TRUE)
@@ -226,33 +233,44 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             if (all(c("nonlinear","symmetric") %in% strategy))
                 options$types <- c(options$types, "reverse-nonlinear")
             
-            transformDir <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"xfmb"))
-            transformFile <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), ensureFileSuffix(es("#{sourceSpace}2#{targetSpace}"),"Rdata"))
-            if (file.exists(transformFile) && !file.exists(transformDir))
+            registration <- NULL
+            regPath <- file.path(.self$getDirectory("transforms",createIfMissing=TRUE), es("#{sourceSpace}2#{targetSpace}"))
+            if (any(file.exists(ensureFileSuffix(regPath, c("Rdata","xfmb")))))
             {
-                tractor.reg::attachTransformation(transformFile)$move(transformDir)
-                unlink(transformFile)
-            }
-            if (file.exists(transformDir))
-            {
-                transform <- tractor.reg::attachTransformation(transformDir)
-                if (all(options$types %in% transform$getTypes()))
-                    return (transform)
+                # If this doesn't contain the required transforms it will be updated below
+                registration <- tractor.reg::readRegistration(regPath)
+                if (all(options$types %in% names(registration$getTypes())))
+                    return (registration)
             }
             
-            imageTypes <- .resolveRegistrationTargets(.self, sourceSpace, targetSpace)
-            sourceImageFile <- .self$getImageFileNameByType(imageTypes[1], sourceSpace)
-            targetImageFile <- .self$getImageFileNameByType(imageTypes[2], targetSpace)
-            options <- c(list(sourceImageFile,targetImageFile), options)
+            # No suitable registration exists, so we need to run one
+            images <- .resolveRegistrationTargets(.self, sourceSpace, targetSpace)
+            options <- c(images, list(registration=registration), options)
             
             report(OL$Info, "Transformation strategy from #{ifelse(sourceSpace=='mni','MNI',sourceSpace)} to #{ifelse(targetSpace=='mni','MNI',targetSpace)} space is #{implode(strategy,', ',' and ')} - registering images")
-            result <- do.call(tractor.reg::registerImages, options)
-            result$transform$move(transformDir)
-            return (result$transform)
+            registration <- do.call(tractor.reg::registerImages, options)
+            
+            registration$serialise(regPath)
+            if (dir.exists(ensureFileSuffix(regPath, "xfmb")))
+                unlink(ensureFileSuffix(regPath,"xfmb"), recursive=TRUE)
+            
+            return (registration)
         }
     },
     
     imageExists = function (type, place = NULL, index = 1) { return (imageFileExists(.self$getImageFileNameByType(type, place, index))) },
+    
+    imageFiles = function (type, place = NULL, index = 1, fallback = FALSE)
+    {
+        path <- .self$getImageFileNameByType(type, place, index, fallback)
+        if (!is.null(place) && tolower(place) == "mni")
+            return (tractor.base::imageFiles(path))
+        else
+        {
+            fileSet <- tractor.base:::ImageFileSet(defaultMap=.self$getMap(place))
+            return (fileSet$atPaths(path))
+        }
+    },
     
     unlinkDirectory = function (type, ask = TRUE)
     {
@@ -310,8 +328,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     updateDiffusionScheme = function (scheme = NULL, unrotated = FALSE)
     {
-        if (!is.null(scheme) && !is(scheme, "SimpleDiffusionScheme"))
-            report(OL$Error, "Specified scheme is not a SimpleDiffusionScheme object")
+        if (!is.null(scheme) && !is(scheme, "DiffusionScheme"))
+            report(OL$Error, "Specified scheme is not a DiffusionScheme object")
         
         # No point in reading and writing from the same location at the same time
         if (is.null(scheme))

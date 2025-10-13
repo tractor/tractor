@@ -1,5 +1,6 @@
 #@args [DICOM or tagged NIfTI file]
 #@desc Calculate the age of a scan subject to the day, using information from a DICOM file, or from a NIfTI file with suitable tag metadata. If no file is specified, the script will search the working directory for DICOM files, and use the first one it finds. BreakdownLevel should be set to 1 for years only (given as a real number); 2 for years and days; and 3 for years, months and days. BreakdownLevel is fixed to 1 if NumberOnly:true is given.
+#@group DICOM handling
 #@nohistory TRUE
 
 library(tractor.base)

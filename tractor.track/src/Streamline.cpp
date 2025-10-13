@@ -4,9 +4,6 @@
 
 double Streamline::getLength (const std::vector<ImageSpace::Point> &points) const
 {
-    if (!this->hasImageSpace())
-        throw std::runtime_error("Streamline has no image space information");
-    
     const size_t nPoints = points.size();
     
     if (points.size() < 2)
@@ -19,6 +16,8 @@ double Streamline::getLength (const std::vector<ImageSpace::Point> &points) cons
             ImageSpace::Vector step = ImageSpace::step(points[i-1], points[i]);
             if (pointType == PointType::Voxel)
             {
+                if (!this->hasImageSpace())
+                    throw std::runtime_error("Streamline has no image space information");
                 for (int j=0; j<3; j++)
                     step[j] *= space->pixdim[j];
             }
@@ -37,9 +36,6 @@ double Streamline::getLength (const std::vector<ImageSpace::Point> &points) cons
 
 void Streamline::trim (std::vector<ImageSpace::Point> &points, const double maxLength)
 {
-    if (!this->hasImageSpace())
-        throw std::runtime_error("Streamline has no image space information");
-    
     const size_t nPoints = points.size();
     
     double length = 0.0;
@@ -48,6 +44,8 @@ void Streamline::trim (std::vector<ImageSpace::Point> &points, const double maxL
         ImageSpace::Vector step = ImageSpace::step(points[i-1], points[i]);
         if (pointType == PointType::Voxel)
         {
+            if (!this->hasImageSpace())
+                throw std::runtime_error("Streamline has no image space information");
             for (int j=0; j<3; j++)
                 step[j] *= space->pixdim[j];
         }

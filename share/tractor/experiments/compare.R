@@ -1,4 +1,5 @@
 #@args reference image, other image(s)
+#@group General analysis
 #@nohistory TRUE
 
 # To ensure that '@' shorthand is expanded properly

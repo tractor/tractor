@@ -1,5 +1,6 @@
 #@args file name
 #@desc Split an ".Rdata" file containing multiple objects into several files containing one object each.
+#@group Utilities
 
 runExperiment <- function ()
 {

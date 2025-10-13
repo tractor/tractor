@@ -1,58 +1,10 @@
 #ifndef _IMAGE_H_
 #define _IMAGE_H_
 
-#include <RcppCommon.h>
-#include <array>
-
-namespace Rcpp {
-namespace traits {
-
-// Partial specialisations to allow as<array<T,D>>(...) and the reverse
-template <class T, size_t N> class Exporter<std::array<T,N>>;
-
-template <class T, size_t N> SEXP wrap (const std::array<T,N> &object);
-
-} // traits namespace
-} // Rcpp namespace
-
-#include <Rcpp.h>
+#include "RcppArray.h"
 #include "RNifti.h"
 
-namespace Rcpp {
-namespace traits {
-
-template <class T, size_t N>
-class Exporter<std::array<T,N>>
-{
-    const static int RTYPE = Rcpp::traits::r_sexptype_traits<T>::rtype;
-    Rcpp::Vector<RTYPE> vec;
-    
-public:
-    Exporter (SEXP x)
-        : vec(x)
-    {
-        if (vec.size() != N)
-            throw Rcpp::exception("Array does not have the expected number of elements");
-    }
-    
-    std::array<T,N> get()
-    {
-        std::array<T,N> result;
-        std::copy(vec.begin(), vec.end(), result.begin());
-        return result;
-    }
-};
-    
-template <class T, size_t N>
-SEXP wrap (const std::array<T,N> &object)
-{
-    const int RTYPE = Rcpp::traits::r_sexptype_traits<T>::rtype;
-    return Vector<RTYPE>(object.begin(), object.end());
-}
-
-} // traits namespace
-} // Rcpp namespace
-
+#include <memory>
 
 // Location conventions: voxel-indexed, scaled for voxel dimensions only (as
 // with a diagonal xform), or world coordinates fully respecting the xform
@@ -158,29 +110,17 @@ public:
 class ImageSpaceEmbedded
 {
 protected:
-    ImageSpace *space = nullptr;
-    bool sharedSpace = false;
+    std::shared_ptr<ImageSpace> space;
     
 public:
-    virtual ~ImageSpaceEmbedded ()
-    {
-        if (!sharedSpace)
-            delete space;
-    }
+    // operator bool is defined for std::shared_ptr
+    bool hasImageSpace () const { return bool(space); }
+    std::shared_ptr<ImageSpace> & imageSpace () { return space; }
+    const std::shared_ptr<ImageSpace> & imageSpace () const { return space; }
     
-    bool hasImageSpace () const { return (space != nullptr); }
-    ImageSpace * imageSpace () const { return space; }
-    
-    void copyImageSpace (const ImageSpaceEmbedded &other)
+    void setImageSpace (const ImageSpace &source)
     {
-        this->space = new ImageSpace(*other.imageSpace());
-        sharedSpace = false;
-    }
-    
-    void setImageSpace (ImageSpace * const space, const bool shared = false)
-    {
-        this->space = space;
-        sharedSpace = shared;
+        space.reset(new ImageSpace(source));
     }
 };
 
@@ -278,6 +218,7 @@ inline void importNifti (const RNifti::NiftiImage &source, std::vector<ImageSpac
 {
     // Which dimension indexes over the elements of the vectors?
     // NB: this is one-based because source->dim[0] is the dimensionality
+    // FIXME: currently unused, and unclear if needed (maybe to calculate volumeSize below?)
     int subdim = 0;
     
     // NIfTI style, with the intent set and the fifth dimension used for the vector
@@ -346,7 +287,7 @@ public:
         if (source->data == nullptr)
             throw std::runtime_error("NiftiImage source contains no voxel data");
         
-        space = new ImageSpace(source);
+        space.reset(new ImageSpace(source));
         internal::importNifti(source, data_, raster);
     }
     

@@ -1,5 +1,6 @@
 #@args [directory]
 #@desc Sort a directory containing DICOM files (default ".") into subdirectories. By default the files will be sorted by series UID (as given in DICOM tag 0020,000e), but sorting by subject name or scan date can be performed in addition (or instead). The DICOM files will be copied into the new subdirectories (within the old directories unless Nested:false is given), and their file names disambiguated if necessary. The original files will then be deleted to avoid duplicate storage, unless DeleteOriginals:false is given. The newer "divest" back-end is based on the well-established and more robust "dcm2niix" tool; in this case the SortOn and SeriesIdentifier options are ignored.
+#@group DICOM handling
 
 library(tractor.base)
 

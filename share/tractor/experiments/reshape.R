@@ -1,5 +1,6 @@
 #@desc Reshape the data in an image, and/or permute its dimensions. This script should be used with care, and only if you know what you are doing. A typical usage might be after inaccurate reconstruction of a complex DICOM file series. Each argument after the image should be either a series of comma-separated integers (e.g. 128,128,50), giving the new dimensions of the data; or a series of comma-separated letters, possibly with negation signs (e.g. x,-z,y), giving the dimension permutation required. These operations will be performed in the order specified. Note that only the data in the image is changed: the metadata stays the same, except for padding where required. If you don't understand what that means, you should probably not use this script! The original image will be OVERWRITTEN.
 #@args image file, new dimensions and/or axis permutations
+#@group General analysis
 
 runExperiment <- function ()
 {

@@ -1,2 +1,2 @@
 "pointType" "leftLength" "rightLength" "sessionPath" "x" "y" "z" "leftSimCosine1" "leftSimCosine2" "leftSimCosine3" "leftSimCosine4" "leftSimCosine5" "leftSimCosine6" "rightSimCosine1" "rightSimCosine2" "rightSimCosine3" "rightSimCosine4" "rightSimCosine5" "rightSimCosine6"
-"1" "knot" 6 3 "../../../data/session" 50 60 35 NA 0.239132454251043 0.767048540295971 0.728958727842863 0.723187569114795 0.864460276600772 NA 0.92600352513985 0.124257837663807 NA NA NA
+"session directory" "knot" 2 6 "../../../data/session" 50 59 35 NA 0.990588241265397 NA NA NA NA NA 0.993438802400375 0.963035820790882 0.99898964542969 0.85293407544059 0.880802386436903

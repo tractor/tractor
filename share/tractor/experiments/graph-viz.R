@@ -1,5 +1,6 @@
 #@desc Visualise the specified graph, either topologically or as an association matrix. The graph can be shown overlaid on the brain if the vertex location space is stored with the graph, and a mask exists in that space.
 #@args graph file
+#@group Graph and network analysis
 #@interactive TRUE
 #@nohistory TRUE
 
@@ -54,7 +55,7 @@ runExperiment <- function ()
             
             edgePoints <- brainMask$getNonzeroIndices()
             if (graph$getVertexLocationUnit() == "mm")
-                edgePoints <- transformVoxelToWorld(edgePoints, brainMask, simple=TRUE)
+                edgePoints <- RNifti::voxelToWorld(edgePoints, brainMask, simple=TRUE)
             fieldOfView <- brainMask$getFieldOfView()
         }
         

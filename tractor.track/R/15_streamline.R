@@ -86,9 +86,9 @@ Streamline <- setRefClass("Streamline", contains="SerialisableObject", fields=li
         .self$updatePointSpacings()
         
         if (reverse)
-            .self$voxelDims <- xfm$getSourceImage(metadataOnly=TRUE)$getVoxelDimensions()[1:3]
+            .self$voxelDims <- RNifti::pixdim(xfm$getSource())[1:3]
         else
-            .self$voxelDims <- xfm$getTargetImage(metadataOnly=TRUE)$getVoxelDimensions()[1:3]
+            .self$voxelDims <- RNifti::pixdim(xfm$getTarget())[1:3]
         
         invisible(.self)
     },

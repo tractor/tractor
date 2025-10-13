@@ -145,7 +145,7 @@ tractor dpreproc
 <pre><code class="language-bash">tractor tensorfit
 </code></pre>
 
-<p>There are four alternative approaches to fitting the tensors available, but standard least-squares fitting is the default: see <code>tractor -o tensorfit</code> for details. The <a href="http://www.camino.org.uk">Camino toolkit</a> offers many more methods.</p>
+<p>There are four alternative approaches to fitting the tensors available, but standard least-squares fitting is the default: see <code>tractor -o tensorfit</code> for details.</p>
 
 <p>The diffusion tensor is a very limited model, however, particularly for tractography. It is therefore recommended to run FSL <a href="http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX">BEDPOSTX algorithm</a> to fit a “ball-and-sticks” model and generate samples for probabilistic tractography. This typically takes several hours. The command for running this is</p>
 
@@ -158,6 +158,13 @@ tractor dpreproc
 </code></pre>
 
 <p>It is important to note that the number of fibres fitted is <em>a property of the session</em>, and so once set it cannot be changed without processing the data again. If you wish to try different values of this option on a single data set, you will need to duplicate the session hierarchy, since these would be considered two distinct preprocessing pipelines, producing two different data sets.</p>
+
+<p>TractoR v3.5.0 added support for <a href="https://mrtrix.readthedocs.io/en/latest/constrained_spherical_deconvolution/constrained_spherical_deconvolution.html">constrained spherical deconvolution</a> via <a href="https://www.mrtrix.org">MRtrix</a>, which can be run as</p>
+
+<pre><code class="language-bash">tractor csd
+</code></pre>
+
+<p>There is not yet support for using the output in tractography, but it can be used with MRtrix’s own <code>tckgen</code> function.</p>
 
 <h2 id="the-status-script">The status script</h2>
 

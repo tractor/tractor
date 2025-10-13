@@ -1,5 +1,6 @@
 #@args source image file, target image file, [output file]
 #@desc Nonlinearly register a source image to a target image, estimating a transformation between them and optionally producing a transformed output image. NiftyReg is used for this operation. The registration can be initialised from an existing transformation (which will be updated), or from an affine text file or control point image.
+#@group Registration
 
 library(tractor.reg)
 
@@ -34,36 +35,34 @@ runExperiment <- function ()
         sourceMaskFile <- NULL
     }
     
-    init <- transform <- NULL
+    init <- registration <- NULL
     source <- identifyImageFileNames(Arguments[1])$fileStem
     target <- identifyImageFileNames(Arguments[2])$fileStem
     
+    assert(!is.null(transformName) || nArguments() > 2, "Transformation name must be specified if there is no output file")
+    regFile <- registrationFile(transformName)
+    
     if (is.null(transformName))
+        transformName <- Arguments[3]
+    else if (regFile$present())
     {
-        # Create an output transformation name from output image name
-        # This file will NOT be used for initialisation, and will simply be overwritten if it exists
-        if (nArguments() >= 3)
-            transform <- attachTransformation(Arguments[3], source, target)
-        else
-            report(OL$Error, "Transformation name must be specified if there is no output file")
-    }
-    else
-    {
-        transform <- attachTransformation(transformName, source, target)
-        if (!is(transform, "Transformation"))
+        registration <- readRegistration(regFile, validate=FALSE)
+        if (!is(registration, "Registration"))
             report(OL$Warning, "Existing transformation file is not valid")
-        else if (!symmetric && is.null(initControlFile) && "nonlinear" %in% transform$getTypes())
+        else if (!symmetric && is.null(initControlFile) && "nonlinear" %in% names(registration$getTypes()))
         {
             report(OL$Info, "Using control point image stored in transformation for initialisation")
-            init <- transform$getTransformObjects(1:transform$nRegistrations(), errorIfMissing=FALSE)
+            init <- registration$getTransforms(errorIfMissing=FALSE)
         }
-        else if (is.null(initControlFile) && is.null(initAffineFile) && "affine" %in% transform$getTypes())
+        else if (is.null(initControlFile) && is.null(initAffineFile) && "affine" %in% names(registration$getTypes()))
         {
             report(OL$Info, "Using affine matrix stored in transformation for initialisation")
-            init <- transform$getTransformObjects(1:transform$nRegistrations(), preferAffine=TRUE, errorIfMissing=FALSE)
+            init <- registration$getTransforms(preferAffine=TRUE, errorIfMissing=FALSE)
         }
     }
     
+    if (is.null(registration))
+        registration <- createRegistration(source, target, method)
     if (!is.null(initControlFile) && !symmetric)
         init <- RNiftyReg::readNifti(initControlFile)
     else if (!is.null(initAffineFile))
@@ -74,13 +73,11 @@ runExperiment <- function ()
         types <- c("reverse-nonlinear", types)
     
     report(OL$Info, "Performing registration")
-    result <- registerImages(transform=transform, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method="niftyreg", types=types, estimateOnly=estimateOnly, interpolation=interpolation, init=init, nonlinearOptions=list(nLevels=nLevels,maxIterations=maxIterations,nBins=nBins,bendingEnergyWeight=bendingEnergyWeight,linearEnergyWeight=linearEnergyWeight,jacobianWeight=jacobianWeight,finalSpacing=rep(finalSpacing,3),spacingUnit=spacingUnit))
+    registration <- registerImages(registration=registration, sourceMask=sourceMaskFile, targetMask=targetMaskFile, method="niftyreg", types=types, estimateOnly=estimateOnly, interpolation=interpolation, init=init, nonlinearOptions=list(nLevels=nLevels,maxIterations=maxIterations,nBins=nBins,bendingEnergyWeight=bendingEnergyWeight,linearEnergyWeight=linearEnergyWeight,jacobianWeight=jacobianWeight,finalSpacing=rep(finalSpacing,3),spacingUnit=spacingUnit))
     
-    if (is.null(transform))
-        result$transform$move(transformName)
-    
+    registration$serialise(transformName)
     if (!estimateOnly)
-        writeImageFile(result$transformedImage, Arguments[3])
+        writeImageFile(registration$getTransformedImage(), Arguments[3])
     
     invisible(NULL)
 }

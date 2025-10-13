@@ -340,9 +340,10 @@ resolvePath <- function (path, ...)
     sapply(path, function(p) {
         for (i in seq_along(.Workspace$pathHandlers))
         {
-            if (p %~% names(.Workspace$pathHandlers)[i])
+            match <- ore.search(names(.Workspace$pathHandlers)[i], p)
+            if (!is.null(match))
             {
-                result <- .Workspace$pathHandlers[[i]](p, ...)
+                result <- .Workspace$pathHandlers[[i]](structure(p,match=match), ...)
                 if (!is.null(result))
                 {
                     report(OL$Debug, "Resolving #{p} to #{result}")
@@ -404,8 +405,15 @@ expandFileName <- function (fileName, base = getwd())
     # Absolute paths are assumed to start with an optional drive letter and colon (for Windows), and then a slash or backslash
     # This covers C:\dir\file, \dir\file, \\server\dir\file, //server/dir/file and /dir/file, but not URLs
     # Cf. https://docs.microsoft.com/en-gb/windows/win32/fileio/naming-a-file#fully-qualified-vs-relative-paths
-    fileName <- ifelse(fileName %~% "^([A-Za-z]:)?[/\\\\]|^~", fileName, file.path(base,fileName))
-    return (normalizePath(fileName, .Platform$file.sep, FALSE))
+    result <- ifelse(fileName %~% "^([A-Za-z]:)?[/\\\\]|^~", fileName, file.path(base,fileName))
+    
+    # normalizePath() may do nothing if the file doesn't exist, but this is fairly common for TractoR, e.g., when resolving stems, so if the file doesn't exist normalise its parent directory and stick the file back on
+    exist <- file.exists(result)
+    result[exist] <- normalizePath(result[exist], .Platform$file.sep, FALSE)
+    result[!exist] <- file.path(normalizePath(dirname(result[!exist]), .Platform$file.sep, FALSE), basename(result[!exist]))
+    
+    # Pass through NAs
+    return (ifelse(is.na(fileName), NA_character_, result))
 }
 
 #' @rdname paths

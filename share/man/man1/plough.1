@@ -4,7 +4,7 @@
 plough \- Interface for running multiple related TractoR experiments
 
 .SH SYNOPSIS
-.B plough \fR[\fB\-GXD\fR] \fB\-C \fIconfig_file\fR [\fB\-V \fIvariable_name\fR] [\fB\-R \fIrepetitions\fR] [\fB\-Q \fIgrid_queue\fR] [\fB\-O \fIgrid_options\fR] [\fB\-P \fIfactor\fR] [\fItractor_flags\fR] \fIscript\fR [\fIarguments\fR]\fB
+.B plough \fR[\fB\-GXDI\fR] \fB\-C \fIconfig_file\fR [\fB\-V \fIvariable_name\fR] [\fB\-R \fIrepetitions\fR] [\fB\-Q \fIgrid_queue\fR] [\fB\-O \fIgrid_options\fR] [\fB\-P \fIfactor\fR] [\fItractor_flags\fR] \fIscript\fR [\fIarguments\fR]\fB
 .br
 .B plough \-H
 
@@ -26,6 +26,9 @@ Cross-apply the loop variables, taking each combination in turn. The total numbe
 .TP
 .B \-D
 Produce debugging output.
+.TP
+.B \-I
+Read values of the \fIInput\fR variable from standard input, one per line. Values or file names containing whitespace cannot be passed this way.
 .TP
 .B \-C \fIconfig_file\fB
 Specify a configuration file in YAML format (see \fBtractor\fR(1) for details). This flag must be specified at least once, and may be used multiple times.
