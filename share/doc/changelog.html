@@ -13,11 +13,9 @@
   <link href="https://fonts.googleapis.com/css?family=Roboto%7CSource+Code+Pro" rel="stylesheet">
   <link href="assets/prism.css" rel="stylesheet">
   <link href="assets/style.css" rel="stylesheet">
+  
+  
 </head>
-
-<!-- Google tag (gtag.js) -->
-
-
 
 <body>
 
@@ -47,6 +45,38 @@
 <h1>Changelog</h1>
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
+
+<h2 id="350-2025-10-13">3.5.0 (2025-10-13)</h2>
+
+<ul>
+<li>TractoR now requires R v3.6.2 (from 2019) or later.</li>
+<li>MRtrix interoperability now extends to session directories. There is support for managed <a href="https://mrtrix.readthedocs.io/en/latest/constrained_spherical_deconvolution/constrained_spherical_deconvolution.html">constrained spherical deconvolution</a> file locations within an <code>mrtrix</code> subdirectory.</li>
+<li>There is a new <code>csd</code> script for running MRtrix CSD through TractoR, and workflows for key commands <code>dwi2response</code> and <code>dwi2fod</code>.</li>
+<li>Registration transformations are now preferentially stored in flat .Rdata files again. These are easier to handle and can now encapsulate all necessary metadata, including for nonlinear warps. The .xfmb folder format can still be read.</li>
+<li>The test dataset stored at <code>tests/data/session</code> has been rebuilt using current software, and therefore differs in various (mostly small) ways from previous releases.</li>
+<li>A new <code>reg-reverse</code> script creates a transformation that is the logical inverse of an existing one.</li>
+<li>The new <code>gradsample</code> script can be used to subsample diffusion MRI acquisitions.</li>
+<li>The <code>import</code> script can now import multiple diffusion or functional data volumes, which will be merged together in order.</li>
+<li>The <code>gradread</code> script is now more flexible with its output, and can create standalone gradient files in addition to working with sessions.</li>
+<li>Handling of groups of related files on disk is now more consistent and unified. Mapping is now supported for images outside of session hierarchies, and favoured over symbolic linking for better portability across operating systems and on cloud-backed and remote filesystems. Remaining uses of symlinking are mostly for compatibility with other software.</li>
+<li>The <code>furrow</code> command is now written in pure R, rather than being a shell script, and is run through the <a href="https://github.com/eddelbuettel/littler">littler</a> frontend. This should make the command less fragile in its interface to R, notably when handling paths containing spaces, and similar treatment is planned for <code>tractor</code> and <code>plough</code> in a future release. The small first-party package <code>arrg</code> is now bundled to support this interface.</li>
+<li>Experiment scripts can now be bundled with arbitrary R packages and found by TractoR via the <code>TRACTOR_PACKAGES</code> environment variable.</li>
+<li>The <code>plough</code> command gains a <code>-I</code> flag to allow values to be passed into the command through a pipe.</li>
+<li>TractoR now provides a simple <code>Rprofile</code> that can be sourced from the user’s equivalent startup file to provide ready access to TractoR’s packages and environment in R sessions.</li>
+<li>The <code>graph-decompose</code> script now has a mode to decompose a graph into connected components.</li>
+<li>The <code>slice</code> script gains a <code>Volume</code> option to specify a required volume if the input is 4D.</li>
+<li>Output from the <code>list</code> script has been improved, and a new <code>Descriptions:true</code> option incorporates the start of the script’s self-description into the summary. Groupings are no longer hard-coded in this script, but determined by a comment in each script.</li>
+<li>Unnamed arguments may now be passed to a workflow via the <code>workflow</code> script.</li>
+<li>Long-deprecated config variables in the <code>view</code>, <code>pnt-data</code> and <code>bedpost</code> scripts have now been removed.</li>
+<li>The global <code>Arguments</code> vector seen by TractoR scripts is now named, using arguments to <code>requireArguments()</code>, for ease of later reference.</li>
+<li>The internals of the tractography code have been tweaked to try to avoid sporadic segmentation faults on some platforms.</li>
+</ul>
+
+<h2 id="345-2025-04-03">3.4.5 (2025-04-03)</h2>
+
+<ul>
+<li>The required <code>RNiftyReg</code> could fail to install on some platforms. This has now been corrected, and other bug-fixes to the package back-ported.</li>
+</ul>
 
 <h2 id="344-2024-05-21">3.4.4 (2024-05-21)</h2>
 

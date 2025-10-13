@@ -13,11 +13,9 @@
   <link href="https://fonts.googleapis.com/css?family=Roboto%7CSource+Code+Pro" rel="stylesheet">
   <link href="assets/prism.css" rel="stylesheet">
   <link href="assets/style.css" rel="stylesheet">
+  
+  
 </head>
-
-<!-- Google tag (gtag.js) -->
-
-
 
 <body>
 
@@ -63,7 +61,7 @@
 
 <p>Please see the <a href="http://cran.r-project.org/web/packages/tractor.base/tractor.base.pdf">full documentation</a> (pdf) for more information on these topics.</p>
 
-<p>The <code>tractor.reg</code> package is involved with all aspects of <a href="registration.html">image registration</a>, interfacing to both FSL-FLIRT (through its command line interface) and the <code>RNiftyReg</code> R package. The <code>tractor.session</code> package creates and maintains <a href="conventions.html">session directories</a>, and includes other functions which interface with the <a href="http://www.fmrib.ox.ac.uk/fsl">FSL</a> and <a href="http://www.camino.org.uk">Camino</a> software packages. The <code>tractor.track</code> package implements the tractography algorithm used by TractoR (in C). The <code>tractor.nt</code> package provides an implementation of <a href="PNT-tutorial.html">probabilistic neighbourhood tractography</a>. The <code>tractor.utils</code> package exists mainly to support the command-line interface (see below). At present none of these four more specialist packages are documented at the R level, i.e. function by function.</p>
+<p>The <code>tractor.reg</code> package is involved with all aspects of <a href="registration.html">image registration</a>, interfacing to both FSL-FLIRT (through its command line interface) and the <code>RNiftyReg</code> R package. The <code>tractor.session</code> package creates and maintains <a href="conventions.html">session directories</a>, and includes other functions which interface with other software packages. The <code>tractor.track</code> package implements the tractography algorithm used by TractoR (in C++). The <code>tractor.nt</code> package provides an implementation of <a href="PNT-tutorial.html">probabilistic neighbourhood tractography</a>. The <code>tractor.utils</code> package exists mainly to support the command-line interface (see below). At present none of these four more specialist packages are documented at the R level, i.e. function by function.</p>
 
 <h2 id="from-command-line-to-r">From command line to R</h2>
 
@@ -77,20 +75,23 @@
 
 <pre><code class="language-r line-numbers">#@args metric image, [mask image]
 #@desc Calculate the mean or weighted mean value of a metric within the nonzero region of a brain volume. The specified mask image can be used as a binary mask (the default) or as a set of weights (with AveragingMode:weighted). In the latter case any weight threshold given is ignored. If the mask is missing then the metric image is itself the mask.
+#@group General analysis
 
 runExperiment  1)
         maskImage </code></pre>
 
-<p>The only mandatory part of a script file is the definition of a <code>runExperiment()</code> function, with no arguments, as on line 4. The R code which forms the functional body of the script must be put exclusively within this function. No other functions will be run. Moreover, with the exception of statements to load required packages, no R code should be positioned outside of the <code>runExperiment()</code> function. Calls to <code>library()</code> or <code>require()</code> for all required packages except <code>tractor.utils</code>, <code>utils</code>, <code>graphics</code>, <code>grDevices</code> and <code>stats</code> should be included in this way.</p>
+<p>The only mandatory part of a script file is the definition of a <code>runExperiment()</code> function, with no arguments, as on line 5. The R code which forms the functional body of the script must be put exclusively within this function. No other functions will be run. Moreover, with the exception of statements to load required packages, no R code should be positioned outside of the <code>runExperiment()</code> function. Calls to <code>library()</code> or <code>require()</code> for all required packages except <code>tractor.utils</code>, <code>utils</code>, <code>graphics</code>, <code>grDevices</code> and <code>stats</code> should be included in this way.</p>
 
-<p>Scripts may take any number of unnamed arguments and/or named configuration parameters. Unnamed arguments are put into the character vector <code>Arguments</code> (see lines 7 and 10 above), and must be coerced to numeric or another mode if required. The <code>nArguments()</code> function returns the number of arguments that the user passed (see line 9), where a new argument is counted as having started after any whitespace. The <code>requireArguments()</code> function can be used to list the names of mandatory arguments, and will produce an error if too few arguments were passed by the user (line 6). Named parameters are recovered using the <code>getConfigVariable()</code> function, which gives the name of the parameter as its first argument (by convention, these always start with an upper case letter), a default value as the second, and optionally, the expected storage mode of the variable (i.e. “character”, “integer”, etc.). The returned value will be of this mode, and an error will be produced if the value given cannot be coerced to the specified mode. Likewise, the <code>validValues</code> argument can be provided if the parameter can only take certain specific values (as in lines 14 and 16). Script authors should call <code>getConfigVariable()</code> with <code>errorIfMissing=TRUE</code> if the parameter is mandatory.</p>
+<p>Scripts may take any number of unnamed arguments and/or named configuration parameters. Unnamed arguments are put into the character vector <code>Arguments</code> (see lines 8 and 11 above), and must be coerced to numeric or another mode if required. The <code>nArguments()</code> function returns the number of arguments that the user passed (see line 10), where a new argument is counted as having started after any whitespace. The <code>requireArguments()</code> function can be used to list the names of mandatory arguments, and will produce an error if too few arguments were passed by the user (line 7). Named parameters are recovered using the <code>getConfigVariable()</code> function, which gives the name of the parameter as its first argument (by convention, these always start with an upper case letter), a default value as the second, and optionally, the expected storage mode of the variable (i.e. “character”, “integer”, etc.). The returned value will be of this mode, and an error will be produced if the value given cannot be coerced to the specified mode. Likewise, the <code>validValues</code> argument can be provided if the parameter can only take certain specific values (as in lines 15 and 17). Script authors should call <code>getConfigVariable()</code> with <code>errorIfMissing=TRUE</code> if the parameter is mandatory.</p>
 
-<p>TractoR scripts are self-documenting, and a number of special comments are used to provide this documentation. The <code>#@args</code> comment specifies unnamed arguments which the script accepts, with optional arguments in square brackets (line 1), and lines starting <code>#@desc</code> describe the function of the script (line 2). Note that there should be only one line of arguments, but there can be many lines of description. If the script is purely informative and doesn’t need to be included within the history log file, you should include a line containing just</p>
+<p>TractoR scripts are self-documenting, and a number of special comments are used to provide this documentation. The <code>#@args</code> comment specifies unnamed arguments which the script accepts, with optional arguments in square brackets (line 1), lines starting <code>#@desc</code> describe the function of the script (line 2) and the <code>#@group</code> comment (optionally) identifies a script group that the script belongs to (line 3). Note that there should be only one line of arguments, but there can be many lines of description. If the script is purely informative and doesn’t need to be included within the history log file, you should include a line containing just</p>
 
 <pre><code class="language-r">#@nohistory TRUE
 </code></pre>
 
 <p>so that the <code>tractor</code> shell script will handle it properly. The shell script will also look for calls to <code>getConfigVariable()</code>, so that it can report the named parameters supported by the script.</p>
+
+<p>For TractoR to find your experiment script you can put it in a <code>.tractor</code> directory within your home directory, or set the <code>TRACTOR_PATH</code> environment variable to include the path to the script. As of TractoR v3.5.0, scripts can also be included in R packages (in the <code>inst/tractor/experiments</code> subdirectory). In this case a user with your package installed will need to include its name in the <code>TRACTOR_PACKAGES</code> environment variable.</p>
 
 
 </div>
