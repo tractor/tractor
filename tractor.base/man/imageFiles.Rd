@@ -51,6 +51,8 @@ If \code{paths} is \code{NULL}, \code{imageFiles} returns a
     \item{info()}{Return information about existing files, as a list with
       one element per path. An element will be \code{NULL} if no
       corresponding files currently exist.}
+    \item{read(...)}{Read the images into memory and return them as
+      \code{\linkS4class{MriImage}} objects.}
     \item{copy(target, overwrite=TRUE)}{Copy the files to target paths (new
       file names or a directory).}
     \item{delete()}{Delete the files or any map reference to them.}

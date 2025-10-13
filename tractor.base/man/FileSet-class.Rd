@@ -32,7 +32,10 @@ or all of the supported formats.}
 
 \item{\code{fileStem(paths)}}{Obtain a file stem for each specified path, dropping format-specific suffixes}
 
-\item{\code{findFormat(paths, intent = c("read", "write"), all = FALSE)}}{Identify and potentially validate files to find the format used at specific paths}
+\item{\code{findFormat(paths, intent = c("read", "write"), preference = NULL,
+  all = FALSE)}}{Identify and potentially validate files to find the format used at specific paths}
+
+\item{\code{resolvePaths(paths)}}{Perform any special path handling and resolve final paths}
 
 \item{\code{subset(match, ...)}}{Create a variant object that only encapsulates the specified subset of formats}
 }}

@@ -25,6 +25,9 @@ to resolve paths.}
 \describe{
 \item{\code{atPaths(paths)}}{Return a handle object to manipulate files at specific paths}
 
-\item{\code{findFormat(paths, intent = c("read", "write"), all = FALSE)}}{Identify and potentially validate files to find the format used at specific paths}
+\item{\code{findFormat(paths, intent = c("read", "write"), preference = NULL,
+  all = FALSE)}}{Identify and potentially validate files to find the format used at specific paths}
+
+\item{\code{resolvePaths(paths)}}{Perform any special path handling and resolve final paths}
 }}
 
