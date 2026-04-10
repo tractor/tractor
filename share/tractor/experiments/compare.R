@@ -1,3 +1,4 @@
+#@desc Compare images for equivalence in dimensions and content. The second and subsequent files specified are compared against the first, and a message will report any matches. Only the first volume will be compared unless AllVolumes is set to true. If IgnoreZeroes is set then only voxels that are nonzero in both images will be compared; MinOverlap indicates the proportion of remaining voxels that must be equal for a match to be identified.
 #@args reference image, other image(s)
 #@group General analysis
 #@nohistory TRUE
@@ -10,7 +11,7 @@ runExperiment <- function ()
     requireArguments("reference image", "other image(s)")
     
     minOverlap <- getConfigVariable("MinOverlap", 1)
-    ignoreZeroes <- getConfigVariable("IgnoreZeroes", TRUE)
+    ignoreZeroes <- getConfigVariable("IgnoreZeroes", FALSE)
     allVolumes <- getConfigVariable("AllVolumes", FALSE)
     # tolerance <- getConfigVariable("Tolerance", signif(sqrt(.Machine$double.eps),3))
     
@@ -29,7 +30,7 @@ runExperiment <- function ()
             next
         if (ignoreZeroes)
         {
-            locs <- union(reference$find(array=FALSE), image$find(array=FALSE))
+            locs <- intersect(reference$find(array=FALSE), image$find(array=FALSE))
             equal <- reference[locs] == image[locs]
         }
         else
