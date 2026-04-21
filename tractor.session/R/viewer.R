@@ -1,3 +1,20 @@
+# Find the first external viewer whose executable is actually available
+externalViewer <- function ()
+{
+    binaries <- list(fsleyes="fsleyes", fslview=c("fslview","fslview_deprecated"), freeview="freeview", mrview="mrview")
+    
+    # Respect the tractorViewer option, but ignore the internal viewer
+    viewers <- setdiff(c(getOption("tractorViewer"), .Viewers), "tractor")
+    for (viewer in viewers)
+    {
+        for (binary in binaries[[viewer]])
+        {
+            if (!is.null(locateExecutable(binary, errorIfMissing=FALSE)))
+                return (viewer)
+        }
+    }
+}
+
 showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), interactive = TRUE, wait = FALSE, lookupTable = NULL, opacity = NULL, infoPanel = NULL)
 {
     viewer <- match.arg(viewer, .Viewers)
@@ -87,7 +104,7 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
                 
                 if (viewer == "fslview" || viewer == "fsleyes")
                 {
-                    # fslview is fussy about data types, so write the image into Analyze format to avoid a crash if necessary
+                    # fslview is fussy about data types, so read and write the image if necessary (writeImageFile() prefers ANALYZE-compatible datatypes)
                     if (imageInfo$format == "Mgh" || (imageInfo$format == "Nifti" && RNifti::niftiHeader(imageInfo$imageFile)$datatype > 64))
                     {
                         dir.create(file.path(tempDir, i))
