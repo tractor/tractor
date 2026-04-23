@@ -206,7 +206,13 @@ BEGIN_RCPP
         space = *(tracker->getModel()->imageSpace());
     }
     else if (sourceType == "file")
-        space = *(static_cast<StreamlineFileSource *>(pipeline->dataSource())->imageSpace());
+    {
+        // Don't assume there's an image space available
+        // .tck format, for example, doesn't provide the information
+        StreamlineFileSource *file = static_cast<StreamlineFileSource *>(pipeline->dataSource());
+        if (file->hasImageSpace())
+            space = *file->imageSpace();
+    }
     else if (sourceType == "list")
         space = *(static_cast<RListDataSource *>(pipeline->dataSource())->imageSpace());
     
