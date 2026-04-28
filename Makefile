@@ -119,7 +119,7 @@ create-md5:
 check-md5:
 	@mkdir -p tmp
 	@$(ECHO_N) "Checking MD5 checksums... "
-	@bin/tractor -q -z -i tests/scripts/check-md5 md5.txt >tmp/md5.txt && $(ECHO) "OK" || ( $(ECHO) "FAIL"; sed '$$ d' tmp/md5.txt )
+	@$(ENV) TRACTOR_PACKAGES=tractor.utils bin/tractor -q -z -i check-md5 md5.txt >tmp/md5.txt && $(ECHO) "OK" || ( $(ECHO) "FAIL"; sed '$$ d' tmp/md5.txt )
 	@rm -f tmp/md5.txt
 
 docker: uninstall distclean
