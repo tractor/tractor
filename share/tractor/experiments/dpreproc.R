@@ -199,11 +199,12 @@ runExperiment <- function ()
                 
                 repeat
                 {
-                    choice <- ask("Use which one as the reference [1-#{length(zeroes)}; s to show in fslview]?", valid=c("s",seq_along(zeroes)))
+                    viewer <- externalViewer()
+                    choice <- ask("Use which one as the reference [1-#{length(zeroes)}; s to show in #{viewer}]?", valid=c("s",seq_along(zeroes)))
                     if (choice == "s")
                     {
                         zeroVolumes <- readImageFile(b0Path, volumes=(if(useTopup) NULL else zeroes))
-                        showImagesInViewer(zeroVolumes, viewer="fslview")
+                        showImagesInViewer(zeroVolumes, viewer=viewer)
                     }
                     else
                     {

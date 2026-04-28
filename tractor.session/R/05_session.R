@@ -147,7 +147,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             if (fileName %~% "@")
                 fileName <- ore.subst("@", basename(.self$getDirectory()), fileName)
             
-            return (file.path(directory, fileName))
+            return (structure(file.path(directory,fileName), place=place))
         }
     },
     
@@ -267,6 +267,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
             return (tractor.base::imageFiles(path))
         else
         {
+            place <- place %||% attr(path, "place")
             fileSet <- tractor.base:::ImageFileSet(defaultMap=.self$getMap(place))
             return (fileSet$atPaths(path))
         }

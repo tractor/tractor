@@ -76,11 +76,12 @@ runExperiment <- function ()
                 done <- ask("Are the principal directions appropriate? [yn]", valid=c("y","n"))
             else
             {
-                done <- ask("Are the principal directions appropriate? [yn; s to show full images in fslview]", valid=c("y","n","s"))
+                viewer <- externalViewer()
+                done <- ask("Are the principal directions appropriate? [yn; s to show full images in #{viewer}]", valid=c("y","n","s"))
                 if (done == "s")
                 {
                     runDtifitWithSession(session)
-                    showImagesInViewer(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1), viewer="fslview")
+                    showImagesInViewer(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1), viewer=viewer)
                     done <- ask("Are the principal directions appropriate? [yn]", valid=c("y","n"))
                 }
             }
@@ -105,9 +106,10 @@ runExperiment <- function ()
             
             repeat
             {
-                done <- ask("Are the principal directions appropriate? [yn; s to show images in fslview]", valid=c("y","n","s"))
+                viewer <- externalViewer()
+                done <- ask("Are the principal directions appropriate? [yn; s to show images in #{viewer}]", valid=c("y","n","s"))
                 if (done == "s")
-                    showImagesInViewer(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1), viewer="fslview")
+                    showImagesInViewer(session$getImageFileNameByType("fa","diffusion"), session$getImageFileNameByType("eigenvector","diffusion",index=1), viewer=viewer)
                 else
                     break
             }

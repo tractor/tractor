@@ -1,5 +1,5 @@
 TractoR, its constituent R packages and command-line interface system, are
-copyright (C) 2005-2007 Jon Clayden, and (C) 2007-2025 University College
+copyright (C) 2005-2007 Jon Clayden, and (C) 2007-2026 University College
 London.
 
 Copyright on all dependency packages (within the `lib` directory) is owned by

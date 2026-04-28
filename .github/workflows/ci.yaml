@@ -23,7 +23,7 @@ jobs:
     
     steps:
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     
@@ -38,7 +38,7 @@ jobs:
     
     - name: Cache dependencies
       id: cache-deps
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: lib/R
         key: ${{ runner.os }}-deps-${{ matrix.R }}-${{ hashFiles('lib/*/DESCRIPTION') }}
@@ -70,7 +70,7 @@ jobs:
     # No submodules needed in this case, as we'll install dependencies from CRAN
     steps:
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: false
     
@@ -96,7 +96,7 @@ jobs:
     # Upload the check directory as an artefact on failure
     - name: Upload check results
       if: failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ matrix.os }}-R${{ matrix.R }}-check
         path: tractor.base.Rcheck

@@ -59,7 +59,7 @@ transformImage <- function (transform, image = NULL, ..., interpolation = 1)
     }
     
     assert(!is(image,"MriImage") || !image$isRgb(), "RGB images cannot be transformed yet")
-    assert(all.equal(RNifti::xform(image), RNifti::xform(attr(transform,"source"))), "Specified image is not in the same space as the registration's source image")
+    assert(all.equal(RNifti::xform(image), RNifti::xform(attr(transform,"source")), tolerance=1e-4), "Specified image is not in the same space as the registration's source image")
     
     result <- applyTransform(transform, image, interpolation=.interpolationNameToCode(interpolation))
     return (as(result, "MriImage"))
