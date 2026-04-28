@@ -1,6 +1,6 @@
 Package: tractor.reg
-Version: 3.5.0
-Date: 2025-10-10
+Version: 3.5.1
+Date: 2026-03-11
 Title: Image registration in TractoR
 Author: Jon Clayden
 Maintainer: Jon Clayden <code@clayden.org>
