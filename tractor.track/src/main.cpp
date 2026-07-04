@@ -278,6 +278,8 @@ BEGIN_RCPP
     if (requirements["profile"])
     {
         profile = new LabelProfileDataSink;
+        if (tracker != nullptr)
+            profile->labelDictionary() = tracker->labelDictionary();
         pipeline->addSink(profile);
     }
     
