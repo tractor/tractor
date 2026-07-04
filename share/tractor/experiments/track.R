@@ -81,7 +81,10 @@ runExperiment <- function ()
         targetInfo <- list(image=NULL, indices=NULL, labels=NULL)
     
     if (requireProfile && length(targetInfo$indices) == 0)
-        report(OL$Error, "")
+    {
+        report(OL$Warning, "No target regions specified - no profile will be created")
+        requireProfile <- FALSE
+    }
     
     if (minTargetHits == "all")
         minTargetHits <- length(targetInfo$indices)
