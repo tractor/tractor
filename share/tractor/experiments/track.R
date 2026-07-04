@@ -3,7 +3,7 @@
 #@example # Seed everywhere within the brain mask
 #@example tractor track /data/subject1
 #@example # Seed in all white matter and use cortical grey matter regions as targets
-#@example tractor track /data/subject1 white_matter TargetRegions:cerebal_cortex TerminateAtTargets:true
+#@example tractor track /data/subject1 white_matter TargetRegions:cerebral_cortex TerminateAtTargets:true
 #@example # Seed just outside a particular grey matter region
 #@example tractor track /data/subject1 postcentral_gyrus_left BoundaryManipulation:outer
 #@group Streamline tractography
