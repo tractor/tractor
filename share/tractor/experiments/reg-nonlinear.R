@@ -62,7 +62,7 @@ runExperiment <- function ()
     }
     
     if (is.null(registration))
-        registration <- createRegistration(source, target, method)
+        registration <- createRegistration(source, target, method="niftyreg")
     if (!is.null(initControlFile) && !symmetric)
         init <- RNiftyReg::readNifti(initControlFile)
     else if (!is.null(initAffineFile))
