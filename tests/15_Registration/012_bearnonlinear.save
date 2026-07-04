@@ -1,5 +1,3 @@
-[NiftyReg WARNING] Changing from 6 to 7 squaring step (equivalent to scaling down by 128)
-[NiftyReg WARNING] The current level reached the maximum number of iteration
 WARNING: Running nonlinear registration without initialisation is not recommended
     Registration method : niftyreg
  Stored transformations : affine (1), nonlinear (1), reverse-nonlinear (1)
