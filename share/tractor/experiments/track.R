@@ -65,6 +65,10 @@ runExperiment <- function ()
     else
         seedInfo <- resolveRegions(seedRegions, session, "diffusion", parcellationConfidence)
     
+    # For global tractography the whole seed area is treated as a single region, so flatten it down
+    if (strategy == "global")
+        seedInfo <- list(image=seedInfo$image$binarise(), indices=1L, labels="global")
+    
     if (!is.null(anisotropyThreshold))
     {
         fa <- session$getImageByType("FA")
@@ -107,7 +111,7 @@ runExperiment <- function ()
     {
         outputLevel <- ifelse(length(seedInfo$indices)==1, OL$Info, OL$Verbose)
         
-        seedImage <- seedInfo$image$map(fx(ifelse(x==index, 1L, 0L)))
+        seedImage <- seedInfo$image$copy()$map(fx(ifelse(x==index, 1L, 0L)))
         if (boundaryManipulation != "none")
         {
             kernel <- mmand::shapeKernel(c(3,3,3), type=kernelShape)
