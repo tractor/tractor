@@ -11,17 +11,17 @@ runExperiment <- function ()
     if (nArguments() > 1)
     {
         mask <- readImageFile(Arguments[2])
-        locs <- which(mask$getData() != 0, arr.ind=TRUE)
+        sparse <- (mask$getSparseness() > 0.8)
+        image <- readImageFile(Arguments[1], sparse=sparse, mask=mask)
+        values <- image[mask$find()]
     }
     else
-        locs <- which(!is.na(image$getData()), arr.ind=TRUE)
-    
-    if (mask$getSparseness() > 0.8)
-        image <- readImageFile(Arguments[1], sparse=TRUE, mask=mask)
-    else
+    {
         image <- readImageFile(Arguments[1])
+        locs <- image$find(fx(!is.na(x) & x!=0))
+        values <- image[locs]
+    }
     
-    values <- signif(image[locs], digits)
-    cat(implode(values, sep="\n"))
+    cat(implode(signif(values,digits), sep="\n"))
     cat("\n")
 }
