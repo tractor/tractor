@@ -32,6 +32,9 @@ runExperiment <- function ()
     assert(!is.null(combine) || nInputs <= 26, "Images beyond the 26th cannot be referred to by the expression", level=OL$Warning)
     expression <- implode(Arguments[-(1:nInputs)], sep=" ")
     
+    # Read template metadata from the first image in the list
+    metadata <- readImageFile(Arguments[1], metadataOnly=TRUE)
+
     if (is.null(combine))
     {
         assert(expression != "", "Expression cannot be empty")
@@ -58,11 +61,12 @@ runExperiment <- function ()
             result <- result / nInputs
     }
     
-    if (length(result) == 1 || (!is.array(result) && !(length(result) %in% cumprod(dim(images[[1]])))))
+    # The result is written out plainly if it's a scalar value, or a vector
+    # without a "dim" attribute that doesn't look like a flattened sub-image
+    if (length(result) == 1 || (!is.array(result) && !(length(result) %in% cumprod(metadata$getDimensions()))))
         cat(paste0(implode(result,sep="\n"), "\n"))
     else
     {
-        metadata <- readImageFile(Arguments[1], metadataOnly=TRUE)
         resultImage <- asMriImage(result, metadata)
         writeImageFile(resultImage, resultName)
     }
