@@ -54,9 +54,7 @@ runExperiment <- function ()
             return (invisible(NULL))
         }
         
-        if (maxRank < maxSeeds)
-            maxSeeds <- maxRank
-        indices <- match(1:maxSeeds, ranks)
+        indices <- match(seq_len(min(maxRank,maxSeeds)), ranks)
         currentPosteriors[-indices] <- NA
         
         validSeeds <- which(currentPosteriors >= minPosterior)
