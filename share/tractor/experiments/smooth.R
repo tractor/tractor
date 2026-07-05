@@ -17,7 +17,7 @@ runExperiment <- function ()
     if (length(width) == 1)
         width <- rep(width, min(3,image$getDimensionality()))
     if (widthType == "fwhm")
-        width <- width / 2*sqrt(2*log(2))
+        width <- width / (2*sqrt(2*log(2)))
     if (widthUnit == "mm")
     {
         if (is.na(image$getVoxelUnits()["spatial"]))
