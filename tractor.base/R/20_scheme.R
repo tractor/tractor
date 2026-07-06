@@ -47,8 +47,8 @@ DiffusionScheme <- setRefClass("DiffusionScheme", contains="SerialisableObject",
         # Assign all volumes with b-values below threshold to shell 0, and check that this is neither all nor none of the volumes
         indices <- rep(NA_integer_, length(bValues))
         indices[bValues < unweightedThreshold] <- 0L
-        assert(any(is.na(indices)), "Diffusion scheme contains only unweighted volumes at b-value threshold of #{threshold}", level=OL$Warning)
-        assert(any(!is.na(indices)), "Diffusion scheme contains no unweighted volumes at b-value threshold of #{threshold}", level=OL$Warning)
+        assert(any(is.na(indices)), "Diffusion scheme contains only unweighted volumes at b-value threshold of #{unweightedThreshold}", level=OL$Warning)
+        assert(any(!is.na(indices)), "Diffusion scheme contains no unweighted volumes at b-value threshold of #{unweightedThreshold}", level=OL$Warning)
         
         # Find the modal unweighted value, or default to zero
         if (any(!is.na(indices)))
