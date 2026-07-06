@@ -38,7 +38,10 @@ std::string BinaryInputStream::readString (const size_t n)
     {
         char *value = new char[n];
         read<char>(value, n);
-        std::string finalValue(value, std::min(n,strlen(value)));
+        size_t len = 0;
+        while (len < n && value[len] != '\0')
+            len++;
+        std::string finalValue(value, len);
         delete[] value;
         return finalValue;
     }
