@@ -18,7 +18,7 @@ void set_colour (FILE *stream, const int code)
 
 char * allocate_and_copy_string (const char *from)
 {
-    char *to;
+    char *to = NULL;
     
     if (from != NULL)
     {
@@ -49,40 +49,37 @@ void parse_arguments (int argc, const char **argv)
                 break;
             }
         }
-        else if (strcmp(argv[current_arg], "-w") == 0)
+        else if (strcmp(argv[current_arg], "-w") == 0 && argv[current_arg+1] != NULL)
         {
             working_dir = allocate_and_copy_string(argv[current_arg+1]);
             to_drop = 2;
         }
-        else if (strcmp(argv[current_arg], "-l") == 0)
+        else if (strcmp(argv[current_arg], "-l") == 0 && argv[current_arg+1] != NULL)
         {
             output_level = allocate_and_copy_string(argv[current_arg+1]);
             to_drop = 2;
         }
-        else if (strcmp(argv[current_arg], "-c") == 0)
+        else if (strcmp(argv[current_arg], "-c") == 0 && argv[current_arg+1] != NULL)
         {
             config_file = allocate_and_copy_string(argv[current_arg+1]);
             to_drop = 2;
         }
-        else if (strcmp(argv[current_arg], "-g") == 0)
+        else if (strcmp(argv[current_arg], "-g") == 0 && argv[current_arg+1] != NULL)
         {
             log_file = fopen(argv[current_arg+1], "w");
             to_drop = 2;
         }
-        else if (strcmp(argv[current_arg], "-p") == 0)
+        else if (strcmp(argv[current_arg], "-p") == 0 && argv[current_arg+1] != NULL)
         {
-            if (argv[current_arg+1] != NULL)
+            parallelisation_factor = atoi(argv[current_arg+1]);
+            if (parallelisation_factor < 1 || parallelisation_factor > 99)
             {
-                parallelisation_factor = atoi(argv[current_arg+1]);
-                if (parallelisation_factor < 1 || parallelisation_factor > 99)
-                {
-                    set_colour(stderr, 33);
-                    fprintf(stderr, "Parallelisation factor must be between 1 and 99 - ignoring value of %d\n", parallelisation_factor);
-                    set_colour(stderr, 0);
-                    parallelisation_factor = 1;
-                }
-                to_drop = 2;
+                set_colour(stderr, 33);
+                fprintf(stderr, "Parallelisation factor must be between 1 and 99 - ignoring value of %d\n", parallelisation_factor);
+                set_colour(stderr, 0);
+                parallelisation_factor = 1;
             }
+            to_drop = 2;
         }
         else if (strcmp(argv[current_arg], "-f") == 0)
         {
@@ -313,7 +310,7 @@ void write_console (const char *buffer, int buffer_len, int output_type)
         set_colour(stderr, is_error_string(buffer) ? 31 : 33);
         
         len = strlen(buffer);
-        if (buffer[len-1] == '\n')
+        if (len > 0 && buffer[len-1] == '\n')
             fprintf(stderr, "%.*s\n", (int) len-1, buffer);
         else
             fprintf(stderr, "%s", buffer);
