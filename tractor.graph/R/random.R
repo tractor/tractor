@@ -42,11 +42,17 @@ randomGraph <- function (n, M, p, weights = NULL, directed = FALSE, selfConnecti
 }
 
 # Flatten upper triangular matrix
-#' @export
 flattenUpperTri <- function(X) t(X)[upper.tri(X,diag=FALSE)]
 
+# Project a matrix with values only in its upper triangle onto a symmetric
+# matrix, by reflecting those values into the lower triangle
+projectTri <- function(X)
+{
+    X[lower.tri(X)] <- t(X)[lower.tri(X)]
+    return (X)
+}
+
 # Get Strength
-#' @export
 getStrength <- function (weight_matrix)
 {
     strength <- rowSums(weight_matrix)
@@ -80,7 +86,7 @@ randomiseGraph <- function (graph)
     Lij <- nodes*(ij[,2]-1)+ij[,1]
     
     iterations <- sum(rank_weights>0)
-    for (i in 1:(iterations-1))
+    for (i in seq_len(max(0, iterations-1)))
     {
         # Calculate expected weights for each connection
         tri_new_weights <- upper.tri(new_weights, diag = FALSE) * new_weights
@@ -103,7 +109,7 @@ randomiseGraph <- function (graph)
         o <- rank_exp_weights[rand_con]
         
         # Save Location
-        location <- c(Lij[o]%%nodes, Lij[o]%/%nodes+1)
+        location <- c(((Lij[o]-1) %% nodes) + 1, ((Lij[o]-1) %/% nodes) + 1)
         
         # Assign New weight
         new_weights[location[1], location[2]] <- rank_weights[rand_con]
