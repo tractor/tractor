@@ -48,7 +48,7 @@ public:
     void attach (const std::string &path)
     {
         this->inputStream = new std::ifstream(path, std::ios::in | std::ios::binary);
-        if (!inputStream)
+        if (inputStream->fail())
             throw std::runtime_error("Failed to open file " + path);
         this->streamsOwned = true;
     }
@@ -77,7 +77,7 @@ public:
     void attach (const std::string &path)
     {
         this->outputStream = new std::ofstream(path, std::ios::out | std::ios::binary);
-        if (!outputStream)
+        if (outputStream->fail())
             throw std::runtime_error("Failed to open file " + path);
         this->streamsOwned = true;
     }
