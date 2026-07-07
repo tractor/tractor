@@ -36,7 +36,12 @@ runExperiment <- function ()
         else
             equal <- as.array(reference) == as.array(image)
         
-        overlap <- sum(equal,na.rm=TRUE) / length(equal)
+        # Avoid divide-by-zero
+        if (length(equal) == 0L)
+            overlap <- 0
+        else
+            overlap <- sum(equal,na.rm=TRUE) / length(equal)
+        
         if (overlap >= minOverlap)
             report(OL$Info, "Images #{Arguments[1]} and #{imagePath} match (#{overlap*100}% overlap)", round=2)
     }
