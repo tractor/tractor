@@ -1,6 +1,6 @@
 Package: tractor.base
-Version: 3.5.1
-Date: 2025-10-24
+Version: 3.5.2
+Date: 2026-07-06
 Title: Read, Manipulate and Visualise Magnetic Resonance Images
 Authors@R: person("Jon", "Clayden", role=c("cre","aut"),
     email="code@clayden.org", comment=c(ORCID="0000-0002-6608-0619"))

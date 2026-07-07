@@ -46,6 +46,24 @@
 
 <p>The significant user-visible changes in each release of TractoR are documented below.</p>
 
+<h2 id="352-2026-07-07">3.5.2 (2026-07-07)</h2>
+
+<ul>
+<li>The <code>track</code> script could produce incomplete results when more than one seed region was specified – for example a named region matching several parcellation labels – with the default <code>Strategy:global</code>. Only one of the requested regions ended up contributing to the output. This has been corrected, and the whole seed area is now always combined into a single result, as documented. Profile outputs now have named columns where region names are available, as intended.</li>
+<li>The <code>reg-nonlinear</code> script will no longer produce an error when the named transform does not already exist (although performing linear registration first is still recommended).</li>
+<li>The <code>values</code> script will no longer fail if a mask image is not specified.</li>
+<li>Using the <code>apply</code> script’s “Combine” mode with a function that reduces each image to a short vector, rather than operating pointwise, could cause an error. This has been fixed.</li>
+<li>The <code>smooth</code> script with the <code>WidthType:fwhm</code> option previously produced a Gaussian kernel of the wrong width, due to an operator-precedence bug in the underlying calculation. This has been corrected.</li>
+<li>Reading a corrupted or truncated MRtrix .tck file with an incomplete header could cause TractoR to hang indefinitely rather than reporting an error. This has been fixed.</li>
+<li>Reading and mapping .trk files, for example with <code>trkmap</code>, has been made more robust. An invalid seed-point index, or streamline coordinates lying outside the image bounds could previously cause a crash, and a separate, rare defect could cause streamline “seed” properties to go unrecognised.</li>
+<li>When processing a batch of sessions, the <code>pnt-viz</code> script could use fewer seed points than requested for sessions handled after one with relatively few valid matches. This has been corrected.</li>
+<li>An unusual case in which trimming a streamline left only its seed point, which can arise when building tract models for probabilistic neighbourhood tractography, is now handled correctly.</li>
+<li>The <code>compare</code> script produced an obscure error, rather than simply reporting no match, when comparing two images with <code>IgnoreZeroes:true</code> that share no nonzero voxels. This has been corrected.</li>
+<li>The <code>transform</code> script now produces a more informative error if asked to transform a point without a source space specified.</li>
+<li>The supplied <code>Rprofile</code> now checks whether the target of <code>TRACTOR_HOME</code> exists, and only prioritises packages installed in TractoR’s library for calls to its scripts.</li>
+<li>The <code>tractor</code> binary is now more defensive when parsing its arguments, and avoids potentially dereferencing an uninitialised pointer.</li>
+</ul>
+
 <h2 id="351-2026-04-28">3.5.1 (2026-04-28)</h2>
 
 <ul>
