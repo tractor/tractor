@@ -57,6 +57,8 @@ runExperiment <- function ()
         point <- splitAndConvertString(Arguments[-1], ",", "numeric", fixed=TRUE, errorIfInvalid=TRUE)
         if (is.null(pointType))
             report(OL$Error, "Point type must be specified if a point location is given")
+        if (is.null(sourceSpace))
+            report(OL$Error, "Source space must be specified when transforming points")
         
         if (targetSpace == sourceSpace)
         {
