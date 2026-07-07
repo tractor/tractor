@@ -37,6 +37,8 @@ void MrtrixSourceFileAdapter::open (StreamlineFileMetadata &metadata)
         throw std::runtime_error("File " + path + " does not seem to contain a valid MRtrix header");
     if (metadata.count == 0)
         throw std::runtime_error("Streamline count not stored in MRtrix track file header");
+    if (datatype.empty())
+        throw std::runtime_error("MRtrix track file does not specify a datatype");
     
     inputStream->seekg(metadata.dataOffset);
 }

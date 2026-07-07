@@ -108,6 +108,8 @@ void TrackvisSourceFileAdapter::read (Streamline &data)
         {
             inputStream->seekg(4 * seedProperty, ios::cur);
             seed = static_cast<int>(inputStream.readValue<float>());
+            if (seed < 0 || seed >= nPoints)
+                throw runtime_error("TrackVis file specifies a seed index (" + std::to_string(seed) + ") which is out of bounds");
         }
         if (nProperties > 0)
             inputStream->seekg(4 * (nProperties-seedProperty-1), ios::cur);
