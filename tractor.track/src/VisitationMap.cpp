@@ -13,8 +13,16 @@ inline void checkAndSetPoint (Image<bool,3> &visited, Image<double,3> &values, c
     static ImageRaster<3>::ArrayIndex loc;
     static size_t index;
     
+    const ImageRaster<3>::ArrayIndex &dims = values.imageRaster().dim();
+    ImageSpace::Element pi;
     for (int i=0; i<3; i++)
-        loc[i] = static_cast<size_t>(round(point[i]));
+    {
+        pi = round(point[i]);
+        // If we're out of bounds there can be no influence on the result so return
+        if (pi < 0.0f || pi >= static_cast<ImageSpace::Element>(dims[i]))
+            return;
+        loc[i] = static_cast<size_t>(pi);
+    }
     
     values.imageRaster().flattenIndex(loc, index);
     if (!visited[index])
