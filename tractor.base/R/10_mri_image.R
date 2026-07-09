@@ -30,9 +30,6 @@ is.emptyMatrix <- function (object)
     return (identical(object, .EmptyMatrix))
 }
 
-setOldClass("rgbArray")
-setClassUnion("MriImageData", c("SparseArray","rgbArray","array","NULL"))
-
 #' The MriImage class
 #' 
 #' This class represents an MRI image. An object of this class is made up of
@@ -41,6 +38,10 @@ setClassUnion("MriImageData", c("SparseArray","rgbArray","array","NULL"))
 #' on. The group generic functions \code{\link{Math}}, \code{\link{Ops}} and
 #' \code{\link{Summary}} are defined for this class, as are methods for
 #' coercing to and from a standard \code{\link{array}}.
+#'
+#' This is a thin backwards-compatible shell around the value-semantics
+#' \code{\link{mriImage}} S7 class, which holds the actual data and
+#' implements all of the real logic. Every method here forwards to it.
 #' 
 #' @field imageDims Integer vector of dimensions
 #' @field voxelDims Numeric vector of pixel/voxel spacings
@@ -57,158 +58,79 @@ setClassUnion("MriImageData", c("SparseArray","rgbArray","array","NULL"))
 #' @field data Sparse or dense array of data, or \code{NULL}
 #' 
 #' @export
-MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(imageDims="integer",voxelDims="numeric",voxelDimUnits="character",source="character",origin="numeric",xform="matrix",reordered="logical",tags="list",data="MriImageData"), methods=list(
-    initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, xform = emptyMatrix(), reordered = TRUE, tags = list(), data = NULL, ...)
+MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(value.="mriImage", imageDims="integer", voxelDims="numeric", voxelDimUnits="character", source="character", origin="numeric", xform="matrix", reordered="logical", tags="list", data="ANY"), methods=list(
+    # imageDims/voxelDims/.../data are a deliberate exception to the
+    # single-hidden-field shell pattern: RNifti's C-level asNifti() duck-typing
+    # accesses fields like $tags and $data directly (not via a generic
+    # function), so they must be real, bare fields kept in sync with value.'s
+    # properties. .syncFields() is called after every mutation to do this in
+    # one place, so no call site can forget to update one of them.
+    initialize = function (imageDims = NULL, voxelDims = NULL, voxelDimUnits = NULL, source = "", origin = NULL, xform = emptyMatrix(), reordered = TRUE, tags = list(), data = NULL, value. = NULL, ...)
     {
-        oldFields <- list(...)
-        
-        # Resolve image dimensions
-        .dims <- imageDims
-        if (is.null(imageDims))
-        {
-            if ("imagedims" %in% names(oldFields))
-                .dims <- oldFields$imagedims
-            else
-                .dims <- dim(data)
-        }
-        
-        # Sanity checking
-        if (!is.null(.dims) && length(.dims) < 2)
-            report(OL$Error, "Image must be multidimensional")
-        if (!is.null(data) && !is.null(dim(data)) && !equivalent(.dims,dim(data)))
-            flag(OL$Warning, "Data dimensions do not match the specified image dimensions")
-        
-        # Resolve voxel dimensions and associated units
-        .voxdims <- voxelDims
-        .voxunits <- as.character(voxelDimUnits)
-        if (is.null(voxelDims) && "voxdims" %in% names(oldFields))
-            .voxdims <- oldFields$voxdims
-        if (is.null(voxelDimUnits) && "voxunit" %in% names(oldFields))
-            .voxunits <- as.character(oldFields$voxunit)
-        
-        # Name voxel units
-        names(.voxunits)[.voxunits %~% "m$"] <- "spatial"
-        names(.voxunits)[.voxunits %~% "s$"] <- "temporal"
-        
-        # Resolve xform
-        .xform <- xform
-        if (is.emptyMatrix(xform) && "storedXform" %in% names(oldFields))
-            .xform <- oldFields$storedXform
-        
-        if (length(.dims) != length(.voxdims))
-            report(OL$Error, "Image and voxel dimensions should have the same length")
-        
-        # Don't call as.character() on .voxunits here, as it will drop names
-        object <- initFields(imageDims=as.integer(.dims), voxelDims=abs(as.numeric(.voxdims)), voxelDimUnits=.voxunits, source=as.character(source), origin=as.numeric(origin), xform=as.matrix(.xform), reordered=reordered, tags=tags, data=data)
-        
-        # Make sure the data dimensions are right
-        if (!is.null(object$data))
-            dim(object$data) <- .dims
-        
-        # Various fix-ups for backwards compatibility
-        if (length(object$voxelDimUnits) == 0)
-            object$voxelDimUnits <- "unknown"
-        if (length(object$source) != 1 || object$source == "internal")
-            object$source <- ""
-        if (length(object$tags) == 2 && all(c("keys","values") %in% names(object$tags)))
-            object$tags <- structure(as.list(object$tags$values), names=object$tags$keys)
-        if (length(object$origin) < 3)
-            object$origin <- c(object$origin, rep(0,3-length(object$origin)))
+        if (!is.null(value.))
+            object <- initFields(value.=value.)
         else
-            object$origin <- object$origin[1:3]
-        
+            object <- initFields(value.=newMriImage(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, source=source, origin=origin, xform=xform, reordered=reordered, tags=tags, data=data, ...))
+        object$.syncFields()
         return (object)
+    },
+
+    .syncFields = function ()
+    {
+        "(internal) Mirror value.'s properties onto real fields, for interop with code that expects direct field access (e.g. RNifti's C-level duck-typing)"
+        .self$imageDims <- value.@imageDims
+        .self$voxelDims <- value.@voxelDims
+        .self$voxelDimUnits <- value.@voxelDimUnits
+        .self$source <- value.@source
+        .self$origin <- value.@origin
+        .self$xform <- value.@xform
+        .self$reordered <- value.@reordered
+        .self$tags <- value.@tags
+        .self$data <- .wrapIfSparseArray(value.@data)
+        invisible (.self)
     },
     
     apply = function (...)
     {
         "Apply a function to the margins of the image"
-        if (.self$isEmpty())
-            report(OL$Error, "The image contains no data")
-        else if (.self$isSparse())
-            return (data$apply(...))
-        else
-            return (base::apply(data, ...))
+        .mriImageApply(value., ...)
     },
     
     binarise = function ()
     {
         "Binarise the image by setting nonzero values to one"
-        .self$map(function(x) ifelse(x!=0, 1L, 0L))
+        .self$value. <- tractor.base::binarise(value.)
+        .self$.syncFields()
+        invisible (.self)
     },
     
     fill = function (value)
     {
         "Fill the image with a particular value"
-        if (value == 0)
-            .self$setData(newSparseArrayWithData(vector(class(value),0), matrix(NA,0,length(imageDims)), imageDims))
-        else
-            .self$setData(array(value, dim=imageDims))
+        .self$value. <- .mriImageFill(value., value)
+        .self$.syncFields()
+        invisible (.self)
     },
     
     find = function (fun = NULL, ..., array = TRUE)
     {
         "Find voxels whose values are not zero, or satisfy a function"
-        .warnIfIndexingUnreorderedImage(.self)
-        
-        if (.self$isEmpty())
-            return (integer(0))
-        else if (is.null(fun))
-        {
-            if (.self$isSparse())
-            {
-                locs <- data$getCoordinates()
-                if (array)
-                    return (locs)
-                else
-                    return (matrixToVectorLocs(locs, imageDims))
-            }
-            else
-                return (which(data != 0, arr.ind=array))
-        }
-        else
-        {
-            if (is.numeric(fun) && length(fun) == 1)
-                locs <- which(as.array(data) == fun)
-            else
-            {
-                fun <- match.fun(fun)
-                locs <- which(as.logical(fun(as.array(data), ...)))
-            }
-            
-            if (array)
-                return (vectorToMatrixLocs(locs, imageDims))
-            else
-                return (locs)
-        }
+        .mriImageFind(value., fun, ..., array=array)
     },
     
-    getData = function () { return (data) },
+    getData = function () { return (.wrapIfSparseArray(values(value.))) },
     
     getDataAtPoint = function (...)
     {
         "Obtain the value of the image at a particular point"
-        if (is.null(data))
-            return (NA)
-        
-        .warnIfIndexingUnreorderedImage(.self)
-        
-        dim <- getDimensionality()
-        loc <- resolveVector(len=dim, ...)
-        if (is.null(loc) || (length(loc) != dim))
-            report(OL$Error, "Point must be specified as a ", dim, "-vector")
-            
-        if (all(loc >= 1) && all(loc <= getDimensions()))
-            return (data[matrix(loc,nrow=1)])
-        else
-            return (NA)
+        .mriImageGetDataAtPoint(value., ...)
     },
     
-    getDimensionality = function () { return (length(voxelDims)) },
+    getDimensionality = function () { return (.mriImageDimensionality(value.)) },
     
-    getDimensions = function () { return (imageDims) },
+    getDimensions = function () { return (dim(value.)) },
     
-    getFieldOfView = function () { return (abs(voxelDims) * imageDims) },
+    getFieldOfView = function () { return (.mriImageFieldOfView(value.)) },
     
     getMetadata = function ()
     {
@@ -216,156 +138,99 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         if (.self$isEmpty())
             return (.self$copy())
         else
-            return (MriImage$new(imageDims=imageDims, voxelDims=voxelDims, voxelDimUnits=voxelDimUnits, source=source, origin=origin, xform=xform, reordered=reordered, tags=tags, data=NULL))
+            return (MriImage$new(value.=metadata(value.)))
     },
     
     getNonzeroIndices = function (array = TRUE, positiveOnly = FALSE)
     {
         "Find voxels whose values are not zero"
-        .warnIfIndexingUnreorderedImage(.self)
-        
-        if (positiveOnly)
-            return (.self$find(fx(x > 0), array=array))
-        else
-            return (.self$find(array=array))
+        .mriImageGetNonzeroIndices(value., array=array, positiveOnly=positiveOnly)
     },
     
-    getOrigin = function () { return (origin) },
+    getOrigin = function () { return (value.@origin) },
     
     getSlice = function (dim, loc)
     {
         "Extract data from a slice of the image along one dimension"
-        if (length(imageDims) < max(2,dim))
-            report(OL$Error, "The dimensionality of the image is too low")
-        if (!(loc %in% seq_len(imageDims[dim])))
-            report(OL$Error, "The specified location is out of bounds")
-        
-        .warnIfIndexingUnreorderedImage(.self)
-        
-        dimsToKeep <- setdiff(seq_along(imageDims), dim)
-        if (.self$isEmpty())
-            newData <- NULL
-        else if (.self$isSparse())
-        {
-            # This code is faster when working with a sparse array
-            newData <- array(0, dim=imageDims[dimsToKeep])
-            matchingCoords <- which(data$getCoordinates()[,dim] == loc)
-            newData[data$getCoordinates()[matchingCoords,dimsToKeep,drop=FALSE]] <- data$getData()[matchingCoords]
-        }
-        else
-        {
-            indices <- alist(i=,j=,k=,t=,u=,v=,w=)[seq_along(imageDims)]
-            indices[dim] <- loc
-            newData <- do.call("[", c(list(data),indices))
-            if (is.vector(newData))
-                newData <- promote(newData)
-        }
-        
-        invisible(newData)
+        .mriImageGetSlice(value., dim, loc)
     },
     
-    getSource = function () { return (source) },
+    getSource = function () { return (value.@source) },
     
     getSparseness = function ()
     {
         "Obtain the proportion of zeroes in the image"
-        if (.self$isEmpty())
-            return (NA)
-        else if (.self$isSparse())
-            return (1 - (nrow(data$getCoordinates()) / prod(.self$getDimensions())))
-        else
-            return (sum(data==0 | is.na(data)) / prod(.self$getDimensions()))
+        .mriImageGetSparseness(value.)
     },
     
     getTags = function (keys = NULL)
     {
         "Retrieve some or all of the tags stored with the image"
-        indexList(tags, keys)
+        .mriImageGetTags(value., keys)
     },
     
-    getVoxelDimensions = function () { return (voxelDims) },
+    getVoxelDimensions = function () { return (pixdim(value.)) },
     
-    getVoxelUnits = function () { return (voxelDimUnits) },
+    getVoxelUnits = function () { return (pixunits(value.)) },
     
     getXform = function (implicit = TRUE)
     {
         "Retrieve the stored or implicit xform matrix"
-        if (is.emptyMatrix(.self$xform) && .self$isReordered() && implicit)
-        {
-            implicitXform <- diag(4)
-            zeroBasedOrigin <- pmax(origin-1, c(0,0,0))
-            if (.self$getDimensionality() == 2)
-            {
-                implicitXform[c(1,6)] <- c(-1,1) * abs(voxelDims)
-                zeroBasedOrigin[1:2] <- zeroBasedOrigin[1:2] * abs(voxelDims)
-            }
-            else
-            {
-                implicitXform[c(1,6,11)] <- c(-1,1,1) * abs(voxelDims[1:3])
-                zeroBasedOrigin <- zeroBasedOrigin * abs(voxelDims[1:3])
-            }
-            implicitXform[1:3,4] <- c(1,-1,-1) * zeroBasedOrigin
-            return (implicitXform)
-        }
-        else
-            return (.self$xform)
+        .mriImageGetXform(value., implicit=implicit)
     },
     
-    hasTags = function (keys) { return (sapply(keys, function(key) !is.null(tags[[key]]))) },
+    hasTags = function (keys) { return (.mriImageHasTags(value., keys)) },
     
-    isEmpty = function () { return (is.null(data)) },
+    isEmpty = function () { return (.mriImageIsEmpty(value.)) },
     
-    isInternal = function () { return (source == "") },
+    isInternal = function () { return (.mriImageIsInternal(value.)) },
     
-    isReordered = function () { return (isTRUE(reordered)) },
+    isReordered = function () { return (.mriImageIsReordered(value.)) },
     
-    isRgb = function () { return (inherits(data,"rgbArray")) },
+    isRgb = function () { return (.mriImageIsRgb(value.)) },
     
-    isSparse = function () { return (is(data,"SparseArray")) },
+    isSparse = function () { return (.mriImageIsSparse(value.)) },
     
     map = function (fun, ..., sparse = NULL)
     {
         "Replace the current data with the result of a function"
-        args <- lapply(list(.self,...), function(x) {
-            if (is(x, "MriImage"))
-                return (as.array(x$getData()))
-            else
-                return (x)
-        })
-        result <- do.call(fun, args)
-        
-        if (!equivalent(dim(result), imageDims))
-            dim(result) <- imageDims
-        
-        if (is.null(sparse))
-            sparse <- (sum(result==0) / length(result) >= 0.75)
-        if (isTRUE(sparse))
-            result <- as(result, "SparseArray")
-        
-        .self$setData(result)
+        args <- lapply(list(...), function(a) if (is(a,"MriImage")) a$value. else a)
+        .self$value. <- do.call(imageMap, c(list(value.,fun), args, list(sparse=sparse)))
+        .self$.syncFields()
+        invisible (.self)
     },
     
     mask = function (maskImage)
     {
         "Mask the image, setting zero voxels in the mask to zero"
-        .self$map(function(x,y) ifelse(y==0,0,x), maskImage)
+        .self$value. <- tractor.base::mask(value., maskImage$value.)
+        .self$.syncFields()
+        invisible (.self)
     },
     
-    nChannels = function () { return (ifelse(.self$isRgb(), attr(data,"channels") %||% 3L, 1L)) },
+    nChannels = function () { return (.mriImageNChannels(value.)) },
     
-    nSlices = function () { return (ifelse(length(imageDims) > 2, imageDims[3], 1L)) },
+    nSlices = function () { return (.mriImageNSlices(value.)) },
     
-    nTags = function () { return (length(tags)) },
+    nTags = function () { return (.mriImageNTags(value.)) },
     
-    nVolumes = function () { return (ifelse(length(imageDims) > 3, prod(imageDims[-(1:3)]), 1L)) },
+    nVolumes = function () { return (.mriImageNVolumes(value.)) },
+
+    threshold = function (level, defaultValue = 0)
+    {
+        "Threshold the image by setting values below the threshold level to zero"
+        .self$value. <- tractor.base::threshold(value., level, defaultValue)
+        .self$.syncFields()
+        invisible (.self)
+    },
     
     setData = function (newData)
     {
         "Replace the data in the image"
-        if (is.null(newData) || equivalent(dim(newData),imageDims))
+        if (is.null(newData) || equivalent(dim(newData),dim(value.)))
         {
-            .self$data <- newData
-            .self$setSource(NULL)
+            .self$value. <- `values<-`(value., newData)
+            .self$.syncFields()
         }
         else
             flag(OL$Warning, "New data does not match the image dimensions")
@@ -377,8 +242,8 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         "Update the origin of the image"
         if (is.numeric(newOrigin) && length(newOrigin) == .self$getDimensionality())
         {
-            .self$origin <- newOrigin
-            .self$setSource(NULL)
+            .self$value. <- set_props(value., origin=newOrigin, source="")
+            .self$.syncFields()
         }
         invisible(.self)
     },
@@ -387,17 +252,18 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
     {
         "Update the source of the image"
         if (is.null(newSource))
-            .self$source <- ""
+            .self$value. <- set_props(value., source="")
         else if (is.character(newSource) && (length(newSource) == 1))
-            .self$source <- newSource
+            .self$value. <- set_props(value., source=newSource)
+        .self$.syncFields()
         invisible(.self)
     },
     
     setTags = function (..., merge = FALSE)
     {
         "Add, replace or merge metadata tags"
-        newTags <- deduplicate(list(...), .self$tags, merge=merge)
-        .self$tags <- newTags[!sapply(newTags,is.null)]
+        .self$value. <- .mriImageSetTags(value., ..., merge=merge)
+        .self$.syncFields()
         invisible(.self)
     },
     
@@ -406,45 +272,25 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(i
         "Update the xform matrix associated with the image"
         if (is.matrix(newXform) && equivalent(dim(newXform),c(4,4)))
         {
-            .self$xform  <- newXform
-            .self$setSource(NULL)
+            .self$value. <- set_props(value., xform=newXform, source="")
+            .self$.syncFields()
         }
         invisible(.self)
     },
     
+    serialise = function (file = NULL)
+    {
+        "Serialise the object to a list or file"
+        fields <- list(imageDims=dim(value.), voxelDims=pixdim(value.), voxelDimUnits=pixunits(value.), source=value.@source, origin=value.@origin, xform=.mriImageGetXform(value.,implicit=FALSE), reordered=value.@reordered, tags=value.@tags, data=values(value.))
+        out <- structure(fields, originalClass="MriImage", originalPackage="tractor.base")
+        if (!is.null(file))
+            save(out, file=ensureFileSuffix(file,"Rdata"))
+        invisible (out)
+    },
+
     summarise = function ()
     {
-        spatialUnit <- voxelDimUnits["spatial"]
-        temporalUnit <- voxelDimUnits["temporal"]
-        voxelDimString <- paste(implode(round(abs(voxelDims[1:min(3,length(voxelDims))]),5), sep=" x "), ifelse(!is.na(spatialUnit),paste(" ",spatialUnit,sep=""),""), sep="")
-        if (length(voxelDims) > 3)
-            voxelDimString <- paste(voxelDimString, " x ", round(abs(voxelDims[4]),5), ifelse(!is.na(spatialUnit) && !is.na(temporalUnit),paste(" ", temporalUnit,sep=""),""), sep="")
-        if (length(voxelDims) > 4)
-            voxelDimString <- paste(voxelDimString, " x ", implode(round(abs(voxelDims[5:length(voxelDims)]),5), sep=" x "), sep="")
-        if (all(voxelDimUnits == "unknown"))
-            voxelDimString <- paste(voxelDimString, "(units unknown)", sep=" ")
-        
-        tagNames <- names(tags)
-        if (length(tagNames) == 0)
-            tagNames <- "(none)"
-        
-        labels <- c("Image source", "Image dimensions", "Voxel dimensions", "Coordinate origin", "Additional tags")
-        values <- c(ifelse(source=="","internal",source), paste(implode(imageDims, sep=" x "),"voxels",sep=" "), voxelDimString, paste("(",implode(round(origin,2), sep=","),")",sep=""), implode(tagNames,sep=", "))
-        
-        if (!.self$isEmpty())
-        {
-            sparseness <- paste(round(.self$getSparseness()*100,2), "% (", ifelse(.self$isSparse(),"sparse","dense"), " storage)", sep="")
-            labels <- c(labels, "Sparseness")
-            values <- c(values, sparseness)
-        }
-        
-        return (list(labels=labels, values=values))
-    },
-    
-    threshold = function (level, defaultValue = 0)
-    {
-        "Threshold the image by setting values below the threshold level to zero"
-        .self$map(function(x) ifelse(x >= level, x, defaultValue))
+        .mriImageSummarise(value.)
     },
     
     writeToFile = function (...) { writeImageFile(.self, ...) }
@@ -456,7 +302,7 @@ registerDeserialiser("MriImageMetadata", function (fields, ...) {
     return (object)
 })
 
-setAs("MriImage", "array", function (from) as(from$getData(),"array"))
+setAs("MriImage", "array", function (from) as.array(from$value.))
 
 setAs("array", "MriImage", function (from) asMriImage(from))
 
@@ -469,10 +315,21 @@ setAs("character", "MriImage", function (from) readImageFile(from))
         flag(OL$Warning, "Indexing into an image which is not reordered has no consistent meaning")
 }
 
+.wrapIfSparseArray <- function (x)
+{
+    # Legacy callers expect a SparseArray shell (with $-style methods), not
+    # the new value-semantics sparseArray S7 class, wherever sparse data
+    # crosses the MriImage legacy API boundary
+    if (is(x, "sparseArray"))
+        return (SparseArray$new(value.=x))
+    else
+        return (x)
+}
+
 #' @export
 as.array.MriImage <- function (x, ...)
 {
-    as(x, "array")
+    as.array(x$value.)
 }
 
 #' @export
@@ -484,13 +341,14 @@ dim.MriImage <- function (x)
 #' @export
 Math.MriImage <- function (x, ...)
 {
-    x$copy()$map(.Generic)
+    MriImage$new(value.=imageMap(x$value., .Generic))
 }
 
 #' @export
 Ops.MriImage <- function (e1, e2)
 {
-    e1$copy()$map(.Generic, e2)
+    e2v <- if (is(e2,"MriImage")) e2$value. else e2
+    MriImage$new(value.=imageMap(e1$value., .Generic, e2v))
 }
 
 #' @export
@@ -503,142 +361,162 @@ Summary.MriImage <- function (x, ..., na.rm = FALSE)
     return (result)
 }
 
-#' @rdname index
+#' Indexing methods for the legacy MriImage class
+#'
+#' These are the backwards-compatible \code{[}/\code{[<-} methods for the
+#' legacy \code{\linkS4class{MriImage}} shell.
+#'
+#' @param x An \code{MriImage} object.
+#' @param i,j,\dots Indexing objects.
+#' @param drop Scalar value: should unitary dimensions be dropped?
+#' @param value New value(s) for replacement forms.
+#' @return A vector, array or \code{\linkS4class{SparseArray}}.
+#' @rdname index-legacy-mri
 #' @export
 setMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - as.integer(!missing(drop))
     if (nArgs < 2)
-        return (x$data)
+        return (x$getData())
     else if (x$isSparse())
     {
         indices <- .evaluateIndices(NULL, NULL, ...)
-        return (x$data[indices,drop=drop])
+        return (.wrapIfSparseArray(x$value.@data[indices,drop=drop]))
     }
     else
-        return (x$data[,,...,drop=drop])
+        return (.wrapIfSparseArray(x$value.@data[,,...,drop=drop]))
 })
 
-#' @rdname index
+#' @rdname index-legacy-mri
 #' @export
 setMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - as.integer(!missing(drop))
     if (nArgs < 3)
-        return (x$data[i,drop=drop])
+        return (.wrapIfSparseArray(x$value.@data[i,drop=drop]))
     else if (x$isSparse())
     {
         indices <- .evaluateIndices(i, NULL, ...)
-        return (x$data[indices,drop=drop])
+        return (.wrapIfSparseArray(x$value.@data[indices,drop=drop]))
     }
     else
-        return (x$data[i,,...,drop=drop])
+        return (.wrapIfSparseArray(x$value.@data[i,,...,drop=drop]))
 })
 
-#' @rdname index
+#' @rdname index-legacy-mri
 #' @export
 setMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     if (x$isSparse())
     {
         indices <- .evaluateIndices(NULL, j, ...)
-        return (x$data[indices,drop=drop])
+        return (.wrapIfSparseArray(x$value.@data[indices,drop=drop]))
     }
     else
-        return (x$data[,j,...,drop=drop])
+        return (.wrapIfSparseArray(x$value.@data[,j,...,drop=drop]))
 })
 
-#' @rdname index
+#' @rdname index-legacy-mri
 #' @export
 setMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     if (x$isSparse())
     {
         indices <- .evaluateIndices(i, j, ...)
-        return (x$data[indices,drop=drop])
+        return (.wrapIfSparseArray(x$value.@data[indices,drop=drop]))
     }
     else
-        return (x$data[i,j,...,drop=drop])
+        return (.wrapIfSparseArray(x$value.@data[i,j,...,drop=drop]))
 })
 
-#' @rdname index
+#' @rdname index-legacy-mri
 #' @export
 setMethod("[", signature(x="MriImage",i="MriImage",j="missing"), function (x, i, j, ..., drop = TRUE) {
     .warnIfIndexingUnreorderedImage(x)
     return (x[i$getNonzeroIndices(array=TRUE,...), drop=drop])
 })
 
-#' @rdname index
+#' @rdname index-legacy-mri
 #' @export
 setReplaceMethod("[", signature(x="MriImage",i="missing",j="missing"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - 1
+    newData <- x$value.@data
     if (nArgs < 2)
-        x$data[] <- value
+        newData[] <- value
     else if (x$isSparse())
     {
         indices <- .evaluateIndices(i, j, ...)
-        x$data[indices] <- value
+        newData[indices] <- value
     }
     else
-        x$data[,,...] <- value
+        newData[,,...] <- value
+    x$setData(newData)
     x$setSource(NULL)
     return (x)
 })
 
-#' @rdname index
+#' @rdname index-legacy-mri
 #' @export
 setReplaceMethod("[", signature(x="MriImage",i="ANY",j="missing"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
     nArgs <- nargs() - 1
+    newData <- x$value.@data
     if (nArgs < 3)
-        x$data[i] <- value
+        newData[i] <- value
     else if (x$isSparse())
     {
         indices <- .evaluateIndices(i, NULL, ...)
-        x$data[indices] <- value
+        newData[indices] <- value
     }
     else
-        x$data[i,,...] <- value
+        newData[i,,...] <- value
+    x$setData(newData)
     x$setSource(NULL)
     return (x)
 })
 
-#' @rdname index
+#' @rdname index-legacy-mri
 #' @export
 setReplaceMethod("[", signature(x="MriImage",i="missing",j="ANY"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
+    newData <- x$value.@data
     if (x$isSparse())
     {
         indices <- .evaluateIndices(NULL, j, ...)
-        x$data[indices] <- value
+        newData[indices] <- value
     }
     else
-        x$data[,j,...] <- value
+        newData[,j,...] <- value
+    x$setData(newData)
     x$setSource(NULL)
     return (x)
 })
 
-#' @rdname index
+#' @rdname index-legacy-mri
 #' @export
 setReplaceMethod("[", signature(x="MriImage",i="ANY",j="ANY"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
+    newData <- x$value.@data
     if (x$isSparse())
     {
         indices <- .evaluateIndices(i, j, ...)
-        x$data[indices] <- value
+        newData[indices] <- value
     }
     else
-        x$data[i,j,...] <- value
+        newData[i,j,...] <- value
+    x$setData(newData)
     x$setSource(NULL)
     return (x)
 })
 
-#' @rdname index
+#' @rdname index-legacy-mri
 #' @export
 setReplaceMethod("[", signature(x="MriImage",i="MriImage",j="missing"), function (x, i, j, ..., value) {
     .warnIfIndexingUnreorderedImage(x)
-    x$data[i$getNonzeroIndices(array=TRUE,...)] <- value
+    newData <- x$value.@data
+    newData[i$getNonzeroIndices(array=TRUE,...)] <- value
+    x$setData(newData)
     x$setSource(NULL)
     return (x)
 })

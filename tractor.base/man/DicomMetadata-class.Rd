@@ -9,6 +9,11 @@
 This class represents DICOM metadata, which typically contains detailed
 information about the scan parameters and subject.
 }
+\details{
+This is a thin backwards-compatible shell around the value-semantics
+\code{\link{dicomMetadata}} S7 class, which holds the actual data and
+implements all of the real logic. Every method here forwards to it.
+}
 \section{Fields}{
 
 \describe{
@@ -40,5 +45,7 @@ otherwise the empty string.}
 \item{\code{getAsciiFields(regex = NULL)}}{Retrieve the value of one or more fields in the ASCII header. Returns NA if no fields match}
 
 \item{\code{getTagValue(group, element)}}{Retrieve the value of a given tag, using an appropriate R type. Returns NA if the tag is missing}
+
+\item{\code{serialise(file = NULL)}}{Serialise the object to a list or file}
 }}
 

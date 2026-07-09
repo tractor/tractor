@@ -5,6 +5,10 @@
 #' diffusion-sensitising gradient direction, in one or more "shells" with a
 #' given weighting ("b-value").
 #' 
+#' This is a thin backwards-compatible shell around the value-semantics
+#' \code{\link{diffusionScheme}} S7 class, which holds the actual data and
+#' implements all of the real logic. Every method here forwards to it.
+#' 
 #' @field bValues A vector of b-values in seconds per square millimetre, one
 #'   per volume acquired.
 #' @field gradientDirections A matrix of gradient directions, one row per
@@ -20,104 +24,75 @@
 #'   are calculated as the mode of the assigned volume b-values in each case.
 #' 
 #' @export
-DiffusionScheme <- setRefClass("DiffusionScheme", contains="SerialisableObject", fields=list(bValues="numeric",gradientDirections="matrix", shellIndices="integer",shellValues="numeric"), methods=list(
-    initialize = function (bValues = NULL, directions = emptyMatrix(), unweightedThreshold = 100, tolerance = 0.02, ...)
+DiffusionScheme <- setRefClass("DiffusionScheme", contains="SerialisableObject", fields=list(value.="diffusionScheme", bValues="numeric", gradientDirections="matrix", shellIndices="integer", shellValues="numeric"), methods=list(
+    initialize = function (bValues = NULL, directions = emptyMatrix(), unweightedThreshold = 100, tolerance = 0.02, value. = NULL, ...)
     {
-        if (is.list(directions))
-            directions <- t(Reduce(cbind, directions))
-        
-        assert(is.matrix(directions), "Gradient directions must be specified in a matrix")
-        assert(any(dim(directions) == 3L), "Gradient matrix does not seem to be 3D")
-        
-        # NB: This changed in TractoR 3.0, from column-per-direction to row-per-direction
-        if (ncol(directions) != 3 && nrow(directions) == 3)
+        oldFields <- list(...)
+        if (!is.null(value.))
+            object <- initFields(value.=value.)
+        else if (!is.null(oldFields$gradientDirections) || !is.null(oldFields$shellIndices) || !is.null(oldFields$shellValues))
         {
-            report(OL$Verbose, "Transposing gradient direction matrix")
-            directions <- t(directions)
+            # Reconstruct directly from pre-computed shell assignment (e.g. as
+            # produced by serialise()), bypassing the shell-assignment logic
+            object <- initFields(value.=tractor.base::diffusionScheme(bValues=as.numeric(bValues), gradientDirections=oldFields$gradientDirections, shellIndices=as.integer(oldFields$shellIndices), shellValues=as.numeric(oldFields$shellValues)))
         }
-        
-        assert(length(bValues) == nrow(directions), "Gradient matrix doesn't match the length of the b-value vector")
-        
-        # Normalise directions to unit length
-        directions <- t(apply(directions, 1, function (x) {
-            length <- vectorLength(x)
-            return (x / ifelse(length==0,1,length))
-        }))
-        
-        # Assign all volumes with b-values below threshold to shell 0, and check that this is neither all nor none of the volumes
-        indices <- rep(NA_integer_, length(bValues))
-        indices[bValues < unweightedThreshold] <- 0L
-        assert(any(is.na(indices)), "Diffusion scheme contains only unweighted volumes at b-value threshold of #{unweightedThreshold}", level=OL$Warning)
-        assert(any(!is.na(indices)), "Diffusion scheme contains no unweighted volumes at b-value threshold of #{unweightedThreshold}", level=OL$Warning)
-        
-        # Find the modal unweighted value, or default to zero
-        if (any(!is.na(indices)))
-            values <- as.numeric(names(which.max(table(bValues[!is.na(indices)]))))
         else
-            values <- 0
-        
-        # Assign remaining volumes to shells with the most common b-value within tolerance
-        allCounts <- sort(table(round(bValues)), decreasing=TRUE)
-        allValues <- as.integer(names(allCounts))
-        allValues <- allValues[allValues >= unweightedThreshold]
-        currentIndex <- 1L
-        for (value in allValues)
-        {
-            # Only create a new shell if there are suitable unassigned values available
-            matches <- is.na(indices) & abs(bValues - value) / value < tolerance
-            if (!any(matches))
-                next
-            values <- c(values, value)
-            indices[matches] <- currentIndex
-            
-            # If every volume is assigned, we're done
-            if (!any(is.na(indices)))
-                break
-            currentIndex <- currentIndex + 1L
-        }
-        
-        # Order shells by ascending b-value
-        shellOrder <- order(values)
-        indices <- structure(shellOrder[indices+1L] - 1L)
-        values <- values[shellOrder]
-        
-        initFields(bValues=as.numeric(bValues), gradientDirections=unname(directions), shellIndices=indices, shellValues=values)
+            object <- initFields(value.=newDiffusionScheme(bValues=bValues, directions=directions, unweightedThreshold=unweightedThreshold, tolerance=tolerance))
+        object$.syncFields()
+        return (object)
+    },
+
+    .syncFields = function ()
+    {
+        "(internal) Mirror value.'s properties onto real fields"
+        .self$bValues <- value.@bValues
+        .self$gradientDirections <- value.@gradientDirections
+        .self$shellIndices <- value.@shellIndices
+        .self$shellValues <- value.@shellValues
+        invisible (.self)
     },
     
     flip = function (dims)
     {
-        dims <- intersect(as.integer(dims), 1:3)
-        if (length(dims) > 0L)
-            .self$gradientDirections[,dims] <- -gradientDirections[,dims]
+        .self$value. <- tractor.base::flip(value., dims)
+        .self$.syncFields()
         invisible(.self)
     },
     
-    getBValues = function () { return (bValues) },
+    getBValues = function () { return (value.@bValues) },
     
-    getGradientDirections = function () { return (gradientDirections) },
+    getGradientDirections = function () { return (value.@gradientDirections) },
     
-    getShellBValues = function () { return (shellValues) },
+    getShellBValues = function () { return (value.@shellValues) },
     
-    getShellIndices = function () { return (shellIndices) },
+    getShellIndices = function () { return (value.@shellIndices) },
     
-    nDirections = function () { return (table(shellValues[shellIndices+1L])) },
+    nDirections = function () { return (tractor.base::nDirections(value.)) },
     
-    nShells = function () { return (max(shellIndices)) },
+    nShells = function () { return (tractor.base::nShells(value.)) },
     
-    nVolumes = function () { return (length(bValues)) },
+    nVolumes = function () { return (length(value.@bValues)) },
     
     rotate = function (rotation)
     {
-        assert(equivalent(dim(rotation), c(3L,3L)) && equivalent(det(rotation), 1), "Argument does not look like a 3D rotation matrix")
-        .self$gradientDirections <- t(rotation %*% t(gradientDirections))
+        .self$value. <- tractor.base::rotateGradients(value., rotation)
+        .self$.syncFields()
         invisible(.self)
+    },
+
+    serialise = function (file = NULL)
+    {
+        "Serialise the object to a list or file"
+        fields <- list(bValues=value.@bValues, gradientDirections=value.@gradientDirections, shellIndices=value.@shellIndices, shellValues=value.@shellValues)
+        out <- structure(fields, originalClass="DiffusionScheme", originalPackage="tractor.base")
+        if (!is.null(file))
+            save(out, file=ensureFileSuffix(file,"Rdata"))
+        invisible (out)
     },
     
     summarise = function ()
     {
-        labels <- c("Number of shells", "Diffusion b-values", "Number of directions")
-        values <- c(nShells(), paste(implode(getShellBValues(),", "), "s/mm^2"), implode(nDirections(),", "))
-        return (list(labels=labels, values=values))
+        .diffusionSchemeSummarise(value.)
     },
     
     writeToFile = function (fileName)

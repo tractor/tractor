@@ -13,6 +13,11 @@ on. The group generic functions \code{\link{Math}}, \code{\link{Ops}} and
 \code{\link{Summary}} are defined for this class, as are methods for
 coercing to and from a standard \code{\link{array}}.
 }
+\details{
+This is a thin backwards-compatible shell around the value-semantics
+\code{\link{mriImage}} S7 class, which holds the actual data and
+implements all of the real logic. Every method here forwards to it.
+}
 \section{Fields}{
 
 \describe{
@@ -67,6 +72,8 @@ reordered. See \code{\link{reorderMriImage}}}
 \item{\code{map(fun, ..., sparse = NULL)}}{Replace the current data with the result of a function}
 
 \item{\code{mask(maskImage)}}{Mask the image, setting zero voxels in the mask to zero}
+
+\item{\code{serialise(file = NULL)}}{Serialise the object to a list or file}
 
 \item{\code{setData(newData)}}{Replace the data in the image}
 

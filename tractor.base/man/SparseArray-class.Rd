@@ -13,6 +13,11 @@ assumed to be zero. Methods are provided to index into the array in the
 standard way, using matrix or vector indices; and for coercing between
 \code{SparseArray} objects and standard (dense) arrays.
 }
+\details{
+This is a thin backwards-compatible shell around the value-semantics
+\code{\link{sparseArray}} S7 class, which holds the actual data and
+implements all of the real logic. Every method here forwards to it.
+}
 \section{Fields}{
 
 \describe{
@@ -31,6 +36,8 @@ standard way, using matrix or vector indices; and for coercing between
 \item{\code{apply(margin, fun, ...)}}{Apply a function to margins of the array}
 
 \item{\code{flip(dimsToFlip)}}{Flip the array along one or more directions}
+
+\item{\code{serialise(file = NULL)}}{Serialise the object to a list or file}
 
 \item{\code{setCoordinatesAndData(newCoords, newData)}}{Update the nonzero locations and data values in the array}
 

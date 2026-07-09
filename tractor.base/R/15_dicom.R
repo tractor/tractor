@@ -2,6 +2,10 @@
 #' 
 #' This class represents DICOM metadata, which typically contains detailed
 #' information about the scan parameters and subject.
+#'
+#' This is a thin backwards-compatible shell around the value-semantics
+#' \code{\link{dicomMetadata}} S7 class, which holds the actual data and
+#' implements all of the real logic. Every method here forwards to it.
 #' 
 #' @field source String naming the source file
 #' @field tags Data frame of tag information
@@ -17,94 +21,75 @@
 #'   otherwise the empty string.
 #' 
 #' @export
-DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(source="character",tags="data.frame",tagOffset="integer",dataOffset="integer",dataLength="integer",explicitTypes="logical",endian="character",asciiFields="character",transferSyntax="character"), methods=list(
+DicomMetadata <- setRefClass("DicomMetadata", contains="SerialisableObject", fields=list(value.="dicomMetadata", source="character", tags="data.frame", tagOffset="integer", dataOffset="integer", dataLength="integer", explicitTypes="logical", endian="character", asciiFields="character", transferSyntax="character"), methods=list(
+    initialize = function (source = character(0), tags = data.frame(), tagOffset = integer(0), dataOffset = integer(0), dataLength = integer(0), explicitTypes = logical(0), endian = character(0), asciiFields = character(0), transferSyntax = character(0), value. = NULL, ...)
+    {
+        if (!is.null(value.))
+            object <- initFields(value.=value.)
+        else
+            object <- initFields(value.=dicomMetadata(source=source, tags=tags, tagOffset=tagOffset, dataOffset=dataOffset, dataLength=dataLength, explicitTypes=explicitTypes, endian=endian, asciiFields=asciiFields, transferSyntax=transferSyntax))
+        object$.syncFields()
+        return (object)
+    },
+
+    .syncFields = function ()
+    {
+        "(internal) Mirror value.'s properties onto real fields"
+        .self$source <- value.@source
+        .self$tags <- value.@tags
+        .self$tagOffset <- value.@tagOffset
+        .self$dataOffset <- value.@dataOffset
+        .self$dataLength <- value.@dataLength
+        .self$explicitTypes <- value.@explicitTypes
+        .self$endian <- value.@endian
+        .self$asciiFields <- value.@asciiFields
+        .self$transferSyntax <- value.@transferSyntax
+        invisible (.self)
+    },
+
     getAsciiFields = function (regex = NULL)
     {
         "Retrieve the value of one or more fields in the ASCII header. Returns NA if no fields match"
-        if (is.null(regex))
-            return (asciiFields)
-        
-        regex <- ore("^\\s*(\\S*", regex, "\\S*)\\s*=\\s*(.+)\\s*$")
-        groups <- groups(ore.search(regex, asciiFields, simplify=FALSE), simplify=TRUE)
-        if (all(is.na(groups)))
-            return (NA)
-        
-        values <- groups[,ncol(groups),]
-        if (all(values %~% ore("^",number,"$")))
-            values <- as.numeric(values)
-        names(values) <- groups[,ncol(groups)-1,]
-        return (values)
+        tractor.base::asciiField(value., regex)
     },
     
-    getDataLength = function () { return (dataLength) },
+    getDataLength = function () { return (value.@dataLength) },
     
-    getDataOffset = function () { return (dataOffset) },
+    getDataOffset = function () { return (value.@dataOffset) },
     
-    getEndianness = function () { return (endian) },
+    getEndianness = function () { return (value.@endian) },
     
-    getSource = function () { return (source) },
+    getSource = function () { return (value.@source) },
     
-    getTags = function () { return (tags) },
+    getTags = function () { return (value.@tags) },
     
-    getTagOffset = function () { return (tagOffset) },
+    getTagOffset = function () { return (value.@tagOffset) },
     
     getTagValue = function (group, element)
     {
         "Retrieve the value of a given tag, using an appropriate R type. Returns NA if the tag is missing"
-        valueRow <- subset(tags, (tags$groups == group & tags$elements == element))
-        if (dim(valueRow)[1] == 0 || valueRow$values == "")
-            return (NA)
-        else
-        {
-            value <- unlist(strsplit(as.vector(valueRow$values), "\\", fixed=TRUE, useBytes=TRUE))
-            if (capabilities("iconv") == TRUE)
-                value <- iconv(value, "", "LATIN1", sub="byte")
-            value <- gsub("^\\s*(.+?)\\s*$", "\\1", value, perl=TRUE)
-            
-            if (as.vector(valueRow$types) %in% .Dicom$convertibleTypes)
-                return (as.numeric(value))
-            else
-                return (value)
-        }
+        tractor.base::tagValue(value., group, element)
     },
     
-    getTransferSyntax = function () { return (transferSyntax) },
+    getTransferSyntax = function () { return (value.@transferSyntax) },
     
-    nTags = function () { return (nrow(tags)) }
+    nTags = function () { return (nrow(value.@tags)) },
+
+    serialise = function (file = NULL)
+    {
+        "Serialise the object to a list or file"
+        fields <- list(source=value.@source, tags=value.@tags, tagOffset=value.@tagOffset, dataOffset=value.@dataOffset, dataLength=value.@dataLength, explicitTypes=value.@explicitTypes, endian=value.@endian, asciiFields=value.@asciiFields, transferSyntax=value.@transferSyntax)
+        out <- structure(fields, originalClass="DicomMetadata", originalPackage="tractor.base")
+        if (!is.null(file))
+            save(out, file=ensureFileSuffix(file,"Rdata"))
+        invisible (out)
+    }
 ))
 
 #' @export
 print.DicomMetadata <- function (x, descriptions = FALSE, ...)
 {
-    tags <- x$getTags()
-    nTags <- nrow(tags)
-    
-    if (nTags > 0)
-    {
-        if (descriptions)
-        {
-            cat("DESCRIPTION", rep(" ",19), "VALUE\n", sep="")
-            for (i in seq_len(nTags))
-            {
-                description <- getDescriptionForDicomTag(tags$groups[i], tags$elements[i])
-                cat(" ", substr(description, 1, 27), sep="")
-                nSpaces <- max(3, 30-nchar(description))
-                cat(rep(" ",nSpaces), sep="")
-                cat(implode(x$getTagValue(tags$groups[i],tags$elements[i]), sep=", "))
-                cat("\n")
-            }
-        }
-        else
-        {
-            cat("GROUP    ELEMENT  VALUE\n")
-            for (i in seq_len(nTags))
-            {
-                cat(sprintf(" 0x%04x   0x%04x   ", tags$groups[i], tags$elements[i]))
-                cat(implode(x$getTagValue(tags$groups[i],tags$elements[i]), sep=", "))
-                cat("\n")
-            }
-        }
-    }
+    .dicomMetadataPrint(x$value., descriptions=descriptions, ...)
 }
 
 getDescriptionForDicomTag <- function (groupRequired, elementRequired)

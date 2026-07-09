@@ -4,9 +4,9 @@ options(reportrStderrLevel=reportr::OL$Fatal)
 image <- readImageFile(system.file("extdata", "nifti", "maskedb0.nii.gz", package="tractor.base"))
 image$setSource(NULL)
 
-image$tags <- list(key="value")
+image$setTags(key="value")
 expect_true(image$hasTags("key"))
-expect_equal(image$nTags(), 1L)
+expect_equal(image$nTags(), 2L)
 
 expect_equal((image+image)[50,59,33], 528)
 expect_equal(max(image), 2503)

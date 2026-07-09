@@ -11,6 +11,11 @@ series of diffusion-weighted volume acquisitions, each with an associated
 diffusion-sensitising gradient direction, in one or more "shells" with a
 given weighting ("b-value").
 }
+\details{
+This is a thin backwards-compatible shell around the value-semantics
+\code{\link{diffusionScheme}} S7 class, which holds the actual data and
+implements all of the real logic. Every method here forwards to it.
+}
 \section{Fields}{
 
 \describe{
@@ -35,6 +40,8 @@ are calculated as the mode of the assigned volume b-values in each case.}
 \section{Methods}{
 
 \describe{
+\item{\code{serialise(file = NULL)}}{Serialise the object to a list or file}
+
 \item{\code{summarise()}}{Summarise key aspects of the object}
 }}
 

@@ -7,98 +7,84 @@
 #' standard way, using matrix or vector indices; and for coercing between
 #' \code{SparseArray} objects and standard (dense) arrays.
 #' 
+#' This is a thin backwards-compatible shell around the value-semantics
+#' \code{\link{sparseArray}} S7 class, which holds the actual data and
+#' implements all of the real logic. Every method here forwards to it.
+#'
 #' @field data Vector of nonzero data values
 #' @field coords Integer matrix of nonzero \code{data} locations, one per row
 #' @field dims Integer vector of dimensions
 #' 
 #' @export
-SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=list(data="ANY",coords="matrix",dims="integer"), methods=list(
-    initialize = function (...)
+SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=list(value.="sparseArray"), methods=list(
+    initialize = function (data = NULL, coords = emptyMatrix(), dims = integer(0), value. = NULL, ...)
     {
-        object <- initFields(...)
-        storage.mode(object$coords) <- "integer"
-        if (is.vector(object$data) && length(object$data) != nrow(object$coords))
-            report(OL$Error, "Coordinate matrix and data vector lengths don't agree")
+        if (!is.null(value.))
+            object <- initFields(value.=value.)
+        else
+            object <- initFields(value.=newSparseArray(data=data, coords=coords, dims=dims))
         return (object)
     },
     
     aperm = function (perm)
     {
         "Permute the dimensions of the array"
-        .self$coords <- .self$coords[,perm]
-        .self$dims <- .self$dims[perm]
+        .self$value. <- aperm(value., perm)
+        invisible (.self)
     },
     
     apply = function (margin, fun, ...)
     {
         "Apply a function to margins of the array"
-        fun <- match.fun(fun)
-        dimsToKeep <- .self$dims[margin]
-        dimsToLose <- .self$dims[-margin]
-        iterations <- prod(dimsToKeep)
-        
-        reshapedArray <- .self$copy()
-        reshapedArray$aperm(c(setdiff(seq_len(.self$getDimensionality()),margin), margin))
-        reshapedArray$setDimensions(c(prod(dimsToLose), iterations))
-        
-        # Assume for now that each application of the function will result in a vector of the same length
-        tempData <- as.array(reshapedArray[,1])
-        dim(tempData) <- dimsToLose
-        tempResult <- fun(tempData, ...)
-        finalArray <- array(NA, dim=c(length(tempResult),iterations))
-        for (i in 1:iterations)
-        {
-            tempData <- as.array(reshapedArray[,i])
-            dim(tempData) <- dimsToLose
-            finalArray[,i] <- fun(tempData, ...)
-        }
-        
-        dim(finalArray) <- c(dim(finalArray)[1], dimsToKeep)
-        finalArray <- drop(finalArray)
-        if (length(dim(finalArray)) == 1)
-            dim(finalArray) <- NULL
-        
-        return (finalArray)
+        sparseApply(value., margin, fun, ...)
     },
     
     flip = function (dimsToFlip)
     {
         "Flip the array along one or more directions"
-        for (i in dimsToFlip)
-            .self$coords[,i] <- .self$dims[i] - .self$coords[,i] + 1
+        .self$value. <- flip(value., dimsToFlip)
+        invisible (.self)
     },
     
-    getCoordinates = function () { return (.self$coords) },
+    getCoordinates = function () { return (coordinates(value.)) },
     
-    getData = function () { return (.self$data) },
+    getData = function () { return (values(value.)) },
     
-    getDimensionality = function () { return (length(.self$dims)) },
+    getDimensionality = function () { return (ndim(value.)) },
     
-    getDimensions = function () { return (.self$dims) },
+    getDimensions = function () { return (dim(value.)) },
     
     setCoordinatesAndData = function (newCoords, newData)
     {
         "Update the nonzero locations and data values in the array"
         if (length(newData) != nrow(newCoords))
             report(OL$Error, "Coordinate matrix and data vector lengths don't agree")
-        .self$coords <- newCoords
-        .self$data <- newData
+        .self$value. <- set_props(value., coords=newCoords, data=newData)
+        invisible (.self)
     },
     
     setDimensions = function (newDims)
     {
         "Change the dimensions of the image"
-        if (prod(.self$dims) != prod(newDims))
-            report(OL$Error, "New dimensions are incompatible with this SparseArray object")
-        .self$coords <- vectorToMatrixLocs(matrixToVectorLocs(.self$coords,.self$dims), newDims)
-        .self$dims <- as.integer(newDims)
+        dim(.self$value.) <- newDims
+        invisible (.self)
+    },
+
+    serialise = function (file = NULL)
+    {
+        "Serialise the object to a list or file"
+        fields <- list(data=values(value.), coords=coordinates(value.), dims=dim(value.))
+        out <- structure(fields, originalClass="SparseArray", originalPackage="tractor.base")
+        if (!is.null(file))
+            save(out, file=ensureFileSuffix(file,"Rdata"))
+        invisible (out)
     },
     
     summarise = function ()
     {
         labels <- c("Dimensions", "Nonzero elements", "Sparseness")
-        values <- c(implode(dims, sep=" x "), as.character(length(data)), paste0(round(100*(1-length(data)/prod(dims)),2),"%"))
-        return (list(labels=labels, values=values))
+        vals <- c(implode(dim(value.),sep=" x "), as.character(length(values(value.))), paste0(round(100*(1-length(values(value.))/prod(dim(value.))),2),"%"))
+        return (list(labels=labels, values=vals))
     }
 ))
 
@@ -127,7 +113,7 @@ SparseArray <- setRefClass("SparseArray", contains="SerialisableObject", fields=
 #' @return A vector, array or \code{\link{SparseArray}}.
 #' 
 #' @author Jon Clayden
-#' @rdname index
+#' @rdname index-legacy
 #' @export
 setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
     # This implementation owes a lot to the equivalent in the "slam" package (credit: Kurt Hornik, David Meyer and Christian Buchta)
@@ -209,12 +195,12 @@ setMethod("[", "SparseArray", function (x, i, j, ..., drop = TRUE) {
         returnValue[apply(finalCoords[dataToKeep,,drop=FALSE],1,max)] <- data[dataToKeep]
     }
     else
-        returnValue <- SparseArray$new(data=data[dataToKeep], coords=finalCoords[dataToKeep,dimsToKeep,drop=FALSE], dims=finalDims[dimsToKeep])
+        returnValue <- SparseArray$new(value.=newSparseArray(data=data[dataToKeep], coords=finalCoords[dataToKeep,dimsToKeep,drop=FALSE], dims=finalDims[dimsToKeep]))
     
     return (returnValue)
 })
 
-#' @rdname index
+#' @rdname index-legacy
 #' @export
 setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
     nArgs <- nargs() - 1
@@ -276,7 +262,7 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
     data[dataLocs[present & !zero]] <- value[which(present & !zero)]
     if (any(present & zero))
     {
-        coords <- coords[-dataLocs[present & zero],]
+        coords <- coords[-dataLocs[present & zero],,drop=FALSE]
         data <- data[-dataLocs[present & zero]]
     }
     if (any(!present & !zero))
@@ -290,54 +276,27 @@ setReplaceMethod("[", "SparseArray", function (x, i, j, ..., value) {
 })
 
 setMethod("Ops", signature(e1="SparseArray",e2="ANY"), function (e1, e2) {
-    report(OL$Error, "No operator method is defined for a \"SparseArray\" and \"#{class(e2)[1]}\"")
-})
-
-setMethod("Ops", signature(e1="SparseArray",e2="array"), function (e1, e2) {
-    if (!all(callGeneric(0, unique(e2)) == 0))
-        return (callGeneric(as(e1,"array"), e2))
+    result <- callGeneric(e1$value., e2)
+    if (is(result, "sparseArray"))
+        return (SparseArray$new(value.=result))
     else
-    {
-        if (!equivalent(e1$getDimensions(), dim(e2)))
-            report(OL$Error, "Sparse and dense array dimensions don't match")
-    
-        newData <- callGeneric(e1$getData(), e2[e1$getCoordinates()])
-        zero <- (newData == 0)
-        return (newSparseArrayWithData(newData[!zero], e1$getCoordinates()[!zero,,drop=FALSE], e1$getDimensions()))
-    }
-})
-
-setMethod("Ops", signature(e1="SparseArray",e2="numeric"), function (e1, e2) {
-    if (callGeneric(0, e2) != 0)
-        return (callGeneric(as(e1,"array"), e2))
-    else
-    {        
-        newData <- callGeneric(e1$getData(), e2)
-        zero <- (newData == 0)
-        return (newSparseArrayWithData(newData[!zero], e1$getCoordinates()[!zero,,drop=FALSE], e1$getDimensions()))
-    }
+        return (result)
 })
 
 setMethod("Summary", signature(x="SparseArray"), function(x, ..., na.rm = FALSE) {
-    callGeneric(0, x$getData(), ..., na.rm=na.rm)
+    callGeneric(x$value., ..., na.rm=na.rm)
 })
 
 setAs("array", "SparseArray", function (from) {
-    coordinates <- which(!is.na(from) & from != 0, arr.ind=TRUE)
-    object <- SparseArray$new(data=from[coordinates], coords=coordinates, dims=dim(from))
-    return (object)
+    return (SparseArray$new(value.=asSparseArray(from)))
 })
 
 setAs("SparseArray", "array", function (from) {
-    data <- array(vector(mode=storage.mode(from$getData()),length=1), dim=from$getDimensions())
-    data[from$getCoordinates()] <- from$getData()
-    return (data)
+    return (as.array(from$value.))
 })
 
 setAs("SparseArray", "logical", function (from) {
-    data <- array(FALSE, dim=from$getDimensions())
-    data[from$getCoordinates()] <- TRUE
-    return (as.vector(data))
+    return (asLogicalArray(from$value.))
 })
 
 #' @export
@@ -368,8 +327,7 @@ dim.SparseArray <- function (x)
 #' @export
 aperm.SparseArray <- function (a, perm, ...)
 {
-    newObject <- a$copy()$aperm(perm)
-    return (newObject)
+    SparseArray$new(value.=aperm(a$value., perm))
 }
 
 #' Create a SparseArray object
@@ -392,5 +350,5 @@ aperm.SparseArray <- function (a, perm, ...)
 #' @export newSparseArrayWithData
 newSparseArrayWithData <- function (data, coordinates, dims)
 {
-    invisible (SparseArray$new(data=data, coords=coordinates, dims=dims))
+    invisible (SparseArray$new(value.=newSparseArray(data=data, coords=coordinates, dims=dims)))
 }

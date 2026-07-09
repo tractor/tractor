@@ -310,7 +310,7 @@ readImageFile <- function (fileName, metadataOnly = FALSE, volumes = NULL, spars
         
         # Create the sparse matrix from its components, if requested
         if (sparse)
-            data <- newSparseArrayWithData(values, coords, dims)
+            data <- newSparseArray(data=values, coords=coords, dims=dims)
         
         # Update the dimensions to match the image metadata
         dim(data) <- dims
@@ -333,7 +333,7 @@ readImageFile <- function (fileName, metadataOnly = FALSE, volumes = NULL, spars
             if (!is.null(volumes))
                 data <- data[,,,volumes]
             if (sparse)
-                data <- as(data, "SparseArray")
+                data <- asSparseArray(data)
         }
     }
     
@@ -353,7 +353,7 @@ readImageFile <- function (fileName, metadataOnly = FALSE, volumes = NULL, spars
     if (metadataOnly)
         image$setData(NULL)
     else if (sparse && !image$isSparse())
-        image$setData(as(image$getData(), "SparseArray"))
+        image$setData(asSparseArray(image$getData()))
     
     # Set the source
     image$setSource(fileNames$fileStem)
