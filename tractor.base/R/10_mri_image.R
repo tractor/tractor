@@ -99,7 +99,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(v
     binarise = function ()
     {
         "Binarise the image by setting nonzero values to one"
-        .self$value. <- tractor.base::binarise(value.)
+        .self$value. <- tractor.base::imageBinarise(value.)
         .self$.syncFields()
         invisible (.self)
     },
@@ -219,7 +219,7 @@ MriImage <- setRefClass("MriImage", contains="SerialisableObject", fields=list(v
     threshold = function (level, defaultValue = 0)
     {
         "Threshold the image by setting values below the threshold level to zero"
-        .self$value. <- tractor.base::threshold(value., level, defaultValue)
+        .self$value. <- tractor.base::imageThreshold(value., level, defaultValue)
         .self$.syncFields()
         invisible (.self)
     },

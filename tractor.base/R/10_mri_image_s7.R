@@ -180,7 +180,7 @@ Summary.mriImage <- function (x, ..., na.rm = FALSE)
 
 .warnIfIndexingUnreorderedMriImage <- function (image)
 {
-    if (!isTRUE(image@reordered) && orientation(image) != "LAS")
+    if (!isTRUE(image@reordered) && .mriImageOrientation(image) != "LAS")
         flag(OL$Warning, "Indexing into an image which is not reordered has no consistent meaning")
 }
 
@@ -362,26 +362,35 @@ method(imageMap, mriImage) <- function (x, fun, ..., sparse = NULL)
 
 #' Threshold an image
 #'
+#' Named \code{imageThreshold()} rather than \code{threshold()} to avoid
+#' colliding with \code{mmand::threshold()} - mmand is a Suggested dependency
+#' of tractor.base and the two are commonly loaded together, so a bare
+#' \code{threshold()} call would otherwise resolve unpredictably depending on
+#' attach order.
+#'
 #' @param x An \code{mriImage} object.
 #' @param level The threshold level.
 #' @param defaultValue The value to assign to voxels below the threshold.
 #' @export
-threshold <- S7::new_generic("threshold", "x")
+imageThreshold <- S7::new_generic("imageThreshold", "x")
 
 #' @export
-method(threshold, mriImage) <- function (x, level, defaultValue = 0)
+method(imageThreshold, mriImage) <- function (x, level, defaultValue = 0)
 {
     imageMap(x, function(v) ifelse(v >= level, v, defaultValue))
 }
 
 #' Binarise an image
 #'
+#' Named \code{imageBinarise()} rather than \code{binarise()} to avoid
+#' colliding with \code{mmand::binarise()} - see \code{\link{imageThreshold}}.
+#'
 #' @param x An \code{mriImage} object.
 #' @export
-binarise <- S7::new_generic("binarise", "x")
+imageBinarise <- S7::new_generic("imageBinarise", "x")
 
 #' @export
-method(binarise, mriImage) <- function (x)
+method(imageBinarise, mriImage) <- function (x)
 {
     imageMap(x, function(v) ifelse(v!=0, 1L, 0L))
 }
@@ -421,7 +430,7 @@ method(mask, mriImage) <- function (x, maskImage)
 .mriImageSetTags <- function (x, ..., merge = FALSE)
 {
     newTags <- deduplicate(list(...), x@tags, merge=merge)
-    set_props(x, tags=newTags[!sapply(newTags,is.null)], source="")
+    set_props(x, tags=newTags[!sapply(newTags,is.null)])
 }
 
 .mriImageGetXform <- function (x, implicit = TRUE)
@@ -445,6 +454,19 @@ method(mask, mriImage) <- function (x, maskImage)
     }
     else
         return (x@xform)
+}
+
+.mriImageOrientation <- function (x, useQuaternionFirst = TRUE)
+{
+    # RNifti::orientation() is a plain function, not an S3 generic - it can't
+    # be overridden by defining an orientation.mriImage method (UseMethod()
+    # is never called). Its non-matrix-input branch always goes via
+    # asNifti()'s C-level duck-typing, which doesn't work on a bare S7 value
+    # (unlike the legacy MriImage shell, which mirrors properties onto real
+    # fields for exactly this reason - see .syncFields()). Call it on the
+    # xform matrix directly instead, which takes the fast .isXformMatrix()
+    # path and never touches asNifti() at all.
+    RNifti::orientation(.mriImageGetXform(x, implicit=TRUE), useQuaternionFirst=useQuaternionFirst)
 }
 
 .mriImageGetDataAtPoint <- function (x, ...)
