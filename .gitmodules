@@ -46,3 +46,6 @@
 [submodule "lib/RcppArray"]
 	path = lib/RcppArray
 	url = https://github.com/jonclayden/RcppArray.git
+[submodule "lib/S7"]
+	path = lib/S7
+	url = https://github.com/tractor/S7.git
