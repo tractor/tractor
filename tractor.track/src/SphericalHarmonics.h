@@ -39,9 +39,23 @@ private:
     std::vector<ImageSpace::Vector> directions_;
     std::vector<std::vector<int>> neighbours_;
     std::vector<std::vector<double>> basisValues_;
+    std::vector<ImageSpace::Vector> tangent1_, tangent2_;
+    // quadraticFit_[i] is a flattened 6-by-(neighbours_[i].size()+1) matrix:
+    // the least-squares operator mapping amplitude samples at vertex i and
+    // its neighbours onto the 6 coefficients of a local quadratic surface
+    // a + b*u + c*w + d*u^2 + e*u*w + f*w^2 in vertex i's tangent plane.
+    // Depends only on the fixed mesh geometry, so it is computed once here
+    // and reused, unchanged, for every voxel's peak refinement
+    std::vector<std::vector<double>> quadraticFit_;
     int order_;
     
-    void refinePeak (ImageSpace::Vector &direction, double &amplitude, const std::vector<double> &coefficients) const;
+    // Replace the coarse vertex "vertexIndex" with the stationary point of a
+    // quadratic surface fitted (via the precomputed quadraticFit_ operator)
+    // through its already-computed amplitude and that of its neighbours, in
+    // its tangent plane - no additional spherical harmonic evaluations are
+    // needed for the fit itself, only a single one at the end to obtain an
+    // accurate amplitude at the refined location
+    void refinePeak (int vertexIndex, ImageSpace::Vector &direction, double &amplitude, const std::vector<double> &amplitudeField, const std::vector<double> &coefficients) const;
     
 public:
     SphereTessellation (const int subdivisions, const int order);
@@ -49,11 +63,10 @@ public:
     const std::vector<ImageSpace::Vector> & directions () const { return directions_; }
     
     // The peaks of the FOD described by "coefficients" - local maxima of the
-    // discretised amplitude, refined to subpixel (sub-mesh) precision by a
-    // few steps of gradient ascent in the local tangent plane - as
-    // (direction,amplitude) pairs, sorted by decreasing amplitude. Antipodal
-    // duplicates (inevitable since only even orders are represented) are
-    // collapsed to a single canonical hemisphere
+    // discretised amplitude, refined to sub-mesh precision by a local
+    // quadratic fit - as (direction, amplitude) pairs, sorted by decreasing
+    // amplitude. Antipodal duplicates (inevitable since only even orders are
+    // represented) are collapsed to a single canonical hemisphere
     std::vector<std::pair<ImageSpace::Vector,double>> findPeaks (const std::vector<double> &coefficients) const;
 };
 

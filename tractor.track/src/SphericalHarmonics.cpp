@@ -67,6 +67,114 @@ double evaluateAmplitude (const int order, const ImageSpace::Vector &direction, 
     return amplitude;
 }
 
+// Invert a 6x6 matrix in place via Gauss-Jordan elimination with partial
+// pivoting. Returns false if the matrix is (numerically) singular, in which
+// case "matrix" is left in an unspecified state
+bool invert6x6 (std::array<std::array<double,6>,6> &matrix)
+{
+    std::array<std::array<double,6>,6> result;
+    for (int i=0; i<6; i++)
+    {
+        for (int j=0; j<6; j++)
+            result[i][j] = (i == j) ? 1.0 : 0.0;
+    }
+    
+    for (int col=0; col<6; col++)
+    {
+        int pivotRow = col;
+        double pivotValue = fabs(matrix[col][col]);
+        for (int row=col+1; row<6; row++)
+        {
+            if (fabs(matrix[row][col]) > pivotValue)
+            {
+                pivotRow = row;
+                pivotValue = fabs(matrix[row][col]);
+            }
+        }
+        if (pivotValue < 1e-12)
+            return false;
+        
+        if (pivotRow != col)
+        {
+            std::swap(matrix[pivotRow], matrix[col]);
+            std::swap(result[pivotRow], result[col]);
+        }
+        
+        const double pivot = matrix[col][col];
+        for (int j=0; j<6; j++)
+        {
+            matrix[col][j] /= pivot;
+            result[col][j] /= pivot;
+        }
+        
+        for (int row=0; row<6; row++)
+        {
+            if (row == col)
+                continue;
+            const double factor = matrix[row][col];
+            if (factor == 0.0)
+                continue;
+            for (int j=0; j<6; j++)
+            {
+                matrix[row][j] -= factor * matrix[col][j];
+                result[row][j] -= factor * result[col][j];
+            }
+        }
+    }
+
+    matrix = result;
+    return true;
+}
+
+// The least-squares operator mapping amplitude samples at a set of points
+// (tangentCoords[0] is always the vertex itself, at (0,0); the rest are its
+// neighbours) onto the 6 coefficients [a,b,c,d,e,f] of a quadratic surface
+// a + b*u + c*w + d*u^2 + e*u*w + f*w^2 fitted through them, flattened as a
+// 6-by-nRows matrix. Depends only on the (fixed) tangent-plane geometry of
+// the points, not on any voxel data, so it can be precomputed once and
+// reused for every voxel's peak refinement. If the fit is degenerate, the
+// zero matrix is returned; this yields d=0 downstream, which fails the
+// negative-definite check in refinePeak() and so is handled safely
+std::vector<double> quadraticFitOperator (const std::vector<std::array<double,2>> &tangentCoords)
+{
+    const size_t rows = tangentCoords.size();
+    std::vector<std::array<double,6>> design(rows);
+    for (size_t r=0; r<rows; r++)
+    {
+        const double u = tangentCoords[r][0], w = tangentCoords[r][1];
+        design[r] = { 1.0, u, w, u*u, u*w, w*w };
+    }
+    
+    std::array<std::array<double,6>,6> normalMatrix;
+    for (int i=0; i<6; i++)
+    {
+        for (int j=0; j<6; j++)
+        {
+            double sum = 0.0;
+            for (size_t r=0; r<rows; r++)
+                sum += design[r][i] * design[r][j];
+            normalMatrix[i][j] = sum;
+        }
+    }
+    
+    std::vector<double> operatorMatrix(6 * rows, 0.0);
+    if (invert6x6(normalMatrix))
+    {
+        for (int i=0; i<6; i++)
+        {
+            for (size_t r=0; r<rows; r++)
+            {
+                double sum = 0.0;
+                for (int j=0; j<6; j++)
+                    sum += normalMatrix[i][j] * design[r][j];
+                operatorMatrix[i*rows + r] = sum;
+            }
+        }
+    }
+    
+    return operatorMatrix;
+}
+
 // Associated Legendre function P_l^m(x), for m >= 0 and l >= m, WITHOUT the
 // Condon-Shortley phase (matching MRtrix's convention), computed via the
 // standard three-term recurrence, filled bottom-up over a small table (not
@@ -237,35 +345,92 @@ SphereTessellation::SphereTessellation (const int subdivisions, const int order)
     basisValues_.resize(directions_.size());
     for (size_t i=0; i<directions_.size(); i++)
         basisValues_[i] = SphericalHarmonics::basis(order_, directions_[i]);
+    
+    // Precompute, for every vertex, an orthonormal tangent-plane basis and
+    // the least-squares operator that will later turn amplitude samples at
+    // that vertex and its neighbours into a local quadratic fit - all of
+    // this depends only on the mesh geometry, not on any voxel's data, so
+    // it is done once here rather than on every call to findPeaks()
+    tangent1_.resize(directions_.size());
+    tangent2_.resize(directions_.size());
+    quadraticFit_.resize(directions_.size());
+    for (size_t i=0; i<directions_.size(); i++)
+    {
+        const ImageSpace::Vector &v0 = directions_[i];
+        ImageSpace::Vector reference(0.0);
+        reference[(fabs(v0[0]) < 0.9) ? 0 : 1] = 1.0;
+        tangent1_[i] = normalise(cross(v0, reference));
+        tangent2_[i] = cross(v0, tangent1_[i]);
+        
+        std::vector<std::array<double,2>> tangentCoords;
+        tangentCoords.push_back({0.0, 0.0});
+        for (const int j : neighbours_[i])
+        {
+            const double u = ImageSpace::dot(directions_[j], tangent1_[i]);
+            const double w = ImageSpace::dot(directions_[j], tangent2_[i]);
+            tangentCoords.push_back({u, w});
+        }
+        
+        quadraticFit_[i] = quadraticFitOperator(tangentCoords);
+    }
 }
 
-void SphereTessellation::refinePeak (ImageSpace::Vector &direction, double &amplitude, const std::vector<double> &coefficients) const
+void SphereTessellation::refinePeak (int vertexIndex, ImageSpace::Vector &direction, double &amplitude, const std::vector<double> &amplitudeField, const std::vector<double> &coefficients) const
 {
-    const double step = 1e-3;
+    const std::vector<int> &neighbours = neighbours_[vertexIndex];
+    const std::vector<double> &fitOperator = quadraticFit_[vertexIndex];
+    const size_t rows = neighbours.size() + 1;
     
-    for (int iteration=0; iteration<8; iteration++)
+    std::vector<double> samples(rows);
+    samples[0] = amplitudeField[vertexIndex];
+    for (size_t j=0; j<neighbours.size(); j++)
+        samples[j+1] = amplitudeField[neighbours[j]];
+    
+    // Apply the precomputed fitting operator: this is the only work done
+    // per peak besides the final polish below - no spherical harmonic
+    // basis evaluations are needed, since the input amplitudes were already
+    // computed (for every mesh vertex) by findPeaks()'s coarse scan
+    double coeffs[6] = {0.0,0.0,0.0,0.0,0.0,0.0};
+    for (int i=0; i<6; i++)
     {
-        ImageSpace::Vector reference(0.0);
-        reference[(fabs(direction[0]) < 0.9) ? 0 : 1] = 1.0;
-        const ImageSpace::Vector tangent1 = normalise(cross(direction, reference));
-        const ImageSpace::Vector tangent2 = cross(direction, tangent1);
-        
-        const double gradient1 = (evaluateAmplitude(order_, tangentStep(direction,tangent1,tangent2,step,0.0), coefficients)
-                                 - evaluateAmplitude(order_, tangentStep(direction,tangent1,tangent2,-step,0.0), coefficients)) / (2.0*step);
-        const double gradient2 = (evaluateAmplitude(order_, tangentStep(direction,tangent1,tangent2,0.0,step), coefficients)
-                                 - evaluateAmplitude(order_, tangentStep(direction,tangent1,tangent2,0.0,-step), coefficients)) / (2.0*step);
-        
-        const double gradientNorm = sqrt(gradient1*gradient1 + gradient2*gradient2);
-        if (gradientNorm < 1e-8)
-            break;
-        
-        // Cap the per-iteration ascent step at roughly the tessellation's
-        // own angular spacing, so refinement cannot overshoot into a
-        // neighbouring peak's basin
-        const double ascentScale = std::min(0.05, gradientNorm) / gradientNorm;
-        direction = tangentStep(direction, tangent1, tangent2, ascentScale*gradient1, ascentScale*gradient2);
+        double sum = 0.0;
+        for (size_t r=0; r<rows; r++)
+            sum += fitOperator[i*rows + r] * samples[r];
+        coeffs[i] = sum;
     }
     
+    const double b=coeffs[1], c=coeffs[2], d=coeffs[3], e=coeffs[4], f=coeffs[5];
+    const double det = 4.0*d*f - e*e;
+    
+    // The stationary point of a + b*u + c*w + d*u^2 + e*u*w + f*w^2 is a
+    // genuine local maximum only if its Hessian [[2d,e],[e,2f]] is negative
+    // definite (d<0 and det>0); otherwise the fit is untrustworthy (e.g. a
+    // saddle, or a near-flat/degenerate configuration) and the coarse mesh
+    // vertex is kept as is - a safe, if less precise, fallback
+    if (d < 0.0 && det > 1e-12)
+    {
+        double u = (e*c - 2.0*b*f) / det;
+        double w = (b*e - 2.0*c*d) / det;
+        
+        // Distrust the fit if its stationary point lies well beyond the
+        // neighbouring vertices used to construct it - a quadratic is only
+        // a local approximation to the true (smooth) FOD amplitude surface
+        const double radius = sqrt(u*u + w*w);
+        const double maxRadius = 0.15;   // radians; a little over one mesh spacing
+        if (radius > maxRadius)
+        {
+            u *= maxRadius / radius;
+            w *= maxRadius / radius;
+        }
+        
+        direction = tangentStep(direction, tangent1_[vertexIndex], tangent2_[vertexIndex], u, w);
+    }
+    
+    // A single fresh evaluation gives an accurate amplitude at the
+    // (possibly refined) direction, rather than trusting the quadratic
+    // fit's own estimate - cheap, since it replaces what was previously 32
+    // such evaluations per peak (8 gradient-ascent iterations x 4 finite
+    // difference samples)
     amplitude = evaluateAmplitude(order_, direction, coefficients);
 }
 
@@ -284,7 +449,7 @@ std::vector<std::pair<ImageSpace::Vector,double>> SphereTessellation::findPeaks 
         amplitude[i] = value;
     }
     
-    std::vector<std::pair<ImageSpace::Vector,double>> peaks;
+    std::vector<int> maximaIndices;
     for (size_t i=0; i<n; i++)
     {
         if (amplitude[i] <= 0.0)
@@ -301,11 +466,17 @@ std::vector<std::pair<ImageSpace::Vector,double>> SphereTessellation::findPeaks 
         }
         
         if (isMaximum)
-            peaks.push_back(std::make_pair(directions_[i], amplitude[i]));
+            maximaIndices.push_back(static_cast<int>(i));
     }
     
-    for (auto &peak : peaks)
-        refinePeak(peak.first, peak.second, coefficients);
+    std::vector<std::pair<ImageSpace::Vector,double>> peaks;
+    for (const int idx : maximaIndices)
+    {
+        ImageSpace::Vector direction = directions_[idx];
+        double amp = amplitude[idx];
+        refinePeak(idx, direction, amp, amplitude, coefficients);
+        peaks.push_back(std::make_pair(direction, amp));
+    }
     
     for (auto &peak : peaks)
         canonicalise(peak.first);
