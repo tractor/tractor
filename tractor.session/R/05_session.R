@@ -183,12 +183,13 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getRegistrationTargetFileName = function (space) { return (.self$getImageFileNameByType(.RegistrationTargets[[space]][[1]], space)) },
     
-    getTracker = function (mask = NULL, preferredModel = c("bedpost","dti"), ...)
+    getTracker = function (mask = NULL, preferredModel = c("bedpost","csd","dti"), ...)
     {
         preferredModel <- match.arg(preferredModel)
         availableModels <- c(.self$imageExists("avf", "bedpost"),
+                             .self$imageExists("wmfod", "mrtrix"),
                              .self$imageExists("eigenvector", "diffusion", 1))
-        names(availableModels) <- c("bedpost", "dti")
+        names(availableModels) <- c("bedpost", "csd", "dti")
         
         if (!any(availableModels))
             report(OL$Error, "No diffusion model is available for the session with root directory #{.self$getDirectory()}")
@@ -202,6 +203,8 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
         {
             if (preferredModel == "bedpost")
                 .self$caches.$objects$diffusionModel <- tractor.track::bedpostDiffusionModel(.self$getDirectory("bedpost"))
+            else if (preferredModel == "csd")
+                .self$caches.$objects$diffusionModel <- tractor.track::csdDiffusionModel(.self$getImageFileNameByType("wmfod", "mrtrix"))
             else
                 .self$caches.$objects$diffusionModel <- tractor.track::dtiDiffusionModel(.self$getImageFileNameByType("eigenvector", "diffusion", 1))
         }

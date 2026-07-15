@@ -20,7 +20,7 @@ runExperiment <- function ()
     
     strategy <- getConfigVariable("Strategy", "global", validValues=c("global","regionwise","voxelwise"))
     nStreamlines <- getConfigVariable("Streamlines", "100x")
-    preferredModel <- getConfigVariable("PreferredModel", "bedpost", validValues=c("bedpost","dti"))
+    preferredModel <- getConfigVariable("PreferredModel", "bedpost", validValues=c("bedpost","csd","dti"))
     anisotropyThreshold <- getConfigVariable("AnisotropyThreshold", NULL, "numeric")
     parcellationConfidence <- getConfigVariable("ParcellationConfidence", 0.2)
     boundaryManipulation <- getConfigVariable("BoundaryManipulation", "none", validValues=c("none","erode","dilate","inner","outer"))
