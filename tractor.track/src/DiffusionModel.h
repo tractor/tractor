@@ -2,6 +2,7 @@
 #define _DIFFUSION_MODEL_H_
 
 #include "Image.h"
+#include "SphericalHarmonics.h"
 
 class DiffusionModel : public ImageSpaceEmbedded
 {
@@ -61,6 +62,34 @@ public:
     float getAvfThreshold () const { return avfThreshold; }
     
     void setAvfThreshold (const float avfThreshold) { this->avfThreshold = avfThreshold; }
+    
+    ImageSpace::Vector sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const override;
+};
+
+class SphericalHarmonicModel : public DiffusionModel
+{
+private:
+    Image<float,4> *coefficients;
+    int order;
+    double amplitudeThreshold;
+    SphereTessellation *tessellation;
+
+public:
+    SphericalHarmonicModel ()
+        : coefficients(NULL), order(0), amplitudeThreshold(0.1), tessellation(NULL) {}
+    
+    SphericalHarmonicModel (const std::string &fodFile, const double amplitudeThreshold);
+    
+    ~SphericalHarmonicModel ()
+    {
+        delete coefficients;
+        delete tessellation;
+    }
+    
+    int getOrder () const { return order; }
+    double getAmplitudeThreshold () const { return amplitudeThreshold; }
+    
+    void setAmplitudeThreshold (const double amplitudeThreshold) { this->amplitudeThreshold = amplitudeThreshold; }
     
     ImageSpace::Vector sampleDirection (const ImageSpace::Point &point, const ImageSpace::Vector &referenceDirection) const override;
 };

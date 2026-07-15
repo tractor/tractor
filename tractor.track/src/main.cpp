@@ -38,6 +38,15 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP createCsdModel (SEXP _fodPath, SEXP _amplitudeThreshold)
+{
+BEGIN_RCPP
+    SphericalHarmonicModel *model = new SphericalHarmonicModel(as<std::string>(_fodPath), as<double>(_amplitudeThreshold));
+    XPtr<DiffusionModel> modelPtr(model);
+    return modelPtr;
+END_RCPP
+}
+
 RcppExport SEXP createTracker (SEXP _model, SEXP _mask, SEXP _maxSteps, SEXP _stepLength, SEXP _curvatureThreshold, SEXP _useLoopcheck, SEXP _oneWay)
 {
 BEGIN_RCPP

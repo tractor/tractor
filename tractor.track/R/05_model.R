@@ -59,3 +59,20 @@ bedpostDiffusionModel <- function (bedpostDir, avfThreshold = 0.05)
     
     return (DiffusionModel$new(pointer=pointer, type="bedpost"))
 }
+
+csdDiffusionModel <- function (fodPath, amplitudeThreshold = 0.1)
+{
+    if (!imageFileExists(fodPath))
+        report(OL$Error, "The specified FOD image does not exist")
+    
+    # The C++ code doesn't read MRtrix format, so go through a temporary file
+    if (identifyImageFileNames(fodPath)$format == "Mrtrix")
+    {
+        path <- threadSafeTempFile("fod")
+        fodPath <- writeImageFile(fodPath, path, "NIFTI")$fileStem
+    }
+    
+    pointer <- .Call("createCsdModel", fodPath, as.double(amplitudeThreshold), PACKAGE="tractor.track")
+    
+    return (DiffusionModel$new(pointer=pointer, type="csd"))
+}
