@@ -1,4 +1,5 @@
 .DS_Store
+tractor-history.log
 /install.log
 /*.Rcheck
 /*.tar.gz
