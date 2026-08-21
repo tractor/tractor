@@ -98,8 +98,7 @@ Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 }
 \seealso{
-The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}) and
-  \code{\linkS4class{MriImage}}.
+The NIfTI-1 standard and \code{\linkS4class{MriImage}}.
 }
 \author{
 Jon Clayden

@@ -204,8 +204,7 @@ chooseDataTypeForImage <- function (image, format, maxSize = NULL)
 #'   paths that were written to.
 #' 
 #' @author Jon Clayden
-#' @seealso The NIfTI-1 standard (\url{http://nifti.nimh.nih.gov/nifti-1}) and
-#'   \code{\linkS4class{MriImage}}.
+#' @seealso The NIfTI-1 standard and \code{\linkS4class{MriImage}}.
 #' @references Please cite the following reference when using TractoR in your
 #' work:
 #' 
