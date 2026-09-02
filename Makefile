@@ -15,11 +15,7 @@ default: build post-build-info
 post-build-info:
 	@$(ECHO) 'Run "make install" to install packages'
 
-bin/lr: lib/littler
-	@$(INSTALL) lib/littler
-	@cp lib/R/littler/bin/r bin/lr
-
-build: bin/lr
+build:
 	@$(ECHO_N) "Building tractor executable... "
 	@cd src && $(R) CMD make >build.log 2>&1 && $(ECHO) "OK" || ( $(ECHO) "FAIL"; exit 0 )
 
@@ -36,6 +32,9 @@ post-install-info:
 
 lib/.timestamp: lib/ore lib/reportr lib/arrg lib/corpcor lib/loder lib/shades lib/yaml lib/jsonlite lib/Rcpp lib/RcppArray lib/RcppEigen lib/mmand lib/RNifti lib/divest lib/RNiftyReg
 	@$(INSTALL) $? && touch lib/.timestamp
+
+lib/R/littler/bin/r:
+	@$(INSTALL) lib/littler
 
 install-libs: lib/.timestamp
 
@@ -74,9 +73,15 @@ install-graph:
 install-main: build
 	@$(MAKE) install-base install-utils install-reg install-session install-track install-nt install-graph
 
+bin/furrow: lib/R/littler/bin/r src/R/furrow
+	@cat src/R/furrow | sed "s|LR_PATH|$(CURDIR)/lib/R/littler/bin/r|" >bin/furrow && chmod +x bin/furrow
+
+install-bin: bin/furrow
+	@$(ECHO) "Command-line scripts installed"
+
 install: build
 	@rm -f install.log
-	@$(MAKE) check-and-install-libs install-main post-install-info
+	@$(MAKE) check-and-install-libs install-main install-bin post-install-info
 
 install-local: install
 
