@@ -2,6 +2,8 @@ reportr::setOutputLevel(Warning)
 options(reportrStderrLevel=reportr::OL$Fatal)
 Sys.setenv(TRACTOR_COMMANDLINE="")
 
+library(RNifti)
+
 expect_flag <- function (object, ...) {
     object
     expect_stdout(reportr::reportFlags(), ...)
@@ -30,13 +32,13 @@ expect_equal(image$getFieldOfView(), c(240,240,150))
 expect_equal(round(image$getOrigin()), c(50,39,23))
 expect_equal(image[50,59,33], 264)
 expect_equal(image$getDataAtPoint(50,59,33), 264)
-expect_equal(RNifti:::orientation(image$getXform()), "LAS")
+expect_equal(orientation(image$getXform()), "LAS")
 
 expect_null(show(image))
 
 expect_false(unreorderedImage$isReordered())
 expect_flag(unreorderedImage[50,59,33], "no consistent meaning")
-expect_equal(RNifti:::orientation(unreorderedImage$getXform()), "LIA")
+expect_equal(orientation(unreorderedImage$getXform()), "LIA")
 
 writePath <- image$writeToFile(tempfile(), "NIFTI_GZ", datatype="uint8")
 expect_true(file.size(writePath$imageFile) < file.size(path))
@@ -62,4 +64,4 @@ expect_equal(image$getDimensions(), c(96,96,60))
 expect_equal(image$getVoxelDimensions(), rep(2.5,3L))
 expect_equal(image$getOrigin(), c(49,39,23))
 expect_equal(image[50,59,33], 264)
-expect_equal(RNifti:::orientation(image$getXform()), "LAS")
+expect_equal(orientation(image$getXform()), "LAS")
