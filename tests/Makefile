@@ -14,7 +14,7 @@ TRACTOR_HOME=$(PWD)/..
 TRACTOR_PACKAGES=tractor.utils
 TRACTOR=$(TRACTOR_HOME)/bin/tractor -q -z -i -v0
 PLOUGH=$(TRACTOR_HOME)/bin/plough -q -z -i -v0
-FURROW=$(TRACTOR_HOME)/bin/lr -v -l utils $(TRACTOR_HOME)/bin/furrow -z
+FURROW=$(TRACTOR_HOME)/bin/furrow -z
 export COLUMNS TRACTOR_HOME TRACTOR_PACKAGES TRACTOR PLOUGH FURROW
 
 # Tests are run three levels down
