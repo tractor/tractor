@@ -48,7 +48,7 @@ jobs:
       run: make install-libs
     
     - name: Install main packages
-      run: make install-main
+      run: make install-main install-bin
     
     - name: Run tests
       run: make deeptest
