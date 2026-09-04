@@ -1,4 +1,4 @@
-#! LR_PATH -v -l utils
+#!/usr/bin/env -S LR_PATH -v -l utils
 
 # Find the path to this script
 path <- Sys.getenv("LITTLER_SCRIPT_PATH")
