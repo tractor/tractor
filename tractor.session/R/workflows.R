@@ -1,3 +1,18 @@
+#' Locate a TractoR workflow script
+#'
+#' This function locates a TractoR "workflow" shell script by name, searching
+#' the current directory, the user's `~/.tractor` directory, the directories
+#' named in the `TRACTOR_PATH` environment variable, the `tractor/workflows`
+#' directories of any packages named in `TRACTOR_PACKAGES`, and finally
+#' TractoR's own standard workflow directory (`share/tractor/workflows`), in
+#' that order.
+#'
+#' @param name A string giving the name of the workflow, with or without a
+#'   `.sh` suffix.
+#' @return The path to the first matching workflow script found.
+#' @seealso [runWorkflow()], which runs a workflow located in this way.
+#' @author Jon Clayden
+#' @export
 findWorkflow <- function (name)
 {
     packagePaths <- unlist(lapply(splitAndConvertString(Sys.getenv("TRACTOR_PACKAGES"), "[:,]"), function(p) system.file("tractor", "workflows", package=p)))
@@ -20,6 +35,27 @@ findWorkflow <- function (name)
     }
 }
 
+#' Check that a workflow's prerequisites are met
+#'
+#' This function checks whether a TractoR workflow script's stated
+#' requirements are satisfied: that a suitable external command is available
+#' on the system path (as declared by a `#@command` directive within the
+#' script), and, unless `commandOnly` is `TRUE`, that any prerequisite files
+#' it declares (via `#@prereq` directives) exist for the given session.
+#'
+#' @param file A string giving the path to a workflow script, or the name of
+#'   a workflow to locate with [findWorkflow()].
+#' @param session An [MriSession] object, or a string giving the path to a
+#'   session directory, used to resolve relative prerequisite file paths.
+#' @param commandOnly Boolean value: if `TRUE`, only the availability of a
+#'   suitable command is checked, and prerequisite files are ignored.
+#' @return A list with elements `ok` (a boolean value indicating whether all
+#'   checks passed), `problems` (a character vector describing any problems
+#'   found) and `commandPath` (the path to the located command, or `NULL`).
+#' @seealso [runWorkflow()], which calls this function before running a
+#'   workflow.
+#' @author Jon Clayden
+#' @export
 precheckWorkflow <- function (file, session, commandOnly = FALSE)
 {
     if (!file.exists(file))
@@ -65,6 +101,35 @@ precheckWorkflow <- function (file, session, commandOnly = FALSE)
     return (result)
 }
 
+#' Run a TractoR workflow
+#'
+#' This function runs a TractoR "workflow": a shell script, usually wrapping
+#' one or more calls to third-party command-line tools such as FSL or
+#' FreeSurfer programs, which together implement a step of a typical
+#' tractography or other MRI processing pipeline. The workflow's location is
+#' found using [findWorkflow()] and its prerequisites checked using
+#' [precheckWorkflow()] before it is run, with a suitable environment
+#' including session-specific and other configuration variables.
+#'
+#' @param name A string giving the name of the workflow to run (see
+#'   [findWorkflow()]).
+#' @param session An [MriSession] object, or a string giving the path to a
+#'   session directory, on which the workflow will operate.
+#' @param ... Named configuration variables to make available to the
+#'   workflow script as environment variables.
+#' @param .args A string, or character vector, of additional command-line
+#'   arguments to make available to the workflow script (as
+#'   `TRACTOR_COMMAND_ARGS`).
+#' @return The workflow's exit code, invisibly. An error is raised if this is
+#'   nonzero.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#'
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 runWorkflow <- function (name, session, ..., .args = "")
 {
     workflowFile <- findWorkflow(name)

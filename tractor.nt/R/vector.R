@@ -1,3 +1,18 @@
+#' Angles between corresponding rows of two matrices
+#'
+#' This function calculates the angle, using
+#' [tractor.base::angleBetweenVectors()], between each pair of corresponding
+#' rows in two matrices (or vectors, which are treated as single rows). If
+#' the matrices have different numbers of rows, the result is padded with
+#' `NA` to the length of the longer one.
+#'
+#' @param matrix1, matrix2 Numeric matrices (or vectors), whose rows are
+#'   compared pairwise.
+#' @return A numeric vector of angles, in radians, of length equal to the
+#'   larger of the number of rows in `matrix1` and `matrix2`. The result is
+#'   returned invisibly.
+#' @author Jon Clayden
+#' @export
 anglesBetweenMatrices <- function (matrix1, matrix2)
 {
     matrix1 <- promote(matrix1, byrow=TRUE)
@@ -12,6 +27,21 @@ anglesBetweenMatrices <- function (matrix1, matrix2)
     invisible (angles)
 }
 
+#' Step vectors between successive points, from a seed
+#'
+#' This function calculates the vectors between successive rows of a matrix
+#' of points, working outwards in each direction from a designated seed
+#' point.
+#'
+#' @param points A numeric matrix of 3D point coordinates, one per row.
+#' @param seedPoint An integer giving the row index of the seed point within
+#'   `points`.
+#' @return A list with elements `left` and `right`, each a matrix of step
+#'   vectors moving outwards from the seed point towards the start and end of
+#'   `points` respectively. The first row of each is `NA`, since there is no
+#'   step vector at the seed itself. The result is returned invisibly.
+#' @author Jon Clayden
+#' @export
 calculateStepVectors <- function (points, seedPoint)
 {
     nPoints <- nrow(points)
@@ -28,6 +58,25 @@ calculateStepVectors <- function (points, seedPoint)
     invisible (list(left=leftVectors, right=rightVectors))
 }
 
+#' Characterise step vectors between successive points, from a seed
+#'
+#' This function calculates the step vectors between successive rows of a
+#' matrix of points, as [calculateStepVectors()] does, and additionally
+#' calculates the angles between consecutive step vectors on each side of the
+#' seed point, and the angle between the first step vectors on either side.
+#'
+#' @param points A numeric matrix of 3D point coordinates, one per row.
+#' @param seedPoint An integer giving the row index of the seed point within
+#'   `points`.
+#' @return A list with elements `leftVectors` and `rightVectors` (as `left`
+#'   and `right` from [calculateStepVectors()]), `leftAngles` and
+#'   `rightAngles`, numeric vectors of angles (in radians) between
+#'   consecutive step vectors on each side, `middleAngle`, the angle between
+#'   the first left and right step vectors, and `leftLength` and
+#'   `rightLength`, the number of points on each side of (and including) the
+#'   seed. The result is returned invisibly.
+#' @author Jon Clayden
+#' @export
 characteriseStepVectors <- function (points, seedPoint)
 {
     vectors <- calculateStepVectors(points, seedPoint)

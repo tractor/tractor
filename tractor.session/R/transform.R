@@ -35,6 +35,28 @@
     return (transform)
 }
 
+#' Guess the space associated with an image
+#'
+#' This function attempts to work out which named space (such as `"mni"`,
+#' or a session-relative space such as `"diffusion"`) an image belongs to, by
+#' comparing the directory containing the image to the standard locations
+#' associated with a session, or to the location of TractoR's standard-space
+#' reference images.
+#'
+#' @param image An [tractor.base::MriImage] object, or a string giving the
+#'   path to an image file. Internal (in-memory only) images are not
+#'   associated with any space.
+#' @param session An [MriSession] object, or `NULL` to try to infer the
+#'   session from the image's path (which will only work if the image lies
+#'   within a session directory).
+#' @param errorIfOutOfSession Boolean value: if `TRUE`, an error is raised if
+#'   `session` is `NULL` and cannot be inferred from the image's path;
+#'   otherwise `NULL` is returned in that case.
+#' @return A string naming the space, in the form understood by
+#'   [transformImageToSpace()] and related functions, or `NULL` if the space
+#'   cannot be determined.
+#' @author Jon Clayden
+#' @export
 guessSpace <- function (image, session = NULL, errorIfOutOfSession = TRUE)
 {
     if (is.character(image))
@@ -68,6 +90,63 @@ guessSpace <- function (image, session = NULL, errorIfOutOfSession = TRUE)
     return (NULL)
 }
 
+#' Transform data between named spaces associated with a session
+#'
+#' These functions transform an image, parcellation or set of points between
+#' two named spaces (such as `"mni"`, or a session-relative space such as
+#' `"diffusion"` or `"structural"`) associated with a session, obtaining or
+#' creating the required registration via the session's
+#' `getTransformation()` method, and then delegating the actual transform
+#' application to [tractor.reg::transformImage()],
+#' [tractor.reg::transformParcellation()] or
+#' [tractor.reg::transformPoints()] as appropriate.
+#'
+#' @param image An [tractor.base::MriImage] object, or a string giving the
+#'   path to an image file, to transform.
+#' @param session An [MriSession] object.
+#' @param newSpace A string naming the space to transform into. See
+#'   [guessSpace()] for the space naming convention.
+#' @param oldSpace A string naming the current space of the data, or `NULL`
+#'   to infer it from `image` or `points`, or (for
+#'   `transformParcellationToSpace()`) to default to `"structural"`.
+#' @param preferAffine Boolean value: if `TRUE`, use an affine transform even
+#'   if a nonlinear one is available.
+#' @param interpolation An integer indicating the type of interpolation to
+#'   apply: 0 (nearest-neighbour), 1 (linear, the default) or 3 (cubic
+#'   spline). Passed to [tractor.reg::transformImage()].
+#' @param parcellation A list in the form created by
+#'   [tractor.reg::readParcellation()], representing a labelled image and
+#'   associated metadata.
+#' @param threshold The minimum interpolated value for a label to be retained
+#'   in the transformed parcellation. Passed to
+#'   [tractor.reg::transformParcellation()].
+#' @param points A numeric vector specifying a single point to transform, or
+#'   a matrix with one point per row.
+#' @param pointType A string giving the convention used by `points`: one of
+#'   `"fsl"`, `"r"`/`"vox"` (voxel indices) or `"mm"` (world coordinates). If
+#'   `NULL`, this is taken from the `"pointType"` attribute of `points`.
+#' @param outputVoxel Boolean value: if `TRUE` and `pointType` is `"mm"`,
+#'   convert the transformed points back to voxel coordinates in the target
+#'   space before returning them.
+#' @param nearest Boolean value: should the resulting points be rounded to
+#'   the nearest integer? Passed to [tractor.reg::transformPoints()].
+#' @return `transformImageToSpace()` returns a transformed
+#'   [tractor.base::MriImage] object. `transformParcellationToSpace()`
+#'   returns a transformed parcellation, in the same form as `parcellation`.
+#'   `transformPointsToSpace()` returns a numeric vector or matrix of
+#'   transformed points, with `"space"` and `"pointType"` attributes set to
+#'   reflect the new space and point convention.
+#' @seealso [guessSpace()], for the space naming convention used by these
+#'   functions; [changePointType()], for converting between point
+#'   conventions within a single space.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#'
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, preferAffine = FALSE, interpolation = 1)
 {
     transform <- .findTransformation(image, session, newSpace, oldSpace)
@@ -76,6 +155,8 @@ transformImageToSpace <- function (image, session, newSpace, oldSpace = NULL, pr
     return (newImage)
 }
 
+#' @rdname transformImageToSpace
+#' @export
 transformParcellationToSpace <- function (parcellation, session, newSpace, oldSpace = "structural", threshold = 0.5, preferAffine = FALSE)
 {
     transform <- .findTransformation(parcellation$image, session, newSpace, oldSpace)
@@ -84,6 +165,8 @@ transformParcellationToSpace <- function (parcellation, session, newSpace, oldSp
     return (newParcellation)
 }
 
+#' @rdname transformImageToSpace
+#' @export
 transformPointsToSpace <- function (points, session, newSpace, oldSpace = NULL, pointType = NULL, outputVoxel = FALSE, preferAffine = FALSE, nearest = FALSE)
 {
     if (is.null(pointType))
@@ -119,6 +202,27 @@ transformPointsToSpace <- function (points, session, newSpace, oldSpace = NULL, 
     return (newPoints)
 }
 
+#' Convert points between coordinate conventions
+#'
+#' This function converts a set of points from one coordinate convention to
+#' another, within a single image space: between voxel indices (FSL's
+#' zero-based convention, or R's one-based convention) and world (millimetre)
+#' coordinates.
+#'
+#' @param points A numeric vector specifying a single point to convert, or a
+#'   matrix with one point per row.
+#' @param image An [tractor.base::MriImage] object, or [RNifti::niftiHeader()]
+#'   object, giving the target space and its voxel-to-world mapping.
+#' @param newPointType A string giving the convention to convert to: one of
+#'   `"fsl"`, `"r"`/`"vox"` (voxel indices) or `"mm"` (world coordinates).
+#' @param oldPointType A string giving the current convention of `points`. If
+#'   `NULL`, this is taken from the `"pointType"` attribute of `points`.
+#' @return The converted points, with a `"pointType"` attribute set to
+#'   reflect `newPointType`.
+#' @seealso [transformPointsToSpace()], which additionally transforms points
+#'   between different image spaces.
+#' @author Jon Clayden
+#' @export
 changePointType <- function (points, image, newPointType, oldPointType = NULL)
 {
     if (is.null(oldPointType))
@@ -148,6 +252,40 @@ changePointType <- function (points, image, newPointType, oldPointType = NULL)
     return (newPoints)
 }
 
+#' Coregister the volumes of a 4D data set within a session
+#'
+#' This function coregisters each volume of a session's raw 4D data (of the
+#' specified `type`, e.g. `"diffusion"` or `"functional"`) to a common
+#' reference volume, and writes the resulting registered data set to file.
+#' This is typically used for motion correction of functional or diffusion
+#' time series that are not otherwise handled by a dedicated tool such as
+#' FSL's `eddy` (see [runEddyWithSession()]).
+#'
+#' @param session An [MriSession] object.
+#' @param type A string giving the (session-relative) type of the 4D data,
+#'   e.g. `"diffusion"` or `"functional"`.
+#' @param reference An integer index into the fourth dimension of the raw
+#'   data, giving the volume to register to, or an
+#'   [tractor.base::MriImage] to use as the target directly.
+#' @param useMask Boolean value: should the session's mask for `type` be used
+#'   to weight or restrict the registration?
+#' @param nLevels An integer giving the number of resolution levels to use for
+#'   the registration.
+#' @param method A string, one of `"niftyreg"`, `"fsl"` or `"none"`. With
+#'   `"none"`, an identity transform is stored and the raw data is simply
+#'   copied to the coregistered data location.
+#' @param options A list of additional method-specific linear registration
+#'   options.
+#' @param ... Additional arguments to [tractor.reg::registerImages()].
+#' @return The resulting [tractor.reg::Registration] object.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#'
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 coregisterDataVolumesForSession <- function (session, type, reference = 1, useMask = FALSE, nLevels = 2, method = c("niftyreg","fsl","none"), options = list(), ...)
 {
     if (!is(session, "MriSession"))
@@ -213,6 +351,19 @@ coregisterDataVolumesForSession <- function (session, type, reference = 1, useMa
     return (registration)
 }
 
+#' Read the volume-to-volume transformation for a session
+#'
+#' This function reads the registration relating the raw volumes of a
+#' session's 4D data of a particular `type` to their common reference volume,
+#' as produced by [coregisterDataVolumesForSession()] or, for diffusion data,
+#' by eddy current correction (see [readEddyCorrectTransformsForSession()]).
+#'
+#' @param session An [MriSession] object.
+#' @param type A string giving the (session-relative) type of the 4D data,
+#'   e.g. `"diffusion"` or `"functional"`.
+#' @return The relevant [tractor.reg::Registration] object.
+#' @author Jon Clayden
+#' @export
 getVolumeTransformationForSession <- function (session, type)
 {
     assert(is(session,"MriSession"), "Specified session is not an MriSession object")

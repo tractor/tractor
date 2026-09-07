@@ -1,3 +1,47 @@
+#' Set up and run a TractoR experiment script
+#'
+#' This function performs the setup required to run a TractoR "experiment"
+#' script from R: it attaches the core packages, sets standard options,
+#' parses command-line-style arguments and configuration variables, sources
+#' the script, and then calls its `runExperiment()` function. It underlies
+#' the `tractor` shell command, but can also be used directly from an R
+#' session (see [callExperiment()] and [debugExperiment()] for convenient
+#' wrappers).
+#'
+#' @param scriptFile A string giving the path to the experiment script.
+#' @param workingDirectory A string giving the working directory to change
+#'   to before running the experiment. Defaults to the current directory.
+#' @param outputLevel An integer giving the `reportr` output level to use,
+#'   typically one of the constants from `OL`.
+#' @param configFiles A character vector of paths to YAML configuration
+#'   files (see [readYaml()]), or `NULL`.
+#' @param configText A single string containing whitespace-separated
+#'   arguments and `name:value` configuration pairs, as would typically be
+#'   assembled from the command line.
+#' @param parallelisationFactor An integer giving the number of cores to
+#'   parallelise over, if the `parallel` package is available. Values of
+#'   one or less disable parallelisation.
+#' @param profile Boolean value: if `TRUE`, the experiment is run under
+#'   `Rprof()` profiling, with results written to `tractor-Rprof.out` in
+#'   the working directory.
+#' @param standalone Boolean value. If `TRUE`, the default, the R session
+#'   will quit once the experiment completes (or fails). If `FALSE`,
+#'   control returns to the caller.
+#' @param debug Boolean value: if `TRUE`, `runExperiment()` is run under
+#'   the R debugger.
+#' @param breakpoint A string identifying a location within `scriptFile` at
+#'   which to set a breakpoint (see `setBreakpoint()`), or `NULL` for none.
+#' @return Called for its side effect of running the experiment script. If
+#'   `scriptFile` does not define a `runExperiment()` function, `NULL` is
+#'   returned invisibly without further action.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#'
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputLevel = OL$Warning, configFiles = NULL, configText = NULL, parallelisationFactor = 1, profile = FALSE, standalone = TRUE, debug = FALSE, breakpoint = NULL)
 {
     profile <- as.logical(profile)
@@ -81,6 +125,22 @@ bootstrapExperiment <- function (scriptFile, workingDirectory = getwd(), outputL
     }
 }
 
+#' Print usage information for an experiment script
+#'
+#' This function prints a usage summary for a TractoR experiment script,
+#' listing the configuration variables it accepts (as determined by
+#' scanning the script's source for calls to [getConfigVariable()]), along
+#' with any arguments, examples or description given via special `#@@args`,
+#' `#@@example` and `#@@desc` comments.
+#'
+#' @param scriptFile A string giving the path to the experiment script.
+#' @param fill Boolean value: if `TRUE`, the output is wrapped to fit the
+#'   width of the terminal (see `cat()`'s `fill` argument); otherwise each
+#'   line is printed as-is.
+#' @return Called for its side effect of printing usage information. `NULL`
+#'   is returned invisibly.
+#' @author Jon Clayden
+#' @export
 describeExperiment <- function (scriptFile, fill = FALSE)
 {
     inputLines <- readLines(scriptFile)
@@ -130,6 +190,20 @@ describeExperiment <- function (scriptFile, fill = FALSE)
     invisible(NULL)
 }
 
+#' Standard search paths for experiment scripts
+#'
+#' This function returns the ordered list of directories that are searched
+#' for TractoR experiment scripts, by [findExperiment()] and
+#' [scanExperiments()]. In order, these are the current working directory,
+#' the user's `~/.tractor` directory, any directories listed in the
+#' `TRACTOR_PATH` environment variable, the `tractor/experiments`
+#' directories of any packages named in the `TRACTOR_PACKAGES` environment
+#' variable, and finally the standard experiment directory shipped with
+#' TractoR.
+#'
+#' @return A character vector of directory paths.
+#' @author Jon Clayden
+#' @export
 experimentPaths <- function ()
 {
     packagePaths <- unlist(lapply(splitAndConvertString(Sys.getenv("TRACTOR_PACKAGES"), "[:,]"), function(p) system.file("tractor", "experiments", package=p)))
@@ -140,6 +214,20 @@ experimentPaths <- function ()
               file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "experiments")))
 }
 
+#' Find and summarise available experiment scripts
+#'
+#' This function scans the standard experiment script search paths (see
+#' [experimentPaths()]) for R scripts, and extracts metadata about each one
+#' from special `#@group`, `#@args`, `#@desc`, `#@interactive`,
+#' `#@nohistory` and `#@example` comments found in its source.
+#'
+#' @param pattern An optional regular expression used to filter scripts by
+#'   name. If `NULL`, the default, all scripts found are returned.
+#' @return A `data.frame` with one row per matching script and columns
+#'   `name`, `group`, `path`, `args`, `description`, `interactive`,
+#'   `nohistory` and `example`.
+#' @author Jon Clayden
+#' @export
 scanExperiments <- function (pattern = NULL)
 {
     path <- list.files(experimentPaths(), "\\.[rR]$", full.names=TRUE)
@@ -173,6 +261,18 @@ scanExperiments <- function (pattern = NULL)
     return (data.frame(name=name, group=group, path=path, args=args, description=description, interactive=interactive, nohistory=nohistory, example=example))
 }
 
+#' Locate an experiment script by name
+#'
+#' This function searches the standard experiment script search paths (see
+#' [experimentPaths()]) for a script with the given name, and returns the
+#' path to the first match. An error is raised if no matching script can be
+#' found.
+#'
+#' @param exptName A string giving the name of the experiment, without the
+#'   `.R` file extension.
+#' @return A string giving the path to the matching experiment script.
+#' @author Jon Clayden
+#' @export
 findExperiment <- function (exptName)
 {
     exptFile <- ensureFileSuffix(exptName, "R")
@@ -188,6 +288,28 @@ findExperiment <- function (exptName)
     }
 }
 
+#' Run a named experiment script from within R
+#'
+#' This function is a convenient way to run a TractoR experiment script
+#' from an interactive R session (as opposed to via the `tractor` shell
+#' command). It locates the script using [findExperiment()] and then runs
+#' it via [bootstrapExperiment()], with `standalone` set to `FALSE` so that
+#' control returns to the caller.
+#'
+#' @param exptName A string giving the name of the experiment. If it
+#'   contains whitespace and `args` is `NULL`, it is assumed to bundle the
+#'   experiment name and its arguments together, as on the command line,
+#'   and will be split accordingly.
+#' @param args A character vector of arguments to the experiment, or a
+#'   single string containing all of them, or `NULL`.
+#' @param configFiles A character vector of paths to YAML configuration
+#'   files, or `NULL`.
+#' @param outputLevel An integer giving the `reportr` output level to use.
+#'   Defaults to the level currently in effect.
+#' @param ... Additional arguments to [bootstrapExperiment()].
+#' @return Called for its side effect of running the experiment script.
+#' @author Jon Clayden
+#' @export
 callExperiment <- function (exptName, args = NULL, configFiles = NULL, outputLevel = getOutputLevel(), ...)
 {
     if (length(exptName) != 1L)
@@ -209,6 +331,29 @@ callExperiment <- function (exptName, args = NULL, configFiles = NULL, outputLev
     rm(list=c("Arguments","ConfigVariables"), envir=globalenv())
 }
 
+#' Run a named experiment script under the debugger
+#'
+#' This function is analogous to [callExperiment()], but runs the located
+#' experiment script at `OL$Debug` output level and under the R debugger,
+#' either stepping into `runExperiment()` directly, or setting a breakpoint
+#' at a particular line if one is given.
+#'
+#' @param exptName A string giving the name of the experiment. If it
+#'   contains whitespace and `args` is `NULL`, it is assumed to bundle the
+#'   experiment name and its arguments together, as on the command line,
+#'   and will be split accordingly.
+#' @param args A character vector of arguments to the experiment, or a
+#'   single string containing all of them, or `NULL`.
+#' @param configFiles A character vector of paths to YAML configuration
+#'   files, or `NULL`.
+#' @param breakpoint A string identifying a location within the experiment
+#'   script at which to set a breakpoint (see `setBreakpoint()`). If
+#'   `NULL`, the default, `runExperiment()` itself is stepped into instead.
+#' @param ... Additional arguments to [bootstrapExperiment()].
+#' @return Called for its side effect of running the experiment script
+#'   under the debugger.
+#' @author Jon Clayden
+#' @export
 debugExperiment <- function (exptName, args = NULL, configFiles = NULL, breakpoint = NULL, ...)
 {
     if (length(exptName) != 1L)

@@ -1,3 +1,13 @@
+#' Create a diffusion tensor matrix from its unique components
+#'
+#' This function creates a symmetric 3x3 diffusion tensor matrix from its six
+#' unique components, as returned (per voxel) by [estimateDiffusionTensors()].
+#'
+#' @param components A numeric vector of length 6, giving the unique elements
+#'   of the tensor in the order Dxx, Dxy, Dxz, Dyy, Dyz, Dzz.
+#' @return A symmetric 3x3 numeric matrix representing the diffusion tensor.
+#' @author Jon Clayden
+#' @export
 createDiffusionTensorFromComponents <- function (components)
 {
     data <- components[c(1,2,3,2,4,5,3,5,6)]
@@ -5,6 +15,46 @@ createDiffusionTensorFromComponents <- function (components)
     return (tensor)
 }
 
+#' Fit diffusion tensors to a set of data
+#'
+#' This function fits diffusion tensors to one or more voxels' worth of
+#' diffusion-weighted signal, by ordinary or iterative weighted least-squares
+#' regression on the log-transformed data. It provides a pure-R alternative
+#' to fitting tensors with FSL's `dtifit` (see [runDtifitWithSession()]).
+#'
+#' @param data A numeric vector or matrix of diffusion-weighted signal
+#'   intensities, with one row per voxel (or a single vector for one voxel)
+#'   and one column per gradient direction/b-value combination, matching
+#'   `scheme`.
+#' @param scheme A [tractor.base::DiffusionScheme] object, or a numeric
+#'   b-matrix (one row per acquisition, with elements Bxx, Bxy, Bxz, Byy, Byz,
+#'   Bzz).
+#' @param method A string, either `"ls"` for ordinary least-squares (the
+#'   default) or `"iwls"` for iterative weighted least-squares, which
+#'   generally gives a more accurate fit at increased computational cost.
+#' @param requireMetrics Boolean value: should tensor eigensystems and the
+#'   derived mean diffusivity and fractional anisotropy metrics also be
+#'   calculated?
+#' @param convergenceLevel The relative change in weighted sum-of-squares
+#'   below which the `"iwls"` iteration is considered to have converged.
+#' @return A list with elements `logS0` (fitted log baseline signal per
+#'   voxel), `tensors` (a 6 x N matrix of unique tensor components per voxel),
+#'   `sse` (sum of squared residuals per voxel) and `bad` (the number of
+#'   nonpositive data values per voxel). If `requireMetrics` is `TRUE`, this
+#'   also includes `eigenvalues`, `eigenvectors`, `md` (mean diffusivity) and
+#'   `fa` (fractional anisotropy).
+#' @seealso [createDiffusionTensorFromComponents()], which converts a single
+#'   voxel's unique tensor components into a matrix, and
+#'   [createDiffusionTensorImagesForSession()], which applies this function
+#'   across a whole session and writes the resulting maps to file.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#'
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), requireMetrics = TRUE, convergenceLevel = 1e-3)
 {
     if (!is(scheme, "DiffusionScheme") && !is.matrix(scheme))
@@ -136,6 +186,30 @@ estimateDiffusionTensors <- function (data, scheme, method = c("ls","iwls"), req
     return (returnValue)
 }
 
+#' Fit diffusion tensors for a session and write metric maps
+#'
+#' This function fits diffusion tensors to a session's preprocessed
+#' diffusion-weighted data, within its brain mask, using
+#' [estimateDiffusionTensors()], and writes the resulting baseline signal,
+#' fractional anisotropy, mean diffusivity, eigenvalue, eigenvector, radial
+#' diffusivity, sum-of-squared-error, "bad voxel count" and colour-FA maps to
+#' the session's diffusion directory. This provides a pure-R alternative to
+#' fitting tensors with FSL's `dtifit` (see [runDtifitWithSession()]).
+#'
+#' @param session An [MriSession] object, which must already have a mask and
+#'   preprocessed diffusion-weighted data associated with it.
+#' @param method A string, either `"ls"` for ordinary least-squares (the
+#'   default) or `"iwls"` for iterative weighted least-squares. Passed to
+#'   [estimateDiffusionTensors()].
+#' @return This function is called for its side effect.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#'
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 createDiffusionTensorImagesForSession <- function (session, method = c("ls","iwls"))
 {
     if (!is(session, "MriSession"))

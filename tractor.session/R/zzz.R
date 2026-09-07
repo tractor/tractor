@@ -1,3 +1,6 @@
+#' @import ore reportr tractor.base yaml
+NULL
+
 .onLoad <- function (libname, pkgname)
 {
     tractorHome <- Sys.getenv("TRACTOR_HOME")

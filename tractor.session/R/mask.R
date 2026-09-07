@@ -1,3 +1,28 @@
+#' Create a brain mask image for a session
+#'
+#' This function creates a brain (foreground) mask for a session's reference
+#' diffusion b=0 volume, and writes it to file along with a masked version of
+#' the b=0 volume itself. This provides a pure-R alternative to using an
+#' external skull-stripping tool such as FSL's `bet` (see
+#' [runBetWithSession()]).
+#'
+#' @param session An [MriSession] object.
+#' @param method A string, either `"kmeans"` or `"fill"`. With `"kmeans"`
+#'   (the default), foreground voxels are identified using k-means clustering
+#'   on the image intensities, followed by connected-component analysis to
+#'   retain only the largest cluster, and morphological closing and dilation
+#'   to remove gaps. With `"fill"`, every voxel is treated as foreground.
+#' @param nClusters An integer giving the number of clusters to use for
+#'   k-means clustering, when `method` is `"kmeans"`.
+#' @return This function is called for its side effect.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#'
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 createMaskImageForSession <- function (session, method = c("kmeans","fill"), nClusters = 2)
 {
     if (!is(session, "MriSession"))

@@ -1,29 +1,28 @@
 #' Copy a directory and its contents
-#' 
+#'
 #' This function copies a directory and its contents from one location to
-#' another. Unlike \code{\link{file.copy}}, the target directory doesn't have
-#' to exist, and the copied directory can have any name.
-#' 
+#' another. Unlike [file.copy()], the target directory doesn't have to
+#' exist, and the copied directory can have any name.
+#'
 #' @param from A string giving the source directory.
 #' @param to A string giving the target directory. If it doesn't exist it will
 #'   be created and filled with the contents of the source directory. If it
-#'   does exist, a new subdirectory with the same \code{\link{basename}} as the
+#'   does exist, a new subdirectory with the same [basename()] as the
 #'   source directory will be created, and the files put there (as with
-#'   \code{\link{file.copy}}, but see the \code{overwrite} parameter below).
-#' @param allFiles If \code{TRUE}, hidden files (with names beginning with a
+#'   [file.copy()], but see the `overwrite` parameter below).
+#' @param allFiles If `TRUE`, hidden files (with names beginning with a
 #'   period) will be included in the copy.
-#' @param deleteOriginal If \code{TRUE}, the source directory will be deleted
+#' @param deleteOriginal If `TRUE`, the source directory will be deleted
 #'   if the copy is successful.
-#' @param overwrite If \code{TRUE}, an existing target directory will be
+#' @param overwrite If `TRUE`, an existing target directory will be
 #'   removed and replaced with the contents of the source directory.
-#' @return \code{TRUE} if all files were copied successfully; \code{FALSE}
+#' @return `TRUE` if all files were copied successfully; `FALSE`
 #'   otherwise.
-#' 
 #' @author Jon Clayden
-#' @seealso \code{\link{file.copy}}
+#' @seealso [file.copy()]
 #' @references Please cite the following reference when using TractoR in your
 #' work:
-#' 
+#'
 #' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.

@@ -29,6 +29,36 @@
             })
 }
 
+#' The MriSession class
+#'
+#' This class represents a single MRI scan session: a managed hierarchy of
+#' directories and files, rooted at a particular location on disk, which may
+#' include structural, diffusion-weighted and/or functional images along with
+#' associated metadata and derived data (masks, tensors, registrations,
+#' tractography results, etc.). The standard layout of a session, and the
+#' mapping from standardised image "type" names (such as `"rawdata"`, `"mask"`
+#' or `"fa"`) to file names within each subdirectory, is described by "map"
+#' YAML files under `share/tractor/session` in the TractoR installation, and
+#' may be extended or overridden on a per-session basis by placing a
+#' `map.yaml` file in the relevant directory. This class provides methods to
+#' resolve directory and image file paths for a session without the caller
+#' needing to know the details of its layout, to read and write images and
+#' other data by type, and to obtain (creating if necessary) registrations
+#' between the various spaces - structural, diffusion, functional and
+#' standard/MNI - associated with the session.
+#'
+#' @field directory The absolute path to the root of the session, i.e. the
+#'   parent of the `tractor` subdirectory in which TractoR-managed files and
+#'   metadata are stored.
+#' @field caches. A list of information cached for efficiency, including the
+#'   session's subdirectory and per-directory file maps, its registration
+#'   strategies, and objects such as a diffusion model created for
+#'   tractography. Rebuilt as needed by the `updateCaches()` method. This
+#'   field is not serialised with the object.
+#'
+#' @note Session objects are usually created using the [attachMriSession()]
+#'   function rather than calling `MriSession$new()` directly.
+#' @export
 MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=list(directory="character",caches.="list"), methods=list(
     initialize = function (directory = NULL, ...)
     {
@@ -50,6 +80,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getDiffusionScheme = function (unrotated = FALSE)
     {
+        "Get the diffusion scheme (b-values and gradient directions) associated with the session"
         # The argument means unrotated only; otherwise rotated is preferred but not required
         diffusionDir <- .self$getDirectory("diffusion")
         scheme <- readDiffusionScheme(.self$getImageFileNameByType(ifelse(unrotated,"rawdata","data"), "diffusion"))
@@ -70,6 +101,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getDirectory = function (type = NULL, createIfMissing = FALSE)
     {
+        "Obtain the path to the session's root, or one of its standard subdirectories, optionally creating it"
         if (is.null(type))
             return (directory)
         else
@@ -96,6 +128,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getImageByType = function (type, place = NULL, index = 1, ...)
     {
+        "Read an image of the specified standard type from the session"
         fileName <- .self$getImageFileNameByType(type, place, index)
         if (tolower(type) == "radialdiff" && !imageFileExists(fileName))
             createRadialDiffusivityMapForSession(.self)
@@ -104,6 +137,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getImageFileNameByType = function (type, place = NULL, index = 1, fallback = FALSE)
     {
+        "Resolve the file name for an image of a particular standard type, optionally in a particular subdirectory"
         if (!is.null(place) && tolower(place) == "mni")
             return (getFileNameForStandardImage(type))
         else
@@ -153,6 +187,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getMap = function (place = "root")
     {
+        "Obtain the file name map for the session's root directory, or a particular subdirectory"
         .self$updateCaches()
         if (place == "root")
             return (.self$caches.$subdirectories)
@@ -162,6 +197,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getParcellation = function (place = "structural", ...)
     {
+        "Obtain a parcellation for the session, generating it by transformation from structural space if necessary"
         fileName <- .self$getImageFileNameByType("parcellation", place)
         if (!imageFileExists(fileName))
         {
@@ -185,6 +221,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getTracker = function (mask = NULL, preferredModel = c("bedpost","dti"), ...)
     {
+        "Create a streamline tracker using the session's diffusion model, caching the model for reuse"
         preferredModel <- match.arg(preferredModel)
         availableModels <- c(.self$imageExists("avf", "bedpost"),
                              .self$imageExists("eigenvector", "diffusion", 1))
@@ -214,6 +251,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     getTransformation = function (sourceSpace, targetSpace)
     {
+        "Obtain a registration between two spaces associated with the session, running one if a suitable transformation does not already exist on disk"
         strategy <- caches.$transformStrategies[[es("#{sourceSpace}2#{targetSpace}")]]
         if ("reverse" %in% strategy)
             return (.self$getTransformation(targetSpace,sourceSpace)$reverse())
@@ -262,6 +300,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     imageFiles = function (type, place = NULL, index = 1, fallback = FALSE)
     {
+        "Obtain a file-set handle for an image of a particular standard type"
         path <- .self$getImageFileNameByType(type, place, index, fallback)
         if (!is.null(place) && tolower(place) == "mni")
             return (tractor.base::imageFiles(path))
@@ -275,6 +314,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     unlinkDirectory = function (type, ask = TRUE)
     {
+        "Delete one of the session's subdirectories, or unmap it if it lies outside the session"
         dirToRemove <- expandFileName(.self$getDirectory(type))
         rootDir <- expandFileName(.self$getDirectory("root"))
         
@@ -295,6 +335,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     updateCaches = function ()
     {
+        "Rebuild the session's cached subdirectory and file maps and registration strategies from the relevant map.yaml files"
         bidsDescription <- file.path(directory, "..", "dataset_description.json")
         if (file.exists(bidsDescription) && ore.file(bidsDescription) %~% "BIDSVersion")
             defaultsPath <- file.path(Sys.getenv("TRACTOR_HOME"), "share", "tractor", "session", "bids")
@@ -329,6 +370,7 @@ MriSession <- setRefClass("MriSession", contains="SerialisableObject", fields=li
     
     updateDiffusionScheme = function (scheme = NULL, unrotated = FALSE)
     {
+        "Write a diffusion scheme to file for the session, also updating the FSL-style bvals/bvecs files if appropriate"
         if (!is.null(scheme) && !is(scheme, "DiffusionScheme"))
             report(OL$Error, "Specified scheme is not a DiffusionScheme object")
         
@@ -358,22 +400,57 @@ setAs("MriSession", "character", function (from) {
     return (from$getDirectory())
 })
 
+#' @export
 as.character.MriSession <- function (x, ...)
 {
     return (x$getDirectory())
 }
 
+#' Attach a session directory
+#'
+#' These functions create an [MriSession] object representing an existing
+#' session directory on disk.
+#'
+#' @param directory A string giving the path to the session directory (i.e.
+#'   the parent of the `tractor` subdirectory in which TractoR-managed files
+#'   live).
+#' @return An [MriSession] object.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#'
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 attachMriSession <- function (directory)
 {
     session <- MriSession$new(directory)
     invisible (session)
 }
 
+#' @rdname attachMriSession
+#' @export
 newSessionFromDirectory <- function (directory)
 {
     return (attachMriSession(directory))
 }
 
+#' Count the images of a particular type associated with a session
+#'
+#' This function counts the number of images of a particular type associated
+#' with a session, using the `index` mechanism supported by some image types
+#' (such as per-fibre `"avf"` maps produced by FSL-BEDPOSTX). It works by
+#' testing sequentially-indexed images for existence until one is not found.
+#'
+#' @param session An [MriSession] object.
+#' @param type A string giving the (session-relative) type of image required.
+#' @param place A string giving the subdirectory in which the image should be
+#'   found, or `NULL` to look in the type's standard location.
+#' @return The number of images of the specified type found, which may be
+#'   zero.
+#' @author Jon Clayden
+#' @export
 getImageCountForSession <- function (session, type, place = NULL)
 {
     if (!is(session, "MriSession"))
@@ -386,6 +463,19 @@ getImageCountForSession <- function (session, type, place = NULL)
     return (i-1)
 }
 
+#' Create a radial diffusivity map for a session
+#'
+#' This function creates a radial diffusivity map for a session with an
+#' existing diffusion tensor fit, calculated as the mean of the second and
+#' third eigenvalues of the tensor at each voxel, and writes it to the
+#' session's diffusion directory.
+#'
+#' @param session An [MriSession] object, which must already have second and
+#'   third eigenvalue maps associated with it (as produced by
+#'   [createDiffusionTensorImagesForSession()], for example).
+#' @return This function is called for its side effect.
+#' @author Jon Clayden
+#' @export
 createRadialDiffusivityMapForSession <- function (session)
 {
     if (!is(session, "MriSession"))

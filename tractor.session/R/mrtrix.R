@@ -1,3 +1,5 @@
+#' @rdname showImagesInFreeview
+#' @export
 showImagesInMrview <- function (imageFileNames, wait = FALSE, lookupTable = NULL, opacity = NULL)
 {
     # Every image except the first is considered an overlay so its options need a prefix

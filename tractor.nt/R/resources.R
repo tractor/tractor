@@ -1,3 +1,29 @@
+#' Locate the file for a PNT resource
+#'
+#' This function determines the file name (with an ".Rdata" extension) for a
+#' probabilistic neighbourhood tractography (PNT) reference tract, matching
+#' model or results object, checking the working directory and, for
+#' reference tracts and models, TractoR's standard resource directories under
+#' `TRACTOR_HOME`.
+#'
+#' For `type` `"model"`, several naming schemes are tried in turn: a
+#' `modelName` element of `options`, used directly; a `datasetName` element,
+#' suffixed with `"_model"`; and a `tractName` element, suffixed with
+#' `"_model"` (this last option also being checked against the standard
+#' model directory when `intent` is `"read"`).
+#'
+#' @param type A string, one of `"reference"`, `"model"` or `"results"`,
+#'   giving the type of resource required.
+#' @param options A named list, generally including a `tractName` element
+#'   (for `"reference"` and `"model"` resources), a `resultsName` element
+#'   (for `"results"` resources), a `datasetName` element, and/or a
+#'   `modelName` element, used to construct the file name (see Details).
+#' @param intent A string, either `"read"` (the default) or `"write"`,
+#'   indicating whether the file is required to already exist.
+#' @return A string giving the path to the resource file. An error is
+#'   signalled if the file could not be found and `intent` is `"read"`.
+#' @author Jon Clayden
+#' @export
 getFileNameForNTResource <- function (type, options = NULL, intent = c("read","write"))
 {
     type <- match.arg(tolower(type), c("reference","model","results"))
@@ -65,6 +91,22 @@ getFileNameForNTResource <- function (type, options = NULL, intent = c("read","w
     }
 }
 
+#' Read a PNT resource from file
+#'
+#' This function locates, using [getFileNameForNTResource()], and deserialises
+#' a probabilistic neighbourhood tractography (PNT) reference tract, matching
+#' model or results object.
+#'
+#' @param type A string, one of `"reference"`, `"model"` or `"results"`,
+#'   giving the type of resource required.
+#' @param options A named list of elements used to construct the resource's
+#'   file name; see [getFileNameForNTResource()].
+#' @return The deserialised resource object: a [ReferenceTract] for
+#'   `type="reference"`, an [UninformativeTractModel] or [MatchingTractModel]
+#'   for `type="model"`, or a [ProbabilisticNTResults] object for
+#'   `type="results"`. The result is returned invisibly.
+#' @author Jon Clayden
+#' @export
 getNTResource <- function (type, options = NULL)
 {
     fileName <- getFileNameForNTResource(type, options, intent="read")
@@ -86,6 +128,24 @@ getNTResource <- function (type, options = NULL)
     }
 }
 
+#' Write a PNT resource to file
+#'
+#' This function serialises a probabilistic neighbourhood tractography (PNT)
+#' reference tract, matching model or results object to file, at the location
+#' determined by [getFileNameForNTResource()].
+#'
+#' @param object The object to serialise: usually a [ReferenceTract],
+#'   [UninformativeTractModel], [MatchingTractModel] or
+#'   [ProbabilisticNTResults] object.
+#' @param type A string, one of `"reference"`, `"model"` or `"results"`,
+#'   giving the type of resource being written.
+#' @param options A named list of elements used to construct the resource's
+#'   file name; see [getFileNameForNTResource()].
+#' @return The serialised representation of `object`, as returned by
+#'   [tractor.base::serialiseReferenceObject()], invisibly. This function is
+#'   mainly called for its side effect of writing the file.
+#' @author Jon Clayden
+#' @export
 writeNTResource <- function (object, type, options = NULL)
 {
     fileName <- getFileNameForNTResource(type, options, intent="write")

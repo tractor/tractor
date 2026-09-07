@@ -1,4 +1,16 @@
 # Find the first external viewer whose executable is actually available
+#' Find an available external image viewer
+#'
+#' This function determines the first available external image viewer
+#' program, in order of preference, favouring the viewer named by the
+#' `tractorViewer` option (see [showImagesInViewer()]) if its executable can
+#' be located.
+#'
+#' @return A string naming the first available external viewer (one of
+#'   `"fsleyes"`, `"fslview"`, `"freeview"` or `"mrview"`), or `NULL` if none
+#'   can be found.
+#' @author Jon Clayden
+#' @export
 externalViewer <- function ()
 {
     binaries <- list(fsleyes="fsleyes", fslview=c("fslview","fslview_deprecated"), freeview="freeview", mrview="mrview")
@@ -15,6 +27,48 @@ externalViewer <- function ()
     }
 }
 
+#' Display one or more images
+#'
+#' This function displays one or more images using TractoR's own internal
+#' viewer, or an external program, according to the specified or default
+#' `viewer`. It handles conversion between colour lookup table/colour map
+#' conventions used by the different viewers, region-of-interest lookup
+#' tables associated with labelled images, and (for the internal viewer)
+#' opacity blending.
+#'
+#' @param ... One or more images to display, each as an
+#'   [tractor.base::MriImage] object or a string giving the path to an image
+#'   file.
+#' @param viewer A string naming the viewer to use: one of `"tractor"` (the
+#'   internal viewer), `"fsleyes"`, `"fslview"`, `"freeview"` or `"mrview"`.
+#'   The default is determined by the `tractorViewer` option, which in turn
+#'   considers the `TRACTOR_VIEWER` environment variable.
+#' @param interactive Boolean value: for the internal viewer, should the
+#'   session be interactive (allowing the user to scroll through slices,
+#'   etc.)?
+#' @param wait Boolean value: for external viewers, should the function wait
+#'   for the viewer program to exit before returning?
+#' @param lookupTable An optional colour lookup table (or colour map) name,
+#'   or vector/list of names, one per image, in a form recognised by the
+#'   chosen viewer, or a generic name such as `"greyscale"` or `"heat"` that
+#'   will be translated appropriately.
+#' @param opacity An optional numeric vector of opacity values, in the range
+#'   0 to 1, one per image.
+#' @param infoPanel For the internal viewer, a function used to generate the
+#'   information panel text. If `NULL`, a suitable default is chosen based on
+#'   whether or not any of the images have an associated region lookup table.
+#' @return This function is called for its side effect.
+#' @seealso [externalViewer()], for choosing an available external viewer,
+#'   and [showImagesInFreeview()] and related functions, which implement the
+#'   external viewer backends.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#'
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), interactive = TRUE, wait = FALSE, lookupTable = NULL, opacity = NULL, infoPanel = NULL)
 {
     viewer <- match.arg(viewer, .Viewers)

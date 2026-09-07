@@ -1,3 +1,55 @@
+#' Run a TractoR experiment repeatedly over a set of parameter combinations
+#'
+#' This function underlies the `plough` shell command, which runs a
+#' `tractor` experiment script multiple times, either varying one or more
+#' configuration variables read from YAML file(s), or simply repeating the
+#' same configuration a fixed number of times. Runs may be dispatched to a
+#' Sun/Oracle Grid Engine cluster via `qsub`, run in parallel across local
+#' cores (see [parallelApply()]), or run serially.
+#'
+#' @param scriptName A string giving the name of the `tractor` experiment
+#'   script to run.
+#' @param configFiles A character vector, or colon-separated string, of
+#'   paths to YAML configuration files (see [readYaml()]).
+#' @param variables A comma-separated string naming the configuration
+#'   variables to loop over. If empty, all variables with more than one
+#'   value are used if `crossApply` is set, otherwise all singly-valued
+#'   variables are used. Ignored if `repetitions` is greater than zero.
+#' @param tractorFlags A string of flags to pass to the underlying
+#'   `tractor` calls. Occurrences of `%name` are substituted with the
+#'   current value of configuration variable `name`, and `%%` with the
+#'   (1-based) iteration index.
+#' @param tractorOptions As for `tractorFlags`, but for experiment-specific
+#'   options placed after the script name rather than command flags.
+#' @param useGridEngine Boolean-like value (compared to `1`): if true,
+#'   jobs are submitted as a Grid Engine array job via `qsub` rather than
+#'   run locally.
+#' @param crossApply Boolean-like value (compared to `1`): if true, every
+#'   combination of the looped variables' values is used (via
+#'   `expand.grid()`); otherwise corresponding elements of each variable
+#'   are used together, recycling shorter vectors as needed.
+#' @param queueName A string giving the Grid Engine queue name to submit
+#'   to, or an empty string to use the default queue. Only relevant if
+#'   `useGridEngine` is true.
+#' @param qsubOptions A string of additional options to pass to `qsub`.
+#'   Only relevant if `useGridEngine` is true.
+#' @param parallelisationFactor An integer giving the number of local
+#'   cores to parallelise over. Ignored if `useGridEngine` is true.
+#' @param debug Boolean-like value (compared to `1`): if true, the
+#'   `reportr` output level is set to `OL$Debug` rather than `OL$Info`.
+#' @param repetitions An integer giving the number of times to repeat the
+#'   experiment using the same, unmodified configuration. If greater than
+#'   zero, this takes priority over `variables` and `crossApply`.
+#' @return Called for its side effect of scheduling or running the
+#'   requested jobs. `NULL` is returned invisibly.
+#' @author Jon Clayden
+#' @references Please cite the following reference when using TractoR in your
+#' work:
+#'
+#' J.D. Clayden, S. Muñoz Maniega, A.J. Storkey, M.D. King, M.E. Bastin & C.A.
+#' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
+#' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
+#' @export
 ploughExperiment <- function (scriptName, configFiles, variables, tractorFlags, tractorOptions, useGridEngine, crossApply, queueName, qsubOptions, parallelisationFactor, debug, repetitions)
 {
     crossApply <- isTRUE(crossApply == 1)
