@@ -61,7 +61,7 @@ registerImagesWithFlirt <- function (registration, sourceMask = NULL, targetMask
     paramString <- es("-in #{sourceFileName} -ref #{targetFileName} #{initExpression} #{outputFileExpression} -omat #{outputMatrixFile} -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof #{affineDof} #{inweightExpression} #{refweightExpression} -interp #{interpolation} >#{logFile} 2>&1")
     
     startTime <- Sys.time()
-    execute("flirt", paramString, errorOnFail=TRUE)
+    execute("flirt", paramString)
     endTime <- Sys.time()
     report(OL$Info, "FSL-FLIRT registration completed in ", round(as.double(endTime-startTime,units="secs"),2), " seconds")
     

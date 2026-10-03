@@ -41,7 +41,7 @@ showImagesInFsleyes <- function (imageFileNames, wait = FALSE, lookupTable = NUL
         imageFileNames <- paste(imageFileNames, "-a", round(100*opacity), sep=" ")
     }
     
-    execute("fsleyes", imageFileNames, errorOnFail=TRUE, wait=wait, silent=TRUE)
+    execute("fsleyes", imageFileNames, wait=wait, silent=TRUE)
     
     invisible(unlist(imageFileNames))
 }
@@ -61,10 +61,10 @@ showImagesInFslview <- function (imageFileNames, wait = FALSE, lookupTable = NUL
         imageFileNames <- paste(imageFileNames, "-t", opacity, sep=" ")
     }
     
-    if (!is.null(locateExecutable("fslview_deprecated", errorIfMissing=FALSE)))
-        execute("fslview_deprecated", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait, silent=TRUE)
+    if (!is.null(locateExecutable("fslview_deprecated")))
+        execute("fslview_deprecated", implode(imageFileNames,sep=" "), wait=wait, silent=TRUE)
     else
-        execute("fslview", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait, silent=TRUE)
+        execute("fslview", implode(imageFileNames,sep=" "), wait=wait, silent=TRUE)
     
     invisible(unlist(imageFileNames))
 }

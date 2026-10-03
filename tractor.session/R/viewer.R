@@ -21,7 +21,7 @@ externalViewer <- function ()
     {
         for (binary in binaries[[viewer]])
         {
-            if (!is.null(locateExecutable(binary, errorIfMissing=FALSE)))
+            if (!is.null(locateExecutable(binary)))
                 return (viewer)
         }
     }

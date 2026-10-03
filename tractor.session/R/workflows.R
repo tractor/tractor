@@ -77,7 +77,7 @@ precheckWorkflow <- function (file, session, commandOnly = FALSE)
     commands <- ore.split("[,\\s]+", groups(ore.search("^\\s*#@command\\s+([\\w\\-,\\s]+)$",commandLines)))
     for (command in commands)
     {
-        command <- locateExecutable(command, errorIfMissing=FALSE)
+        command <- locateExecutable(command)
         if (!is.null(command))
         {
             result$commandPath <- command

@@ -14,7 +14,7 @@ runExperiment <- function ()
         values <- c(values, sysInfo["machine"], sysInfo["sysname"], sysInfo["release"])
     }
     
-    gitAvailable <- !is.null(locateExecutable("git", errorIfMissing=FALSE))
+    gitAvailable <- !is.null(locateExecutable("git"))
     gitDirectory <- file.path(Sys.getenv("TRACTOR_HOME"), ".git")
     if (gitAvailable && file.exists(gitDirectory))
     {

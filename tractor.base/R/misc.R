@@ -442,7 +442,7 @@ ensureFileSuffix <- function (fileName, suffix, strip = NULL)
 
 #' @rdname execute
 #' @export
-locateExecutable <- function (fileName, errorIfMissing = TRUE)
+locateExecutable <- function (fileName)
 {
     pathDirs <- unlist(strsplit(Sys.getenv("PATH"), .Platform$path.sep, fixed=TRUE))
     possibleLocations <- file.path(pathDirs, fileName)
@@ -451,17 +451,9 @@ locateExecutable <- function (fileName, errorIfMissing = TRUE)
     filesExist <- file.exists(possibleLocations)
     
     if (sum(filesExist) == 0)
-    {
-        if (errorIfMissing)
-            report(OL$Error, "Required executable \"", fileName, "\" is not available on the system path")
-        else
-            return (NULL)
-    }
+        return (NULL)
     else
-    {
-        realLocations <- possibleLocations[filesExist]
-        return (realLocations[1])
-    }
+        return (possibleLocations[filesExist][1])
 }
 
 #' Find or run an external executable file
@@ -475,14 +467,14 @@ locateExecutable <- function (fileName, errorIfMissing = TRUE)
 #' @param executable,fileName Name of the executable to run.
 #' @param params A character vector giving the parameters to pass to the
 #'   executable, if any. Elements will be separated by a space.
-#' @param errorOnFail,errorIfMissing Logical value: should an error be produced
-#'   if the executable can't be found?
 #' @param silent Logical value: should the executable be run without any
 #'   output?
 #' @param \dots Additional arguments to \code{\link{system}}.
 #' @return For \code{execute}, the return value of the underlying call to
-#'   \code{\link{system2}}. For \code{locateExecutable}, the location of the
-#'   requested executable, or \code{NULL} if it could not be found.
+#'   \code{\link{system2}}. If the requested executable is not found then a
+#'   recoverable error is signalled and the return value is \code{NULL}. For
+#'   \code{locateExecutable}, the location of the requested executable, or
+#'   \code{NULL} if it could not be found.
 #' 
 #' @note These functions are designed for Unix systems and may not work on
 #'   Windows.
@@ -495,10 +487,13 @@ locateExecutable <- function (fileName, errorIfMissing = TRUE)
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 #' @export
-execute <- function (executable, params = NULL, errorOnFail = TRUE, silent = FALSE, ...)
+execute <- function (executable, params = NULL, silent = FALSE, ...)
 {
-    execLoc <- locateExecutable(executable, errorOnFail)
-    if (!is.null(execLoc))
+    execLoc <- locateExecutable(executable)
+    
+    if (is.null(execLoc))
+        return (fallback(NULL, "Executable \"#{executable}\" is not available on the system path", class="missingExecutable"))
+    else
     {
         report(OL$Debug, "#{execLoc} #{implode(params,sep=' ')}")
         if (silent && getOutputLevel() > OL$Debug)

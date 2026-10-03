@@ -26,7 +26,7 @@ showImagesInMrview <- function (imageFileNames, wait = FALSE, lookupTable = NULL
         imageFileNames[-1] <- es("#{imageFileNames[-1]} -overlay.opacity #{opacity[-1]}")
     }
     
-    execute("mrview", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait, silent=TRUE)
+    execute("mrview", implode(imageFileNames,sep=" "), wait=wait, silent=TRUE)
     
     invisible(unlist(imageFileNames))
 }

@@ -74,7 +74,7 @@ showImagesInFreeview <- function (imageFileNames, wait = FALSE, lookupTable = NU
         imageFileNames <- paste(imageFileNames, ":opacity=", opacity, sep="")
     }
     
-    execute("freeview", implode(imageFileNames,sep=" "), errorOnFail=TRUE, wait=wait, silent=TRUE)
+    execute("freeview", implode(imageFileNames,sep=" "), wait=wait, silent=TRUE)
     
     invisible(unlist(imageFileNames))
 }
