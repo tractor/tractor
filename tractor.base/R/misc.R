@@ -472,9 +472,9 @@ locateExecutable <- function (fileName)
 #' @param \dots Additional arguments to \code{\link{system}}.
 #' @return For \code{execute}, the return value of the underlying call to
 #'   \code{\link{system2}}. If the requested executable is not found then a
-#'   recoverable error is signalled and the return value is \code{NULL}. For
-#'   \code{locateExecutable}, the location of the requested executable, or
-#'   \code{NULL} if it could not be found.
+#'   recoverable error of class \code{missingExecutable} is signalled and the
+#'   return value is \code{NULL}. For \code{locateExecutable}, the location of
+#'   the requested executable, or \code{NULL} if it could not be found.
 #' 
 #' @note These functions are designed for Unix systems and may not work on
 #'   Windows.

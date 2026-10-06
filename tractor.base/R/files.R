@@ -22,8 +22,8 @@
 #'     \item{imageSuffix}{The file suffix associated with the image file.}
 #'     \item{auxiliarySuffixes}{The file suffixes associated with any
 #'       auxiliary files.}
-#'   If no suitable files are found then a recoverable error is signalled and
-#'   the return value is \code{NULL}.}
+#'   If no suitable files are found then a recoverable error of class
+#'   \code{missingFile} is signalled and the return value is \code{NULL}.}
 #' 
 #' @author Jon Clayden
 #' @seealso \code{\link{imageFiles}}, \code{\link{resolvePath}}

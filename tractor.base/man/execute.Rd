@@ -5,19 +5,15 @@
 \alias{execute}
 \title{Find or run an external executable file}
 \usage{
-locateExecutable(fileName, errorIfMissing = TRUE)
+locateExecutable(fileName)
 
-execute(executable, params = NULL, errorOnFail = TRUE, silent = FALSE,
-  ...)
+execute(executable, params = NULL, silent = FALSE, ...)
 }
 \arguments{
 \item{executable, fileName}{Name of the executable to run.}
 
 \item{params}{A character vector giving the parameters to pass to the
 executable, if any. Elements will be separated by a space.}
-
-\item{errorOnFail, errorIfMissing}{Logical value: should an error be produced
-if the executable can't be found?}
 
 \item{silent}{Logical value: should the executable be run without any
 output?}
@@ -26,8 +22,10 @@ output?}
 }
 \value{
 For \code{execute}, the return value of the underlying call to
-  \code{\link{system2}}. For \code{locateExecutable}, the location of the
-  requested executable, or \code{NULL} if it could not be found.
+  \code{\link{system2}}. If the requested executable is not found then a
+  recoverable error of class \code{missingExecutable} is signalled and the
+  return value is \code{NULL}. For \code{locateExecutable}, the location of
+  the requested executable, or \code{NULL} if it could not be found.
 }
 \description{
 The \code{execute} function is a wrapper around the \code{\link{system2}}

@@ -4,14 +4,10 @@
 \alias{identifyImageFileNames}
 \title{Resolve image paths}
 \usage{
-identifyImageFileNames(fileName, errorIfMissing = TRUE,
-  auxiliaries = c("dirs", "lut", "tags"), ...)
+identifyImageFileNames(fileName, auxiliaries = c("dirs", "lut", "tags"), ...)
 }
 \arguments{
 \item{fileName}{A character vector of image paths.}
-
-\item{errorIfMissing}{Logical value: raise an error if no suitable files
-were found?}
 
 \item{auxiliaries}{A character vector of auxiliary file suffixes to search
 for.}
@@ -31,7 +27,8 @@ A list with the following elements, describing the identified files:
     \item{imageSuffix}{The file suffix associated with the image file.}
     \item{auxiliarySuffixes}{The file suffixes associated with any
       auxiliary files.}
-  }
+  If no suitable files are found then a recoverable error of class
+  \code{missingFile} is signalled and the return value is \code{NULL}.}
 }
 \description{
 This function identifies characteristics of an image on disk, including
