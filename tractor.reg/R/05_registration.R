@@ -115,11 +115,11 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
     
     getTransformedImage = function () { return (transformed.) },
     
-    getTransforms = function (indices = 1:n, reverse = FALSE, preferAffine = FALSE, half = FALSE, errorIfMissing = TRUE)
+    getTransforms = function (indices = 1:n, reverse = FALSE, preferAffine = FALSE, half = FALSE)
     {
         "Extract one or more transforms, favouring nonlinear warps by default"
         if (length(indices) > 1)
-            return (lapply(indices, .self$getTransforms, reverse=reverse, preferAffine=preferAffine, half=half, errorIfMissing=errorIfMissing))
+            return (lapply(indices, .self$getTransforms, reverse=reverse, preferAffine=preferAffine, half=half))
         
         transformSet <- transforms[[indices]]
         nonlinearType <- ifelse(reverse, "reverse-nonlinear", "nonlinear")
@@ -128,10 +128,8 @@ Registration <- setRefClass("Registration", contains="SerialisableObject", field
             object <- transformSet$getObject("affine")
         else if (transformSet$hasType(nonlinearType))
             object <- transformSet$getObject(nonlinearType)
-        else if (errorIfMissing)
-            report(OL$Error, "No suitable #{ifelse(reverse,'reverse','forward')} transform is available for index #{indices}")
         else
-            return (NULL)
+            return (fallback(NULL, "No suitable #{ifelse(reverse,'reverse','forward')} transform is available for index #{indices}", class="missingTransform"))
         
         if (reverse && isAffine(object))
             object <- invertAffine(object)

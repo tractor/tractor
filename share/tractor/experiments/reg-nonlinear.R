@@ -52,12 +52,12 @@ runExperiment <- function ()
         else if (!symmetric && is.null(initControlFile) && "nonlinear" %in% names(registration$getTypes()))
         {
             report(OL$Info, "Using control point image stored in transformation for initialisation")
-            init <- registration$getTransforms(errorIfMissing=FALSE)
+            init <- reportAs(registration$getTransforms(), missingTransform=Warning)
         }
         else if (is.null(initControlFile) && is.null(initAffineFile) && "affine" %in% names(registration$getTypes()))
         {
             report(OL$Info, "Using affine matrix stored in transformation for initialisation")
-            init <- registration$getTransforms(preferAffine=TRUE, errorIfMissing=FALSE)
+            init <- reportAs(registration$getTransforms(preferAffine=TRUE), missingTransform=Warning)
         }
     }
     
