@@ -149,14 +149,9 @@ showImagesInViewer <- function (..., viewer = getOption("tractorViewer"), intera
         imageFileNames <- lapply(seq_along(imageList), function (i) {
             if (is.character(imageList[[i]]))
             {
-                imageInfo <- identifyImageFileNames(imageList[[i]], errorIfMissing=FALSE)
-                if (is.null(imageInfo))
-                {
-                    report(OL$Warning, "Image file \"", imageList[[i]], "\" does not exist")
-                    return(NULL)
-                }
+                imageInfo <- reportAs(identifyImageFileNames(imageList[[i]]), missingFile=Warning)
                 
-                if (viewer == "fslview" || viewer == "fsleyes")
+                if (!is.null(imageInfo) && (viewer == "fslview" || viewer == "fsleyes"))
                 {
                     # fslview is fussy about data types, so read and write the image if necessary (writeImageFile() prefers ANALYZE-compatible datatypes)
                     if (imageInfo$format == "Mgh" || (imageInfo$format == "Nifti" && RNifti::niftiHeader(imageInfo$imageFile)$datatype > 64))

@@ -7,8 +7,6 @@
 #' compatibility.
 #' 
 #' @param fileName A character vector of image paths.
-#' @param errorIfMissing Logical value: raise an error if no suitable files
-#'   were found?
 #' @param auxiliaries A character vector of auxiliary file suffixes to search
 #'   for.
 #' @param \dots Additional arguments to \code{\link{resolvePath}}.
@@ -24,7 +22,8 @@
 #'     \item{imageSuffix}{The file suffix associated with the image file.}
 #'     \item{auxiliarySuffixes}{The file suffixes associated with any
 #'       auxiliary files.}
-#'   }
+#'   If no suitable files are found then a recoverable error is signalled and
+#'   the return value is \code{NULL}.}
 #' 
 #' @author Jon Clayden
 #' @seealso \code{\link{imageFiles}}, \code{\link{resolvePath}}
@@ -35,7 +34,7 @@
 #' Clark (2011). TractoR: Magnetic resonance imaging and tractography with R.
 #' Journal of Statistical Software 44(8):1-18. \doi{10.18637/jss.v044.i08}.
 #' @export
-identifyImageFileNames <- function (fileName, errorIfMissing = TRUE, auxiliaries = c("dirs","lut","tags"), ...)
+identifyImageFileNames <- function (fileName, auxiliaries = c("dirs","lut","tags"), ...)
 {
     fileSet <- ImageFileSet$new(auxiliaries=auxiliaries)
     format <- fileSet$findFormat(fileName,all=TRUE)[[1]]
@@ -47,14 +46,9 @@ identifyImageFileNames <- function (fileName, errorIfMissing = TRUE, auxiliaries
         
         # The image does not exist, because we have already tried the unresolved path
         if (all(fileName == originalFileName))
-        {
-            if (errorIfMissing)
-                report(OL$Error, "Complete image file does not exist: #{fileName}")
-            else
-                return (NULL)
-        }
+            return (fallback(NULL, "Complete image file does not exist: #{fileName}", class="missingFile"))
         else
-            return (identifyImageFileNames(fileName, errorIfMissing=errorIfMissing, auxiliaries=auxiliaries))
+            return (identifyImageFileNames(fileName, auxiliaries=auxiliaries))
     }
     else if (length(format$otherFiles) > 0L)
     {

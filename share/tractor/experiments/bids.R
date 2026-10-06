@@ -62,7 +62,7 @@ runExperiment <- function ()
         }
         
         # Check whether the source image is present (and with which auxiliaries)
-        info <- identifyImageFileNames(from, auxiliaries=c("bval","bvec","dirs","json","tags"), errorIfMissing=FALSE)
+        info <- reportAs(identifyImageFileNames(from, auxiliaries=c("bval","bvec","dirs","json","tags"), missingFile=Ignore))
         if (is.null(info))
         {
             report(OL$Warning, "Skipping #{from} (source image not found)")

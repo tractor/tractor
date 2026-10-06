@@ -320,7 +320,7 @@ expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = T
             arguments[i] <- ifelse(relative, shQuote(relativePath(arguments[i],workingDirectory)), shQuote(arguments[i]))
             next
         }
-        fileName <- identifyImageFileNames(arguments[i], errorIfMissing=FALSE)
+        fileName <- reportAs(identifyImageFileNames(arguments[i]), missingFile=Ignore)
         if (!is.null(fileName))
             arguments[i] <- ifelse(suffixes, fileName$imageFile, fileName$fileStem)
         if (arguments[i] != names(arguments)[i])
@@ -330,7 +330,7 @@ expandArguments <- function (arguments, workingDirectory = getwd(), suffixes = T
             parts <- resolvePath(ore.split("=", arguments[i]))
             for (j in seq_along(parts))
             {
-                fileName <- identifyImageFileNames(parts[j], errorIfMissing=FALSE)
+                fileName <- reportAs(identifyImageFileNames(parts[j]), missingFile=Ignore)
                 if (!is.null(fileName))
                     parts[j] <- ifelse(suffixes, fileName$imageFile, fileName$fileStem)
                 if (parts[j] != names(parts)[j])
