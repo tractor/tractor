@@ -1,4 +1,4 @@
-WARNING: Running nonlinear registration without initialisation is not recommended
+* * * WARNING: Running nonlinear registration without initialisation is not recommended
     Registration method : niftyreg
  Stored transformations : affine (1), nonlinear (1), reverse-nonlinear (1)
 Source image dimensions : 96 x 96 voxels
