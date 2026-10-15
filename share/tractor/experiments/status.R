@@ -12,12 +12,12 @@ runExperiment <- function ()
     if (getOutputLevel() > OL$Info)
         setOutputLevel(OL$Info)
     
-    report(OL$Info, "GENERAL:", prefixFormat="")
+    report(OL$Info, "GENERAL:", prefix=FALSE)
     printLabelledValues(c("Session directory","Working directory exists"), c(session$getDirectory(),file.exists(session$getDirectory("root"))), leftJustify=TRUE)
     
     if (file.exists(session$getDirectory("diffusion")))
     {
-        report(OL$Info, "\nDIFFUSION:", prefixFormat="")
+        report(OL$Info, "\nDIFFUSION:", prefix=FALSE)
         labels <- c("Preprocessing complete", "Data dimensions", "Voxel dimensions", "Number of shells", "Diffusion b-values", "Number of gradient directions", "Fibre orientation model(s)")
         
         metadata <- NULL
@@ -57,7 +57,7 @@ runExperiment <- function ()
     
     if (file.exists(session$getDirectory("functional")))
     {
-        report(OL$Info, "\nFUNCTIONAL:", prefixFormat="")
+        report(OL$Info, "\nFUNCTIONAL:", prefix=FALSE)
         labels <- c("Data dimensions", "Voxel dimensions", "Sampling frequency", "Total time")
         
         metadata <- NULL
@@ -90,7 +90,7 @@ runExperiment <- function ()
     
     if (file.exists(session$getDirectory("structural")))
     {
-        report(OL$Info, "\nSTRUCTURAL:", prefixFormat="")
+        report(OL$Info, "\nSTRUCTURAL:", prefix=FALSE)
         labels <- c("Number of T1w volumes", "T1w space dimensions", "T1w voxel dimensions", "Parcellation created", "Number of T2w volumes", "Number of PDw volumes")
         
         t1Count <- getImageCountForSession(session, "t1", "structural")

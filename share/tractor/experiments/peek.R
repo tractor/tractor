@@ -21,7 +21,7 @@ runExperiment <- function ()
     else if (!filesExist[1])
     {
         object <- readGraphFile(fileNames[2])
-        report(OL$Info, "An object of class \"Graph\"", prefixFormat="")
+        report(OL$Info, "An object of class \"Graph\"", prefix=FALSE)
         cat("---\n")
         print(object)
     }
@@ -32,11 +32,11 @@ runExperiment <- function ()
         {
             elementClasses <- sapply(object, attr, "originalClass")
             elementClasses <- paste("\"", elementClasses, "\"", sep="")
-            report(OL$Info, "A list of #{length(object)} object(s) of class(es) #{implode(unique(elementClasses),', ')}", prefixFormat="")
+            report(OL$Info, "A list of #{length(object)} object(s) of class(es) #{implode(unique(elementClasses),', ')}", prefix=FALSE)
         }
         else
         {
-            report(OL$Info, "An object of class \"#{implode(attr(object,'originalClass'),', ')}\"", prefixFormat="")
+            report(OL$Info, "An object of class \"#{implode(attr(object,'originalClass'),', ')}\"", prefix=FALSE)
             object <- deserialiseReferenceObject(object=object)
             cat("---\n")
             print(object)

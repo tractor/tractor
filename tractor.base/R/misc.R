@@ -210,9 +210,9 @@ printLabelledValues <- function (labels, values, outputLevel = OL$Info, leftJust
     for (i in seq_len(nValues))
     {
         if (leftJustify)
-            report(outputLevel, "  ", labels[i], implode(rep(" ",maxLabelLength-labelLengths[i]),sep=""), " : ", values[i], prefixFormat="")
+            report(outputLevel, "  ", labels[i], implode(rep(" ",maxLabelLength-labelLengths[i]),sep=""), " : ", values[i], prefix=FALSE)
         else
-            report(outputLevel, implode(rep(" ",maxLabelLength-labelLengths[i]),sep=""), labels[i], " : ", values[i], prefixFormat="")
+            report(outputLevel, implode(rep(" ",maxLabelLength-labelLengths[i]),sep=""), labels[i], " : ", values[i], prefix=FALSE)
     }
     
     invisible(NULL)
