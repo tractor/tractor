@@ -37,8 +37,8 @@ parser <- arrg("furrow",
             opt("n,stems", "Do not append a suffix to image filenames, giving the file stem instead"),
             opt("r,relative", "Generate paths relative to the working directory, rather than absolute paths"),
             opt("w,workdir", "Specify the working directory, which will be created if necessary", arg="dir", default=defaultWorkingDirectory),
-            patterns=list(pat("command", "arg...?", options="znrw"),
-                          pat(options="h!")),
+            patterns=list(pat("command", "arg...?", .options="znrw"),
+                          pat(.options="h!")),
             header=c(ore::es("furrow (program v3.5.0, distribution v#{tractorVersion})"), "Channel a command through TractoR's shorthand"),
             footer="Run the specified command, which can be any standard program or script on the PATH, after first expanding TractoR's image-path shorthand, such as @FA for the fractional anisotropy map in the current session directory, or /data/subject1@diffusion/data for the diffusion data series from the session rooted at /data/subject1.")
 
