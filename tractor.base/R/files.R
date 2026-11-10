@@ -292,7 +292,10 @@ readImageFile <- function (fileName, metadataOnly = FALSE, volumes = NULL, spars
                 
                 if (length(toKeep) > 0)
                 {
-                    coords <- rbind(coords, cbind(vectorToMatrixLocs(toKeep,fullDims[1:3]),blocks[i]))
+                    if (length(blocks) > 1)
+                        coords <- rbind(coords, cbind(vectorToMatrixLocs(toKeep,fullDims[1:3]),blocks[i]))
+                    else
+                        coords <- rbind(coords, vectorToMatrixLocs(toKeep,fullDims[1:3]))
                     values <- c(values, currentData[toKeep])
                 }
             }
