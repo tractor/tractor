@@ -339,13 +339,25 @@ readImageFile <- function (fileName, metadataOnly = FALSE, volumes = NULL, spars
         }
     }
     
-    # Attach the data to the image
-    if (willReadData)
+    # Attach the data to the image, except for sparse data, which RNifti can't
+    # handle; this is kept separate, and the header is used as a proxy below
+    sparseData <- NULL
+    if (willReadData && is(data, "SparseArray"))
+        sparseData <- data
+    else if (willReadData)
         image <- updateNifti(data, image)
     
     # Reorder the image if requested (as opposed to the data to be associated with it)
     if (willReorderImage)
+    {
+        oldXform <- xform(image)
         orientation(image) <- "LAS"
+        
+        # RNifti reorients the header without data, so we can work out the
+        # implied voxel transformation and apply it to sparse coordinates
+        if (!is.null(sparseData))
+            sparseData <- .reorientSparseArray(sparseData, oldXform, xform(image), dim(image))
+    }
     
     # Convert to an MriImage
     attr(image, "reordered") <- reorder
@@ -354,6 +366,8 @@ readImageFile <- function (fileName, metadataOnly = FALSE, volumes = NULL, spars
     # Ensure the data has the required form
     if (metadataOnly)
         image$setData(NULL)
+    else if (!is.null(sparseData))
+        image$setData(sparseData)
     else if (sparse && !image$isSparse())
         image$setData(as(image$getData(), "SparseArray"))
     

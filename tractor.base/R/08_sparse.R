@@ -372,6 +372,23 @@ aperm.SparseArray <- function (a, perm, ...)
     return (newObject)
 }
 
+# Apply the voxel permutation and flips implied by a reorientation (as made by
+# RNifti's orientation<- method) to the coordinates of a SparseArray
+.reorientSparseArray <- function (data, oldXform, newXform, newDims)
+{
+    # Mapping from old to new zero-based voxel coordinates, which should be a
+    # signed permutation, plus offsets for flipped axes - all integer elements
+    transform <- round(solve(newXform) %*% oldXform)
+    
+    coords <- data$getCoordinates()
+    nDims <- ncol(coords)
+    spatialCoords <- cbind(coords, matrix(1L, nrow(coords), max(0,3-nDims)))[,1:3,drop=FALSE] - 1
+    spatialCoords <- spatialCoords %*% t(transform[1:3,1:3]) + rep(transform[1:3,4], each=nrow(coords)) + 1
+    coords[,seq_len(min(3,nDims))] <- spatialCoords[,seq_len(min(3,nDims))]
+    
+    return (newSparseArrayWithData(data$getData(), coords, newDims))
+}
+
 #' Create a SparseArray object
 #' 
 #' This function creates a \code{\linkS4class{SparseArray}} object from its
